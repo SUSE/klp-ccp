@@ -17,7 +17,7 @@ namespace suse
     public:
       pp_tokenizer(const std::string &filename);
 
-      code_remarks &get_remarks() noexcept
+      code_remarks& get_remarks() noexcept
       {
 	return _remarks;
       }

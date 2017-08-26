@@ -52,6 +52,21 @@ namespace suse
 	return file_loc(_raw_off + 2, _line + 1, 0);
       }
 
+      std::streamoff raw_off() const noexcept
+      {
+	return _raw_off;
+      }
+
+      std::streamoff line() const noexcept
+      {
+	return _line;
+      }
+
+      std::streamoff col() const noexcept
+      {
+	return _col;
+      }
+
       friend std::ostream& operator<<(std::ostream &o, const file_loc &loc);
 
     private:

@@ -2,6 +2,7 @@ noinst_HEADERS =		\
 	code_remark.hh		\
 	code_remarks.hh	\
 	file_loc.hh		\
+	file_range.hh		\
 	header_resolver.hh	\
 	path.hh		\
 	pp_token.hh		\
@@ -12,6 +13,7 @@ libcp_a_SOURCES =		\
 	code_remark.cc		\
 	code_remarks.cc	\
 	file_loc.cc		\
+	file_range.cc		\
 	header_resolver.cc	\
 	path.cc		\
 	pp_tokenizer.cc

@@ -4,6 +4,7 @@
 #include <string>
 #include <ios>
 #include "file_loc.hh"
+#include "file_range.hh"
 
 namespace suse
 {
@@ -19,7 +20,7 @@ namespace suse
 	};
 
       code_remark(const severity sev, const std::string &msg,
-		  const std::string &filename, const file_loc loc);
+		  const file_range &file_range);
 
       severity get_severity() const noexcept
       {
@@ -31,8 +32,7 @@ namespace suse
 
     private:
       std::string _msg;
-      std::string _filename;
-      file_loc _loc;
+      file_range _file_range;
       severity _sev;
     };
 

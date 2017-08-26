@@ -35,11 +35,13 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  pp_token tok;
   pp_tokenizer tokker(argv[1]);
-
-  while ((tok = tokker.read_next_token()))
+  while (true)
     {
+      pp_token tok = tokker.read_next_token();
+      if (!tok)
+	break;
+
       std::cout << '{' << type2name(tok.get_type())
 		<< ':' << tok.get_value() << '}';
     }

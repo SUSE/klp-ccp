@@ -32,7 +32,7 @@ char pp_tokenizer::_read_next_char(file_loc &loc, const char prev)
     if (_i.eof()) {
       _remarks.add(code_remark(code_remark::severity::fatal,
 			       "no newline after continuation",
-			       _filename, _cur_loc));
+			       file_range(_filename, _cur_loc)));
       return 0;
     }
     if (next != '\n') {
@@ -69,14 +69,14 @@ pp_token pp_tokenizer::_tokenize_c_comment()
     } else {
       _skip_next_char();
       return pp_token(pp_token::type::ws, " ",
-		      _filename, _tok_loc, _cur_loc);
+		      file_range(_filename, _tok_loc, _cur_loc));
     }
   }
   _remarks.add(code_remark(code_remark::severity::fatal,
 			   "EOF within C-style comment",
-			   _filename, _cur_loc));
+			   file_range(_filename, _cur_loc)));
   return pp_token(pp_token::type::ws, " ",
-		  _filename, _tok_loc, _cur_loc);
+		  file_range(_filename, _tok_loc, _cur_loc));
 }
 
 pp_token pp_tokenizer::_tokenize_cpp_comment()
@@ -86,14 +86,14 @@ pp_token pp_tokenizer::_tokenize_cpp_comment()
       _advance_to_next_char();
     } else {
       return pp_token(pp_token::type::ws, " ",
-		      _filename, _tok_loc, _cur_loc);
+		      file_range(_filename, _tok_loc, _cur_loc));
     }
   }
   _remarks.add(code_remark(code_remark::severity::warning,
 			   "EOF within C++-style comment",
-			   _filename, _cur_loc));
+			   file_range(_filename, _cur_loc)));
   return pp_token(pp_token::type::ws, " ",
-		  _filename, _tok_loc, _cur_loc);
+		  file_range(_filename, _tok_loc, _cur_loc));
 }
 
 pp_token pp_tokenizer::_tokenize_string(const char delim,
@@ -114,13 +114,15 @@ pp_token pp_tokenizer::_tokenize_string(const char delim,
       _advance_to_next_char();
     } else {
       _advance_to_next_char();
-      return pp_token(tok_type, value, _filename, _tok_loc, _cur_loc);
+      return pp_token(tok_type, value,
+		      file_range(_filename, _tok_loc, _cur_loc));
     }
   }
   _remarks.add(code_remark(code_remark::severity::fatal,
 			   "encountered EOF while searching for end of string",
-			   _filename, _cur_loc));
-  return pp_token(tok_type, value, _filename, _tok_loc, _cur_loc);
+			   file_range(_filename, _cur_loc)));
+  return pp_token(tok_type, value,
+		  file_range(_filename, _tok_loc, _cur_loc));
 }
 
 pp_token pp_tokenizer::_tokenize_punctuator()
@@ -230,7 +232,7 @@ pp_token pp_tokenizer::_tokenize_punctuator()
     _advance_to_next_char();
   }
   return pp_token(pp_token::type::punctuator, value,
-		  _filename, _tok_loc, _cur_loc);
+		  file_range(_filename, _tok_loc, _cur_loc));
 }
 
 pp_token pp_tokenizer::_tokenize_pp_number()
@@ -274,7 +276,7 @@ pp_token pp_tokenizer::_tokenize_pp_number()
   }
 
   return pp_token(pp_token::type::pp_number, value,
-		  _filename, _tok_loc, _cur_loc);
+		  file_range(_filename, _tok_loc, _cur_loc));
 }
 
 pp_token pp_tokenizer::_tokenize_id()
@@ -301,7 +303,7 @@ pp_token pp_tokenizer::_tokenize_id()
   }
 
   return pp_token(pp_token::type::id, value,
-		  _filename, _tok_loc, _cur_loc);
+		  file_range(_filename, _tok_loc, _cur_loc));
 }
 
 pp_token pp_tokenizer::_tokenize_ws()
@@ -325,7 +327,7 @@ pp_token pp_tokenizer::_tokenize_ws()
   }
 
   return pp_token(pp_token::type::ws, value,
-		  _filename, _tok_loc, _cur_loc);
+		  file_range(_filename, _tok_loc, _cur_loc));
 }
 
 pp_token pp_tokenizer::read_next_token()
@@ -334,7 +336,7 @@ pp_token pp_tokenizer::read_next_token()
   switch (_cur) {
   case 0:
     return pp_token(pp_token::type::eof, "",
-		    _filename, _cur_loc, _cur_loc);
+		    file_range(_filename, _cur_loc, _cur_loc));
 
   case '\n':
     {
@@ -342,8 +344,8 @@ pp_token pp_tokenizer::read_next_token()
       const char cur = _cur;
       _expect_qh_str = expect_qh_str::newline;
       _advance_to_next_char();
-      return pp_token(pp_token::type::newline, std::string(1, cur), _filename,
-		      _tok_loc, cur_loc + cur);
+      return pp_token(pp_token::type::newline, std::string(1, cur),
+		      file_range(_filename, _tok_loc, cur_loc + cur));
     }
 
   case ' ':
@@ -464,7 +466,7 @@ pp_token pp_tokenizer::read_next_token()
       _expect_qh_str = expect_qh_str::no;
       _advance_to_next_char();
       return pp_token(pp_token::type::non_ws_char, std::string(1, cur),
-		      _filename, _tok_loc, cur_loc + cur);
+		      file_range(_filename, _tok_loc, cur_loc + cur));
     }
   }
   // unreachable

@@ -2,7 +2,7 @@
 #define PP_TOKEN_HH
 
 #include <string>
-#include "file_loc.hh"
+#include "file_range.hh"
 
 namespace suse
 {
@@ -28,15 +28,10 @@ namespace suse
 	eof,
       };
 
-      pp_token() = default;
-
-      pp_token(type type, const std::string &value,
-	       const std::string &filename,
-	       const file_loc &start_loc, const file_loc &end_loc)
-	: _value(value), _filename(filename),
-	  _start_loc(start_loc), _end_loc(end_loc), _type(type)
+      pp_token(const type type, const std::string &value,
+	       const file_range &file_range)
+	: _value(value), _file_range(file_range), _type(type)
       {}
-
 
       type get_type() const noexcept
       {
@@ -55,9 +50,7 @@ namespace suse
 
     private:
       std::string _value;
-      std::string _filename;
-      file_loc _start_loc;
-      file_loc _end_loc;
+      file_range _file_range;
       type _type;
     };
   }
