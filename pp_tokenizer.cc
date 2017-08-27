@@ -317,6 +317,8 @@ pp_token pp_tokenizer::_tokenize_ws()
     switch (_cur) {
     case ' ':
     case '\t':
+    case '\v':
+    case '\f':
       value.push_back(_cur);
       _advance_to_next_char();
       break;
@@ -350,6 +352,8 @@ pp_token pp_tokenizer::read_next_token()
 
   case ' ':
   case '\t':
+  case '\v':
+  case '\f':
     return _tokenize_ws();
 
   case '/':
