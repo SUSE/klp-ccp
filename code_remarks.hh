@@ -19,6 +19,8 @@ namespace suse
       bool empty() const noexcept;
       bool any_fatal() const noexcept;
 
+      code_remarks& operator+=(const code_remarks &remarks);
+
       friend std::ostream& operator<<(std::ostream &o, const code_remarks &rs);
 
     private:

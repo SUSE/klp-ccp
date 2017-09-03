@@ -24,9 +24,9 @@ namespace suse
 	if (!c)
 	  return *this;
 
-	auto raw_off = _raw_off;
+	auto raw_off = _raw_off + 1;
 	auto line = _line;
-	auto col = _col;
+	auto col = _col + 1;
 
 	if (c == '\n') {
 	  ++line;
@@ -65,6 +65,16 @@ namespace suse
       std::streamoff col() const noexcept
       {
 	return _col;
+      }
+
+      bool operator==(const file_loc &rhs) const noexcept
+      {
+	return _raw_off == rhs._raw_off;
+      }
+
+      bool operator<=(const file_loc &rhs) const noexcept
+      {
+	return _raw_off <= rhs._raw_off;
       }
 
       friend std::ostream& operator<<(std::ostream &o, const file_loc &loc);

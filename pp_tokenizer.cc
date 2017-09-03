@@ -1,8 +1,9 @@
 #include <cassert>
 #include <cerrno>
 #include <system_error>
-
 #include "pp_tokenizer.hh"
+#include "pp_except.hh"
+
 using namespace suse::cp;
 
 pp_tokenizer::pp_tokenizer(const std::string &filename)
@@ -30,7 +31,7 @@ char pp_tokenizer::_read_next_char(file_loc &loc, const char prev)
   while (c == '\\') {
     const char next = static_cast<char>(_i.get());
     if (_i.eof()) {
-      _remarks.add(code_remark(code_remark::severity::fatal,
+      _remarks.add(code_remark(code_remark::severity::warning,
 			       "no newline after continuation",
 			       file_range(_filename, _cur_loc)));
       return 0;
@@ -61,41 +62,6 @@ void pp_tokenizer::_skip_next_char()
   _advance_to_next_char();
 }
 
-pp_token pp_tokenizer::_tokenize_c_comment()
-{
-  while (_cur) {
-    if (!(_cur == '*' && _next == '/')) {
-      _advance_to_next_char();
-    } else {
-      _skip_next_char();
-      return pp_token(pp_token::type::ws, " ",
-		      file_range(_filename, _tok_loc, _cur_loc));
-    }
-  }
-  _remarks.add(code_remark(code_remark::severity::fatal,
-			   "EOF within C-style comment",
-			   file_range(_filename, _cur_loc)));
-  return pp_token(pp_token::type::ws, " ",
-		  file_range(_filename, _tok_loc, _cur_loc));
-}
-
-pp_token pp_tokenizer::_tokenize_cpp_comment()
-{
-  while(_cur) {
-    if (_cur != '\n') {
-      _advance_to_next_char();
-    } else {
-      return pp_token(pp_token::type::ws, " ",
-		      file_range(_filename, _tok_loc, _cur_loc));
-    }
-  }
-  _remarks.add(code_remark(code_remark::severity::warning,
-			   "EOF within C++-style comment",
-			   file_range(_filename, _cur_loc)));
-  return pp_token(pp_token::type::ws, " ",
-		  file_range(_filename, _tok_loc, _cur_loc));
-}
-
 pp_token pp_tokenizer::_tokenize_string(const char delim,
 					const bool delim_escapable,
 					const pp_token::type tok_type)
@@ -118,11 +84,12 @@ pp_token pp_tokenizer::_tokenize_string(const char delim,
 		      file_range(_filename, _tok_loc, _cur_loc));
     }
   }
-  _remarks.add(code_remark(code_remark::severity::fatal,
-			   "encountered EOF while searching for end of string",
-			   file_range(_filename, _cur_loc)));
-  return pp_token(tok_type, value,
-		  file_range(_filename, _tok_loc, _cur_loc));
+
+  code_remark remark(code_remark::severity::fatal,
+		     "encountered EOF while searching for end of string",
+		     file_range(_filename, _cur_loc));
+  _remarks.add(remark);
+  throw(remark);
 }
 
 pp_token pp_tokenizer::_tokenize_punctuator()
@@ -306,20 +273,105 @@ pp_token pp_tokenizer::_tokenize_id()
 		  file_range(_filename, _tok_loc, _cur_loc));
 }
 
+std::size_t pp_tokenizer::_skip_c_comment(const std::size_t n_trailing_spaces)
+{
+  assert(_cur == '/' && _next == '*');
+  std::size_t n_chars_in_last_line = n_trailing_spaces + 2;
+  _skip_next_char();
+
+  while (_cur) {
+    if (_cur == '*' && _next == '/') {
+      _skip_next_char();
+      return n_chars_in_last_line + 2;
+    } else {
+      if (_cur != '\n')
+	++n_chars_in_last_line;
+      else
+	n_chars_in_last_line = 0;
+      _advance_to_next_char();
+    }
+  }
+
+  code_remark remark(code_remark::severity::fatal,
+		     "EOF within C-style comment",
+		     file_range(_filename, _cur_loc));
+  _remarks.add(remark);
+  throw pp_except(remark);
+}
+
+void pp_tokenizer::_skip_cpp_comment()
+{
+  assert(_cur == '/' && _next == '/');
+  _skip_next_char();
+  while(_cur != '\n')
+      _advance_to_next_char();
+
+  if (!_cur) {
+    _remarks.add(code_remark(code_remark::severity::warning,
+			     "EOF within C++-style comment",
+			     file_range(_filename, _cur_loc)));
+  }
+}
+
 pp_token pp_tokenizer::_tokenize_ws()
 {
-  std::string value;
+  // According to the standard (5.1.1.2(3)):
+  // - Each comment is replaced replaced by a single space.
+  // - Newlines are retained.
+  // - Implementations may replace whitespace sequences other than
+  //   newlines with a single space.
+  //
+  // GNU cpp does the following:
+  // At the beginning of lines:
+  //   - Comments are transformed into a sequence of space characters
+  //     equal in number to the number of comment's characters after its
+  //     last newline.
+  //   - Any whitespace character is transformed into a space.
+  // At the end of lines:
+  //   - Any space, including any arising from comments, is stripped.
+  // In the middle of lines:
+  //   - Comments are replaced with a single space
+  //   - Sequences of whitespace are replaced with a single space.
+  //
+  // In addition, GNU CPP collapses multiple newlines into a single one.
+  // We don't do this here.
+  std::size_t n_spaces = 0;
   bool done = false;
 
-  assert(_cur == ' ' || _cur == '\t');
+  assert(_cur == ' ' || _cur == '\t' || _cur == '\v' || _cur == '\f' ||
+	 _cur == '/' && (_next == '*' || _next == '/'));
+
 
   while (!done) {
     switch (_cur) {
+    case '\n':
+      // Whitespace at end of line, return a single newline.
+      _advance_to_next_char();
+      _expect_qh_str = expect_qh_str::newline;
+      return pp_token(pp_token::type::newline, "\n",
+		      file_range(_filename, _tok_loc, _cur_loc));
+
+    case '/':
+      if (_next == '*') {
+	n_spaces = _skip_c_comment(n_spaces);
+      } else if (_next == '/') {
+	// Whitespace + comment at end of line, return a single newline.
+	_skip_cpp_comment();
+	assert(!_cur || _cur == '\n');
+	_advance_to_next_char();
+	_expect_qh_str = expect_qh_str::newline;
+	return pp_token(pp_token::type::newline, "\n",
+		      file_range(_filename, _tok_loc, _cur_loc));
+      } else {
+	done = true;
+      }
+      break;
+
     case ' ':
     case '\t':
     case '\v':
     case '\f':
-      value.push_back(_cur);
+      ++n_spaces;
       _advance_to_next_char();
       break;
 
@@ -328,8 +380,10 @@ pp_token pp_tokenizer::_tokenize_ws()
     }
   }
 
-  return pp_token(pp_token::type::ws, value,
-		  file_range(_filename, _tok_loc, _cur_loc));
+  return pp_token(pp_token::type::ws,
+	std::string(_expect_qh_str == expect_qh_str::newline ? n_spaces : 1,
+		    ' '),
+	file_range(_filename, _tok_loc, _cur_loc));
 }
 
 pp_token pp_tokenizer::read_next_token()
@@ -346,7 +400,8 @@ pp_token pp_tokenizer::read_next_token()
       const char cur = _cur;
       _expect_qh_str = expect_qh_str::newline;
       _advance_to_next_char();
-      return pp_token(pp_token::type::newline, std::string(1, cur),
+      return pp_token(pp_token::type::newline,
+		      std::string(1, cur),
 		      file_range(_filename, _tok_loc, cur_loc + cur));
     }
 
@@ -358,11 +413,9 @@ pp_token pp_tokenizer::read_next_token()
 
   case '/':
     if (_next == '*') {
-      _skip_next_char();
-      return _tokenize_c_comment();
+      return _tokenize_ws();
     } else if (_next == '/') {
-      _skip_next_char();
-      return _tokenize_cpp_comment();
+      return _tokenize_ws();
     } else {
       _expect_qh_str = expect_qh_str::no;
       return _tokenize_punctuator();
@@ -460,6 +513,7 @@ pp_token pp_tokenizer::read_next_token()
   case '?':
   case ':':
   case ';':
+  case ',':
     _expect_qh_str = expect_qh_str::no;
     return _tokenize_punctuator();
 
@@ -469,7 +523,8 @@ pp_token pp_tokenizer::read_next_token()
       const char cur = _cur;
       _expect_qh_str = expect_qh_str::no;
       _advance_to_next_char();
-      return pp_token(pp_token::type::non_ws_char, std::string(1, cur),
+      return pp_token(pp_token::type::non_ws_char,
+		      std::string(1, cur),
 		      file_range(_filename, _tok_loc, cur_loc + cur));
     }
   }

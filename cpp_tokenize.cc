@@ -24,6 +24,7 @@ static const char* type2name(pp_token::type type)
     CASE(punctuator);
     CASE(non_ws_char);
     CASE(eof);
+    CASE(empty);
   }
 #undef CASE
 }
@@ -38,8 +39,8 @@ int main(int argc, char* argv[])
   pp_tokenizer tokker(argv[1]);
   while (true)
     {
-      pp_token tok = tokker.read_next_token();
-      if (!tok)
+      auto tok = tokker.read_next_token();
+      if (tok.is_eof())
 	break;
 
       std::cout << '{' << type2name(tok.get_type())

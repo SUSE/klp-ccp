@@ -29,13 +29,13 @@ namespace suse
       void _advance_to_next_char();
       void _skip_next_char();
 
-      pp_token _tokenize_c_comment();
-      pp_token _tokenize_cpp_comment();
-      pp_token _tokenize_string(const char delim, const bool delim_escapable,
+      pp_token _tokenize_string(const char delim,const bool delim_escapable,
 				const pp_token::type tok_type);
       pp_token _tokenize_punctuator();
       pp_token _tokenize_pp_number();
       pp_token _tokenize_id();
+      std::size_t _skip_c_comment(const std::size_t n_trailing_spaces);
+      void _skip_cpp_comment();
       pp_token _tokenize_ws();
 
       std::string _filename;

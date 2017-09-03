@@ -12,6 +12,8 @@ namespace suse
     class header_resolver
     {
     public:
+      header_resolver() = default;
+
       template <typename T>
       header_resolver(T &&begin, T &&end)
 	: _search_dirs(std::forward<T>(begin), std::forward<T>(end))
@@ -23,9 +25,9 @@ namespace suse
 	_search_dirs.push_back(std::forward<T>(dir));
       }
 
-      std::string resolve(const std::string &header);
+      std::string resolve(const std::string &header) const;
       std::string resolve(const std::string &header,
-			  const std::string &referring_file);
+			  const std::string &referring_file) const;
 
     private:
       std::vector<std::string> _search_dirs;

@@ -4,6 +4,7 @@
 using namespace suse::cp;
 
 std::string header_resolver::resolve(const std::string &header)
+  const
 {
   for (auto &&d : _search_dirs) {
     auto &&p = normalize_path(d + '/' + header);
@@ -16,6 +17,7 @@ std::string header_resolver::resolve(const std::string &header)
 
 std::string header_resolver::resolve(const std::string &header,
 				     const std::string &referring_file)
+  const
 {
   std::string p{normalize_path(dirname(referring_file) + '/' + header)};
 

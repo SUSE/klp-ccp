@@ -34,6 +34,13 @@ bool code_remarks::any_fatal() const noexcept
   return false;
 }
 
+code_remarks& code_remarks::operator+=(const code_remarks &remarks)
+{
+  _remarks.insert(_remarks.end(),
+		  remarks._remarks.begin(), remarks._remarks.end());
+  return *this;
+}
+
 std::ostream& suse::cp::operator<<(std::ostream &o, const code_remarks &rs)
 {
   for(auto &&r : rs._remarks) {
