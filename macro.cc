@@ -558,6 +558,7 @@ macro::parse_macro_definition(const pp_tokens::const_iterator begin,
       if (it->is_punctuator("...")) {
 	variadic = true;
 	arg_names.push_back("__VA_ARGS__");
+	unique_arg_names.insert("__VA_ARGS__");
 	it = skip_ws(it + 1);
       } else if (it->is_id()) {
 	if (it->get_value() == "__VA_ARGS__") {
