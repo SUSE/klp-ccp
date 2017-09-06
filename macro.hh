@@ -44,9 +44,6 @@ namespace suse
 
 	pp_token _handle_stringification();
 
-	pp_token _yield_pending_ws();
-	void _report_ws() noexcept;
-
 	void _add_concat_token(const pp_token &tok);
 	pp_token _yield_concat_token();
 
@@ -61,17 +58,11 @@ namespace suse
 	const pp_tokens *_cur_arg;
 	pp_tokens::const_iterator _cur_arg_it;
 
-	enum class _pending_ws_state
-	{
-	  dont_emit,
-	  nonempty_seen,
-	  emit_on_nonempty,
-	};
-	_pending_ws_state _pending_ws_state;
 
 	std::unique_ptr<pp_token> _concat_token;
 	bool _in_concat;
 
+	bool _last_ws;
 	bool _anything_emitted;
       };
 

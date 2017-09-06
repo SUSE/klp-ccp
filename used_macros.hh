@@ -23,7 +23,7 @@ namespace suse
       typedef _used_macros_type::size_type size_type;
       typedef _used_macros_type::value_type value_type;
 
-      used_macros() noexcept = default;
+      used_macros() = default;
 
       bool empty() const noexcept
       { return _used_macros.empty(); }
@@ -48,6 +48,12 @@ namespace suse
 
       size_type size() const noexcept
       { return _used_macros.size(); }
+
+      template<typename... Targs>
+      size_type count(Targs&&... args)
+      {
+	return _used_macros.count(std::forward<Targs>(args)...);
+      }
 
       used_macros& operator+=(const used_macros &rhs);
       used_macros operator+(const used_macros &rhs) const;

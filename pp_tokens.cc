@@ -23,12 +23,10 @@ void pp_tokens::normalize_ws()
 {
   auto ws_or_empty_pred =
     pp_token::is_type_any_of_predicate<pp_token::type::empty,
-				       pp_token::type::ws,
-				       pp_token::type::newline>;
+				       pp_token::type::ws>;
 
   auto ws_pred =
-    pp_token::is_type_any_of_predicate<pp_token::type::ws,
-				       pp_token::type::newline>;
+    pp_token::is_type_any_of_predicate<pp_token::type::ws>;
 
   auto empty_pred =
     pp_token::is_type_any_of_predicate<pp_token::type::empty>;
@@ -37,7 +35,7 @@ void pp_tokens::normalize_ws()
 					  ws_or_empty_pred);
   while(it_seq_begin != _tokens.end()) {
     iterator it_seq_end =
-      std::find_if_not(it_seq_begin + 1, _tokens.end(), ws_or_empty_pred);
+      std::find_if_not(it_seq_begin, _tokens.end(), ws_or_empty_pred);
 
     // Move any whitespace or newline to after the empty tokens while
     // preserving the order of the empties.
@@ -54,24 +52,19 @@ void pp_tokens::normalize_ws()
 
     // Now, it_ws points right to the beginning of the trailing
     // whitespace sequence.
-    assert(it_ws == it_seq_end || ws_pred(*it_ws));
-    if (it_seq_begin == _tokens.begin() || it_seq_end == _tokens.end()) {
-      // Beginning or end of token sequence, purge the whitespace.
-      _tokens.erase(it_ws, it_seq_end);
-      return;
-    } else if (it_ws != it_seq_end) {
-      // There is some whitespace and it's not at the beginning or end.
-      // Keep a single representative.
-      assert(std::all_of(it_ws, it_seq_end,
-			 [&it_ws](const pp_token &tok) {
-			   return (tok.used_macros().empty() &&
-				   (tok.get_file_range() ==
-				    it_ws->get_file_range()));
-			 }));
-      it_ws->set_type_and_value(pp_token::type::ws, " ");
-      it_seq_end = _tokens.erase(it_ws + 1, it_seq_end);
-    }
+    // There's never more than one whitespace.
+    assert(it_ws == it_seq_end || it_ws + 1 == it_seq_end);
+    if (it_seq_begin == _tokens.begin() && it_ws == it_seq_begin) {
+      // Beginning of token sequence, and it's all whitespace w/o any
+      // empties. Strip it.
+      it_seq_end = _tokens.erase(it_ws, it_seq_end);
 
+    } else if (it_seq_end == _tokens.end() && it_ws == it_seq_end) {
+      // End of token sequence, and it's all whitespace w/o any
+      // empties. Strip it.
+	_tokens.erase(it_ws, it_seq_end);
+	return;
+    }
     it_seq_begin = std::find_if(it_seq_end, _tokens.end(), ws_or_empty_pred);
   }
 }

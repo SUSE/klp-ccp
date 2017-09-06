@@ -114,6 +114,10 @@ pp_token::concat(const pp_token &tok, code_remarks &remarks)
   } else if (_type == type::pp_number && tok._type == type::id) {
     _value += tok._value;
     return;
+  } else if (_type == type::pp_number && tok._type == type::punctuator &&
+     (tok._value == "-" || tok._value == "+")) {
+    _value += tok._value;
+    return;
   }
 
   if (_type != tok._type) {

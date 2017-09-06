@@ -220,6 +220,7 @@ pp_token pp_tokenizer::_tokenize_pp_number()
 	value.push_back(_next);
 	_skip_next_char();
       } else {
+	value.push_back(_cur);
 	_advance_to_next_char();
       }
       break;
