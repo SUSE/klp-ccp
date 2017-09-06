@@ -311,6 +311,37 @@ pp_token macro::instance::read_next_token()
 	goto handle_arg;
       }
       // Remaining case of non-parameter identifier is handled below.
+    } else if (_macro->is_variadic() && _it_repl->is_punctuator(",") &&
+	       (_it_repl + 2)->is_id() &&
+	       (_it_repl + 2)->get_value() == _macro->_arg_names.back()) {
+      // Handle the GNU extension that a in a sequence of
+      //  , ## __VA_ARGS__,
+      // the comma gets removed if __VA_ARGS__ is empty.
+      auto vaarg = _resolve_arg((_it_repl + 2)->get_value(), false);
+      assert(vaarg);
+      if (std::all_of(vaarg->cbegin(), vaarg->cend(),
+		      [](const pp_token &tok) {
+			return tok.is_ws() || tok.is_empty();
+		      })) {
+	// __VA_ARGS__ is empty, skip the comma.
+	_it_repl += 2;
+	continue;
+      } else {
+	// __VA_ARGS__ is not empty. What to do next depends on whether
+	// the comma has again been preceeded by a ## or not.
+	// In either case, the comma is not concatenated to the __VA_ARGS__,
+	// but each are treated separately.
+	if (_concat_token) {
+	  _add_concat_token(*_it_repl);
+	  _it_repl += 2;
+	  return _yield_concat_token();
+	} else {
+	  auto tok = *_it_repl;
+	  _it_repl += 2;
+	  _last_ws = false;
+	  return tok;
+	}
+      }
     }
 
     if (!_macro->_is_stringification(_it_repl)) {
