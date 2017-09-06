@@ -319,7 +319,8 @@ pp_token macro::instance::read_next_token()
       // the comma gets removed if __VA_ARGS__ is empty.
       auto vaarg = _resolve_arg((_it_repl + 2)->get_value(), false);
       assert(vaarg);
-      if (std::all_of(vaarg->cbegin(), vaarg->cend(),
+      if (vaarg->empty() ||
+	  std::all_of(vaarg->cbegin(), vaarg->cend(),
 		      [](const pp_token &tok) {
 			return tok.is_ws() || tok.is_empty();
 		      })) {
@@ -334,11 +335,13 @@ pp_token macro::instance::read_next_token()
 	if (_concat_token) {
 	  _add_concat_token(*_it_repl);
 	  _it_repl += 2;
+	  assert(_in_concat);
 	  return _yield_concat_token();
 	} else {
 	  auto tok = *_it_repl;
 	  _it_repl += 2;
 	  _last_ws = false;
+	  _in_concat = true;
 	  return tok;
 	}
       }
