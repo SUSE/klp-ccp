@@ -83,8 +83,11 @@ used_macros pp_tokens::get_used_macros() const
 std::string pp_tokens::stringify(const bool as_string) const
 {
   std::string s;
-  for (auto &&it = _tokens.begin(); it != _tokens.end(); ++it)
+  for (auto &&it = _tokens.begin(); it != _tokens.end(); ++it) {
+    if (it + 1 == _tokens.end() && it->is_ws())
+      break;
     s += it->stringify();
+  }
 
   if (as_string)
     s = __escape_string(std::move(s));

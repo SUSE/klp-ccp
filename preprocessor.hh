@@ -77,6 +77,7 @@ namespace suse
       code_remarks _remarks;
 
       std::size_t __counter__;
+      std::queue<pp_token> _pending_tokens;
       bool _maybe_pp_directive;
       bool _line_empty;
    };

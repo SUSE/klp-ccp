@@ -17,8 +17,153 @@ preprocessor::preprocessor(const std::string &filename,
 
 pp_token preprocessor::read_next_token()
 {
-  return _expand(_root_expansion_state,
-		 std::bind(&preprocessor::_read_next_plain_token, this));
+  // Basically, this is just a wrapper around _expand()
+  // which removes or adds whitespace as needed.
+  //
+  // There are two cases for _pending_tokens: either it
+  // consists of a single ws token, in which case it's
+  // not clear yet whether it should get emitted or
+  // it consists of empties + ws + something else
+  // in which case all of these but the last should get emitted.
+  assert(_pending_tokens.size() != 1 || !_pending_tokens.front().is_empty());
+  if (_pending_tokens.size() > 1 ||
+      (_pending_tokens.size() == 1 &&
+       (_pending_tokens.front().is_eof() ||
+	_pending_tokens.front().is_newline()))) {
+    auto tok = _pending_tokens.front();
+    if (tok.is_newline())
+      _line_empty = true;
+    _pending_tokens.pop();
+    return tok;
+  }
+
+ read_next:
+  auto next_tok = _expand(_root_expansion_state,
+			std::bind(&preprocessor::_read_next_plain_token, this));
+
+  if (_pending_tokens.size() == 1 && _pending_tokens.front().is_ws()) {
+    if (next_tok.is_newline() || next_tok.is_eof()) {
+      _pending_tokens.pop();
+      if (_line_empty && next_tok.is_newline())
+	goto read_next;
+      _line_empty = true;
+      return next_tok;
+    } else if (next_tok.is_empty()) {
+      return next_tok;
+    }
+    assert(!next_tok.is_ws());
+    _line_empty = false;
+    std::swap(next_tok, _pending_tokens.front());
+    return next_tok;
+  }
+
+  assert(_pending_tokens.empty() ||
+	 (_pending_tokens.size() == 1 && !_pending_tokens.front().is_ws() &&
+	  !_pending_tokens.front().is_newline() &&
+	  !_pending_tokens.front().is_empty() &&
+	  !_pending_tokens.front().is_eof()));
+  // There are certain token combinations where GNU cpp emits an extra
+  // space in order to make preprocessing idempotent:
+  // pp_number {-, +, --, ++, -=, +=, ., id, pp_number}
+  // . pp_number
+  // id {id, pp_number)
+  // + {+, ++, =}, - {-, --, =, >}, ! =, * =, / =, % =, ^ =,
+  // < {<, =, <=, <<=, :, %}, << =, > {>, =, >=, >>=}, >> =,
+  // & {=, &}, | {=, |},
+  // % {=, >, :},  %: %:, : >,
+  // : :, . ., # # if any of these is coming from macro expansion
+  //                or they're separated by any empties
+  pp_token prev_tok(pp_token::type::eof, std::string(), file_range());
+  if (_pending_tokens.empty()) {
+    if (next_tok.is_ws()) {
+      _pending_tokens.push(std::move(next_tok));
+      goto read_next;
+    } else if (next_tok.is_newline()) {
+      if (_line_empty)
+	goto read_next;
+      _line_empty = true;
+      return next_tok;
+    } else if (next_tok.is_empty() || next_tok.is_eof()) {
+      return next_tok;
+    } else {
+      prev_tok = std::move(next_tok);
+      next_tok = _expand(_root_expansion_state,
+			std::bind(&preprocessor::_read_next_plain_token, this));
+    }
+  } else {
+    assert(_pending_tokens.size() == 1);
+    prev_tok = std::move(_pending_tokens.front());
+    _pending_tokens.pop();
+  }
+
+  assert (!prev_tok.is_empty() && !prev_tok.is_newline() &&
+	  !prev_tok.is_ws() && !prev_tok.is_eof());
+  _line_empty = false;
+  while (next_tok.is_empty()) {
+    _pending_tokens.push(std::move(next_tok));
+    next_tok = _expand(_root_expansion_state,
+		       std::bind(&preprocessor::_read_next_plain_token, this));
+  }
+
+  if (next_tok.is_ws() || next_tok.is_newline() || next_tok.is_eof()) {
+    _pending_tokens.push(std::move(next_tok));
+    return prev_tok;
+  }
+
+  if ((prev_tok.is_type_any_of<pp_token::type::pp_number>() &&
+       (next_tok.is_punctuator("-") || next_tok.is_punctuator("+") ||
+	next_tok.is_punctuator("--") || next_tok.is_punctuator("++") ||
+	next_tok.is_punctuator("-=") || next_tok.is_punctuator("+=") ||
+	next_tok.is_punctuator(".") || next_tok.is_id() ||
+	next_tok.is_type_any_of<pp_token::type::pp_number>())) ||
+      (prev_tok.is_punctuator(".") &&
+       next_tok.is_type_any_of<pp_token::type::pp_number>()) ||
+      (prev_tok.is_id() &&
+       (next_tok.is_id() ||
+	next_tok.is_type_any_of<pp_token::type::pp_number>())) ||
+      (prev_tok.is_type_any_of<pp_token::type::punctuator>() &&
+       next_tok.is_type_any_of<pp_token::type::punctuator>() &&
+       ((prev_tok.is_punctuator("+") &&
+	 (next_tok.is_punctuator("+") || next_tok.is_punctuator("++") ||
+	  next_tok.is_punctuator("="))) ||
+	(prev_tok.is_punctuator("-") &&
+	 (next_tok.is_punctuator("-") || next_tok.is_punctuator("--") ||
+	  next_tok.is_punctuator("=") || next_tok.is_punctuator(">"))) ||
+	(prev_tok.is_punctuator("!") && next_tok.is_punctuator("=")) ||
+	(prev_tok.is_punctuator("*") && next_tok.is_punctuator("=")) ||
+	(prev_tok.is_punctuator("/") && next_tok.is_punctuator("=")) ||
+	(prev_tok.is_punctuator("%") && next_tok.is_punctuator("=")) ||
+	(prev_tok.is_punctuator("^") && next_tok.is_punctuator("=")) ||
+	(prev_tok.is_punctuator("<") &&
+	 (next_tok.is_punctuator("<") || next_tok.is_punctuator("=") ||
+	  next_tok.is_punctuator("<=") || next_tok.is_punctuator("<<=") ||
+	  next_tok.is_punctuator(":") || next_tok.is_punctuator("%"))) ||
+	(prev_tok.is_punctuator("<<") && next_tok.is_punctuator("=")) ||
+	(prev_tok.is_punctuator(">") &&
+	 (next_tok.is_punctuator(">") || next_tok.is_punctuator("=") ||
+	  next_tok.is_punctuator(">=") || next_tok.is_punctuator(">>="))) ||
+	(prev_tok.is_punctuator(">>") && next_tok.is_punctuator("=")) ||
+	(prev_tok.is_punctuator("&") &&
+	 (next_tok.is_punctuator("=") || next_tok.is_punctuator("&"))) ||
+	(prev_tok.is_punctuator("|") &&
+	 (next_tok.is_punctuator("=") || next_tok.is_punctuator("|"))) ||
+	(prev_tok.is_punctuator("%") &&
+	 (next_tok.is_punctuator("=") || next_tok.is_punctuator(">") ||
+	  next_tok.is_punctuator(":"))) ||
+	(prev_tok.is_punctuator("%:") && next_tok.is_punctuator("%:")) ||
+	(prev_tok.is_punctuator(":") && next_tok.is_punctuator(">")) ||
+	(((prev_tok.is_punctuator(":") && next_tok.is_punctuator(":")) ||
+	  (prev_tok.is_punctuator(".") && next_tok.is_punctuator(".")) ||
+	  (prev_tok.is_punctuator("#") && next_tok.is_punctuator("#"))) &&
+	 (!prev_tok.used_macros().empty() || !next_tok.used_macros().empty() ||
+	  !_pending_tokens.empty()))))) {
+    _pending_tokens.emplace(pp_token::type::ws, " ",
+			file_range(next_tok.get_file_range().get_filename(),
+				   next_tok.get_file_range().get_start_loc()));
+  }
+
+  _pending_tokens.push(std::move(next_tok));
+  return prev_tok;
 }
 
 template<typename T>
