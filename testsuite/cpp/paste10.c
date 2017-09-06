@@ -12,4 +12,4 @@
 
 #define tprintf(format, args...) sprintf(format, ## args)
 
-strcpy(tprintf("<%s>", test))
+strcpy(tprintf("<%s>",test))
