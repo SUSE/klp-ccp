@@ -1,0 +1,4 @@
+foreach src [glob -nocomplain $srcdir/$subdir/*.c] {
+    set testname $src
+    run_cpp $src
+}

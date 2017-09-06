@@ -5,5 +5,8 @@ AC_PROG_CXX
 AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])
 AC_PROG_RANLIB
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile
+		 testsuite/Makefile
+		 testsuite/lib/Makefile
+		 testsuite/cpp/Makefile])
 AC_OUTPUT

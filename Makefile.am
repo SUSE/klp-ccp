@@ -1,3 +1,5 @@
+SUBDIRS = . testsuite
+
 noinst_HEADERS =		\
 	code_remark.hh		\
 	code_remarks.hh	\
@@ -29,7 +31,7 @@ libcp_a_SOURCES =		\
 	preprocessor.cc	\
 	used_macros.cc
 
-noinst_PROGRAMS = cpp_tokenize normalize_path dirname cpp
+check_PROGRAMS = cpp_tokenize normalize_path dirname cpp
 
 cpp_tokenize_SOURCES = cpp_tokenize.cc
 cpp_tokenize_LDADD = libcp.a

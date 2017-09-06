@@ -1,0 +1,19 @@
+
+proc run_cpp { test } {
+    global objdir
+
+    file tempfile gnucpp_out
+    file tempfile mycpp_out
+
+    if {[catch {exec /usr/bin/cpp -P $test | sed {s/^[[:space:]]*//; /^$/ d;} > $gnucpp_out}]} {
+	fail "GNU cpp failed to preprocess $test\n"
+    } elseif {[catch {exec $objdir/../cpp $test | sed {s/^[[:space:]]*//; /^$/ d;} > $mycpp_out}]} {
+	fail "cpp failed to preprocess $test\n"
+    } elseif {[catch {exec diff $gnucpp_out $mycpp_out > /dev/null 2>&1}]} {
+	fail "GNU cpp's result for $test is different\n"
+    } else {
+	pass "$test"
+    }
+
+    exec rm -rf $gnucpp_out $mycpp_out > /dev/null 2>&1
+}
