@@ -25,11 +25,7 @@ namespace suse
 	_expansion_state();
 
 	std::vector<macro::instance> macro_instances;
-	std::vector<pp_token> pending_empties;
-	file_range pending_ws_range;
-	file_range pending_eof_range;
-	bool pending_ws;
-	bool pending_eof;
+	std::queue<pp_token> pending_tokens;
 	bool last_ws;
       };
     }

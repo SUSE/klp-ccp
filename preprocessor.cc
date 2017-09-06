@@ -135,18 +135,16 @@ pp_token
 preprocessor::_expand(_preprocessor_impl::_expansion_state &state,
 		      const std::function<pp_token()> &token_reader)
 {
-  if (!state.pending_empties.empty()) {
-    pp_token tok = std::move(state.pending_empties.front());
-    state.pending_empties.erase(state.pending_empties.begin());
+  if (!state.pending_tokens.empty()) {
+    pp_token tok = std::move(state.pending_tokens.front());
+    state.pending_tokens.pop();
+    if (tok.is_ws()) {
+      assert(!state.last_ws);
+      state.last_ws = true;
+    } else if (!tok.is_empty()) {
+      state.last_ws = false;
+    }
     return tok;
-  } else if (state.pending_ws) {
-    assert(!state.last_ws);
-    state.last_ws = true;
-    state.pending_ws = false;
-    return pp_token(pp_token::type::ws, " ", std::move(state.pending_ws_range));
-  } else if (state.pending_eof) {
-    return pp_token(pp_token::type::eof, std::string(),
-		    std::move(state.pending_eof_range));
   }
 
   auto read_tok = [&]() {
@@ -185,16 +183,13 @@ preprocessor::_expand(_preprocessor_impl::_expansion_state &state,
 	pp_token next_tok = read_tok();
 	while (true) {
 	  if (next_tok.is_eof()) {
-	    state.pending_eof = true;
-	    state.pending_eof_range = next_tok.get_file_range();
+	    state.pending_tokens.push(std::move(next_tok));
+	    state.last_ws = false;
 	    return tok;
 	  } else if (next_tok.is_ws()) {
-	    if (!state.pending_ws) {
-	      state.pending_ws = true;
-	      state.pending_ws_range = next_tok.get_file_range();
-	    }
+	    state.pending_tokens.push(std::move(next_tok));
 	  } else if (next_tok.is_empty()) {
-	    state.pending_empties.push_back(std::move(next_tok));
+	    state.pending_tokens.push(std::move(next_tok));
 	  } else {
 	    break;
 	  }
@@ -204,18 +199,16 @@ preprocessor::_expand(_preprocessor_impl::_expansion_state &state,
 	// Not a macro invocation?
 	if (!next_tok.is_punctuator("(")) {
 	  state.last_ws = false;
+	  state.pending_tokens.push(std::move(next_tok));
 	  return tok;
 	}
 
-	state.pending_empties.clear();
-	state.pending_ws = false;
-	assert(!state.pending_eof);
-
 	used_macros base_um(std::move(tok.used_macros()));
-	while (!state.pending_empties.empty()) {
-	  base_um += std::move(state.pending_empties.front().used_macros());
-	  state.pending_empties.erase(state.pending_empties.begin());
+	while (!state.pending_tokens.empty()) {
+	  base_um += std::move(state.pending_tokens.front().used_macros());
+	  state.pending_tokens.pop();
 	}
+
 	base_um += next_tok.used_macros();
 	state.macro_instances.push_back(_handle_func_macro_invocation(
 						m->second, std::move(base_um),
@@ -409,5 +402,5 @@ preprocessor::_create_macro_arg(const std::function<pp_token()> &token_reader,
 		(std::move(arg), std::move(exp_arg), std::move(end_delim));
 }
 _expansion_state::_expansion_state()
-  : pending_ws(false), pending_eof(false), last_ws(false)
+  : last_ws(false)
 {}
