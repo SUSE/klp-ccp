@@ -153,7 +153,7 @@ pp_token macro::instance::read_next_token()
     if (_cur_arg->empty()) {
       _cur_arg = nullptr;
       ++_it_repl;
-      if (_macro->_is_concat_op(_it_repl + 1)) {
+      if (_macro->_is_concat_op(_it_repl)) {
 	_in_concat = true;
 	++_it_repl;
       } else if (_in_concat) {
