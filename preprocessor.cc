@@ -9,7 +9,7 @@ using namespace suse::cp::_preprocessor_impl;
 preprocessor::preprocessor(const std::string &filename,
 			   const header_resolver &header_resolver)
   : _header_resolver(header_resolver),
-    _root_expansion_state(),
+    _root_expansion_state(), __counter__(0),
     _maybe_pp_directive(true), _line_empty(true)
 {
   _tokenizers.emplace(filename);
@@ -166,6 +166,27 @@ preprocessor::_expand(_preprocessor_impl::_expansion_state &state,
 
   // Deal with possible macro invocation
   if (tok.is_id()) {
+    // Check for the predefined macros first.
+    if (tok.get_value() == "__FILE__") {
+      state.last_ws = false;
+      return pp_token(pp_token::type::str, tok.get_file_range().get_filename(),
+		      tok.get_file_range(), std::move(tok.used_macros()));
+    } else if (tok.get_value() == "__LINE__") {
+      auto line = tok.get_file_range().get_start_loc().line();
+      state.last_ws = false;
+      return pp_token(pp_token::type::pp_number, std::to_string(line),
+		      tok.get_file_range(), std::move(tok.used_macros()));
+    } else if (tok.get_value() == "__INCLUDE_LEVEL__") {
+      state.last_ws = false;
+      return pp_token(pp_token::type::pp_number,
+		      std::to_string(_tokenizers.size() - 1),
+		      tok.get_file_range(), std::move(tok.used_macros()));
+    } else if (tok.get_value() == "__COUNTER__") {
+      state.last_ws = false;
+      return pp_token(pp_token::type::pp_number, std::to_string(__counter__++),
+		      tok.get_file_range(), std::move(tok.used_macros()));
+    }
+
     auto m = _macros.find(tok.get_value());
     if (m != _macros.end() && !tok.used_macros().count(m->second)) {
       if (!m->second->is_func_like()) {
