@@ -135,18 +135,6 @@ pp_token
 preprocessor::_expand(_preprocessor_impl::_expansion_state &state,
 		      const std::function<pp_token()> &token_reader)
 {
-  if (!state.pending_tokens.empty()) {
-    pp_token tok = std::move(state.pending_tokens.front());
-    state.pending_tokens.pop();
-    if (tok.is_ws()) {
-      assert(!state.last_ws);
-      state.last_ws = true;
-    } else if (!tok.is_empty()) {
-      state.last_ws = false;
-    }
-    return tok;
-  }
-
   auto read_tok = [&]() {
     while (!state.macro_instances.empty()) {
       try {
@@ -167,7 +155,12 @@ preprocessor::_expand(_preprocessor_impl::_expansion_state &state,
   };
 
  read_next:
-  pp_token tok = read_tok();
+  pp_token tok = (state.pending_tokens.empty()
+		  ? read_tok()
+		  : std::move(state.pending_tokens.front()));
+  if (!state.pending_tokens.empty())
+    state.pending_tokens.pop();
+
   if (tok.is_eof())
     return tok;
 
