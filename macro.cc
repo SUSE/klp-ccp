@@ -402,9 +402,6 @@ macro::macro(const std::string &name,
     _func_like(func_like),
     _variadic(variadic)
 {
-  if (_variadic)
-    _arg_names.push_back("__VA_ARGS__");
-
   // Due to the restriction that a ## concatenated token must again
   // yield a valid preprocessing token, macro evaluation can fail and
   // thus yield an error. Hence macro arguments must not get macro
@@ -529,6 +526,7 @@ macro::parse_macro_definition(const pp_tokens::const_iterator begin,
 
       if (it->is_punctuator("...")) {
 	variadic = true;
+	arg_names.push_back("__VA_ARGS__");
 	it = skip_ws(it + 1);
       } else if (it->is_id()) {
 	if (it->get_value() == "__VA_ARGS__") {
@@ -547,6 +545,10 @@ macro::parse_macro_definition(const pp_tokens::const_iterator begin,
 
 	arg_names.push_back(it->get_value());
 	it = skip_ws(it + 1);
+	if (it->is_punctuator("...")) {
+	  variadic = true;
+	  it = skip_ws(it + 1);
+	}
       } else {
 	code_remark remark(code_remark::severity::fatal,
 			   "garbage in macro argument list",
@@ -578,7 +580,7 @@ macro::parse_macro_definition(const pp_tokens::const_iterator begin,
 
   return create(name, func_like, variadic, std::move(arg_names),
 		_normalize_repl(it, end, func_like, unique_arg_names,
-				variadic, remarks),
+				remarks),
 		file_range(range_start, range_end));
 }
 
@@ -609,7 +611,6 @@ pp_tokens macro::_normalize_repl(const pp_tokens::const_iterator begin,
 				 const pp_tokens::const_iterator end,
 				 const bool func_like,
 				 const std::set<std::string> &arg_names,
-				 const bool variadic,
 				 code_remarks &remarks)
 {
   if (begin == end)
@@ -667,8 +668,7 @@ pp_tokens macro::_normalize_repl(const pp_tokens::const_iterator begin,
 	++it_arg;
       assert(it_arg == end || !it_arg->is_ws());
       if (it_arg == end || !it_arg->is_id() ||
-	  (!(variadic && it_arg->get_value() == "__VA_ARGS__") &&
-	   !arg_names.count(it_arg->get_value()))) {
+	  !arg_names.count(it_arg->get_value())) {
 	code_remark remark(code_remark::severity::fatal,
 			   "# in func-like macro not followed by parameter",
 			   (end - 1)->get_file_range());

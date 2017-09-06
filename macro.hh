@@ -111,7 +111,6 @@ namespace suse
 				       const pp_tokens::const_iterator end,
 				       const bool func_like,
 				       const std::set<std::string> &arg_names,
-				       const bool variadic,
 				       code_remarks &remarks);
 
       pp_tokens::const_iterator
