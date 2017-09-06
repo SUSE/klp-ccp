@@ -181,13 +181,20 @@ preprocessor::_expand(_preprocessor_impl::_expansion_state &state,
 	goto read_next;
       } else {
 	pp_token next_tok = read_tok();
+	bool last_ws = false;
 	while (true) {
 	  if (next_tok.is_eof()) {
 	    state.pending_tokens.push(std::move(next_tok));
 	    state.last_ws = false;
 	    return tok;
 	  } else if (next_tok.is_ws()) {
-	    state.pending_tokens.push(std::move(next_tok));
+	    if (!last_ws) {
+	      state.pending_tokens.push(std::move(next_tok));
+	      last_ws = true;
+	    }
+	  } else if (next_tok.is_newline()) {
+	      state.pending_tokens.push(std::move(next_tok));
+	      last_ws = false;
 	  } else if (next_tok.is_empty()) {
 	    state.pending_tokens.push(std::move(next_tok));
 	  } else {
