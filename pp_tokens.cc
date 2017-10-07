@@ -80,6 +80,17 @@ used_macros pp_tokens::get_used_macros() const
   return result;
 }
 
+used_macro_undefs pp_tokens::get_used_macro_undefs() const
+{
+  used_macro_undefs result;
+
+  for (auto tok : _tokens) {
+    result += tok.used_macro_undefs();
+  }
+
+  return result;
+}
+
 std::string pp_tokens::stringify(const bool as_string) const
 {
   std::string s;

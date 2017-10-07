@@ -5,13 +5,13 @@
 #include <memory>
 #include "file_range.hh"
 #include "used_macros.hh"
+#include "used_macro_undefs.hh"
 
 namespace suse
 {
   namespace cp
   {
     class code_remarks;
-    class macro;
 
     class pp_token
     {
@@ -39,7 +39,8 @@ namespace suse
 	       const file_range &file_range);
 
       pp_token(const type type, const std::string &value,
-	       const file_range &file_range, used_macros &&um);
+	       const file_range &file_range, used_macros &&um,
+	       const class used_macro_undefs &umu);
 
       bool operator==(const pp_token &rhs) const noexcept;
 
@@ -63,6 +64,16 @@ namespace suse
       class used_macros& used_macros() noexcept
       {
 	return _used_macros;
+      }
+
+      const class used_macro_undefs& used_macro_undefs() const noexcept
+      {
+	return _used_macro_undefs;
+      }
+
+      class used_macro_undefs& used_macro_undefs() noexcept
+      {
+	return _used_macro_undefs;
       }
 
       const file_range& get_file_range() const noexcept
@@ -145,6 +156,7 @@ namespace suse
       std::string _value;
       file_range _file_range;
       class used_macros _used_macros;
+      class used_macro_undefs _used_macro_undefs;
       type _type;
     };
 

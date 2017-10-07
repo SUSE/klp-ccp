@@ -61,6 +61,7 @@ namespace suse
       _handle_func_macro_invocation(
 			const std::shared_ptr<const macro> &macro,
 			used_macros &&used_macros_base,
+			used_macro_undefs &&used_macro_undefs_base,
 			const file_range &id_tok_file_range,
 			const std::function<pp_token()> &token_reader);
 
@@ -73,6 +74,7 @@ namespace suse
       std::stack<pp_tokenizer> _tokenizers;
       _preprocessor_impl::_expansion_state _root_expansion_state;
       std::map<std::string, std::shared_ptr<const macro> > _macros;
+      std::map<std::string, std::shared_ptr<const macro_undef> > _macro_undefs;
 
       code_remarks _remarks;
 

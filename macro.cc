@@ -11,11 +11,13 @@ using namespace suse::cp;
 
 macro::instance::instance(const std::shared_ptr<const macro> &macro,
 			  used_macros &&used_macros_base,
+			  used_macro_undefs &&used_macro_undefs_base,
 			  std::vector<pp_tokens> &&args,
 			  std::vector<pp_tokens> &&exp_args,
 			  const file_range &file_range)
   : _macro(macro),
     _used_macros_base(std::move(used_macros_base)),
+    _used_macro_undefs_base(std::move(used_macro_undefs_base)),
     _file_range(file_range),
     _it_repl(_macro->_repl.cbegin()), _cur_arg(nullptr),
     _in_concat(false), _last_ws(false), _anything_emitted(false)
@@ -67,6 +69,11 @@ used_macros macro::instance::_tok_used_macros_init() const
   return result;
 }
 
+used_macro_undefs macro::instance::_tok_used_macro_undefs_init() const
+{
+  return _used_macro_undefs_base;
+}
+
 pp_token macro::instance::_handle_stringification()
 {
   assert(_it_repl != _macro->_repl.end());
@@ -79,8 +86,10 @@ pp_token macro::instance::_handle_stringification()
 
   _it_repl += 2;
   auto tok = pp_token(pp_token::type::str, arg->stringify(true),
-		      _file_range, _tok_used_macros_init());
+		      _file_range, _tok_used_macros_init(),
+		      _tok_used_macro_undefs_init());
   tok.used_macros() += arg->get_used_macros();
+  tok.used_macro_undefs() += arg->get_used_macro_undefs();
   return tok;
 }
 
@@ -90,8 +99,10 @@ void macro::instance::_add_concat_token(const pp_token &tok)
 
   if (!_concat_token) {
     _concat_token.reset(new pp_token(tok.get_type(), tok.get_value(),
-				     _file_range, _tok_used_macros_init()));
+				     _file_range, _tok_used_macros_init(),
+				     _tok_used_macro_undefs_init()));
     _concat_token->used_macros() += tok.used_macros();
+    _concat_token->used_macro_undefs() += tok.used_macro_undefs();
   } else {
     _concat_token->concat(tok, _remarks);
   }
@@ -279,8 +290,10 @@ pp_token macro::instance::read_next_token()
       }
 
       auto tok = pp_token(_cur_arg_it->get_type(), _cur_arg_it->get_value(),
-			  _file_range, _tok_used_macros_init());
+			  _file_range, _tok_used_macros_init(),
+			  _tok_used_macro_undefs_init());
       tok.used_macros() += _cur_arg_it->used_macros();
+      tok.used_macro_undefs() += _cur_arg_it->used_macro_undefs();
       ++_cur_arg_it;
 
       if (_cur_arg_it == _cur_arg->cend()) {
@@ -367,7 +380,8 @@ pp_token macro::instance::read_next_token()
       // Emit an empty token in order to report usage of this macro.
       _anything_emitted = true;
       return pp_token(pp_token::type::empty, std::string(),
-		      _file_range, _tok_used_macros_init());
+		      _file_range, _tok_used_macros_init(),
+		      _tok_used_macro_undefs_init());
     }
 
     return pp_token(pp_token::type::eof, std::string(), file_range());
@@ -403,8 +417,10 @@ pp_token macro::instance::read_next_token()
 
   if (_it_repl->is_empty()) {
     auto tok = pp_token(_it_repl->get_type(), _it_repl->get_value(),
-			_file_range, _tok_used_macros_init());
+			_file_range, _tok_used_macros_init(),
+			_tok_used_macro_undefs_init());
     tok.used_macros() += _it_repl->used_macros();
+    tok.used_macro_undefs() += _it_repl->used_macro_undefs();
     ++_it_repl;
     return tok;
   }
@@ -414,8 +430,10 @@ pp_token macro::instance::read_next_token()
   }
 
   auto tok = pp_token(_it_repl->get_type(), _it_repl->get_value(),
-		      _file_range, _tok_used_macros_init());
+		      _file_range, _tok_used_macros_init(),
+		      _tok_used_macro_undefs_init());
   tok.used_macros() += _it_repl->used_macros();
+  tok.used_macro_undefs() += _it_repl->used_macro_undefs();
   ++_it_repl;
 
   _last_ws = tok.is_ws();
@@ -429,10 +447,12 @@ macro::macro(const std::string &name,
 	     const bool variadic,
 	     std::vector<std::string> &&arg_names,
 	     pp_tokens &&repl,
-	     const file_range &file_range)
+	     const file_range &file_range,
+	     std::shared_ptr<const macro_undef> &&prev_macro_undef)
   : _name(name), _arg_names(std::move(arg_names)),
     _repl(std::move(repl)),
     _file_range(file_range),
+    _prev_macro_undef(prev_macro_undef),
     _func_like(func_like),
     _variadic(variadic)
 {
@@ -479,6 +499,7 @@ macro::macro(const std::string &name,
 std::shared_ptr<const macro>
 macro::parse_macro_definition(const pp_tokens::const_iterator begin,
 			      pp_tokens::const_iterator end,
+			      std::shared_ptr<const macro_undef> &&macro_undef,
 			      code_remarks &remarks)
 {
   assert (begin != end);
@@ -616,7 +637,8 @@ macro::parse_macro_definition(const pp_tokens::const_iterator begin,
   return create(name, func_like, variadic, std::move(arg_names),
 		_normalize_repl(it, end, func_like, unique_arg_names,
 				remarks),
-		file_range(range_start, range_end));
+		file_range(range_start, range_end),
+		std::move(macro_undef));
 }
 
 bool macro::operator==(const macro &rhs) const noexcept

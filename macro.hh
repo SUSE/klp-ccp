@@ -23,6 +23,7 @@ namespace suse
       public:
 	instance(const std::shared_ptr<const macro> &macro,
 		 used_macros &&used_macros_base,
+		 used_macro_undefs &&used_macro_undefs_base,
 		 std::vector<pp_tokens> &&args,
 		 std::vector<pp_tokens> &&exp_args,
 		 const file_range &file_range);
@@ -42,6 +43,8 @@ namespace suse
 
 	used_macros _tok_used_macros_init() const;
 
+	used_macro_undefs _tok_used_macro_undefs_init() const;
+
 	pp_token _handle_stringification();
 
 	void _add_concat_token(const pp_token &tok);
@@ -49,6 +52,7 @@ namespace suse
 
 	const std::shared_ptr<const macro> &_macro;
 	const used_macros _used_macros_base;
+	const used_macro_undefs _used_macro_undefs_base;
 	std::map<std::string,
 		 std::pair<pp_tokens, pp_tokens> > _args;
 	const file_range _file_range;
@@ -69,6 +73,7 @@ namespace suse
       static std::shared_ptr<const macro>
       parse_macro_definition(const pp_tokens::const_iterator begin,
 			     const pp_tokens::const_iterator end,
+			     std::shared_ptr<const macro_undef> &&macro_undef,
 			     code_remarks &remarks);
 
       bool operator==(const macro &rhs) const noexcept;
@@ -102,7 +107,8 @@ namespace suse
 	    const bool variadic,
 	    std::vector<std::string> &&arg_names,
 	    pp_tokens &&repl,
-	    const file_range &file_range);
+	    const file_range &file_range,
+	    std::shared_ptr<const macro_undef> &&prev_macro_undef);
 
       template<typename... Targs>
       static std::shared_ptr<const macro> create(Targs&&... args);
@@ -129,6 +135,7 @@ namespace suse
       std::vector<std::string> _arg_names;
       pp_tokens _repl;
       file_range _file_range;
+      std::shared_ptr<const macro_undef> _prev_macro_undef;
       std::vector<bool> _do_expand_args;
       bool _func_like;
       bool _variadic;

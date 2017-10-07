@@ -1,35 +1,39 @@
 SUBDIRS = . testsuite
 
-noinst_HEADERS =		\
-	code_remark.hh		\
-	code_remarks.hh	\
-	file_loc.hh		\
-	file_range.hh		\
-	header_resolver.hh	\
-	macro.hh		\
-	path.hh		\
-	pp_except.hh		\
-	pp_token.hh		\
-	pp_tokens.hh		\
-	pp_tokenizer.hh	\
-	preprocessor.hh	\
-	used_macros.hh
+noinst_HEADERS =			\
+	code_remark.hh			\
+	code_remarks.hh		\
+	file_loc.hh			\
+	file_range.hh			\
+	header_resolver.hh		\
+	macro.hh			\
+	macro_undef.hh			\
+	path.hh			\
+	pp_except.hh			\
+	pp_token.hh			\
+	pp_tokens.hh			\
+	pp_tokenizer.hh		\
+	preprocessor.hh		\
+	used_macros.hh			\
+	used_macro_undefs.hh
 
 noinst_LIBRARIES = libcp.a
-libcp_a_SOURCES =		\
-	code_remark.cc		\
-	code_remarks.cc	\
-	file_loc.cc		\
-	file_range.cc		\
-	header_resolver.cc	\
-	macro.cc		\
-	path.cc		\
-	pp_except.cc		\
-	pp_token.cc		\
-	pp_tokens.cc		\
-	pp_tokenizer.cc	\
-	preprocessor.cc	\
-	used_macros.cc
+libcp_a_SOURCES =			\
+	code_remark.cc			\
+	code_remarks.cc		\
+	file_loc.cc			\
+	file_range.cc			\
+	header_resolver.cc		\
+	macro.cc			\
+	macro_undef.cc			\
+	path.cc			\
+	pp_except.cc			\
+	pp_token.cc			\
+	pp_tokens.cc			\
+	pp_tokenizer.cc		\
+	preprocessor.cc		\
+	used_macros.cc			\
+	used_macro_undefs.cc
 
 check_PROGRAMS = cpp_tokenize normalize_path dirname cpp
 

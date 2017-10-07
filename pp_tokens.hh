@@ -6,6 +6,7 @@
 #include <algorithm>
 #include "pp_token.hh"
 #include "used_macros.hh"
+#include "used_macro_undefs.hh"
 
 namespace suse
 {
@@ -93,6 +94,8 @@ namespace suse
       }
 
       used_macros get_used_macros() const;
+
+      used_macro_undefs get_used_macro_undefs() const;
 
       std::string stringify(const bool as_string) const;
 

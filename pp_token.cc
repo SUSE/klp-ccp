@@ -13,9 +13,10 @@ pp_token::pp_token(const type type, const std::string &value,
 {}
 
 pp_token::pp_token(const type type, const std::string &value,
-		   const file_range &file_range, class used_macros &&um)
+		   const file_range &file_range, class used_macros &&um,
+		   const class used_macro_undefs &umu)
   : _value(value), _file_range(file_range), _used_macros(std::move(um)),
-    _type(type)
+    _used_macro_undefs(umu), _type(type)
 {}
 
 bool pp_token::operator==(const pp_token &rhs) const noexcept
@@ -87,6 +88,7 @@ pp_token::concat(const pp_token &tok, code_remarks &remarks)
   assert(tok._type != type::hstr);
 
   _used_macros += tok._used_macros;
+  _used_macro_undefs += tok._used_macro_undefs;
   if (_type == type::empty) {
     _type = tok._type;
     _value = tok._value;
