@@ -27,6 +27,7 @@ static const char* type2name(pp_token::type type)
     CASE(empty);
   }
 #undef CASE
+  __builtin_unreachable();
 }
 
 int main(int argc, char* argv[])

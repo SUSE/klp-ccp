@@ -71,6 +71,8 @@ std::string pp_token::stringify() const
   case type::empty:
    return "";
   }
+
+  __builtin_unreachable();
 }
 
 void

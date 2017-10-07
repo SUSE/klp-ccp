@@ -340,7 +340,7 @@ pp_token pp_tokenizer::_tokenize_ws()
   bool done = false;
 
   assert(_cur == ' ' || _cur == '\t' || _cur == '\v' || _cur == '\f' ||
-	 _cur == '/' && (_next == '*' || _next == '/'));
+	 ( _cur == '/' && (_next == '*' || _next == '/')));
 
 
   while (!done) {
