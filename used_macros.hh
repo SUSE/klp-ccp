@@ -1,8 +1,8 @@
 #ifndef USED_MACROS_HH
 #define USED_MACROS_HH
 
-#include <set>
 #include <memory>
+#include "cow_set.hh"
 
 namespace suse
 {
@@ -13,7 +13,7 @@ namespace suse
     class used_macros
     {
     private:
-      typedef std::set<std::shared_ptr<const macro> > _used_macros_type;
+      typedef cow_set<std::shared_ptr<const macro> > _used_macros_type;
 
       used_macros(_used_macros_type &&um);
 
@@ -31,23 +31,8 @@ namespace suse
       const_iterator cbegin() const noexcept
       { return _used_macros.cbegin(); }
 
-      const_iterator begin() const noexcept
-      { return _used_macros.begin(); }
-
-      iterator begin() noexcept
-      { return _used_macros.begin(); }
-
       const_iterator cend() const noexcept
       { return _used_macros.cend(); }
-
-      const_iterator end() const noexcept
-      { return _used_macros.end(); }
-
-      iterator end() noexcept
-      { return _used_macros.end(); }
-
-      size_type size() const noexcept
-      { return _used_macros.size(); }
 
       template<typename... Targs>
       size_type count(Targs&&... args)

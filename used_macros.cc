@@ -10,8 +10,8 @@ used_macros::used_macros(_used_macros_type &&um)
 
 used_macros& used_macros::operator+=(const used_macros &rhs)
 {
-  _used_macros.insert(rhs._used_macros.begin(),
-		      rhs._used_macros.end());
+  _used_macros.insert(rhs._used_macros.cbegin(),
+		      rhs._used_macros.cend());
   return *this;
 }
 
@@ -19,9 +19,9 @@ used_macros used_macros::operator+(const used_macros &rhs) const
 {
   _used_macros_type result;
 
-  std::set_union(this->begin(), this->end(),
-		 rhs.begin(), rhs.end(),
-		 std::inserter(result, result.end()));
+  std::set_union(this->cbegin(), this->cend(),
+		 rhs.cbegin(), rhs.cend(),
+		 std::inserter(result, result.cend()));
   return used_macros(std::move(result));
 }
 

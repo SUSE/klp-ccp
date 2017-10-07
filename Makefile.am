@@ -3,6 +3,7 @@ SUBDIRS = . testsuite
 noinst_HEADERS =			\
 	code_remark.hh			\
 	code_remarks.hh		\
+	cow_set.hh			\
 	file_loc.hh			\
 	file_range.hh			\
 	header_resolver.hh		\

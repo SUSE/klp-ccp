@@ -10,8 +10,8 @@ used_macro_undefs::used_macro_undefs(_used_macro_undefs_type &&um)
 
 used_macro_undefs& used_macro_undefs::operator+=(const used_macro_undefs &rhs)
 {
-  _used_macro_undefs.insert(rhs._used_macro_undefs.begin(),
-		      rhs._used_macro_undefs.end());
+  _used_macro_undefs.insert(rhs._used_macro_undefs.cbegin(),
+		      rhs._used_macro_undefs.cend());
   return *this;
 }
 
@@ -20,9 +20,9 @@ used_macro_undefs used_macro_undefs::operator+(const used_macro_undefs &rhs)
 {
   _used_macro_undefs_type result;
 
-  std::set_union(this->begin(), this->end(),
-		 rhs.begin(), rhs.end(),
-		 std::inserter(result, result.end()));
+  std::set_union(this->cbegin(), this->cend(),
+		 rhs.cbegin(), rhs.cend(),
+		 std::inserter(result, result.cend()));
   return used_macro_undefs(std::move(result));
 }
 
