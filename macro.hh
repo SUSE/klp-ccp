@@ -81,11 +81,6 @@ namespace suse
       bool operator!=(const macro &rhs) const noexcept
       { return !(*this == rhs); }
 
-      std::shared_ptr<const macro> get() const
-      {
-	return std::shared_ptr<const macro>(_self_ptr);
-      }
-
       bool is_func_like() const noexcept
       { return _func_like; }
 
@@ -130,7 +125,6 @@ namespace suse
 
       bool _is_concat_op(const pp_tokens::const_iterator &it) const noexcept;
 
-      std::weak_ptr<macro> _self_ptr;
       std::string _name;
       std::vector<std::string> _arg_names;
       pp_tokens _repl;
@@ -144,11 +138,7 @@ namespace suse
     template<typename... Targs>
     std::shared_ptr<const macro> macro::create(Targs&&... args)
     {
-      auto sp =
-	std::make_shared<macro>(macro(std::forward<Targs>(args)...));
-
-      sp->_self_ptr = sp;
-      return sp;
+      return std::make_shared<macro>(macro(std::forward<Targs>(args)...));
     }
   }
 }
