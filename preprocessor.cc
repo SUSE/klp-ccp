@@ -562,7 +562,7 @@ preprocessor::_create_macro_arg(const std::function<pp_token()> &token_reader,
 
   bool last_ws = false;
   auto read_arg_tok = [&]() {
-  skip_ws:
+  skip_ws_or_empty:
     auto tok = token_reader();
 
     if (tok.is_eof()) {
@@ -577,6 +577,9 @@ preprocessor::_create_macro_arg(const std::function<pp_token()> &token_reader,
     tok.used_macros().clear();
     used_macro_undefs_base += tok.used_macro_undefs();
     tok.used_macro_undefs().clear();
+
+    if (tok.is_empty())
+      goto skip_ws_or_empty;
 
     if (!lparens &&
 	((!variadic && tok.is_punctuator(",")) || tok.is_punctuator(")"))) {
@@ -597,7 +600,7 @@ preprocessor::_create_macro_arg(const std::function<pp_token()> &token_reader,
 
     if (tok.is_ws()) {
       if (last_ws)
-	goto skip_ws;
+	goto skip_ws_or_empty;
       last_ws = true;
     } else if (!tok.is_empty()) {
       last_ws = false;

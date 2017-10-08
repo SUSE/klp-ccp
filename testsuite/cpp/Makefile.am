@@ -99,6 +99,7 @@ EXTRA_DIST = compare-w-gnu-cpp.exp \
 	test28.c \
 	test29.c \
 	test30.c \
+	test31.c \
 	tr-paste.c \
 	uchar-3.c \
 	Wvariadic-2.c \

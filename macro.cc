@@ -190,29 +190,12 @@ pp_token macro::instance::read_next_token()
       // operator in the macro replacement list.
       assert(_cur_arg_it != _cur_arg->end());
       assert(!_cur_arg_it->is_ws());
+      assert(!_cur_arg_it->is_empty());
 
-      // Add leading empty tokens to the concatenation in order to
-      // report their used_macros at the result.
-      while(_cur_arg_it != _cur_arg->end() && _cur_arg_it->is_empty())
-	_add_concat_token(*_cur_arg_it++);
+      _add_concat_token(*_cur_arg_it++);
 
-      if (_cur_arg_it != _cur_arg->end() && _cur_arg_it->is_ws()) {
-	_cur_arg_it++;
-	assert (_cur_arg_it == _cur_arg->end() ||
-		(!_cur_arg_it->is_ws() && _cur_arg_it->is_empty()));
-      }
-
-      if (_cur_arg_it != _cur_arg->end())
-	_add_concat_token(*_cur_arg_it++);
-
-      // Add the empty tokens following the non-empty one to the
-      // concatenation as well.
-      while(_cur_arg_it != _cur_arg->end() && _cur_arg_it->is_empty())
-	_add_concat_token(*_cur_arg_it++);
-
-      // If the arg's remaining content is all whitespace, strip it.
-      if (_cur_arg_it + 1 == _cur_arg->end() && _cur_arg_it->is_ws())
-	++_cur_arg_it;
+      assert(_cur_arg_it != _cur_arg->end() || !_cur_arg_it->is_empty());
+      assert(_cur_arg_it + 1 != _cur_arg->end() || !_cur_arg_it->is_ws());
 
       // No more tokens left in current parameter's replacement list?
       if (_cur_arg_it == _cur_arg->cend()) {
@@ -239,52 +222,19 @@ pp_token macro::instance::read_next_token()
       assert(_it_repl != _macro->_repl.end());
 
     } else if (_macro->_is_concat_op(_it_repl + 1) &&
-	       (_cur_arg_it == _cur_arg->begin() ||
-		(!_cur_arg_it->is_ws() && !_cur_arg_it->is_empty())) &&
-	       (std::count_if(_cur_arg_it, _cur_arg->end(),
-			      [](const pp_token &tok) {
-				return !tok.is_empty() && !tok.is_ws();
-			      })
-		== 1)) {
+	       _cur_arg_it + 1 == _cur_arg->end()) {
       // This is the last token in the current parameter's replacement
       // list and the next token is a ## operator. Prepare for the
       // concatenation.
+      assert(!_cur_arg_it->is_empty());
+      assert(!_cur_arg_it->is_ws());
 
       // The in_concat == true case would have been handled by the
       // branch above.
       assert(!_in_concat);
       _in_concat = true;
 
-      if (_cur_arg_it == _cur_arg->begin()) {
-	// Add leading empty tokens to the concatenation in order to
-	// report their used_macros at the result.
-	while(_cur_arg_it != _cur_arg->end() && _cur_arg_it->is_empty())
-	  _add_concat_token(*_cur_arg_it++);
-
-	assert(_cur_arg_it != _cur_arg->end());
-	if (_cur_arg_it->is_ws()) {
-	  _cur_arg_it++;
-	  assert (_cur_arg_it != _cur_arg->end() &&
-		  (!_cur_arg_it->is_ws() && _cur_arg_it->is_empty()));
-	}
-      }
-
-      assert(_cur_arg_it != _cur_arg->end());
-      assert(!_cur_arg_it->is_ws() && !_cur_arg_it->is_empty());
       _add_concat_token(*_cur_arg_it++);
-
-      // Add the empty tokens following the non-empty one to the
-      // concatenation in order to report their used_macros at the
-      // result.
-      while(_cur_arg_it != _cur_arg->end() && !_cur_arg_it->is_ws()) {
-	assert(_cur_arg_it->is_empty());
-	_add_concat_token(*_cur_arg_it++);
-      }
-
-      if (_cur_arg_it != _cur_arg->end()) {
-	assert(_cur_arg_it->is_ws());
-	++_cur_arg_it;
-      }
 
       assert (_cur_arg_it == _cur_arg->end());
       _cur_arg = nullptr;
@@ -346,11 +296,7 @@ pp_token macro::instance::read_next_token()
       // the comma gets removed if __VA_ARGS__ is empty.
       auto vaarg = _resolve_arg((_it_repl + 2)->get_value(), false);
       assert(vaarg);
-      if (vaarg->empty() ||
-	  std::all_of(vaarg->cbegin(), vaarg->cend(),
-		      [](const pp_token &tok) {
-			return tok.is_ws() || tok.is_empty();
-		      })) {
+      if (vaarg->empty()) {
 	// __VA_ARGS__ is empty, skip the comma.
 	_it_repl += 2;
 	continue;

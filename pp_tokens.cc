@@ -59,7 +59,7 @@ void pp_tokens::normalize_ws()
       // empties. Strip it.
       it_seq_end = _tokens.erase(it_ws, it_seq_end);
 
-    } else if (it_seq_end == _tokens.end() && it_ws == it_seq_end) {
+    } else if (it_seq_end == _tokens.end() && it_ws == it_seq_begin) {
       // End of token sequence, and it's all whitespace w/o any
       // empties. Strip it.
 	_tokens.erase(it_ws, it_seq_end);
