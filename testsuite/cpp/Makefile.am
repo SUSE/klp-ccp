@@ -69,6 +69,15 @@ EXTRA_DIST = compare-w-gnu-cpp.exp \
 	spacing1.c \
 	spacing2.c \
 	strify5.c \
+	test1.c \
+	test2.c \
+	test3.c \
+	test4.c \
+	test5.c \
+	test6.c \
+	test7.c \
+	test8.c \
+	test9.c \
 	test10.c \
 	test11.c \
 	test12.c \
@@ -79,7 +88,6 @@ EXTRA_DIST = compare-w-gnu-cpp.exp \
 	test17.c \
 	test18.c \
 	test19.c \
-	test1.c \
 	test20.c \
 	test21.c \
 	test22.c \
@@ -90,14 +98,7 @@ EXTRA_DIST = compare-w-gnu-cpp.exp \
 	test27.c \
 	test28.c \
 	test29.c \
-	test2.c \
-	test3.c \
-	test4.c \
-	test5.c \
-	test6.c \
-	test7.c \
-	test8.c \
-	test9.c \
+	test30.c \
 	tr-paste.c \
 	uchar-3.c \
 	Wvariadic-2.c \

@@ -121,6 +121,8 @@ namespace suse
       template<typename InputIt>
       void insert(InputIt &&first, InputIt &&last);
 
+      void clear() noexcept;
+
     private:
       void _do_cow();
 
@@ -486,6 +488,15 @@ namespace suse
 
       _data->_set.insert(std::forward<InputIt>(first),
 			 std::forward<InputIt>(last));
+    }
+
+    template<typename Key, typename Compare, typename Allocator>
+    void cow_set<Key, Compare, Allocator>::clear() noexcept
+    {
+      if (_data && !--_data->_refcount)
+	delete _data;
+
+      _data = nullptr;
     }
 
     template<typename Key, typename Compare, typename Allocator>

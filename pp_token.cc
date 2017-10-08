@@ -13,9 +13,11 @@ pp_token::pp_token(const type type, const std::string &value,
 {}
 
 pp_token::pp_token(const type type, const std::string &value,
-		   const file_range &file_range, class used_macros &&um,
+		   const file_range &file_range,
+		   const class used_macros &eh, class used_macros &&um,
 		   const class used_macro_undefs &umu)
-  : _value(value), _file_range(file_range), _used_macros(std::move(um)),
+  : _value(value), _file_range(file_range),
+    _expansion_history(std::move(eh)), _used_macros(std::move(um)),
     _used_macro_undefs(umu), _type(type)
 {}
 
@@ -78,6 +80,11 @@ std::string pp_token::stringify() const
 void
 pp_token::concat(const pp_token &tok, code_remarks &remarks)
 {
+  assert(_used_macros.empty());
+  assert(_used_macro_undefs.empty());
+  assert(tok._used_macros.empty());
+  assert(tok._used_macro_undefs.empty());
+
   assert(_type != type::ws);
   assert(tok._type != type::ws);
   assert(_type != type::newline);
@@ -89,8 +96,7 @@ pp_token::concat(const pp_token &tok, code_remarks &remarks)
   assert(_type != type::hstr);
   assert(tok._type != type::hstr);
 
-  _used_macros += tok._used_macros;
-  _used_macro_undefs += tok._used_macro_undefs;
+  _expansion_history += tok._expansion_history;
   if (_type == type::empty) {
     _type = tok._type;
     _value = tok._value;

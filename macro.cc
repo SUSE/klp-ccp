@@ -57,6 +57,13 @@ macro::instance::_resolve_arg(const std::string &name, const bool expanded)
   return resolved;
 }
 
+used_macros macro::instance::_tok_expansion_history_init() const
+{
+  used_macros eh;
+  eh += _macro;
+  return eh;
+}
+
 used_macros macro::instance::_tok_used_macros_init() const
 {
   // Anything relevant to the current macro call
@@ -83,26 +90,27 @@ pp_token macro::instance::_handle_stringification()
 
   auto arg = _resolve_arg((_it_repl + 1)->get_value(), false);
   assert(arg);
+  assert(arg->get_used_macros().empty());
+  assert(arg->get_used_macro_undefs().empty());
 
   _it_repl += 2;
-  auto tok = pp_token(pp_token::type::str, arg->stringify(true),
-		      _file_range, _tok_used_macros_init(),
-		      _tok_used_macro_undefs_init());
-  tok.used_macros() += arg->get_used_macros();
-  tok.used_macro_undefs() += arg->get_used_macro_undefs();
-  return tok;
+  return pp_token(pp_token::type::str, arg->stringify(true),
+		  _file_range, used_macros(), _tok_used_macros_init(),
+		  _tok_used_macro_undefs_init());
 }
 
 void macro::instance::_add_concat_token(const pp_token &tok)
 {
   assert(!tok.is_ws() && !tok.is_newline() && !tok.is_eof());
 
+  assert(tok.used_macros().empty());
+  assert(tok.used_macro_undefs().empty());
+
   if (!_concat_token) {
     _concat_token.reset(new pp_token(tok.get_type(), tok.get_value(),
-				     _file_range, _tok_used_macros_init(),
-				     _tok_used_macro_undefs_init()));
-    _concat_token->used_macros() += tok.used_macros();
-    _concat_token->used_macro_undefs() += tok.used_macro_undefs();
+				     _file_range, _tok_expansion_history_init(),
+				     used_macros(), used_macro_undefs()));
+    _concat_token->expansion_history() += tok.expansion_history();
   } else {
     _concat_token->concat(tok, _remarks);
   }
@@ -117,6 +125,10 @@ pp_token macro::instance::_yield_concat_token()
     _last_ws = false;
 
   pp_token tok = std::move(*_concat_token);
+  assert(_concat_token->used_macros().empty());
+  _concat_token->used_macros() = _tok_used_macros_init();
+  assert(_concat_token->used_macro_undefs().empty());
+  _concat_token->used_macro_undefs() = _tok_used_macro_undefs_init();
   _concat_token.reset();
   return tok;
 }
@@ -290,8 +302,10 @@ pp_token macro::instance::read_next_token()
       }
 
       auto tok = pp_token(_cur_arg_it->get_type(), _cur_arg_it->get_value(),
-			  _file_range, _tok_used_macros_init(),
+			  _file_range, _tok_expansion_history_init(),
+			  _tok_used_macros_init(),
 			  _tok_used_macro_undefs_init());
+      tok.expansion_history() += _cur_arg_it->expansion_history();
       tok.used_macros() += _cur_arg_it->used_macros();
       tok.used_macro_undefs() += _cur_arg_it->used_macro_undefs();
       ++_cur_arg_it;
@@ -380,7 +394,8 @@ pp_token macro::instance::read_next_token()
       // Emit an empty token in order to report usage of this macro.
       _anything_emitted = true;
       return pp_token(pp_token::type::empty, std::string(),
-		      _file_range, _tok_used_macros_init(),
+		      _file_range, _tok_expansion_history_init(),
+		      _tok_used_macros_init(),
 		      _tok_used_macro_undefs_init());
     }
 
@@ -415,25 +430,14 @@ pp_token macro::instance::read_next_token()
   // All the cases below will emit something.
   _anything_emitted = _anything_emitted || !_it_repl->is_ws();
 
-  if (_it_repl->is_empty()) {
-    auto tok = pp_token(_it_repl->get_type(), _it_repl->get_value(),
-			_file_range, _tok_used_macros_init(),
-			_tok_used_macro_undefs_init());
-    tok.used_macros() += _it_repl->used_macros();
-    tok.used_macro_undefs() += _it_repl->used_macro_undefs();
-    ++_it_repl;
-    return tok;
-  }
-
   if (_macro->_is_stringification(_it_repl)) {
     return _handle_stringification();
   }
 
   auto tok = pp_token(_it_repl->get_type(), _it_repl->get_value(),
-		      _file_range, _tok_used_macros_init(),
+		      _file_range,
+		      _tok_expansion_history_init(), _tok_used_macros_init(),
 		      _tok_used_macro_undefs_init());
-  tok.used_macros() += _it_repl->used_macros();
-  tok.used_macro_undefs() += _it_repl->used_macro_undefs();
   ++_it_repl;
 
   _last_ws = tok.is_ws();

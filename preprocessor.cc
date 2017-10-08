@@ -41,6 +41,7 @@ pp_token preprocessor::read_next_token()
  read_next:
   auto next_tok = _expand(_root_expansion_state,
 			std::bind(&preprocessor::_read_next_plain_token, this));
+  next_tok.expansion_history().clear();
 
   if (_pending_tokens.size() == 1 && _pending_tokens.front().is_ws()) {
     if (next_tok.is_newline() || next_tok.is_eof()) {
@@ -349,29 +350,29 @@ preprocessor::_expand(_preprocessor_impl::_expansion_state &state,
     if (tok.get_value() == "__FILE__") {
       state.last_ws = false;
       return pp_token(pp_token::type::str, tok.get_file_range().get_filename(),
-		      tok.get_file_range(), std::move(tok.used_macros()),
-		      tok.used_macro_undefs());
+		      tok.get_file_range(), used_macros(),
+		      std::move(tok.used_macros()), tok.used_macro_undefs());
     } else if (tok.get_value() == "__LINE__") {
       auto line = tok.get_file_range().get_start_loc().line();
       state.last_ws = false;
       return pp_token(pp_token::type::pp_number, std::to_string(line),
-		      tok.get_file_range(), std::move(tok.used_macros()),
-		      tok.used_macro_undefs());
+		      tok.get_file_range(), used_macros(),
+		      std::move(tok.used_macros()), tok.used_macro_undefs());
     } else if (tok.get_value() == "__INCLUDE_LEVEL__") {
       state.last_ws = false;
       return pp_token(pp_token::type::pp_number,
 		      std::to_string(_tokenizers.size() - 1),
-		      tok.get_file_range(), std::move(tok.used_macros()),
-		      tok.used_macro_undefs());
+		      tok.get_file_range(), used_macros(),
+		      std::move(tok.used_macros()), tok.used_macro_undefs());
     } else if (tok.get_value() == "__COUNTER__") {
       state.last_ws = false;
       return pp_token(pp_token::type::pp_number, std::to_string(__counter__++),
-		      tok.get_file_range(), std::move(tok.used_macros()),
-		      tok.used_macro_undefs());
+		      tok.get_file_range(), used_macros(),
+		      std::move(tok.used_macros()), tok.used_macro_undefs());
     }
 
     auto m = _macros.find(tok.get_value());
-    if (m != _macros.end() && !tok.used_macros().count(m->second)) {
+    if (m != _macros.end() && !tok.expansion_history().count(m->second)) {
       if (!m->second->is_func_like()) {
 	state.macro_instances.push_back(
 		_handle_object_macro_invocation(m->second, std::move(tok)));
@@ -474,14 +475,12 @@ preprocessor::_handle_func_macro_invocation(
     while (i_arg < n_args) {
       std::tuple<pp_tokens, pp_tokens, pp_token> cur_arg
 	= _create_macro_arg(token_reader, macro->shall_expand_arg(i_arg),
-			    i_arg == macro->non_va_arg_count());
+			    i_arg == macro->non_va_arg_count(),
+			    used_macros_base, used_macro_undefs_base);
       ++i_arg;
       args.push_back(std::move(std::get<0>(cur_arg)));
       exp_args.push_back(std::move(std::get<1>(cur_arg)));
 
-      used_macros_base += std::move(std::get<2>(cur_arg).used_macros());
-      used_macro_undefs_base +=
-	std::move(std::get<2>(cur_arg).used_macro_undefs());
       assert(std::get<2>(cur_arg).get_type() == pp_token::type::punctuator);
       assert(std::get<2>(cur_arg).get_value().size() == 1);
       const char arg_delim = std::get<2>(cur_arg).get_value()[0];
@@ -523,17 +522,12 @@ preprocessor::_handle_func_macro_invocation(
   } else {
     // Slurp in the tokens between the () and make sure they're all empties.
     std::tuple<pp_tokens, pp_tokens, pp_token> dummy_arg
-      = _create_macro_arg(token_reader, false, false);
+      = _create_macro_arg(token_reader, false, false,
+			  used_macros_base, used_macro_undefs_base);
     assert(std::get<2>(dummy_arg).get_type() == pp_token::type::punctuator);
-    used_macros_base += std::move(std::get<2>(dummy_arg).used_macros());
-    used_macro_undefs_base +=
-      std::move(std::get<2>(dummy_arg).used_macro_undefs());
     bool non_empty_found = false;
     for (auto tok : std::get<0>(dummy_arg)) {
-      if (tok.is_empty()) {
-	used_macros_base += tok.used_macros();
-	used_macro_undefs_base += tok.used_macro_undefs();
-      } else if (!tok.is_ws()) {
+      if (!tok.is_empty() && !tok.is_ws()) {
 	non_empty_found = true;
 	break;
       }
@@ -557,7 +551,9 @@ preprocessor::_handle_func_macro_invocation(
 
 std::tuple<pp_tokens, pp_tokens, pp_token>
 preprocessor::_create_macro_arg(const std::function<pp_token()> &token_reader,
-				const bool expand, const bool variadic)
+				const bool expand, const bool variadic,
+				used_macros &used_macros_base,
+				used_macro_undefs &used_macro_undefs_base)
 {
   pp_tokens arg;
   pp_tokens exp_arg;
@@ -577,6 +573,11 @@ preprocessor::_create_macro_arg(const std::function<pp_token()> &token_reader,
       throw pp_except(remark);
     }
 
+    used_macros_base += tok.used_macros();
+    tok.used_macros().clear();
+    used_macro_undefs_base += tok.used_macro_undefs();
+    tok.used_macro_undefs().clear();
+
     if (!lparens &&
 	((!variadic && tok.is_punctuator(",")) || tok.is_punctuator(")"))) {
       end_delim = std::move(tok);
@@ -589,7 +590,6 @@ preprocessor::_create_macro_arg(const std::function<pp_token()> &token_reader,
     else if (tok.is_punctuator(")"))
       --lparens;
     else if (tok.is_newline()) {
-      assert(tok.used_macros().empty());
       tok = pp_token(pp_token::type::ws, " ", tok.get_file_range());
     } else if (tok.is_ws() && tok.get_value().size() > 1) {
       tok.set_type_and_value(pp_token::type::ws, " ");

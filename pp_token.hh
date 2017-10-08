@@ -39,7 +39,8 @@ namespace suse
 	       const file_range &file_range);
 
       pp_token(const type type, const std::string &value,
-	       const file_range &file_range, used_macros &&um,
+	       const file_range &file_range,
+	       const used_macros &eh, used_macros &&um,
 	       const class used_macro_undefs &umu);
 
       bool operator==(const pp_token &rhs) const noexcept;
@@ -55,6 +56,16 @@ namespace suse
       }
 
       void set_type_and_value(const type type, const std::string &value);
+
+      const class used_macros& expansion_history() const noexcept
+      {
+	return _expansion_history;
+      }
+
+      class used_macros& expansion_history() noexcept
+      {
+	return _expansion_history;
+      }
 
       const class used_macros& used_macros() const noexcept
       {
@@ -155,6 +166,7 @@ namespace suse
 
       std::string _value;
       file_range _file_range;
+      class used_macros _expansion_history;
       class used_macros _used_macros;
       class used_macro_undefs _used_macro_undefs;
       type _type;

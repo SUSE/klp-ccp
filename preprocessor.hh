@@ -67,7 +67,9 @@ namespace suse
 
       std::tuple<pp_tokens, pp_tokens, pp_token>
       _create_macro_arg(const std::function<pp_token()> &token_reader,
-			const bool expand, const bool variadic);
+			const bool expand, const bool variadic,
+			used_macros &used_macros_base,
+			used_macro_undefs &used_macro_undefs_base);
 
       header_resolver _header_resolver;
 

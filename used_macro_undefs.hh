@@ -41,6 +41,9 @@ namespace suse
 	return _used_macro_undefs.count(std::forward<Targs>(args)...);
       }
 
+      void clear() noexcept
+      { _used_macro_undefs.clear(); }
+
       used_macro_undefs& operator+=(const used_macro_undefs &rhs);
       used_macro_undefs operator+(const used_macro_undefs &rhs) const;
 

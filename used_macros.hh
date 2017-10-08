@@ -40,6 +40,9 @@ namespace suse
 	return _used_macros.count(std::forward<Targs>(args)...);
       }
 
+      void clear() noexcept
+      { _used_macros.clear(); }
+
       used_macros& operator+=(const used_macros &rhs);
       used_macros operator+(const used_macros &rhs) const;
 

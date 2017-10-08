@@ -41,6 +41,8 @@ namespace suse
 	_resolve_arg(const std::string &name, const bool expanded)
 	  const noexcept;
 
+	used_macros _tok_expansion_history_init() const;
+
 	used_macros _tok_used_macros_init() const;
 
 	used_macro_undefs _tok_used_macro_undefs_init() const;
