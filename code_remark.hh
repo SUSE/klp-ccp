@@ -4,7 +4,6 @@
 #include <string>
 #include <ios>
 #include <memory>
-#include "file_loc.hh"
 #include "file_range.hh"
 
 namespace suse

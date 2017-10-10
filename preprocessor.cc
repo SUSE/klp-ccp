@@ -3,6 +3,7 @@
 #include "preprocessor.hh"
 #include "pp_except.hh"
 #include "macro_undef.hh"
+#include "header_inclusion_tree.hh"
 
 using namespace suse::cp;
 using namespace suse::cp::_preprocessor_impl;
@@ -10,10 +11,12 @@ using namespace suse::cp::_preprocessor_impl;
 preprocessor::preprocessor(const std::string &filename,
 			   const header_resolver &header_resolver)
   : _header_resolver(header_resolver),
+    _header_inclusion_root(new header_inclusion_root(filename)),
+    _cur_header_inclusion_node(_header_inclusion_root.get()),
     _root_expansion_state(), __counter__(0),
     _maybe_pp_directive(true), _line_empty(true)
 {
-  _tokenizers.emplace(filename);
+  _tokenizers.emplace(*_header_inclusion_root);
 }
 
 pp_token preprocessor::read_next_token()
@@ -160,8 +163,8 @@ pp_token preprocessor::read_next_token()
 	 (!prev_tok.used_macros().empty() || !next_tok.used_macros().empty() ||
 	  !_pending_tokens.empty()))))) {
     _pending_tokens.emplace(pp_token::type::ws, " ",
-			file_range(next_tok.get_file_range().get_filename(),
-				   next_tok.get_file_range().get_start_loc()));
+	file_range(next_tok.get_file_range().get_header_inclusion_node(),
+		   next_tok.get_file_range().get_start_loc()));
   }
 
   _pending_tokens.push(std::move(next_tok));
@@ -349,11 +352,12 @@ preprocessor::_expand(_preprocessor_impl::_expansion_state &state,
     // Check for the predefined macros first.
     if (tok.get_value() == "__FILE__") {
       state.last_ws = false;
-      return pp_token(pp_token::type::str, tok.get_file_range().get_filename(),
-		      tok.get_file_range(), used_macros(),
-		      std::move(tok.used_macros()), tok.used_macro_undefs());
+      return pp_token(pp_token::type::str,
+		tok.get_file_range().get_header_inclusion_node().get_filename(),
+		tok.get_file_range(), used_macros(),
+		std::move(tok.used_macros()), tok.used_macro_undefs());
     } else if (tok.get_value() == "__LINE__") {
-      auto line = tok.get_file_range().get_start_loc().line();
+      auto line = tok.get_file_range().get_start_line();
       state.last_ws = false;
       return pp_token(pp_token::type::pp_number, std::to_string(line),
 		      tok.get_file_range(), used_macros(),

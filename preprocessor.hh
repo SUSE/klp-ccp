@@ -11,12 +11,15 @@
 #include "header_resolver.hh"
 #include "macro.hh"
 #include "pp_tokenizer.hh"
+#include "header_inclusion_tree.hh"
 
 namespace suse
 {
   namespace cp
   {
     class pp_tokenizer;
+    class header_inclusion_root;
+    class header_inclusion_node;
 
     namespace _preprocessor_impl
     {
@@ -72,6 +75,9 @@ namespace suse
 			used_macro_undefs &used_macro_undefs_base);
 
       header_resolver _header_resolver;
+
+      std::unique_ptr<header_inclusion_root> _header_inclusion_root;
+      header_inclusion_node *_cur_header_inclusion_node;
 
       std::stack<pp_tokenizer> _tokenizers;
       _preprocessor_impl::_expansion_state _root_expansion_state;

@@ -3,7 +3,6 @@
 
 #include <fstream>
 #include <string>
-#include "file_loc.hh"
 #include "code_remark.hh"
 #include "code_remarks.hh"
 #include "pp_token.hh"
@@ -15,7 +14,7 @@ namespace suse
     class pp_tokenizer
     {
     public:
-      pp_tokenizer(const std::string &filename);
+      pp_tokenizer(header_inclusion_node &file);
 
       code_remarks& get_remarks() noexcept
       {
@@ -25,7 +24,9 @@ namespace suse
       pp_token read_next_token();
 
     private:
-      char _read_next_char(file_loc &loc, const char prev);
+      char _read_next_char_raw();
+
+      char _read_next_char(std::streamoff &loc);
       void _advance_to_next_char();
       void _skip_next_char();
 
@@ -38,11 +39,12 @@ namespace suse
       void _skip_cpp_comment();
       pp_token _tokenize_ws();
 
-      std::string _filename;
+      header_inclusion_node &_file;
       std::ifstream _i;
-      file_loc _cur_loc;
-      file_loc _next_loc;
-      file_loc _tok_loc;
+      std::streamoff _line_length;
+      std::streamoff _cur_loc;
+      std::streamoff _next_loc;
+      std::streamoff _tok_loc;
       enum class expect_qh_str
       {
 	no,
@@ -52,6 +54,7 @@ namespace suse
       };
       expect_qh_str _expect_qh_str;
       code_remarks _remarks;
+      char _pending;
       char _cur;
       char _next;
     };

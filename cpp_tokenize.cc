@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include "pp_tokenizer.hh"
+#include "header_inclusion_tree.hh"
 
 using namespace suse::cp;
 
@@ -37,7 +38,8 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  pp_tokenizer tokker(argv[1]);
+  header_inclusion_root hir (argv[1]);
+  pp_tokenizer tokker(hir);
   while (true)
     {
       auto tok = tokker.read_next_token();

@@ -3,47 +3,68 @@
 #include <system_error>
 #include "pp_tokenizer.hh"
 #include "pp_except.hh"
+#include "header_inclusion_tree.hh"
 
 using namespace suse::cp;
 
-pp_tokenizer::pp_tokenizer(const std::string &filename)
-  : _filename(filename), _i(filename),
-    _expect_qh_str(expect_qh_str::newline)
+pp_tokenizer::pp_tokenizer(header_inclusion_node &file)
+  : _file(file), _i(_file.get_filename()),
+    _line_length(0), _expect_qh_str(expect_qh_str::newline),
+    _pending(0)
 {
   if (!_i)
     throw std::system_error(errno, std::system_category(),
-			    filename);
+			    _file.get_filename());
 
   _i.exceptions(std::ifstream::badbit);
-  _cur = _read_next_char(_cur_loc, 0);
+  _cur = _read_next_char(_cur_loc);
   _next_loc = _cur_loc;
-  _next = _read_next_char(_next_loc, _cur);
+  _next = _read_next_char(_next_loc);
 }
 
-char pp_tokenizer::_read_next_char(file_loc &loc, const char prev)
+char pp_tokenizer::_read_next_char_raw()
 {
-  char c = static_cast<char>(_i.get());
-  loc += prev;
-  if (_i.eof())
+  if (_pending) {
+    const char c = _pending;
+    _pending = 0;
+    return c;
+  }
+
+  const char c = static_cast<char>(_i.get());
+  ++_line_length;
+
+  if (c == '\n') {
+    _file.add_line(_line_length);
+    _line_length = 0;
+  } else if (_i.eof()) {
+    return 0;
+  }
+
+  return c;
+}
+
+char pp_tokenizer::_read_next_char(std::streamoff &loc)
+{
+  char c = _read_next_char_raw();
+  loc += 1;
+  if (!c)
     return 0;
 
   // skip continuation lines
   while (c == '\\') {
-    const char next = static_cast<char>(_i.get());
-    if (_i.eof()) {
+    const char next = _read_next_char_raw();
+    if (!c) {
       _remarks.add(code_remark(code_remark::severity::warning,
 			       "no newline after continuation",
-			       file_range(_filename, _cur_loc)));
+			       file_range(_file, _cur_loc)));
       return 0;
     }
     if (next != '\n') {
-      _i.unget();
+      _pending = next;
       break;
     } else {
-      loc += file_loc::continuation;
-      c = static_cast<char>(_i.get());
-      if (_i.eof())
-	c = 0;
+      loc += 1;
+      c = _read_next_char_raw();
     }
   }
   return c;
@@ -53,7 +74,7 @@ void pp_tokenizer::_advance_to_next_char()
 {
   _cur_loc = _next_loc;
   _cur = _next;
-  _next = _read_next_char(_next_loc, _next);
+  _next = _read_next_char(_next_loc);
 }
 
 void pp_tokenizer::_skip_next_char()
@@ -81,13 +102,13 @@ pp_token pp_tokenizer::_tokenize_string(const char delim,
     } else {
       _advance_to_next_char();
       return pp_token(tok_type, value,
-		      file_range(_filename, _tok_loc, _cur_loc));
+		      file_range(_file, _tok_loc, _cur_loc));
     }
   }
 
   code_remark remark(code_remark::severity::fatal,
 		     "encountered EOF while searching for end of string",
-		     file_range(_filename, _cur_loc));
+		     file_range(_file, _cur_loc));
   _remarks.add(remark);
   throw(remark);
 }
@@ -199,7 +220,7 @@ pp_token pp_tokenizer::_tokenize_punctuator()
     _advance_to_next_char();
   }
   return pp_token(pp_token::type::punctuator, value,
-		  file_range(_filename, _tok_loc, _cur_loc));
+		  file_range(_file, _tok_loc, _cur_loc));
 }
 
 pp_token pp_tokenizer::_tokenize_pp_number()
@@ -244,7 +265,7 @@ pp_token pp_tokenizer::_tokenize_pp_number()
   }
 
   return pp_token(pp_token::type::pp_number, value,
-		  file_range(_filename, _tok_loc, _cur_loc));
+		  file_range(_file, _tok_loc, _cur_loc));
 }
 
 pp_token pp_tokenizer::_tokenize_id()
@@ -271,7 +292,7 @@ pp_token pp_tokenizer::_tokenize_id()
   }
 
   return pp_token(pp_token::type::id, value,
-		  file_range(_filename, _tok_loc, _cur_loc));
+		  file_range(_file, _tok_loc, _cur_loc));
 }
 
 std::size_t pp_tokenizer::_skip_c_comment(const std::size_t n_trailing_spaces)
@@ -295,7 +316,7 @@ std::size_t pp_tokenizer::_skip_c_comment(const std::size_t n_trailing_spaces)
 
   code_remark remark(code_remark::severity::fatal,
 		     "EOF within C-style comment",
-		     file_range(_filename, _cur_loc));
+		     file_range(_file, _cur_loc));
   _remarks.add(remark);
   throw pp_except(remark);
 }
@@ -310,7 +331,7 @@ void pp_tokenizer::_skip_cpp_comment()
   if (!_cur) {
     _remarks.add(code_remark(code_remark::severity::warning,
 			     "EOF within C++-style comment",
-			     file_range(_filename, _cur_loc)));
+			     file_range(_file, _cur_loc)));
   }
 }
 
@@ -350,7 +371,7 @@ pp_token pp_tokenizer::_tokenize_ws()
       _advance_to_next_char();
       _expect_qh_str = expect_qh_str::newline;
       return pp_token(pp_token::type::newline, "\n",
-		      file_range(_filename, _tok_loc, _cur_loc));
+		      file_range(_file, _tok_loc, _cur_loc));
 
     case '/':
       if (_next == '*') {
@@ -362,7 +383,7 @@ pp_token pp_tokenizer::_tokenize_ws()
 	_advance_to_next_char();
 	_expect_qh_str = expect_qh_str::newline;
 	return pp_token(pp_token::type::newline, "\n",
-		      file_range(_filename, _tok_loc, _cur_loc));
+		      file_range(_file, _tok_loc, _cur_loc));
       } else {
 	done = true;
       }
@@ -384,7 +405,7 @@ pp_token pp_tokenizer::_tokenize_ws()
   return pp_token(pp_token::type::ws,
 	std::string(_expect_qh_str == expect_qh_str::newline ? n_spaces : 1,
 		    ' '),
-	file_range(_filename, _tok_loc, _cur_loc));
+	file_range(_file, _tok_loc, _cur_loc));
 }
 
 pp_token pp_tokenizer::read_next_token()
@@ -393,17 +414,16 @@ pp_token pp_tokenizer::read_next_token()
   switch (_cur) {
   case 0:
     return pp_token(pp_token::type::eof, "",
-		    file_range(_filename, _cur_loc, _cur_loc));
+		    file_range(_file, _cur_loc, _cur_loc));
 
   case '\n':
     {
-      const file_loc cur_loc = _cur_loc;
       const char cur = _cur;
       _expect_qh_str = expect_qh_str::newline;
       _advance_to_next_char();
       return pp_token(pp_token::type::newline,
 		      std::string(1, cur),
-		      file_range(_filename, _tok_loc, cur_loc + cur));
+		      file_range(_file, _tok_loc, _cur_loc));
     }
 
   case ' ':
@@ -520,13 +540,12 @@ pp_token pp_tokenizer::read_next_token()
 
   default:
     {
-      const file_loc cur_loc = _cur_loc;
       const char cur = _cur;
       _expect_qh_str = expect_qh_str::no;
       _advance_to_next_char();
       return pp_token(pp_token::type::non_ws_char,
 		      std::string(1, cur),
-		      file_range(_filename, _tok_loc, cur_loc + cur));
+		      file_range(_file, _tok_loc, _cur_loc));
     }
   }
   // unreachable
