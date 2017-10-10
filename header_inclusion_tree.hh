@@ -6,6 +6,8 @@
 #include <utility>
 #include "pp_tokens.hh"
 #include "offset_to_line_col_map.hh"
+#include "used_macros.hh"
+#include "used_macro_undefs.hh"
 
 namespace suse
 {
@@ -28,6 +30,10 @@ namespace suse
       {
 	return _filename;
       }
+
+      header_inclusion_node*
+      get_parent() noexcept
+      { return _parent; }
 
       void add_line(const std::streamoff length);
 
@@ -65,9 +71,14 @@ namespace suse
       friend class header_inclusion_node;
 
       header_inclusion_child(header_inclusion_node &parent,
-			     pp_tokens &&tokens, const std::string &filename);
+			     const std::string &filename,
+			     file_range &&file_range,
+			     used_macros &&used_macros,
+			     used_macro_undefs &&used_macro_undefs);
 
-      pp_tokens _tokens;
+      file_range _file_range;
+      used_macros _used_macros;
+      used_macro_undefs _used_macro_undefs;
     };
 
 
@@ -77,7 +88,7 @@ namespace suse
     {
       _children.push_back(
 	std::unique_ptr<header_inclusion_child>(
-		new header_inclusion_child(std::forward<Targs>(args)...)));
+	   new header_inclusion_child(*this, std::forward<Targs>(args)...)));
       return *_children.back();
     }
   }

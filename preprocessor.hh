@@ -74,6 +74,8 @@ namespace suse
 			used_macros &used_macros_base,
 			used_macro_undefs &used_macro_undefs_base);
 
+      void _handle_include(pp_tokens &&directive_toks);
+
       header_resolver _header_resolver;
 
       std::unique_ptr<header_inclusion_root> _header_inclusion_root;

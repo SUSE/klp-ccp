@@ -188,6 +188,7 @@ pp_token preprocessor::_read_next_plain_token()
 
     if (tok.is_eof()) {
       _tokenizers.pop();
+      _cur_header_inclusion_node = _cur_header_inclusion_node->get_parent();
       _maybe_pp_directive = true;
     } else if (tok.is_newline()) {
       _maybe_pp_directive = true;
@@ -311,6 +312,8 @@ preprocessor::_handle_pp_directive(pp_token &&sharp_tok)
 					  std::move(mu)));
       _macros.erase(it_m);
     }
+  } else if (it_tok->get_value() == "include") {
+    _handle_include(std::move(directive_toks));
   }
 }
 
@@ -629,6 +632,171 @@ preprocessor::_create_macro_arg(const std::function<pp_token()> &token_reader,
   return std::tuple<pp_tokens, pp_tokens, pp_token>
 		(std::move(arg), std::move(exp_arg), std::move(end_delim));
 }
+
+void preprocessor::_handle_include(pp_tokens &&directive_toks)
+{
+  auto it_tok = directive_toks.cbegin();
+
+  assert(it_tok->is_punctuator("#"));
+  ++it_tok;
+
+  if (it_tok->is_ws())
+    ++it_tok;
+
+  assert(it_tok->is_id());
+  assert(it_tok->get_value() == "include");
+  ++it_tok;
+
+  if (it_tok->is_ws())
+    ++it_tok;
+
+  assert(it_tok != directive_toks.cend());
+  std::string unresolved;
+  bool is_qstr;
+  used_macros um;
+  used_macro_undefs umu;
+  if (it_tok->is_type_any_of<pp_token::type::qstr, pp_token::type::hstr>()) {
+    unresolved = it_tok->get_value();
+    is_qstr = it_tok->get_type() == pp_token::type::qstr;
+    ++it_tok;
+    if (it_tok->is_ws())
+      ++it_tok;
+
+    if (!it_tok->is_newline() && !it_tok->is_eof()) {
+      file_range fr (it_tok->get_file_range().get_header_inclusion_node(),
+		     it_tok->get_file_range().get_start_loc());
+      code_remark remark(code_remark::severity::fatal,
+			 "garbage after #include", fr);
+      _remarks.add(remark);
+      throw pp_except(remark);
+    }
+  } else {
+    auto read_tok = [&]() {
+      if (it_tok->is_newline() || it_tok->is_eof()) {
+	return pp_token(pp_token::type::eof, std::string(), file_range());
+      }
+      return *it_tok++;
+    };
+
+    pp_tokens expanded;
+    _expansion_state state;
+    while (true) {
+      auto tok = _expand(state, read_tok);
+      if (tok.is_eof())
+	break;
+      expanded.push_back(std::move(tok));
+    }
+
+    um = expanded.get_used_macros();
+    umu = expanded.get_used_macro_undefs();
+
+    auto skip = [&expanded] (pp_tokens::const_iterator it){
+      while(it != expanded.cend() &&
+	    it->is_type_any_of<pp_token::type::ws,
+			       pp_token::type::empty>()) {
+	assert(!it->is_newline());
+	++it;
+      }
+      return it;
+    };
+
+    it_tok = expanded.cbegin();
+    it_tok = skip(it_tok);
+
+    if (it_tok == expanded.cend()) {
+      auto it = directive_toks.cbegin();
+      file_range fr (it->get_file_range().get_header_inclusion_node(),
+		     it->get_file_range().get_start_loc());
+      code_remark remark(code_remark::severity::fatal,
+			 "macro expansion at #include evaluated to nothing",
+			 fr);
+      _remarks.add(remark);
+      throw pp_except(remark);
+    }
+
+    if (it_tok->is_punctuator("<")) {
+      is_qstr = false;
+
+      ++it_tok;
+      for (auto it_next = skip(it_tok + 1); it_next != expanded.cend();
+	   it_tok = it_next, it_next = skip(it_next + 1)) {
+	unresolved += it_tok->stringify();
+      }
+
+      assert(it_tok != expanded.cend());
+      if (!it_tok->is_punctuator(">")) {
+	auto it = directive_toks.cbegin();
+	file_range fr (it->get_file_range().get_header_inclusion_node(),
+		       it->get_file_range().get_start_loc());
+	code_remark remark(code_remark::severity::fatal,
+			   "macro expansion at #include does not end with '>'",
+			   fr);
+	_remarks.add(remark);
+	throw pp_except(remark);
+      } else if (unresolved.empty()) {
+	auto it = directive_toks.cbegin();
+	file_range fr (it->get_file_range().get_header_inclusion_node(),
+		       it->get_file_range().get_start_loc());
+	code_remark remark(code_remark::severity::fatal,
+			   "macro expansion at #include gives \"<>\"",
+			   fr);
+	_remarks.add(remark);
+	throw pp_except(remark);
+      }
+    } else if (it_tok->get_type() == pp_token::type::str) {
+      is_qstr = true;
+      unresolved = it_tok->get_value();
+
+      it_tok = skip(it_tok + 1);
+      if (it_tok != expanded.cend()) {
+	auto it = directive_toks.cbegin();
+	file_range fr (it->get_file_range().get_header_inclusion_node(),
+		       it->get_file_range().get_start_loc());
+	code_remark remark(code_remark::severity::fatal,
+			   "macro expansion at #include yields garbage at end",
+			   fr);
+	_remarks.add(remark);
+	throw pp_except(remark);
+      }
+    } else {
+      auto it = directive_toks.cbegin();
+      file_range fr (it->get_file_range().get_header_inclusion_node(),
+		     it->get_file_range().get_start_loc());
+      code_remark remark(code_remark::severity::fatal,
+			 "macro expansion at #include doesn't conform",
+			 fr);
+      _remarks.add(remark);
+      throw pp_except(remark);
+    }
+  }
+
+  std::string resolved
+    = (is_qstr ?
+       _header_resolver.resolve(unresolved,
+				_cur_header_inclusion_node->get_filename()) :
+       _header_resolver.resolve(unresolved));
+
+  if (resolved.empty()) {
+    auto it = directive_toks.cbegin();
+    file_range fr (it->get_file_range().get_header_inclusion_node(),
+		   it->get_file_range().get_start_loc());
+    code_remark remark(code_remark::severity::fatal,
+		       "could not find header from #include",
+		       fr);
+    _remarks.add(remark);
+    throw pp_except(remark);
+  }
+
+  file_range fr (directive_toks.cbegin()->get_file_range(),
+		 (directive_toks.cend() - 1)->get_file_range());
+
+  _cur_header_inclusion_node =
+    &_cur_header_inclusion_node->add_child(resolved, std::move(fr),
+					   std::move(um), std::move(umu));
+  _tokenizers.emplace(*_cur_header_inclusion_node);
+}
+
+
 _expansion_state::_expansion_state()
   : last_ws(false)
 {}

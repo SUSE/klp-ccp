@@ -31,8 +31,14 @@ header_inclusion_root::~header_inclusion_root() noexcept = default;
 
 header_inclusion_child::header_inclusion_child(
 				header_inclusion_node &parent,
-				pp_tokens &&tokens, const std::string &filename)
-  : header_inclusion_node(&parent, filename), _tokens(std::move(tokens))
+				const std::string &filename,
+				file_range &&file_range,
+				used_macros &&used_macros,
+				used_macro_undefs &&used_macro_undefs)
+  : header_inclusion_node(&parent, filename),
+    _file_range(std::move(file_range)),
+    _used_macros(std::move(used_macros)),
+    _used_macro_undefs(std::move(used_macro_undefs))
 {}
 
 header_inclusion_child::~header_inclusion_child() noexcept = default;
