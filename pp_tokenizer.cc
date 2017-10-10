@@ -9,7 +9,8 @@ using namespace suse::cp;
 
 pp_tokenizer::pp_tokenizer(header_inclusion_node &file)
   : _file(file), _i(_file.get_filename()),
-    _line_length(0), _expect_qh_str(expect_qh_str::newline),
+    _line_length(0), _cur_loc(0), _next_loc(0),
+    _expect_qh_str(expect_qh_str::newline),
     _pending(0)
 {
   if (!_i)
@@ -18,6 +19,8 @@ pp_tokenizer::pp_tokenizer(header_inclusion_node &file)
 
   _i.exceptions(std::ifstream::badbit);
   _cur = _read_next_char(_cur_loc);
+  // Compensate for the initial increment in _read_next_char()
+  _cur_loc -= 1;
   _next_loc = _cur_loc;
   _next = _read_next_char(_next_loc);
 }
