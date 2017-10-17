@@ -93,6 +93,9 @@ namespace suse
 	return _tokens == rhs._tokens;
       }
 
+      const pp_token& operator[](const _pp_tokens_type::size_type i) const
+      { return _tokens[i]; }
+
       used_macros get_used_macros() const;
 
       used_macro_undefs get_used_macro_undefs() const;

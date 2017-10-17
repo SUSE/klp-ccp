@@ -5,6 +5,16 @@ AC_PROG_CXX
 AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])
 AC_PROG_RANLIB
 
+AC_PROG_YACC
+
+AC_ARG_ENABLE([debug-parser],
+	      [AS_HELP_STRING([--enable-debug-parser],
+			      [enable bison parser state output (default no)])])
+
+if [[ "x$enable_debug_parser" = xyes ]]; then
+   AC_DEFINE([DEBUG_PARSER], [1], [bison parser state output])
+fi
+
 AC_CONFIG_FILES([Makefile
 		 testsuite/Makefile
 		 testsuite/lib/Makefile
