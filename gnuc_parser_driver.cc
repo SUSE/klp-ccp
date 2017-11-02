@@ -57,7 +57,6 @@ static const _val_tok_map_entry kw_map_entries[] = {
   { "__attribute", gnuc_parser::token_type::TOK_KW_ATTRIBUTE },
   { "case", gnuc_parser::token_type::TOK_KW_CASE },
   { "default", gnuc_parser::token_type::TOK_KW_DEFAULT },
-  { "label", gnuc_parser::token_type::TOK_KW_LABEL },
   { "__label__", gnuc_parser::token_type::TOK_KW_LABEL },
   { "if", gnuc_parser::token_type::TOK_KW_IF },
   { "else", gnuc_parser::token_type::TOK_KW_ELSE },
