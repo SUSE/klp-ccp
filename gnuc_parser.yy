@@ -277,7 +277,7 @@ static void empty(T* &value, pp_tokens_range &loc)
 %nonassoc TOK_DUMMY_PRIO_GREEDY_ATTR_LIST
 %nonassoc TOK_KW_ATTRIBUTE
 
-
+%type <translation_unit>	start
 %type <translation_unit>	translation_unit
 %type <external_declaration>	external_declaration
 %type <function_definition>	function_definition
@@ -421,6 +421,13 @@ static void empty(T* &value, pp_tokens_range &loc)
 %type <string_literal>	string_literal
 
 %%
+
+start:
+	/* empty */
+	  { empty($$, @$); }
+	| translation_unit
+	  { $$ = MV_P($1); }
+;
 
 translation_unit:
 	external_declaration
