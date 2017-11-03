@@ -2171,6 +2171,8 @@ namespace suse
 
 	void extend(external_declaration* &&ed);
 
+	void extend_tokens_range(const pp_tokens_range &tr) noexcept;
+
       private:
 	std::vector<std::reference_wrapper<external_declaration> > _eds;
       };

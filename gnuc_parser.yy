@@ -434,6 +434,8 @@ translation_unit:
 	  { $$ = new translation_unit(std::move($1)); }
 	| translation_unit external_declaration
 	  { $$ = MV_P($1); $$->extend(std::move($2)); }
+	| translation_unit TOK_SEMICOLON
+	  { $$ = MV_P($1);}
 ;
 
 external_declaration:

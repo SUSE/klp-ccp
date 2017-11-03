@@ -2500,3 +2500,8 @@ void translation_unit::extend(external_declaration* &&ed)
   _extend_tokens_range(_ed.get().get_tokens_range());
   _ed.get()._set_parent(*this);
 }
+
+void translation_unit::extend_tokens_range(const pp_tokens_range &tr) noexcept
+{
+  _extend_tokens_range(tr);
+}
