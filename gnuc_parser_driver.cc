@@ -26,6 +26,7 @@ static const _val_tok_map_entry kw_map_entries[] = {
   { "char", gnuc_parser::token_type::TOK_KW_CHAR },
   { "short", gnuc_parser::token_type::TOK_KW_SHORT },
   { "int", gnuc_parser::token_type::TOK_KW_INT },
+  { "__int128", gnuc_parser::token_type::TOK_KW_INT128 },
   { "long", gnuc_parser::token_type::TOK_KW_LONG },
   { "float", gnuc_parser::token_type::TOK_KW_FLOAT },
   { "double", gnuc_parser::token_type::TOK_KW_DOUBLE },
