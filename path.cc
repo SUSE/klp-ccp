@@ -18,7 +18,7 @@ std::string suse::cp::normalize_path(std::string &&p)
 	last_is_sep = true;
 	++it;
       }
-    } else if ((last_is_sep || it == p.begin()) && *it == '.') {
+    } else if (last_is_sep && *it == '.') {
       if (p.end() - it >= 2 && *(it + 1) == '.' &&
 	  (p.end() - it == 2 || (*(it + 2) == '/'))) {
 	std::string::reverse_iterator rit{it};
