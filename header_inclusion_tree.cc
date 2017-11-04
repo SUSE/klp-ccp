@@ -22,8 +22,10 @@ header_inclusion_node::offset_to_line_col(const std::streamoff off)
 }
 
 
-header_inclusion_root::header_inclusion_root(const std::string &filename)
-  : header_inclusion_node(nullptr, filename)
+header_inclusion_root::header_inclusion_root(const std::string &filename,
+					     const bool is_preinclude)
+  : header_inclusion_node(nullptr, filename),
+    _is_preinclude(is_preinclude)
 {}
 
 header_inclusion_root::~header_inclusion_root() noexcept = default;

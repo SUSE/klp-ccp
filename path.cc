@@ -74,3 +74,15 @@ bool suse::cp::file_readable(const std::string &p)
 
   return S_ISREG(s.st_mode);
 }
+
+std::string suse::cp::getcwd()
+{
+  char *p = ::getcwd(nullptr, 0);
+
+  if (!p)
+    throw std::system_error(errno, std::system_category(), "getcwd");
+
+  std::string sp(p);
+  free(p);
+  return sp;
+}

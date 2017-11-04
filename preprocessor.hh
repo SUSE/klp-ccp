@@ -36,8 +36,13 @@ namespace suse
     class preprocessor
     {
     public:
-      preprocessor(const std::string &filename,
+      typedef std::vector<std::unique_ptr<header_inclusion_root> >
+	header_inclusion_roots_type;
+
+      preprocessor(header_inclusion_roots_type &header_inclusion_roots,
 		   const header_resolver &header_resolver);
+
+      preprocessor(std::vector<header_inclusion_root*> &&roots);
 
       pp_token read_next_token();
 
@@ -78,7 +83,8 @@ namespace suse
 
       header_resolver _header_resolver;
 
-      std::unique_ptr<header_inclusion_root> _header_inclusion_root;
+      header_inclusion_roots_type &_header_inclusion_roots;
+      header_inclusion_roots_type::iterator _cur_header_inclusion_root;
       header_inclusion_node *_cur_header_inclusion_node;
 
       std::stack<pp_tokenizer> _tokenizers;

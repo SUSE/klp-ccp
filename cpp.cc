@@ -12,7 +12,11 @@ int main(int argc, char* argv[])
   }
 
   header_resolver hr;
-  preprocessor p(argv[1], hr);
+  std::unique_ptr<header_inclusion_root> hir{
+    new header_inclusion_root(argv[1], false) };
+  preprocessor::header_inclusion_roots_type hirs;
+  hirs.emplace_back(std::move(hir));
+  preprocessor p(hirs, hr);
 
   while(true) {
     try {

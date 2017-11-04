@@ -4,19 +4,22 @@
 #include "pp_except.hh"
 #include "macro_undef.hh"
 #include "header_inclusion_tree.hh"
+#include "path.hh"
 
 using namespace suse::cp;
 using namespace suse::cp::_preprocessor_impl;
 
-preprocessor::preprocessor(const std::string &filename,
+preprocessor::preprocessor(header_inclusion_roots_type &header_inclusion_roots,
 			   const header_resolver &header_resolver)
   : _header_resolver(header_resolver),
-    _header_inclusion_root(new header_inclusion_root(filename)),
-    _cur_header_inclusion_node(_header_inclusion_root.get()),
+    _header_inclusion_roots(header_inclusion_roots),
+    _cur_header_inclusion_root(_header_inclusion_roots.begin()),
+    _cur_header_inclusion_node(_header_inclusion_roots[0].get()),
     _root_expansion_state(), __counter__(0),
     _maybe_pp_directive(true), _line_empty(true)
 {
-  _tokenizers.emplace(*_header_inclusion_root);
+  assert(!header_inclusion_roots.empty());
+  _tokenizers.emplace(*_cur_header_inclusion_node);
 }
 
 pp_token preprocessor::read_next_token()
@@ -188,8 +191,16 @@ pp_token preprocessor::_read_next_plain_token()
 
     if (tok.is_eof()) {
       _tokenizers.pop();
-      _cur_header_inclusion_node = _cur_header_inclusion_node->get_parent();
+      if (_tokenizers.empty()) {
+	if (++_cur_header_inclusion_root == _header_inclusion_roots.end())
+	  return tok;
+	_cur_header_inclusion_node = _cur_header_inclusion_root->get();
+	_tokenizers.emplace(*_cur_header_inclusion_node);
+      } else {
+	_cur_header_inclusion_node = _cur_header_inclusion_node->get_parent();
+      }
       _maybe_pp_directive = true;
+      goto again;
     } else if (tok.is_newline()) {
       _maybe_pp_directive = true;
     } else if (_maybe_pp_directive && tok.is_punctuator("#")) {

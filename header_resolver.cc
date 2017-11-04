@@ -3,6 +3,8 @@
 
 using namespace suse::cp;
 
+const struct header_resolver::cwd_tag header_resolver::cwd;
+
 std::string header_resolver::resolve(const std::string &header)
   const
 {
@@ -20,6 +22,18 @@ std::string header_resolver::resolve(const std::string &header,
   const
 {
   std::string p{normalize_path(dirname(referring_file) + '/' + header)};
+
+  if (file_readable(p))
+    return p;
+
+  return resolve(header);
+}
+
+struct cwd_tag {};
+std::string header_resolver::resolve(const std::string &header, const cwd_tag&)
+  const
+{
+  std::string p{normalize_path(getcwd() + '/' + header)};
 
   if (file_readable(p))
     return p;

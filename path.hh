@@ -10,6 +10,7 @@ namespace suse
     std::string normalize_path(std::string &&p);
     std::string dirname(const std::string &p);
     bool file_readable(const std::string &p);
+    std::string getcwd();
   }
 }
 

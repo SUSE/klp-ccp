@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  header_inclusion_root hir (argv[1]);
+  header_inclusion_root hir (argv[1], false);
   pp_tokenizer tokker(hir);
   while (true)
     {

@@ -147,9 +147,8 @@ void gnuc_parser_driver::parse_debug()
 }
 #endif
 
-gnuc_parser_driver::gnuc_parser_driver(const std::string &filename,
-				       const header_resolver &header_resolver)
-  : _pp(filename, header_resolver),
+gnuc_parser_driver::gnuc_parser_driver(preprocessor &&pp)
+  : _pp(std::move(pp)),
     _parser(*this), _ignore_td_spec(0), _in_typedef(false)
 {
   _typedefs_scopes.emplace();

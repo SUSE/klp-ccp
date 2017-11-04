@@ -57,8 +57,12 @@ namespace suse
     class header_inclusion_root : public header_inclusion_node
     {
     public:
-      header_inclusion_root(const std::string &filename);
+      header_inclusion_root(const std::string &filename,
+			    const bool is_preinclude);
       virtual ~header_inclusion_root() noexcept;
+
+    private:
+      bool _is_preinclude;
     };
 
 

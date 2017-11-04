@@ -19,8 +19,7 @@ namespace suse
       class gnuc_parser_driver
       {
       public:
-	gnuc_parser_driver(const std::string &filename,
-			   const header_resolver &header_resolver);
+	gnuc_parser_driver(preprocessor &&pp);
 
 	gnuc_parser_driver(gnuc_parser_driver&&) = delete;
 
