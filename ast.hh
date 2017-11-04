@@ -146,6 +146,7 @@ namespace suse
       class function_definition;
       class translation_unit;
       class external_declaration;
+      class external_declaration_asm;
       class expr;
       class expr_list;
       class expr_comma;
@@ -250,7 +251,7 @@ namespace suse
       class asm_operand_list;
       class asm_clobber_list;
       class asm_jump_to_label_list;
-      class stmt_asm;
+      class asm_directive;
       class function_definition;
       class translation_unit;
       class external_declaration;
@@ -584,7 +585,7 @@ namespace suse
       {
       public:
 	typedef type_set<expr_string_literal,
-			 stmt_asm> parent_types;
+			 asm_directive> parent_types;
 
 	string_literal(const pp_token_index s);
 
@@ -1986,6 +1987,18 @@ namespace suse
 	expr *_e;
       };
 
+      class stmt_asm : public stmt
+      {
+      public:
+	stmt_asm(asm_directive* &&ad) noexcept;
+
+	virtual ~stmt_asm() noexcept;
+
+      private:
+	asm_directive &_ad;
+      };
+
+
       enum class asm_qualifier
       {
 	aq_goto,
@@ -1995,7 +2008,7 @@ namespace suse
       class asm_qualifier_list : public ast_entity<asm_qualifier_list>
       {
       public:
-	typedef type_set<stmt_asm> parent_types;
+	typedef type_set<asm_directive> parent_types;
 
 	asm_qualifier_list(const pp_tokens_range &tr,
 			   const asm_qualifier aq);
@@ -2042,7 +2055,7 @@ namespace suse
       class asm_operand_list : public ast_entity<asm_operand_list>
       {
       public:
-	typedef type_set<stmt_asm> parent_types;
+	typedef type_set<asm_directive> parent_types;
 
       public:
 	asm_operand_list(asm_operand* &&ao);
@@ -2058,7 +2071,7 @@ namespace suse
       class asm_clobber_list : public ast_entity<asm_clobber_list>
       {
       public:
-	typedef type_set<stmt_asm> parent_types;
+	typedef type_set<asm_directive> parent_types;
 
 	asm_clobber_list(const pp_token_index clobber_tok);
 
@@ -2073,7 +2086,7 @@ namespace suse
       class asm_jump_to_label_list : public ast_entity<asm_jump_to_label_list>
       {
       public:
-	typedef type_set<stmt_asm> parent_types;
+	typedef type_set<asm_directive> parent_types;
 
 	asm_jump_to_label_list(const pp_token_index label_tok);
 
@@ -2085,16 +2098,19 @@ namespace suse
 	std::vector<pp_token_index> _label_toks;
       };
 
-      class stmt_asm : public stmt
+      class asm_directive : public ast_entity<asm_directive>
       {
       public:
-	stmt_asm(const pp_tokens_range &tr,
-		 asm_qualifier_list* &&aql, string_literal* &&asm_s,
-		 asm_operand_list* &&output_aol, asm_operand_list* &&input_aol,
-		 asm_clobber_list* &&acl, asm_jump_to_label_list* &&ajtll)
+	typedef type_set<stmt_asm, external_declaration_asm> parent_types;
+
+	asm_directive(const pp_tokens_range &tr,
+		      asm_qualifier_list* &&aql, string_literal* &&asm_s,
+		      asm_operand_list* &&output_aol,
+		      asm_operand_list* &&input_aol, asm_clobber_list* &&acl,
+		      asm_jump_to_label_list* &&ajtll)
 	  noexcept;
 
-	virtual ~stmt_asm() noexcept;
+	virtual ~asm_directive() noexcept;
 
       private:
 	asm_qualifier_list *_aql;
@@ -2157,6 +2173,17 @@ namespace suse
 
       private:
 	function_definition &_fd;
+      };
+
+      class external_declaration_asm : public external_declaration
+      {
+      public:
+	external_declaration_asm(asm_directive* &&ad) noexcept;
+
+	virtual ~external_declaration_asm() noexcept;
+
+      private:
+	asm_directive &_ad;
       };
 
 

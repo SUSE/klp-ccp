@@ -2271,6 +2271,18 @@ stmt_return::~stmt_return() noexcept
 }
 
 
+stmt_asm::stmt_asm(asm_directive* &&ad) noexcept
+  : stmt(ad->get_tokens_range()), _ad(*mv_p(std::move(ad)))
+{
+  _ad._set_parent(*this);
+}
+
+stmt_asm::~stmt_asm() noexcept
+{
+  delete &_ad;
+}
+
+
 asm_qualifier_list::asm_qualifier_list(const pp_tokens_range &tr,
 				       const asm_qualifier aq)
   : ast_entity(tr), _aqs(1, aq)
@@ -2373,13 +2385,13 @@ void asm_jump_to_label_list::extend(const pp_token_index label_tok)
 }
 
 
-stmt_asm::stmt_asm(const pp_tokens_range &tr,
+asm_directive::asm_directive(const pp_tokens_range &tr,
 		   asm_qualifier_list* &&aql, string_literal* &&asm_s,
 		   asm_operand_list* &&output_aol,
 		   asm_operand_list* &&input_aol,
 		   asm_clobber_list* &&acl, asm_jump_to_label_list* &&ajtll)
   noexcept
-  : stmt(tr), _aql(mv_p(std::move(aql))), _asm_s(*mv_p(std::move(asm_s))),
+  : ast_entity(tr), _aql(mv_p(std::move(aql))), _asm_s(*mv_p(std::move(asm_s))),
     _output_aol(mv_p(std::move(output_aol))),
     _input_aol(mv_p(std::move(input_aol))), _acl(mv_p(std::move(acl))),
     _ajtll(mv_p(std::move(ajtll)))
@@ -2397,7 +2409,7 @@ stmt_asm::stmt_asm(const pp_tokens_range &tr,
     _ajtll->_set_parent(*this);
 }
 
-stmt_asm::~stmt_asm() noexcept
+asm_directive::~asm_directive() noexcept
 {
   delete _aql;
   delete &_asm_s;
@@ -2466,6 +2478,19 @@ external_declaration_func(function_definition* &&fd) noexcept
 external_declaration_func::~external_declaration_func() noexcept
 {
   delete &_fd;
+}
+
+
+external_declaration_asm::
+external_declaration_asm(asm_directive* &&ad) noexcept
+  : external_declaration(ad->get_tokens_range()), _ad(*mv_p(std::move(ad)))
+{
+  _ad._set_parent(*this);
+}
+
+external_declaration_asm::~external_declaration_asm() noexcept
+{
+  delete &_ad;
 }
 
 

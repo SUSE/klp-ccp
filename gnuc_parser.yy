@@ -119,6 +119,7 @@ static void empty(T* &value, pp_tokens_range &loc)
   suse::cp::ast::local_label_declaration_list *local_label_declaration_list;
   suse::cp::ast::block_item *block_item;
   suse::cp::ast::block_item_list *block_item_list;
+  suse::cp::ast::asm_directive *asm_directive;
   suse::cp::ast::asm_qualifier_list *asm_qualifier_list;
   suse::cp::ast::asm_operand_name *asm_operand_name;
   suse::cp::ast::asm_operand *asm_operand;
@@ -381,6 +382,7 @@ static void empty(T* &value, pp_tokens_range &loc)
 %type <stmt>	iteration_statement
 %type <stmt>	jump_statement
 %type <stmt>	asm_statement
+%type <asm_directive>	asm_directive
 %type <asm_qualifier_list>	asm_qualifier_list_opt
 %type <asm_qualifier_list>	asm_qualifier_list
 %type <asm_operand_list>	asm_operand_list_opt
@@ -443,6 +445,8 @@ external_declaration:
 	  { $$ = new external_declaration_func(std::move($1)); }
 	| declaration
 	  { $$ = new external_declaration_decl(std::move($1)); }
+	| asm_directive
+	  { $$ = new external_declaration_asm(std::move($1)); }
 ;
 
 function_definition_body:
@@ -1710,35 +1714,40 @@ jump_statement:
 
 
 asm_statement:
+	asm_directive
+	  { $$ = new stmt_asm(std::move($1)); }
+;
+
+asm_directive:
 	TOK_KW_ASM asm_qualifier_list_opt TOK_LPAREN string_literal TOK_RPAREN TOK_SEMICOLON
 	  {
-	    $$ = new stmt_asm(@$, std::move($2), std::move($4),
-			      nullptr, nullptr,
-			      nullptr, nullptr);
+	    $$ = new asm_directive(@$, std::move($2), std::move($4),
+				   nullptr, nullptr,
+				   nullptr, nullptr);
 	  }
 	| TOK_KW_ASM asm_qualifier_list_opt TOK_LPAREN string_literal TOK_COLON asm_operand_list_opt TOK_RPAREN  TOK_SEMICOLON
 	  {
-	    $$ = new stmt_asm(@$, std::move($2), std::move($4),
-			      std::move($6), nullptr,
-			      nullptr, nullptr);
+	    $$ = new asm_directive(@$, std::move($2), std::move($4),
+				   std::move($6), nullptr,
+				   nullptr, nullptr);
 	  }
 	| TOK_KW_ASM asm_qualifier_list_opt TOK_LPAREN string_literal TOK_COLON asm_operand_list_opt TOK_COLON asm_operand_list_opt TOK_RPAREN  TOK_SEMICOLON
 	  {
-	    $$ = new stmt_asm(@$, std::move($2), std::move($4),
-			      std::move($6), std::move($8),
-			      nullptr, nullptr);
+	    $$ = new asm_directive(@$, std::move($2), std::move($4),
+				   std::move($6), std::move($8),
+				   nullptr, nullptr);
 	  }
 	| TOK_KW_ASM asm_qualifier_list_opt TOK_LPAREN string_literal TOK_COLON asm_operand_list_opt TOK_COLON asm_operand_list_opt TOK_COLON asm_clobber_list_opt TOK_RPAREN TOK_SEMICOLON
 	  {
-	    $$ = new stmt_asm(@$, std::move($2), std::move($4),
-			      std::move($6), std::move($8),
-			      std::move($10), nullptr);
+	    $$ = new asm_directive(@$, std::move($2), std::move($4),
+				   std::move($6), std::move($8),
+				   std::move($10), nullptr);
 	  }
 	| TOK_KW_ASM asm_qualifier_list_opt TOK_LPAREN string_literal TOK_COLON asm_operand_list_opt TOK_COLON asm_operand_list_opt TOK_COLON asm_clobber_list_opt TOK_COLON asm_jump_to_label_list_opt TOK_RPAREN TOK_SEMICOLON
 	  {
-	    $$ = new stmt_asm(@$, std::move($2), std::move($4),
-			      std::move($6), std::move($8),
-			      std::move($10), std::move($12));
+	    $$ = new asm_directive(@$, std::move($2), std::move($4),
+				   std::move($6), std::move($8),
+				   std::move($10), std::move($12));
 	  }
 ;
 
