@@ -1363,19 +1363,19 @@ void specifier_qualifier_list::extend(specifier_qualifier_list* &&sql)
 
   for (auto &ts : _sql->_tss) {
     _tss.push_back(ts);
-    ts.get()._set_parent(*this);
+    ts.get()._reset_parent(*this, *_sql);
   }
   _sql->_tss.clear();
 
   for (auto &tq : _sql->_tqs) {
     _tqs.push_back(tq);
-    tq.get()._set_parent(*this);
+    tq.get()._reset_parent(*this, *_sql);
   }
   _sql->_tqs.clear();
 
   for (auto &asl : _sql->_asls) {
     _asls.push_back(asl);
-    asl.get()._set_parent(*this);
+    asl.get()._reset_parent(*this, *_sql);
   }
   _sql->_asls.clear();
 
@@ -1491,13 +1491,13 @@ void declaration_specifiers::extend(declaration_specifiers* &&ds)
 
   for (auto &scs : _ds->_scss) {
     _scss.push_back(scs);
-    scs.get()._set_parent(*this);
+    scs.get()._reset_parent(*this, *_ds);
   }
   _ds->_scss.clear();
 
   for (auto &fs : _ds->_fss) {
     _fss.push_back(fs);
-    fs.get()._set_parent(*this);
+    fs.get()._reset_parent(*this, *_ds);
   }
   _ds->_fss.clear();
 
