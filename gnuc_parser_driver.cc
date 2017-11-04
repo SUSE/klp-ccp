@@ -167,7 +167,9 @@ gnuc_parser_driver::lex(gnuc_parser::semantic_type *value,
     }
   } while (_tokens.back().is_ws() ||
 	   _tokens.back().is_newline() ||
-	   _tokens.back().is_empty());
+	   _tokens.back().is_empty() ||
+	   (_tokens.back().is_id() &&
+	    _tokens.back().get_value() == "__extension__"));
   _grab_pp_remarks();
 
   loc->end = _tokens.size();
