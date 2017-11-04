@@ -22,8 +22,17 @@ std::string suse::cp::normalize_path(std::string &&p)
       if (p.end() - it >= 2 && *(it + 1) == '.' &&
 	  (p.end() - it == 2 || (*(it + 2) == '/'))) {
 	std::string::reverse_iterator rit{it};
-	if (last_is_sep && it != p.begin() + 1) {
+	if (it != p.begin() + 1) {
 	  ++rit;
+
+	  // If the preceeding patch component is also a '..', then
+	  // don't remove the current one.
+	  if (p.rend() - rit == 2 && *rit == '.' && *(rit + 1) == '.') {
+	    last_is_sep = false;
+	    ++it;
+	    continue;
+	  }
+
 	  rit = std::find(rit, p.rend(), '/');
 	}
 
