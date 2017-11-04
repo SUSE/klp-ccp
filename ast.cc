@@ -1538,14 +1538,15 @@ initializer_expr::~initializer_expr() noexcept
 
 initializer_init_list::initializer_init_list(const pp_tokens_range &tr,
 					     initializer_list* &&il) noexcept
-  : initializer(tr), _il(*mv_p(std::move(il)))
+  : initializer(tr), _il(mv_p(std::move(il)))
 {
-  _il._set_parent(*this);
+  if (_il)
+    _il->_set_parent(*this);
 }
 
 initializer_init_list::~initializer_init_list() noexcept
 {
-  delete &_il;
+  delete _il;
 }
 
 

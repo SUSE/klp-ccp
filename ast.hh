@@ -1435,7 +1435,7 @@ namespace suse
 	virtual ~initializer_init_list() noexcept;
 
       private:
-	initializer_list &_il;
+	initializer_list *_il;
       };
 
       class designator : public ast_entity<designator>

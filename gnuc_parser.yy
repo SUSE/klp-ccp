@@ -1547,6 +1547,8 @@ initializer:
 	  { $$ = new initializer_init_list(@$, std::move($2)); }
 	| TOK_LBRACE initializer_list TOK_COMMA TOK_RBRACE
 	  { $$ = new initializer_init_list(@$, std::move($2)); }
+	| TOK_LBRACE TOK_RBRACE
+	  { $$ = new initializer_init_list(@$, nullptr); }
 ;
 
 initializer_list:
