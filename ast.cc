@@ -435,7 +435,8 @@ attribute::attribute(const pp_tokens_range &tr, const pp_token_index name_tok,
 		     expr_list* &&params) noexcept
   : ast_entity(tr), _name_tok(name_tok), _params(mv_p(std::move(params)))
 {
-  _params->_set_parent(*this);
+  if (_params)
+    _params->_set_parent(*this);
 }
 
 attribute::~attribute() noexcept
