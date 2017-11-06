@@ -1610,7 +1610,9 @@ designator_list:
 
 designator:
 	TOK_LBRACKET constant_expression TOK_RBRACKET
-	  { $$ = new designator_array(@$, std::move($2)); }
+	  { $$ = new designator_array(@$, std::move($2), nullptr); }
+	| TOK_LBRACKET constant_expression TOK_TRIPLE_DOT constant_expression TOK_RBRACKET
+	  { $$ = new designator_array(@$, std::move($2), std::move($4)); }
 	| TOK_DOT id_or_tdid
 	  { $$ = new designator_member(@$, $2); }
 ;

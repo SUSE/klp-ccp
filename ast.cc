@@ -1627,15 +1627,20 @@ designator_member::~designator_member() noexcept = default;
 
 
 designator_array::designator_array(const pp_tokens_range &tr,
-				   expr* &&index) noexcept
-  : designator(tr), _index(*mv_p(std::move(index)))
+				   expr* &&index_first, expr* &&index_last)
+  noexcept
+  : designator(tr), _index_first(*mv_p(std::move(index_first))),
+    _index_last(mv_p(std::move(index_last)))
 {
-  _index._set_parent(*this);
+  _index_first._set_parent(*this);
+  if (_index_last)
+    _index_last->_set_parent(*this);
 }
 
 designator_array::~designator_array() noexcept
 {
-  delete &_index;
+  delete &_index_first;
+  delete _index_last;
 }
 
 

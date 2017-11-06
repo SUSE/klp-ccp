@@ -489,7 +489,6 @@ namespace suse
 	type_name &_tn;
       };
 
-
       class expr_builtin_offsetof : public expr
       {
       public:
@@ -1518,12 +1517,13 @@ namespace suse
       {
       public:
 	designator_array(const pp_tokens_range &tr,
-			 expr* &&index) noexcept;
+			 expr* &&index_first, expr* &&index_last) noexcept;
 
 	virtual ~designator_array() noexcept;
 
       private:
-	expr &_index;
+	expr &_index_first;
+	expr *_index_last;
       };
 
       class designator_list : public ast_entity<designator_list>
