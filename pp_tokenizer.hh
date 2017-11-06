@@ -44,6 +44,7 @@ namespace suse
       std::streamoff _line_length;
       std::streamoff _cur_loc;
       std::streamoff _next_loc;
+      std::streamoff _next_next_loc;
       std::streamoff _tok_loc;
       enum class expect_qh_str
       {
@@ -57,6 +58,7 @@ namespace suse
       char _pending;
       char _cur;
       char _next;
+      char _next_next;
     };
   }
 }

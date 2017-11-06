@@ -18,8 +18,14 @@ static const char* type2name(pp_token::type type)
     CASE(pp_number);
     CASE(chr);
     CASE(wchr);
+    CASE(uchr8);
+    CASE(uchr16);
+    CASE(uchr32);
     CASE(str);
     CASE(wstr);
+    CASE(ustr8);
+    CASE(ustr16);
+    CASE(ustr32);
     CASE(qstr);
     CASE(hstr);
     CASE(punctuator);

@@ -53,12 +53,30 @@ std::string pp_token::stringify() const
   case type::wchr:
     return "L'" + _value + '\'';
 
+  case type::uchr8:
+    return "u8'" + _value + '\'';
+
+  case type::uchr16:
+    return "u'" + _value + '\'';
+
+  case type::uchr32:
+    return "U'" + _value + '\'';
+
   case type::str:
   case type::qstr:
     return '"' + _value + '"';
 
   case type::wstr:
     return "L\"" + _value + '"';
+
+  case type::ustr8:
+    return "u\"" + _value + '"';
+
+  case type::ustr16:
+    return "u\"" + _value + '"';
+
+  case type::ustr32:
+    return "U\"" + _value + '"';
 
   case type::hstr:
     return '<' + _value + '>';

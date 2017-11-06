@@ -23,6 +23,8 @@ pp_tokenizer::pp_tokenizer(header_inclusion_node &file)
   _cur_loc -= 1;
   _next_loc = _cur_loc;
   _next = _read_next_char(_next_loc);
+  _next_next_loc = _next_loc;
+  _next_next = _read_next_char(_next_next_loc);
 }
 
 char pp_tokenizer::_read_next_char_raw()
@@ -77,7 +79,9 @@ void pp_tokenizer::_advance_to_next_char()
 {
   _cur_loc = _next_loc;
   _cur = _next;
-  _next = _read_next_char(_next_loc);
+  _next_loc = _next_next_loc;
+  _next = _next_next;
+  _next_next = _read_next_char(_next_next_loc);
 }
 
 void pp_tokenizer::_skip_next_char()
@@ -472,10 +476,48 @@ pp_token pp_tokenizer::read_next_token()
       return _tokenize_id();
     }
 
+  case 'u':
+    _expect_qh_str = expect_qh_str::no;
+    if (_next == '8') {
+      if (_next_next == '"') {
+	_skip_next_char();
+	_advance_to_next_char();
+	return _tokenize_string('"', true, pp_token::type::ustr8);
+      } else if (_next_next == '\'') {
+	_skip_next_char();
+	_advance_to_next_char();
+	return _tokenize_string('\'', true, pp_token::type::uchr8);
+      } else {
+	return _tokenize_id();
+      }
+    } else if (_next == '"') {
+      _skip_next_char();
+      return _tokenize_string('"', true, pp_token::type::ustr16);
+    } else if (_next == '\'') {
+      _skip_next_char();
+      return _tokenize_string('\'', true, pp_token::type::uchr16);
+    } else {
+      return _tokenize_id();
+    }
+
+  case 'U':
+    _expect_qh_str = expect_qh_str::no;
+    if (_next == '"') {
+      _skip_next_char();
+      return _tokenize_string('"', true, pp_token::type::ustr32);
+    } else if (_next == '\'') {
+      _skip_next_char();
+      return _tokenize_string('\'', true, pp_token::type::uchr32);
+    } else {
+      return _tokenize_id();
+    }
+
   case '_':
-  case 'a' ... 'z':
+  case 'a' ... 't':
+  case 'v' ... 'z':
   case 'A' ... 'K':
-  case 'M' ... 'Z':
+  case 'M' ... 'T':
+  case 'V' ... 'Z':
     {
       pp_token tok = _tokenize_id();
       if (_expect_qh_str == expect_qh_str::sharp_seen &&

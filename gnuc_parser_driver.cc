@@ -195,12 +195,24 @@ gnuc_parser_driver::lex(gnuc_parser::semantic_type *value,
   case pp_token::type::chr:
     /* fall through */
   case pp_token::type::wchr:
+    /* fall through */
+  case pp_token::type::uchr8:
+    /* fall through */
+  case pp_token::type::uchr16:
+    /* fall through */
+  case pp_token::type::uchr32:
     value->token_index = loc->begin;
     return gnuc_parser::token_type::TOK_CONSTANT;
 
   case pp_token::type::str:
     /* fall through */
   case pp_token::type::wstr:
+    /* fall through */
+  case pp_token::type::ustr8:
+    /* fall through */
+  case pp_token::type::ustr16:
+    /* fall through */
+  case pp_token::type::ustr32:
     value->token_index = loc->begin;
     return gnuc_parser::token_type::TOK_STRING_LITERAL;
 
