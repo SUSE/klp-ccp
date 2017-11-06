@@ -61,6 +61,12 @@ static void empty(T* &value, pp_tokens_range &loc)
 	value = nullptr;
 	loc.begin = loc.end;
 }
+
+static void empty(pp_tokens_range &loc)
+{
+	loc.begin = loc.end;
+}
+
 }
 
 %parse-param {suse::cp::yy::gnuc_parser_driver &pd}
@@ -747,15 +753,28 @@ id_or_tdid:
 struct_declaration_list_opt:
 	/* empty */
 	  { empty($$, @$); }
+	| semicolons
+	  { $$ = nullptr; }
 	| struct_declaration_list
 	  { $$ = MV_P($1); }
 ;
 
 struct_declaration_list:
-	struct_declaration
-	  { $$ = new struct_declaration_list(std::move($1)); }
-	| struct_declaration_list struct_declaration
+	semicolons_opt struct_declaration semicolons_opt
+	  { $$ = new struct_declaration_list(std::move($2)); }
+	| struct_declaration_list struct_declaration semicolons_opt
 	  { $$ = MV_P($1); $$->extend(std::move($2)); }
+;
+
+semicolons_opt:
+	/* empty */
+	  { empty(@$); }
+	| semicolons
+;
+
+semicolons:
+	TOK_SEMICOLON
+	| semicolons TOK_SEMICOLON
 ;
 
 /*
