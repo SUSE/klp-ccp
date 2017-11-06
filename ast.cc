@@ -330,16 +330,17 @@ expr_unop_post::~expr_unop_post() noexcept
 expr_compound_literal::expr_compound_literal(const pp_tokens_range &tr,
 					     type_name* &&tn,
 					     initializer_list* &&il) noexcept
-  : expr(tr), _tn(*mv_p(std::move(tn))), _il(*mv_p(std::move(il)))
+  : expr(tr), _tn(*mv_p(std::move(tn))), _il(mv_p(std::move(il)))
 {
   _tn._set_parent(*this);
-  _il._set_parent(*this);
+  if (_il)
+    _il->_set_parent(*this);
 }
 
 expr_compound_literal::~expr_compound_literal() noexcept
 {
   delete &_tn;
-  delete &_il;
+  delete _il;
 }
 
 

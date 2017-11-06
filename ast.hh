@@ -584,7 +584,7 @@ namespace suse
 
       private:
 	type_name &_tn;
-	initializer_list &_il;
+	initializer_list *_il;
       };
 
       class expr_statement : public expr

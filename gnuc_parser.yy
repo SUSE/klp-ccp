@@ -2088,6 +2088,8 @@ postfix_expression:
 	  { $$ = new expr_compound_literal(@$, std::move($2), std::move($5)); }
 	| TOK_LPAREN type_name TOK_RPAREN TOK_LBRACE initializer_list TOK_COMMA TOK_RBRACE
 	  { $$ = new expr_compound_literal(@$, std::move($2), std::move($5)); }
+	| TOK_LPAREN type_name TOK_RPAREN TOK_LBRACE TOK_RBRACE
+	  { $$ = new expr_compound_literal(@$, std::move($2), nullptr); }
 ;
 
 statement_expression:
