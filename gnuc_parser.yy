@@ -1102,19 +1102,21 @@ parameter_list:
 ;
 
 parameter_declaration_first:
-	declaration_specifiers_w_non_att_no_ts declarator_no_tdid
+	declaration_specifiers_w_non_att_no_ts declarator_no_tdid attribute_specifier_list_opt
 	  {
 	    pd.enter_td_scope();
 	    pd.handle_param_id($2->get_id_tok());
 	    $$ = new parameter_declaration_declarator(@$, std::move($1),
-						      std::move($2));
+						      std::move($2),
+						      std::move($3));
 	  }
-	| declaration_specifiers_ts param_declarator_tdid
+	| declaration_specifiers_ts param_declarator_tdid attribute_specifier_list_opt
 	  {
 	    pd.enter_td_scope();
 	    pd.handle_param_id($2->get_id_tok());
 	    $$ = new parameter_declaration_declarator(@$, std::move($1),
-						      std::move($2));
+						      std::move($2),
+						      std::move($3));
 	  }
 	| declaration_specifiers_w_non_att_no_ts abstract_declarator_opt
 	  {
@@ -1131,17 +1133,19 @@ parameter_declaration_first:
 ;
 
 parameter_declaration:
-	declaration_specifiers_no_ts declarator_no_tdid
+	declaration_specifiers_no_ts declarator_no_tdid attribute_specifier_list_opt
 	  {
 	    pd.handle_param_id($2->get_id_tok());
 	    $$ = new parameter_declaration_declarator(@$, std::move($1),
-						      std::move($2));
+						      std::move($2),
+						      std::move($3));
 	  }
-	| declaration_specifiers_ts param_declarator_tdid
+	| declaration_specifiers_ts param_declarator_tdid attribute_specifier_list_opt
 	  {
 	    pd.handle_param_id($2->get_id_tok());
 	    $$ = new parameter_declaration_declarator(@$, std::move($1),
-						      std::move($2));
+						      std::move($2),
+						      std::move($3));
 	  }
 	| declaration_specifiers_no_ts abstract_declarator_opt
 	  {

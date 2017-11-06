@@ -1842,16 +1842,20 @@ parameter_declaration::~parameter_declaration() noexcept
 parameter_declaration_declarator::
 parameter_declaration_declarator(const pp_tokens_range &tr,
 				 declaration_specifiers* &&ds,
-				 declarator* &&d) noexcept
+				 declarator* &&d,
+				 attribute_specifier_list* &&asl) noexcept
   : parameter_declaration(tr, std::move(ds)),
-    _d(*mv_p(std::move(d)))
+    _d(*mv_p(std::move(d))), _asl(mv_p(std::move(asl)))
 {
   _d._set_parent(*this);
+  if (_asl)
+    _asl->_set_parent(*this);
 }
 
 parameter_declaration_declarator::~parameter_declaration_declarator() noexcept
 {
   delete &_d;
+  delete _asl;
 }
 
 

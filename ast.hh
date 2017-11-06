@@ -732,7 +732,8 @@ namespace suse
 			 specifier_qualifier_list,
 			 init_declarator,
 			 stmt_labeled,
-			 function_definition> parent_types;
+			 function_definition,
+			 parameter_declaration_declarator> parent_types;
 
 	attribute_specifier_list(attribute_specifier* &&as);
 
@@ -1666,12 +1667,15 @@ namespace suse
       public:
 	parameter_declaration_declarator(const pp_tokens_range &tr,
 					 declaration_specifiers* &&ds,
-					 declarator* &&d) noexcept;
+					 declarator* &&d,
+					 attribute_specifier_list* &&asl)
+	  noexcept;
 
 	virtual ~parameter_declaration_declarator() noexcept;
 
       private:
 	declarator &_d;
+	attribute_specifier_list *_asl;
       };
 
       class parameter_declaration_abstract
