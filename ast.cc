@@ -930,11 +930,12 @@ struct_declarator::struct_declarator(const pp_tokens_range &tr,
 				     declarator* &&d, expr* &&width,
 				     attribute_specifier_list* &&asl_after)
   noexcept
-  : ast_entity(tr), _d(*mv_p(std::move(d))),
+  : ast_entity(tr), _d(mv_p(std::move(d))),
     _width(mv_p(std::move(width))),
     _asl_before(nullptr), _asl_after(mv_p(std::move(asl_after)))
 {
-  _d._set_parent(*this);
+  if (_d)
+    _d->_set_parent(*this);
   if (_width)
     _width->_set_parent(*this);
   if (_asl_after)
@@ -943,7 +944,7 @@ struct_declarator::struct_declarator(const pp_tokens_range &tr,
 
 struct_declarator::~struct_declarator() noexcept
 {
-  delete &_d;
+  delete _d;
   delete _width;
   delete _asl_before;
   delete _asl_after;

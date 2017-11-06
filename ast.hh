@@ -1118,7 +1118,7 @@ namespace suse
 	void set_asl_before(attribute_specifier_list* &&asl_before) noexcept;
 
       private:
-	declarator &_d;
+	declarator *_d;
 	expr *_width;
 	attribute_specifier_list *_asl_before;
 	attribute_specifier_list *_asl_after;
