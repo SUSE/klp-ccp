@@ -218,6 +218,47 @@ expr_sizeof_type_name::~expr_sizeof_type_name() noexcept
 }
 
 
+expr_alignof_expr::expr_alignof_expr(const pp_tokens_range &tr, expr* &&e)
+  noexcept
+  : expr(tr), _e(*mv_p(std::move(e)))
+{
+  _e._set_parent(static_cast<expr&>(*this));
+}
+
+expr_alignof_expr::~expr_alignof_expr() noexcept
+{
+  delete &_e;
+}
+
+
+expr_alignof_type_name::expr_alignof_type_name(const pp_tokens_range &tr,
+					     type_name* &&tn) noexcept
+  : expr(tr), _tn(*mv_p(std::move(tn)))
+{
+  _tn._set_parent(*this);
+}
+
+expr_alignof_type_name::~expr_alignof_type_name() noexcept
+{
+  delete &_tn;
+}
+
+
+expr_builtin_offsetof::expr_builtin_offsetof(const pp_tokens_range &tr,
+					     type_name* &&tn,
+					     expr *&&member_designator)
+noexcept
+  : expr(tr), _tn(*mv_p(std::move(tn))),
+    _member_designator(*mv_p(std::move(member_designator)))
+{}
+
+expr_builtin_offsetof::~expr_builtin_offsetof() noexcept
+{
+  delete &_tn;
+  delete &_member_designator;
+}
+
+
 expr_array_subscript::expr_array_subscript(const pp_tokens_range &tr,
 					   expr* &&base, expr* &&index)
   noexcept
@@ -548,8 +589,8 @@ direct_abstract_declarator_array::
 direct_abstract_declarator_array(const pp_tokens_range &tr,
 				 direct_abstract_declarator* &&dad,
 				 const vla_unspec_size_tag&) noexcept
-  : direct_abstract_declarator(tr), _tql(nullptr), _size(nullptr),
-    _static(false), _vla_unspec_size(true)
+  : direct_abstract_declarator(tr), _dad(mv_p(std::move(dad))),
+    _tql(nullptr), _size(nullptr), _static(false), _vla_unspec_size(true)
 {
   if (_dad)
     _dad->_set_parent(static_cast<direct_abstract_declarator&>(*this));

@@ -466,6 +466,45 @@ namespace suse
 	type_name &_tn;
       };
 
+      class expr_alignof_expr : public expr
+      {
+      public:
+	expr_alignof_expr(const pp_tokens_range &tr, expr* &&e) noexcept;
+
+	virtual ~expr_alignof_expr() noexcept;
+
+      private:
+	expr &_e;
+      };
+
+      class expr_alignof_type_name : public expr
+      {
+      public:
+	expr_alignof_type_name(const pp_tokens_range &tr, type_name* &&tn)
+	  noexcept;
+
+	virtual ~expr_alignof_type_name() noexcept;
+
+      private:
+	type_name &_tn;
+      };
+
+
+      class expr_builtin_offsetof : public expr
+      {
+      public:
+	expr_builtin_offsetof(const pp_tokens_range &tr, type_name* &&tn,
+			      expr *&&member_designator)
+	  noexcept;
+
+	virtual ~expr_builtin_offsetof() noexcept;
+
+      private:
+	type_name &_tn;
+	expr &_member_designator;
+      };
+
+
       class expr_array_subscript : public expr
       {
       public:
@@ -796,6 +835,7 @@ namespace suse
       {
       public:
 	typedef type_set<typeof_type_name, expr_sizeof_type_name,
+			 expr_alignof_type_name, expr_builtin_offsetof,
 			 expr_cast, expr_compound_literal,
 			 typeof_type_name> parent_types;
 
