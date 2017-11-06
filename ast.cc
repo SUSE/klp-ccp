@@ -1724,11 +1724,16 @@ void initializer_list::extend(initializer* &&i)
 
 
 asm_label::asm_label(const pp_tokens_range &tr,
-		     const pp_token_index label_tok) noexcept
-  : ast_entity(tr), _label_tok(label_tok)
-{}
+		     string_literal* &&label) noexcept
+  : ast_entity(tr), _label(*mv_p(std::move(label)))
+{
+  _label._set_parent(*this);
+}
 
-asm_label::~asm_label() noexcept = default;
+asm_label::~asm_label() noexcept
+{
+  delete &_label;
+}
 
 
 init_declarator::init_declarator(const pp_tokens_range &tr,

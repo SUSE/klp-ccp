@@ -1560,8 +1560,8 @@ init_declarator_tdid:
 ;
 
 asm_label:
-	TOK_KW_ASM TOK_LPAREN TOK_STRING_LITERAL TOK_RPAREN
-	  { $$ = new asm_label(@$, $3); }
+	TOK_KW_ASM TOK_LPAREN string_literal TOK_RPAREN
+	  { $$ = new asm_label(@$, std::move($3)); }
 ;
 
 initializer:

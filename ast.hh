@@ -636,7 +636,8 @@ namespace suse
       {
       public:
 	typedef type_set<expr_string_literal,
-			 asm_directive> parent_types;
+			 asm_directive,
+			 asm_label> parent_types;
 
 	string_literal(const pp_token_index s);
 
@@ -1581,12 +1582,12 @@ namespace suse
 
       public:
 	asm_label(const pp_tokens_range &tr,
-		  const pp_token_index label_tok) noexcept;
+		  string_literal* &&label) noexcept;
 
 	virtual ~asm_label() noexcept;
 
       private:
-	pp_token_index _label_tok;
+	string_literal &_label;
       };
 
       class init_declarator : public ast_entity<init_declarator>
