@@ -57,6 +57,8 @@ static const _val_tok_map_entry kw_map_entries[] = {
   { "__alignof__", gnuc_parser::token_type::TOK_KW_ALIGNOF },
   { "__alignof", gnuc_parser::token_type::TOK_KW_ALIGNOF },
   { "__builtin_offsetof", gnuc_parser::token_type::TOK_KW_BUILTIN_OFFSETOF },
+  { "__builtin_types_compatible_p",
+	gnuc_parser::token_type::TOK_KW_BUILTIN_TYPES_COMPATIBLE_P },
   { "__attribute__", gnuc_parser::token_type::TOK_KW_ATTRIBUTE },
   { "__attribute", gnuc_parser::token_type::TOK_KW_ATTRIBUTE },
   { "case", gnuc_parser::token_type::TOK_KW_CASE },

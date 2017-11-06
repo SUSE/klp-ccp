@@ -250,12 +250,30 @@ expr_builtin_offsetof::expr_builtin_offsetof(const pp_tokens_range &tr,
 noexcept
   : expr(tr), _tn(*mv_p(std::move(tn))),
     _member_designator(*mv_p(std::move(member_designator)))
-{}
+{
+  _tn._set_parent(*this);
+  _member_designator._set_parent(static_cast<expr&>(*this));
+}
 
 expr_builtin_offsetof::~expr_builtin_offsetof() noexcept
 {
   delete &_tn;
   delete &_member_designator;
+}
+
+
+expr_builtin_types_compatible_p::
+expr_builtin_types_compatible_p(const pp_tokens_range &tr,
+				type_name* &&tn1, type_name* &&tn2) noexcept
+  : expr(tr), _tn1(*mv_p(std::move(tn1))), _tn2(*mv_p(std::move(tn2)))
+{
+  _tn1._set_parent(*this);
+  _tn2._set_parent(*this);
+}
+expr_builtin_types_compatible_p::~expr_builtin_types_compatible_p() noexcept
+{
+  delete &_tn1;
+  delete &_tn2;
 }
 
 

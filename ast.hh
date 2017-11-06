@@ -504,6 +504,19 @@ namespace suse
 	expr &_member_designator;
       };
 
+      class expr_builtin_types_compatible_p : public expr
+      {
+      public:
+	expr_builtin_types_compatible_p(const pp_tokens_range &tr,
+					type_name* &&tn1, type_name* &&tn2)
+	  noexcept;
+
+	virtual ~expr_builtin_types_compatible_p() noexcept;
+
+      private:
+	type_name &_tn1;
+	type_name &_tn2;
+      };
 
       class expr_array_subscript : public expr
       {
@@ -836,6 +849,7 @@ namespace suse
       public:
 	typedef type_set<typeof_type_name, expr_sizeof_type_name,
 			 expr_alignof_type_name, expr_builtin_offsetof,
+			 expr_builtin_types_compatible_p,
 			 expr_cast, expr_compound_literal,
 			 typeof_type_name> parent_types;
 

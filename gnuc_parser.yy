@@ -180,7 +180,9 @@ static void empty(pp_tokens_range &loc)
 
 %token TOK_KW_SIZEOF
 %token TOK_KW_ALIGNOF
+
 %token TOK_KW_BUILTIN_OFFSETOF
+%token TOK_KW_BUILTIN_TYPES_COMPATIBLE_P
 
 
 %token TOK_KW_ATTRIBUTE
@@ -2062,6 +2064,8 @@ unary_expression:
 	  { $$ = new expr_alignof_type_name(@$, std::move($3)); }
 	| TOK_KW_BUILTIN_OFFSETOF TOK_LPAREN type_name TOK_COMMA expression TOK_RPAREN
 	  { $$ = new expr_builtin_offsetof(@$, std::move($3), std::move($5)); }
+	| TOK_KW_BUILTIN_TYPES_COMPATIBLE_P TOK_LPAREN type_name TOK_COMMA type_name TOK_RPAREN
+	  { $$ = new expr_builtin_types_compatible_p(@$, std::move($3), std::move($5)); }
 ;
 
 unary_operator:
