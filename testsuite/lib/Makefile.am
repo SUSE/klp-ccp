@@ -1,1 +1,1 @@
-EXTRA_DIST = cpp.exp
+EXTRA_DIST = cpp.exp cparse.exp

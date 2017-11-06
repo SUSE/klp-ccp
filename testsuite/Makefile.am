@@ -1,5 +1,5 @@
-SUBDIRS = lib cpp
+SUBDIRS = lib cpp cparse
 
 AUTOMAKE_OPTIONS = dejagnu
-DEJATOOL = cpp
+DEJATOOL = cpp cparse
 
