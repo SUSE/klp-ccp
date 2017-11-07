@@ -139,6 +139,18 @@ static _val_tok_map_type _initialize_val_tok_map(const _val_tok_map_entry *e)
   return m;
 }
 
+gnuc_parser_driver::gnuc_parser_driver(preprocessor &&pp)
+  : _result(nullptr), _pp(std::move(pp)),
+    _parser(*this), _ignore_td_spec(0), _in_typedef(false)
+{
+  _typedefs_scopes.emplace();
+}
+
+gnuc_parser_driver::~gnuc_parser_driver() noexcept
+{
+  delete _result;
+}
+
 void gnuc_parser_driver::parse()
 {
   _parser.parse();
@@ -152,11 +164,13 @@ void gnuc_parser_driver::parse_debug()
 }
 #endif
 
-gnuc_parser_driver::gnuc_parser_driver(preprocessor &&pp)
-  : _pp(std::move(pp)),
-    _parser(*this), _ignore_td_spec(0), _in_typedef(false)
+ast gnuc_parser_driver::grab_result()
 {
-  _typedefs_scopes.emplace();
+  std::unique_ptr<translation_unit> tu(_result);
+  _result = nullptr;
+
+  return ast::ast(_pp.grab_header_inclusion_roots(),
+		  std::move(_tokens), std::move(tu));
 }
 
 gnuc_parser::token_type

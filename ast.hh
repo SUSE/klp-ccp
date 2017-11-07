@@ -5,7 +5,10 @@
 #include <cassert>
 #include <initializer_list>
 #include <functional>
+#include <memory>
 #include "type_set.hh"
+#include "header_inclusion_tree.hh"
+#include "pp_tokens.hh"
 
 #ifdef DEBUG_PARSER
 #include <iostream>
@@ -55,9 +58,28 @@ namespace suse
 	_ast_entity *_parent;
 
       private:
+	friend class ast;
+
+	virtual _ast_entity* _get_child(const size_t i) noexcept = 0;
+
+	template <typename callable_type>
+	void for_each_dfs_po(callable_type &&c);
+
 	pp_tokens_range _tokens_range;
       };
 
+      template <typename callable_type>
+      void _ast_entity::for_each_dfs_po(callable_type &&c)
+      {
+	  for (std::size_t i_child = 0;; ++i_child) {
+	    _ast_entity * const ae = _get_child(i_child);
+	    if (!ae)
+	      break;
+	    ae->for_each_dfs_po(std::forward<callable_type>(c));
+	  }
+
+	  c(this);
+      }
 
       template <typename derived>
       class ast_entity : public _ast_entity
@@ -100,6 +122,7 @@ namespace suse
       ast_entity<derived>::ast_entity(const ast_entity &ae) noexcept
 	: _ast_entity(ae)
       {}
+
 
       class expr;
       class expr_list;
@@ -272,6 +295,8 @@ namespace suse
 	void extend(expr* &&e);
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<std::reference_wrapper<expr> > _exprs;
       };
 
@@ -310,6 +335,8 @@ namespace suse
 	virtual ~expr_comma() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	expr &_left;
 	expr &_right;
       };
@@ -337,6 +364,8 @@ namespace suse
 	virtual ~expr_assignment() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	assign_op _op;
 	expr &_lhs;
 	expr &_rhs;
@@ -353,6 +382,8 @@ namespace suse
 	virtual ~expr_conditional() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	expr &_cond;
 	expr *_expr_true;
 	expr &_expr_false;
@@ -388,6 +419,8 @@ namespace suse
 	virtual ~expr_binop() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	binary_op _op;
 	expr &_left;
 	expr &_right;
@@ -402,6 +435,8 @@ namespace suse
 	virtual ~expr_cast() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	type_name &_tn;
 	expr &_e;
       };
@@ -427,6 +462,8 @@ namespace suse
 	virtual ~expr_label_addr() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	pp_token_index _label_tok;
       };
 
@@ -439,6 +476,8 @@ namespace suse
 	virtual ~expr_unop_pre() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	unary_op_pre _op;
 	expr &_e;
       };
@@ -451,6 +490,8 @@ namespace suse
 	virtual ~expr_sizeof_expr() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	expr &_e;
       };
 
@@ -463,6 +504,8 @@ namespace suse
 	virtual ~expr_sizeof_type_name() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	type_name &_tn;
       };
 
@@ -474,6 +517,8 @@ namespace suse
 	virtual ~expr_alignof_expr() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	expr &_e;
       };
 
@@ -486,6 +531,8 @@ namespace suse
 	virtual ~expr_alignof_type_name() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	type_name &_tn;
       };
 
@@ -499,6 +546,8 @@ namespace suse
 	virtual ~expr_builtin_offsetof() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	type_name &_tn;
 	expr &_member_designator;
       };
@@ -513,6 +562,8 @@ namespace suse
 	virtual ~expr_builtin_types_compatible_p() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	type_name &_tn1;
 	type_name &_tn2;
       };
@@ -526,6 +577,8 @@ namespace suse
 	virtual ~expr_array_subscript() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	expr &_base;
 	expr &_index;
       };
@@ -541,6 +594,8 @@ namespace suse
 	virtual ~expr_func_invocation() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	expr &_func;
 	expr_list *_args;
       };
@@ -562,6 +617,8 @@ namespace suse
 	virtual ~expr_member_deref() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	member_deref_type _deref_type;
 	expr &_base;
 	pp_token_index _member_tok;
@@ -582,6 +639,8 @@ namespace suse
 	virtual ~expr_unop_post() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	unary_op_post _op;
 	expr &_e;
       };
@@ -595,6 +654,8 @@ namespace suse
 	virtual ~expr_compound_literal() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	type_name &_tn;
 	initializer_list *_il;
       };
@@ -607,6 +668,8 @@ namespace suse
 	virtual ~expr_statement() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	stmt &_s;
       };
 
@@ -618,6 +681,8 @@ namespace suse
 	virtual ~expr_id() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	pp_token_index _id_tok;
       };
 
@@ -629,6 +694,8 @@ namespace suse
 	virtual ~expr_constant() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	pp_token_index _const_tok;
       };
 
@@ -646,6 +713,8 @@ namespace suse
 	void extend(const pp_token_index s);
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<pp_token_index> _strings;
       };
 
@@ -657,6 +726,8 @@ namespace suse
 	virtual ~expr_string_literal() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	string_literal &_sl;
       };
 
@@ -668,6 +739,8 @@ namespace suse
 	virtual ~expr_parenthesized() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	expr &_e;
       };
 
@@ -684,6 +757,8 @@ namespace suse
 	virtual ~attribute() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	pp_token_index _name_tok;
 	expr_list *_params;
       };
@@ -700,6 +775,8 @@ namespace suse
 	void extend(const pp_tokens_range &tr, attribute* &&a);
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<attribute*> _attributes;
       };
 
@@ -715,6 +792,8 @@ namespace suse
 	virtual ~attribute_specifier() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	attribute_list &_al;
       };
 
@@ -742,6 +821,8 @@ namespace suse
 	void extend(attribute_specifier* &&as);
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<std::reference_wrapper<attribute_specifier> > _ass;
       };
 
@@ -757,6 +838,8 @@ namespace suse
 	void extend(const pp_tokens_range &tr, type_qualifier_list* &&tql);
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<type_qualifier_list*> _tqls;
       };
 
@@ -785,6 +868,8 @@ namespace suse
 	virtual ~direct_abstract_declarator_parenthesized() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	attribute_specifier_list *_asl;
 	abstract_declarator &_ad;
       };
@@ -806,6 +891,8 @@ namespace suse
 	virtual ~direct_abstract_declarator_array() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	direct_abstract_declarator *_dad;
 	type_qualifier_list *_tql;
 	expr *_size;
@@ -824,6 +911,8 @@ namespace suse
 	virtual ~direct_abstract_declarator_func() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	direct_abstract_declarator *_dad;
 	parameter_declaration_list *_ptl;
       };
@@ -841,6 +930,8 @@ namespace suse
 	virtual ~abstract_declarator() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	pointer *_pt;
 	direct_abstract_declarator *_dad;
       };
@@ -860,6 +951,8 @@ namespace suse
 	virtual ~type_name() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	specifier_qualifier_list &_sql;
 	abstract_declarator *_ad;
       };
@@ -887,6 +980,8 @@ namespace suse
 	virtual pp_token_index get_id_tok() const noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	pp_token_index _id_tok;
       };
 
@@ -903,6 +998,8 @@ namespace suse
 	virtual pp_token_index get_id_tok() const noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	declarator &_d;
 	attribute_specifier_list *_asl;
       };
@@ -927,6 +1024,8 @@ namespace suse
 	virtual pp_token_index get_id_tok() const noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	direct_declarator &_dd;
 	type_qualifier_list *_tql;
 	expr *_size;
@@ -956,6 +1055,8 @@ namespace suse
 	virtual pp_token_index get_id_tok() const noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	direct_declarator &_dd;
 	parameter_declaration_list *_ptl;
 	identifier_list *_il;
@@ -978,6 +1079,8 @@ namespace suse
 	pp_token_index get_id_tok() const noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	pointer *_pt;
 	direct_declarator &_dd;
       };
@@ -1006,6 +1109,8 @@ namespace suse
 	{ return _sc; }
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	storage_class _sc;
       };
 
@@ -1030,6 +1135,8 @@ namespace suse
 	virtual ~type_qualifier() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	type_qualifier_type _tqt;
       };
 
@@ -1051,6 +1158,8 @@ namespace suse
 	void extend(attribute_specifier_list* &&asl);
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<std::reference_wrapper<type_qualifier> > _tqs;
 	std::vector<std::reference_wrapper<attribute_specifier_list> > _asls;
       };
@@ -1091,6 +1200,8 @@ namespace suse
 	virtual ~type_specifier_pod() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	pod_spec _pod_spec;
       };
 
@@ -1102,6 +1213,8 @@ namespace suse
 	virtual ~type_specifier_tdid() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	pp_token_index _tdid_tok;
       };
 
@@ -1115,7 +1228,7 @@ namespace suse
 
 	virtual ~struct_declaration() noexcept;
 
-      private:
+      protected:
 	specifier_qualifier_list *_sql;
       };
 
@@ -1133,6 +1246,8 @@ namespace suse
 	void set_asl_before(attribute_specifier_list* &&asl_before) noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	declarator *_d;
 	expr *_width;
 	attribute_specifier_list *_asl_before;
@@ -1151,6 +1266,8 @@ namespace suse
 	void extend(struct_declarator* &&sd);
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<std::reference_wrapper<struct_declarator> > _sds;
       };
 
@@ -1164,6 +1281,8 @@ namespace suse
 	virtual ~struct_declaration_c99() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	struct_declarator_list &_sdl;
       };
 
@@ -1187,6 +1306,8 @@ namespace suse
 	virtual ~unnamed_struct_or_union() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	struct_or_union _sou;
 	struct_declaration_list *_sdl;
 	attribute_specifier_list *_asl_before;
@@ -1204,6 +1325,8 @@ namespace suse
 	virtual ~struct_declaration_unnamed_sou() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	unnamed_struct_or_union &_unnamed_sou;
       };
 
@@ -1221,6 +1344,8 @@ namespace suse
 	void extend(struct_declaration* &&sd);
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<std::reference_wrapper<struct_declaration> > _sds;
       };
 
@@ -1251,6 +1376,7 @@ namespace suse
 			    attribute_specifier_list* &&asl_after,
 			    const bool id_tok_valid) noexcept;
 
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
 
 	struct_or_union _sou;
 	pp_token_index _id_tok;
@@ -1271,6 +1397,8 @@ namespace suse
 	virtual ~struct_or_union_ref() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	struct_or_union _sou;
 	pp_token_index _id_tok;
 	attribute_specifier_list *_asl;
@@ -1288,6 +1416,8 @@ namespace suse
 	virtual ~enumerator() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	pp_token_index _id_tok;
 	expr *_value;
       };
@@ -1304,6 +1434,8 @@ namespace suse
 	void extend(enumerator* &&e);
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<std::reference_wrapper<enumerator> > _es;
       };
 
@@ -1331,6 +1463,8 @@ namespace suse
 		 attribute_specifier_list* &&asl_after,
 		 const bool id_tok_valid) noexcept;
 
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	pp_token_index _id_tok;
 	enumerator_list &_el;
 	attribute_specifier_list *_asl_before;
@@ -1348,6 +1482,8 @@ namespace suse
 	virtual ~enum_ref() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	pp_token_index _id_tok;
 	attribute_specifier_list *_asl;
       };
@@ -1361,6 +1497,8 @@ namespace suse
 	virtual ~typeof_expr() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	expr &_e;
       };
 
@@ -1373,6 +1511,8 @@ namespace suse
 	virtual ~typeof_type_name() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	type_name &_tn;
       };
 
@@ -1386,6 +1526,8 @@ namespace suse
 	virtual ~function_specifier() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	pp_token_index _spec_tok;
       };
 
@@ -1415,6 +1557,10 @@ namespace suse
 
       protected:
 	specifier_qualifier_list(const pp_tokens_range &tr) noexcept;
+
+	std::size_t _n_children() const noexcept;
+
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
 
       private:
 	std::vector<std::reference_wrapper<type_specifier> > _tss;
@@ -1450,6 +1596,8 @@ namespace suse
 	void extend(declaration_specifiers* &&ds);
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<std::reference_wrapper<storage_class_specifier> > _scss;
 	std::vector<std::reference_wrapper<function_specifier> > _fss;
       };
@@ -1466,7 +1614,7 @@ namespace suse
       protected:
 	initializer(const pp_tokens_range &tr) noexcept;
 
-      private:
+      protected:
 	designation *_d;
       };
 
@@ -1478,6 +1626,8 @@ namespace suse
 	virtual ~initializer_expr() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	expr &_e;
       };
 
@@ -1490,6 +1640,8 @@ namespace suse
 	virtual ~initializer_init_list() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	initializer_list *_il;
       };
 
@@ -1512,6 +1664,8 @@ namespace suse
 	virtual ~designator_member() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	pp_token_index _member_tok;
       };
 
@@ -1524,6 +1678,8 @@ namespace suse
 	virtual ~designator_array() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	expr &_index_first;
 	expr *_index_last;
       };
@@ -1541,6 +1697,8 @@ namespace suse
 	void extend(designator* &&d);
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<std::reference_wrapper<designator> > _ds;
       };
 
@@ -1556,6 +1714,8 @@ namespace suse
 	virtual ~designation() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	designator_list &_dl;
       };
 
@@ -1572,6 +1732,8 @@ namespace suse
 	void extend(initializer* &&i);
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<std::reference_wrapper<initializer> > _is;
       };
 
@@ -1588,6 +1750,8 @@ namespace suse
 	virtual ~asm_label() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	string_literal &_label;
       };
 
@@ -1606,6 +1770,8 @@ namespace suse
 	void set_asl_before(attribute_specifier_list* &&asl_before) noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	declarator &_d;
 	initializer *_i;
 	asm_label *_al;
@@ -1626,6 +1792,8 @@ namespace suse
 	void extend(init_declarator* &&id);
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<std::reference_wrapper<init_declarator> > _ids;
       };
 
@@ -1644,6 +1812,8 @@ namespace suse
 	virtual ~declaration() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	declaration_specifiers &_ds;
 	init_declarator_list *_idl;
       };
@@ -1658,7 +1828,8 @@ namespace suse
 
 	virtual ~parameter_declaration() noexcept;
 
-      private:
+
+      protected:
 	declaration_specifiers &_ds;
       };
 
@@ -1674,6 +1845,8 @@ namespace suse
 	virtual ~parameter_declaration_declarator() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	declarator &_d;
 	attribute_specifier_list *_asl;
       };
@@ -1690,6 +1863,8 @@ namespace suse
 	virtual ~parameter_declaration_abstract() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	abstract_declarator *_ad;
       };
 
@@ -1709,6 +1884,8 @@ namespace suse
 	void set_variadic(const pp_tokens_range &triple_dot_tr) noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<std::reference_wrapper<parameter_declaration> > _pds;
 	bool _variadic;
       };
@@ -1727,6 +1904,8 @@ namespace suse
 	void extend(const pp_token_index id_tok);
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<pp_token_index> _ids;
       };
 
@@ -1742,6 +1921,8 @@ namespace suse
 	void extend(declaration* &&d);
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<std::reference_wrapper<declaration> > _ds;
       };
 
@@ -1768,6 +1949,8 @@ namespace suse
 	virtual ~stmt_labeled() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	pp_token_index _label_tok;
 	stmt &_s;
 	attribute_specifier_list *_asl;
@@ -1782,6 +1965,8 @@ namespace suse
 	virtual ~stmt_case() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	expr &_e;
 	stmt &_s;
       };
@@ -1795,6 +1980,8 @@ namespace suse
 	virtual ~stmt_case_range() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	expr &_e_low;
 	expr &_e_high;
 	stmt &_s;
@@ -1808,6 +1995,8 @@ namespace suse
 	~stmt_default() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	stmt &_s;
       };
 
@@ -1823,6 +2012,8 @@ namespace suse
 	virtual ~local_label_declaration() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	identifier_list &_idl;
       };
 
@@ -1839,6 +2030,8 @@ namespace suse
 	void extend(local_label_declaration* &&lld);
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<std::reference_wrapper<local_label_declaration> > _llds;
       };
 
@@ -1860,6 +2053,8 @@ namespace suse
 	virtual ~block_item_decl() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	declaration &_d;
       };
 
@@ -1871,6 +2066,8 @@ namespace suse
 	virtual ~block_item_stmt() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	stmt &_s;
       };
 
@@ -1882,6 +2079,8 @@ namespace suse
 	virtual ~block_item_function_definition() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	function_definition &_fd;
       };
 
@@ -1897,6 +2096,8 @@ namespace suse
 	void extend(block_item* &&bi);
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<std::reference_wrapper<block_item> > _bis;
       };
 
@@ -1909,9 +2110,15 @@ namespace suse
 
 	virtual ~stmt_compound() noexcept;
 
+	void register_label(stmt_labeled * const label);
+
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	local_label_declaration_list *_lldl;
 	block_item_list *_bil;
+
+	std::vector<stmt_labeled*> _labels;
       };
 
       class stmt_expr : public stmt
@@ -1922,6 +2129,8 @@ namespace suse
 	virtual ~stmt_expr() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	expr *_e;
       };
 
@@ -1935,6 +2144,8 @@ namespace suse
 	virtual ~stmt_if() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	expr &_cond;
 	stmt &_s_true;
 	stmt *_s_false;
@@ -1948,6 +2159,8 @@ namespace suse
 	virtual ~stmt_switch() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	expr &_e;
 	stmt &_s;
       };
@@ -1960,6 +2173,8 @@ namespace suse
 	virtual ~stmt_while() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	expr &_e;
 	stmt &_s;
       };
@@ -1972,6 +2187,8 @@ namespace suse
 	virtual ~stmt_do() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	expr &_e;
 	stmt &_s;
       };
@@ -1986,6 +2203,8 @@ namespace suse
 	virtual ~stmt_for_init_expr() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	expr *_init;
 	expr *_cond;
 	expr *_next;
@@ -2002,6 +2221,8 @@ namespace suse
 	virtual ~stmt_for_init_decl() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	declaration &_d;
 	expr *_cond;
 	expr *_next;
@@ -2016,6 +2237,8 @@ namespace suse
 	virtual ~stmt_goto() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	expr &_e;
       };
 
@@ -2025,6 +2248,9 @@ namespace suse
 	stmt_continue(const pp_tokens_range &tr) noexcept;
 
 	virtual ~stmt_continue() noexcept;
+
+      private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
       };
 
       class stmt_break : public stmt
@@ -2033,6 +2259,9 @@ namespace suse
 	stmt_break(const pp_tokens_range &tr) noexcept;
 
 	virtual ~stmt_break() noexcept;
+
+      private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
       };
 
       class stmt_return : public stmt
@@ -2043,6 +2272,8 @@ namespace suse
 	virtual ~stmt_return() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	expr *_e;
       };
 
@@ -2054,6 +2285,8 @@ namespace suse
 	virtual ~stmt_asm() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	asm_directive &_ad;
       };
 
@@ -2078,6 +2311,8 @@ namespace suse
 		    const asm_qualifier aq);
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<asm_qualifier> _aqs;
       };
 
@@ -2092,6 +2327,8 @@ namespace suse
 	virtual ~asm_operand_name() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	pp_token_index _id_tok;
       };
 
@@ -2106,6 +2343,8 @@ namespace suse
 	virtual ~asm_operand() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	asm_operand_name *_aon;
 	pp_token_index _constraint_tok;
 	expr &_e;
@@ -2124,6 +2363,8 @@ namespace suse
 	void extend(asm_operand* &&ao);
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<std::reference_wrapper<asm_operand> > _aos;
       };
 
@@ -2139,6 +2380,8 @@ namespace suse
 	void extend(const pp_token_index clobber_tok);
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<pp_token_index> _clobber_toks;
       };
 
@@ -2154,6 +2397,8 @@ namespace suse
 	void extend(const pp_token_index label_tok);
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<pp_token_index> _label_toks;
       };
 
@@ -2172,6 +2417,8 @@ namespace suse
 	virtual ~asm_directive() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	asm_qualifier_list *_aql;
 	string_literal &_asm_s;
 	asm_operand_list *_output_aol;
@@ -2195,6 +2442,8 @@ namespace suse
 	virtual ~function_definition() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	declaration_specifiers &_ds;
 	declarator &_d;
 	attribute_specifier_list *_asl;
@@ -2220,6 +2469,8 @@ namespace suse
 	virtual ~external_declaration_decl() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	declaration &_d;
       };
 
@@ -2231,6 +2482,8 @@ namespace suse
 	virtual ~external_declaration_func() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	function_definition &_fd;
       };
 
@@ -2242,6 +2495,8 @@ namespace suse
 	virtual ~external_declaration_asm() noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	asm_directive &_ad;
       };
 
@@ -2260,7 +2515,35 @@ namespace suse
 	void extend_tokens_range(const pp_tokens_range &tr) noexcept;
 
       private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept;
+
 	std::vector<std::reference_wrapper<external_declaration> > _eds;
+      };
+
+
+      class ast
+      {
+      public:
+	typedef std::vector<std::unique_ptr<header_inclusion_root> >
+	header_inclusion_roots_type;
+
+	ast(header_inclusion_roots_type &&hirs, pp_tokens &&tokens,
+	    std::unique_ptr<translation_unit> &&tu);
+
+	template <typename callable_type>
+	void for_each_dfs_po(callable_type &&c)
+	{
+	  if (_tu)
+	    _tu->for_each_dfs_po(std::forward<callable_type>(c));
+	}
+
+	pp_tokens& get_pp_tokens() noexcept
+	{ return _tokens; }
+
+      private:
+	header_inclusion_roots_type _hirs;
+	pp_tokens _tokens;
+	std::unique_ptr<translation_unit> _tu;
       };
     }
   }

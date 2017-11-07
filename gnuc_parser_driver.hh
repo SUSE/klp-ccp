@@ -23,6 +23,8 @@ namespace suse
 
 	gnuc_parser_driver(gnuc_parser_driver&&) = delete;
 
+	~gnuc_parser_driver() noexcept;
+
 	void parse();
 
 #ifdef DEBUG_PARSER
@@ -31,6 +33,9 @@ namespace suse
 
 	code_remarks& get_remarks() noexcept
 	{ return _remarks; }
+
+
+	ast::ast grab_result();
 
       private:
 	suse::cp::yy::gnuc_parser::token_type
@@ -67,6 +72,7 @@ namespace suse
 	_typedefs_type _stashed_typedef_scope;
 
 	pp_tokens _tokens;
+	ast::translation_unit *_result;
 
 	preprocessor _pp;
 	gnuc_parser _parser;

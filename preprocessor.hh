@@ -49,6 +49,10 @@ namespace suse
       code_remarks& get_remarks() noexcept
       { return _remarks; }
 
+      header_inclusion_roots_type
+      grab_header_inclusion_roots()
+      { return std::move(_header_inclusion_roots); }
+
     private:
       template<typename T>
       void _grab_remarks_from(T &from);
@@ -81,7 +85,7 @@ namespace suse
 
       void _handle_include(pp_tokens &&directive_toks);
 
-      header_resolver _header_resolver;
+      const header_resolver &_header_resolver;
 
       header_inclusion_roots_type &_header_inclusion_roots;
       header_inclusion_roots_type::iterator _cur_header_inclusion_root;
