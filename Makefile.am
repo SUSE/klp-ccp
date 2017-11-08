@@ -21,6 +21,7 @@ noinst_HEADERS =			\
 	pp_tokens.hh			\
 	pp_tokenizer.hh		\
 	preprocessor.hh		\
+	semantic_except.hh		\
 	type_set.hh			\
 	used_macros.hh			\
 	used_macro_undefs.hh
@@ -28,6 +29,7 @@ noinst_HEADERS =			\
 noinst_LIBRARIES = libcp.a
 libcp_a_SOURCES =			\
 	ast.cc				\
+	ast_resolve.cc			\
 	code_remark.cc			\
 	code_remarks.cc		\
 	file_range.cc			\
@@ -45,6 +47,7 @@ libcp_a_SOURCES =			\
 	pp_tokens.cc			\
 	pp_tokenizer.cc		\
 	preprocessor.cc		\
+	semantic_except.cc		\
 	used_macros.cc			\
 	used_macro_undefs.cc
 

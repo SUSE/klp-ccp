@@ -3245,11 +3245,6 @@ stmt_compound::~stmt_compound() noexcept
   delete _bil;
 }
 
-void stmt_compound::register_label(stmt_labeled * const label)
-{
-  _labels.push_back(label);
-}
-
 _ast_entity* stmt_compound::_get_child(const size_t i) noexcept
 {
   if (!i) {

@@ -9,6 +9,8 @@
 #include "type_set.hh"
 #include "header_inclusion_tree.hh"
 #include "pp_tokens.hh"
+#include "code_remarks.hh"
+#include "code_remark.hh"
 
 #ifdef DEBUG_PARSER
 #include <iostream>
@@ -150,7 +152,7 @@ namespace suse
 	: _ast_entity(ae)
       {}
 
-
+      class ast;
       class expr;
       class expr_list;
       class attribute;
@@ -1949,6 +1951,10 @@ namespace suse
 
 	void extend(const pp_token_index id_tok);
 
+	const std::vector<pp_token_index>&
+	get_identifiers() const noexcept
+	{ return _ids; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
 
@@ -1997,6 +2003,9 @@ namespace suse
 		     stmt* &&s, attribute_specifier_list* &&asl) noexcept;
 
 	virtual ~stmt_labeled() noexcept;
+
+	pp_token_index get_label_tok() const noexcept
+	{ return _label_tok; }
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
@@ -2061,6 +2070,9 @@ namespace suse
 
 	virtual ~local_label_declaration() noexcept;
 
+	const identifier_list& get_identifier_list() const noexcept
+	{ return _idl; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
 
@@ -2078,6 +2090,10 @@ namespace suse
 	virtual ~local_label_declaration_list() noexcept;
 
 	void extend(local_label_declaration* &&lld);
+
+	const std::vector<std::reference_wrapper<local_label_declaration> >&
+	get_local_label_declarations() const noexcept
+	{ return _llds; }
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
@@ -2162,13 +2178,19 @@ namespace suse
 
 	void register_label(stmt_labeled * const label);
 
+	stmt_labeled* lookup_label(const ast &ast,
+				   const pp_token_index &label_tok) noexcept;
+
+	bool is_local_label(const ast &ast,
+			    const pp_token_index &label_tok) noexcept;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
 
 	local_label_declaration_list *_lldl;
 	block_item_list *_bil;
 
-	std::vector<stmt_labeled*> _labels;
+	std::vector<std::reference_wrapper<stmt_labeled> > _labels;
       };
 
       class stmt_expr : public stmt
@@ -2587,13 +2609,22 @@ namespace suse
 	    _tu->for_each_dfs_po(std::forward<callable_type>(c));
 	}
 
-	pp_tokens& get_pp_tokens() noexcept
+	const pp_tokens& get_pp_tokens() const noexcept
 	{ return _tokens; }
 
+	void resolve();
+
+	code_remarks& get_remarks() noexcept
+	{ return _remarks; }
+
       private:
+	void _register_labels();
+
 	header_inclusion_roots_type _hirs;
 	pp_tokens _tokens;
 	std::unique_ptr<translation_unit> _tu;
+
+	code_remarks _remarks;
       };
     }
   }

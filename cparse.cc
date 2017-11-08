@@ -4,6 +4,7 @@
 #include "header_resolver.hh"
 #include "pp_except.hh"
 #include "parse_except.hh"
+#include "semantic_except.hh"
 
 using namespace suse::cp;
 
@@ -87,6 +88,16 @@ int main(int argc, char* argv[])
 
   if (!pd.get_remarks().empty())
     std::cerr << pd.get_remarks();
+
+  ast::ast ast(pd.grab_result());
+  try {
+    ast.resolve();
+  } catch (const semantic_except&) {
+    r = 3;
+  }
+
+  if (!ast.get_remarks().empty())
+    std::cerr << ast.get_remarks();
 
   return r;
 }
