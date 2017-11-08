@@ -52,6 +52,9 @@ namespace suse
 	const pp_tokens_range get_tokens_range() const noexcept
 	{ return _tokens_range; }
 
+	_ast_entity* get_parent() noexcept
+	{ return _parent; }
+
       protected:
 	void _extend_tokens_range(const pp_tokens_range &tr) noexcept;
 
@@ -81,6 +84,9 @@ namespace suse
 	  c(this);
       }
 
+      template <typename U>
+      using parents_of = typename U::parent_types;
+
       template <typename derived>
       class ast_entity : public _ast_entity
       {
@@ -90,6 +96,27 @@ namespace suse
 	ast_entity(const ast_entity &ae) noexcept;
 
 	virtual ~ast_entity() noexcept = default;
+
+
+	template<typename mask_type_set, typename callable_type>
+	bool for_each_parent(callable_type &&c)
+	{
+	  bool r = true;
+	  _ast_entity *p = _parent;
+	  typedef
+	    typename
+	    derived::parent_types::template closure<parents_of, mask_type_set>
+	    ancestor_types;
+
+	  while (p && r) {
+	    r = ancestor_types::cast_and_call(std::forward<callable_type>(c),
+					      *p);
+
+	    p = p->get_parent();
+	  }
+
+	  return r;
+	};
 
 	template<typename parent_type>
 	void _set_parent(parent_type &p) noexcept
@@ -179,6 +206,8 @@ namespace suse
       class expr_cast;
       class expr_unop_pre;
       class expr_sizeof_expr;
+      class expr_alignof_expr;
+      class expr_builtin_offsetof;
       class expr_sizeof_type_name;
       class expr_array_subscript;
       class expr_func_invocation;
@@ -303,7 +332,13 @@ namespace suse
       class expr : public ast_entity<expr>
       {
       public:
-	typedef type_set<expr, expr_list,
+	typedef type_set<expr_list,
+			 expr_cast, expr_unop_pre,
+			 expr_sizeof_expr, expr_alignof_expr,
+			 expr_builtin_offsetof, expr_array_subscript,
+			 expr_func_invocation, expr_member_deref,
+			 expr_unop_post, expr_parenthesized, expr_comma,
+			 expr_assignment, expr_conditional, expr_binop,
 			 direct_abstract_declarator_array,
 			 direct_declarator_array,
 			 struct_declarator,
@@ -323,7 +358,6 @@ namespace suse
 	virtual ~expr() noexcept;
 
       protected:
-	expr(const std::initializer_list<expr*> &exprs) noexcept;
 	expr(const pp_tokens_range &tr) noexcept;
       };
 
@@ -848,7 +882,8 @@ namespace suse
       {
       public:
 	typedef type_set<abstract_declarator,
-			 direct_abstract_declarator> parent_types;
+			 direct_abstract_declarator_array,
+			 direct_abstract_declarator_func> parent_types;
 
 	virtual ~direct_abstract_declarator() noexcept;
 
@@ -920,8 +955,7 @@ namespace suse
       class abstract_declarator : public ast_entity<abstract_declarator>
       {
       public:
-	typedef type_set<type_name, parameter_declaration,
-			 direct_abstract_declarator_parenthesized,
+	typedef type_set<type_name, direct_abstract_declarator_parenthesized,
 			 parameter_declaration_abstract> parent_types;
 
 	abstract_declarator(const pp_tokens_range &tr, pointer* &&pt,
@@ -960,7 +994,8 @@ namespace suse
       class direct_declarator : public ast_entity<direct_declarator>
       {
       public:
-	typedef type_set<declarator, direct_declarator> parent_types;
+	typedef type_set<declarator, direct_declarator_array,
+			 direct_declarator_func> parent_types;
 
 	virtual ~direct_declarator() noexcept;
 
@@ -1037,7 +1072,7 @@ namespace suse
       {
       public:
 	typedef type_set<struct_declaration_c99, function_definition,
-			 parameter_declaration,
+			 parameter_declaration_declarator,
 			 init_declarator_list>parent_types;
 
 	direct_declarator_func(const pp_tokens_range &tr,
@@ -1097,7 +1132,7 @@ namespace suse
       class storage_class_specifier : public ast_entity<storage_class_specifier>
       {
       public:
-	typedef type_set<declaration_specifiers> parent_types;
+	typedef type_set<specifier_qualifier_list> parent_types;
 
       public:
 	storage_class_specifier(const pp_tokens_range &tr,
@@ -1124,8 +1159,7 @@ namespace suse
       class type_qualifier : public ast_entity<type_qualifier>
       {
       public:
-	typedef type_set<declaration_specifiers,
-			 specifier_qualifier_list,
+	typedef type_set<specifier_qualifier_list,
 			 type_qualifier_list> parent_types;
 
       public:
@@ -1167,8 +1201,7 @@ namespace suse
       class type_specifier : public ast_entity<type_specifier>
       {
       public:
-	typedef type_set<declaration_specifiers,
-			 specifier_qualifier_list> parent_types;
+	typedef type_set<specifier_qualifier_list> parent_types;
 
 	type_specifier(const pp_tokens_range &tr) noexcept;
 
@@ -1227,6 +1260,9 @@ namespace suse
 			   specifier_qualifier_list* &&sql) noexcept;
 
 	virtual ~struct_declaration() noexcept;
+
+	specifier_qualifier_list* get_specifier_qualifier_list() noexcept
+	{ return _sql; }
 
       protected:
 	specifier_qualifier_list *_sql;
@@ -1519,7 +1555,7 @@ namespace suse
       class function_specifier : public ast_entity<function_specifier>
       {
       public:
-	typedef type_set<declaration_specifiers> parent_types;
+	typedef type_set<specifier_qualifier_list> parent_types;
       public:
 	function_specifier(const pp_token_index spec_tok) noexcept;
 
@@ -1535,8 +1571,10 @@ namespace suse
 	: public ast_entity<specifier_qualifier_list>
       {
       public:
-	typedef type_set<struct_declaration, type_name,
-			 declaration, parameter_declaration,
+	typedef type_set<struct_declaration_c99, struct_declaration_unnamed_sou,
+			 type_name, declaration,
+			 parameter_declaration_declarator,
+			 parameter_declaration_abstract,
 			 function_definition> parent_types;
 
 	specifier_qualifier_list(type_specifier* &&ts);
@@ -1609,9 +1647,11 @@ namespace suse
 
 	virtual ~initializer() noexcept;
 
-	void set_designation(designation* &&d) noexcept;
+	virtual void set_designation(designation* &&d) noexcept = 0;
 
       protected:
+	void _set_designation(designation* &&d) noexcept;
+
 	initializer(const pp_tokens_range &tr) noexcept;
 
       protected:
@@ -1624,6 +1664,8 @@ namespace suse
 	initializer_expr(expr* &&e) noexcept;
 
 	virtual ~initializer_expr() noexcept;
+
+	virtual void set_designation(designation* &&d) noexcept;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
@@ -1638,6 +1680,8 @@ namespace suse
 			      initializer_list* &&il) noexcept;
 
 	virtual ~initializer_init_list() noexcept;
+
+	virtual void set_designation(designation* &&d) noexcept;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
@@ -1705,7 +1749,7 @@ namespace suse
       class designation : public ast_entity<designation>
       {
       public:
-	typedef type_set<initializer> parent_types;
+	typedef type_set<initializer_expr, initializer_init_list> parent_types;
 
       public:
 	designation(const pp_tokens_range &tr,
@@ -1828,6 +1872,8 @@ namespace suse
 
 	virtual ~parameter_declaration() noexcept;
 
+	declaration_specifiers& get_declaration_specifiers() noexcept
+	{ return _ds; }
 
       protected:
 	declaration_specifiers &_ds;
@@ -1930,7 +1976,11 @@ namespace suse
       class stmt : public ast_entity<stmt>
       {
       public:
-	typedef type_set<stmt, block_item_stmt, function_definition,
+	typedef type_set<stmt_labeled, stmt_case, stmt_case_range,
+			 stmt_default, stmt_if, stmt_switch,
+			 stmt_while, stmt_do,
+			 stmt_for_init_expr, stmt_for_init_decl,
+			 block_item_stmt, function_definition,
 			 expr_statement> parent_types;
 
 	virtual ~stmt() noexcept;

@@ -84,32 +84,29 @@ _ast_entity* expr_list::_get_child(const size_t i) noexcept
   return &_exprs[i].get();
 }
 
-template<typename list_type>
-static pp_tokens_range tr_from_aes(const list_type &aes)
-{
-  assert(aes.size());
-  return pp_tokens_range{
-    (*aes.begin())->get_tokens_range().begin,
-    (*(aes.end() - 1))->get_tokens_range().end
-  };
-}
 
-expr::expr(const std::initializer_list<expr*> &exprs) noexcept
-  : ast_entity(tr_from_aes(exprs))
-{
-  for (auto e : exprs)
-    e->_set_parent(*this);
-}
 expr::expr(const pp_tokens_range &tr) noexcept
   : ast_entity(tr)
 {}
 
 expr::~expr() noexcept = default;
 
+static pp_tokens_range tr_from_aes(const _ast_entity &ae1,
+				   const _ast_entity &ae2) noexcept
+{
+  return pp_tokens_range{
+    ae1.get_tokens_range().begin,
+    ae2.get_tokens_range().end
+  };
+}
 
 expr_comma::expr_comma(expr* &&l, expr* &&r) noexcept
-  : expr{l, r}, _left(*mv_p(std::move(l))), _right(*mv_p(std::move(r)))
-{}
+  : expr(tr_from_aes(*l, *r)),
+    _left(*mv_p(std::move(l))), _right(*mv_p(std::move(r)))
+{
+  _left._set_parent(*this);
+  _right._set_parent(*this);
+}
 
 expr_comma::~expr_comma() noexcept
 {
@@ -137,9 +134,12 @@ _ast_entity* expr_comma::_get_child(const size_t i) noexcept
 
 expr_assignment::expr_assignment(const assign_op op, expr* &&lhs, expr* &&rhs)
   noexcept
-  : expr{lhs, rhs}, _op(op),
+  : expr(tr_from_aes(*lhs, *rhs)), _op(op),
     _lhs(*mv_p(std::move(lhs))), _rhs(*mv_p(std::move(rhs)))
-{}
+{
+  _lhs._set_parent(*this);
+  _rhs._set_parent(*this);
+}
 
 expr_assignment::~expr_assignment() noexcept
 {
@@ -168,16 +168,23 @@ _ast_entity* expr_assignment::_get_child(const size_t i) noexcept
 expr_conditional::expr_conditional(expr* &&cond,
 				   expr* &&expr_true, expr* &&expr_false)
   noexcept
-  : expr{cond, expr_true, expr_false},
+  : expr(tr_from_aes(*cond, *expr_false)),
     _cond(*mv_p(std::move(cond))), _expr_true(mv_p(std::move(expr_true))),
     _expr_false(*mv_p(std::move(expr_false)))
-{}
+{
+  _cond._set_parent(*this);
+  _expr_true->_set_parent(*this);
+  _expr_false._set_parent(*this);
+}
 
-expr_conditional::expr_conditional(expr* &&cond,  expr* &&expr_false) noexcept
-  : expr{cond, expr_false},
+expr_conditional::expr_conditional(expr* &&cond, expr* &&expr_false) noexcept
+  : expr(tr_from_aes(*cond, *expr_false)),
     _cond(*mv_p(std::move(cond))), _expr_true(nullptr),
     _expr_false(*mv_p(std::move(expr_false)))
-{}
+{
+  _cond._set_parent(*this);
+  _expr_false._set_parent(*this);
+}
 
 expr_conditional::~expr_conditional() noexcept
 {
@@ -204,8 +211,12 @@ _ast_entity* expr_conditional::_get_child(const size_t i) noexcept
 
 
 expr_binop::expr_binop(const binary_op op, expr* &&l, expr* &&r) noexcept
-  : expr{l, r}, _left(*mv_p(std::move(l))), _right(*mv_p(std::move(r)))
-{}
+  : expr(tr_from_aes(*l, *r)),
+    _left(*mv_p(std::move(l))), _right(*mv_p(std::move(r)))
+{
+  _left._set_parent(*this);
+  _right._set_parent(*this);
+}
 
 expr_binop::~expr_binop() noexcept
 {
@@ -236,7 +247,7 @@ expr_cast::expr_cast(const pp_tokens_range &tr, type_name* &&tn, expr* &&e)
   : expr(tr), _tn(*mv_p(std::move(tn))), _e(*mv_p(std::move(e)))
 {
   _tn._set_parent(*this);
-  _e._set_parent(static_cast<expr&>(*this));
+  _e._set_parent(*this);
 }
 
 expr_cast::~expr_cast() noexcept
@@ -280,7 +291,7 @@ expr_unop_pre::expr_unop_pre(const pp_tokens_range &tr,
 			     const unary_op_pre op, expr* &&e) noexcept
   : expr(tr), _op(op), _e(*mv_p(std::move(e)))
 {
-  _e._set_parent(static_cast<expr&>(*this));
+  _e._set_parent(*this);
 }
 
 expr_unop_pre::~expr_unop_pre() noexcept
@@ -301,7 +312,7 @@ expr_sizeof_expr::expr_sizeof_expr(const pp_tokens_range &tr, expr* &&e)
   noexcept
   : expr(tr), _e(*mv_p(std::move(e)))
 {
-  _e._set_parent(static_cast<expr&>(*this));
+  _e._set_parent(*this);
 }
 
 expr_sizeof_expr::~expr_sizeof_expr() noexcept
@@ -343,7 +354,7 @@ expr_alignof_expr::expr_alignof_expr(const pp_tokens_range &tr, expr* &&e)
   noexcept
   : expr(tr), _e(*mv_p(std::move(e)))
 {
-  _e._set_parent(static_cast<expr&>(*this));
+  _e._set_parent(*this);
 }
 
 expr_alignof_expr::~expr_alignof_expr() noexcept
@@ -389,7 +400,7 @@ noexcept
     _member_designator(*mv_p(std::move(member_designator)))
 {
   _tn._set_parent(*this);
-  _member_designator._set_parent(static_cast<expr&>(*this));
+  _member_designator._set_parent(*this);
 }
 
 expr_builtin_offsetof::~expr_builtin_offsetof() noexcept
@@ -454,8 +465,8 @@ expr_array_subscript::expr_array_subscript(const pp_tokens_range &tr,
   noexcept
   : expr(tr), _base(*mv_p(std::move(base))), _index(*mv_p(std::move(index)))
 {
-  _base._set_parent(static_cast<expr&>(*this));
-  _index._set_parent(static_cast<expr&>(*this));
+  _base._set_parent(*this);
+  _index._set_parent(*this);
 }
 
 expr_array_subscript::~expr_array_subscript() noexcept
@@ -486,7 +497,7 @@ expr_func_invocation::expr_func_invocation(const pp_tokens_range &tr,
 		     expr* &&func, expr_list* &&args) noexcept
   : expr(tr), _func(*mv_p(std::move(func))), _args(mv_p(std::move(args)))
 {
-  _func._set_parent(static_cast<expr&>(*this));
+  _func._set_parent(*this);
   _args->_set_parent(*this);
 }
 
@@ -494,7 +505,7 @@ expr_func_invocation::expr_func_invocation(const pp_tokens_range &tr,
 					   expr* &&func) noexcept
   : expr(tr), _func(*mv_p(std::move(func))), _args(nullptr)
 {
-  _func._set_parent(static_cast<expr&>(*this));
+  _func._set_parent(*this);
 }
 
 expr_func_invocation::~expr_func_invocation() noexcept
@@ -524,7 +535,7 @@ expr_member_deref::expr_member_deref(const pp_tokens_range &tr,
   : expr(tr), _deref_type(deref_type), _base(*mv_p(std::move(base))),
     _member_tok(member_tok)
 {
-  _base._set_parent(static_cast<expr&>(*this));
+  _base._set_parent(*this);
 }
 
 expr_member_deref::~expr_member_deref() noexcept
@@ -545,7 +556,7 @@ expr_unop_post::expr_unop_post(const pp_tokens_range &tr,
 			       const unary_op_post op, expr* &&e) noexcept
   : expr(tr), _op(op), _e(*mv_p(std::move(e)))
 {
-  _e._set_parent(static_cast<expr&>(*this));
+  _e._set_parent(*this);
 }
 
 expr_unop_post::~expr_unop_post() noexcept
@@ -682,7 +693,7 @@ expr_parenthesized::expr_parenthesized(const pp_tokens_range &tr,
 					      expr* &&e) noexcept
   : expr(tr), _e(*mv_p(std::move(e)))
 {
-  _e._set_parent(static_cast<expr&>(*this));
+  _e._set_parent(*this);
 }
 
 expr_parenthesized::~expr_parenthesized() noexcept
@@ -933,7 +944,7 @@ direct_abstract_declarator_array(const pp_tokens_range &tr,
 {
   assert(!_static || _size);
   if (_dad)
-    _dad->_set_parent(static_cast<direct_abstract_declarator&>(*this));
+    _dad->_set_parent(*this);
   if (_tql)
     _tql->_set_parent(*this);
   if (_size)
@@ -948,7 +959,7 @@ direct_abstract_declarator_array(const pp_tokens_range &tr,
     _tql(nullptr), _size(nullptr), _static(false), _vla_unspec_size(true)
 {
   if (_dad)
-    _dad->_set_parent(static_cast<direct_abstract_declarator&>(*this));
+    _dad->_set_parent(*this);
 }
 
 direct_abstract_declarator_array::
@@ -997,7 +1008,7 @@ direct_abstract_declarator_func(const pp_tokens_range &tr,
     _dad(mv_p(std::move(dad))), _ptl(mv_p(std::move(ptl)))
 {
   if (_dad)
-    _dad->_set_parent(static_cast<direct_abstract_declarator&>(*this));
+    _dad->_set_parent(*this);
   if (_ptl)
     _ptl->_set_parent(*this);
 }
@@ -1154,7 +1165,7 @@ direct_declarator_array::direct_declarator_array(const pp_tokens_range &tr,
     _static(is_static), _vla_unspec_size(false)
 {
   assert(!_static || _size);
-  _dd._set_parent(static_cast<direct_declarator&>(*this));
+  _dd._set_parent(*this);
   if (_tql)
     _tql->_set_parent(*this);
   if (_size)
@@ -1169,7 +1180,7 @@ direct_declarator_array::direct_declarator_array(const pp_tokens_range &tr,
     _tql(mv_p(std::move(tql))), _size(nullptr),
     _static(false), _vla_unspec_size(true)
 {
-  _dd._set_parent(static_cast<direct_declarator&>(*this));
+  _dd._set_parent(*this);
   if (_tql)
     _tql->_set_parent(*this);
 }
@@ -1210,7 +1221,7 @@ noexcept
   : direct_declarator(tr), _dd(*mv_p(std::move(dd))),
     _ptl(mv_p(std::move(ptl))), _il(nullptr)
 {
-  _dd._set_parent(static_cast<direct_declarator&>(*this));
+  _dd._set_parent(*this);
   assert(_ptl);
   _ptl->_set_parent(*this);
 }
@@ -1222,7 +1233,7 @@ noexcept
   : direct_declarator(tr), _dd(*mv_p(std::move(dd))),
     _ptl(nullptr), _il(mv_p(std::move(il)))
 {
-  _dd._set_parent(static_cast<direct_declarator&>(*this));
+  _dd._set_parent(*this);
   if (_il)
   _il->_set_parent(*this);
 }
@@ -1430,10 +1441,7 @@ struct_declaration::struct_declaration(const pp_tokens_range &tr,
 				       specifier_qualifier_list* &&sql)
   noexcept
   : ast_entity(tr), _sql(mv_p(std::move(sql)))
-{
-  if (_sql)
-    _sql->_set_parent(*this);
-}
+{}
 
 struct_declaration::~struct_declaration() noexcept
 {
@@ -1553,6 +1561,8 @@ struct_declaration_c99::struct_declaration_c99(const pp_tokens_range &tr,
   noexcept
   : struct_declaration(tr, std::move(sql)), _sdl(*mv_p(std::move(sdl)))
 {
+  if (get_specifier_qualifier_list())
+    get_specifier_qualifier_list()->_set_parent(*this);
   _sdl._set_parent(*this);
 }
 
@@ -1636,6 +1646,8 @@ struct_declaration_unnamed_sou(const pp_tokens_range &tr,
   : struct_declaration(tr, std::move(sql)),
     _unnamed_sou(*mv_p(std::move(unnamed_sou)))
 {
+  if (get_specifier_qualifier_list())
+    get_specifier_qualifier_list()->_set_parent(*this);
   _unnamed_sou._set_parent(*this);
 }
 
@@ -2167,7 +2179,7 @@ declaration_specifiers::declaration_specifiers(storage_class_specifier* &&scs)
     delete &_scs.get();
     throw;
   }
-  _scs.get()._set_parent(*this);
+  _scs.get()._set_parent(static_cast<specifier_qualifier_list&>(*this));
 }
 
 declaration_specifiers::declaration_specifiers(function_specifier* &&fs)
@@ -2180,7 +2192,7 @@ declaration_specifiers::declaration_specifiers(function_specifier* &&fs)
     delete &_fs.get();
     throw;
   }
-  _fs.get()._set_parent(*this);
+  _fs.get()._set_parent(static_cast<specifier_qualifier_list&>(*this));
 }
 
 declaration_specifiers::declaration_specifiers(type_specifier* &&ts)
@@ -2214,7 +2226,7 @@ void declaration_specifiers::extend(storage_class_specifier* &&scs)
     throw;
   }
   _extend_tokens_range(_scs.get().get_tokens_range());
-  _scs.get()._set_parent(*this);
+  _scs.get()._set_parent(static_cast<specifier_qualifier_list&>(*this));
 }
 
 void declaration_specifiers::extend(function_specifier* &&fs)
@@ -2227,7 +2239,7 @@ void declaration_specifiers::extend(function_specifier* &&fs)
     throw;
   }
   _extend_tokens_range(_fs.get().get_tokens_range());
-  _fs.get()._set_parent(*this);
+  _fs.get()._set_parent(static_cast<specifier_qualifier_list&>(*this));
 }
 
 void declaration_specifiers::extend(type_specifier* &&ts)
@@ -2264,13 +2276,15 @@ void declaration_specifiers::extend(declaration_specifiers* &&ds)
 
   for (auto &scs : _ds->_scss) {
     _scss.push_back(scs);
-    scs.get()._reset_parent(*this, *_ds);
+    scs.get()._reset_parent(static_cast<specifier_qualifier_list&>(*this),
+			    static_cast<specifier_qualifier_list&>(*_ds));
   }
   _ds->_scss.clear();
 
   for (auto &fs : _ds->_fss) {
     _fss.push_back(fs);
-    fs.get()._reset_parent(*this, *_ds);
+    fs.get()._reset_parent(static_cast<specifier_qualifier_list&>(*this),
+			   static_cast<specifier_qualifier_list&>(*_ds));
   }
   _ds->_fss.clear();
 
@@ -2303,12 +2317,10 @@ initializer::~initializer() noexcept
   delete _d;
 }
 
-void initializer::set_designation(designation* &&d) noexcept
+void initializer::_set_designation(designation* &&d) noexcept
 {
   assert(!_d);
   _d = mv_p(std::move(d));
-  if (_d)
-    _d->_set_parent(*this);
 }
 
 
@@ -2322,6 +2334,14 @@ initializer_expr::~initializer_expr() noexcept
 {
   delete &_e;
 }
+
+void initializer_expr::set_designation(designation* &&d) noexcept
+{
+  if (d)
+    d->_set_parent(*this);
+  _set_designation(std::move(d));
+}
+
 
 _ast_entity* initializer_expr::_get_child(const size_t i) noexcept
 {
@@ -2349,6 +2369,13 @@ initializer_init_list::initializer_init_list(const pp_tokens_range &tr,
 initializer_init_list::~initializer_init_list() noexcept
 {
   delete _il;
+}
+
+void initializer_init_list::set_designation(designation* &&d) noexcept
+{
+  if (d)
+    d->_set_parent(*this);
+  _set_designation(std::move(d));
 }
 
 _ast_entity* initializer_init_list::_get_child(const size_t i) noexcept
@@ -2698,9 +2725,7 @@ parameter_declaration::
 parameter_declaration(const pp_tokens_range &tr,
 		      declaration_specifiers* &&ds) noexcept
   : ast_entity(tr), _ds(*mv_p(std::move(ds)))
-{
-  _ds._set_parent(*this);
-}
+{}
 
 parameter_declaration::~parameter_declaration() noexcept
 {
@@ -2716,6 +2741,7 @@ parameter_declaration_declarator(const pp_tokens_range &tr,
   : parameter_declaration(tr, std::move(ds)),
     _d(*mv_p(std::move(d))), _asl(mv_p(std::move(asl)))
 {
+  get_declaration_specifiers()._set_parent(*this);
   _d._set_parent(*this);
   if (_asl)
     _asl->_set_parent(*this);
@@ -2757,6 +2783,7 @@ parameter_declaration_abstract(const pp_tokens_range &tr,
   : parameter_declaration(tr, std::move(ds)),
     _ad(mv_p(std::move(ad)))
 {
+  get_declaration_specifiers()._set_parent(*this);
   if (_ad)
     _ad->_set_parent(*this);
 }
@@ -2906,7 +2933,7 @@ stmt_labeled::stmt_labeled(const pp_tokens_range &tr,
   : stmt(tr), _label_tok(label_tok), _s(*mv_p(std::move(s))),
     _asl(mv_p(std::move(asl)))
 {
-  _s._set_parent(static_cast<stmt&>(*this));
+  _s._set_parent(*this);
   if(_asl)
     _asl->_set_parent(*this);
 }
@@ -2940,7 +2967,7 @@ stmt_case::stmt_case(const pp_tokens_range &tr,
   : stmt(tr), _e(*mv_p(std::move(e))), _s(*mv_p(std::move(s)))
 {
   _e._set_parent(*this);
-  _s._set_parent(static_cast<stmt&>(*this));
+  _s._set_parent(*this);
 }
 
 stmt_case::~stmt_case() noexcept
@@ -2975,7 +3002,7 @@ stmt_case_range::stmt_case_range(const pp_tokens_range &tr,
 {
   _e_low._set_parent(*this);
   _e_high._set_parent(*this);
-  _s._set_parent(static_cast<stmt&>(*this));
+  _s._set_parent(*this);
 }
 
 stmt_case_range::~stmt_case_range() noexcept
@@ -3010,7 +3037,7 @@ _ast_entity* stmt_case_range::_get_child(const size_t i) noexcept
 stmt_default::stmt_default(const pp_tokens_range &tr, stmt* &&s) noexcept
   : stmt(tr), _s(*mv_p(std::move(s)))
 {
-  _s._set_parent(static_cast<stmt&>(*this));
+  _s._set_parent(*this);
 }
 
 stmt_default::~stmt_default() noexcept
@@ -3265,9 +3292,9 @@ stmt_if::stmt_if(const pp_tokens_range &tr,
     _s_true(*mv_p(std::move(s_true))), _s_false(mv_p(std::move(s_false)))
 {
   _cond._set_parent(*this);
-  _s_true._set_parent(static_cast<stmt&>(*this));
+  _s_true._set_parent(*this);
   if (_s_false)
-    _s_false->_set_parent(static_cast<stmt&>(*this));
+    _s_false->_set_parent(*this);
 }
 
 stmt_if::~stmt_if() noexcept
@@ -3302,7 +3329,7 @@ stmt_switch::stmt_switch(const pp_tokens_range &tr, expr* &&e, stmt* &&s)
   : stmt(tr), _e(*mv_p(std::move(e))), _s(*mv_p(std::move(s)))
 {
   _e._set_parent(*this);
-  _s._set_parent(static_cast<stmt&>(*this));
+  _s._set_parent(*this);
 }
 
 stmt_switch::~stmt_switch() noexcept
@@ -3334,7 +3361,7 @@ stmt_while::stmt_while(const pp_tokens_range &tr, expr* &&e, stmt* &&s)
   : stmt(tr), _e(*mv_p(std::move(e))), _s(*mv_p(std::move(s)))
 {
   _e._set_parent(*this);
-  _s._set_parent(static_cast<stmt&>(*this));
+  _s._set_parent(*this);
 }
 
 stmt_while::~stmt_while() noexcept
@@ -3366,7 +3393,7 @@ stmt_do::stmt_do(const pp_tokens_range &tr, expr* &&e, stmt* &&s)
   : stmt(tr), _e(*mv_p(std::move(e))), _s(*mv_p(std::move(s)))
 {
   _e._set_parent(*this);
-  _s._set_parent(static_cast<stmt&>(*this));
+  _s._set_parent(*this);
 }
 
 stmt_do::~stmt_do() noexcept
@@ -3405,7 +3432,7 @@ stmt_for_init_expr::stmt_for_init_expr(const pp_tokens_range &tr,
     _cond->_set_parent(*this);
   if (_next)
     _next->_set_parent(*this);
-  _s._set_parent(static_cast<stmt&>(*this));
+  _s._set_parent(*this);
 }
 
 stmt_for_init_expr::~stmt_for_init_expr() noexcept
@@ -3460,7 +3487,7 @@ stmt_for_init_decl::stmt_for_init_decl(const pp_tokens_range &tr,
     _cond->_set_parent(*this);
   if (_next)
     _next->_set_parent(*this);
-  _s._set_parent(static_cast<stmt&>(*this));
+  _s._set_parent(*this);
 }
 
 stmt_for_init_decl::~stmt_for_init_decl() noexcept

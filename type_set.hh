@@ -13,48 +13,73 @@ namespace suse
     class type_set;
 
     template<typename enable,
-	     template<typename> class types_member_accessor, typename result,
-	     typename pending_type_set>
+	     template<typename> class types_member_accessor,
+	     typename mask_type_set, typename result, typename pending_type_set>
     struct closure_impl;
 
-    template <template<typename> class types_member_accessor, typename result,
+    template <template<typename> class types_member_accessor,
+	      typename mask_type_set, typename result,
 	      typename T, typename... types>
     struct closure_impl<
-      typename std::enable_if<!result::template is_member<T>()>::type,
-      types_member_accessor, result,
+      typename std::enable_if<!result::template is_member<T>() &&
+			      !mask_type_set::template is_member<T>()>::type,
+      types_member_accessor, mask_type_set, result,
       type_set<T, types...>
       >
     {
       typedef typename
       closure_impl
       <void,
-       types_member_accessor, typename result::template add_type<T>,
+       types_member_accessor, mask_type_set,
+       typename result::template add_type<T>,
        typename type_set<types...>::
 	 template add_types<types_member_accessor<T> >
        >::type
       type;
     };
 
-    template <template<typename> class types_member_accessor, typename result,
+    template <template<typename> class types_member_accessor,
+	      typename mask_type_set, typename result,
 	      typename T, typename... types>
     struct closure_impl<
-      typename std::enable_if<result::template is_member<T>()>::type,
-      types_member_accessor, result,
+      typename std::enable_if<!result::template is_member<T>() &&
+			      mask_type_set::template is_member<T>()>::type,
+      types_member_accessor, mask_type_set, result,
       type_set<T, types...>
       >
     {
       typedef typename
       closure_impl
       <void,
-       types_member_accessor, result,
+       types_member_accessor, mask_type_set,
+       typename result::template add_type<T>,
        type_set<types...>
        >::type
       type;
     };
 
-    template <template<typename> class types_member_accessor, typename result>
+    template <template<typename> class types_member_accessor,
+	      typename mask_type_set, typename result,
+	      typename T, typename... types>
+    struct closure_impl<
+      typename std::enable_if<result::template is_member<T>()>::type,
+      types_member_accessor, mask_type_set, result,
+      type_set<T, types...>
+      >
+    {
+      typedef typename
+      closure_impl
+      <void,
+       types_member_accessor, mask_type_set, result,
+       type_set<types...>
+       >::type
+      type;
+    };
+
+    template <template<typename> class types_member_accessor,
+	      typename mask_type_set, typename result>
     struct closure_impl<void,
-			types_member_accessor, result,
+			types_member_accessor, mask_type_set, result,
 			type_set<> >
     {
       typedef result type;
@@ -130,8 +155,10 @@ namespace suse
       template<typename new_type_set>
       using add_types = typename add_types_impl<new_type_set>::type;
 
-      template<template<typename> class types_member_accessor>
+      template<template<typename> class types_member_accessor,
+	       typename mask_type_set>
       using closure = typename closure_impl<void, types_member_accessor,
+					    mask_type_set,
 					    type_set<>, type_set
 					    >::type;
 
@@ -155,7 +182,7 @@ namespace suse
     public:
       template<typename U, typename callable_type,
 	       typename return_type
-		 = decltype(std::declval<callable_type>()(std::declval<T>()))>
+		 = decltype(std::declval<callable_type>()(std::declval<T&>()))>
       static return_type cast_and_call(callable_type &&callable, U &&value)
       {
 	static_assert(!std::is_pointer<T>::value,
@@ -166,7 +193,7 @@ namespace suse
 	const typename std::add_pointer<T>::type ptr_value =
 	  dynamic_cast<typename std::add_pointer<T>::type>(&value);
 	if (ptr_value) {
-	  return callable(std::forward<T>(*ptr_value));
+	  return callable(*ptr_value);
 	} else {
 	  return (type_set<types...>::
 		  template cast_and_call<U, callable_type, return_type>
