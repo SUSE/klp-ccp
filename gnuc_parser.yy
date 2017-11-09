@@ -1716,16 +1716,31 @@ iteration_statement:
 	  { $$ = new stmt_while(@$, std::move($3), std::move($5)); }
 	| TOK_KW_DO statement TOK_KW_WHILE TOK_LPAREN expression TOK_RPAREN TOK_SEMICOLON
 	  { $$ = new stmt_do(@$, std::move($5), std::move($2)); }
-	| TOK_KW_FOR TOK_LPAREN expression_opt TOK_SEMICOLON expression_opt TOK_SEMICOLON expression_opt TOK_RPAREN statement
+	| kw_for TOK_LPAREN expression_opt TOK_SEMICOLON expression_opt TOK_SEMICOLON expression_opt TOK_RPAREN statement
 	  {
+	    pd.leave_td_scope();
 	    $$ = new stmt_for_init_expr(@$, std::move($3), std::move($5),
 					std::move($7), std::move($9));
 	  }
-	| TOK_KW_FOR TOK_LPAREN declaration expression_opt TOK_SEMICOLON expression_opt TOK_RPAREN statement
+	| kw_for TOK_LPAREN declaration expression_opt TOK_SEMICOLON expression_opt TOK_RPAREN statement
 	  {
+	    pd.leave_td_scope();
+	    /*
+	     * Ugly hack: recheck whether the lookahead token is
+	     * a typedef identifier.
+	     */
+	    if (yychar == token::TOK_IDENTIFIER) {
+		if (pd.is_typedef_id(pd._tokens[yylval.token_index].get_value()))
+			yychar = token::TOK_TYPEDEF_IDENTIFIER;
+	    }
 	    $$ = new stmt_for_init_decl(@$, std::move($3), std::move($4),
 					std::move($6), std::move($8));
 	  }
+;
+
+kw_for:
+	TOK_KW_FOR
+	  { pd.enter_td_scope(); }
 ;
 
 
