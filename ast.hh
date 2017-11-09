@@ -57,6 +57,9 @@ namespace suse
 	_ast_entity* get_parent() noexcept
 	{ return _parent; }
 
+	const _ast_entity* get_parent() const noexcept
+	{ return _parent; }
+
       protected:
 	void _extend_tokens_range(const pp_tokens_range &tr) noexcept;
 
@@ -69,6 +72,9 @@ namespace suse
 
 	template <typename callable_type>
 	void for_each_dfs_po(callable_type &&c);
+
+	template <typename callable_type>
+	void for_each_dfs_pre_and_po(callable_type &&c);
 
 	pp_tokens_range _tokens_range;
       };
@@ -83,7 +89,26 @@ namespace suse
 	    ae->for_each_dfs_po(std::forward<callable_type>(c));
 	  }
 
-	  c(this);
+	  c(*this);
+      }
+
+      struct pre_traversal_tag{};
+      struct post_traversal_tag{};
+
+      template <typename callable_type>
+      void _ast_entity::for_each_dfs_pre_and_po(callable_type &&c)
+      {
+	const bool do_po = c(*this, pre_traversal_tag{});
+
+	for (std::size_t i_child = 0;; ++i_child) {
+	  _ast_entity * const ae = _get_child(i_child);
+	  if (!ae)
+	    break;
+	  ae->for_each_dfs_pre_and_po(std::forward<callable_type>(c));
+	}
+
+	if (do_po)
+	  c(*this, post_traversal_tag{});
       }
 
       template <typename U>
@@ -172,6 +197,7 @@ namespace suse
       class type_name;
       class direct_declarator;
       class direct_declarator_parenthesized;
+      class direct_declarator_id;
       class declarator;
       class initializer;
       class designator;
@@ -712,14 +738,62 @@ namespace suse
       class expr_id : public expr
       {
       public:
+	class resolved
+	{
+	public:
+	  struct builtin_tag {};
+
+	  resolved() noexcept;
+	  resolved(const builtin_tag&) noexcept;
+	  resolved(direct_declarator_id &ddid) noexcept;
+	  resolved(stmt_labeled &sl) noexcept;
+	  resolved(enumerator &e) noexcept;
+	  resolved(identifier_list &pil) noexcept;
+
+	  enum class resolved_type
+	  {
+	    none,
+	    builtin,
+	    direct_declarator_id,
+	    stmt_labeled,
+	    enumerator,
+	    in_param_id_list,
+	  };
+
+	  resolved_type get_type() const noexcept
+	  { return _type; }
+
+	  direct_declarator_id& get_direct_declarator() const noexcept;
+	  stmt_labeled& get_stmt_labeled() const noexcept;
+	  enumerator& get_enumerator() const noexcept;
+	  identifier_list& get_param_id_list() const noexcept;
+
+	private:
+	  resolved_type _type;
+
+	  union
+	  {
+	    direct_declarator_id *_ddid;
+	    stmt_labeled *_sl;
+	    enumerator *_e;
+	    identifier_list *_pil;
+	  };
+	};
+
 	expr_id(const pp_token_index id_tok) noexcept;
 
 	virtual ~expr_id() noexcept;
+
+	pp_token_index get_id_tok() const noexcept
+	{ return _id_tok; }
+
+	void set_resolved(const resolved &r) noexcept;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
 
 	pp_token_index _id_tok;
+	resolved _resolved;
       };
 
       class expr_constant : public expr
@@ -1034,6 +1108,11 @@ namespace suse
 
 	virtual pp_token_index get_id_tok() const noexcept;
 
+	const declarator& get_declarator() const noexcept
+	{
+	  return _d;
+	}
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
 
@@ -1073,10 +1152,6 @@ namespace suse
       class direct_declarator_func : public direct_declarator
       {
       public:
-	typedef type_set<struct_declaration_c99, function_definition,
-			 parameter_declaration_declarator,
-			 init_declarator_list>parent_types;
-
 	direct_declarator_func(const pp_tokens_range &tr,
 			       direct_declarator* &&dd,
 			       parameter_declaration_list* &&ptl)
@@ -1090,6 +1165,11 @@ namespace suse
 	virtual ~direct_declarator_func() noexcept;
 
 	virtual pp_token_index get_id_tok() const noexcept;
+
+	const direct_declarator& get_direct_declarator() const noexcept
+	{
+	  return _dd;
+	}
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
@@ -1114,6 +1194,16 @@ namespace suse
 	virtual ~declarator() noexcept;
 
 	pp_token_index get_id_tok() const noexcept;
+
+	const direct_declarator& get_direct_declarator() const noexcept
+	{
+	  return _dd;
+	}
+
+	const pointer* get_pointer() const noexcept
+	{
+	  return _pt;
+	}
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
@@ -1247,10 +1337,16 @@ namespace suse
 
 	virtual ~type_specifier_tdid() noexcept;
 
+	pp_token_index get_id_tok() const noexcept
+	{ return _tdid_tok; }
+
+	void set_resolved(direct_declarator_id &ddid) noexcept;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
 
 	pp_token_index _tdid_tok;
+	direct_declarator_id * _resolved;
       };
 
       class struct_declaration : public ast_entity<struct_declaration>
@@ -1452,6 +1548,9 @@ namespace suse
 		   expr* &&value) noexcept;
 
 	virtual ~enumerator() noexcept;
+
+	pp_token_index get_id_tok() const noexcept
+	{ return _id_tok; }
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
@@ -2609,6 +2708,13 @@ namespace suse
 	    _tu->for_each_dfs_po(std::forward<callable_type>(c));
 	}
 
+	template <typename callable_type>
+	void for_each_dfs_pre_and_po(callable_type &&c)
+	{
+	  if (_tu)
+	    _tu->for_each_dfs_pre_and_po(std::forward<callable_type>(c));
+	}
+
 	const pp_tokens& get_pp_tokens() const noexcept
 	{ return _tokens; }
 
@@ -2619,6 +2725,8 @@ namespace suse
 
       private:
 	void _register_labels();
+
+	void _resolve_ids();
 
 	header_inclusion_roots_type _hirs;
 	pp_tokens _tokens;

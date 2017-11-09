@@ -1,5 +1,5 @@
 #pragma GCC system_header
-#define NULL (void *) 0
+#define NULL ((void *) 0)
 #define ONEP (void *) 1
 #define RETURN return NULL
 

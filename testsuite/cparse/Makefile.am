@@ -1133,9 +1133,6 @@ EXTRA_DIST = cparse.exp \
 	pr33726.c \
 	pr33742.c \
 	pr33826.c \
-	pr33919-1.h \
-	pr33919-2.h \
-	pr33919.c \
 	pr33923.c \
 	pr33961.c \
 	pr34003-1.c \
@@ -1502,8 +1499,6 @@ EXTRA_DIST = cparse.exp \
 	pr50340.c \
 	pr50527.c \
 	pr50571.c \
-	pr50604.c \
-	pr50613.c \
 	pr50717-1.c \
 	pr50763-2.c \
 	pr50763-5.c \
@@ -2023,8 +2018,6 @@ EXTRA_DIST = cparse.exp \
 	pr81030.c \
 	pr81192.c \
 	pr81227.c \
-	pr81292-1.c \
-	pr81292-2.c \
 	pr81345.c \
 	pr81455.c \
 	pr81564.c \
@@ -2144,50 +2137,6 @@ EXTRA_DIST = cparse.exp \
 	strict-overflow-5.c \
 	strict-overflow-6.c \
 	string-opt-1.c \
-	strlenopt-10.c \
-	strlenopt-11.c \
-	strlenopt-12.c \
-	strlenopt-12g.c \
-	strlenopt-13.c \
-	strlenopt-14g.c \
-	strlenopt-14gf.c \
-	strlenopt-15.c \
-	strlenopt-16g.c \
-	strlenopt-17g.c \
-	strlenopt-18g.c \
-	strlenopt-19.c \
-	strlenopt-1.c \
-	strlenopt-1f.c \
-	strlenopt-20.c \
-	strlenopt-21.c \
-	strlenopt-22.c \
-	strlenopt-22g.c \
-	strlenopt-23.c \
-	strlenopt-24.c \
-	strlenopt-25.c \
-	strlenopt-26.c \
-	strlenopt-27.c \
-	strlenopt-28.c \
-	strlenopt-29.c \
-	strlenopt-2.c \
-	strlenopt-2f.c \
-	strlenopt-30.c \
-	strlenopt-31.c \
-	strlenopt-31g.c \
-	strlenopt-32.c \
-	strlenopt-33.c \
-	strlenopt-33g.c \
-	strlenopt-34.c \
-	strlenopt-35.c \
-	strlenopt-3.c \
-	strlenopt-4.c \
-	strlenopt-4g.c \
-	strlenopt-4gf.c \
-	strlenopt-5.c \
-	strlenopt-7.c \
-	strlenopt-8.c \
-	strlenopt-9.c \
-	strlenopt.h \
 	struct-alias-1.c \
 	struct-by-value-1.c \
 	struct-by-value-2.c \

@@ -627,11 +627,67 @@ _ast_entity* expr_statement::_get_child(const size_t i) noexcept
 }
 
 
+expr_id::resolved::resolved() noexcept
+  : _type(resolved_type::none)
+{}
+
+expr_id::resolved::resolved(const builtin_tag&) noexcept
+  : _type(resolved_type::builtin)
+{}
+
+expr_id::resolved::resolved(direct_declarator_id &ddid) noexcept
+  : _type(resolved_type::direct_declarator_id), _ddid(&ddid)
+{}
+
+expr_id::resolved::resolved(stmt_labeled &sl) noexcept
+  : _type(resolved_type::stmt_labeled), _sl(&sl)
+{}
+
+expr_id::resolved::resolved(enumerator &e) noexcept
+  : _type(resolved_type::enumerator), _e(&e)
+{}
+
+expr_id::resolved::resolved(identifier_list &pil) noexcept
+  : _type(resolved_type::in_param_id_list), _pil(&pil)
+{}
+
+direct_declarator_id& expr_id::resolved::get_direct_declarator()
+  const noexcept
+{
+  assert(_type == resolved_type::direct_declarator_id);
+  return *_ddid;
+}
+
+stmt_labeled& expr_id::resolved::get_stmt_labeled() const noexcept
+{
+  assert(_type == resolved_type::stmt_labeled);
+  return *_sl;
+}
+
+enumerator& expr_id::resolved::get_enumerator() const noexcept
+{
+  assert(_type == resolved_type::enumerator);
+  return *_e;
+}
+
+identifier_list& expr_id::resolved::get_param_id_list()
+  const noexcept
+{
+  assert(_type == resolved_type::in_param_id_list);
+  return *_pil;
+}
+
 expr_id::expr_id(const pp_token_index id_tok) noexcept
   : expr(pp_tokens_range{id_tok, id_tok + 1}), _id_tok(id_tok)
 {}
 
 expr_id::~expr_id() noexcept = default;
+
+void expr_id::set_resolved(const resolved &r) noexcept
+{
+  assert(_resolved.get_type() == resolved::resolved_type::none);
+  _resolved = r;
+}
 
 _ast_entity* expr_id::_get_child(const size_t i) noexcept
 {
@@ -1426,10 +1482,16 @@ _ast_entity* type_specifier_pod::_get_child(const size_t i) noexcept
 
 type_specifier_tdid::type_specifier_tdid(const pp_token_index tdid_tok) noexcept
   : type_specifier(pp_tokens_range{tdid_tok, tdid_tok + 1}),
-    _tdid_tok(tdid_tok)
+    _tdid_tok(tdid_tok), _resolved(nullptr)
 {}
 
 type_specifier_tdid::~type_specifier_tdid() noexcept = default;
+
+void type_specifier_tdid::set_resolved(direct_declarator_id &ddid) noexcept
+{
+  assert(!_resolved);
+  _resolved = &ddid;
+}
 
 _ast_entity* type_specifier_tdid::_get_child(const size_t i) noexcept
 {
