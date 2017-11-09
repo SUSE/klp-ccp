@@ -2,7 +2,7 @@ proc run_cparse { test } {
     global objdir
     global srcdir
 
-    if {[catch {exec $objdir/../cparse --include=$srcdir/../arch/stddef-x86_64.h $test}]} {
+    if {[catch {exec $objdir/../cparse --include=$srcdir/../arch/stddef-x86_64.h $test > /dev/null 2>&1 }]} {
 	fail "cparse failed on $test\n"
     } else {
 	pass "$test"
