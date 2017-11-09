@@ -1157,6 +1157,55 @@ direct_declarator::direct_declarator(const pp_tokens_range &tr) noexcept
 direct_declarator::~direct_declarator() noexcept = default;
 
 
+direct_declarator_id::context::context() noexcept
+: _type(context_type::unknown)
+{}
+
+direct_declarator_id::context::context(struct_declarator &sd) noexcept
+  : _type(context_type::struct_decl), _sd(&sd)
+{}
+
+direct_declarator_id::context::context(parameter_declaration_declarator &pdd)
+  noexcept
+  : _type(context_type::parameter_decl), _pdd(&pdd)
+{}
+
+direct_declarator_id::context::context(init_declarator &id) noexcept
+  : _type(context_type::init_decl), _id(&id)
+{}
+
+direct_declarator_id::context::context(function_definition &fd) noexcept
+  : _type(context_type::function_def), _fd(&fd)
+{}
+
+struct_declarator& direct_declarator_id::context::get_struct_declarator()
+  const noexcept
+{
+  assert(_type == context_type::struct_decl);
+  return *_sd;
+}
+
+parameter_declaration_declarator&
+direct_declarator_id::context::get_param_declaration_declarator() const noexcept
+{
+  assert(_type == context_type::parameter_decl);
+  return *_pdd;
+}
+
+init_declarator& direct_declarator_id::context::get_init_declarator()
+  const noexcept
+{
+  assert(_type == context_type::init_decl);
+  return *_id;
+}
+
+function_definition& direct_declarator_id::context::get_function_definition()
+  const noexcept
+{
+  assert(_type == context_type::init_decl);
+  return *_fd;
+}
+
 direct_declarator_id::direct_declarator_id(const pp_token_index id_tok) noexcept
   : direct_declarator(pp_tokens_range{id_tok, id_tok + 1}), _id_tok(id_tok)
 {}
@@ -1167,6 +1216,20 @@ pp_token_index direct_declarator_id::get_id_tok() const noexcept
 {
   return _id_tok;
 }
+
+const direct_declarator_id::context&
+direct_declarator_id::get_context() const noexcept
+{
+  assert(_ctx.get_type() != context::context_type::unknown);
+  return _ctx;
+}
+
+void direct_declarator_id::set_context(const context &ctx) noexcept
+{
+  assert(_ctx.get_type() == context::context_type::unknown);
+  _ctx = ctx;
+}
+
 
 _ast_entity* direct_declarator_id::_get_child(const size_t i) noexcept
 {

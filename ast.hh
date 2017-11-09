@@ -1077,6 +1077,8 @@ namespace suse
 
 	virtual pp_token_index get_id_tok() const noexcept = 0;
 
+	const _ast_entity& get_first_non_declarator_parent() const noexcept;
+
       protected:
 	direct_declarator(const pp_tokens_range &tr) noexcept;
       };
@@ -1084,16 +1086,59 @@ namespace suse
       class direct_declarator_id : public direct_declarator
       {
       public:
+	class context
+	{
+	public:
+	  context() noexcept;
+	  context(struct_declarator &sd) noexcept;
+	  context(parameter_declaration_declarator &pdd) noexcept;
+	  context(init_declarator &id) noexcept;
+	  context(function_definition &fd) noexcept;
+
+	  enum class context_type
+	  {
+	    unknown,
+	    struct_decl,
+	    parameter_decl,
+	    init_decl,
+	    function_def,
+	  };
+
+	  context_type get_type() const noexcept
+	  { return _type; }
+
+	  struct_declarator& get_struct_declarator() const noexcept;
+	  parameter_declaration_declarator& get_param_declaration_declarator()
+	    const noexcept;
+	  init_declarator& get_init_declarator() const noexcept;
+	  function_definition& get_function_definition() const noexcept;
+
+	private:
+	  context_type _type;
+
+	  union
+	  {
+	    struct_declarator *_sd;
+	    parameter_declaration_declarator *_pdd;
+	    init_declarator *_id;
+	    function_definition *_fd;
+	  };
+	};
+
 	direct_declarator_id(const pp_token_index id_tok) noexcept;
 
 	virtual ~direct_declarator_id() noexcept;
 
 	virtual pp_token_index get_id_tok() const noexcept;
 
+	const context& get_context() const noexcept;
+	void set_context(const context &ctx) noexcept;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
 
 	pp_token_index _id_tok;
+	context _ctx;
       };
 
       class direct_declarator_parenthesized : public direct_declarator

@@ -237,7 +237,6 @@ bool stmt_compound::is_local_label(const ast &ast,
   return false;
 }
 
-
 namespace
 {
   class _register_label_scope_finder
@@ -311,6 +310,24 @@ void ast::ast::_register_labels()
     });
 }
 
+
+
+const _ast_entity& direct_declarator::get_first_non_declarator_parent()
+  const noexcept
+{
+  const _ast_entity *p;
+  for (p = get_parent(); p; p = p->get_parent()) {
+    if (!dynamic_cast<const declarator*>(p) &&
+	!dynamic_cast<const direct_declarator*>(p)) {
+      break;
+    }
+  }
+
+  assert(p);
+  return *p;
+}
+
+
 namespace
 {
   class _id_resolver
@@ -330,10 +347,10 @@ namespace
     void _resolve_id(expr_id &ei);
     void _resolve_id(type_specifier_tdid &ts_tdid);
 
-    struct _declarator_ctx_finder
+    struct _declarator_id_ctx_finder
     {
-      _declarator_ctx_finder() noexcept
-	: type(ctx_type::none)
+      _declarator_id_ctx_finder(direct_declarator_id &ddid) noexcept
+	: _ddid(ddid)
       {}
 
       bool operator()(const declarator&) noexcept
@@ -342,19 +359,13 @@ namespace
       bool operator()(const direct_declarator&) noexcept
       { return true; }
 
-      bool operator()(const struct_declarator&) noexcept;
-      bool operator()(const parameter_declaration_declarator &pdd) noexcept;
-      bool operator()(const init_declarator&) noexcept;
-      bool operator()(const function_definition&) noexcept;
+      bool operator()(struct_declarator &sd) noexcept;
+      bool operator()(parameter_declaration_declarator &pdd) noexcept;
+      bool operator()(init_declarator &id) noexcept;
+      bool operator()(function_definition &fd) noexcept;
 
-      enum class ctx_type
-      {
-	none,
-	struct_decl,
-	parameter_decl,
-	init_decl,
-	function_def,
-      } type;
+    private:
+      direct_declarator_id &_ddid;
     };
 
     ast::ast &_ast;
@@ -376,14 +387,9 @@ static bool _is_fundef_ddf(direct_declarator_func const *ddf)
 {
   // Check that the first non-declarator/-direct_declarator parent is
   // a function_definition instance.
-  for (const _ast_entity *p = ddf->get_parent(); ; p = p->get_parent()) {
-    assert(p);
-    if (dynamic_cast<const function_definition*>(p)) {
-      return true;
-    } else if (!dynamic_cast<const declarator*>(p) &&
-	       !dynamic_cast<const direct_declarator*>(p)) {
-      return false;
-    }
+  if (dynamic_cast<const function_definition*>
+      (&ddf->get_first_non_declarator_parent())) {
+    return true;
   }
 
   return false;
@@ -490,62 +496,30 @@ void _id_resolver::_leave_scope()
   _scopes.pop_back();
 }
 
-bool _id_resolver::_declarator_ctx_finder::operator()(const struct_declarator&)
-  noexcept
-{
-  type = ctx_type::struct_decl;
-  return false;
-}
-
-bool _id_resolver::_declarator_ctx_finder::
-operator()(const parameter_declaration_declarator &pdd) noexcept
-{
-  type = ctx_type::parameter_decl;
-  return false;
-}
-
-bool _id_resolver::_declarator_ctx_finder::operator()(const init_declarator&)
-  noexcept
-{
-  type = ctx_type::init_decl;
-  return false;
-}
-
-bool
-_id_resolver::_declarator_ctx_finder::operator()(const function_definition&)
-  noexcept
-{
-  type = ctx_type::function_def;
-  return false;
-}
-
-
 void _id_resolver::_handle_direct_declarator_id(direct_declarator_id &ddid)
 {
-  _declarator_ctx_finder dcf;
-
+  _declarator_id_ctx_finder dcf(ddid);
   ddid.for_each_parent<type_set<struct_declarator,
 				 init_declarator,
 				 function_definition,
 				 parameter_declaration_declarator> >(dcf);
-  assert(dcf.type != _declarator_ctx_finder::ctx_type::none);
 
-  switch (dcf.type)
+  switch (ddid.get_context().get_type())
   {
-  case _declarator_ctx_finder::ctx_type::none:
+  case direct_declarator_id::context::context_type::unknown:
     assert(0);
     __builtin_unreachable();
 
-  case _declarator_ctx_finder::ctx_type::struct_decl:
+  case direct_declarator_id::context::context_type::struct_decl:
     return;
 
-  case _declarator_ctx_finder::ctx_type::parameter_decl:
+  case direct_declarator_id::context::context_type::parameter_decl:
     /* fall through */
-  case _declarator_ctx_finder::ctx_type::init_decl:
+  case direct_declarator_id::context::context_type::init_decl:
     _scopes.back().push_back(expr_id::resolved(ddid));
     return;
 
-  case _declarator_ctx_finder::ctx_type::function_def:
+  case direct_declarator_id::context::context_type::function_def:
     // A function definition's id declarator must get added to parent
     // scope.
     assert(_scopes.size() >= 2);
@@ -677,13 +651,42 @@ void _id_resolver::_resolve_id(type_specifier_tdid &ts_tdid)
 }
 
 
+bool
+_id_resolver::_declarator_id_ctx_finder::operator()(struct_declarator &sd)
+  noexcept
+{
+  _ddid.set_context(direct_declarator_id::context(sd));
+  return false;
+}
+
+bool _id_resolver::_declarator_id_ctx_finder::
+operator()(parameter_declaration_declarator &pdd) noexcept
+{
+  _ddid.set_context(direct_declarator_id::context(pdd));
+  return false;
+}
+
+bool _id_resolver::_declarator_id_ctx_finder::operator()(init_declarator& id)
+  noexcept
+{
+  _ddid.set_context(direct_declarator_id::context(id));
+  return false;
+}
+
+bool
+_id_resolver::_declarator_id_ctx_finder::operator()(function_definition& fd)
+  noexcept
+{
+  _ddid.set_context(direct_declarator_id::context(fd));
+  return false;
+}
+
+
 void ast::ast::_resolve_ids()
 {
   _id_resolver ir(*this);
   this->for_each_dfs_pre_and_po(ir);
 }
-
-
 
 void ast::ast::resolve()
 {
