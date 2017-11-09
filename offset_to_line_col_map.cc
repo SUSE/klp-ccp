@@ -1,4 +1,5 @@
 #include <limits>
+#include <cassert>
 #include "offset_to_line_col_map.hh"
 
 using namespace suse::cp;
@@ -98,12 +99,15 @@ void offset_to_line_col_map::add_line(const std::streamoff length)
 
   // Add one index entry for each multiple of _offset_range_per_index
   // in the range [_last_offset, next_offset).
-  const std::streamoff lo_rounded_down =
-    _last_offset - (_last_offset % _offset_range_per_index);
-  const std::streamoff no_rounded_down =
-    next_offset - (next_offset % _offset_range_per_index);
-  for (std::streamoff o = lo_rounded_down; o < no_rounded_down;
+  const std::streamoff lo_rounded_up =
+    ((_last_offset + _offset_range_per_index - 1)
+     / _offset_range_per_index * _offset_range_per_index);
+  const std::streamoff no_rounded_up =
+    ((next_offset + _offset_range_per_index - 1)
+     / _offset_range_per_index * _offset_range_per_index);
+  for (std::streamoff o = lo_rounded_up; o < no_rounded_up;
        o += _offset_range_per_index) {
+    assert(_last_offset <= _index.size() * _offset_range_per_index);
     _index.push_back((struct _index_entry_type){
 	.offset_in_enc = enc_it - _enc_map.cbegin(),
 	.offset = _last_offset,
