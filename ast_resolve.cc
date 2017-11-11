@@ -403,8 +403,12 @@ namespace
 
     ast::ast &_ast;
 
+    struct _scope
+    {
+      std::vector<expr_id::resolved> _declared_ids;
+    };
     typedef std::vector<expr_id::resolved> _scope_type;
-    typedef std::vector<_scope_type> _scopes_type;
+    typedef std::vector<_scope> _scopes_type;
     _scopes_type _scopes;
 
     std::vector<std::reference_wrapper<direct_declarator_id> >
@@ -488,14 +492,14 @@ bool _id_resolver::operator()(_ast_entity &ae, const pre_traversal_tag&)
 
   enumerator *e = dynamic_cast<enumerator*>(&ae);
   if (e) {
-    _scopes.back().push_back(expr_id::resolved(*e));
+    _scopes.back()._declared_ids.push_back(expr_id::resolved(*e));
     return false;
   }
 
   identifier_list *pil = dynamic_cast<identifier_list*>(&ae);
   if (pil) {
     if (_is_fundef_ddf_pil(pil))
-      _scopes.back().push_back(expr_id::resolved(*pil));
+      _scopes.back()._declared_ids.push_back(expr_id::resolved(*pil));
 
     return false;
   }
@@ -559,7 +563,8 @@ const expr_id::resolved* _id_resolver::_lookup(const pp_token_index id_tok,
   const auto &scopes_begin =
     !skip_newest_scope ? _scopes.rbegin() : _scopes.rbegin() + 1;
   for (auto scope_it = scopes_begin; scope_it != _scopes.rend(); ++scope_it) {
-    for (auto r_it = scope_it->rbegin(); !result && r_it != scope_it->rend();
+    for (auto r_it = scope_it->_declared_ids.rbegin();
+	 !result && r_it != scope_it->_declared_ids.rend();
 	 ++r_it) {
       if (r_it->get_type() ==
 	  expr_id::resolved::resolved_type::direct_declarator_id) {
@@ -624,7 +629,7 @@ void _id_resolver::_handle_direct_declarator_id(direct_declarator_id &ddid)
     return;
 
   case direct_declarator_id::context::context_type::parameter_decl:
-    _scopes.back().push_back(expr_id::resolved(ddid));
+    _scopes.back()._declared_ids.push_back(expr_id::resolved(ddid));
     return;
 
   case direct_declarator_id::context::context_type::init_decl:
@@ -698,7 +703,7 @@ void _id_resolver::_handle_init_decl(direct_declarator_id &ddid)
   }
 
   if (no_linkage) {
-    _scopes.back().push_back(expr_id::resolved(ddid));
+    _scopes.back()._declared_ids.push_back(expr_id::resolved(ddid));
     return;
   }
 
@@ -856,7 +861,7 @@ void _id_resolver::_handle_init_decl(direct_declarator_id &ddid)
     throw semantic_except(remark);
   }
 
-  _scopes.back().push_back(expr_id::resolved(ddid));
+  _scopes.back()._declared_ids.push_back(expr_id::resolved(ddid));
 }
 
 void _id_resolver::_handle_fun_def(direct_declarator_id &ddid)
@@ -979,7 +984,7 @@ void _id_resolver::_handle_fun_def(direct_declarator_id &ddid)
   // A function definition's id declarator must get added to parent
   // scope.
   assert(_scopes.size() >= 2);
-  (_scopes.end() - 2)->push_back(expr_id::resolved(ddid));
+  (_scopes.end() - 2)->_declared_ids.push_back(expr_id::resolved(ddid));
 }
 
 
@@ -1171,7 +1176,8 @@ void _id_resolver::_resolve_id(type_specifier_tdid &ts_tdid)
   const pp_token &id_tok = _ast.get_pp_tokens()[ts_tdid.get_id_tok()];
   for (auto scope_it = _scopes.rbegin(); scope_it != _scopes.rend();
        ++scope_it) {
-    for (auto r_it = scope_it->rbegin(); r_it != scope_it->rend(); ++r_it) {
+    for (auto r_it = scope_it->_declared_ids.rbegin();
+	 r_it != scope_it->_declared_ids.rend(); ++r_it) {
       if (r_it->get_type() ==
 	  expr_id::resolved::resolved_type::direct_declarator_id) {
 	if (id_tok.get_value() ==
