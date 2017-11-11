@@ -1,5 +1,7 @@
 #include <cassert>
 #include "ast.hh"
+#include "code_remark.hh"
+#include "semantic_except.hh"
 
 using namespace suse::cp::ast;
 
@@ -651,7 +653,7 @@ expr_id::resolved::resolved(identifier_list &pil) noexcept
   : _type(resolved_type::in_param_id_list), _pil(&pil)
 {}
 
-direct_declarator_id& expr_id::resolved::get_direct_declarator()
+direct_declarator_id& expr_id::resolved::get_direct_declarator_id()
   const noexcept
 {
   assert(_type == resolved_type::direct_declarator_id);
@@ -1150,6 +1152,7 @@ _ast_entity* type_name::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+
 direct_declarator::direct_declarator(const pp_tokens_range &tr) noexcept
   : ast_entity(tr)
 {}
@@ -1202,7 +1205,7 @@ init_declarator& direct_declarator_id::context::get_init_declarator()
 function_definition& direct_declarator_id::context::get_function_definition()
   const noexcept
 {
-  assert(_type == context_type::init_decl);
+  assert(_type == context_type::function_def);
   return *_fd;
 }
 
@@ -1228,6 +1231,36 @@ void direct_declarator_id::set_context(const context &ctx) noexcept
 {
   assert(_ctx.get_type() == context::context_type::unknown);
   _ctx = ctx;
+}
+
+bool direct_declarator_id::is_function() const noexcept
+{
+  const _ast_entity *p = get_parent();
+  assert(p);
+
+  // Find the first parent which is not a parenthesises-only direct
+  // declarator.
+  const declarator *d = dynamic_cast<const declarator*>(p);
+  while (d) {
+    if (d->get_pointer()) {
+      // Will be a "pointer to ... function returning ..." at best.
+      return false;
+    }
+
+    p = d->get_parent();
+    assert(p);
+    const direct_declarator_parenthesized *pddp
+      = dynamic_cast<const direct_declarator_parenthesized*>(p);
+    if (!pddp)
+      return false;
+
+    p = pddp->get_parent();
+    assert(p);
+
+    d = dynamic_cast<const declarator*>(p);
+  }
+
+  return !!dynamic_cast<const direct_declarator_func*>(p);
 }
 
 
@@ -2417,6 +2450,28 @@ void declaration_specifiers::extend(declaration_specifiers* &&ds)
   specifier_qualifier_list::extend(std::move(_ds));
 }
 
+
+storage_class declaration_specifiers::get_storage_class(ast &ast) const
+{
+  storage_class sc = storage_class::sc_none;
+  for (auto scs : _scss) {
+    if (sc == storage_class::sc_none) {
+      sc = scs.get().get_storage_class();
+    } else if (sc != scs.get().get_storage_class()) {
+      const pp_token &scs_tok =
+	ast.get_pp_tokens()[scs.get().get_tokens_range().begin];
+      code_remark remark(code_remark::severity::fatal,
+			 "conflicting storage class specifiers",
+			 scs_tok.get_file_range());
+      ast.get_remarks().add(remark);
+      throw semantic_except(remark);
+    }
+  }
+
+  return sc;
+}
+
+
 _ast_entity* declaration_specifiers::_get_child(const size_t i) noexcept
 {
   const size_t _sql_n_children = specifier_qualifier_list::_n_children();
@@ -2697,6 +2752,58 @@ _ast_entity* asm_label::_get_child(const size_t i) noexcept
 }
 
 
+linkage::linkage(init_declarator &self) noexcept
+  : _linkage_type(linkage_type::none),
+    _next(self), _prev(&_next)
+{}
+
+linkage::linkage(function_definition &self) noexcept
+  : _linkage_type(linkage_type::none),
+    _next(self), _prev(&_next)
+{}
+
+void linkage::set_linkage_type(const linkage_type type) noexcept
+{
+  assert(_linkage_type == linkage_type::none);
+  _linkage_type = type;
+}
+
+void linkage::link_to(init_declarator &target,
+		      const linkage_type type) noexcept
+{
+  __link_to(target, type);
+}
+
+void linkage::link_to(function_definition &target,
+		      const linkage_type type) noexcept
+{
+  __link_to(target, type);
+}
+
+template<typename target_type>
+void linkage::__link_to(target_type &target, const linkage_type type) noexcept
+{
+  set_linkage_type(type);
+  assert(_prev == &_next);
+
+  linkage &target_linkage = target.get_linkage();
+  _prev = target_linkage._prev;
+  target_linkage._prev = &_next;
+  *_prev = _next; // links previous node to this one
+  _next = link{target};
+}
+
+linkage::link::link(init_declarator &id) noexcept
+  : _target_type(link_target_type::init_decl),
+    _target_id(&id)
+{}
+
+linkage::link::link(function_definition &fd) noexcept
+  : _target_type(link_target_type::function_def),
+    _target_fd(&fd)
+{}
+
+
 init_declarator::init_declarator(const pp_tokens_range &tr,
 				 declarator* &&d, initializer* &&i,
 				 asm_label* &&al,
@@ -2705,7 +2812,8 @@ init_declarator::init_declarator(const pp_tokens_range &tr,
   : ast_entity(tr), _d(*mv_p(std::move(d))), _i(mv_p(std::move(i))),
     _al(mv_p(std::move(al))), _asl_before(nullptr),
     _asl_middle(mv_p(std::move(asl_middle))),
-    _asl_after(mv_p(std::move(asl_after)))
+    _asl_after(mv_p(std::move(asl_after))),
+    _linkage(*this)
 {
   _d._set_parent(*this);
   if (_i)
@@ -2833,6 +2941,11 @@ declaration::~declaration() noexcept
 {
   delete &_ds;
   delete _idl;
+}
+
+bool declaration::is_at_file_scope() const noexcept
+{
+  return !!dynamic_cast<const external_declaration_decl*>(get_parent());
 }
 
 _ast_entity* declaration::_get_child(const size_t i) noexcept
@@ -3964,7 +4077,8 @@ function_definition::function_definition(const pp_tokens_range &tr,
 					 stmt_compound* &&sc) noexcept
   : ast_entity(tr), _ds(*mv_p(std::move(ds))), _d(*mv_p(std::move(d))),
     _asl(mv_p(std::move(asl))), _dl(mv_p(std::move(dl))),
-    _sc(*mv_p(std::move(sc)))
+    _sc(*mv_p(std::move(sc))),
+    _linkage(*this)
 {
   _ds._set_parent(*this);
   _d._set_parent(*this);
@@ -3983,6 +4097,12 @@ function_definition::~function_definition() noexcept
   delete _dl;
   delete &_sc;
 }
+
+bool function_definition::is_at_file_scope() const noexcept
+{
+  return !!dynamic_cast<const external_declaration_func*>(get_parent());
+}
+
 
 _ast_entity* function_definition::_get_child(const size_t i) noexcept
 {

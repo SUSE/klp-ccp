@@ -763,7 +763,7 @@ namespace suse
 	  resolved_type get_type() const noexcept
 	  { return _type; }
 
-	  direct_declarator_id& get_direct_declarator() const noexcept;
+	  direct_declarator_id& get_direct_declarator_id() const noexcept;
 	  stmt_labeled& get_stmt_labeled() const noexcept;
 	  enumerator& get_enumerator() const noexcept;
 	  identifier_list& get_param_id_list() const noexcept;
@@ -1134,6 +1134,8 @@ namespace suse
 	const context& get_context() const noexcept;
 	void set_context(const context &ctx) noexcept;
 
+	bool is_function() const noexcept;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
 
@@ -1259,6 +1261,7 @@ namespace suse
 
       enum class storage_class
       {
+	sc_none,
 	sc_typedef,
 	sc_extern,
 	sc_static,
@@ -1277,7 +1280,7 @@ namespace suse
 
 	virtual ~storage_class_specifier() noexcept;
 
-	storage_class get_storage_class() const noexcept
+	storage_class get_storage_class() const
 	{ return _sc; }
 
       private:
@@ -1779,6 +1782,8 @@ namespace suse
 
 	void extend(declaration_specifiers* &&ds);
 
+	storage_class get_storage_class(ast &ast) const;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
 
@@ -1945,10 +1950,65 @@ namespace suse
 	string_literal &_label;
       };
 
+      class linkage
+      {
+      public:
+	enum class linkage_type
+	  {
+	    none,
+	    internal,
+	    external,
+	    nested_fun_auto,
+	  };
+
+	linkage(init_declarator &self) noexcept;
+	linkage(function_definition &self) noexcept;
+
+	linkage_type get_linkage_type() const noexcept
+	{ return _linkage_type; }
+
+	void set_linkage_type(const linkage_type type) noexcept;
+
+	void link_to(init_declarator &target,
+		     const linkage_type type) noexcept;
+	void link_to(function_definition &target,
+		     const linkage_type type) noexcept;
+
+      private:
+	class link
+	{
+	public:
+	  link(init_declarator &id) noexcept;
+	  link(function_definition &fd) noexcept;
+
+	private:
+	  enum class link_target_type
+	  {
+	    init_decl,
+	    function_def,
+	  };
+
+	  link_target_type _target_type;
+
+	  union {
+	    init_declarator *_target_id;
+	    function_definition *_target_fd;
+	  };
+	};
+
+	template<typename target_type>
+	void __link_to(target_type &target, const linkage_type type) noexcept;
+
+	linkage_type _linkage_type;
+	link _next;
+	link *_prev;
+      };
+
       class init_declarator : public ast_entity<init_declarator>
       {
       public:
 	typedef type_set<init_declarator_list> parent_types;
+
 
 	init_declarator(const pp_tokens_range &tr,
 			declarator* &&d, initializer* &&i, asm_label* &&al,
@@ -1959,6 +2019,14 @@ namespace suse
 
 	void set_asl_before(attribute_specifier_list* &&asl_before) noexcept;
 
+	const declaration& get_containing_declaration() const noexcept;
+
+	linkage& get_linkage() noexcept
+	{ return _linkage; }
+
+	const linkage& get_linkage() const noexcept
+	{ return _linkage; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
 
@@ -1968,6 +2036,8 @@ namespace suse
 	attribute_specifier_list *_asl_before;
 	attribute_specifier_list *_asl_middle;
 	attribute_specifier_list *_asl_after;
+
+	linkage _linkage;
       };
 
       class init_declarator_list : public ast_entity<init_declarator_list>
@@ -2000,6 +2070,12 @@ namespace suse
 		    init_declarator_list* &&idl) noexcept;
 
 	virtual ~declaration() noexcept;
+
+	bool is_at_file_scope() const noexcept;
+
+	const declaration_specifiers& get_declaration_specifiers()
+	  const noexcept
+	{ return _ds; }
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
@@ -2657,6 +2733,18 @@ namespace suse
 
 	virtual ~function_definition() noexcept;
 
+	linkage& get_linkage() noexcept
+	{ return _linkage; }
+
+	const linkage& get_linkage() const noexcept
+	{ return _linkage; }
+
+	const declaration_specifiers& get_declaration_specifiers()
+	  const noexcept
+	{ return _ds; }
+
+	bool is_at_file_scope() const noexcept;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
 
@@ -2665,6 +2753,8 @@ namespace suse
 	attribute_specifier_list *_asl;
 	declaration_list *_dl;
 	stmt_compound &_sc;
+
+	linkage _linkage;
       };
 
       class external_declaration : public ast_entity<external_declaration>

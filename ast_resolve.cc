@@ -311,6 +311,15 @@ void ast::ast::_register_labels()
 }
 
 
+const declaration& init_declarator::get_containing_declaration() const noexcept
+{
+  assert(dynamic_cast<const init_declarator_list*>(get_parent()));
+  const declaration *d
+    = dynamic_cast<const declaration*>(get_parent()->get_parent());
+  assert(d);
+  return *d;
+}
+
 
 const _ast_entity& direct_declarator::get_first_non_declarator_parent()
   const noexcept
@@ -343,7 +352,31 @@ namespace
     void _enter_scope();
     void _leave_scope();
 
+    const expr_id::resolved* _lookup(const pp_token_index id_tok,
+				     bool *in_cur_scope = nullptr,
+				     bool skip_newest_scope = false)
+      const noexcept;
+
+    template <typename predicate_type>
+    const expr_id::resolved* _lookup(const pp_token_index id_tok,
+				     predicate_type &&pred,
+				     bool *in_cur_scope = nullptr,
+				     bool skip_newest_scope = false)
+      const noexcept;
+
     void _handle_direct_declarator_id(direct_declarator_id &ddid);
+    void _handle_init_decl(direct_declarator_id &ddid);
+    void _handle_fun_def(direct_declarator_id &ddid);
+    static linkage::linkage_type
+    _get_linkage_type(const direct_declarator_id::context &ctx) noexcept;
+    static void _link_to(linkage &l,
+			 const direct_declarator_id::context &target_ctx)
+      noexcept;
+    void _add_pending_linkage(direct_declarator_id &ddid,
+			      const linkage::linkage_type type);
+    bool _try_resolve_pending_linkages(direct_declarator_id &ddid,
+				       const linkage::linkage_type type);
+
     void _resolve_id(expr_id &ei);
     void _resolve_id(type_specifier_tdid &ts_tdid);
 
@@ -372,8 +405,10 @@ namespace
 
     typedef std::vector<expr_id::resolved> _scope_type;
     typedef std::vector<_scope_type> _scopes_type;
-
     _scopes_type _scopes;
+
+    std::vector<std::reference_wrapper<direct_declarator_id> >
+    _pending_linkages;
   };
 }
 
@@ -496,6 +531,81 @@ void _id_resolver::_leave_scope()
   _scopes.pop_back();
 }
 
+const expr_id::resolved* _id_resolver::_lookup(const pp_token_index id_tok,
+					       bool *in_cur_scope,
+					       bool skip_newest_scope)
+  const noexcept
+{
+  return _lookup(id_tok, [](const expr_id::resolved&) { return true; },
+		 in_cur_scope, skip_newest_scope);
+}
+
+template <typename predicate_type>
+const expr_id::resolved* _id_resolver::_lookup(const pp_token_index id_tok,
+					       predicate_type &&pred,
+					       bool *in_cur_scope,
+					       bool skip_newest_scope)
+  const noexcept
+{
+  const expr_id::resolved *result = nullptr;
+
+  if (in_cur_scope)
+    *in_cur_scope = false;
+
+  if (skip_newest_scope)
+    assert(_scopes.size() > 1);
+
+  const pp_token &id = _ast.get_pp_tokens()[id_tok];
+  const auto &scopes_begin =
+    !skip_newest_scope ? _scopes.rbegin() : _scopes.rbegin() + 1;
+  for (auto scope_it = scopes_begin; scope_it != _scopes.rend(); ++scope_it) {
+    for (auto r_it = scope_it->rbegin(); !result && r_it != scope_it->rend();
+	 ++r_it) {
+      if (r_it->get_type() ==
+	  expr_id::resolved::resolved_type::direct_declarator_id) {
+	if (id.get_value() ==
+	    (_ast.get_pp_tokens()[r_it->get_direct_declarator_id().get_id_tok()]
+	     .get_value())) {
+	  result = &*r_it;
+	}
+      } else if (r_it->get_type() ==
+		 expr_id::resolved::resolved_type::enumerator) {
+	if (id.get_value() ==
+	    (_ast.get_pp_tokens()[r_it->get_enumerator().get_id_tok()]
+	     .get_value())) {
+	  result = &*r_it;
+	}
+      } else if (r_it->get_type() ==
+		 expr_id::resolved::resolved_type::in_param_id_list) {
+	const identifier_list &pil = r_it->get_param_id_list();
+	for (auto pi_tok : pil.get_identifiers()) {
+	  if (id.get_value() == _ast.get_pp_tokens()[pi_tok].get_value()) {
+	    result = &*r_it;
+	    break;
+	  }
+	}
+      } else {
+	assert(0);
+	__builtin_unreachable();
+      }
+
+      if (result && !pred(*result)) {
+	result = nullptr;
+	break;
+      }
+    }
+
+    if (result) {
+      if (in_cur_scope && scope_it == scopes_begin)
+	*in_cur_scope = true;
+      return result;
+    }
+  }
+
+  return nullptr;
+}
+
+
 void _id_resolver::_handle_direct_declarator_id(direct_declarator_id &ddid)
 {
   _declarator_id_ctx_finder dcf(ddid);
@@ -514,18 +624,474 @@ void _id_resolver::_handle_direct_declarator_id(direct_declarator_id &ddid)
     return;
 
   case direct_declarator_id::context::context_type::parameter_decl:
-    /* fall through */
-  case direct_declarator_id::context::context_type::init_decl:
     _scopes.back().push_back(expr_id::resolved(ddid));
     return;
 
+  case direct_declarator_id::context::context_type::init_decl:
+    _handle_init_decl(ddid);
+    return;
+
   case direct_declarator_id::context::context_type::function_def:
-    // A function definition's id declarator must get added to parent
-    // scope.
-    assert(_scopes.size() >= 2);
-    (_scopes.end() - 2)->push_back(expr_id::resolved(ddid));
+    _handle_fun_def(ddid);
     return;
   }
+}
+
+void _id_resolver::_handle_init_decl(direct_declarator_id &ddid)
+{
+  init_declarator &id = ddid.get_context().get_init_declarator();
+  const declaration &d = id.get_containing_declaration();
+  const storage_class sc
+    = d.get_declaration_specifiers().get_storage_class(_ast);
+  const bool is_fun = ddid.is_function();
+  const bool is_at_file_scope = d.is_at_file_scope();
+
+
+  // Find a previous declaration visible in the current scope, if any.
+  bool prev_is_in_cur_scope;
+  const expr_id::resolved *prev = _lookup(ddid.get_id_tok(),
+					  &prev_is_in_cur_scope);
+
+  // Let's be good citizens and check for forbidden redeclarations in
+  // the same scope.
+  const bool is_local_nonfun =
+    !is_fun && !is_at_file_scope && sc != storage_class::sc_extern;
+  const bool no_linkage =
+    ((sc != storage_class::sc_none &&
+      sc != storage_class::sc_static &&
+      sc != storage_class::sc_extern &&
+      !(is_fun && !is_at_file_scope && sc == storage_class::sc_auto)) ||
+     is_local_nonfun);
+  if (prev && prev_is_in_cur_scope &&
+      (no_linkage ||
+       prev->get_type() == expr_id::resolved::resolved_type::enumerator)) {
+
+    // typedef redeclarations are possible if they yield the same result.
+    const bool prev_is_typedef
+      = ((prev->get_type() ==
+	  expr_id::resolved::resolved_type::direct_declarator_id) &&
+	 (prev->get_direct_declarator_id().get_context().get_type() ==
+	  direct_declarator_id::context::context_type::init_decl) &&
+	 ((prev->get_direct_declarator_id().get_context().get_init_declarator()
+	   .get_containing_declaration().get_declaration_specifiers()
+	   .get_storage_class(_ast)) ==
+	  storage_class::sc_typedef));
+
+    // In old-style parameter declarations, the declaration obviously
+    // has to declare some id of the function prototype's identifier
+    // list. So that's Ok.
+    const bool is_oldstyle_param_decl
+      = (is_local_nonfun &&
+	 (prev->get_type() ==
+	  expr_id::resolved::resolved_type::in_param_id_list) &&
+	 dynamic_cast<const declaration_list*>(d.get_parent()));
+
+    if (!(is_oldstyle_param_decl ||
+	  (sc == storage_class::sc_typedef && prev_is_typedef))) {
+      const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+      code_remark remark(code_remark::severity::fatal,
+			 "invalid redeclaration",
+			 id_tok.get_file_range());
+      _ast.get_remarks().add(remark);
+      throw semantic_except(remark);
+    }
+  }
+
+  if (no_linkage) {
+    _scopes.back().push_back(expr_id::resolved(ddid));
+    return;
+  }
+
+
+  assert((sc == storage_class::sc_none ||
+	  sc == storage_class::sc_static ||
+	  sc == storage_class::sc_extern) ||
+	 (is_fun && !is_at_file_scope && sc == storage_class::sc_auto));
+  assert(is_fun || is_at_file_scope || sc == storage_class::sc_extern);
+
+  if (is_at_file_scope && sc == storage_class::sc_static) {
+    // Internal linkage.
+    if (prev) {
+      assert(prev_is_in_cur_scope &&
+	     (prev->get_type() ==
+	      expr_id::resolved::resolved_type::direct_declarator_id));
+
+      direct_declarator_id &prev_ddid = prev->get_direct_declarator_id();
+      const linkage::linkage_type prev_linkage =
+	_get_linkage_type(prev_ddid.get_context());
+      if (prev_linkage != linkage::linkage_type::internal) {
+	const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+	code_remark remark(code_remark::severity::fatal,
+			   "static declaration follows non-static one",
+			   id_tok.get_file_range());
+	_ast.get_remarks().add(remark);
+	throw semantic_except(remark);
+      }
+
+      _link_to(id.get_linkage(), prev_ddid.get_context());
+
+    } else {
+      _try_resolve_pending_linkages(ddid, linkage::linkage_type::internal);
+    }
+
+  } else if (sc == storage_class::sc_extern ||
+	     (sc == storage_class::sc_none && is_fun)) {
+    // Linkage of previous declaration, if any. Otherwise external.
+    direct_declarator_id* prev_ddid = nullptr;
+    if (prev) {
+      auto get_ddid_if_linkage =
+	[](const expr_id::resolved &r) {
+	switch(r.get_type()) {
+	case expr_id::resolved::resolved_type::direct_declarator_id:
+	  {
+	    direct_declarator_id &prev_ddid = r.get_direct_declarator_id();
+	    const linkage::linkage_type prev_linkage =
+	      _get_linkage_type(prev_ddid.get_context());
+	    if (prev_linkage != linkage::linkage_type::none)
+	      return &prev_ddid;
+	  }
+	  return static_cast<direct_declarator_id*>(nullptr);
+
+	case expr_id::resolved::resolved_type::enumerator:
+	  return static_cast<direct_declarator_id*>(nullptr);
+
+	case expr_id::resolved::resolved_type::in_param_id_list:
+	  return static_cast<direct_declarator_id*>(nullptr);
+
+	default:
+	  assert(0);
+	  __builtin_unreachable();
+	}
+      };
+
+      prev_ddid = get_ddid_if_linkage(*prev);
+      if (!prev_ddid) {
+	// Try to find a visible declaration which actually has a linkage.
+	prev = _lookup(ddid.get_id_tok(), get_ddid_if_linkage);
+	if (prev) {
+	  prev_ddid = &prev->get_direct_declarator_id();
+	  const linkage::linkage_type prev_linkage =
+	    _get_linkage_type(prev_ddid->get_context());
+	  if (prev_linkage != linkage::linkage_type::external) {
+	    const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+	    code_remark remark(code_remark::severity::fatal,
+			       "extern declaration follows static one",
+			       id_tok.get_file_range());
+	    _ast.get_remarks().add(remark);
+	    throw semantic_except(remark);
+	  }
+	}
+      }
+    }
+
+    if (prev_ddid) {
+      _link_to(id.get_linkage(), prev_ddid->get_context());
+    } else {
+      _add_pending_linkage(ddid, linkage::linkage_type::external);
+    }
+
+  } else if (is_at_file_scope) {
+    assert(sc == storage_class::sc_none && !is_fun);
+    // Object at file scope with no storage class specifier:
+    // external linkage.
+    if (prev) {
+      assert(prev_is_in_cur_scope &&
+	     (prev->get_type() ==
+	      expr_id::resolved::resolved_type::direct_declarator_id));
+
+      direct_declarator_id &prev_ddid = prev->get_direct_declarator_id();
+      const linkage::linkage_type prev_linkage =
+	_get_linkage_type(prev_ddid.get_context());
+      if (prev_linkage != linkage::linkage_type::external) {
+	const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+	code_remark remark(code_remark::severity::fatal,
+			   "non-static declaration follows static one",
+			   id_tok.get_file_range());
+	_ast.get_remarks().add(remark);
+	throw semantic_except(remark);
+      }
+
+      _link_to(id.get_linkage(), prev_ddid.get_context());
+
+    } else {
+      _try_resolve_pending_linkages(ddid, linkage::linkage_type::external);
+    }
+
+  } else if (is_fun && !is_at_file_scope && sc == storage_class::sc_auto) {
+    // This branch deals with the gcc extension of having an 'auto' specifier
+    // for linking to nested functions in the same scope.
+    if (prev && prev_is_in_cur_scope) {
+      assert(prev->get_type() ==
+	     expr_id::resolved::resolved_type::direct_declarator_id);
+
+      direct_declarator_id &prev_ddid = prev->get_direct_declarator_id();
+      const linkage::linkage_type prev_linkage =
+	_get_linkage_type(prev_ddid.get_context());
+      if (prev_linkage != linkage::linkage_type::nested_fun_auto) {
+	const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+	code_remark remark{
+	  code_remark::severity::fatal,
+	  "auto nested function declaration follows an external one",
+	  id_tok.get_file_range()
+	};
+	_ast.get_remarks().add(remark);
+	throw semantic_except(remark);
+      }
+
+      _link_to(id.get_linkage(), prev_ddid.get_context());
+
+    } else {
+      id.get_linkage()
+	.set_linkage_type(linkage::linkage_type::nested_fun_auto);
+    }
+
+  } else {
+    assert(sc == storage_class::sc_static && is_fun && !is_at_file_scope);
+    // That's not allowed.
+    const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+    code_remark remark(code_remark::severity::fatal,
+		       "static specifier at non-local function declaration",
+		       id_tok.get_file_range());
+    _ast.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  _scopes.back().push_back(expr_id::resolved(ddid));
+}
+
+void _id_resolver::_handle_fun_def(direct_declarator_id &ddid)
+{
+  if (!ddid.is_function()) {
+      const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+      code_remark remark(code_remark::severity::fatal,
+			 "no function declarator in definition's prototype",
+			 id_tok.get_file_range());
+      _ast.get_remarks().add(remark);
+      throw semantic_except(remark);
+  }
+
+  function_definition &fd = ddid.get_context().get_function_definition();
+  storage_class sc
+    = fd.get_declaration_specifiers().get_storage_class(_ast);
+
+  const bool is_at_file_scope = fd.is_at_file_scope();
+  if (sc != storage_class::sc_none &&
+      !(is_at_file_scope && (sc == storage_class::sc_static ||
+			       sc == storage_class::sc_extern)) &&
+      !(!is_at_file_scope && sc == storage_class::sc_auto)) {
+      const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+      code_remark remark(code_remark::severity::fatal,
+			 "invalid storage class at function definition",
+			 id_tok.get_file_range());
+      _ast.get_remarks().add(remark);
+      throw semantic_except(remark);
+  }
+
+  // Find a previous declaration visible in the current scope, if any.
+  bool prev_is_in_cur_scope;
+  const expr_id::resolved * const prev = _lookup(ddid.get_id_tok(),
+						 &prev_is_in_cur_scope, true);
+
+  // Check for forbidden redeclarations in the same scope.
+  if (prev && prev_is_in_cur_scope &&
+      (prev->get_type() == expr_id::resolved::resolved_type::enumerator ||
+       prev->get_type() == expr_id::resolved::resolved_type::in_param_id_list))
+    {
+    const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+    code_remark remark(code_remark::severity::fatal,
+		       "invalid redeclaration",
+		       id_tok.get_file_range());
+    _ast.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  if (!is_at_file_scope) {
+    // Nested functions have 'auto' linkage.
+    if (prev && prev_is_in_cur_scope) {
+      assert(prev->get_type() ==
+	     expr_id::resolved::resolved_type::direct_declarator_id);
+
+      direct_declarator_id &prev_ddid = prev->get_direct_declarator_id();
+      const linkage::linkage_type prev_linkage =
+	_get_linkage_type(prev_ddid.get_context());
+      if (prev_linkage != linkage::linkage_type::nested_fun_auto) {
+	const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+	code_remark remark{
+	  code_remark::severity::fatal,
+	  "nested function definition follows an external declaration",
+	  id_tok.get_file_range()
+	};
+	_ast.get_remarks().add(remark);
+	throw semantic_except(remark);
+      }
+
+      _link_to(fd.get_linkage(), prev_ddid.get_context());
+
+    } else {
+      fd.get_linkage().set_linkage_type(linkage::linkage_type::nested_fun_auto);
+    }
+
+  } else if (sc == storage_class::sc_static) {
+    assert(is_at_file_scope);
+    // Internal linkage.
+    if (prev) {
+      assert(prev->get_type() ==
+	     expr_id::resolved::resolved_type::direct_declarator_id);
+
+      direct_declarator_id &prev_ddid = prev->get_direct_declarator_id();
+      const linkage::linkage_type prev_linkage =
+	_get_linkage_type(prev_ddid.get_context());
+      if (prev_linkage != linkage::linkage_type::internal) {
+	const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+	code_remark remark(code_remark::severity::fatal,
+			   "static declaration follows non-static one",
+			   id_tok.get_file_range());
+	_ast.get_remarks().add(remark);
+	throw semantic_except(remark);
+      }
+
+      _link_to(fd.get_linkage(), prev_ddid.get_context());
+
+    } else {
+      _try_resolve_pending_linkages(ddid, linkage::linkage_type::internal);
+    }
+
+  } else {
+    assert(sc == storage_class::sc_extern || sc == storage_class::sc_none);
+    // Linkage of previous declaration, if any. Otherwise external.
+    if (prev) {
+      assert(prev->get_type() ==
+	     expr_id::resolved::resolved_type::direct_declarator_id);
+      direct_declarator_id &prev_ddid = prev->get_direct_declarator_id();
+      const linkage::linkage_type prev_linkage =
+	_get_linkage_type(prev_ddid.get_context());
+      if (prev_linkage == linkage::linkage_type::none) {
+	fd.get_linkage().set_linkage_type(linkage::linkage_type::external);
+      }
+
+      _link_to(fd.get_linkage(), prev_ddid.get_context());
+
+    } else {
+      _try_resolve_pending_linkages(ddid, linkage::linkage_type::external);
+    }
+  }
+
+  // A function definition's id declarator must get added to parent
+  // scope.
+  assert(_scopes.size() >= 2);
+  (_scopes.end() - 2)->push_back(expr_id::resolved(ddid));
+}
+
+
+linkage::linkage_type
+_id_resolver::_get_linkage_type(const direct_declarator_id::context &ctx)
+  noexcept
+{
+  switch (ctx.get_type()) {
+  case direct_declarator_id::context::context_type::init_decl:
+    return ctx.get_init_declarator().get_linkage().get_linkage_type();
+    break;
+
+  case direct_declarator_id::context::context_type::function_def:
+    return ctx.get_function_definition().get_linkage().get_linkage_type();
+    break;
+
+  default:
+    assert(0);
+    __builtin_unreachable();
+  }
+}
+
+void _id_resolver::_link_to(linkage &l,
+			    const direct_declarator_id::context &target_ctx)
+  noexcept
+{
+  const linkage::linkage_type type = _get_linkage_type(target_ctx);
+
+  switch (target_ctx.get_type()) {
+  case direct_declarator_id::context::context_type::init_decl:
+    l.link_to(target_ctx.get_init_declarator(), type);
+    break;
+
+  case direct_declarator_id::context::context_type::function_def:
+    l.link_to(target_ctx.get_function_definition(), type);
+    break;
+
+  default:
+    assert(0);
+    __builtin_unreachable();
+  }
+}
+
+void _id_resolver::_add_pending_linkage(direct_declarator_id &ddid,
+					const linkage::linkage_type type)
+{
+  if (_try_resolve_pending_linkages(ddid, type))
+    return;
+  _pending_linkages.push_back(std::ref(ddid));
+}
+
+bool
+_id_resolver::_try_resolve_pending_linkages(direct_declarator_id &ddid,
+					    const linkage::linkage_type type)
+{
+  const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+  auto it_pl = _pending_linkages.begin();
+  for (; it_pl != _pending_linkages.end(); ++it_pl) {
+    const pp_token &pl_id_tok =
+      _ast.get_pp_tokens()[it_pl->get().get_id_tok()];
+    if (id_tok.get_value() == pl_id_tok.get_value())
+      break;
+  }
+
+  bool is_at_file_scope;
+  linkage *l;
+  const direct_declarator_id::context &ctx = ddid.get_context();
+  switch(ctx.get_type()) {
+  case direct_declarator_id::context::context_type::init_decl:
+    l = &ctx.get_init_declarator().get_linkage();
+    is_at_file_scope =
+      ctx.get_init_declarator().get_containing_declaration().is_at_file_scope();
+    break;
+
+  case direct_declarator_id::context::context_type::function_def:
+    l = &ctx.get_function_definition().get_linkage();
+    is_at_file_scope =
+      ctx.get_function_definition().is_at_file_scope();
+    break;
+
+  default:
+    assert(0);
+    __builtin_unreachable();
+  }
+
+  if (it_pl == _pending_linkages.end()) {
+    l->set_linkage_type(type);
+    return is_at_file_scope;
+  }
+
+  const direct_declarator_id::context &pl_ctx = it_pl->get().get_context();
+  const linkage::linkage_type pl_linkage_type
+    = _get_linkage_type(pl_ctx);
+  assert(pl_linkage_type == linkage::linkage_type::external);
+
+  if (type != pl_linkage_type) {
+    const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+    code_remark remark(code_remark::severity::fatal,
+		       "static declaration follows external one",
+		       id_tok.get_file_range());
+    _ast.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  _link_to(*l, pl_ctx);
+  if (is_at_file_scope) {
+    // Subsequent extern declarations will be able to discover this.
+    _pending_linkages.erase(it_pl);
+    return true;
+  }
+
+  return false;
 }
 
 void _id_resolver::_resolve_id(expr_id &ei)
@@ -548,43 +1114,18 @@ void _id_resolver::_resolve_id(expr_id &ei)
     }
   }
 
+
   // Otherwise, search "ordinary" identifiers.
-  const pp_token &id_tok = _ast.get_pp_tokens()[ei.get_id_tok()];
-  for (auto scope_it = _scopes.rbegin(); scope_it != _scopes.rend();
-       ++scope_it) {
-    for (auto r_it = scope_it->rbegin(); r_it != scope_it->rend(); ++r_it) {
-      if (r_it->get_type() ==
-	  expr_id::resolved::resolved_type::direct_declarator_id) {
-	if (id_tok.get_value() ==
-	    (_ast.get_pp_tokens()[r_it->get_direct_declarator().get_id_tok()]
-	     .get_value())) {
-	  ei.set_resolved(*r_it);
-	  return;
-	}
-      } else if (r_it->get_type() ==
-		 expr_id::resolved::resolved_type::enumerator) {
-	if (id_tok.get_value() ==
-	    (_ast.get_pp_tokens()[r_it->get_enumerator().get_id_tok()]
-	     .get_value())) {
-	  ei.set_resolved(*r_it);
-	  return;
-	}
-      } else if (r_it->get_type() ==
-		 expr_id::resolved::resolved_type::in_param_id_list) {
-	const identifier_list &pil = r_it->get_param_id_list();
-	for (auto pi_tok : pil.get_identifiers()) {
-	  if (id_tok.get_value() == _ast.get_pp_tokens()[pi_tok].get_value()) {
-	    ei.set_resolved(*r_it);
-	    return;
-	  }
-	}
-      }
-    }
+  const expr_id::resolved *resolved_id = _lookup(ei.get_id_tok());
+  if (resolved_id) {
+    ei.set_resolved(*resolved_id);
+    return;
   }
 
 
   // Otherwise check whether the identifier refers to a builtin
   // and if so, report that fact.
+  const pp_token &id_tok = _ast.get_pp_tokens()[ei.get_id_tok()];
   static std::set<std::string> builtin_ids = _init_builtin_ids_set();
   if (builtin_ids.count(id_tok.get_value())) {
     ei.set_resolved(expr_id::resolved(expr_id::resolved::builtin_tag{}));
@@ -634,9 +1175,9 @@ void _id_resolver::_resolve_id(type_specifier_tdid &ts_tdid)
       if (r_it->get_type() ==
 	  expr_id::resolved::resolved_type::direct_declarator_id) {
 	if (id_tok.get_value() ==
-	    (_ast.get_pp_tokens()[r_it->get_direct_declarator().get_id_tok()]
+	    (_ast.get_pp_tokens()[r_it->get_direct_declarator_id().get_id_tok()]
 	     .get_value())) {
-	  ts_tdid.set_resolved(r_it->get_direct_declarator());
+	  ts_tdid.set_resolved(r_it->get_direct_declarator_id());
 	  return;
 	}
       }
