@@ -295,6 +295,7 @@ static void empty(pp_tokens_range &loc)
 %type <function_definition>	function_definition_ext
 %type <stmt_compound>	function_definition_body
 %type <declaration>	declaration
+%type <declaration>	declaration_ext
 %type <declaration_specifiers>	declaration_specifiers_no_ts_opt
 %type <declaration_specifiers>	declaration_specifiers_no_ts
 %type <declaration_specifiers>	declaration_specifiers_w_non_att_no_ts
@@ -453,7 +454,7 @@ translation_unit:
 external_declaration:
 	function_definition_ext
 	  { $$ = new external_declaration_func(std::move($1)); }
-	| declaration
+	| declaration_ext
 	  { $$ = new external_declaration_decl(std::move($1)); }
 	| asm_directive
 	  { $$ = new external_declaration_asm(std::move($1)); }
@@ -507,6 +508,24 @@ function_definition_body:
 	  {
 	    pd.leave_td_scope();
 	    $$ = new stmt_compound(@$, std::move($3), std::move($4));
+	  }
+;
+
+declaration_ext:
+	init_declarator_list_no_tdid TOK_SEMICOLON
+	  {
+	    declaration_specifiers *ds =
+		new declaration_specifiers(pp_tokens_range(@1.begin, @1.begin));
+	    try {
+	      $$ = new declaration(@$, std::move(ds), std::move($1));
+	    } catch (...) {
+	      delete ds;
+	      throw;
+	    }
+	  }
+	| declaration
+	  {
+	    $$ = MV_P($1);
 	  }
 ;
 
