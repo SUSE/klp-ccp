@@ -189,11 +189,18 @@ static const char * const _builtin_ids[] = {
 	nullptr
 };
 
-static std::set<std::string> _init_builtin_ids_set()
+static const char * const _builtin_tdids[] = {
+	"__builtin_va_list",
+	nullptr
+};
+
+
+static std::set<std::string>
+_init_builtin_ids_set(const char * const builtin_ids[])
 {
   std::set<std::string> s;
 
-  for (const char * const *b = _builtin_ids; *b; ++b)
+  for (const char * const *b = builtin_ids; *b; ++b)
     s.insert(*b);
 
   return s;
@@ -1452,7 +1459,8 @@ void _id_resolver::_resolve_id(expr_id &ei)
   // Otherwise check whether the identifier refers to a builtin
   // and if so, report that fact.
   const pp_token &id_tok = _ast.get_pp_tokens()[ei.get_id_tok()];
-  static std::set<std::string> builtin_ids = _init_builtin_ids_set();
+  static std::set<std::string> builtin_ids =
+    _init_builtin_ids_set(_builtin_ids);
   if (builtin_ids.count(id_tok.get_value())) {
     ei.set_resolved(expr_id::resolved(expr_id::resolved::builtin_tag{}));
     return;
@@ -1509,6 +1517,14 @@ void _id_resolver::_resolve_id(type_specifier_tdid &ts_tdid)
 	}
       }
     }
+  }
+
+  // Typedef id not found. Check whether the identifier refers to a
+  // builtin and if so, silently accept it.
+  static std::set<std::string> builtin_tdids =
+    _init_builtin_ids_set(_builtin_tdids);
+  if (builtin_tdids.count(id_tok.get_value())) {
+    return;
   }
 
   code_remark remark(code_remark::severity::fatal,

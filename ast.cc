@@ -461,6 +461,38 @@ _ast_entity* expr_builtin_types_compatible_p::_get_child(const size_t i)
   __builtin_unreachable();
 }
 
+expr_builtin_va_arg::expr_builtin_va_arg(const pp_tokens_range &tr,
+					 expr* &&e, type_name* &&tn) noexcept
+  : expr(tr), _e(*mv_p(std::move(e))), _tn(*mv_p(std::move(tn)))
+{
+  _e._set_parent(*this);
+  _tn._set_parent(*this);
+}
+
+expr_builtin_va_arg::~expr_builtin_va_arg() noexcept
+{
+  delete &_e;
+  delete &_tn;
+}
+
+_ast_entity* expr_builtin_va_arg::_get_child(const size_t i) noexcept
+{
+  switch (i)
+  {
+  case 0:
+    return &_e;
+
+  case 1:
+    return &_tn;
+
+  case 2:
+    return nullptr;
+  }
+
+  __builtin_unreachable();
+}
+
+
 
 expr_array_subscript::expr_array_subscript(const pp_tokens_range &tr,
 					   expr* &&base, expr* &&index)

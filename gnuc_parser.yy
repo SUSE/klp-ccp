@@ -183,6 +183,7 @@ static void empty(pp_tokens_range &loc)
 
 %token TOK_KW_BUILTIN_OFFSETOF
 %token TOK_KW_BUILTIN_TYPES_COMPATIBLE_P
+%token TOK_KW_BUILTIN_VA_ARG
 
 
 %token TOK_KW_ATTRIBUTE
@@ -2172,6 +2173,8 @@ postfix_expression:
 	  { $$ = new expr_compound_literal(@$, std::move($2), std::move($5)); }
 	| TOK_LPAREN type_name TOK_RPAREN TOK_LBRACE TOK_RBRACE
 	  { $$ = new expr_compound_literal(@$, std::move($2), nullptr); }
+	| TOK_KW_BUILTIN_VA_ARG TOK_LPAREN expression TOK_COMMA type_name TOK_RPAREN
+	  { $$ = new expr_builtin_va_arg(@$, std::move($3), std::move($5)); }
 ;
 
 statement_expression:
