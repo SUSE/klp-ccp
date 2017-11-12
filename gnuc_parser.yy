@@ -1828,11 +1828,11 @@ asm_qualifier_list:
 	TOK_KW_GOTO
 	  { $$ = new asm_qualifier_list(@$, asm_qualifier::aq_goto); }
 	| asm_qualifier_list TOK_KW_GOTO
-	  { $$ = MV_P($1); $$->extend(@$, asm_qualifier::aq_goto); }
+	  { $$ = MV_P($1); $$->extend(@2, asm_qualifier::aq_goto); }
 	| TOK_KW_VOLATILE
 	  { $$ = new asm_qualifier_list(@$, asm_qualifier::aq_volatile); }
 	| asm_qualifier_list TOK_KW_VOLATILE
-	  { $$ = MV_P($1); $$->extend(@$, asm_qualifier::aq_volatile); }
+	  { $$ = MV_P($1); $$->extend(@2, asm_qualifier::aq_volatile); }
 ;
 
 asm_operand_list_opt:
