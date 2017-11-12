@@ -467,9 +467,29 @@ bool _id_resolver::operator()(_ast_entity &ae, const pre_traversal_tag&)
 {
   if (dynamic_cast<function_definition*>(&ae) ||
       dynamic_cast<stmt_compound*>(&ae) ||
-      dynamic_cast<stmt_for_init_decl*>(&ae)) {
+      dynamic_cast<stmt_if*>(&ae) ||
+      dynamic_cast<stmt_switch*>(&ae) ||
+      dynamic_cast<stmt_for_init_decl*>(&ae) ||
+      dynamic_cast<stmt_for_init_expr*>(&ae) ||
+      dynamic_cast<stmt_while*>(&ae) ||
+      dynamic_cast<stmt_do*>(&ae)) {
     _enter_scope();
     return true;
+  }
+
+  if (dynamic_cast<stmt*>(&ae)) {
+    _ast_entity * const p = ae.get_parent();
+    assert(p);
+    if (dynamic_cast<stmt_if*>(p) ||
+	dynamic_cast<stmt_switch*>(p) ||
+	dynamic_cast<stmt_for_init_decl*>(p) ||
+	dynamic_cast<stmt_for_init_expr*>(p) ||
+	dynamic_cast<stmt_while*>(p) ||
+	dynamic_cast<stmt_do*>(p)) {
+      _enter_scope();
+      return true;
+    }
+    return false;
   }
 
   parameter_declaration_list *pdl =
