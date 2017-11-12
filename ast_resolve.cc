@@ -352,21 +352,28 @@ namespace
     void _enter_scope();
     void _leave_scope();
 
-    const expr_id::resolved* _lookup(const pp_token_index id_tok,
-				     bool *in_cur_scope = nullptr,
-				     bool skip_newest_scope = false)
+    const expr_id::resolved* _lookup_id(const pp_token_index id_tok,
+					bool *in_cur_scope = nullptr,
+					bool skip_newest_scope = false)
       const noexcept;
 
     template <typename predicate_type>
-    const expr_id::resolved* _lookup(const pp_token_index id_tok,
-				     predicate_type &&pred,
-				     bool *in_cur_scope = nullptr,
-				     bool skip_newest_scope = false)
+    const expr_id::resolved* _lookup_id(const pp_token_index id_tok,
+					predicate_type &&pred,
+					bool *in_cur_scope = nullptr,
+					bool skip_newest_scope = false)
+      const noexcept;
+
+    const sou_decl_link* _lookup_sou_decl(const pp_token_index id_tok,
+					  const bool only_in_cur_scope)
       const noexcept;
 
     void _handle_direct_declarator_id(direct_declarator_id &ddid);
     void _handle_init_decl(direct_declarator_id &ddid);
     void _handle_fun_def(direct_declarator_id &ddid);
+    void _handle_sou_ref(struct_or_union_ref &sour);
+    void _handle_sou_def(struct_or_union_def &soud);
+
     static linkage::linkage_type
     _get_linkage_type(const direct_declarator_id::context &ctx) noexcept;
     static void _link_to(linkage &l,
@@ -380,25 +387,43 @@ namespace
     void _resolve_id(expr_id &ei);
     void _resolve_id(type_specifier_tdid &ts_tdid);
 
-    struct _declarator_id_ctx_finder
+    class _declarator_id_ctx_finder
     {
+    public:
       _declarator_id_ctx_finder(direct_declarator_id &ddid) noexcept
 	: _ddid(ddid)
       {}
 
-      bool operator()(const declarator&) noexcept
+      bool operator()(const declarator&) const noexcept
       { return true; }
 
-      bool operator()(const direct_declarator&) noexcept
+      bool operator()(const direct_declarator&) const noexcept
       { return true; }
 
-      bool operator()(struct_declarator &sd) noexcept;
-      bool operator()(parameter_declaration_declarator &pdd) noexcept;
-      bool operator()(init_declarator &id) noexcept;
-      bool operator()(function_definition &fd) noexcept;
+      bool operator()(struct_declarator &sd) const noexcept;
+      bool operator()(parameter_declaration_declarator &pdd) const noexcept;
+      bool operator()(init_declarator &id) const noexcept;
+      bool operator()(function_definition &fd) const noexcept;
 
     private:
       direct_declarator_id &_ddid;
+    };
+
+    struct _sou_ref_standalone_checker
+    {
+    public:
+      bool operator()(const specifier_qualifier_list&) const noexcept
+      { return true; }
+
+      bool operator()(const struct_declaration_c99 &sd) noexcept;
+      bool operator()(const struct_declaration_unnamed_sou&) const noexcept;
+      bool operator()(const type_name&) noexcept;
+      bool operator()(const declaration &d) noexcept;
+      bool operator()(const parameter_declaration_declarator&) noexcept;
+      bool operator()(const parameter_declaration_abstract&) noexcept;
+      bool operator()(const function_definition&) noexcept;
+
+      bool is_standalone_decl;
     };
 
     ast::ast &_ast;
@@ -406,6 +431,7 @@ namespace
     struct _scope
     {
       std::vector<expr_id::resolved> _declared_ids;
+      std::vector<sou_decl_link> _declared_sous;
     };
     typedef std::vector<expr_id::resolved> _scope_type;
     typedef std::vector<_scope> _scopes_type;
@@ -414,6 +440,7 @@ namespace
     std::vector<std::reference_wrapper<direct_declarator_id> >
     _pending_linkages;
   };
+
 }
 
 _id_resolver::_id_resolver(ast::ast &ast)
@@ -524,6 +551,17 @@ bool _id_resolver::operator()(_ast_entity &ae, const pre_traversal_tag&)
     return false;
   }
 
+  struct_or_union_ref *sour = dynamic_cast<struct_or_union_ref*>(&ae);
+  if (sour) {
+    _handle_sou_ref(*sour);
+    return false;
+  }
+
+  struct_or_union_def *soud = dynamic_cast<struct_or_union_def*>(&ae);
+  if (soud) {
+    _handle_sou_def(*soud);
+    return false;
+  }
 
   expr_id *ei = dynamic_cast<expr_id*>(&ae);
   if (ei) {
@@ -555,20 +593,20 @@ void _id_resolver::_leave_scope()
   _scopes.pop_back();
 }
 
-const expr_id::resolved* _id_resolver::_lookup(const pp_token_index id_tok,
-					       bool *in_cur_scope,
-					       bool skip_newest_scope)
+const expr_id::resolved* _id_resolver::_lookup_id(const pp_token_index id_tok,
+						  bool *in_cur_scope,
+						  bool skip_newest_scope)
   const noexcept
 {
-  return _lookup(id_tok, [](const expr_id::resolved&) { return true; },
-		 in_cur_scope, skip_newest_scope);
+  return _lookup_id(id_tok, [](const expr_id::resolved&) { return true; },
+		    in_cur_scope, skip_newest_scope);
 }
 
 template <typename predicate_type>
-const expr_id::resolved* _id_resolver::_lookup(const pp_token_index id_tok,
-					       predicate_type &&pred,
-					       bool *in_cur_scope,
-					       bool skip_newest_scope)
+const expr_id::resolved* _id_resolver::_lookup_id(const pp_token_index id_tok,
+						  predicate_type &&pred,
+						  bool *in_cur_scope,
+						  bool skip_newest_scope)
   const noexcept
 {
   const expr_id::resolved *result = nullptr;
@@ -630,10 +668,47 @@ const expr_id::resolved* _id_resolver::_lookup(const pp_token_index id_tok,
   return nullptr;
 }
 
+const sou_decl_link* _id_resolver::
+_lookup_sou_decl(const pp_token_index id_tok, const bool only_in_cur_scope)
+  const noexcept
+{
+  const pp_token &_id_tok = _ast.get_pp_tokens()[id_tok];
+  assert(_scopes.size() > 0);
+  const auto scopes_end =
+    (!only_in_cur_scope ?
+     _scopes.rend() :
+     _scopes.rbegin() + 1);
+  for (auto scope_it = _scopes.rbegin(); scope_it != scopes_end; ++scope_it) {
+    for (auto d_it = scope_it->_declared_sous.begin();
+	 d_it != scope_it->_declared_sous.end(); ++d_it) {
+      pp_token_index d_id_tok;
+      switch (d_it->get_target_type()) {
+      case sou_decl_link::target_type::ref:
+	d_id_tok = d_it->get_target_sou_ref().get_id_tok();
+	break;
+
+      case sou_decl_link::target_type::def:
+	d_id_tok = d_it->get_target_sou_def().get_id_tok();
+	break;
+
+      case sou_decl_link::target_type::unlinked:
+	assert(0);
+	__builtin_unreachable();
+      }
+
+      if (_id_tok.get_value() == _ast.get_pp_tokens()[d_id_tok].get_value()) {
+	return &*d_it;
+      }
+    }
+  }
+
+  return nullptr;
+}
+
 
 void _id_resolver::_handle_direct_declarator_id(direct_declarator_id &ddid)
 {
-  _declarator_id_ctx_finder dcf(ddid);
+  const _declarator_id_ctx_finder dcf(ddid);
   ddid.for_each_parent<type_set<struct_declarator,
 				 init_declarator,
 				 function_definition,
@@ -674,8 +749,8 @@ void _id_resolver::_handle_init_decl(direct_declarator_id &ddid)
 
   // Find a previous declaration visible in the current scope, if any.
   bool prev_is_in_cur_scope;
-  const expr_id::resolved *prev = _lookup(ddid.get_id_tok(),
-					  &prev_is_in_cur_scope);
+  const expr_id::resolved *prev = _lookup_id(ddid.get_id_tok(),
+					     &prev_is_in_cur_scope);
 
   // Let's be good citizens and check for forbidden redeclarations in
   // the same scope.
@@ -792,7 +867,7 @@ void _id_resolver::_handle_init_decl(direct_declarator_id &ddid)
       prev_ddid = get_ddid_if_linkage(*prev);
       if (!prev_ddid) {
 	// Try to find a visible declaration which actually has a linkage.
-	prev = _lookup(ddid.get_id_tok(), get_ddid_if_linkage);
+	prev = _lookup_id(ddid.get_id_tok(), get_ddid_if_linkage);
 	if (prev) {
 	  prev_ddid = &prev->get_direct_declarator_id();
 	  const linkage::linkage_type prev_linkage =
@@ -914,8 +989,9 @@ void _id_resolver::_handle_fun_def(direct_declarator_id &ddid)
 
   // Find a previous declaration visible in the current scope, if any.
   bool prev_is_in_cur_scope;
-  const expr_id::resolved * const prev = _lookup(ddid.get_id_tok(),
-						 &prev_is_in_cur_scope, true);
+  const expr_id::resolved * const prev = _lookup_id(ddid.get_id_tok(),
+						    &prev_is_in_cur_scope,
+						    true);
 
   // Check for forbidden redeclarations in the same scope.
   if (prev && prev_is_in_cur_scope &&
@@ -1007,6 +1083,130 @@ void _id_resolver::_handle_fun_def(direct_declarator_id &ddid)
   (_scopes.end() - 2)->_declared_ids.push_back(expr_id::resolved(ddid));
 }
 
+void _id_resolver::_handle_sou_ref(struct_or_union_ref &sour)
+{
+  _sou_ref_standalone_checker srsc;
+  sour.for_each_parent<type_set<struct_declaration_c99,
+				struct_declaration_unnamed_sou,
+				type_name, declaration,
+				parameter_declaration_declarator,
+				parameter_declaration_abstract,
+				function_definition> >(srsc);
+
+  // If the 'struct foo' construct is standalone, i.e. is a
+  // declaration of that tag, then search only the current scope.
+  const sou_decl_link *prev_decl = _lookup_sou_decl(sour.get_id_tok(),
+						    srsc.is_standalone_decl);
+
+  struct_or_union prev_tag_kind;
+  if (srsc.is_standalone_decl && prev_decl) {
+    // It's a redeclaration, link it to the previous one.
+    switch (prev_decl->get_target_type()) {
+    case sou_decl_link::target_type::ref:
+      prev_tag_kind = prev_decl->get_target_sou_ref().get_tag_kind();
+      sour.get_decl_list_node().link_to(prev_decl->get_target_sou_ref());
+      break;
+
+    case sou_decl_link::target_type::def:
+      prev_tag_kind = prev_decl->get_target_sou_def().get_tag_kind();
+      sour.get_decl_list_node().link_to(prev_decl->get_target_sou_def());
+      break;
+
+    case sou_decl_link::target_type::unlinked:
+      assert(0);
+      __builtin_unreachable();
+    }
+
+  } else if (!prev_decl) {
+    // It's the first occurence and thus a declaration.
+    _scopes.back()._declared_sous.push_back(sou_decl_link(sour));
+
+  } else {
+    assert (!srsc.is_standalone_decl && prev_decl);
+    // It isnt't a declaration for that tag, but a real usage.
+    switch (prev_decl->get_target_type()) {
+    case sou_decl_link::target_type::ref:
+      prev_tag_kind = prev_decl->get_target_sou_ref().get_tag_kind();
+      sour.link_to_declaration(prev_decl->get_target_sou_ref());
+      break;
+
+    case sou_decl_link::target_type::def:
+      prev_tag_kind = prev_decl->get_target_sou_def().get_tag_kind();
+      sour.link_to_declaration(prev_decl->get_target_sou_def());
+      break;
+
+    case sou_decl_link::target_type::unlinked:
+      assert(0);
+      __builtin_unreachable();
+    }
+  }
+
+  if (prev_decl && prev_tag_kind != sour.get_tag_kind()) {
+    const pp_token &id_tok = _ast.get_pp_tokens()[sour.get_id_tok()];
+    code_remark remark(code_remark::severity::fatal,
+		       "tag redeclared as a different kind",
+		       id_tok.get_file_range());
+    _ast.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+}
+
+void _id_resolver::_handle_sou_def(struct_or_union_def &soud)
+{
+  if (!soud.has_id())
+    return;
+
+  const sou_decl_link *prev_decl = _lookup_sou_decl(soud.get_id_tok(),
+						    true);
+  if (prev_decl) {
+    // It's a redeclaration, link it to the previous one.
+    struct_or_union prev_tag_kind;
+    struct_or_union_def *prev_def = nullptr;
+    switch (prev_decl->get_target_type()) {
+    case sou_decl_link::target_type::ref:
+      {
+	struct_or_union_ref &prev_sou_ref = prev_decl->get_target_sou_ref();
+	prev_def = prev_sou_ref.get_decl_list_node().find_definition();
+	prev_tag_kind = prev_sou_ref.get_tag_kind();
+	soud.get_decl_list_node().link_to(prev_sou_ref);
+      }
+      break;
+
+    case sou_decl_link::target_type::def:
+      {
+	struct_or_union_def &prev_sou_def = prev_decl->get_target_sou_def();
+	prev_def = &prev_sou_def;
+	prev_tag_kind = prev_sou_def.get_tag_kind();
+	soud.get_decl_list_node().link_to(prev_sou_def);
+      }
+      break;
+
+    case sou_decl_link::target_type::unlinked:
+      assert(0);
+      __builtin_unreachable();
+    }
+
+    if (prev_tag_kind != soud.get_tag_kind()) {
+      const pp_token &id_tok = _ast.get_pp_tokens()[soud.get_id_tok()];
+      code_remark remark(code_remark::severity::fatal,
+			 "tag redeclared as a different kind",
+			 id_tok.get_file_range());
+      _ast.get_remarks().add(remark);
+      throw semantic_except(remark);
+    } else if (prev_def) {
+      const pp_token &id_tok = _ast.get_pp_tokens()[soud.get_id_tok()];
+      code_remark remark(code_remark::severity::fatal,
+			 "struct or union redefined",
+			 id_tok.get_file_range());
+      _ast.get_remarks().add(remark);
+      throw semantic_except(remark);
+    }
+
+  } else {
+    // It's the first occurence and thus a declaration.
+    _scopes.back()._declared_sous.push_back(sou_decl_link(soud));
+  }
+}
 
 linkage::linkage_type
 _id_resolver::_get_linkage_type(const direct_declarator_id::context &ctx)
@@ -1141,7 +1341,7 @@ void _id_resolver::_resolve_id(expr_id &ei)
 
 
   // Otherwise, search "ordinary" identifiers.
-  const expr_id::resolved *resolved_id = _lookup(ei.get_id_tok());
+  const expr_id::resolved *resolved_id = _lookup_id(ei.get_id_tok());
   if (resolved_id) {
     ei.set_resolved(*resolved_id);
     return;
@@ -1220,21 +1420,21 @@ void _id_resolver::_resolve_id(type_specifier_tdid &ts_tdid)
 
 bool
 _id_resolver::_declarator_id_ctx_finder::operator()(struct_declarator &sd)
-  noexcept
+  const noexcept
 {
   _ddid.set_context(direct_declarator_id::context(sd));
   return false;
 }
 
 bool _id_resolver::_declarator_id_ctx_finder::
-operator()(parameter_declaration_declarator &pdd) noexcept
+operator()(parameter_declaration_declarator &pdd) const noexcept
 {
   _ddid.set_context(direct_declarator_id::context(pdd));
   return false;
 }
 
 bool _id_resolver::_declarator_id_ctx_finder::operator()(init_declarator& id)
-  noexcept
+  const noexcept
 {
   _ddid.set_context(direct_declarator_id::context(id));
   return false;
@@ -1242,11 +1442,63 @@ bool _id_resolver::_declarator_id_ctx_finder::operator()(init_declarator& id)
 
 bool
 _id_resolver::_declarator_id_ctx_finder::operator()(function_definition& fd)
-  noexcept
+  const noexcept
 {
   _ddid.set_context(direct_declarator_id::context(fd));
   return false;
 }
+
+
+bool _id_resolver::_sou_ref_standalone_checker::
+operator()(const struct_declaration_c99 &sd) noexcept
+{
+  is_standalone_decl = sd.get_struct_declarator_list().empty();
+  return false;
+}
+
+bool _id_resolver::_sou_ref_standalone_checker::
+operator()(const struct_declaration_unnamed_sou&) const noexcept
+{
+  assert(0);
+  __builtin_unreachable();
+  return false;
+}
+
+bool _id_resolver::_sou_ref_standalone_checker::operator()(const type_name&)
+  noexcept
+{
+  is_standalone_decl = false;
+  return false;
+}
+
+bool _id_resolver::_sou_ref_standalone_checker::operator()(const declaration &d)
+  noexcept
+{
+  is_standalone_decl = !!d.get_init_declarator_list();
+  return false;
+}
+
+bool _id_resolver::_sou_ref_standalone_checker::
+operator()(const parameter_declaration_declarator&) noexcept
+{
+  is_standalone_decl = false;
+  return false;
+}
+
+bool _id_resolver::_sou_ref_standalone_checker
+::operator()(const parameter_declaration_abstract&) noexcept
+{
+  is_standalone_decl = false;
+  return false;
+}
+
+bool _id_resolver::_sou_ref_standalone_checker::
+operator()(const function_definition&) noexcept
+{
+  is_standalone_decl = false;
+  return false;
+}
+
 
 
 void ast::ast::_resolve_ids()

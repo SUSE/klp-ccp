@@ -1704,6 +1704,11 @@ void struct_declarator_list::extend(struct_declarator* &&sd)
   _sd.get()._set_parent(*this);
 }
 
+bool struct_declarator_list::empty() const noexcept
+{
+  return _sds.empty();
+}
+
 _ast_entity* struct_declarator_list::_get_child(const size_t i) noexcept
 {
   if (i >= _sds.size())
@@ -1869,6 +1874,107 @@ _ast_entity* struct_declaration_list::_get_child(const size_t i) noexcept
 }
 
 
+sou_decl_link::sou_decl_link() noexcept
+  : _target_type(target_type::unlinked)
+{}
+
+sou_decl_link::sou_decl_link(struct_or_union_ref &sour) noexcept
+  : _target_type(target_type::ref), _sour(&sour)
+{}
+
+sou_decl_link::sou_decl_link(struct_or_union_def &soud) noexcept
+  : _target_type(target_type::def), _soud(&soud)
+{}
+
+struct_or_union_ref& sou_decl_link::get_target_sou_ref() const noexcept
+{
+  assert(_target_type == target_type::ref);
+  return *_sour;
+}
+
+struct_or_union_def& sou_decl_link::get_target_sou_def() const noexcept
+{
+  assert(_target_type == target_type::def);
+  return *_soud;
+}
+
+
+sou_decl_list_node::sou_decl_list_node(struct_or_union_ref &self) noexcept
+  : _next(self), _prev(&_next)
+{}
+
+sou_decl_list_node::sou_decl_list_node(struct_or_union_def &self) noexcept
+  : _next(self), _prev(&_next)
+{}
+
+void sou_decl_list_node::link_to(struct_or_union_ref &target) noexcept
+{
+  // Any struct_or_union_ref on this list is a declaration by itself
+  // and thus, must not have a link to a declaration set.
+  // Our _decl_list_node should point to ourselves. The assertion
+  // thus checks that the containing struct_or_union_ref, if any,
+  // hasn't been linked to any declaration.
+  assert(_next.get_target_type() != sou_decl_link::target_type::ref ||
+	 (_next.get_target_sou_ref().get_link_to_decl().get_target_type() ==
+	  sou_decl_link::target_type::unlinked));
+  assert(target.get_link_to_decl().get_target_type() ==
+	 sou_decl_link::target_type::unlinked);
+  __link_to(target);
+}
+
+void sou_decl_list_node::link_to(struct_or_union_def &target) noexcept
+{
+  __link_to(target);
+}
+
+template<typename target_type>
+void sou_decl_list_node::__link_to(target_type &target) noexcept
+{
+  assert(_prev == &_next);
+
+  sou_decl_list_node &target_node = target.get_decl_list_node();
+  _prev = target_node._prev;
+  target_node._prev = &_next;
+  *_prev = _next; // links previous node to this one
+  _next = sou_decl_link{target};
+}
+
+namespace
+{
+  class _sou_decl_list_def_searcher
+  {
+  public:
+    _sou_decl_list_def_searcher() noexcept
+      : _found(nullptr)
+    {}
+
+    bool operator()(struct_or_union_def &soud) noexcept
+    {
+      _found = &soud;
+      return false;
+    }
+
+    bool operator()(struct_or_union_ref&) const noexcept
+    {
+      return true;
+    }
+
+    struct_or_union_def *get_result() noexcept
+    { return _found; }
+
+  private:
+    struct_or_union_def *_found;
+  };
+}
+
+struct_or_union_def* sou_decl_list_node::find_definition() const noexcept
+{
+  _sou_decl_list_def_searcher def_searcher;
+  for_each(def_searcher);
+  return def_searcher.get_result();
+}
+
+
 struct_or_union_def::struct_or_union_def(const pp_tokens_range &tr,
 					 const struct_or_union sou,
 					 const pp_token_index id_tok,
@@ -1898,9 +2004,10 @@ struct_or_union_def::struct_or_union_def(const pp_tokens_range &tr,
 					 attribute_specifier_list* &&asl_after,
 					 const bool id_tok_valid) noexcept
 
-  : type_specifier(tr), _sou(sou),
+  : type_specifier(tr), _sou(sou), _id_tok(id_tok),
     _sdl(mv_p(std::move(sdl))), _asl_before(mv_p(std::move(asl_before))),
-    _asl_after(mv_p(std::move(asl_after))), _id_tok_valid(id_tok_valid)
+    _asl_after(mv_p(std::move(asl_after))),
+    _decl_list_node(*this), _id_tok_valid(id_tok_valid)
 {
   if (_sdl)
     _sdl->_set_parent(*this);
@@ -1952,7 +2059,7 @@ struct_or_union_ref::struct_or_union_ref(const pp_tokens_range &tr,
 					 attribute_specifier_list* &&asl)
   noexcept
   : type_specifier(tr), _sou(sou), _id_tok(id_tok),
-    _asl(mv_p(std::move(asl)))
+    _asl(mv_p(std::move(asl))), _decl_list_node(*this)
 {
   if (_asl)
     _asl->_set_parent(*this);
@@ -1961,6 +2068,15 @@ struct_or_union_ref::struct_or_union_ref(const pp_tokens_range &tr,
 struct_or_union_ref::~struct_or_union_ref() noexcept
 {
   delete _asl;
+}
+
+void struct_or_union_ref::link_to_declaration(const sou_decl_link &target)
+  noexcept
+{
+  assert(_link_to_decl.get_target_type() ==
+	 sou_decl_link::target_type::unlinked);
+  assert(&_decl_list_node.get_next().get_target_sou_ref() == this);
+  _link_to_decl = target;
 }
 
 _ast_entity* struct_or_union_ref::_get_child(const size_t i) noexcept

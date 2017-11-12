@@ -1447,6 +1447,8 @@ namespace suse
 
 	void extend(struct_declarator* &&sd);
 
+	bool empty() const noexcept;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
 
@@ -1461,6 +1463,10 @@ namespace suse
 			       struct_declarator_list * &&sdl) noexcept;
 
 	virtual ~struct_declaration_c99() noexcept;
+
+	const struct_declarator_list& get_struct_declarator_list()
+	  const noexcept
+	{ return _sdl; }
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
@@ -1531,6 +1537,62 @@ namespace suse
 	std::vector<std::reference_wrapper<struct_declaration> > _sds;
       };
 
+      class sou_decl_link
+	{
+	public:
+	  sou_decl_link() noexcept;
+	  sou_decl_link(struct_or_union_ref &sour) noexcept;
+	  sou_decl_link(struct_or_union_def &soud) noexcept;
+
+	  enum class target_type
+	  {
+	    unlinked,
+	    ref,
+	    def,
+	  };
+
+	  target_type get_target_type() const noexcept
+	  { return _target_type; }
+
+	  struct_or_union_ref& get_target_sou_ref() const noexcept;
+	  struct_or_union_def& get_target_sou_def() const noexcept;
+
+	private:
+
+	  target_type _target_type;
+
+	  union {
+	    struct_or_union_ref *_sour;
+	    struct_or_union_def *_soud;
+	  };
+	};
+
+      class sou_decl_list_node
+      {
+      public:
+	sou_decl_list_node(struct_or_union_ref &self) noexcept;
+	sou_decl_list_node(struct_or_union_def &self) noexcept;
+
+	void link_to(struct_or_union_ref &target) noexcept;
+	void link_to(struct_or_union_def &target) noexcept;
+
+	const sou_decl_link& get_next() const noexcept
+	{ return _next; }
+
+	template <typename callable_type>
+	bool for_each(callable_type &&c) const;
+
+	struct_or_union_def* find_definition() const noexcept;
+
+      private:
+	template <typename target_type>
+	void __link_to(target_type &target) noexcept;
+
+	sou_decl_link _next;
+	sou_decl_link *_prev;
+      };
+
+
       class struct_or_union_def : public type_specifier
       {
       public:
@@ -1549,6 +1611,21 @@ namespace suse
 
 	virtual ~struct_or_union_def() noexcept;
 
+	bool has_id() const noexcept
+	{ return _id_tok_valid; }
+
+	pp_token_index get_id_tok() const noexcept
+	{
+	  assert(_id_tok_valid);
+	  return _id_tok;
+	}
+
+	struct_or_union get_tag_kind() const noexcept
+	{ return _sou; }
+
+	sou_decl_list_node& get_decl_list_node() noexcept
+	{ return _decl_list_node; }
+
       private:
 	struct_or_union_def(const pp_tokens_range &tr,
 			    const struct_or_union sou,
@@ -1565,6 +1642,7 @@ namespace suse
 	struct_declaration_list *_sdl;
 	attribute_specifier_list *_asl_before;
 	attribute_specifier_list *_asl_after;
+	sou_decl_list_node _decl_list_node;
 	bool _id_tok_valid;
       };
 
@@ -1578,13 +1656,59 @@ namespace suse
 
 	virtual ~struct_or_union_ref() noexcept;
 
+	pp_token_index get_id_tok() const noexcept
+	{ return _id_tok; };
+
+	struct_or_union get_tag_kind() const noexcept
+	{ return _sou; }
+
+	sou_decl_list_node& get_decl_list_node() noexcept
+	{ return _decl_list_node; }
+
+	const sou_decl_link& get_link_to_decl() const noexcept
+	{ return _link_to_decl; }
+
+	void link_to_declaration(const sou_decl_link &target) noexcept;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
 
 	struct_or_union _sou;
 	pp_token_index _id_tok;
 	attribute_specifier_list *_asl;
+	sou_decl_list_node _decl_list_node;
+	sou_decl_link _link_to_decl;
       };
+
+
+      template <typename callable_type>
+      bool sou_decl_list_node::for_each(callable_type &&c) const
+      {
+	const sou_decl_list_node *cur = this;
+	do {
+	  bool r;
+	  switch (cur->_next.get_target_type()) {
+	  case sou_decl_link::target_type::ref:
+	    r = c(cur->_next.get_target_sou_ref());
+	    cur = &cur->_next.get_target_sou_ref().get_decl_list_node();
+	    break;
+
+	  case sou_decl_link::target_type::def:
+	    r = c(cur->_next.get_target_sou_def());
+	    cur = &cur->_next.get_target_sou_def().get_decl_list_node();
+	    break;
+
+	  case sou_decl_link::target_type::unlinked:
+	    assert(0);
+	    __builtin_unreachable();
+	  }
+
+	  if (!r)
+	    return false;
+	} while (cur != this);
+
+	return true;
+      }
 
 
       class enumerator : public ast_entity<enumerator>
@@ -2076,6 +2200,9 @@ namespace suse
 	const declaration_specifiers& get_declaration_specifiers()
 	  const noexcept
 	{ return _ds; }
+
+	const init_declarator_list* get_init_declarator_list() const noexcept
+	{ return _idl; }
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
