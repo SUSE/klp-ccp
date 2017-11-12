@@ -1,4 +1,4 @@
-foreach src [glob -nocomplain $srcdir/$subdir/*.c] {
+foreach src [glob -nocomplain $srcdir/$subdir/gcc.dg/*.c] {
     set testname $src
     run_cparse $src
 }
