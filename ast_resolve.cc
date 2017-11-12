@@ -368,11 +368,17 @@ namespace
 					  const bool only_in_cur_scope)
       const noexcept;
 
+    enum_def* _lookup_enum_def(const pp_token_index id_tok,
+			       const bool only_in_cur_scope)
+      const noexcept;
+
     void _handle_direct_declarator_id(direct_declarator_id &ddid);
     void _handle_init_decl(direct_declarator_id &ddid);
     void _handle_fun_def(direct_declarator_id &ddid);
     void _handle_sou_ref(struct_or_union_ref &sour);
     void _handle_sou_def(struct_or_union_def &soud);
+    void _handle_enum_def(enum_def &ed);
+    void _handle_enum_ref(enum_ref &er);
 
     static linkage::linkage_type
     _get_linkage_type(const direct_declarator_id::context &ctx) noexcept;
@@ -432,6 +438,7 @@ namespace
     {
       std::vector<expr_id::resolved> _declared_ids;
       std::vector<sou_decl_link> _declared_sous;
+      std::vector<std::reference_wrapper<enum_def> > _defined_enums;
     };
     typedef std::vector<expr_id::resolved> _scope_type;
     typedef std::vector<_scope> _scopes_type;
@@ -560,6 +567,18 @@ bool _id_resolver::operator()(_ast_entity &ae, const pre_traversal_tag&)
   struct_or_union_def *soud = dynamic_cast<struct_or_union_def*>(&ae);
   if (soud) {
     _handle_sou_def(*soud);
+    return false;
+  }
+
+  enum_def *ed = dynamic_cast<enum_def*>(&ae);
+  if (ed) {
+    _handle_enum_def(*ed);
+    return false;
+  }
+
+  enum_ref *er = dynamic_cast<enum_ref*>(&ae);
+  if (er) {
+    _handle_enum_ref(*er);
     return false;
   }
 
@@ -705,6 +724,31 @@ _lookup_sou_decl(const pp_token_index id_tok, const bool only_in_cur_scope)
   return nullptr;
 }
 
+enum_def* _id_resolver::_lookup_enum_def(const pp_token_index id_tok,
+					 const bool only_in_cur_scope)
+  const noexcept
+
+{
+ const pp_token &_id_tok = _ast.get_pp_tokens()[id_tok];
+  assert(_scopes.size() > 0);
+  const auto scopes_end =
+    (!only_in_cur_scope ?
+     _scopes.rend() :
+     _scopes.rbegin() + 1);
+  for (auto scope_it = _scopes.rbegin(); scope_it != scopes_end; ++scope_it) {
+    for (auto d_it = scope_it->_defined_enums.begin();
+	 d_it != scope_it->_defined_enums.end(); ++d_it) {
+      const pp_token_index d_id_tok = d_it->get().get_id_tok();
+
+      if (_id_tok.get_value() == _ast.get_pp_tokens()[d_id_tok].get_value()) {
+	return &d_it->get();
+      }
+    }
+  }
+
+  return nullptr;
+
+}
 
 void _id_resolver::_handle_direct_declarator_id(direct_declarator_id &ddid)
 {
@@ -1119,6 +1163,15 @@ void _id_resolver::_handle_sou_ref(struct_or_union_ref &sour)
 
   } else if (!prev_decl) {
     // It's the first occurence and thus a declaration.
+    if (_lookup_enum_def(sour.get_id_tok(), true)) {
+      const pp_token &id_tok = _ast.get_pp_tokens()[sour.get_id_tok()];
+      code_remark remark(code_remark::severity::fatal,
+			 "tag redeclared as a different kind",
+			 id_tok.get_file_range());
+      _ast.get_remarks().add(remark);
+      throw semantic_except(remark);
+    }
+
     _scopes.back()._declared_sous.push_back(sou_decl_link(sour));
 
   } else {
@@ -1203,9 +1256,57 @@ void _id_resolver::_handle_sou_def(struct_or_union_def &soud)
     }
 
   } else {
-    // It's the first occurence and thus a declaration.
+    // It's the first declaration.
+    if (_lookup_enum_def(soud.get_id_tok(), true)) {
+      const pp_token &id_tok = _ast.get_pp_tokens()[soud.get_id_tok()];
+      code_remark remark(code_remark::severity::fatal,
+			 "tag redeclared as a different kind",
+			 id_tok.get_file_range());
+      _ast.get_remarks().add(remark);
+      throw semantic_except(remark);
+    }
+
     _scopes.back()._declared_sous.push_back(sou_decl_link(soud));
   }
+}
+
+void _id_resolver::_handle_enum_def(enum_def &ed)
+{
+  if (!ed.has_id())
+    return;
+
+  if (_lookup_enum_def(ed.get_id_tok(), true)) {
+    const pp_token &id_tok = _ast.get_pp_tokens()[ed.get_id_tok()];
+    code_remark remark(code_remark::severity::fatal,
+		       "enum redeclared",
+		       id_tok.get_file_range());
+    _ast.get_remarks().add(remark);
+    throw semantic_except(remark);
+  } else if (_lookup_sou_decl(ed.get_id_tok(), true)) {
+    const pp_token &id_tok = _ast.get_pp_tokens()[ed.get_id_tok()];
+    code_remark remark(code_remark::severity::fatal,
+		       "tag redeclared as a different kind",
+		       id_tok.get_file_range());
+    _ast.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  _scopes.back()._defined_enums.push_back(std::ref(ed));
+}
+
+void _id_resolver::_handle_enum_ref(enum_ref &er)
+{
+  enum_def * const ed = _lookup_enum_def(er.get_id_tok(), false);
+  if (!ed) {
+    const pp_token &id_tok = _ast.get_pp_tokens()[er.get_id_tok()];
+    code_remark remark(code_remark::severity::fatal,
+		       "enum undeclared",
+		       id_tok.get_file_range());
+    _ast.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  er.link_to_definition(*ed);
 }
 
 linkage::linkage_type

@@ -2211,7 +2211,8 @@ _ast_entity* enum_def::_get_child(const size_t i) noexcept
 enum_ref::enum_ref(const pp_tokens_range &tr,
 		   const pp_token_index id_tok,
 		   attribute_specifier_list* &&asl) noexcept
-  : type_specifier(tr), _id_tok(id_tok), _asl(mv_p(std::move(asl)))
+  : type_specifier(tr), _id_tok(id_tok), _asl(mv_p(std::move(asl))),
+    _def(nullptr)
 {
   if (_asl)
     _asl->_set_parent(*this);
@@ -2220,6 +2221,12 @@ enum_ref::enum_ref(const pp_tokens_range &tr,
 enum_ref::~enum_ref() noexcept
 {
   delete _asl;
+}
+
+void enum_ref::link_to_definition(enum_def &ed) noexcept
+{
+  assert(!_def);
+  _def = &ed;
 }
 
 _ast_entity* enum_ref::_get_child(const size_t i) noexcept

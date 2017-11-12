@@ -1764,6 +1764,15 @@ namespace suse
 
 	virtual ~enum_def() noexcept;
 
+	bool has_id() const noexcept
+	{ return _id_tok_valid; }
+
+	pp_token_index get_id_tok() const noexcept
+	{
+	  assert(_id_tok_valid);
+	  return _id_tok;
+	}
+
       private:
 	enum_def(const pp_tokens_range &tr,
 		 const pp_token_index id_tok,
@@ -1790,11 +1799,17 @@ namespace suse
 
 	virtual ~enum_ref() noexcept;
 
+	pp_token_index get_id_tok() const noexcept
+	{ return _id_tok; }
+
+	void link_to_definition(enum_def &ed) noexcept;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept;
 
 	pp_token_index _id_tok;
 	attribute_specifier_list *_asl;
+	enum_def *_def;
       };
 
       class typeof_expr : public type_specifier
