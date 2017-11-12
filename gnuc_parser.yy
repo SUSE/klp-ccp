@@ -352,7 +352,8 @@ static void empty(pp_tokens_range &loc)
 %type <declarator>	param_declarator_tdid
 %type <declarator>	param_declarator_tdid_in_parens
 %type <direct_declarator>	direct_param_declarator_tdid
-%type <direct_declarator>	direct_param_declarator_tdid_in_parens
+%type <direct_declarator>	direct_param_declarator_tdid_in_parens_tdid
+%type <direct_declarator>	direct_param_declarator_tdid_in_parens_no_tdid
 %type <declarator>	declarator_no_tdid_opt
 %type <declarator>	declarator_no_tdid
 %type <direct_declarator>	direct_declarator_no_tdid
@@ -1036,8 +1037,10 @@ abstract_declarator_opt:
 abstract_declarator:
 	pointer
 	  { $$ = new abstract_declarator(@$, std::move($1), nullptr); }
-	| pointer_opt direct_abstract_declarator
+	| pointer direct_abstract_declarator
 	  { $$ = new abstract_declarator(@$, std::move($1), std::move($2)); }
+	| direct_abstract_declarator
+	  { $$ = new abstract_declarator(@$, nullptr, std::move($1)); }
 ;
 
 pointer_opt:
@@ -1206,8 +1209,10 @@ declarator_no_tdid_opt:
 ;
 
 declarator_no_tdid:
-	pointer_opt direct_declarator_no_tdid
+	pointer direct_declarator_no_tdid
 	  { $$ = new declarator(@$, std::move($1), std::move($2)); }
+	| direct_declarator_no_tdid
+	  { $$ = new declarator(@$, nullptr, std::move($1)); }
 ;
 
 direct_declarator_no_tdid:
@@ -1309,8 +1314,10 @@ direct_declarator_tdid:
 
 
 param_declarator_tdid:
-	pointer_opt direct_param_declarator_tdid
+	pointer direct_param_declarator_tdid
 	  { $$ = new declarator(@$, std::move($1), std::move($2)); }
+	| direct_param_declarator_tdid
+	  { $$ = new declarator(@$, nullptr, std::move($1)); }
 ;
 
 direct_param_declarator_tdid:
@@ -1353,11 +1360,53 @@ direct_param_declarator_tdid:
 ;
 
 param_declarator_tdid_in_parens:
-	pointer_opt direct_param_declarator_tdid_in_parens
+	pointer direct_param_declarator_tdid_in_parens_tdid
 	  { $$ = new declarator(@$, std::move($1), std::move($2)); }
+	| direct_param_declarator_tdid_in_parens_no_tdid
+	  { $$ = new declarator(@$, nullptr, std::move($1)); }
 ;
 
-direct_param_declarator_tdid_in_parens:
+direct_param_declarator_tdid_in_parens_tdid:
+	id_or_tdid
+	  { $$ = new direct_declarator_id($1); }
+	| lparen_ign_td_spec attribute_specifier_list_opt param_declarator_tdid_in_parens TOK_RPAREN
+	  {
+	    pd.end_ignore_td_spec();
+	    $$ = new direct_declarator_parenthesized(@$, std::move($3),
+						     std::move($2));
+	  }
+	| direct_param_declarator_tdid_in_parens_tdid TOK_LBRACKET type_qualifier_list_opt assignment_expression_opt TOK_RBRACKET
+	  {
+	    $$ = new direct_declarator_array(@$, std::move($1), std::move($3),
+					     std::move($4), false);
+	  }
+	| direct_param_declarator_tdid_in_parens_tdid TOK_LBRACKET TOK_KW_STATIC type_qualifier_list_opt assignment_expression TOK_RBRACKET
+	  {
+	    $$ = new direct_declarator_array(@$, std::move($1), std::move($4),
+					     std::move($5), true);
+	  }
+	| direct_param_declarator_tdid_in_parens_tdid TOK_LBRACKET type_qualifier_list TOK_KW_STATIC assignment_expression TOK_RBRACKET
+	  {
+	    $$ = new direct_declarator_array(@$, std::move($1), std::move($3),
+					     std::move($5), true);
+	  }
+	| direct_param_declarator_tdid_in_parens_tdid TOK_LBRACKET type_qualifier_list_opt TOK_ASTERISK TOK_RBRACKET
+	  {
+	    $$ = new direct_declarator_array(@$, std::move($1), std::move($3),
+				direct_declarator_array::vla_unspec_size_tag{});
+	  }
+	| direct_param_declarator_tdid_in_parens_tdid lparen_ign_td_spec parameter_type_list TOK_RPAREN
+	  {
+	    pd.leave_td_scope();
+	    pd.end_ignore_td_spec();
+	    $$ = new direct_declarator_func(@$, std::move($1), std::move($3));
+	  }
+	| direct_param_declarator_tdid_in_parens_tdid TOK_LPAREN identifier_list_opt TOK_RPAREN
+	  { $$ = new direct_declarator_func(@$, std::move($1), std::move($3)); }
+;
+
+
+direct_param_declarator_tdid_in_parens_no_tdid:
 	TOK_IDENTIFIER
 	  { $$ = new direct_declarator_id($1); }
 	| lparen_ign_td_spec attribute_specifier_list_opt param_declarator_tdid_in_parens TOK_RPAREN
@@ -1366,33 +1415,33 @@ direct_param_declarator_tdid_in_parens:
 	    $$ = new direct_declarator_parenthesized(@$, std::move($3),
 						     std::move($2));
 	  }
-	| direct_param_declarator_tdid_in_parens TOK_LBRACKET type_qualifier_list_opt assignment_expression_opt TOK_RBRACKET
+	| direct_param_declarator_tdid_in_parens_no_tdid TOK_LBRACKET type_qualifier_list_opt assignment_expression_opt TOK_RBRACKET
 	  {
 	    $$ = new direct_declarator_array(@$, std::move($1), std::move($3),
 					     std::move($4), false);
 	  }
-	| direct_param_declarator_tdid_in_parens TOK_LBRACKET TOK_KW_STATIC type_qualifier_list_opt assignment_expression TOK_RBRACKET
+	| direct_param_declarator_tdid_in_parens_no_tdid TOK_LBRACKET TOK_KW_STATIC type_qualifier_list_opt assignment_expression TOK_RBRACKET
 	  {
 	    $$ = new direct_declarator_array(@$, std::move($1), std::move($4),
 					     std::move($5), true);
 	  }
-	| direct_param_declarator_tdid_in_parens TOK_LBRACKET type_qualifier_list TOK_KW_STATIC assignment_expression TOK_RBRACKET
+	| direct_param_declarator_tdid_in_parens_no_tdid TOK_LBRACKET type_qualifier_list TOK_KW_STATIC assignment_expression TOK_RBRACKET
 	  {
 	    $$ = new direct_declarator_array(@$, std::move($1), std::move($3),
 					     std::move($5), true);
 	  }
-	| direct_param_declarator_tdid_in_parens TOK_LBRACKET type_qualifier_list_opt TOK_ASTERISK TOK_RBRACKET
+	| direct_param_declarator_tdid_in_parens_no_tdid TOK_LBRACKET type_qualifier_list_opt TOK_ASTERISK TOK_RBRACKET
 	  {
 	    $$ = new direct_declarator_array(@$, std::move($1), std::move($3),
 				direct_declarator_array::vla_unspec_size_tag{});
 	  }
-	| direct_param_declarator_tdid_in_parens lparen_ign_td_spec parameter_type_list TOK_RPAREN
+	| direct_param_declarator_tdid_in_parens_no_tdid lparen_ign_td_spec parameter_type_list TOK_RPAREN
 	  {
 	    pd.leave_td_scope();
 	    pd.end_ignore_td_spec();
 	    $$ = new direct_declarator_func(@$, std::move($1), std::move($3));
 	  }
-	| direct_param_declarator_tdid_in_parens TOK_LPAREN identifier_list_opt TOK_RPAREN
+	| direct_param_declarator_tdid_in_parens_no_tdid TOK_LPAREN identifier_list_opt TOK_RPAREN
 	  { $$ = new direct_declarator_func(@$, std::move($1), std::move($3)); }
 ;
 
