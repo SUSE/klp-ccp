@@ -2450,6 +2450,11 @@ _ast_entity* specifier_qualifier_list::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+
+declaration_specifiers::declaration_specifiers(const pp_tokens_range &tr)
+  : specifier_qualifier_list(tr)
+{}
+
 declaration_specifiers::declaration_specifiers(storage_class_specifier* &&scs)
   : specifier_qualifier_list(scs->get_tokens_range())
 {

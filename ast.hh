@@ -1897,6 +1897,8 @@ namespace suse
       class declaration_specifiers : public specifier_qualifier_list
       {
       public:
+	declaration_specifiers(const pp_tokens_range &tr);
+
 	declaration_specifiers(storage_class_specifier* &&scs);
 
 	declaration_specifiers(function_specifier* &&fs);

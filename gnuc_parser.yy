@@ -292,6 +292,7 @@ static void empty(pp_tokens_range &loc)
 %type <translation_unit>	translation_unit
 %type <external_declaration>	external_declaration
 %type <function_definition>	function_definition
+%type <function_definition>	function_definition_ext
 %type <stmt_compound>	function_definition_body
 %type <declaration>	declaration
 %type <declaration_specifiers>	declaration_specifiers_no_ts_opt
@@ -450,7 +451,7 @@ translation_unit:
 ;
 
 external_declaration:
-	function_definition
+	function_definition_ext
 	  { $$ = new external_declaration_func(std::move($1)); }
 	| declaration
 	  { $$ = new external_declaration_decl(std::move($1)); }
@@ -458,15 +459,23 @@ external_declaration:
 	  { $$ = new external_declaration_asm(std::move($1)); }
 ;
 
-function_definition_body:
-	TOK_LBRACE {
-		     pd.clear_in_typedef();
-		     pd.restore_stashed_td_scope();
-		   }
-	local_label_declaration_list_opt block_item_list_opt TOK_RBRACE
+function_definition_ext:
+	function_definition
+	  { $$ = MV_P($1); }
+	| declarator_no_tdid
+	  attribute_specifier_list_opt { pd.handle_decl_id($1->get_id_tok()); }
+	  declaration_list_opt function_definition_body
 	  {
-	    pd.leave_td_scope();
-	    $$ = new stmt_compound(@$, std::move($3), std::move($4));
+	    declaration_specifiers *ds =
+		new declaration_specifiers(pp_tokens_range(@1.begin, @1.begin));
+	    try {
+	      $$ = new function_definition(@$, std::move(ds), std::move($1),
+					   std::move($2), std::move($4),
+					   std::move($5));
+	    } catch (...) {
+	      delete ds;
+	      throw;
+	    }
 	  }
 ;
 
@@ -486,6 +495,18 @@ function_definition:
 	    $$ = new function_definition(@$, std::move($1), std::move($2),
 					 std::move($3), std::move($5),
 					 std::move($6));
+	  }
+;
+
+function_definition_body:
+	TOK_LBRACE {
+		     pd.clear_in_typedef();
+		     pd.restore_stashed_td_scope();
+		   }
+	local_label_declaration_list_opt block_item_list_opt TOK_RBRACE
+	  {
+	    pd.leave_td_scope();
+	    $$ = new stmt_compound(@$, std::move($3), std::move($4));
 	  }
 ;
 
