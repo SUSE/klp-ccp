@@ -421,23 +421,6 @@ namespace
       direct_declarator_id &_ddid;
     };
 
-    struct _sou_ref_standalone_checker
-    {
-    public:
-      bool operator()(const specifier_qualifier_list&) const noexcept
-      { return true; }
-
-      void operator()(const struct_declaration_c99 &sd) noexcept;
-      void operator()(const struct_declaration_unnamed_sou&) const noexcept;
-      void operator()(const type_name&) noexcept;
-      void operator()(const declaration &d) noexcept;
-      void operator()(const parameter_declaration_declarator&) noexcept;
-      void operator()(const parameter_declaration_abstract&) noexcept;
-      void operator()(const function_definition&) noexcept;
-
-      bool is_standalone_decl;
-    };
-
     suse::cp::ast::ast &_ast;
 
     struct _scope
@@ -1139,21 +1122,55 @@ void _id_resolver::_handle_fun_def(direct_declarator_id &ddid)
 
 void _id_resolver::_handle_sou_ref(struct_or_union_ref &sour)
 {
-  _sou_ref_standalone_checker srsc;
+  bool is_standalone_decl;
+  auto &&standalone_decl_checker
+    = (wrap_callables<no_default_action>
+       ([](const specifier_qualifier_list&) {
+	 // Move on searching upwards the tree.
+	 return true;
+	},
+	[&is_standalone_decl](const struct_declaration_c99 &sd) {
+	  is_standalone_decl = sd.get_struct_declarator_list().empty();
+	},
+	[&is_standalone_decl](const struct_declaration_unnamed_sou&) {
+	  // struct_declaration_unnamed_sou can be a parent of a
+	  // specifier_qualifier_list. A specifier_qualifier_list can
+	  // in turn be a parent of our struct_or_union_ref.
+	  // However, these can't be both true for the *same*
+	  // specifier_qualifier_list instance.
+	  assert(0);
+	  __builtin_unreachable();
+	},
+	[&is_standalone_decl](const type_name&) {
+	  is_standalone_decl = false;
+	},
+	[&is_standalone_decl](const declaration &d) {
+	  is_standalone_decl = !d.get_init_declarator_list();
+	},
+	[&is_standalone_decl](const parameter_declaration_declarator&) {
+	  is_standalone_decl = false;
+	},
+	[&is_standalone_decl](const parameter_declaration_abstract&) {
+	  is_standalone_decl = false;
+	},
+	[&is_standalone_decl](const function_definition&) {
+	  is_standalone_decl = false;
+	}));
   sour.for_each_ancestor<type_set<struct_declaration_c99,
 				  struct_declaration_unnamed_sou,
 				  type_name, declaration,
 				  parameter_declaration_declarator,
 				  parameter_declaration_abstract,
-				  function_definition> >(srsc);
+				  function_definition> >
+    (standalone_decl_checker);
 
   // If the 'struct foo' construct is standalone, i.e. is a
   // declaration of that tag, then search only the current scope.
   const sou_decl_link *prev_decl = _lookup_sou_decl(sour.get_id_tok(),
-						    srsc.is_standalone_decl);
+						    is_standalone_decl);
 
   struct_or_union prev_tag_kind;
-  if (srsc.is_standalone_decl && prev_decl) {
+  if (is_standalone_decl && prev_decl) {
     // It's a redeclaration, link it to the previous one.
     switch (prev_decl->get_target_type()) {
     case sou_decl_link::target_type::ref:
@@ -1186,7 +1203,7 @@ void _id_resolver::_handle_sou_ref(struct_or_union_ref &sour)
     return;
 
   } else {
-    assert (!srsc.is_standalone_decl && prev_decl);
+    assert (!is_standalone_decl && prev_decl);
     // It isnt't a declaration for that tag, but a real usage.
     switch (prev_decl->get_target_type()) {
     case sou_decl_link::target_type::ref:
@@ -1576,56 +1593,6 @@ _id_resolver::_declarator_id_ctx_finder::operator()(function_definition& fd)
   const noexcept
 {
   _ddid.set_context(direct_declarator_id::context(fd));
-  // The ancestor search stops here.
-}
-
-
-void _id_resolver::_sou_ref_standalone_checker::
-operator()(const struct_declaration_c99 &sd) noexcept
-{
-  is_standalone_decl = sd.get_struct_declarator_list().empty();
-  // The ancestor search stops here.
-}
-
-void _id_resolver::_sou_ref_standalone_checker::
-operator()(const struct_declaration_unnamed_sou&) const noexcept
-{
-  assert(0);
-  __builtin_unreachable();
-}
-
-void _id_resolver::_sou_ref_standalone_checker::operator()(const type_name&)
-  noexcept
-{
-  is_standalone_decl = false;
-  // The ancestor search stops here.
-}
-
-void _id_resolver::_sou_ref_standalone_checker::operator()(const declaration &d)
-  noexcept
-{
-  is_standalone_decl = !!d.get_init_declarator_list();
-  // The ancestor search stops here.
-}
-
-void _id_resolver::_sou_ref_standalone_checker::
-operator()(const parameter_declaration_declarator&) noexcept
-{
-  is_standalone_decl = false;
-  // The ancestor search stops here.
-}
-
-void _id_resolver::_sou_ref_standalone_checker
-::operator()(const parameter_declaration_abstract&) noexcept
-{
-  is_standalone_decl = false;
-  // The ancestor search stops here.
-}
-
-void _id_resolver::_sou_ref_standalone_checker::
-operator()(const function_definition&) noexcept
-{
-  is_standalone_decl = false;
   // The ancestor search stops here.
 }
 
