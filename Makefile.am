@@ -4,6 +4,8 @@ BUILT_SOURCES = gnuc_parser.hh stack.hh
 
 noinst_HEADERS =			\
 	ast.hh				\
+	ast_processor.hh		\
+	ast_processor_impl.hh		\
 	code_remark.hh			\
 	code_remarks.hh		\
 	cow_set.hh			\

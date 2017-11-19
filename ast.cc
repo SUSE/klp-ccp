@@ -1,5 +1,6 @@
 #include <cassert>
 #include "ast.hh"
+#include "ast_processor.hh"
 #include "code_remark.hh"
 #include "semantic_except.hh"
 
@@ -86,6 +87,16 @@ _ast_entity* expr_list::_get_child(const size_t i) noexcept
   return &_exprs[i].get();
 }
 
+void expr_list::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 expr::expr(const pp_tokens_range &tr) noexcept
   : ast_entity(tr)
@@ -133,6 +144,16 @@ _ast_entity* expr_comma::_get_child(const size_t i) noexcept
   __builtin_unreachable();
 }
 
+void expr_comma::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_comma::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 expr_assignment::expr_assignment(const assign_op op, expr* &&lhs, expr* &&rhs)
   noexcept
@@ -164,6 +185,16 @@ _ast_entity* expr_assignment::_get_child(const size_t i) noexcept
   }
 
   __builtin_unreachable();
+}
+
+void expr_assignment::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_assignment::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -211,6 +242,16 @@ _ast_entity* expr_conditional::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void expr_conditional::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_conditional::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 expr_binop::expr_binop(const binary_op op, expr* &&l, expr* &&r) noexcept
   : expr(tr_from_aes(*l, *r)),
@@ -241,6 +282,16 @@ _ast_entity* expr_binop::_get_child(const size_t i) noexcept
   }
 
   __builtin_unreachable();
+}
+
+void expr_binop::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_binop::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -275,6 +326,16 @@ _ast_entity* expr_cast::_get_child(const size_t i) noexcept
   __builtin_unreachable();
 }
 
+void expr_cast::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_cast::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 expr_label_addr::expr_label_addr(const pp_tokens_range &tr,
 				 const pp_token_index label_tok) noexcept
@@ -286,6 +347,16 @@ expr_label_addr::~expr_label_addr() noexcept = default;
 _ast_entity* expr_label_addr::_get_child(const size_t i) noexcept
 {
   return nullptr;
+}
+
+void expr_label_addr::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_label_addr::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -309,6 +380,16 @@ _ast_entity* expr_unop_pre::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void expr_unop_pre::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_unop_pre::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 expr_sizeof_expr::expr_sizeof_expr(const pp_tokens_range &tr, expr* &&e)
   noexcept
@@ -328,6 +409,16 @@ _ast_entity* expr_sizeof_expr::_get_child(const size_t i) noexcept
     return &_e;
 
   return nullptr;
+}
+
+void expr_sizeof_expr::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_sizeof_expr::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -351,6 +442,16 @@ _ast_entity* expr_sizeof_type_name::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void expr_sizeof_type_name::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_sizeof_type_name::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 expr_alignof_expr::expr_alignof_expr(const pp_tokens_range &tr, expr* &&e)
   noexcept
@@ -372,6 +473,16 @@ _ast_entity* expr_alignof_expr::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void expr_alignof_expr::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_alignof_expr::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 expr_alignof_type_name::expr_alignof_type_name(const pp_tokens_range &tr,
 					     type_name* &&tn) noexcept
@@ -391,6 +502,16 @@ _ast_entity* expr_alignof_type_name::_get_child(const size_t i) noexcept
     return &_tn;
 
   return nullptr;
+}
+
+void expr_alignof_type_name::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_alignof_type_name::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -428,6 +549,16 @@ _ast_entity* expr_builtin_offsetof::_get_child(const size_t i) noexcept
   __builtin_unreachable();
 }
 
+void expr_builtin_offsetof::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_builtin_offsetof::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 expr_builtin_types_compatible_p::
 expr_builtin_types_compatible_p(const pp_tokens_range &tr,
@@ -461,6 +592,17 @@ _ast_entity* expr_builtin_types_compatible_p::_get_child(const size_t i)
   __builtin_unreachable();
 }
 
+void expr_builtin_types_compatible_p::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_builtin_types_compatible_p::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+
 expr_builtin_va_arg::expr_builtin_va_arg(const pp_tokens_range &tr,
 					 expr* &&e, type_name* &&tn) noexcept
   : expr(tr), _e(*mv_p(std::move(e))), _tn(*mv_p(std::move(tn)))
@@ -492,6 +634,15 @@ _ast_entity* expr_builtin_va_arg::_get_child(const size_t i) noexcept
   __builtin_unreachable();
 }
 
+void expr_builtin_va_arg::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_builtin_va_arg::_process(processor<bool> &p)
+{
+  return p(*this);
+}
 
 
 expr_array_subscript::expr_array_subscript(const pp_tokens_range &tr,
@@ -524,6 +675,16 @@ _ast_entity* expr_array_subscript::_get_child(const size_t i) noexcept
   }
 
   __builtin_unreachable();
+}
+
+void expr_array_subscript::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_array_subscript::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -560,6 +721,16 @@ _ast_entity* expr_func_invocation::_get_child(const size_t i) noexcept
     return nullptr;
 }
 
+void expr_func_invocation::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_func_invocation::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 expr_member_deref::expr_member_deref(const pp_tokens_range &tr,
 				     const member_deref_type deref_type,
@@ -585,6 +756,16 @@ _ast_entity* expr_member_deref::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void expr_member_deref::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_member_deref::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 expr_unop_post::expr_unop_post(const pp_tokens_range &tr,
 			       const unary_op_post op, expr* &&e) noexcept
@@ -604,6 +785,16 @@ _ast_entity* expr_unop_post::_get_child(const size_t i) noexcept
     return &_e;
 
   return nullptr;
+}
+
+void expr_unop_post::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_unop_post::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -640,6 +831,16 @@ _ast_entity* expr_compound_literal::_get_child(const size_t i) noexcept
   __builtin_unreachable();
 }
 
+void expr_compound_literal::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_compound_literal::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 expr_statement::expr_statement(const pp_tokens_range &tr, stmt* &&s) noexcept
   : expr(tr), _s(*mv_p(std::move(s)))
@@ -658,6 +859,16 @@ _ast_entity* expr_statement::_get_child(const size_t i) noexcept
     return &_s;
 
   return nullptr;
+}
+
+void expr_statement::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_statement::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -728,6 +939,16 @@ _ast_entity* expr_id::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void expr_id::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_id::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 expr_constant::expr_constant(const pp_token_index const_tok) noexcept
   : expr(pp_tokens_range{const_tok, const_tok + 1}), _const_tok(const_tok)
@@ -738,6 +959,16 @@ expr_constant::~expr_constant() noexcept = default;
 _ast_entity* expr_constant::_get_child(const size_t i) noexcept
 {
   return nullptr;
+}
+
+void expr_constant::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_constant::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -756,6 +987,16 @@ void string_literal::extend(const pp_token_index s)
 _ast_entity* string_literal::_get_child(const size_t i) noexcept
 {
   return nullptr;
+}
+
+void string_literal::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool string_literal::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -778,6 +1019,16 @@ _ast_entity* expr_string_literal::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void expr_string_literal::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_string_literal::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 expr_parenthesized::expr_parenthesized(const pp_tokens_range &tr,
 					      expr* &&e) noexcept
@@ -797,6 +1048,16 @@ _ast_entity* expr_parenthesized::_get_child(const size_t i) noexcept
     return &_e;
 
   return nullptr;
+}
+
+void expr_parenthesized::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool expr_parenthesized::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -824,6 +1085,16 @@ _ast_entity* attribute::_get_child(const size_t i) noexcept
     return _params;
 
   return nullptr;
+}
+
+void attribute::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool attribute::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -873,6 +1144,16 @@ _ast_entity* attribute_list::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void attribute_list::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool attribute_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 attribute_specifier::attribute_specifier(const pp_tokens_range &tr,
 					 attribute_list* &&al) noexcept
@@ -889,6 +1170,16 @@ _ast_entity* attribute_specifier::_get_child(const size_t i) noexcept
     return &_al;
 
   return nullptr;
+}
+
+void attribute_specifier::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool attribute_specifier::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -930,6 +1221,16 @@ _ast_entity* attribute_specifier_list::_get_child(const size_t i) noexcept
     return nullptr;
 
   return &_ass[i].get();
+}
+
+void attribute_specifier_list::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool attribute_specifier_list::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -979,6 +1280,16 @@ _ast_entity* pointer::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void pointer::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool pointer::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 direct_abstract_declarator::
 direct_abstract_declarator(const pp_tokens_range &tr) noexcept
@@ -1021,6 +1332,17 @@ direct_abstract_declarator_parenthesized::_get_child(const size_t i) noexcept
 
   return nullptr;
 }
+
+void direct_abstract_declarator_parenthesized::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool direct_abstract_declarator_parenthesized::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 direct_abstract_declarator_array::
 direct_abstract_declarator_array(const pp_tokens_range &tr,
@@ -1089,6 +1411,16 @@ _ast_entity* direct_abstract_declarator_array::_get_child(const size_t i)
   return nullptr;
 }
 
+void direct_abstract_declarator_array::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool direct_abstract_declarator_array::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 direct_abstract_declarator_func::
 direct_abstract_declarator_func(const pp_tokens_range &tr,
@@ -1124,6 +1456,16 @@ _ast_entity* direct_abstract_declarator_func::_get_child(const size_t i)
   return nullptr;
 }
 
+void direct_abstract_declarator_func::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool direct_abstract_declarator_func::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 abstract_declarator::abstract_declarator(const pp_tokens_range &tr,
 					 pointer* &&pt,
@@ -1157,6 +1499,16 @@ _ast_entity* abstract_declarator::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void abstract_declarator::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool abstract_declarator::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 type_name::type_name(const pp_tokens_range &tr, specifier_qualifier_list* &&sql,
 		     abstract_declarator* &&ad) noexcept
@@ -1182,6 +1534,16 @@ _ast_entity* type_name::_get_child(const size_t i) noexcept
   }
 
   return nullptr;
+}
+
+void type_name::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool type_name::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -1301,6 +1663,16 @@ _ast_entity* direct_declarator_id::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void direct_declarator_id::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool direct_declarator_id::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 direct_declarator_parenthesized::
 direct_declarator_parenthesized(const pp_tokens_range &tr,
@@ -1336,6 +1708,16 @@ _ast_entity* direct_declarator_parenthesized::_get_child(const size_t i)
   }
 
   return nullptr;
+}
+
+void direct_declarator_parenthesized::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool direct_declarator_parenthesized::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -1397,6 +1779,16 @@ _ast_entity* direct_declarator_array::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void direct_declarator_array::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool direct_declarator_array::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 direct_declarator_func::direct_declarator_func(const pp_tokens_range &tr,
 					     direct_declarator* &&dd,
@@ -1450,6 +1842,16 @@ _ast_entity* direct_declarator_func::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void direct_declarator_func::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool direct_declarator_func::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 declarator::declarator(const pp_tokens_range &tr, pointer* &&pt,
 		       direct_declarator* &&dd) noexcept
@@ -1486,6 +1888,16 @@ _ast_entity* declarator::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void declarator::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool declarator::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 storage_class_specifier::
 storage_class_specifier(const pp_tokens_range &tr,
@@ -1500,6 +1912,16 @@ _ast_entity* storage_class_specifier::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void storage_class_specifier::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool storage_class_specifier::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 type_qualifier::type_qualifier(const pp_tokens_range &tr,
 			       const type_qualifier_type &tqt) noexcept
@@ -1511,6 +1933,16 @@ type_qualifier::~type_qualifier() noexcept = default;
 _ast_entity* type_qualifier::_get_child(const size_t i) noexcept
 {
   return nullptr;
+}
+
+void type_qualifier::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool type_qualifier::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -1587,6 +2019,16 @@ _ast_entity* type_qualifier_list::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void type_qualifier_list::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool type_qualifier_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 type_specifier::type_specifier(const pp_tokens_range &tr) noexcept
   : ast_entity(tr)
@@ -1607,6 +2049,16 @@ _ast_entity* type_specifier_pod::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void type_specifier_pod::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool type_specifier_pod::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 type_specifier_tdid::type_specifier_tdid(const pp_token_index tdid_tok) noexcept
   : type_specifier(pp_tokens_range{tdid_tok, tdid_tok + 1}),
@@ -1624,6 +2076,16 @@ void type_specifier_tdid::set_resolved(direct_declarator_id &ddid) noexcept
 _ast_entity* type_specifier_tdid::_get_child(const size_t i) noexcept
 {
   return nullptr;
+}
+
+void type_specifier_tdid::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool type_specifier_tdid::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -1703,6 +2165,16 @@ _ast_entity* struct_declarator::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void struct_declarator::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool struct_declarator::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 struct_declarator_list::struct_declarator_list(struct_declarator* &&sd)
   : ast_entity(sd->get_tokens_range())
@@ -1749,6 +2221,16 @@ _ast_entity* struct_declarator_list::_get_child(const size_t i) noexcept
   return &_sds[i].get();
 }
 
+void struct_declarator_list::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool struct_declarator_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 struct_declaration_c99::struct_declaration_c99(const pp_tokens_range &tr,
 					       specifier_qualifier_list* &&sql,
@@ -1778,6 +2260,16 @@ _ast_entity* struct_declaration_c99::_get_child(const size_t i) noexcept
   }
 
   return nullptr;
+}
+
+void struct_declaration_c99::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool struct_declaration_c99::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -1832,6 +2324,16 @@ _ast_entity* unnamed_struct_or_union::_get_child(const size_t i) noexcept
   }
 }
 
+void unnamed_struct_or_union::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool unnamed_struct_or_union::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 struct_declaration_unnamed_sou::
 struct_declaration_unnamed_sou(const pp_tokens_range &tr,
@@ -1863,6 +2365,16 @@ _ast_entity* struct_declaration_unnamed_sou::_get_child(const size_t i) noexcept
   }
 
   return nullptr;
+}
+
+void struct_declaration_unnamed_sou::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool struct_declaration_unnamed_sou::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -1903,6 +2415,16 @@ _ast_entity* struct_declaration_list::_get_child(const size_t i) noexcept
     return nullptr;
 
   return &_sds[i].get();
+}
+
+void struct_declaration_list::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool struct_declaration_list::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -2084,6 +2606,16 @@ _ast_entity* struct_or_union_def::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void struct_or_union_def::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool struct_or_union_def::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 struct_or_union_ref::struct_or_union_ref(const pp_tokens_range &tr,
 					 const struct_or_union sou,
@@ -2119,6 +2651,16 @@ _ast_entity* struct_or_union_ref::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void struct_or_union_ref::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool struct_or_union_ref::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 enumerator::enumerator(const pp_tokens_range &tr, const pp_token_index id_tok,
 		       expr* &&value) noexcept
@@ -2140,6 +2682,17 @@ _ast_entity* enumerator::_get_child(const size_t i) noexcept
 
   return nullptr;
 }
+
+void enumerator::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool enumerator::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 enumerator_list::enumerator_list(enumerator* &&e)
   : ast_entity(e->get_tokens_range())
@@ -2179,6 +2732,16 @@ _ast_entity* enumerator_list::_get_child(const size_t i) noexcept
     return nullptr;
 
   return &_es[i].get();
+}
+
+void enumerator_list::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool enumerator_list::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -2239,6 +2802,16 @@ _ast_entity* enum_def::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void enum_def::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool enum_def::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 enum_ref::enum_ref(const pp_tokens_range &tr,
 		   const pp_token_index id_tok,
@@ -2269,6 +2842,16 @@ _ast_entity* enum_ref::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void enum_ref::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool enum_ref::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 typeof_expr::typeof_expr(const pp_tokens_range &tr,
 			 expr* &&e) noexcept
@@ -2288,6 +2871,16 @@ _ast_entity* typeof_expr::_get_child(const size_t i) noexcept
     return &_e;
 
   return nullptr;
+}
+
+void typeof_expr::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool typeof_expr::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -2311,6 +2904,16 @@ _ast_entity* typeof_type_name::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void typeof_type_name::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool typeof_type_name::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 function_specifier::function_specifier(const pp_token_index spec_tok) noexcept
   : ast_entity(pp_tokens_range{spec_tok, spec_tok + 1}),
@@ -2322,6 +2925,16 @@ function_specifier::~function_specifier() noexcept = default;
 _ast_entity* function_specifier::_get_child(const size_t i) noexcept
 {
   return nullptr;
+}
+
+void function_specifier::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool function_specifier::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -2480,6 +3093,16 @@ _ast_entity* specifier_qualifier_list::_get_child(const size_t i) noexcept
   }
 
   return nullptr;
+}
+
+void specifier_qualifier_list::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool specifier_qualifier_list::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -2697,6 +3320,16 @@ _ast_entity* initializer_expr::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void initializer_expr::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool initializer_expr::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 initializer_init_list::initializer_init_list(const pp_tokens_range &tr,
 					     initializer_list* &&il) noexcept
@@ -2732,6 +3365,16 @@ _ast_entity* initializer_init_list::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void initializer_init_list::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool initializer_init_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 designator::designator(const pp_tokens_range &tr) noexcept
   : ast_entity(tr)
@@ -2750,6 +3393,16 @@ designator_member::~designator_member() noexcept = default;
 _ast_entity* designator_member::_get_child(const size_t i) noexcept
 {
   return nullptr;
+}
+
+void designator_member::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool designator_member::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -2785,6 +3438,16 @@ _ast_entity* designator_array::_get_child(const size_t i) noexcept
   }
 
   __builtin_unreachable();
+}
+
+void designator_array::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool designator_array::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -2828,6 +3491,16 @@ _ast_entity* designator_list::_get_child(const size_t i) noexcept
   return &_ds[i].get();
 }
 
+void designator_list::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool designator_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 designation::designation(const pp_tokens_range &tr,
 			 designator_list* &&dl) noexcept
@@ -2847,6 +3520,16 @@ _ast_entity* designation::_get_child(const size_t i) noexcept
     return &_dl;
 
   return nullptr;
+}
+
+void designation::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool designation::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -2890,6 +3573,16 @@ _ast_entity* initializer_list::_get_child(const size_t i) noexcept
   return &_is[i].get();
 }
 
+void initializer_list::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool initializer_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 asm_label::asm_label(const pp_tokens_range &tr,
 		     string_literal* &&label) noexcept
@@ -2909,6 +3602,16 @@ _ast_entity* asm_label::_get_child(const size_t i) noexcept
     return &_label;
 
   return nullptr;
+}
+
+void asm_label::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool asm_label::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -3047,6 +3750,17 @@ _ast_entity* init_declarator::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void init_declarator::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool init_declarator::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+
 init_declarator_list::init_declarator_list(init_declarator* &&id)
   : ast_entity(id->get_tokens_range())
 {
@@ -3087,6 +3801,17 @@ _ast_entity* init_declarator_list::_get_child(const size_t i) noexcept
   return &_ids[i].get();
 }
 
+void init_declarator_list::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool init_declarator_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+
 declaration::declaration(const pp_tokens_range &tr,
 			 declaration_specifiers* &&ds,
 			 init_declarator_list* &&idl) noexcept
@@ -3116,6 +3841,16 @@ _ast_entity* declaration::_get_child(const size_t i) noexcept
     return _idl;
 
   return nullptr;
+}
+
+void declaration::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool declaration::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -3172,6 +3907,16 @@ _ast_entity* parameter_declaration_declarator::_get_child(const size_t i)
   __builtin_unreachable();
 }
 
+void parameter_declaration_declarator::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool parameter_declaration_declarator::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 parameter_declaration_abstract::
 parameter_declaration_abstract(const pp_tokens_range &tr,
@@ -3206,6 +3951,16 @@ _ast_entity* parameter_declaration_abstract::_get_child(const size_t i) noexcept
   }
 
   __builtin_unreachable();
+}
+
+void parameter_declaration_abstract::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool parameter_declaration_abstract::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -3258,6 +4013,16 @@ _ast_entity* parameter_declaration_list::_get_child(const size_t i) noexcept
   return &_pds[i].get();
 }
 
+void parameter_declaration_list::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool parameter_declaration_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 identifier_list::identifier_list(const pp_token_index id_tok)
   : ast_entity(pp_tokens_range{id_tok, id_tok + 1}),
@@ -3275,6 +4040,16 @@ void identifier_list::extend(const pp_token_index id_tok)
 _ast_entity* identifier_list::_get_child(const size_t i) noexcept
 {
   return nullptr;
+}
+
+void identifier_list::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool identifier_list::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 declaration_list::declaration_list(declaration* &&d)
@@ -3315,6 +4090,16 @@ _ast_entity* declaration_list::_get_child(const size_t i) noexcept
     return nullptr;
 
   return &_ds[i].get();
+}
+
+void declaration_list::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool declaration_list::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -3359,6 +4144,16 @@ _ast_entity* stmt_labeled::_get_child(const size_t i) noexcept
   __builtin_unreachable();
 }
 
+void stmt_labeled::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool stmt_labeled::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 stmt_case::stmt_case(const pp_tokens_range &tr,
 		     expr* &&e, stmt* &&s) noexcept
@@ -3389,6 +4184,16 @@ _ast_entity* stmt_case::_get_child(const size_t i) noexcept
   }
 
   __builtin_unreachable();
+}
+
+void stmt_case::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool stmt_case::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -3428,7 +4233,16 @@ _ast_entity* stmt_case_range::_get_child(const size_t i) noexcept
   }
 
   __builtin_unreachable();
+}
 
+void stmt_case_range::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool stmt_case_range::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -3451,6 +4265,16 @@ _ast_entity* stmt_default::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void stmt_default::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool stmt_default::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 local_label_declaration::local_label_declaration(const pp_tokens_range &tr,
 						 identifier_list* &&idl)
@@ -3471,6 +4295,16 @@ _ast_entity* local_label_declaration::_get_child(const size_t i) noexcept
     return &_idl;
 
   return nullptr;
+}
+
+void local_label_declaration::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool local_label_declaration::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -3515,6 +4349,16 @@ _ast_entity* local_label_declaration_list::_get_child(const size_t i) noexcept
   return &_llds[i].get();
 }
 
+void local_label_declaration_list::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool local_label_declaration_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 block_item::block_item(const pp_tokens_range &tr) noexcept
   : ast_entity(tr)
@@ -3542,6 +4386,16 @@ _ast_entity* block_item_decl::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void block_item_decl::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool block_item_decl::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 block_item_stmt::block_item_stmt(stmt* &&s) noexcept
   : block_item(s->get_tokens_range()), _s(*mv_p(std::move(s)))
@@ -3563,6 +4417,16 @@ _ast_entity* block_item_stmt::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void block_item_stmt::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool block_item_stmt::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 block_item_function_definition::
 block_item_function_definition(function_definition* &&fd) noexcept
@@ -3582,6 +4446,16 @@ _ast_entity* block_item_function_definition::_get_child(const size_t i) noexcept
     return &_fd;
 
   return nullptr;
+}
+
+void block_item_function_definition::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool block_item_function_definition::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -3625,6 +4499,16 @@ _ast_entity* block_item_list::_get_child(const size_t i) noexcept
   return &_bis[i].get();
 }
 
+void block_item_list::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool block_item_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 stmt_compound::stmt_compound(const pp_tokens_range &tr,
 			     local_label_declaration_list* &&lldl,
@@ -3657,6 +4541,16 @@ _ast_entity* stmt_compound::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void stmt_compound::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool stmt_compound::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 stmt_expr::stmt_expr(const pp_tokens_range &tr, expr* &&e) noexcept
   : stmt(tr), _e(mv_p(std::move(e)))
@@ -3677,6 +4571,17 @@ _ast_entity* stmt_expr::_get_child(const size_t i) noexcept
 
   return nullptr;
 }
+
+void stmt_expr::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool stmt_expr::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 stmt_if::stmt_if(const pp_tokens_range &tr,
 		 expr* &&cond, stmt* &&s_true, stmt* &&s_false)
@@ -3717,6 +4622,17 @@ _ast_entity* stmt_if::_get_child(const size_t i) noexcept
   __builtin_unreachable();
 }
 
+void stmt_if::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool stmt_if::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+
 stmt_switch::stmt_switch(const pp_tokens_range &tr, expr* &&e, stmt* &&s)
   noexcept
   : stmt(tr), _e(*mv_p(std::move(e))), _s(*mv_p(std::move(s)))
@@ -3746,6 +4662,16 @@ _ast_entity* stmt_switch::_get_child(const size_t i) noexcept
   }
 
   __builtin_unreachable();
+}
+
+void stmt_switch::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool stmt_switch::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -3780,6 +4706,16 @@ _ast_entity* stmt_while::_get_child(const size_t i) noexcept
   __builtin_unreachable();
 }
 
+void stmt_while::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool stmt_while::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 stmt_do::stmt_do(const pp_tokens_range &tr, expr* &&e, stmt* &&s)
   noexcept
@@ -3810,6 +4746,16 @@ _ast_entity* stmt_do::_get_child(const size_t i) noexcept
   }
 
   __builtin_unreachable();
+}
+
+void stmt_do::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool stmt_do::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -3867,6 +4813,16 @@ _ast_entity* stmt_for_init_expr::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void stmt_for_init_expr::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool stmt_for_init_expr::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 stmt_for_init_decl::stmt_for_init_decl(const pp_tokens_range &tr,
 				       declaration* &&d,
@@ -3917,6 +4873,16 @@ _ast_entity* stmt_for_init_decl::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void stmt_for_init_decl::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool stmt_for_init_decl::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 stmt_goto::stmt_goto(const pp_tokens_range &tr, expr* &&e) noexcept
   : stmt(tr), _e(*mv_p(std::move(e)))
@@ -3937,6 +4903,16 @@ _ast_entity* stmt_goto::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void stmt_goto::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool stmt_goto::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 stmt_continue::stmt_continue(const pp_tokens_range &tr) noexcept
   : stmt(tr)
@@ -3949,6 +4925,16 @@ _ast_entity* stmt_continue::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void stmt_continue::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool stmt_continue::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 stmt_break::stmt_break(const pp_tokens_range &tr) noexcept
   : stmt(tr)
@@ -3959,6 +4945,16 @@ stmt_break::~stmt_break() noexcept = default;
 _ast_entity* stmt_break::_get_child(const size_t i) noexcept
 {
   return nullptr;
+}
+
+void stmt_break::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool stmt_break::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -3982,6 +4978,16 @@ _ast_entity* stmt_return::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void stmt_return::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool stmt_return::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 stmt_asm::stmt_asm(asm_directive* &&ad) noexcept
   : stmt(ad->get_tokens_range()), _ad(*mv_p(std::move(ad)))
@@ -4000,6 +5006,16 @@ _ast_entity* stmt_asm::_get_child(const size_t i) noexcept
     return &_ad;
 
   return nullptr;
+}
+
+void stmt_asm::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool stmt_asm::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -4022,6 +5038,16 @@ _ast_entity* asm_qualifier_list::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void asm_qualifier_list::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool asm_qualifier_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 asm_operand_name::asm_operand_name(const pp_tokens_range &tr,
 				   const pp_token_index id_tok) noexcept
@@ -4033,6 +5059,16 @@ asm_operand_name::~asm_operand_name() noexcept = default;
 _ast_entity* asm_operand_name::_get_child(const size_t i) noexcept
 {
   return nullptr;
+}
+
+void asm_operand_name::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool asm_operand_name::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -4065,6 +5101,16 @@ _ast_entity* asm_operand::_get_child(const size_t i) noexcept
   }
 
   return nullptr;
+}
+
+void asm_operand::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool asm_operand::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -4108,6 +5154,16 @@ _ast_entity* asm_operand_list::_get_child(const size_t i) noexcept
   return &_aos[i].get();
 }
 
+void asm_operand_list::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool asm_operand_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 asm_clobber_list::asm_clobber_list(const pp_token_index clobber_tok)
   : ast_entity(pp_tokens_range{clobber_tok, clobber_tok + 1}),
@@ -4127,6 +5183,16 @@ _ast_entity* asm_clobber_list::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void asm_clobber_list::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool asm_clobber_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 asm_jump_to_label_list::asm_jump_to_label_list(const pp_token_index label_tok)
   : ast_entity(pp_tokens_range{label_tok, label_tok + 1}),
@@ -4144,6 +5210,16 @@ void asm_jump_to_label_list::extend(const pp_token_index label_tok)
 _ast_entity* asm_jump_to_label_list::_get_child(const size_t i) noexcept
 {
   return nullptr;
+}
+
+void asm_jump_to_label_list::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool asm_jump_to_label_list::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -4228,6 +5304,16 @@ _ast_entity* asm_directive::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void asm_directive::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool asm_directive::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 function_definition::function_definition(const pp_tokens_range &tr,
 					 declaration_specifiers* &&ds,
@@ -4292,6 +5378,16 @@ _ast_entity* function_definition::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void function_definition::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool function_definition::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 external_declaration::external_declaration(const pp_tokens_range &tr) noexcept
   : ast_entity(tr)
@@ -4319,6 +5415,16 @@ _ast_entity* external_declaration_decl::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void external_declaration_decl::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool external_declaration_decl::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 external_declaration_func::
 external_declaration_func(function_definition* &&fd) noexcept
@@ -4340,6 +5446,16 @@ _ast_entity* external_declaration_func::_get_child(const size_t i) noexcept
   return nullptr;
 }
 
+void external_declaration_func::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool external_declaration_func::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
 
 external_declaration_asm::
 external_declaration_asm(asm_directive* &&ad) noexcept
@@ -4359,6 +5475,16 @@ _ast_entity* external_declaration_asm::_get_child(const size_t i) noexcept
     return &_ad;
 
   return nullptr;
+}
+
+void external_declaration_asm::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool external_declaration_asm::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
@@ -4405,6 +5531,16 @@ _ast_entity* translation_unit::_get_child(const size_t i) noexcept
     return nullptr;
 
   return &_eds[i].get();
+}
+
+void translation_unit::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+bool translation_unit::_process(processor<bool> &p)
+{
+  return p(*this);
 }
 
 
