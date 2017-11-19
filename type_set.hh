@@ -90,6 +90,11 @@ namespace suse
     class type_set<T, types...>
     {
     public:
+      static constexpr std::size_t size()
+      {
+	return sizeof...(types);
+      }
+
       template<typename U>
       static constexpr bool is_member()
       {
@@ -181,6 +186,11 @@ namespace suse
     class type_set<>
     {
     public:
+      static constexpr std::size_t size()
+      {
+	return 0;
+      }
+
       template<typename U>
       static constexpr bool is_member()
       {

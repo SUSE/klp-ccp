@@ -4,6 +4,7 @@ BUILT_SOURCES = gnuc_parser.hh stack.hh
 
 noinst_HEADERS =			\
 	ast.hh				\
+	ast_impl.hh			\
 	ast_processor.hh		\
 	ast_processor_impl.hh		\
 	callables_wrapper.hh		\

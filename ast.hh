@@ -123,9 +123,6 @@ namespace suse
 	  c(*this, post_traversal_tag{});
       }
 
-      template <typename U>
-      using parents_of = typename U::parent_types;
-
       template <typename derived>
       class ast_entity : public _ast_entity
       {
@@ -137,25 +134,8 @@ namespace suse
 	virtual ~ast_entity() noexcept = default;
 
 
-	template<typename mask_type_set, typename callable_type>
-	bool for_each_parent(callable_type &&c)
-	{
-	  bool r = true;
-	  _ast_entity *p = _parent;
-	  typedef
-	    typename
-	    derived::parent_types::template closure<parents_of, mask_type_set>
-	    ancestor_types;
-
-	  while (p && r) {
-	    r = ancestor_types::cast_and_call(std::forward<callable_type>(c),
-					      *p);
-
-	    p = p->get_parent();
-	  }
-
-	  return r;
-	};
+	template<typename boundary_type_set, typename callable_type>
+	void for_each_ancestor(callable_type &&c);
 
 	template<typename parent_type>
 	void _set_parent(parent_type &p) noexcept

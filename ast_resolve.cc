@@ -1,7 +1,7 @@
 #include <cassert>
 #include <set>
 #include <string>
-#include "ast.hh"
+#include "ast_impl.hh"
 #include "semantic_except.hh"
 
 using namespace suse::cp;
@@ -279,10 +279,9 @@ namespace
       return true;
     }
 
-    bool operator()(const expr_statement&)
+    void operator()(const expr_statement&)
     {
-      // Don't let labels escape statement expressions.
-      return false;
+      // The ancestor search stops here.
     }
 
     bool operator()(const function_definition&)
@@ -310,7 +309,7 @@ void ast::ast::_register_labels()
       stmt_labeled *sl = dynamic_cast<stmt_labeled*>(&ae);
       if (sl) {
 	_register_label_scope_finder rlsf(*this, sl->get_label_tok());
-	sl->for_each_parent<type_set<expr_statement> >(rlsf);
+	sl->for_each_ancestor<type_set<expr_statement> >(rlsf);
 	assert(rlsf.get_result());
 	rlsf.get_result()->register_label(sl);
       }
@@ -413,10 +412,10 @@ namespace
       bool operator()(const direct_declarator&) const noexcept
       { return true; }
 
-      bool operator()(struct_declarator &sd) const noexcept;
-      bool operator()(parameter_declaration_declarator &pdd) const noexcept;
-      bool operator()(init_declarator &id) const noexcept;
-      bool operator()(function_definition &fd) const noexcept;
+      void operator()(struct_declarator &sd) const noexcept;
+      void operator()(parameter_declaration_declarator &pdd) const noexcept;
+      void operator()(init_declarator &id) const noexcept;
+      void operator()(function_definition &fd) const noexcept;
 
     private:
       direct_declarator_id &_ddid;
@@ -428,13 +427,13 @@ namespace
       bool operator()(const specifier_qualifier_list&) const noexcept
       { return true; }
 
-      bool operator()(const struct_declaration_c99 &sd) noexcept;
-      bool operator()(const struct_declaration_unnamed_sou&) const noexcept;
-      bool operator()(const type_name&) noexcept;
-      bool operator()(const declaration &d) noexcept;
-      bool operator()(const parameter_declaration_declarator&) noexcept;
-      bool operator()(const parameter_declaration_abstract&) noexcept;
-      bool operator()(const function_definition&) noexcept;
+      void operator()(const struct_declaration_c99 &sd) noexcept;
+      void operator()(const struct_declaration_unnamed_sou&) const noexcept;
+      void operator()(const type_name&) noexcept;
+      void operator()(const declaration &d) noexcept;
+      void operator()(const parameter_declaration_declarator&) noexcept;
+      void operator()(const parameter_declaration_abstract&) noexcept;
+      void operator()(const function_definition&) noexcept;
 
       bool is_standalone_decl;
     };
@@ -760,10 +759,10 @@ enum_def* _id_resolver::_lookup_enum_def(const pp_token_index id_tok,
 void _id_resolver::_handle_direct_declarator_id(direct_declarator_id &ddid)
 {
   const _declarator_id_ctx_finder dcf(ddid);
-  ddid.for_each_parent<type_set<struct_declarator,
-				 init_declarator,
-				 function_definition,
-				 parameter_declaration_declarator> >(dcf);
+  ddid.for_each_ancestor<type_set<struct_declarator,
+				  init_declarator,
+				  function_definition,
+				  parameter_declaration_declarator> >(dcf);
 
   switch (ddid.get_context().get_type())
   {
@@ -1137,12 +1136,12 @@ void _id_resolver::_handle_fun_def(direct_declarator_id &ddid)
 void _id_resolver::_handle_sou_ref(struct_or_union_ref &sour)
 {
   _sou_ref_standalone_checker srsc;
-  sour.for_each_parent<type_set<struct_declaration_c99,
-				struct_declaration_unnamed_sou,
-				type_name, declaration,
-				parameter_declaration_declarator,
-				parameter_declaration_abstract,
-				function_definition> >(srsc);
+  sour.for_each_ancestor<type_set<struct_declaration_c99,
+				  struct_declaration_unnamed_sou,
+				  type_name, declaration,
+				  parameter_declaration_declarator,
+				  parameter_declaration_abstract,
+				  function_definition> >(srsc);
 
   // If the 'struct foo' construct is standalone, i.e. is a
   // declaration of that tag, then search only the current scope.
@@ -1535,85 +1534,84 @@ void _id_resolver::_resolve_id(type_specifier_tdid &ts_tdid)
 }
 
 
-bool
+void
 _id_resolver::_declarator_id_ctx_finder::operator()(struct_declarator &sd)
   const noexcept
 {
   _ddid.set_context(direct_declarator_id::context(sd));
-  return false;
+  // The ancestor search stops here.
 }
 
-bool _id_resolver::_declarator_id_ctx_finder::
+void _id_resolver::_declarator_id_ctx_finder::
 operator()(parameter_declaration_declarator &pdd) const noexcept
 {
   _ddid.set_context(direct_declarator_id::context(pdd));
-  return false;
+  // The ancestor search stops here.
 }
 
-bool _id_resolver::_declarator_id_ctx_finder::operator()(init_declarator& id)
+void _id_resolver::_declarator_id_ctx_finder::operator()(init_declarator& id)
   const noexcept
 {
   _ddid.set_context(direct_declarator_id::context(id));
-  return false;
+  // The ancestor search stops here.
 }
 
-bool
+void
 _id_resolver::_declarator_id_ctx_finder::operator()(function_definition& fd)
   const noexcept
 {
   _ddid.set_context(direct_declarator_id::context(fd));
-  return false;
+  // The ancestor search stops here.
 }
 
 
-bool _id_resolver::_sou_ref_standalone_checker::
+void _id_resolver::_sou_ref_standalone_checker::
 operator()(const struct_declaration_c99 &sd) noexcept
 {
   is_standalone_decl = sd.get_struct_declarator_list().empty();
-  return false;
+  // The ancestor search stops here.
 }
 
-bool _id_resolver::_sou_ref_standalone_checker::
+void _id_resolver::_sou_ref_standalone_checker::
 operator()(const struct_declaration_unnamed_sou&) const noexcept
 {
   assert(0);
   __builtin_unreachable();
-  return false;
 }
 
-bool _id_resolver::_sou_ref_standalone_checker::operator()(const type_name&)
+void _id_resolver::_sou_ref_standalone_checker::operator()(const type_name&)
   noexcept
 {
   is_standalone_decl = false;
-  return false;
+  // The ancestor search stops here.
 }
 
-bool _id_resolver::_sou_ref_standalone_checker::operator()(const declaration &d)
+void _id_resolver::_sou_ref_standalone_checker::operator()(const declaration &d)
   noexcept
 {
   is_standalone_decl = !!d.get_init_declarator_list();
-  return false;
+  // The ancestor search stops here.
 }
 
-bool _id_resolver::_sou_ref_standalone_checker::
+void _id_resolver::_sou_ref_standalone_checker::
 operator()(const parameter_declaration_declarator&) noexcept
 {
   is_standalone_decl = false;
-  return false;
+  // The ancestor search stops here.
 }
 
-bool _id_resolver::_sou_ref_standalone_checker
+void _id_resolver::_sou_ref_standalone_checker
 ::operator()(const parameter_declaration_abstract&) noexcept
 {
   is_standalone_decl = false;
-  return false;
+  // The ancestor search stops here.
 }
 
-bool _id_resolver::_sou_ref_standalone_checker::
+void _id_resolver::_sou_ref_standalone_checker::
 operator()(const function_definition&) noexcept
 {
   is_standalone_decl = false;
-  return false;
+  // The ancestor search stops here.
 }
 
 
