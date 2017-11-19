@@ -6,6 +6,7 @@ noinst_HEADERS =			\
 	ast.hh				\
 	ast_processor.hh		\
 	ast_processor_impl.hh		\
+	callables_wrapper.hh		\
 	code_remark.hh			\
 	code_remarks.hh		\
 	cow_set.hh			\
