@@ -263,7 +263,7 @@ namespace suse
 	virtual ret_type operator()(translation_unit &e) override;
 
       private:
-	callable_type &&_c;
+	callable_type _c;
       };
 
       template<typename return_type, typename callable_type>

@@ -43,7 +43,7 @@ namespace suse
       {}
 
     private:
-      callable_type &&_c;
+      callable_type _c;
       callables_wrapper<default_action, callables_types...> _cs;
 
     private:
