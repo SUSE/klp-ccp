@@ -372,28 +372,6 @@ namespace
     void _resolve_id(expr_id &ei);
     void _resolve_id(type_specifier_tdid &ts_tdid);
 
-    class _declarator_id_ctx_finder
-    {
-    public:
-      _declarator_id_ctx_finder(direct_declarator_id &ddid) noexcept
-	: _ddid(ddid)
-      {}
-
-      bool operator()(const declarator&) const noexcept
-      { return true; }
-
-      bool operator()(const direct_declarator&) const noexcept
-      { return true; }
-
-      void operator()(struct_declarator &sd) const noexcept;
-      void operator()(parameter_declaration_declarator &pdd) const noexcept;
-      void operator()(init_declarator &id) const noexcept;
-      void operator()(function_definition &fd) const noexcept;
-
-    private:
-      direct_declarator_id &_ddid;
-    };
-
     suse::cp::ast::ast &_ast;
 
     struct _scope
@@ -714,11 +692,37 @@ enum_def* _id_resolver::_lookup_enum_def(const pp_token_index id_tok,
 
 void _id_resolver::_handle_direct_declarator_id(direct_declarator_id &ddid)
 {
-  const _declarator_id_ctx_finder dcf(ddid);
+  auto &&context_finder
+    = (wrap_callables<no_default_action>
+       ([](const declarator&) {
+	  // Continue the search upwards.
+	  return true;
+	},
+	[](const direct_declarator&) {
+	  // Continue the search upwards.
+	  return true;
+	},
+	[&ddid](struct_declarator &sd) {
+	  ddid.set_context(direct_declarator_id::context(sd));
+	  // The ancestor search stops here.
+	},
+	[&ddid](parameter_declaration_declarator &pdd) {
+	  ddid.set_context(direct_declarator_id::context(pdd));
+	  // The ancestor search stops here.
+	},
+	[&ddid](init_declarator &id) {
+	  ddid.set_context(direct_declarator_id::context(id));
+	  // The ancestor search stops here.
+	},
+	[&ddid](function_definition &fd) {
+	  ddid.set_context(direct_declarator_id::context(fd));
+	  // The ancestor search stops here.
+	}));
   ddid.for_each_ancestor<type_set<struct_declarator,
 				  init_declarator,
 				  function_definition,
-				  parameter_declaration_declarator> >(dcf);
+				  parameter_declaration_declarator> >
+    (context_finder);
 
   switch (ddid.get_context().get_type())
   {
@@ -1536,37 +1540,6 @@ void _id_resolver::_resolve_id(type_specifier_tdid &ts_tdid)
 		     id_tok.get_file_range());
   _ast.get_remarks().add(remark);
   throw semantic_except(remark);
-}
-
-
-void
-_id_resolver::_declarator_id_ctx_finder::operator()(struct_declarator &sd)
-  const noexcept
-{
-  _ddid.set_context(direct_declarator_id::context(sd));
-  // The ancestor search stops here.
-}
-
-void _id_resolver::_declarator_id_ctx_finder::
-operator()(parameter_declaration_declarator &pdd) const noexcept
-{
-  _ddid.set_context(direct_declarator_id::context(pdd));
-  // The ancestor search stops here.
-}
-
-void _id_resolver::_declarator_id_ctx_finder::operator()(init_declarator& id)
-  const noexcept
-{
-  _ddid.set_context(direct_declarator_id::context(id));
-  // The ancestor search stops here.
-}
-
-void
-_id_resolver::_declarator_id_ctx_finder::operator()(function_definition& fd)
-  const noexcept
-{
-  _ddid.set_context(direct_declarator_id::context(fd));
-  // The ancestor search stops here.
 }
 
 
