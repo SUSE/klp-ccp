@@ -1099,7 +1099,7 @@ void _id_resolver::_handle_fun_def(direct_declarator_id &ddid)
 
 void _id_resolver::_handle_sou_ref(struct_or_union_ref &sour)
 {
-  bool is_standalone_decl;
+  bool is_standalone_decl = false;
   auto &&standalone_decl_checker
     = (wrap_callables<no_default_action>
        ([](const specifier_qualifier_list&) {
@@ -1241,8 +1241,8 @@ void _id_resolver::_handle_sou_def(struct_or_union_def &soud)
       break;
 
     case sou_decl_link::target_type::unlinked:
-      assert(0);
-      __builtin_unreachable();
+	assert(0);
+	__builtin_unreachable();
     }
 
     if (prev_tag_kind != soud.get_tag_kind()) {
@@ -1446,7 +1446,7 @@ void _id_resolver::_resolve_id(expr_id &ei)
 	 p; p = p->get_parent()) {
       stmt_compound *sc = dynamic_cast<stmt_compound*>(p);
       if (sc) {
-	stmt_labeled *sl = sl = sc->lookup_label(_ast, ei.get_id_tok());
+	stmt_labeled *sl = sc->lookup_label(_ast, ei.get_id_tok());
 	if (sl) {
 	  ei.set_resolved(expr_id::resolved(*sl));
 	  return;
