@@ -73,7 +73,18 @@ namespace suse
 
     private:
       template<typename enable, typename... args_types>
+      struct _caller;
+
+      // This one handles the case where this instance can't handle the
+      // arguments' types but either the tail can or there is a
+      // non-no_default_action default_action.
+      template<typename... args_types>
       struct _caller
+      <typename std::enable_if
+	<(!impl::has_overload<callable_type&&, args_types...>::value &&
+	  (has_overload<args_types...>::value ||
+	  !std::is_same<default_action<args_types...>, void>::value))>::type,
+       args_types...>
       {
 	_caller(callable_type&,
 		callables_wrapper<default_action, callables_types...> &cs)
@@ -90,6 +101,8 @@ namespace suse
 	}
       };
 
+      // This handles the case where this instance can handle the
+      // arguments' types.
       template<typename... args_types>
       struct _caller
       <typename std::enable_if<impl::has_overload<callable_type&&,
@@ -138,15 +151,23 @@ namespace suse
       template<typename... args_types>
       using has_overload = std::false_type;
 
+      // No match for the arguments' types. Invoke the default_action
+      // if it is not no_default_action.
       template<typename... args_types>
-      auto operator()(args_types&&... args)
-	-> decltype(std::declval<const default_action<args_types...> >()
-		    (std::forward<args_types>(args)...))
+      auto operator()(args_types&&... args) ->
+	typename std::enable_if
+	  <!std::is_same<default_action<args_types...>, void>::value,
+	   decltype(std::declval<const default_action<args_types...> >()
+		    (std::forward<args_types>(args)...))>
+	::type
       {
 	const default_action<args_types...> _caller;
 	return _caller(std::forward<args_types>(args)...);
       }
     };
+
+    template<typename...>
+    using no_default_action = void;
 
     template<template<typename... __args_types> class default_action,
 	     typename... callables_types>
