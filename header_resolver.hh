@@ -29,7 +29,10 @@ namespace suse
       std::string resolve(const std::string &header,
 			  const std::string &referring_file) const;
 
-      static const struct cwd_tag {} cwd;
+      static const struct cwd_tag
+      {
+	cwd_tag() noexcept {}
+      } cwd;
       std::string resolve(const std::string &header, const cwd_tag&) const;
 
     private:

@@ -249,7 +249,7 @@ namespace
   class _register_label_scope_finder
   {
   public:
-    _register_label_scope_finder(ast::ast &ast,
+    _register_label_scope_finder(suse::cp::ast::ast &ast,
 				 const pp_token_index label_tok) noexcept
       : _ast(ast), _label_tok(label_tok), _registrar(nullptr)
     {}
@@ -297,13 +297,13 @@ namespace
     }
 
   private:
-    ast::ast &_ast;
+    suse::cp::ast::ast &_ast;
     const pp_token_index _label_tok;
     stmt_compound *_registrar;
   };
 }
 
-void ast::ast::_register_labels()
+void suse::cp::ast::ast::_register_labels()
 {
   this->for_each_dfs_po([&](_ast_entity &ae) {
       stmt_labeled *sl = dynamic_cast<stmt_labeled*>(&ae);
@@ -348,11 +348,11 @@ namespace
   class _id_resolver
   {
   public:
-    _id_resolver(ast::ast &ast);
+    _id_resolver(suse::cp::ast::ast &ast);
 
     bool operator()(_ast_entity &ae, const pre_traversal_tag&);
 
-    void operator()(_ast_entity &ae, const post_traversal_tag&);
+    void operator()(_ast_entity&, const post_traversal_tag&);
 
   private:
     void _enter_scope();
@@ -438,7 +438,7 @@ namespace
       bool is_standalone_decl;
     };
 
-    ast::ast &_ast;
+    suse::cp::ast::ast &_ast;
 
     struct _scope
     {
@@ -456,7 +456,7 @@ namespace
 
 }
 
-_id_resolver::_id_resolver(ast::ast &ast)
+_id_resolver::_id_resolver(suse::cp::ast::ast &ast)
   : _ast(ast)
 {
   _enter_scope();
@@ -603,7 +603,7 @@ bool _id_resolver::operator()(_ast_entity &ae, const pre_traversal_tag&)
   return false;
 }
 
-void _id_resolver::operator()(_ast_entity &ae, const post_traversal_tag&)
+void _id_resolver::operator()(_ast_entity&, const post_traversal_tag&)
 {
   _leave_scope();
 }
@@ -894,11 +894,11 @@ void _id_resolver::_handle_init_decl(direct_declarator_id &ddid)
 	switch(r.get_type()) {
 	case expr_id::resolved::resolved_type::direct_declarator_id:
 	  {
-	    direct_declarator_id &prev_ddid = r.get_direct_declarator_id();
+	    direct_declarator_id &_prev_ddid = r.get_direct_declarator_id();
 	    const linkage::linkage_type prev_linkage =
-	      _get_linkage_type(prev_ddid.get_context());
+	      _get_linkage_type(_prev_ddid.get_context());
 	    if (prev_linkage != linkage::linkage_type::none)
-	      return &prev_ddid;
+	      return &_prev_ddid;
 	  }
 	  return static_cast<direct_declarator_id*>(nullptr);
 
@@ -908,7 +908,11 @@ void _id_resolver::_handle_init_decl(direct_declarator_id &ddid)
 	case expr_id::resolved::resolved_type::in_param_id_list:
 	  return static_cast<direct_declarator_id*>(nullptr);
 
-	default:
+	case expr_id::resolved::resolved_type::none:
+	/* fall through */
+	case expr_id::resolved::resolved_type::builtin:
+	/* fall through */
+	case expr_id::resolved::resolved_type::stmt_labeled:
 	  assert(0);
 	  __builtin_unreachable();
 	}
@@ -1179,6 +1183,7 @@ void _id_resolver::_handle_sou_ref(struct_or_union_ref &sour)
     }
 
     _scopes.back()._declared_sous.push_back(sou_decl_link(sour));
+    return;
 
   } else {
     assert (!srsc.is_standalone_decl && prev_decl);
@@ -1200,7 +1205,8 @@ void _id_resolver::_handle_sou_ref(struct_or_union_ref &sour)
     }
   }
 
-  if (prev_decl && prev_tag_kind != sour.get_tag_kind()) {
+  assert(prev_decl);
+  if (prev_tag_kind != sour.get_tag_kind()) {
     const pp_token &id_tok = _ast.get_pp_tokens()[sour.get_id_tok()];
     code_remark remark(code_remark::severity::fatal,
 		       "tag redeclared as a different kind",
@@ -1322,13 +1328,15 @@ _id_resolver::_get_linkage_type(const direct_declarator_id::context &ctx)
   switch (ctx.get_type()) {
   case direct_declarator_id::context::context_type::init_decl:
     return ctx.get_init_declarator().get_linkage().get_linkage_type();
-    break;
 
   case direct_declarator_id::context::context_type::function_def:
     return ctx.get_function_definition().get_linkage().get_linkage_type();
-    break;
 
-  default:
+  case direct_declarator_id::context::context_type::unknown:
+    /* fall through */
+  case direct_declarator_id::context::context_type::struct_decl:
+    /* fall through */
+  case direct_declarator_id::context::context_type::parameter_decl:
     assert(0);
     __builtin_unreachable();
   }
@@ -1349,7 +1357,11 @@ void _id_resolver::_link_to(linkage &l,
     l.link_to(target_ctx.get_function_definition(), type);
     break;
 
-  default:
+  case direct_declarator_id::context::context_type::unknown:
+    /* fall through */
+  case direct_declarator_id::context::context_type::struct_decl:
+    /* fall through */
+  case direct_declarator_id::context::context_type::parameter_decl:
     assert(0);
     __builtin_unreachable();
   }
@@ -1392,7 +1404,11 @@ _id_resolver::_try_resolve_pending_linkages(direct_declarator_id &ddid,
       ctx.get_function_definition().is_at_file_scope();
     break;
 
-  default:
+  case direct_declarator_id::context::context_type::unknown:
+    /* fall through */
+  case direct_declarator_id::context::context_type::struct_decl:
+    /* fall through */
+  case direct_declarator_id::context::context_type::parameter_decl:
     assert(0);
     __builtin_unreachable();
   }
@@ -1408,7 +1424,6 @@ _id_resolver::_try_resolve_pending_linkages(direct_declarator_id &ddid,
   assert(pl_linkage_type == linkage::linkage_type::external);
 
   if (type != pl_linkage_type) {
-    const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
     code_remark remark(code_remark::severity::fatal,
 		       "static declaration follows external one",
 		       id_tok.get_file_range());
@@ -1616,13 +1631,13 @@ operator()(const function_definition&) noexcept
 
 
 
-void ast::ast::_resolve_ids()
+void suse::cp::ast::ast::_resolve_ids()
 {
   _id_resolver ir(*this);
   this->for_each_dfs_pre_and_po(ir);
 }
 
-void ast::ast::resolve()
+void suse::cp::ast::ast::resolve()
 {
   _register_labels();
   _resolve_ids();

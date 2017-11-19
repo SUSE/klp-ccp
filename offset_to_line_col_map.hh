@@ -35,6 +35,12 @@ namespace suse
 
       struct _index_entry_type
       {
+	_index_entry_type(const _enc_map_type::difference_type _offset_in_enc,
+			  const std::streamoff _offset,
+			  const std::streamoff _line) noexcept
+	  : offset_in_enc(_offset_in_enc), offset(_offset), line(_line)
+	{}
+
 	_enc_map_type::difference_type offset_in_enc;
 	std::streamoff offset;
 	std::streamoff line;

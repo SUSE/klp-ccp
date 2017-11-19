@@ -60,7 +60,7 @@ expr_list::expr_list(expr_list &&el)
     e.get()._reset_parent(*this, el);
 }
 
-expr_list::~expr_list()
+expr_list::~expr_list() noexcept
 {
   for (auto e : _exprs)
     delete &e.get();
@@ -254,7 +254,7 @@ bool expr_conditional::_process(processor<bool> &p)
 
 
 expr_binop::expr_binop(const binary_op op, expr* &&l, expr* &&r) noexcept
-  : expr(tr_from_aes(*l, *r)),
+  : expr(tr_from_aes(*l, *r)), _op(op),
     _left(*mv_p(std::move(l))), _right(*mv_p(std::move(r)))
 {
   _left._set_parent(*this);
@@ -344,7 +344,7 @@ expr_label_addr::expr_label_addr(const pp_tokens_range &tr,
 
 expr_label_addr::~expr_label_addr() noexcept = default;
 
-_ast_entity* expr_label_addr::_get_child(const size_t i) noexcept
+_ast_entity* expr_label_addr::_get_child(const size_t) noexcept
 {
   return nullptr;
 }
@@ -934,7 +934,7 @@ void expr_id::set_resolved(const resolved &r) noexcept
   _resolved = r;
 }
 
-_ast_entity* expr_id::_get_child(const size_t i) noexcept
+_ast_entity* expr_id::_get_child(const size_t) noexcept
 {
   return nullptr;
 }
@@ -956,7 +956,7 @@ expr_constant::expr_constant(const pp_token_index const_tok) noexcept
 
 expr_constant::~expr_constant() noexcept = default;
 
-_ast_entity* expr_constant::_get_child(const size_t i) noexcept
+_ast_entity* expr_constant::_get_child(const size_t) noexcept
 {
   return nullptr;
 }
@@ -984,7 +984,7 @@ void string_literal::extend(const pp_token_index s)
   _extend_tokens_range(pp_tokens_range{s, s+1});
 }
 
-_ast_entity* string_literal::_get_child(const size_t i) noexcept
+_ast_entity* string_literal::_get_child(const size_t) noexcept
 {
   return nullptr;
 }
@@ -1658,7 +1658,7 @@ bool direct_declarator_id::is_function() const noexcept
 }
 
 
-_ast_entity* direct_declarator_id::_get_child(const size_t i) noexcept
+_ast_entity* direct_declarator_id::_get_child(const size_t) noexcept
 {
   return nullptr;
 }
@@ -1907,7 +1907,7 @@ storage_class_specifier(const pp_tokens_range &tr,
 
 storage_class_specifier::~storage_class_specifier() noexcept = default;
 
-_ast_entity* storage_class_specifier::_get_child(const size_t i) noexcept
+_ast_entity* storage_class_specifier::_get_child(const size_t) noexcept
 {
   return nullptr;
 }
@@ -1930,7 +1930,7 @@ type_qualifier::type_qualifier(const pp_tokens_range &tr,
 
 type_qualifier::~type_qualifier() noexcept = default;
 
-_ast_entity* type_qualifier::_get_child(const size_t i) noexcept
+_ast_entity* type_qualifier::_get_child(const size_t) noexcept
 {
   return nullptr;
 }
@@ -2044,7 +2044,7 @@ type_specifier_pod::type_specifier_pod(const pp_tokens_range &tr,
 
 type_specifier_pod::~type_specifier_pod() noexcept = default;
 
-_ast_entity* type_specifier_pod::_get_child(const size_t i) noexcept
+_ast_entity* type_specifier_pod::_get_child(const size_t) noexcept
 {
   return nullptr;
 }
@@ -2073,7 +2073,7 @@ void type_specifier_tdid::set_resolved(direct_declarator_id &ddid) noexcept
   _resolved = &ddid;
 }
 
-_ast_entity* type_specifier_tdid::_get_child(const size_t i) noexcept
+_ast_entity* type_specifier_tdid::_get_child(const size_t) noexcept
 {
   return nullptr;
 }
@@ -2322,6 +2322,8 @@ _ast_entity* unnamed_struct_or_union::_get_child(const size_t i) noexcept
 
     --_i;
   }
+
+  return nullptr;
 }
 
 void unnamed_struct_or_union::_process(processor<void> &p)
@@ -2922,7 +2924,7 @@ function_specifier::function_specifier(const pp_token_index spec_tok) noexcept
 
 function_specifier::~function_specifier() noexcept = default;
 
-_ast_entity* function_specifier::_get_child(const size_t i) noexcept
+_ast_entity* function_specifier::_get_child(const size_t) noexcept
 {
   return nullptr;
 }
@@ -3390,7 +3392,7 @@ designator_member::designator_member(const pp_tokens_range &tr,
 
 designator_member::~designator_member() noexcept = default;
 
-_ast_entity* designator_member::_get_child(const size_t i) noexcept
+_ast_entity* designator_member::_get_child(const size_t) noexcept
 {
   return nullptr;
 }
@@ -4037,7 +4039,7 @@ void identifier_list::extend(const pp_token_index id_tok)
   _extend_tokens_range(pp_tokens_range{id_tok, id_tok + 1});
 }
 
-_ast_entity* identifier_list::_get_child(const size_t i) noexcept
+_ast_entity* identifier_list::_get_child(const size_t) noexcept
 {
   return nullptr;
 }
@@ -4920,7 +4922,7 @@ stmt_continue::stmt_continue(const pp_tokens_range &tr) noexcept
 
 stmt_continue::~stmt_continue() noexcept = default;
 
-_ast_entity* stmt_continue::_get_child(const size_t i) noexcept
+_ast_entity* stmt_continue::_get_child(const size_t) noexcept
 {
   return nullptr;
 }
@@ -4942,7 +4944,7 @@ stmt_break::stmt_break(const pp_tokens_range &tr) noexcept
 
 stmt_break::~stmt_break() noexcept = default;
 
-_ast_entity* stmt_break::_get_child(const size_t i) noexcept
+_ast_entity* stmt_break::_get_child(const size_t) noexcept
 {
   return nullptr;
 }
@@ -5033,7 +5035,7 @@ void asm_qualifier_list::extend(const pp_tokens_range &tr,
   _extend_tokens_range(tr);
 }
 
-_ast_entity* asm_qualifier_list::_get_child(const size_t i) noexcept
+_ast_entity* asm_qualifier_list::_get_child(const size_t) noexcept
 {
   return nullptr;
 }
@@ -5056,7 +5058,7 @@ asm_operand_name::asm_operand_name(const pp_tokens_range &tr,
 
 asm_operand_name::~asm_operand_name() noexcept = default;
 
-_ast_entity* asm_operand_name::_get_child(const size_t i) noexcept
+_ast_entity* asm_operand_name::_get_child(const size_t) noexcept
 {
   return nullptr;
 }
@@ -5178,7 +5180,7 @@ void asm_clobber_list::extend(const pp_token_index clobber_tok)
   _extend_tokens_range(pp_tokens_range{clobber_tok, clobber_tok + 1});
 }
 
-_ast_entity* asm_clobber_list::_get_child(const size_t i) noexcept
+_ast_entity* asm_clobber_list::_get_child(const size_t) noexcept
 {
   return nullptr;
 }
@@ -5207,7 +5209,7 @@ void asm_jump_to_label_list::extend(const pp_token_index label_tok)
   _extend_tokens_range(pp_tokens_range{label_tok, label_tok + 1});
 }
 
-_ast_entity* asm_jump_to_label_list::_get_child(const size_t i) noexcept
+_ast_entity* asm_jump_to_label_list::_get_child(const size_t) noexcept
 {
   return nullptr;
 }

@@ -86,7 +86,7 @@ namespace suse
 	  typename
 	  std::enable_if<!is_boundary<arg_type>() && is_void_ret<arg_type>(),
 			 bool>::type
-	  operator()(arg_type &&arg)
+	  operator()(arg_type&&)
 	  {
 	    static_assert(!is_boundary<arg_type>() && is_void_ret<arg_type>(),
 			  "implementation error");
@@ -101,6 +101,9 @@ namespace suse
 	template<typename arg_type>
 	struct default_action_unreachable
 	{
+	  default_action_unreachable() noexcept
+	  {}
+
 	  bool operator()(arg_type&&) const noexcept
 	  {
 	    assert(0);

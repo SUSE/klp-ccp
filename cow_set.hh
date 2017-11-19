@@ -190,8 +190,10 @@ namespace suse
     cow_set<Key, Compare, Allocator>::
     const_iterator::~const_iterator() noexcept
     {
-      if (_backing_it_valid)
-	_backing_it()->_set_type::const_iterator::~const_iterator();
+      if (_backing_it_valid) {
+	typedef typename _set_type::const_iterator it_type;
+	_backing_it()->~it_type();
+      }
     }
 
     template<typename Key, typename Compare, typename Allocator>
@@ -202,8 +204,10 @@ namespace suse
       if (this == &rhs)
 	return *this;
 
-      if (_backing_it_valid)
-	_backing_it()->_set_type::const_iterator::~const_iterator();
+      if (_backing_it_valid) {
+	typedef typename _set_type::const_iterator it_type;
+	_backing_it()->~it_type();
+      }
 
       _backing_it_valid = rhs._backing_it_valid;
       if (_backing_it_valid)
@@ -221,8 +225,10 @@ namespace suse
       if (this == &rhs)
 	return *this;
 
-      if (_backing_it_valid)
-	_backing_it()->_set_type::const_iterator::~const_iterator();
+      if (_backing_it_valid) {
+	typedef typename _set_type::const_iterator it_type;
+	_backing_it()->~it_type();
+      }
 
       _backing_it_valid = rhs._backing_it_valid;
       if (_backing_it_valid)

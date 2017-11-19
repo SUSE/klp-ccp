@@ -16,13 +16,13 @@ static const option options[] = {
 
 static const char optstring[] = "h";
 
-void print_help()
+static void print_help()
 {
   std::cerr << "usage: "
 	    << "cparse [-include <file>] [-h] <file>" << std::endl;
 }
 
-void print_usage()
+static void print_usage()
 {
   std::cerr << "error: invalid command line" << std::endl;
 }

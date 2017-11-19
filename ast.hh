@@ -536,7 +536,7 @@ namespace suse
 	virtual ~expr_label_addr() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual bool _process(processor<bool> &p) override;
@@ -862,7 +862,7 @@ namespace suse
 	void set_resolved(const resolved &r) noexcept;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual bool _process(processor<bool> &p) override;
@@ -879,7 +879,7 @@ namespace suse
 	virtual ~expr_constant() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual bool _process(processor<bool> &p) override;
@@ -901,7 +901,7 @@ namespace suse
 	void extend(const pp_token_index s);
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual bool _process(processor<bool> &p) override;
@@ -1249,7 +1249,7 @@ namespace suse
 
 	virtual ~direct_declarator_id() noexcept override;
 
-	virtual pp_token_index get_id_tok() const noexcept;
+	virtual pp_token_index get_id_tok() const noexcept override;
 
 	const context& get_context() const noexcept;
 	void set_context(const context &ctx) noexcept;
@@ -1257,7 +1257,7 @@ namespace suse
 	bool is_function() const noexcept;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual bool _process(processor<bool> &p) override;
@@ -1276,7 +1276,7 @@ namespace suse
 
 	virtual ~direct_declarator_parenthesized() noexcept override;
 
-	virtual pp_token_index get_id_tok() const noexcept;
+	virtual pp_token_index get_id_tok() const noexcept override;
 
 	const declarator& get_declarator() const noexcept
 	{
@@ -1310,7 +1310,7 @@ namespace suse
 
 	virtual ~direct_declarator_array() noexcept override;
 
-	virtual pp_token_index get_id_tok() const noexcept;
+	virtual pp_token_index get_id_tok() const noexcept override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -1340,7 +1340,7 @@ namespace suse
 
 	virtual ~direct_declarator_func() noexcept override;
 
-	virtual pp_token_index get_id_tok() const noexcept;
+	virtual pp_token_index get_id_tok() const noexcept override;
 
 	const direct_declarator& get_direct_declarator() const noexcept
 	{
@@ -1420,7 +1420,7 @@ namespace suse
 	{ return _sc; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual bool _process(processor<bool> &p) override;
@@ -1448,7 +1448,7 @@ namespace suse
 	virtual ~type_qualifier() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual bool _process(processor<bool> &p) override;
@@ -1518,7 +1518,7 @@ namespace suse
 	virtual ~type_specifier_pod() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual bool _process(processor<bool> &p) override;
@@ -1539,7 +1539,7 @@ namespace suse
 	void set_resolved(direct_declarator_id &ddid) noexcept;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual bool _process(processor<bool> &p) override;
@@ -1832,7 +1832,7 @@ namespace suse
 	virtual ~struct_or_union_ref() noexcept override;
 
 	pp_token_index get_id_tok() const noexcept
-	{ return _id_tok; };
+	{ return _id_tok; }
 
 	struct_or_union get_tag_kind() const noexcept
 	{ return _sou; }
@@ -2046,7 +2046,7 @@ namespace suse
 	virtual ~function_specifier() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual bool _process(processor<bool> &p) override;
@@ -2159,7 +2159,7 @@ namespace suse
 
 	virtual ~initializer_expr() noexcept override;
 
-	virtual void set_designation(designation* &&d) noexcept;
+	virtual void set_designation(designation* &&d) noexcept override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -2178,7 +2178,7 @@ namespace suse
 
 	virtual ~initializer_init_list() noexcept override;
 
-	virtual void set_designation(designation* &&d) noexcept;
+	virtual void set_designation(designation* &&d) noexcept override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -2208,7 +2208,7 @@ namespace suse
 	virtual ~designator_member() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual bool _process(processor<bool> &p) override;
@@ -2565,7 +2565,7 @@ namespace suse
 	{ return _ids; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual bool _process(processor<bool> &p) override;
@@ -2995,7 +2995,7 @@ namespace suse
 	virtual ~stmt_continue() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual bool _process(processor<bool> &p) override;
@@ -3009,7 +3009,7 @@ namespace suse
 	virtual ~stmt_break() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual bool _process(processor<bool> &p) override;
@@ -3068,7 +3068,7 @@ namespace suse
 		    const asm_qualifier aq);
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual bool _process(processor<bool> &p) override;
@@ -3087,7 +3087,7 @@ namespace suse
 	virtual ~asm_operand_name() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual bool _process(processor<bool> &p) override;
@@ -3149,7 +3149,7 @@ namespace suse
 	void extend(const pp_token_index clobber_tok);
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual bool _process(processor<bool> &p) override;
@@ -3170,7 +3170,7 @@ namespace suse
 	void extend(const pp_token_index label_tok);
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual bool _process(processor<bool> &p) override;

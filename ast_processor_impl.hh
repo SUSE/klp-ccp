@@ -20,6 +20,12 @@ namespace suse
       {}
 
       template<typename ret_type, typename callable_type>
+      _processor<ret_type, callable_type>::_processor(const _processor& p)
+	noexcept
+	: _c(std::forward<callable_type>(p._c))
+      {}
+
+      template<typename ret_type, typename callable_type>
       _processor<ret_type, callable_type>::~_processor() noexcept = default;
 
       template<typename ret_type, typename callable_type>

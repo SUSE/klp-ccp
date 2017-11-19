@@ -137,6 +137,9 @@ namespace suse
       {
       public:
 	_processor(callable_type &&c) noexcept;
+
+	_processor(const _processor& p) noexcept;
+
 	virtual ~_processor() noexcept override;
 
 	virtual ret_type operator()(expr_list &e) override;

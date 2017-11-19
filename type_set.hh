@@ -217,7 +217,7 @@ namespace suse
       }
 
       template<typename U, typename callable_type, typename return_type>
-      static return_type cast_and_call(callable_type &&callable, U &&value)
+      static return_type cast_and_call(callable_type&&, U&&)
       {
 	assert(0);
 	__builtin_unreachable();

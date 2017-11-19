@@ -352,16 +352,10 @@ void gnuc_parser_driver::handle_decl_id(const ast::pp_token_index tok)
   assert(_tokens[tok].is_id());
   assert(!_ignore_td_spec);
 
-  switch (_in_typedef)
-  {
-  case true:
+  if(_in_typedef)
     _typedefs_scopes.top().insert(_tokens[tok].get_value());
-    break;
-
-  case false:
+  else
     _typedefs_scopes.top().erase(_tokens[tok].get_value());
-    break;
-  };
 }
 
 void gnuc_parser_driver::handle_enumerator_id(const ast::pp_token_index tok)

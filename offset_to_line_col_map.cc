@@ -74,7 +74,8 @@ unsigned int ffs(T val)
       }
     }
 
-    return r + val;
+    assert(val == 1 | val == 0);
+    return r + static_cast<unsigned int>(val);
   }
 
   // The general case
@@ -108,11 +109,7 @@ void offset_to_line_col_map::add_line(const std::streamoff length)
   for (std::streamoff o = lo_rounded_up; o < no_rounded_up;
        o += _offset_range_per_index) {
     assert(_last_offset <= _index.size() * _offset_range_per_index);
-    _index.push_back((struct _index_entry_type){
-	.offset_in_enc = enc_it - _enc_map.cbegin(),
-	.offset = _last_offset,
-	.line = _cur_line,
-      });
+    _index.emplace_back(enc_it - _enc_map.cbegin(), _last_offset, _cur_line);
   }
 
   _last_offset = next_offset;
@@ -156,7 +153,7 @@ offset_to_line_col_map::_append_encoded_offset(const std::streamoff off)
 
   // Optimize the common case of a line length < 128 characters.
   if (off < (1 << (std::numeric_limits<unsigned char>::digits - 1))) {
-    _enc_map.push_back(off);
+    _enc_map.push_back(static_cast<unsigned char>(off));
     return _enc_map.cend() - 1;
   }
 
@@ -179,8 +176,9 @@ offset_to_line_col_map::_append_encoded_offset(const std::streamoff off)
   // UTF8-style multibyte encoding: number of leading ones in header
   // denotes number of payload bytes to follow.
   unsigned char header
-    = (((1 << needed_payload_bytes) - 1) <<
-       (std::numeric_limits<unsigned char>::digits - needed_payload_bytes));
+    = (static_cast<unsigned char>
+       (((1 << needed_payload_bytes) - 1) <<
+	 (std::numeric_limits<unsigned char>::digits - needed_payload_bytes)));
 
   const unsigned int non_header_payload_bits =
     needed_payload_bytes * std::numeric_limits<unsigned char>::digits;
@@ -195,7 +193,8 @@ offset_to_line_col_map::_append_encoded_offset(const std::streamoff off)
   if (remaining_payload_bits < non_header_payload_bits) {
     remaining_payload_bits -=
       remaining_payload_bits % std::numeric_limits<unsigned char>::digits;
-    _enc_map.push_back(off >> remaining_payload_bits);
+    _enc_map.push_back((static_cast<unsigned char>
+			(off >> remaining_payload_bits)));
   }
 
   while (remaining_payload_bits > 0) {
