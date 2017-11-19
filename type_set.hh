@@ -86,27 +86,6 @@ namespace suse
     };
 
 
-    template<template<typename> class trans, typename result,
-	     typename... pending_types>
-    struct transform_impl;
-
-    template <template<typename> class trans, typename result,
-	      typename T, typename... pending_types>
-    struct transform_impl<trans, result, T, pending_types...>
-    {
-      typedef typename
-      transform_impl<trans, typename result::template add_type<trans<T> >,
-		     pending_types...>::type
-      type;
-    };
-
-    template <template<typename> class trans, typename result>
-    struct transform_impl<trans, result>
-    {
-      typedef result type;
-    };
-
-
     template<typename T, typename... types>
     class type_set<T, types...>
     {
@@ -161,11 +140,6 @@ namespace suse
 					    mask_type_set,
 					    type_set<>, type_set
 					    >::type;
-
-      template<template<typename> class trans>
-      using transform = typename transform_impl<trans,
-						type_set<>,
-						T, types...>::type;
 
     private:
       template<typename... other_types>
