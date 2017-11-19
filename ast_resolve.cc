@@ -244,74 +244,47 @@ bool stmt_compound::is_local_label(const ast &ast,
   return false;
 }
 
-namespace
-{
-  class _register_label_scope_finder
-  {
-  public:
-    _register_label_scope_finder(suse::cp::ast::ast &ast,
-				 const pp_token_index label_tok) noexcept
-      : _ast(ast), _label_tok(label_tok), _registrar(nullptr)
-    {}
-
-    stmt_compound* get_result() noexcept
-    {
-      return _registrar;
-    }
-
-    bool operator()(stmt_compound &sc)
-    {
-      _registrar = &sc;
-
-      if (sc.lookup_label(_ast, _label_tok)) {
-	code_remark remark(code_remark::severity::fatal,
-			   "label redefined",
-			   _ast.get_pp_tokens()[_label_tok].get_file_range());
-	_ast.get_remarks().add(remark);
-	throw semantic_except(remark);
-      }
-
-      // If this label is declared local to this block, finish the
-      // search here.
-      if (sc.is_local_label(_ast, _label_tok))
-	return false;
-
-      return true;
-    }
-
-    void operator()(const expr_statement&)
-    {
-      // The ancestor search stops here.
-    }
-
-    bool operator()(const function_definition&)
-    {
-      // Don't let labels escape function definitions.
-      return false;
-    }
-
-    bool operator()(const _ast_entity&)
-    {
-      // Default: continue search upwards the tree.
-      return true;
-    }
-
-  private:
-    suse::cp::ast::ast &_ast;
-    const pp_token_index _label_tok;
-    stmt_compound *_registrar;
-  };
-}
 
 void suse::cp::ast::ast::_register_labels()
 {
   this->for_each_dfs_po([&](_ast_entity &ae) {
       stmt_labeled *sl = dynamic_cast<stmt_labeled*>(&ae);
       if (sl) {
-	_register_label_scope_finder rlsf(*this, sl->get_label_tok());
-	sl->for_each_ancestor<type_set<expr_statement> >(rlsf);
-	assert(rlsf.get_result());
-	rlsf.get_result()->register_label(sl);
+	const pp_token_index label_tok = sl->get_label_tok();
+	stmt_compound *registrar = nullptr;
+
+	auto &&label_scope_finder
+	  = (wrap_callables<default_action_return_true>
+	       ([&](stmt_compound &sc) {
+		  registrar = &sc;
+
+		  if (sc.lookup_label(*this, label_tok)) {
+		    code_remark remark(code_remark::severity::fatal,
+				       "label redefined",
+				       _tokens[label_tok].get_file_range());
+		    _remarks.add(remark);
+		    throw semantic_except(remark);
+		  }
+
+		  // If this label is declared local to this block, finish the
+		  // search here.
+		  if (sc.is_local_label(*this, label_tok))
+		    return false;
+
+		  return true;
+		},
+		[](const expr_statement&) {
+		  // The ancestor search stops here.
+		},
+		[](const function_definition&) {
+		  // Don't let labels escape function definitions.
+		  return false;
+		}));
+
+	// _register_label_scope_finder rlsf(*this, sl->get_label_tok());
+	sl->for_each_ancestor<type_set<expr_statement> >(label_scope_finder);
+	assert(registrar);
+	registrar->register_label(sl);
       }
     });
 }
