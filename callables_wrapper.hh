@@ -127,10 +127,6 @@ namespace suse
 	auto operator()(args_types&&... args) ->
 	  decltype(_c(std::forward<args_types>(args)...))
 	{
-	  static_assert(!(callables_wrapper<default_action, callables_types...>
-			  ::template has_overload<args_types...>::value),
-			"overload resolution ambiguity");
-
 	  return _c(std::forward<args_types>(args)...);
 	}
       };

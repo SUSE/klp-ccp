@@ -151,14 +151,6 @@ namespace suse
       template<typename... other_types>
       friend class type_set;
 
-      template<typename V>
-      static constexpr bool no_inherit_relationship()
-      {
-	return (!std::is_base_of<V, T>::value &&
-		!std::is_base_of<T, V>::value &&
-		type_set<types...>::template no_inherit_relationship<V>());
-      }
-
     public:
       template<typename U, typename callable_type,
 	       typename return_type
@@ -167,8 +159,6 @@ namespace suse
       {
 	static_assert(!std::is_pointer<T>::value,
 		      "casting to pointer is not implemented");
-	static_assert(type_set<types...>::template no_inherit_relationship<T>(),
-		      "inheritance relationship between type_set types");
 
 	const typename std::add_pointer<T>::type ptr_value =
 	  dynamic_cast<typename std::add_pointer<T>::type>(&value);
@@ -210,12 +200,6 @@ namespace suse
     private:
       template<typename... other_types>
       friend class type_set;
-
-      template<typename V>
-      static constexpr bool no_inherit_relationship()
-      {
-	return true;
-      }
 
       template<typename U, typename callable_type, typename return_type>
       static return_type cast_and_call(callable_type &&callable, U &&value)
