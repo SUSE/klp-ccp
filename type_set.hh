@@ -86,6 +86,26 @@ namespace suse
     };
 
 
+    template<typename result, typename... pending_types>
+    struct add_const_impl;
+
+    template<typename result, typename T, typename... pending_types>
+    struct add_const_impl<result, T, pending_types...>
+    {
+      typedef typename
+      add_const_impl
+	<typename result::template add_type<typename std::add_const<T>::type>,
+	 pending_types...>::type
+      type;
+    };
+
+    template <typename result>
+    struct add_const_impl<result>
+    {
+      typedef result type;
+    };
+
+
     template<typename T, typename... types>
     class type_set<T, types...>
     {
@@ -146,6 +166,9 @@ namespace suse
 					    mask_type_set,
 					    type_set<>, type_set
 					    >::type;
+
+      using add_const = typename add_const_impl<type_set<>,
+						T, types...>::type;
 
     private:
       template<typename... other_types>
