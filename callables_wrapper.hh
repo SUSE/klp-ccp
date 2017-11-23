@@ -42,6 +42,11 @@ namespace suse
 	  _cs(std::forward<callables_types>(cs)...)
       {}
 
+      static constexpr std::size_t size()
+      {
+	return 1 + sizeof...(callables_types);
+      }
+
     private:
       callable_type _c;
       callables_wrapper<default_action, callables_types...> _cs;
@@ -148,6 +153,11 @@ namespace suse
       callables_wrapper() noexcept
       {}
 
+      static constexpr std::size_t size()
+      {
+	return 0;
+      }
+
       template<typename... args_types>
       using has_overload = std::false_type;
 
@@ -188,6 +198,16 @@ namespace suse
     public:
       template<typename... args_types>
       using type = impl<args_types...>;
+    };
+
+    template<typename... args_types>
+    struct default_action_nop
+    {
+      default_action_nop() noexcept
+      {}
+
+      void operator()(args_types&&...) const noexcept
+      {}
     };
 
     template <typename ret_type, typename mask>

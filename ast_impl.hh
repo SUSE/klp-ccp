@@ -98,6 +98,21 @@ namespace suse
 	};
       }
 
+
+      template <typename callable_type>
+      void _ast_entity::for_each_dfs_po(callable_type &&c)
+      {
+	  for (std::size_t i_child = 0;; ++i_child) {
+	    _ast_entity * const ae = _get_child(i_child);
+	    if (!ae)
+	      break;
+	    ae->for_each_dfs_po(std::forward<callable_type>(c));
+	  }
+
+	  c(*this);
+      }
+
+
       template<typename derived>
       template<typename boundary_type_set, typename callable_type>
       void
@@ -131,6 +146,32 @@ namespace suse
 	      return;
 	    p = p->get_parent();
 	  }
+	}
+      }
+
+
+      template <typename handled_types, typename callables_wrapper_type>
+      void ast::for_each_dfs_po(callables_wrapper_type &&c)
+      {
+	static_assert((handled_types::size() ==
+		       (std::remove_reference<callables_wrapper_type>::type::
+			size())),
+		      "number of overloads != number of handled types");
+
+	if (!_tu)
+	  return;
+
+	if (handled_types::size() < impl::double_dispatch_threshold) {
+	  auto &&_c = [&c](_ast_entity &ae) {
+	    handled_types::cast_and_call(c, ae);
+	  };
+	  _tu->for_each_dfs_po(_c);
+	} else {
+	  auto &&processor = make_processor<void>(c);
+	  auto &&_c = [&processor](_ast_entity &ae) {
+	    ae._process(processor);
+	  };
+	  _tu->for_each_dfs_po(_c);
 	}
       }
     }

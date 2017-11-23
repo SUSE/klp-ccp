@@ -91,19 +91,6 @@ namespace suse
 	pp_tokens_range _tokens_range;
       };
 
-      template <typename callable_type>
-      void _ast_entity::for_each_dfs_po(callable_type &&c)
-      {
-	  for (std::size_t i_child = 0;; ++i_child) {
-	    _ast_entity * const ae = _get_child(i_child);
-	    if (!ae)
-	      break;
-	    ae->for_each_dfs_po(std::forward<callable_type>(c));
-	  }
-
-	  c(*this);
-      }
-
       struct pre_traversal_tag{};
       struct post_traversal_tag{};
 
@@ -2822,7 +2809,7 @@ namespace suse
 
 	virtual ~stmt_compound() noexcept override;
 
-	void register_label(stmt_labeled * const label);
+	void register_label(stmt_labeled &label);
 
 	stmt_labeled* lookup_label(const ast &ast,
 				   const pp_token_index &label_tok) noexcept;
@@ -3338,12 +3325,8 @@ namespace suse
 	ast(header_inclusion_roots_type &&hirs, pp_tokens &&tokens,
 	    std::unique_ptr<translation_unit> &&tu);
 
-	template <typename callable_type>
-	void for_each_dfs_po(callable_type &&c)
-	{
-	  if (_tu)
-	    _tu->for_each_dfs_po(std::forward<callable_type>(c));
-	}
+	template <typename handled_types, typename callables_wrapper_type>
+	void for_each_dfs_po(callables_wrapper_type &&c);
 
 	template <typename callable_type>
 	void for_each_dfs_pre_and_po(callable_type &&c)
