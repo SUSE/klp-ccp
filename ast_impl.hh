@@ -96,21 +96,6 @@ namespace suse
 	private:
 	  callable_type &&_c;
 	};
-
-
-	template<typename arg_type>
-	struct default_action_unreachable
-	{
-	  default_action_unreachable() noexcept
-	  {}
-
-	  bool operator()(arg_type&&) const noexcept
-	  {
-	    assert(0);
-	    __builtin_unreachable();
-	  }
-	};
-
       }
 
       template<typename derived>
@@ -127,18 +112,19 @@ namespace suse
 						  boundary_type_set>
 	  ancestor_types;
 
+	auto &&__c =
+	  wrap_callables<default_action_unreachable<bool, ancestor_types>
+			 ::template type>
+	  (_c);
 	_ast_entity *p = _parent;
 	if (ancestor_types::size() < impl::double_dispatch_threshold) {
 	  while (p) {
-	    if (!ancestor_types::cast_and_call(_c, *p))
+	    if (!ancestor_types::cast_and_call(__c, *p))
 	      return;
 
 	    p = p->get_parent();
 	  }
 	} else {
-	  auto &&__c =
-	    (wrap_callables<impl::default_action_unreachable>
-	     (_c));
 	  auto &&processor = make_processor<bool>(__c);
 	  while (p) {
 	    if (!p->_process(processor))

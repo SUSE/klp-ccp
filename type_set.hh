@@ -98,7 +98,8 @@ namespace suse
       template<typename U>
       static constexpr bool is_member()
       {
-	return (std::is_same<T, U>::value ||
+	return (std::is_same<T,
+			     typename std::remove_reference<U>::type>::value ||
 		type_set<types...>::template is_member<U>());
       }
 
@@ -217,10 +218,9 @@ namespace suse
       }
 
       template<typename U, typename callable_type, typename return_type>
-      static return_type cast_and_call(callable_type&&, U&&)
+      static return_type cast_and_call(callable_type &&callable, U &&value)
       {
-	assert(0);
-	__builtin_unreachable();
+	return callable(std::forward<U>(value));
       }
     };
   }

@@ -190,6 +190,34 @@ namespace suse
       using type = impl<args_types...>;
     };
 
+    template <typename ret_type, typename mask>
+    class default_action_unreachable
+    {
+    private:
+
+      template<typename enable, typename... args_types>
+      struct impl;
+
+      template<typename arg_type>
+      struct impl
+	<typename std::enable_if<!mask::template is_member<arg_type>()>::type,
+	 arg_type>
+      {
+	impl() noexcept
+	{}
+
+	ret_type operator()(arg_type&&) const noexcept
+	{
+	  assert(0);
+	  __builtin_unreachable();
+	}
+      };
+
+      public:
+      template<typename... args_types>
+      using type = impl<void, args_types...>;
+    };
+
 
     template<template<typename... __args_types> class default_action,
 	     typename... callables_types>
