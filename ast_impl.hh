@@ -112,6 +112,24 @@ namespace suse
 	  c(*this);
       }
 
+      template<typename callable_type_pre,
+	       typename callable_type_post>
+      void _ast_entity::for_each_dfs_pre_and_po(callable_type_pre &&c_pre,
+						callable_type_post &&c_post)
+      {
+	const bool do_po = c_pre(*this);
+
+	for (std::size_t i_child = 0;; ++i_child) {
+	  _ast_entity * const ae = _get_child(i_child);
+	  if (!ae)
+	    break;
+	  ae->for_each_dfs_pre_and_po(c_pre, c_post);
+	}
+
+	if (do_po)
+	  c_post(*this);
+      }
+
 
       template<typename derived>
       template<typename boundary_type_set, typename callable_type>
@@ -172,6 +190,70 @@ namespace suse
 	    ae._process(processor);
 	  };
 	  _tu->for_each_dfs_po(_c);
+	}
+      }
+
+      template <typename handled_types_pre,
+		typename handled_types_post,
+		typename callables_wrapper_type_pre,
+		typename callables_wrapper_type_post>
+      void ast::for_each_dfs_pre_and_po(callables_wrapper_type_pre &&c_pre,
+					callables_wrapper_type_post &&c_post)
+      {
+	static_assert((handled_types_pre::size() ==
+		       (std::remove_reference<callables_wrapper_type_pre>
+			::type::size())),
+		      "pre: number of overloads != number of handled types");
+	static_assert((handled_types_post::size() ==
+		       (std::remove_reference<callables_wrapper_type_post>
+			::type::size())),
+		      "post: number of overloads != number of handled types");
+	if (!_tu)
+	  return;
+
+	if (handled_types_pre::size() < impl::double_dispatch_threshold &&
+	    handled_types_post::size() < impl::double_dispatch_threshold) {
+	  auto &&_c_pre = [&c_pre](_ast_entity &ae) {
+	    return handled_types_pre::cast_and_call(c_pre, ae);
+	  };
+	  auto &&_c_post = [&c_post](_ast_entity &ae) {
+	    handled_types_post::cast_and_call(c_post, ae);
+	  };
+	  _tu->for_each_dfs_pre_and_po(_c_pre, _c_post);
+
+	} else if (handled_types_pre::size() <
+		   impl::double_dispatch_threshold) {
+	  auto &&_c_pre = [&c_pre](_ast_entity &ae) {
+	    return handled_types_pre::cast_and_call(c_pre, ae);
+	  };
+	  auto &&processor_post = make_processor<void>(c_post);
+	  auto &&_c_post = [&processor_post](_ast_entity &ae) {
+	    ae._process(processor_post);
+	  };
+	  _tu->for_each_dfs_pre_and_po(_c_pre, _c_post);
+
+	} else if (handled_types_post::size() <
+		   impl::double_dispatch_threshold) {
+	  auto &&processor_pre = make_processor<bool>(c_pre);
+	  auto &&_c_pre = [&processor_pre](_ast_entity &ae) {
+	    return ae._process(processor_pre);
+	  };
+	  auto &&_c_post = [&c_post](_ast_entity &ae) {
+	    handled_types_post::cast_and_call(c_post, ae);
+	  };
+	  _tu->for_each_dfs_pre_and_po(_c_pre, _c_post);
+
+	} else {
+	  auto &&processor_pre = make_processor<bool>(c_pre);
+	  auto &&_c_pre = [&processor_pre](_ast_entity &ae) {
+	    return ae._process(processor_pre);
+	  };
+	  auto &&processor_post = make_processor<void>(c_post);
+	  auto &&_c_post = [&processor_post](_ast_entity &ae) {
+	    ae._process(processor_post);
+	  };
+	  _tu->for_each_dfs_pre_and_po(_c_pre, _c_post);
+
 	}
       }
     }

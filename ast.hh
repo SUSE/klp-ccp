@@ -85,30 +85,14 @@ namespace suse
 	template <typename callable_type>
 	void for_each_dfs_po(callable_type &&c);
 
-	template <typename callable_type>
-	void for_each_dfs_pre_and_po(callable_type &&c);
+	template<typename callable_type_pre,
+		 typename callable_type_post>
+	void for_each_dfs_pre_and_po(callable_type_pre &&c_pre,
+				     callable_type_post &&c_post);
 
 	pp_tokens_range _tokens_range;
       };
 
-      struct pre_traversal_tag{};
-      struct post_traversal_tag{};
-
-      template <typename callable_type>
-      void _ast_entity::for_each_dfs_pre_and_po(callable_type &&c)
-      {
-	const bool do_po = c(*this, pre_traversal_tag{});
-
-	for (std::size_t i_child = 0;; ++i_child) {
-	  _ast_entity * const ae = _get_child(i_child);
-	  if (!ae)
-	    break;
-	  ae->for_each_dfs_pre_and_po(std::forward<callable_type>(c));
-	}
-
-	if (do_po)
-	  c(*this, post_traversal_tag{});
-      }
 
       template <typename derived>
       class ast_entity : public _ast_entity
@@ -3328,12 +3312,12 @@ namespace suse
 	template <typename handled_types, typename callables_wrapper_type>
 	void for_each_dfs_po(callables_wrapper_type &&c);
 
-	template <typename callable_type>
-	void for_each_dfs_pre_and_po(callable_type &&c)
-	{
-	  if (_tu)
-	    _tu->for_each_dfs_pre_and_po(std::forward<callable_type>(c));
-	}
+	template <typename handled_types_pre,
+		  typename handled_types_post,
+		  typename callables_wrapper_type_pre,
+		  typename callables_wrapper_type_post>
+	void for_each_dfs_pre_and_po(callables_wrapper_type_pre &&c_pre,
+				     callables_wrapper_type_post &&c_post);
 
 	const pp_tokens& get_pp_tokens() const noexcept
 	{ return _tokens; }

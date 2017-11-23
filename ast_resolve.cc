@@ -323,9 +323,7 @@ namespace
   public:
     _id_resolver(suse::cp::ast::ast &ast);
 
-    bool operator()(_ast_entity &ae, const pre_traversal_tag&);
-
-    void operator()(_ast_entity&, const post_traversal_tag&);
+    void operator()();
 
   private:
     void _enter_scope();
@@ -396,22 +394,22 @@ _id_resolver::_id_resolver(suse::cp::ast::ast &ast)
   _enter_scope();
 }
 
-static bool _is_fundef_ddf(direct_declarator_func const *ddf)
+static bool _is_fundef_ddf(const direct_declarator_func &ddf)
 {
   // Check that the first non-declarator/-direct_declarator parent is
   // a function_definition instance.
   if (dynamic_cast<const function_definition*>
-      (&ddf->get_first_non_declarator_parent())) {
+      (&ddf.get_first_non_declarator_parent())) {
     return true;
   }
 
   return false;
 }
 
-static bool _is_fundef_ddf_pdl(const parameter_declaration_list *pdl)
+static bool _is_fundef_ddf_pdl(const parameter_declaration_list &pdl)
   noexcept
 {
-  const _ast_entity * const p = pdl->get_parent();
+  const _ast_entity * const p = pdl.get_parent();
 
   if (dynamic_cast<const direct_abstract_declarator_func*>(p)) {
     // A parameter in an abstract func declarator cannot be a
@@ -419,127 +417,147 @@ static bool _is_fundef_ddf_pdl(const parameter_declaration_list *pdl)
     return false;
   }
 
-  const direct_declarator_func *ddf =
+  const direct_declarator_func * const ddf =
     dynamic_cast<const direct_declarator_func*>(p);
   assert(ddf);
 
-  return _is_fundef_ddf(ddf);
+  return _is_fundef_ddf(*ddf);
 }
 
-static bool _is_fundef_ddf_pil(const identifier_list *pil) noexcept
+static bool _is_fundef_ddf_pil(const identifier_list &pil) noexcept
 {
   const direct_declarator_func *ddf =
-    dynamic_cast<const direct_declarator_func*>(pil->get_parent());
+    dynamic_cast<const direct_declarator_func*>(pil.get_parent());
   if (!ddf)
     return false;
 
-  return _is_fundef_ddf(ddf);
+  return _is_fundef_ddf(*ddf);
 }
 
-
-bool _id_resolver::operator()(_ast_entity &ae, const pre_traversal_tag&)
+void _id_resolver::operator()()
 {
-  if (dynamic_cast<function_definition*>(&ae) ||
-      dynamic_cast<stmt_compound*>(&ae) ||
-      dynamic_cast<stmt_if*>(&ae) ||
-      dynamic_cast<stmt_switch*>(&ae) ||
-      dynamic_cast<stmt_for_init_decl*>(&ae) ||
-      dynamic_cast<stmt_for_init_expr*>(&ae) ||
-      dynamic_cast<stmt_while*>(&ae) ||
-      dynamic_cast<stmt_do*>(&ae)) {
-    _enter_scope();
-    return true;
-  }
-
-  if (dynamic_cast<stmt*>(&ae)) {
-    _ast_entity * const p = ae.get_parent();
-    assert(p);
-    if (dynamic_cast<stmt_if*>(p) ||
-	dynamic_cast<stmt_switch*>(p) ||
-	dynamic_cast<stmt_for_init_decl*>(p) ||
-	dynamic_cast<stmt_for_init_expr*>(p) ||
-	dynamic_cast<stmt_while*>(p) ||
-	dynamic_cast<stmt_do*>(p)) {
-      _enter_scope();
-      return true;
-    }
-    return false;
-  }
-
-  parameter_declaration_list *pdl =
-    dynamic_cast<parameter_declaration_list*>(&ae);
-  if (pdl) {
-    if (!_is_fundef_ddf_pdl(pdl)) {
-	// Open a new scope if this paramter declaration list is not part
-	// of a function definition's prototype.
+  auto &&pre =
+    (wrap_callables<default_action_return_value<bool, false>::type>
+     ([this](const function_definition&) {
 	_enter_scope();
 	return true;
-    }
-    return false;
-  }
+      },
+      [this](const stmt_compound&) {
+	_enter_scope();
+	return true;
+      },
+      [this](const stmt_if&) {
+	_enter_scope();
+	return true;
+      },
+      [this](const stmt_switch&) {
+	_enter_scope();
+	return true;
+      },
+      [this](const stmt_for_init_decl&) {
+	_enter_scope();
+	return true;
+      },
+      [this](const stmt_for_init_expr&) {
+	_enter_scope();
+	return true;
+      },
+      [this](const stmt_while&) {
+	_enter_scope();
+	return true;
+      },
+      [this](const stmt_do&) {
+	_enter_scope();
+	return true;
+      },
+      [this](const stmt &s) {
+	const _ast_entity * const p = s.get_parent();
+	assert(p);
+	if (dynamic_cast<const stmt_if*>(p) ||
+	    dynamic_cast<const stmt_switch*>(p) ||
+	    dynamic_cast<const stmt_for_init_decl*>(p) ||
+	    dynamic_cast<const stmt_for_init_expr*>(p) ||
+	    dynamic_cast<const stmt_while*>(p) ||
+	    dynamic_cast<const stmt_do*>(p)) {
+	  _enter_scope();
+	  return true;
+	}
+	return false;
+      },
+      [this](const parameter_declaration_list &pdl) {
+	if (!_is_fundef_ddf_pdl(pdl)) {
+	  // Open a new scope if this paramter declaration list is not part
+	  // of a function definition's prototype.
+	  _enter_scope();
+	  return true;
+	}
+	return false;
+      },
+      [this](direct_declarator_id &ddid) {
+	_handle_direct_declarator_id(ddid);
+	return false;
+      },
+      [this](enumerator &e) {
+	_scopes.back()._declared_ids.push_back(expr_id::resolved(e));
+	return false;
+      },
+      [this](identifier_list &pil) {
+	if (_is_fundef_ddf_pil(pil))
+	  _scopes.back()._declared_ids.push_back(expr_id::resolved(pil));
+	return false;
+      },
+      [this](struct_or_union_ref &sour) {
+	_handle_sou_ref(sour);
+	return false;
+      },
+      [this](struct_or_union_def &soud) {
+	_handle_sou_def(soud);
+	return false;
+      },
+      [this](enum_ref &er) {
+	_handle_enum_ref(er);
+	return false;
+      },
+      [this](enum_def &ed) {
+	_handle_enum_def(ed);
+	return false;
+      },
+      [this](expr_id &ei) {
+	_resolve_id(ei);
+	return false;
+      },
+      [this](type_specifier_tdid &ts_tdid) {
+	_resolve_id(ts_tdid);
+	return false;
+      }));
 
-  direct_declarator_id *ddid = dynamic_cast<direct_declarator_id*>(&ae);
-  if (ddid) {
-    _handle_direct_declarator_id(*ddid);
-    return false;
-  }
+  auto &&post =
+    (wrap_callables<no_default_action>
+     ([this](const _ast_entity&) {
+	_leave_scope();
+      }));
 
-  enumerator *e = dynamic_cast<enumerator*>(&ae);
-  if (e) {
-    _scopes.back()._declared_ids.push_back(expr_id::resolved(*e));
-    return false;
-  }
-
-  identifier_list *pil = dynamic_cast<identifier_list*>(&ae);
-  if (pil) {
-    if (_is_fundef_ddf_pil(pil))
-      _scopes.back()._declared_ids.push_back(expr_id::resolved(*pil));
-
-    return false;
-  }
-
-  struct_or_union_ref *sour = dynamic_cast<struct_or_union_ref*>(&ae);
-  if (sour) {
-    _handle_sou_ref(*sour);
-    return false;
-  }
-
-  struct_or_union_def *soud = dynamic_cast<struct_or_union_def*>(&ae);
-  if (soud) {
-    _handle_sou_def(*soud);
-    return false;
-  }
-
-  enum_def *ed = dynamic_cast<enum_def*>(&ae);
-  if (ed) {
-    _handle_enum_def(*ed);
-    return false;
-  }
-
-  enum_ref *er = dynamic_cast<enum_ref*>(&ae);
-  if (er) {
-    _handle_enum_ref(*er);
-    return false;
-  }
-
-  expr_id *ei = dynamic_cast<expr_id*>(&ae);
-  if (ei) {
-    _resolve_id(*ei);
-    return false;
-  }
-
-  type_specifier_tdid *ts_tdid = dynamic_cast<type_specifier_tdid*>(&ae);
-  if (ts_tdid) {
-    _resolve_id(*ts_tdid);
-    return false;
-  }
-
-  return false;
-}
-
-void _id_resolver::operator()(_ast_entity&, const post_traversal_tag&)
-{
-  _leave_scope();
+  _ast.for_each_dfs_pre_and_po<
+    type_set<const function_definition,
+	     const stmt_compound,
+	     const stmt_if,
+	     const stmt_switch,
+	     const stmt_for_init_decl,
+	     const stmt_for_init_expr,
+	     const stmt_while,
+	     const stmt_do,
+	     const stmt,
+	     const parameter_declaration_list,
+	     direct_declarator_id,
+	     enumerator,
+	     identifier_list,
+	     struct_or_union_ref,
+	     struct_or_union_def,
+	     enum_ref,
+	     enum_def,
+	     expr_id,
+	     type_specifier_tdid>,
+    type_set<const _ast_entity> >(std::move(pre), std::move(post));
 }
 
 void _id_resolver::_enter_scope()
@@ -1547,7 +1565,7 @@ void _id_resolver::_resolve_id(type_specifier_tdid &ts_tdid)
 void suse::cp::ast::ast::_resolve_ids()
 {
   _id_resolver ir(*this);
-  this->for_each_dfs_pre_and_po(ir);
+  ir();
 }
 
 void suse::cp::ast::ast::resolve()
