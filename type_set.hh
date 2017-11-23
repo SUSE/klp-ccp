@@ -92,7 +92,7 @@ namespace suse
     public:
       static constexpr std::size_t size()
       {
-	return sizeof...(types);
+	return 1 + sizeof...(types);
       }
 
       template<typename U>
