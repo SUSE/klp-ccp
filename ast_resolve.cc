@@ -254,7 +254,7 @@ void suse::cp::ast::ast::_register_labels()
 	stmt_compound *registrar = nullptr;
 
 	auto &&label_scope_finder
-	  = (wrap_callables<default_action_return_true>
+	  = (wrap_callables<default_action_return_value<bool, true>::type>
 	       ([&](stmt_compound &sc) {
 		  registrar = &sc;
 

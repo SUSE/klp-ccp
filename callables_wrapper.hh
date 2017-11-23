@@ -169,16 +169,25 @@ namespace suse
     template<typename...>
     using no_default_action = void;
 
-    template<typename... args_types>
-    struct default_action_return_true
+    template <typename val_type, val_type val>
+    class default_action_return_value
     {
-      default_action_return_true() noexcept
-      {}
-
-      bool operator()(args_types&&...) const noexcept
+    private:
+      template<typename... args_types>
+      struct impl
       {
-	return true;
-      }
+	impl() noexcept
+	{}
+
+	val_type operator()(args_types&&...) const noexcept
+	{
+	  return val;
+	}
+      };
+
+    public:
+      template<typename... args_types>
+      using type = impl<args_types...>;
     };
 
 
