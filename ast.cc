@@ -92,7 +92,17 @@ void expr_list::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_list::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_list::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -149,7 +159,17 @@ void expr_comma::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_comma::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_comma::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_comma::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -192,7 +212,17 @@ void expr_assignment::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_assignment::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_assignment::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_assignment::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -247,7 +277,17 @@ void expr_conditional::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_conditional::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_conditional::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_conditional::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -289,7 +329,17 @@ void expr_binop::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_binop::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_binop::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_binop::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -331,7 +381,17 @@ void expr_cast::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_cast::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_cast::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_cast::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -354,7 +414,17 @@ void expr_label_addr::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_label_addr::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_label_addr::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_label_addr::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -385,7 +455,17 @@ void expr_unop_pre::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_unop_pre::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_unop_pre::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_unop_pre::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -416,7 +496,17 @@ void expr_sizeof_expr::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_sizeof_expr::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_sizeof_expr::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_sizeof_expr::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -447,7 +537,17 @@ void expr_sizeof_type_name::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_sizeof_type_name::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_sizeof_type_name::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_sizeof_type_name::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -478,7 +578,17 @@ void expr_alignof_expr::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_alignof_expr::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_alignof_expr::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_alignof_expr::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -509,7 +619,17 @@ void expr_alignof_type_name::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_alignof_type_name::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_alignof_type_name::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_alignof_type_name::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -554,7 +674,17 @@ void expr_builtin_offsetof::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_builtin_offsetof::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_builtin_offsetof::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_builtin_offsetof::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -597,7 +727,17 @@ void expr_builtin_types_compatible_p::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_builtin_types_compatible_p::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_builtin_types_compatible_p::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_builtin_types_compatible_p::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -639,7 +779,17 @@ void expr_builtin_va_arg::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_builtin_va_arg::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_builtin_va_arg::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_builtin_va_arg::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -682,7 +832,17 @@ void expr_array_subscript::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_array_subscript::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_array_subscript::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_array_subscript::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -726,7 +886,17 @@ void expr_func_invocation::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_func_invocation::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_func_invocation::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_func_invocation::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -761,7 +931,17 @@ void expr_member_deref::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_member_deref::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_member_deref::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_member_deref::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -792,7 +972,17 @@ void expr_unop_post::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_unop_post::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_unop_post::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_unop_post::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -836,7 +1026,17 @@ void expr_compound_literal::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_compound_literal::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_compound_literal::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_compound_literal::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -866,7 +1066,17 @@ void expr_statement::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_statement::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_statement::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_statement::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -944,7 +1154,17 @@ void expr_id::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_id::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_id::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_id::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -966,7 +1186,17 @@ void expr_constant::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_constant::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_constant::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_constant::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -994,7 +1224,17 @@ void string_literal::_process(processor<void> &p)
   p(*this);
 }
 
+void string_literal::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool string_literal::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool string_literal::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -1024,7 +1264,17 @@ void expr_string_literal::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_string_literal::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_string_literal::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_string_literal::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -1055,7 +1305,17 @@ void expr_parenthesized::_process(processor<void> &p)
   p(*this);
 }
 
+void expr_parenthesized::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool expr_parenthesized::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_parenthesized::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -1092,7 +1352,17 @@ void attribute::_process(processor<void> &p)
   p(*this);
 }
 
+void attribute::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool attribute::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool attribute::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -1149,7 +1419,17 @@ void attribute_list::_process(processor<void> &p)
   p(*this);
 }
 
+void attribute_list::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool attribute_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool attribute_list::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -1177,7 +1457,17 @@ void attribute_specifier::_process(processor<void> &p)
   p(*this);
 }
 
+void attribute_specifier::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool attribute_specifier::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool attribute_specifier::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -1228,7 +1518,17 @@ void attribute_specifier_list::_process(processor<void> &p)
   p(*this);
 }
 
+void attribute_specifier_list::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool attribute_specifier_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool attribute_specifier_list::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -1285,7 +1585,17 @@ void pointer::_process(processor<void> &p)
   p(*this);
 }
 
+void pointer::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool pointer::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool pointer::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -1338,7 +1648,17 @@ void direct_abstract_declarator_parenthesized::_process(processor<void> &p)
   p(*this);
 }
 
+void direct_abstract_declarator_parenthesized::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool direct_abstract_declarator_parenthesized::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool direct_abstract_declarator_parenthesized::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -1416,7 +1736,17 @@ void direct_abstract_declarator_array::_process(processor<void> &p)
   p(*this);
 }
 
+void direct_abstract_declarator_array::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool direct_abstract_declarator_array::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool direct_abstract_declarator_array::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -1461,7 +1791,17 @@ void direct_abstract_declarator_func::_process(processor<void> &p)
   p(*this);
 }
 
+void direct_abstract_declarator_func::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool direct_abstract_declarator_func::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool direct_abstract_declarator_func::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -1504,7 +1844,17 @@ void abstract_declarator::_process(processor<void> &p)
   p(*this);
 }
 
+void abstract_declarator::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool abstract_declarator::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool abstract_declarator::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -1541,7 +1891,17 @@ void type_name::_process(processor<void> &p)
   p(*this);
 }
 
+void type_name::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool type_name::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool type_name::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -1668,7 +2028,17 @@ void direct_declarator_id::_process(processor<void> &p)
   p(*this);
 }
 
+void direct_declarator_id::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool direct_declarator_id::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool direct_declarator_id::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -1715,7 +2085,17 @@ void direct_declarator_parenthesized::_process(processor<void> &p)
   p(*this);
 }
 
+void direct_declarator_parenthesized::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool direct_declarator_parenthesized::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool direct_declarator_parenthesized::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -1784,7 +2164,17 @@ void direct_declarator_array::_process(processor<void> &p)
   p(*this);
 }
 
+void direct_declarator_array::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool direct_declarator_array::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool direct_declarator_array::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -1847,7 +2237,17 @@ void direct_declarator_func::_process(processor<void> &p)
   p(*this);
 }
 
+void direct_declarator_func::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool direct_declarator_func::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool direct_declarator_func::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -1893,7 +2293,17 @@ void declarator::_process(processor<void> &p)
   p(*this);
 }
 
+void declarator::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool declarator::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool declarator::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -1917,7 +2327,17 @@ void storage_class_specifier::_process(processor<void> &p)
   p(*this);
 }
 
+void storage_class_specifier::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool storage_class_specifier::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool storage_class_specifier::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -1940,7 +2360,17 @@ void type_qualifier::_process(processor<void> &p)
   p(*this);
 }
 
+void type_qualifier::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool type_qualifier::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool type_qualifier::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -2024,7 +2454,17 @@ void type_qualifier_list::_process(processor<void> &p)
   p(*this);
 }
 
+void type_qualifier_list::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool type_qualifier_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool type_qualifier_list::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -2054,7 +2494,17 @@ void type_specifier_pod::_process(processor<void> &p)
   p(*this);
 }
 
+void type_specifier_pod::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool type_specifier_pod::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool type_specifier_pod::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -2083,7 +2533,17 @@ void type_specifier_tdid::_process(processor<void> &p)
   p(*this);
 }
 
+void type_specifier_tdid::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool type_specifier_tdid::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool type_specifier_tdid::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -2170,7 +2630,17 @@ void struct_declarator::_process(processor<void> &p)
   p(*this);
 }
 
+void struct_declarator::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool struct_declarator::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool struct_declarator::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -2226,7 +2696,17 @@ void struct_declarator_list::_process(processor<void> &p)
   p(*this);
 }
 
+void struct_declarator_list::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool struct_declarator_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool struct_declarator_list::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -2267,7 +2747,17 @@ void struct_declaration_c99::_process(processor<void> &p)
   p(*this);
 }
 
+void struct_declaration_c99::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool struct_declaration_c99::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool struct_declaration_c99::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -2331,7 +2821,17 @@ void unnamed_struct_or_union::_process(processor<void> &p)
   p(*this);
 }
 
+void unnamed_struct_or_union::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool unnamed_struct_or_union::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool unnamed_struct_or_union::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -2374,7 +2874,17 @@ void struct_declaration_unnamed_sou::_process(processor<void> &p)
   p(*this);
 }
 
+void struct_declaration_unnamed_sou::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool struct_declaration_unnamed_sou::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool struct_declaration_unnamed_sou::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -2424,7 +2934,17 @@ void struct_declaration_list::_process(processor<void> &p)
   p(*this);
 }
 
+void struct_declaration_list::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool struct_declaration_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool struct_declaration_list::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -2613,7 +3133,17 @@ void struct_or_union_def::_process(processor<void> &p)
   p(*this);
 }
 
+void struct_or_union_def::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool struct_or_union_def::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool struct_or_union_def::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -2658,7 +3188,17 @@ void struct_or_union_ref::_process(processor<void> &p)
   p(*this);
 }
 
+void struct_or_union_ref::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool struct_or_union_ref::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool struct_or_union_ref::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -2690,7 +3230,17 @@ void enumerator::_process(processor<void> &p)
   p(*this);
 }
 
+void enumerator::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool enumerator::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool enumerator::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -2741,7 +3291,17 @@ void enumerator_list::_process(processor<void> &p)
   p(*this);
 }
 
+void enumerator_list::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool enumerator_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool enumerator_list::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -2809,7 +3369,17 @@ void enum_def::_process(processor<void> &p)
   p(*this);
 }
 
+void enum_def::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool enum_def::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool enum_def::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -2849,7 +3419,17 @@ void enum_ref::_process(processor<void> &p)
   p(*this);
 }
 
+void enum_ref::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool enum_ref::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool enum_ref::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -2880,7 +3460,17 @@ void typeof_expr::_process(processor<void> &p)
   p(*this);
 }
 
+void typeof_expr::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool typeof_expr::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool typeof_expr::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -2911,7 +3501,17 @@ void typeof_type_name::_process(processor<void> &p)
   p(*this);
 }
 
+void typeof_type_name::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool typeof_type_name::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool typeof_type_name::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -2934,7 +3534,17 @@ void function_specifier::_process(processor<void> &p)
   p(*this);
 }
 
+void function_specifier::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool function_specifier::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool function_specifier::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -3102,7 +3712,17 @@ void specifier_qualifier_list::_process(processor<void> &p)
   p(*this);
 }
 
+void specifier_qualifier_list::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool specifier_qualifier_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool specifier_qualifier_list::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -3327,7 +3947,17 @@ void initializer_expr::_process(processor<void> &p)
   p(*this);
 }
 
+void initializer_expr::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool initializer_expr::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool initializer_expr::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -3372,7 +4002,17 @@ void initializer_init_list::_process(processor<void> &p)
   p(*this);
 }
 
+void initializer_init_list::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool initializer_init_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool initializer_init_list::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -3402,7 +4042,17 @@ void designator_member::_process(processor<void> &p)
   p(*this);
 }
 
+void designator_member::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool designator_member::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool designator_member::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -3447,7 +4097,17 @@ void designator_array::_process(processor<void> &p)
   p(*this);
 }
 
+void designator_array::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool designator_array::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool designator_array::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -3498,7 +4158,17 @@ void designator_list::_process(processor<void> &p)
   p(*this);
 }
 
+void designator_list::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool designator_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool designator_list::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -3529,7 +4199,17 @@ void designation::_process(processor<void> &p)
   p(*this);
 }
 
+void designation::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool designation::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool designation::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -3580,7 +4260,17 @@ void initializer_list::_process(processor<void> &p)
   p(*this);
 }
 
+void initializer_list::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool initializer_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool initializer_list::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -3611,7 +4301,17 @@ void asm_label::_process(processor<void> &p)
   p(*this);
 }
 
+void asm_label::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool asm_label::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool asm_label::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -3757,7 +4457,17 @@ void init_declarator::_process(processor<void> &p)
   p(*this);
 }
 
+void init_declarator::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool init_declarator::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool init_declarator::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -3808,7 +4518,17 @@ void init_declarator_list::_process(processor<void> &p)
   p(*this);
 }
 
+void init_declarator_list::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool init_declarator_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool init_declarator_list::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -3850,7 +4570,17 @@ void declaration::_process(processor<void> &p)
   p(*this);
 }
 
+void declaration::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool declaration::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool declaration::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -3914,7 +4644,17 @@ void parameter_declaration_declarator::_process(processor<void> &p)
   p(*this);
 }
 
+void parameter_declaration_declarator::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool parameter_declaration_declarator::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool parameter_declaration_declarator::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -3960,7 +4700,17 @@ void parameter_declaration_abstract::_process(processor<void> &p)
   p(*this);
 }
 
+void parameter_declaration_abstract::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool parameter_declaration_abstract::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool parameter_declaration_abstract::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4020,7 +4770,17 @@ void parameter_declaration_list::_process(processor<void> &p)
   p(*this);
 }
 
+void parameter_declaration_list::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool parameter_declaration_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool parameter_declaration_list::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4049,7 +4809,17 @@ void identifier_list::_process(processor<void> &p)
   p(*this);
 }
 
+void identifier_list::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool identifier_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool identifier_list::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4099,7 +4869,17 @@ void declaration_list::_process(processor<void> &p)
   p(*this);
 }
 
+void declaration_list::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool declaration_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool declaration_list::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4151,7 +4931,17 @@ void stmt_labeled::_process(processor<void> &p)
   p(*this);
 }
 
+void stmt_labeled::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool stmt_labeled::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool stmt_labeled::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4193,7 +4983,17 @@ void stmt_case::_process(processor<void> &p)
   p(*this);
 }
 
+void stmt_case::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool stmt_case::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool stmt_case::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4242,7 +5042,17 @@ void stmt_case_range::_process(processor<void> &p)
   p(*this);
 }
 
+void stmt_case_range::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool stmt_case_range::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool stmt_case_range::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4272,7 +5082,17 @@ void stmt_default::_process(processor<void> &p)
   p(*this);
 }
 
+void stmt_default::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool stmt_default::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool stmt_default::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4304,7 +5124,17 @@ void local_label_declaration::_process(processor<void> &p)
   p(*this);
 }
 
+void local_label_declaration::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool local_label_declaration::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool local_label_declaration::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4356,7 +5186,17 @@ void local_label_declaration_list::_process(processor<void> &p)
   p(*this);
 }
 
+void local_label_declaration_list::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool local_label_declaration_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool local_label_declaration_list::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4393,7 +5233,17 @@ void block_item_decl::_process(processor<void> &p)
   p(*this);
 }
 
+void block_item_decl::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool block_item_decl::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool block_item_decl::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4424,7 +5274,17 @@ void block_item_stmt::_process(processor<void> &p)
   p(*this);
 }
 
+void block_item_stmt::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool block_item_stmt::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool block_item_stmt::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4455,7 +5315,17 @@ void block_item_function_definition::_process(processor<void> &p)
   p(*this);
 }
 
+void block_item_function_definition::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool block_item_function_definition::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool block_item_function_definition::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4506,7 +5376,17 @@ void block_item_list::_process(processor<void> &p)
   p(*this);
 }
 
+void block_item_list::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool block_item_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool block_item_list::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4548,7 +5428,17 @@ void stmt_compound::_process(processor<void> &p)
   p(*this);
 }
 
+void stmt_compound::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool stmt_compound::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool stmt_compound::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4579,7 +5469,17 @@ void stmt_expr::_process(processor<void> &p)
   p(*this);
 }
 
+void stmt_expr::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool stmt_expr::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool stmt_expr::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4629,7 +5529,17 @@ void stmt_if::_process(processor<void> &p)
   p(*this);
 }
 
+void stmt_if::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool stmt_if::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool stmt_if::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4671,7 +5581,17 @@ void stmt_switch::_process(processor<void> &p)
   p(*this);
 }
 
+void stmt_switch::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool stmt_switch::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool stmt_switch::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4713,7 +5633,17 @@ void stmt_while::_process(processor<void> &p)
   p(*this);
 }
 
+void stmt_while::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool stmt_while::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool stmt_while::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4755,7 +5685,17 @@ void stmt_do::_process(processor<void> &p)
   p(*this);
 }
 
+void stmt_do::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool stmt_do::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool stmt_do::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4820,7 +5760,17 @@ void stmt_for_init_expr::_process(processor<void> &p)
   p(*this);
 }
 
+void stmt_for_init_expr::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool stmt_for_init_expr::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool stmt_for_init_expr::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4880,7 +5830,17 @@ void stmt_for_init_decl::_process(processor<void> &p)
   p(*this);
 }
 
+void stmt_for_init_decl::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool stmt_for_init_decl::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool stmt_for_init_decl::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4910,7 +5870,17 @@ void stmt_goto::_process(processor<void> &p)
   p(*this);
 }
 
+void stmt_goto::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool stmt_goto::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool stmt_goto::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4932,7 +5902,17 @@ void stmt_continue::_process(processor<void> &p)
   p(*this);
 }
 
+void stmt_continue::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool stmt_continue::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool stmt_continue::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4954,7 +5934,17 @@ void stmt_break::_process(processor<void> &p)
   p(*this);
 }
 
+void stmt_break::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool stmt_break::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool stmt_break::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4985,7 +5975,17 @@ void stmt_return::_process(processor<void> &p)
   p(*this);
 }
 
+void stmt_return::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool stmt_return::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool stmt_return::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -5015,7 +6015,17 @@ void stmt_asm::_process(processor<void> &p)
   p(*this);
 }
 
+void stmt_asm::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool stmt_asm::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool stmt_asm::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -5045,7 +6055,17 @@ void asm_qualifier_list::_process(processor<void> &p)
   p(*this);
 }
 
+void asm_qualifier_list::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool asm_qualifier_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool asm_qualifier_list::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -5068,7 +6088,17 @@ void asm_operand_name::_process(processor<void> &p)
   p(*this);
 }
 
+void asm_operand_name::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool asm_operand_name::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool asm_operand_name::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -5110,7 +6140,17 @@ void asm_operand::_process(processor<void> &p)
   p(*this);
 }
 
+void asm_operand::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool asm_operand::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool asm_operand::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -5161,7 +6201,17 @@ void asm_operand_list::_process(processor<void> &p)
   p(*this);
 }
 
+void asm_operand_list::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool asm_operand_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool asm_operand_list::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -5190,7 +6240,17 @@ void asm_clobber_list::_process(processor<void> &p)
   p(*this);
 }
 
+void asm_clobber_list::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool asm_clobber_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool asm_clobber_list::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -5219,7 +6279,17 @@ void asm_jump_to_label_list::_process(processor<void> &p)
   p(*this);
 }
 
+void asm_jump_to_label_list::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool asm_jump_to_label_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool asm_jump_to_label_list::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -5311,7 +6381,17 @@ void asm_directive::_process(processor<void> &p)
   p(*this);
 }
 
+void asm_directive::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool asm_directive::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool asm_directive::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -5385,7 +6465,17 @@ void function_definition::_process(processor<void> &p)
   p(*this);
 }
 
+void function_definition::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool function_definition::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool function_definition::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -5422,7 +6512,17 @@ void external_declaration_decl::_process(processor<void> &p)
   p(*this);
 }
 
+void external_declaration_decl::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool external_declaration_decl::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool external_declaration_decl::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -5453,7 +6553,17 @@ void external_declaration_func::_process(processor<void> &p)
   p(*this);
 }
 
+void external_declaration_func::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool external_declaration_func::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool external_declaration_func::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -5484,7 +6594,17 @@ void external_declaration_asm::_process(processor<void> &p)
   p(*this);
 }
 
+void external_declaration_asm::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool external_declaration_asm::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool external_declaration_asm::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -5540,7 +6660,17 @@ void translation_unit::_process(processor<void> &p)
   p(*this);
 }
 
+void translation_unit::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
 bool translation_unit::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool translation_unit::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }

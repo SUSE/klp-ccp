@@ -45,6 +45,9 @@ namespace suse
       template<typename ret_type>
       class processor;
 
+      template<typename ret_type>
+      class const_processor;
+
       template<typename derived>
       class ast_entity;
 
@@ -80,7 +83,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept = 0;
 
 	virtual void _process(processor<void> &p) = 0;
+	virtual void _process(const_processor<void> &p) const = 0;
 	virtual bool _process(processor<bool> &p) = 0;
+	virtual bool _process(const_processor<bool> &p) const = 0;
 
 	template <typename callable_type>
 	void for_each_dfs_po(callable_type &&c);
@@ -319,7 +324,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<std::reference_wrapper<expr> > _exprs;
       };
@@ -368,7 +375,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr &_left;
 	expr &_right;
@@ -400,7 +409,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	assign_op _op;
 	expr &_lhs;
@@ -421,7 +432,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr &_cond;
 	expr *_expr_true;
@@ -461,7 +474,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	binary_op _op;
 	expr &_left;
@@ -480,7 +495,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	type_name &_tn;
 	expr &_e;
@@ -510,7 +527,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	pp_token_index _label_tok;
       };
@@ -527,7 +546,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	unary_op_pre _op;
 	expr &_e;
@@ -544,7 +565,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr &_e;
       };
@@ -561,7 +584,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	type_name &_tn;
       };
@@ -577,7 +602,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr &_e;
       };
@@ -594,7 +621,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	type_name &_tn;
       };
@@ -612,7 +641,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	type_name &_tn;
 	expr &_member_designator;
@@ -631,7 +662,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	type_name &_tn1;
 	type_name &_tn2;
@@ -649,7 +682,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr &_e;
 	type_name &_tn;
@@ -667,7 +702,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr &_base;
 	expr &_index;
@@ -687,7 +724,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr &_func;
 	expr_list *_args;
@@ -713,7 +752,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	member_deref_type _deref_type;
 	expr &_base;
@@ -738,7 +779,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	unary_op_post _op;
 	expr &_e;
@@ -756,7 +799,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	type_name &_tn;
 	initializer_list *_il;
@@ -773,7 +818,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	stmt &_s;
       };
@@ -836,7 +883,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	pp_token_index _id_tok;
 	resolved _resolved;
@@ -853,7 +902,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	pp_token_index _const_tok;
       };
@@ -875,7 +926,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<pp_token_index> _strings;
       };
@@ -891,7 +944,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	string_literal &_sl;
       };
@@ -907,7 +962,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr &_e;
       };
@@ -928,7 +985,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	pp_token_index _name_tok;
 	expr_list *_params;
@@ -949,7 +1008,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<attribute*> _attributes;
       };
@@ -969,7 +1030,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	attribute_list &_al;
       };
@@ -1001,7 +1064,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<std::reference_wrapper<attribute_specifier> > _ass;
       };
@@ -1021,7 +1086,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<type_qualifier_list*> _tqls;
       };
@@ -1055,7 +1122,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	attribute_specifier_list *_asl;
 	abstract_declarator &_ad;
@@ -1082,7 +1151,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	direct_abstract_declarator *_dad;
 	type_qualifier_list *_tql;
@@ -1106,7 +1177,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	direct_abstract_declarator *_dad;
 	parameter_declaration_list *_ptl;
@@ -1127,7 +1200,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	pointer *_pt;
 	direct_abstract_declarator *_dad;
@@ -1152,7 +1227,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	specifier_qualifier_list &_sql;
 	abstract_declarator *_ad;
@@ -1231,7 +1308,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	pp_token_index _id_tok;
 	context _ctx;
@@ -1258,7 +1337,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	declarator &_d;
 	attribute_specifier_list *_asl;
@@ -1287,7 +1368,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	direct_declarator &_dd;
 	type_qualifier_list *_tql;
@@ -1322,7 +1405,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	direct_declarator &_dd;
 	parameter_declaration_list *_ptl;
@@ -1359,7 +1444,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	pointer *_pt;
 	direct_declarator &_dd;
@@ -1394,7 +1481,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	storage_class _sc;
       };
@@ -1422,7 +1511,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	type_qualifier_type _tqt;
       };
@@ -1448,7 +1539,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<std::reference_wrapper<type_qualifier> > _tqs;
 	std::vector<std::reference_wrapper<attribute_specifier_list> > _asls;
@@ -1492,7 +1585,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	pod_spec _pod_spec;
       };
@@ -1513,7 +1608,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	pp_token_index _tdid_tok;
 	direct_declarator_id * _resolved;
@@ -1553,7 +1650,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	declarator *_d;
 	expr *_width;
@@ -1579,7 +1678,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<std::reference_wrapper<struct_declarator> > _sds;
       };
@@ -1601,7 +1702,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	struct_declarator_list &_sdl;
       };
@@ -1630,7 +1733,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	struct_or_union _sou;
 	struct_declaration_list *_sdl;
@@ -1652,7 +1757,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	unnamed_struct_or_union &_unnamed_sou;
       };
@@ -1675,7 +1782,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<std::reference_wrapper<struct_declaration> > _sds;
       };
@@ -1781,7 +1890,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	struct_or_union _sou;
 	pp_token_index _id_tok;
@@ -1820,7 +1931,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	struct_or_union _sou;
 	pp_token_index _id_tok;
@@ -1877,7 +1990,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	pp_token_index _id_tok;
 	expr *_value;
@@ -1898,7 +2013,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<std::reference_wrapper<enumerator> > _es;
       };
@@ -1939,7 +2056,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	pp_token_index _id_tok;
 	enumerator_list &_el;
@@ -1966,7 +2085,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	pp_token_index _id_tok;
 	attribute_specifier_list *_asl;
@@ -1985,7 +2106,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr &_e;
       };
@@ -2002,7 +2125,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	type_name &_tn;
       };
@@ -2020,7 +2145,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	pp_token_index _spec_tok;
       };
@@ -2059,7 +2186,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
       private:
 	std::vector<std::reference_wrapper<type_specifier> > _tss;
@@ -2136,7 +2265,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr &_e;
       };
@@ -2155,7 +2286,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	initializer_list *_il;
       };
@@ -2182,7 +2315,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	pp_token_index _member_tok;
       };
@@ -2199,7 +2334,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr &_index_first;
 	expr *_index_last;
@@ -2221,7 +2358,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<std::reference_wrapper<designator> > _ds;
       };
@@ -2241,7 +2380,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	designator_list &_dl;
       };
@@ -2262,7 +2403,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<std::reference_wrapper<initializer> > _is;
       };
@@ -2283,7 +2426,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	string_literal &_label;
       };
@@ -2369,7 +2514,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	declarator &_d;
 	initializer *_i;
@@ -2396,7 +2543,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<std::reference_wrapper<init_declarator> > _ids;
       };
@@ -2428,7 +2577,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	declaration_specifiers &_ds;
 	init_declarator_list *_idl;
@@ -2467,7 +2618,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	declarator &_d;
 	attribute_specifier_list *_asl;
@@ -2488,7 +2641,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	abstract_declarator *_ad;
       };
@@ -2512,7 +2667,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<std::reference_wrapper<parameter_declaration> > _pds;
 	bool _variadic;
@@ -2539,7 +2696,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<pp_token_index> _ids;
       };
@@ -2559,7 +2718,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<std::reference_wrapper<declaration> > _ds;
       };
@@ -2597,7 +2758,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	pp_token_index _label_tok;
 	stmt &_s;
@@ -2616,7 +2779,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr &_e;
 	stmt &_s;
@@ -2634,7 +2799,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr &_e_low;
 	expr &_e_high;
@@ -2652,7 +2819,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	stmt &_s;
       };
@@ -2676,7 +2845,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	identifier_list &_idl;
       };
@@ -2701,7 +2872,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<std::reference_wrapper<local_label_declaration> > _llds;
       };
@@ -2727,7 +2900,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	declaration &_d;
       };
@@ -2743,7 +2918,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	stmt &_s;
       };
@@ -2759,7 +2936,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	function_definition &_fd;
       };
@@ -2779,7 +2958,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<std::reference_wrapper<block_item> > _bis;
       };
@@ -2805,7 +2986,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	local_label_declaration_list *_lldl;
 	block_item_list *_bil;
@@ -2824,7 +3007,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr *_e;
       };
@@ -2842,7 +3027,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr &_cond;
 	stmt &_s_true;
@@ -2860,7 +3047,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr &_e;
 	stmt &_s;
@@ -2877,7 +3066,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr &_e;
 	stmt &_s;
@@ -2894,7 +3085,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr &_e;
 	stmt &_s;
@@ -2913,7 +3106,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr *_init;
 	expr *_cond;
@@ -2934,7 +3129,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	declaration &_d;
 	expr *_cond;
@@ -2953,7 +3150,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr &_e;
       };
@@ -2969,7 +3168,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
       };
 
       class stmt_break final : public stmt
@@ -2983,7 +3184,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
       };
 
       class stmt_return final : public stmt
@@ -2997,7 +3200,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr *_e;
       };
@@ -3013,7 +3218,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	asm_directive &_ad;
       };
@@ -3042,7 +3249,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<asm_qualifier> _aqs;
       };
@@ -3061,7 +3270,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	pp_token_index _id_tok;
       };
@@ -3080,7 +3291,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	asm_operand_name *_aon;
 	pp_token_index _constraint_tok;
@@ -3103,7 +3316,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<std::reference_wrapper<asm_operand> > _aos;
       };
@@ -3123,7 +3338,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<pp_token_index> _clobber_toks;
       };
@@ -3144,7 +3361,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<pp_token_index> _label_toks;
       };
@@ -3167,7 +3386,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	asm_qualifier_list *_aql;
 	string_literal &_asm_s;
@@ -3207,7 +3428,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	declaration_specifiers &_ds;
 	declarator &_d;
@@ -3239,7 +3462,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	declaration &_d;
       };
@@ -3255,7 +3480,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	function_definition &_fd;
       };
@@ -3271,7 +3498,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	asm_directive &_ad;
       };
@@ -3294,7 +3523,9 @@ namespace suse
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
 	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<std::reference_wrapper<external_declaration> > _eds;
       };
