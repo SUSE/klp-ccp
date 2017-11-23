@@ -1,5 +1,5 @@
 #include <cassert>
-#include "ast.hh"
+#include "ast_impl.hh"
 #include "ast_processor.hh"
 #include "code_remark.hh"
 #include "semantic_except.hh"
@@ -2014,7 +2014,7 @@ bool direct_declarator_id::is_function() const noexcept
     d = dynamic_cast<const declarator*>(p);
   }
 
-  return !!dynamic_cast<const direct_declarator_func*>(p);
+  return p->is_any_of<direct_declarator_func>();
 }
 
 
@@ -4552,7 +4552,7 @@ declaration::~declaration() noexcept
 
 bool declaration::is_at_file_scope() const noexcept
 {
-  return !!dynamic_cast<const external_declaration_decl*>(get_parent());
+  return get_parent()->is_any_of<external_declaration>();
 }
 
 _ast_entity* declaration::_get_child(const size_t i) noexcept
@@ -6428,7 +6428,7 @@ function_definition::~function_definition() noexcept
 
 bool function_definition::is_at_file_scope() const noexcept
 {
-  return !!dynamic_cast<const external_declaration_func*>(get_parent());
+  return get_parent()->is_any_of<external_declaration_func>();
 }
 
 

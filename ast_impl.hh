@@ -17,6 +17,21 @@ namespace suse
       {
 	static constexpr std::size_t double_dispatch_threshold = 8;
 
+	template<typename types>
+	struct _is_any_of
+	{
+	  _is_any_of() noexcept
+	  {}
+
+	  template<typename type>
+	  typename
+	  std::enable_if<types::template is_member<type>(), bool>::type
+	  operator()(const type&) const noexcept
+	  {
+	    return true;
+	  }
+	};
+
 	template <typename U>
 	using parents_of = typename U::parent_types;
 
@@ -98,6 +113,29 @@ namespace suse
 	};
       }
 
+      template <typename ret_type, typename handled_types,
+		typename callables_wrapper_type>
+      ret_type _ast_entity::process(callables_wrapper_type &&c) const
+      {
+	if (handled_types::size() < impl::double_dispatch_threshold) {
+	  return (handled_types::add_const::cast_and_call
+		  (std::forward<callables_wrapper_type>(c), *this));
+	} else {
+	  auto &&processor =
+	    (make_const_processor<ret_type>
+	     (std::forward<callables_wrapper_type>(c)));
+	  return this->_process(processor);
+	}
+      }
+
+      template<typename... types>
+      bool _ast_entity::is_any_of() const noexcept
+      {
+	auto &&checker =
+	  (wrap_callables<default_action_return_value<bool, false>::type>
+	   (impl::_is_any_of<type_set<types...> >()));
+	return this->process<bool, type_set<types...> >(checker);
+      }
 
       template <typename callable_type>
       void _ast_entity::for_each_dfs_po(callable_type &&c)

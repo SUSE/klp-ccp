@@ -69,6 +69,13 @@ namespace suse
 	const _ast_entity* get_parent() const noexcept
 	{ return _parent; }
 
+	template <typename ret_type, typename handled_types,
+		  typename callables_wrapper_type>
+	ret_type process(callables_wrapper_type &&c) const;
+
+	template<typename... types>
+	bool is_any_of() const noexcept;
+
       protected:
 	void _extend_tokens_range(const pp_tokens_range &tr) noexcept;
 

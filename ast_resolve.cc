@@ -292,7 +292,7 @@ void suse::cp::ast::ast::_register_labels()
 
 const declaration& init_declarator::get_containing_declaration() const noexcept
 {
-  assert(dynamic_cast<const init_declarator_list*>(get_parent()));
+  assert(get_parent()->is_any_of<init_declarator_list>());
   const declaration *d
     = dynamic_cast<const declaration*>(get_parent()->get_parent());
   assert(d);
@@ -305,10 +305,8 @@ const _ast_entity& direct_declarator::get_first_non_declarator_parent()
 {
   const _ast_entity *p;
   for (p = get_parent(); p; p = p->get_parent()) {
-    if (!dynamic_cast<const declarator*>(p) &&
-	!dynamic_cast<const direct_declarator*>(p)) {
+    if (!p->is_any_of<declarator, direct_declarator>())
       break;
-    }
   }
 
   assert(p);
@@ -398,12 +396,8 @@ static bool _is_fundef_ddf(const direct_declarator_func &ddf)
 {
   // Check that the first non-declarator/-direct_declarator parent is
   // a function_definition instance.
-  if (dynamic_cast<const function_definition*>
-      (&ddf.get_first_non_declarator_parent())) {
-    return true;
-  }
-
-  return false;
+  return
+    ddf.get_first_non_declarator_parent().is_any_of<function_definition>();
 }
 
 static bool _is_fundef_ddf_pdl(const parameter_declaration_list &pdl)
@@ -411,7 +405,7 @@ static bool _is_fundef_ddf_pdl(const parameter_declaration_list &pdl)
 {
   const _ast_entity * const p = pdl.get_parent();
 
-  if (dynamic_cast<const direct_abstract_declarator_func*>(p)) {
+  if (p->is_any_of<direct_abstract_declarator_func>()) {
     // A parameter in an abstract func declarator cannot be a
     // parameter in a function definition.
     return false;
@@ -473,12 +467,9 @@ void _id_resolver::operator()()
       [this](const stmt &s) {
 	const _ast_entity * const p = s.get_parent();
 	assert(p);
-	if (dynamic_cast<const stmt_if*>(p) ||
-	    dynamic_cast<const stmt_switch*>(p) ||
-	    dynamic_cast<const stmt_for_init_decl*>(p) ||
-	    dynamic_cast<const stmt_for_init_expr*>(p) ||
-	    dynamic_cast<const stmt_while*>(p) ||
-	    dynamic_cast<const stmt_do*>(p)) {
+	if (p->is_any_of<stmt_if, stmt_switch,
+			 stmt_for_init_decl, stmt_for_init_expr,
+			 stmt_while, stmt_do>()) {
 	  _enter_scope();
 	  return true;
 	}
@@ -812,7 +803,7 @@ void _id_resolver::_handle_init_decl(direct_declarator_id &ddid)
       = (is_local_nonfun &&
 	 (prev->get_type() ==
 	  expr_id::resolved::resolved_type::in_param_id_list) &&
-	 dynamic_cast<const declaration_list*>(d.get_parent()));
+	 d.get_parent()->is_any_of<declaration_list>());
 
     if (!(is_oldstyle_param_decl ||
 	  (sc == storage_class::sc_typedef && prev_is_typedef))) {
@@ -1459,7 +1450,7 @@ void _id_resolver::_resolve_id(expr_id &ei)
 
   // In case of the expr_id representing the identifier following a
   // goto keyword, try to resolve to a label first.
-  if (dynamic_cast<const stmt_goto*>(ei.get_parent())) {
+  if (ei.get_parent()->is_any_of<stmt_goto>()) {
     for (_ast_entity *p = ei.get_parent()->get_parent();
 	 p; p = p->get_parent()) {
       stmt_compound *sc = dynamic_cast<stmt_compound*>(p);
@@ -1495,21 +1486,20 @@ void _id_resolver::_resolve_id(expr_id &ei)
 
   // Accept resolving failure for the second slot of
   // __builtin_offsetof(), i.e. the member designator.
-  for (const _ast_entity *p = ei.get_parent(); dynamic_cast<const expr*>(p);
+  for (const _ast_entity *p = ei.get_parent(); p->is_any_of<expr>();
        p = p->get_parent()) {
-    if (dynamic_cast<const expr_builtin_offsetof*>(p))
+    if (p->is_any_of<expr_builtin_offsetof>())
       return;
   }
 
   // Resolving the identifier failed. Silently accept that for expr_id's
   // being part of attributes.
   for (const _ast_entity *p = ei.get_parent(); p; p = p->get_parent()) {
-    if (dynamic_cast<const attribute*>(p))
+    if (p->is_any_of<attribute>())
       return;
   }
 
-
-  if (dynamic_cast<expr_func_invocation*>(ei.get_parent())) {
+  if (ei.get_parent()->is_any_of<expr_func_invocation>()) {
     // warn only about calls to undeclared functions
     code_remark remark(code_remark::severity::warning,
 		       "identifier not declared",
