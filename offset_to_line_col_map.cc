@@ -74,7 +74,7 @@ unsigned int ffs(T val)
       }
     }
 
-    assert(val == 1 | val == 0);
+    assert(val == 1 || val == 0);
     return r + static_cast<unsigned int>(val);
   }
 
