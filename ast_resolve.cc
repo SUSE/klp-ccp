@@ -355,15 +355,15 @@ namespace
     void _handle_enum_def(enum_def &ed);
     void _handle_enum_ref(enum_ref &er);
 
-    static linkage::linkage_type
-    _get_linkage_type(const direct_declarator_id::context &ctx) noexcept;
+    static linkage::linkage_kind
+    _get_linkage_kind(const direct_declarator_id::context &ctx) noexcept;
     static void _link_to(linkage &l,
 			 const direct_declarator_id::context &target_ctx)
       noexcept;
     void _add_pending_linkage(direct_declarator_id &ddid,
-			      const linkage::linkage_type type);
+			      const linkage::linkage_kind kind);
     bool _try_resolve_pending_linkages(direct_declarator_id &ddid,
-				       const linkage::linkage_type type);
+				       const linkage::linkage_kind kind);
 
     void _resolve_id(expr_id &ei);
     void _resolve_id(type_specifier_tdid &ts_tdid);
@@ -592,22 +592,22 @@ const expr_id::resolved* _id_resolver::_lookup_id(const pp_token_index id_tok,
     for (auto r_it = scope_it->_declared_ids.rbegin();
 	 !result && r_it != scope_it->_declared_ids.rend();
 	 ++r_it) {
-      if (r_it->get_type() ==
-	  expr_id::resolved::resolved_type::direct_declarator_id) {
+      if (r_it->get_kind() ==
+	  expr_id::resolved::resolved_kind::direct_declarator_id) {
 	if (id.get_value() ==
 	    (_ast.get_pp_tokens()[r_it->get_direct_declarator_id().get_id_tok()]
 	     .get_value())) {
 	  result = &*r_it;
 	}
-      } else if (r_it->get_type() ==
-		 expr_id::resolved::resolved_type::enumerator) {
+      } else if (r_it->get_kind() ==
+		 expr_id::resolved::resolved_kind::enumerator) {
 	if (id.get_value() ==
 	    (_ast.get_pp_tokens()[r_it->get_enumerator().get_id_tok()]
 	     .get_value())) {
 	  result = &*r_it;
 	}
-      } else if (r_it->get_type() ==
-		 expr_id::resolved::resolved_type::in_param_id_list) {
+      } else if (r_it->get_kind() ==
+		 expr_id::resolved::resolved_kind::in_param_id_list) {
 	const identifier_list &pil = r_it->get_param_id_list();
 	for (auto pi_tok : pil.get_identifiers()) {
 	  if (id.get_value() == _ast.get_pp_tokens()[pi_tok].get_value()) {
@@ -650,16 +650,16 @@ _lookup_sou_decl(const pp_token_index id_tok, const bool only_in_cur_scope)
     for (auto d_it = scope_it->_declared_sous.begin();
 	 d_it != scope_it->_declared_sous.end(); ++d_it) {
       pp_token_index d_id_tok;
-      switch (d_it->get_target_type()) {
-      case sou_decl_link::target_type::ref:
+      switch (d_it->get_target_kind()) {
+      case sou_decl_link::target_kind::ref:
 	d_id_tok = d_it->get_target_sou_ref().get_id_tok();
 	break;
 
-      case sou_decl_link::target_type::def:
+      case sou_decl_link::target_kind::def:
 	d_id_tok = d_it->get_target_sou_def().get_id_tok();
 	break;
 
-      case sou_decl_link::target_type::unlinked:
+      case sou_decl_link::target_kind::unlinked:
 	assert(0);
 	__builtin_unreachable();
       }
@@ -733,24 +733,24 @@ void _id_resolver::_handle_direct_declarator_id(direct_declarator_id &ddid)
 				  parameter_declaration_declarator> >
     (context_finder);
 
-  switch (ddid.get_context().get_type())
+  switch (ddid.get_context().get_kind())
   {
-  case direct_declarator_id::context::context_type::unknown:
+  case direct_declarator_id::context::context_kind::unknown:
     assert(0);
     __builtin_unreachable();
 
-  case direct_declarator_id::context::context_type::struct_decl:
+  case direct_declarator_id::context::context_kind::struct_decl:
     return;
 
-  case direct_declarator_id::context::context_type::parameter_decl:
+  case direct_declarator_id::context::context_kind::parameter_decl:
     _scopes.back()._declared_ids.push_back(expr_id::resolved(ddid));
     return;
 
-  case direct_declarator_id::context::context_type::init_decl:
+  case direct_declarator_id::context::context_kind::init_decl:
     _handle_init_decl(ddid);
     return;
 
-  case direct_declarator_id::context::context_type::function_def:
+  case direct_declarator_id::context::context_kind::function_def:
     _handle_fun_def(ddid);
     return;
   }
@@ -783,14 +783,14 @@ void _id_resolver::_handle_init_decl(direct_declarator_id &ddid)
      is_local_nonfun);
   if (prev && prev_is_in_cur_scope &&
       (no_linkage ||
-       prev->get_type() == expr_id::resolved::resolved_type::enumerator)) {
+       prev->get_kind() == expr_id::resolved::resolved_kind::enumerator)) {
 
     // typedef redeclarations are possible if they yield the same result.
     const bool prev_is_typedef
-      = ((prev->get_type() ==
-	  expr_id::resolved::resolved_type::direct_declarator_id) &&
-	 (prev->get_direct_declarator_id().get_context().get_type() ==
-	  direct_declarator_id::context::context_type::init_decl) &&
+      = ((prev->get_kind() ==
+	  expr_id::resolved::resolved_kind::direct_declarator_id) &&
+	 (prev->get_direct_declarator_id().get_context().get_kind() ==
+	  direct_declarator_id::context::context_kind::init_decl) &&
 	 ((prev->get_direct_declarator_id().get_context().get_init_declarator()
 	   .get_containing_declaration().get_declaration_specifiers()
 	   .get_storage_class(_ast)) ==
@@ -801,8 +801,8 @@ void _id_resolver::_handle_init_decl(direct_declarator_id &ddid)
     // list. So that's Ok.
     const bool is_oldstyle_param_decl
       = (is_local_nonfun &&
-	 (prev->get_type() ==
-	  expr_id::resolved::resolved_type::in_param_id_list) &&
+	 (prev->get_kind() ==
+	  expr_id::resolved::resolved_kind::in_param_id_list) &&
 	 d.get_parent()->is_any_of<declaration_list>());
 
     if (!(is_oldstyle_param_decl ||
@@ -832,13 +832,13 @@ void _id_resolver::_handle_init_decl(direct_declarator_id &ddid)
     // Internal linkage.
     if (prev) {
       assert(prev_is_in_cur_scope &&
-	     (prev->get_type() ==
-	      expr_id::resolved::resolved_type::direct_declarator_id));
+	     (prev->get_kind() ==
+	      expr_id::resolved::resolved_kind::direct_declarator_id));
 
       direct_declarator_id &prev_ddid = prev->get_direct_declarator_id();
-      const linkage::linkage_type prev_linkage =
-	_get_linkage_type(prev_ddid.get_context());
-      if (prev_linkage != linkage::linkage_type::internal) {
+      const linkage::linkage_kind prev_linkage =
+	_get_linkage_kind(prev_ddid.get_context());
+      if (prev_linkage != linkage::linkage_kind::internal) {
 	const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
 	code_remark remark(code_remark::severity::fatal,
 			   "static declaration follows non-static one",
@@ -850,7 +850,7 @@ void _id_resolver::_handle_init_decl(direct_declarator_id &ddid)
       _link_to(id.get_linkage(), prev_ddid.get_context());
 
     } else {
-      _try_resolve_pending_linkages(ddid, linkage::linkage_type::internal);
+      _try_resolve_pending_linkages(ddid, linkage::linkage_kind::internal);
     }
 
   } else if (sc == storage_class::sc_extern ||
@@ -860,28 +860,28 @@ void _id_resolver::_handle_init_decl(direct_declarator_id &ddid)
     if (prev) {
       auto get_ddid_if_linkage =
 	[](const expr_id::resolved &r) {
-	switch(r.get_type()) {
-	case expr_id::resolved::resolved_type::direct_declarator_id:
+	switch(r.get_kind()) {
+	case expr_id::resolved::resolved_kind::direct_declarator_id:
 	  {
 	    direct_declarator_id &_prev_ddid = r.get_direct_declarator_id();
-	    const linkage::linkage_type prev_linkage =
-	      _get_linkage_type(_prev_ddid.get_context());
-	    if (prev_linkage != linkage::linkage_type::none)
+	    const linkage::linkage_kind prev_linkage =
+	      _get_linkage_kind(_prev_ddid.get_context());
+	    if (prev_linkage != linkage::linkage_kind::none)
 	      return &_prev_ddid;
 	  }
 	  return static_cast<direct_declarator_id*>(nullptr);
 
-	case expr_id::resolved::resolved_type::enumerator:
+	case expr_id::resolved::resolved_kind::enumerator:
 	  return static_cast<direct_declarator_id*>(nullptr);
 
-	case expr_id::resolved::resolved_type::in_param_id_list:
+	case expr_id::resolved::resolved_kind::in_param_id_list:
 	  return static_cast<direct_declarator_id*>(nullptr);
 
-	case expr_id::resolved::resolved_type::none:
+	case expr_id::resolved::resolved_kind::none:
 	/* fall through */
-	case expr_id::resolved::resolved_type::builtin:
+	case expr_id::resolved::resolved_kind::builtin:
 	/* fall through */
-	case expr_id::resolved::resolved_type::stmt_labeled:
+	case expr_id::resolved::resolved_kind::stmt_labeled:
 	  assert(0);
 	  __builtin_unreachable();
 	}
@@ -893,9 +893,9 @@ void _id_resolver::_handle_init_decl(direct_declarator_id &ddid)
 	prev = _lookup_id(ddid.get_id_tok(), get_ddid_if_linkage);
 	if (prev) {
 	  prev_ddid = &prev->get_direct_declarator_id();
-	  const linkage::linkage_type prev_linkage =
-	    _get_linkage_type(prev_ddid->get_context());
-	  if (prev_linkage != linkage::linkage_type::external) {
+	  const linkage::linkage_kind prev_linkage =
+	    _get_linkage_kind(prev_ddid->get_context());
+	  if (prev_linkage != linkage::linkage_kind::external) {
 	    const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
 	    code_remark remark(code_remark::severity::fatal,
 			       "extern declaration follows static one",
@@ -910,7 +910,7 @@ void _id_resolver::_handle_init_decl(direct_declarator_id &ddid)
     if (prev_ddid) {
       _link_to(id.get_linkage(), prev_ddid->get_context());
     } else {
-      _add_pending_linkage(ddid, linkage::linkage_type::external);
+      _add_pending_linkage(ddid, linkage::linkage_kind::external);
     }
 
   } else if (is_at_file_scope) {
@@ -919,13 +919,13 @@ void _id_resolver::_handle_init_decl(direct_declarator_id &ddid)
     // external linkage.
     if (prev) {
       assert(prev_is_in_cur_scope &&
-	     (prev->get_type() ==
-	      expr_id::resolved::resolved_type::direct_declarator_id));
+	     (prev->get_kind() ==
+	      expr_id::resolved::resolved_kind::direct_declarator_id));
 
       direct_declarator_id &prev_ddid = prev->get_direct_declarator_id();
-      const linkage::linkage_type prev_linkage =
-	_get_linkage_type(prev_ddid.get_context());
-      if (prev_linkage != linkage::linkage_type::external) {
+      const linkage::linkage_kind prev_linkage =
+	_get_linkage_kind(prev_ddid.get_context());
+      if (prev_linkage != linkage::linkage_kind::external) {
 	const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
 	code_remark remark(code_remark::severity::fatal,
 			   "non-static declaration follows static one",
@@ -937,20 +937,20 @@ void _id_resolver::_handle_init_decl(direct_declarator_id &ddid)
       _link_to(id.get_linkage(), prev_ddid.get_context());
 
     } else {
-      _try_resolve_pending_linkages(ddid, linkage::linkage_type::external);
+      _try_resolve_pending_linkages(ddid, linkage::linkage_kind::external);
     }
 
   } else if (is_fun && !is_at_file_scope && sc == storage_class::sc_auto) {
     // This branch deals with the gcc extension of having an 'auto' specifier
     // for linking to nested functions in the same scope.
     if (prev && prev_is_in_cur_scope) {
-      assert(prev->get_type() ==
-	     expr_id::resolved::resolved_type::direct_declarator_id);
+      assert(prev->get_kind() ==
+	     expr_id::resolved::resolved_kind::direct_declarator_id);
 
       direct_declarator_id &prev_ddid = prev->get_direct_declarator_id();
-      const linkage::linkage_type prev_linkage =
-	_get_linkage_type(prev_ddid.get_context());
-      if (prev_linkage != linkage::linkage_type::nested_fun_auto) {
+      const linkage::linkage_kind prev_linkage =
+	_get_linkage_kind(prev_ddid.get_context());
+      if (prev_linkage != linkage::linkage_kind::nested_fun_auto) {
 	const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
 	code_remark remark{
 	  code_remark::severity::fatal,
@@ -965,7 +965,7 @@ void _id_resolver::_handle_init_decl(direct_declarator_id &ddid)
 
     } else {
       id.get_linkage()
-	.set_linkage_type(linkage::linkage_type::nested_fun_auto);
+	.set_linkage_kind(linkage::linkage_kind::nested_fun_auto);
     }
 
   } else {
@@ -1018,8 +1018,8 @@ void _id_resolver::_handle_fun_def(direct_declarator_id &ddid)
 
   // Check for forbidden redeclarations in the same scope.
   if (prev && prev_is_in_cur_scope &&
-      (prev->get_type() == expr_id::resolved::resolved_type::enumerator ||
-       prev->get_type() == expr_id::resolved::resolved_type::in_param_id_list))
+      (prev->get_kind() == expr_id::resolved::resolved_kind::enumerator ||
+       prev->get_kind() == expr_id::resolved::resolved_kind::in_param_id_list))
     {
     const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
     code_remark remark(code_remark::severity::fatal,
@@ -1032,13 +1032,13 @@ void _id_resolver::_handle_fun_def(direct_declarator_id &ddid)
   if (!is_at_file_scope) {
     // Nested functions have 'auto' linkage.
     if (prev && prev_is_in_cur_scope) {
-      assert(prev->get_type() ==
-	     expr_id::resolved::resolved_type::direct_declarator_id);
+      assert(prev->get_kind() ==
+	     expr_id::resolved::resolved_kind::direct_declarator_id);
 
       direct_declarator_id &prev_ddid = prev->get_direct_declarator_id();
-      const linkage::linkage_type prev_linkage =
-	_get_linkage_type(prev_ddid.get_context());
-      if (prev_linkage != linkage::linkage_type::nested_fun_auto) {
+      const linkage::linkage_kind prev_linkage =
+	_get_linkage_kind(prev_ddid.get_context());
+      if (prev_linkage != linkage::linkage_kind::nested_fun_auto) {
 	const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
 	code_remark remark{
 	  code_remark::severity::fatal,
@@ -1052,20 +1052,20 @@ void _id_resolver::_handle_fun_def(direct_declarator_id &ddid)
       _link_to(fd.get_linkage(), prev_ddid.get_context());
 
     } else {
-      fd.get_linkage().set_linkage_type(linkage::linkage_type::nested_fun_auto);
+      fd.get_linkage().set_linkage_kind(linkage::linkage_kind::nested_fun_auto);
     }
 
   } else if (sc == storage_class::sc_static) {
     assert(is_at_file_scope);
     // Internal linkage.
     if (prev) {
-      assert(prev->get_type() ==
-	     expr_id::resolved::resolved_type::direct_declarator_id);
+      assert(prev->get_kind() ==
+	     expr_id::resolved::resolved_kind::direct_declarator_id);
 
       direct_declarator_id &prev_ddid = prev->get_direct_declarator_id();
-      const linkage::linkage_type prev_linkage =
-	_get_linkage_type(prev_ddid.get_context());
-      if (prev_linkage != linkage::linkage_type::internal) {
+      const linkage::linkage_kind prev_linkage =
+	_get_linkage_kind(prev_ddid.get_context());
+      if (prev_linkage != linkage::linkage_kind::internal) {
 	const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
 	code_remark remark(code_remark::severity::fatal,
 			   "static declaration follows non-static one",
@@ -1077,26 +1077,26 @@ void _id_resolver::_handle_fun_def(direct_declarator_id &ddid)
       _link_to(fd.get_linkage(), prev_ddid.get_context());
 
     } else {
-      _try_resolve_pending_linkages(ddid, linkage::linkage_type::internal);
+      _try_resolve_pending_linkages(ddid, linkage::linkage_kind::internal);
     }
 
   } else {
     assert(sc == storage_class::sc_extern || sc == storage_class::sc_none);
     // Linkage of previous declaration, if any. Otherwise external.
     if (prev) {
-      assert(prev->get_type() ==
-	     expr_id::resolved::resolved_type::direct_declarator_id);
+      assert(prev->get_kind() ==
+	     expr_id::resolved::resolved_kind::direct_declarator_id);
       direct_declarator_id &prev_ddid = prev->get_direct_declarator_id();
-      const linkage::linkage_type prev_linkage =
-	_get_linkage_type(prev_ddid.get_context());
-      if (prev_linkage == linkage::linkage_type::none) {
-	fd.get_linkage().set_linkage_type(linkage::linkage_type::external);
+      const linkage::linkage_kind prev_linkage =
+	_get_linkage_kind(prev_ddid.get_context());
+      if (prev_linkage == linkage::linkage_kind::none) {
+	fd.get_linkage().set_linkage_kind(linkage::linkage_kind::external);
       }
 
       _link_to(fd.get_linkage(), prev_ddid.get_context());
 
     } else {
-      _try_resolve_pending_linkages(ddid, linkage::linkage_type::external);
+      _try_resolve_pending_linkages(ddid, linkage::linkage_kind::external);
     }
   }
 
@@ -1158,18 +1158,18 @@ void _id_resolver::_handle_sou_ref(struct_or_union_ref &sour)
   struct_or_union prev_tag_kind;
   if (is_standalone_decl && prev_decl) {
     // It's a redeclaration, link it to the previous one.
-    switch (prev_decl->get_target_type()) {
-    case sou_decl_link::target_type::ref:
+    switch (prev_decl->get_target_kind()) {
+    case sou_decl_link::target_kind::ref:
       prev_tag_kind = prev_decl->get_target_sou_ref().get_tag_kind();
       sour.get_decl_list_node().link_to(prev_decl->get_target_sou_ref());
       break;
 
-    case sou_decl_link::target_type::def:
+    case sou_decl_link::target_kind::def:
       prev_tag_kind = prev_decl->get_target_sou_def().get_tag_kind();
       sour.get_decl_list_node().link_to(prev_decl->get_target_sou_def());
       break;
 
-    case sou_decl_link::target_type::unlinked:
+    case sou_decl_link::target_kind::unlinked:
       assert(0);
       __builtin_unreachable();
     }
@@ -1191,18 +1191,18 @@ void _id_resolver::_handle_sou_ref(struct_or_union_ref &sour)
   } else {
     assert (!is_standalone_decl && prev_decl);
     // It isnt't a declaration for that tag, but a real usage.
-    switch (prev_decl->get_target_type()) {
-    case sou_decl_link::target_type::ref:
+    switch (prev_decl->get_target_kind()) {
+    case sou_decl_link::target_kind::ref:
       prev_tag_kind = prev_decl->get_target_sou_ref().get_tag_kind();
       sour.link_to_declaration(prev_decl->get_target_sou_ref());
       break;
 
-    case sou_decl_link::target_type::def:
+    case sou_decl_link::target_kind::def:
       prev_tag_kind = prev_decl->get_target_sou_def().get_tag_kind();
       sour.link_to_declaration(prev_decl->get_target_sou_def());
       break;
 
-    case sou_decl_link::target_type::unlinked:
+    case sou_decl_link::target_kind::unlinked:
       assert(0);
       __builtin_unreachable();
     }
@@ -1230,8 +1230,8 @@ void _id_resolver::_handle_sou_def(struct_or_union_def &soud)
     // It's a redeclaration, link it to the previous one.
     struct_or_union prev_tag_kind;
     struct_or_union_def *prev_def = nullptr;
-    switch (prev_decl->get_target_type()) {
-    case sou_decl_link::target_type::ref:
+    switch (prev_decl->get_target_kind()) {
+    case sou_decl_link::target_kind::ref:
       {
 	struct_or_union_ref &prev_sou_ref = prev_decl->get_target_sou_ref();
 	prev_def = prev_sou_ref.get_decl_list_node().find_definition();
@@ -1240,7 +1240,7 @@ void _id_resolver::_handle_sou_def(struct_or_union_def &soud)
       }
       break;
 
-    case sou_decl_link::target_type::def:
+    case sou_decl_link::target_kind::def:
       {
 	struct_or_union_def &prev_sou_def = prev_decl->get_target_sou_def();
 	prev_def = &prev_sou_def;
@@ -1249,7 +1249,7 @@ void _id_resolver::_handle_sou_def(struct_or_union_def &soud)
       }
       break;
 
-    case sou_decl_link::target_type::unlinked:
+    case sou_decl_link::target_kind::unlinked:
 	assert(0);
 	__builtin_unreachable();
     }
@@ -1324,22 +1324,22 @@ void _id_resolver::_handle_enum_ref(enum_ref &er)
   er.link_to_definition(*ed);
 }
 
-linkage::linkage_type
-_id_resolver::_get_linkage_type(const direct_declarator_id::context &ctx)
+linkage::linkage_kind
+_id_resolver::_get_linkage_kind(const direct_declarator_id::context &ctx)
   noexcept
 {
-  switch (ctx.get_type()) {
-  case direct_declarator_id::context::context_type::init_decl:
-    return ctx.get_init_declarator().get_linkage().get_linkage_type();
+  switch (ctx.get_kind()) {
+  case direct_declarator_id::context::context_kind::init_decl:
+    return ctx.get_init_declarator().get_linkage().get_linkage_kind();
 
-  case direct_declarator_id::context::context_type::function_def:
-    return ctx.get_function_definition().get_linkage().get_linkage_type();
+  case direct_declarator_id::context::context_kind::function_def:
+    return ctx.get_function_definition().get_linkage().get_linkage_kind();
 
-  case direct_declarator_id::context::context_type::unknown:
+  case direct_declarator_id::context::context_kind::unknown:
     /* fall through */
-  case direct_declarator_id::context::context_type::struct_decl:
+  case direct_declarator_id::context::context_kind::struct_decl:
     /* fall through */
-  case direct_declarator_id::context::context_type::parameter_decl:
+  case direct_declarator_id::context::context_kind::parameter_decl:
     assert(0);
     __builtin_unreachable();
   }
@@ -1349,38 +1349,38 @@ void _id_resolver::_link_to(linkage &l,
 			    const direct_declarator_id::context &target_ctx)
   noexcept
 {
-  const linkage::linkage_type type = _get_linkage_type(target_ctx);
+  const linkage::linkage_kind kind = _get_linkage_kind(target_ctx);
 
-  switch (target_ctx.get_type()) {
-  case direct_declarator_id::context::context_type::init_decl:
-    l.link_to(target_ctx.get_init_declarator(), type);
+  switch (target_ctx.get_kind()) {
+  case direct_declarator_id::context::context_kind::init_decl:
+    l.link_to(target_ctx.get_init_declarator(), kind);
     break;
 
-  case direct_declarator_id::context::context_type::function_def:
-    l.link_to(target_ctx.get_function_definition(), type);
+  case direct_declarator_id::context::context_kind::function_def:
+    l.link_to(target_ctx.get_function_definition(), kind);
     break;
 
-  case direct_declarator_id::context::context_type::unknown:
+  case direct_declarator_id::context::context_kind::unknown:
     /* fall through */
-  case direct_declarator_id::context::context_type::struct_decl:
+  case direct_declarator_id::context::context_kind::struct_decl:
     /* fall through */
-  case direct_declarator_id::context::context_type::parameter_decl:
+  case direct_declarator_id::context::context_kind::parameter_decl:
     assert(0);
     __builtin_unreachable();
   }
 }
 
 void _id_resolver::_add_pending_linkage(direct_declarator_id &ddid,
-					const linkage::linkage_type type)
+					const linkage::linkage_kind kind)
 {
-  if (_try_resolve_pending_linkages(ddid, type))
+  if (_try_resolve_pending_linkages(ddid, kind))
     return;
   _pending_linkages.push_back(std::ref(ddid));
 }
 
 bool
 _id_resolver::_try_resolve_pending_linkages(direct_declarator_id &ddid,
-					    const linkage::linkage_type type)
+					    const linkage::linkage_kind kind)
 {
   const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
   auto it_pl = _pending_linkages.begin();
@@ -1394,39 +1394,39 @@ _id_resolver::_try_resolve_pending_linkages(direct_declarator_id &ddid,
   bool is_at_file_scope;
   linkage *l;
   const direct_declarator_id::context &ctx = ddid.get_context();
-  switch(ctx.get_type()) {
-  case direct_declarator_id::context::context_type::init_decl:
+  switch(ctx.get_kind()) {
+  case direct_declarator_id::context::context_kind::init_decl:
     l = &ctx.get_init_declarator().get_linkage();
     is_at_file_scope =
       ctx.get_init_declarator().get_containing_declaration().is_at_file_scope();
     break;
 
-  case direct_declarator_id::context::context_type::function_def:
+  case direct_declarator_id::context::context_kind::function_def:
     l = &ctx.get_function_definition().get_linkage();
     is_at_file_scope =
       ctx.get_function_definition().is_at_file_scope();
     break;
 
-  case direct_declarator_id::context::context_type::unknown:
+  case direct_declarator_id::context::context_kind::unknown:
     /* fall through */
-  case direct_declarator_id::context::context_type::struct_decl:
+  case direct_declarator_id::context::context_kind::struct_decl:
     /* fall through */
-  case direct_declarator_id::context::context_type::parameter_decl:
+  case direct_declarator_id::context::context_kind::parameter_decl:
     assert(0);
     __builtin_unreachable();
   }
 
   if (it_pl == _pending_linkages.end()) {
-    l->set_linkage_type(type);
+    l->set_linkage_kind(kind);
     return is_at_file_scope;
   }
 
   const direct_declarator_id::context &pl_ctx = it_pl->get().get_context();
-  const linkage::linkage_type pl_linkage_type
-    = _get_linkage_type(pl_ctx);
-  assert(pl_linkage_type == linkage::linkage_type::external);
+  const linkage::linkage_kind pl_linkage_kind
+    = _get_linkage_kind(pl_ctx);
+  assert(pl_linkage_kind == linkage::linkage_kind::external);
 
-  if (type != pl_linkage_type) {
+  if (kind != pl_linkage_kind) {
     code_remark remark(code_remark::severity::fatal,
 		       "static declaration follows external one",
 		       id_tok.get_file_range());
@@ -1523,8 +1523,8 @@ void _id_resolver::_resolve_id(type_specifier_tdid &ts_tdid)
        ++scope_it) {
     for (auto r_it = scope_it->_declared_ids.rbegin();
 	 r_it != scope_it->_declared_ids.rend(); ++r_it) {
-      if (r_it->get_type() ==
-	  expr_id::resolved::resolved_type::direct_declarator_id) {
+      if (r_it->get_kind() ==
+	  expr_id::resolved::resolved_kind::direct_declarator_id) {
 	if (id_tok.get_value() ==
 	    (_ast.get_pp_tokens()[r_it->get_direct_declarator_id().get_id_tok()]
 	     .get_value())) {

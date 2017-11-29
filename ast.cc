@@ -1083,52 +1083,52 @@ bool expr_statement::_process(const_processor<bool> &p) const
 
 
 expr_id::resolved::resolved() noexcept
-  : _type(resolved_type::none)
+  : _kind(resolved_kind::none)
 {}
 
 expr_id::resolved::resolved(const builtin_tag&) noexcept
-  : _type(resolved_type::builtin)
+  : _kind(resolved_kind::builtin)
 {}
 
 expr_id::resolved::resolved(direct_declarator_id &ddid) noexcept
-  : _type(resolved_type::direct_declarator_id), _ddid(&ddid)
+  : _kind(resolved_kind::direct_declarator_id), _ddid(&ddid)
 {}
 
 expr_id::resolved::resolved(stmt_labeled &sl) noexcept
-  : _type(resolved_type::stmt_labeled), _sl(&sl)
+  : _kind(resolved_kind::stmt_labeled), _sl(&sl)
 {}
 
 expr_id::resolved::resolved(enumerator &e) noexcept
-  : _type(resolved_type::enumerator), _e(&e)
+  : _kind(resolved_kind::enumerator), _e(&e)
 {}
 
 expr_id::resolved::resolved(identifier_list &pil) noexcept
-  : _type(resolved_type::in_param_id_list), _pil(&pil)
+  : _kind(resolved_kind::in_param_id_list), _pil(&pil)
 {}
 
 direct_declarator_id& expr_id::resolved::get_direct_declarator_id()
   const noexcept
 {
-  assert(_type == resolved_type::direct_declarator_id);
+  assert(_kind == resolved_kind::direct_declarator_id);
   return *_ddid;
 }
 
 stmt_labeled& expr_id::resolved::get_stmt_labeled() const noexcept
 {
-  assert(_type == resolved_type::stmt_labeled);
+  assert(_kind == resolved_kind::stmt_labeled);
   return *_sl;
 }
 
 enumerator& expr_id::resolved::get_enumerator() const noexcept
 {
-  assert(_type == resolved_type::enumerator);
+  assert(_kind == resolved_kind::enumerator);
   return *_e;
 }
 
 identifier_list& expr_id::resolved::get_param_id_list()
   const noexcept
 {
-  assert(_type == resolved_type::in_param_id_list);
+  assert(_kind == resolved_kind::in_param_id_list);
   return *_pil;
 }
 
@@ -1140,7 +1140,7 @@ expr_id::~expr_id() noexcept = default;
 
 void expr_id::set_resolved(const resolved &r) noexcept
 {
-  assert(_resolved.get_type() == resolved::resolved_type::none);
+  assert(_resolved.get_kind() == resolved::resolved_kind::none);
   _resolved = r;
 }
 
@@ -1908,58 +1908,58 @@ bool type_name::_process(const_processor<bool> &p) const
 
 
 direct_declarator::direct_declarator(const pp_tokens_range &tr) noexcept
-  : ast_entity(tr)
+  : typed_ast_entity(tr)
 {}
 
 direct_declarator::~direct_declarator() noexcept = default;
 
 
 direct_declarator_id::context::context() noexcept
-: _type(context_type::unknown)
+: _kind(context_kind::unknown)
 {}
 
 direct_declarator_id::context::context(struct_declarator &sd) noexcept
-  : _type(context_type::struct_decl), _sd(&sd)
+  : _kind(context_kind::struct_decl), _sd(&sd)
 {}
 
 direct_declarator_id::context::context(parameter_declaration_declarator &pdd)
   noexcept
-  : _type(context_type::parameter_decl), _pdd(&pdd)
+  : _kind(context_kind::parameter_decl), _pdd(&pdd)
 {}
 
 direct_declarator_id::context::context(init_declarator &id) noexcept
-  : _type(context_type::init_decl), _id(&id)
+  : _kind(context_kind::init_decl), _id(&id)
 {}
 
 direct_declarator_id::context::context(function_definition &fd) noexcept
-  : _type(context_type::function_def), _fd(&fd)
+  : _kind(context_kind::function_def), _fd(&fd)
 {}
 
 struct_declarator& direct_declarator_id::context::get_struct_declarator()
   const noexcept
 {
-  assert(_type == context_type::struct_decl);
+  assert(_kind == context_kind::struct_decl);
   return *_sd;
 }
 
 parameter_declaration_declarator&
 direct_declarator_id::context::get_param_declaration_declarator() const noexcept
 {
-  assert(_type == context_type::parameter_decl);
+  assert(_kind == context_kind::parameter_decl);
   return *_pdd;
 }
 
 init_declarator& direct_declarator_id::context::get_init_declarator()
   const noexcept
 {
-  assert(_type == context_type::init_decl);
+  assert(_kind == context_kind::init_decl);
   return *_id;
 }
 
 function_definition& direct_declarator_id::context::get_function_definition()
   const noexcept
 {
-  assert(_type == context_type::function_def);
+  assert(_kind == context_kind::function_def);
   return *_fd;
 }
 
@@ -1977,13 +1977,13 @@ pp_token_index direct_declarator_id::get_id_tok() const noexcept
 const direct_declarator_id::context&
 direct_declarator_id::get_context() const noexcept
 {
-  assert(_ctx.get_type() != context::context_type::unknown);
+  assert(_ctx.get_kind() != context::context_kind::unknown);
   return _ctx;
 }
 
 void direct_declarator_id::set_context(const context &ctx) noexcept
 {
-  assert(_ctx.get_type() == context::context_type::unknown);
+  assert(_ctx.get_kind() == context::context_kind::unknown);
   _ctx = ctx;
 }
 
@@ -2951,26 +2951,26 @@ bool struct_declaration_list::_process(const_processor<bool> &p) const
 
 
 sou_decl_link::sou_decl_link() noexcept
-  : _target_type(target_type::unlinked)
+  : _target_kind(target_kind::unlinked)
 {}
 
 sou_decl_link::sou_decl_link(struct_or_union_ref &sour) noexcept
-  : _target_type(target_type::ref), _sour(&sour)
+  : _target_kind(target_kind::ref), _sour(&sour)
 {}
 
 sou_decl_link::sou_decl_link(struct_or_union_def &soud) noexcept
-  : _target_type(target_type::def), _soud(&soud)
+  : _target_kind(target_kind::def), _soud(&soud)
 {}
 
 struct_or_union_ref& sou_decl_link::get_target_sou_ref() const noexcept
 {
-  assert(_target_type == target_type::ref);
+  assert(_target_kind == target_kind::ref);
   return *_sour;
 }
 
 struct_or_union_def& sou_decl_link::get_target_sou_def() const noexcept
 {
-  assert(_target_type == target_type::def);
+  assert(_target_kind == target_kind::def);
   return *_soud;
 }
 
@@ -2990,11 +2990,11 @@ void sou_decl_list_node::link_to(struct_or_union_ref &target) noexcept
   // Our _decl_list_node should point to ourselves. The assertion
   // thus checks that the containing struct_or_union_ref, if any,
   // hasn't been linked to any declaration.
-  assert(_next.get_target_type() != sou_decl_link::target_type::ref ||
-	 (_next.get_target_sou_ref().get_link_to_decl().get_target_type() ==
-	  sou_decl_link::target_type::unlinked));
-  assert(target.get_link_to_decl().get_target_type() ==
-	 sou_decl_link::target_type::unlinked);
+  assert(_next.get_target_kind() != sou_decl_link::target_kind::ref ||
+	 (_next.get_target_sou_ref().get_link_to_decl().get_target_kind() ==
+	  sou_decl_link::target_kind::unlinked));
+  assert(target.get_link_to_decl().get_target_kind() ==
+	 sou_decl_link::target_kind::unlinked);
   __link_to(target);
 }
 
@@ -3169,8 +3169,8 @@ struct_or_union_ref::~struct_or_union_ref() noexcept
 void struct_or_union_ref::link_to_declaration(const sou_decl_link &target)
   noexcept
 {
-  assert(_link_to_decl.get_target_type() ==
-	 sou_decl_link::target_type::unlinked);
+  assert(_link_to_decl.get_target_kind() ==
+	 sou_decl_link::target_kind::unlinked);
   assert(&_decl_list_node.get_next().get_target_sou_ref() == this);
   _link_to_decl = target;
 }
@@ -4318,37 +4318,37 @@ bool asm_label::_process(const_processor<bool> &p) const
 
 
 linkage::linkage(init_declarator &self) noexcept
-  : _linkage_type(linkage_type::none),
+  : _linkage_kind(linkage_kind::none),
     _next(self), _prev(&_next)
 {}
 
 linkage::linkage(function_definition &self) noexcept
-  : _linkage_type(linkage_type::none),
+  : _linkage_kind(linkage_kind::none),
     _next(self), _prev(&_next)
 {}
 
-void linkage::set_linkage_type(const linkage_type type) noexcept
+void linkage::set_linkage_kind(const linkage_kind kind) noexcept
 {
-  assert(_linkage_type == linkage_type::none);
-  _linkage_type = type;
+  assert(_linkage_kind == linkage_kind::none);
+  _linkage_kind = kind;
 }
 
 void linkage::link_to(init_declarator &target,
-		      const linkage_type type) noexcept
+		      const linkage_kind kind) noexcept
 {
-  __link_to(target, type);
+  __link_to(target, kind);
 }
 
 void linkage::link_to(function_definition &target,
-		      const linkage_type type) noexcept
+		      const linkage_kind kind) noexcept
 {
-  __link_to(target, type);
+  __link_to(target, kind);
 }
 
 template<typename target_type>
-void linkage::__link_to(target_type &target, const linkage_type type) noexcept
+void linkage::__link_to(target_type &target, const linkage_kind kind) noexcept
 {
-  set_linkage_type(type);
+  set_linkage_kind(kind);
   assert(_prev == &_next);
 
   linkage &target_linkage = target.get_linkage();
@@ -4359,12 +4359,12 @@ void linkage::__link_to(target_type &target, const linkage_type type) noexcept
 }
 
 linkage::link::link(init_declarator &id) noexcept
-  : _target_type(link_target_type::init_decl),
+  : _target_kind(link_target_kind::init_decl),
     _target_id(&id)
 {}
 
 linkage::link::link(function_definition &fd) noexcept
-  : _target_type(link_target_type::function_def),
+  : _target_kind(link_target_kind::function_def),
     _target_fd(&fd)
 {}
 

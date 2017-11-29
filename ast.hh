@@ -847,7 +847,7 @@ namespace suse
 	  resolved(enumerator &e) noexcept;
 	  resolved(identifier_list &pil) noexcept;
 
-	  enum class resolved_type
+	  enum class resolved_kind
 	  {
 	    none,
 	    builtin,
@@ -857,8 +857,8 @@ namespace suse
 	    in_param_id_list,
 	  };
 
-	  resolved_type get_type() const noexcept
-	  { return _type; }
+	  resolved_kind get_kind() const noexcept
+	  { return _kind; }
 
 	  direct_declarator_id& get_direct_declarator_id() const noexcept;
 	  stmt_labeled& get_stmt_labeled() const noexcept;
@@ -866,7 +866,7 @@ namespace suse
 	  identifier_list& get_param_id_list() const noexcept;
 
 	private:
-	  resolved_type _type;
+	  resolved_kind _kind;
 
 	  union
 	  {
@@ -1270,7 +1270,7 @@ namespace suse
 	  context(init_declarator &id) noexcept;
 	  context(function_definition &fd) noexcept;
 
-	  enum class context_type
+	  enum class context_kind
 	  {
 	    unknown,
 	    struct_decl,
@@ -1279,8 +1279,8 @@ namespace suse
 	    function_def,
 	  };
 
-	  context_type get_type() const noexcept
-	  { return _type; }
+	  context_kind get_kind() const noexcept
+	  { return _kind; }
 
 	  struct_declarator& get_struct_declarator() const noexcept;
 	  parameter_declaration_declarator& get_param_declaration_declarator()
@@ -1289,7 +1289,7 @@ namespace suse
 	  function_definition& get_function_definition() const noexcept;
 
 	private:
-	  context_type _type;
+	  context_kind _kind;
 
 	  union
 	  {
@@ -1797,34 +1797,33 @@ namespace suse
       };
 
       class sou_decl_link
-	{
+      {
 	public:
 	  sou_decl_link() noexcept;
 	  sou_decl_link(struct_or_union_ref &sour) noexcept;
 	  sou_decl_link(struct_or_union_def &soud) noexcept;
 
-	  enum class target_type
+	  enum class target_kind
 	  {
 	    unlinked,
 	    ref,
 	    def,
 	  };
 
-	  target_type get_target_type() const noexcept
-	  { return _target_type; }
+	  target_kind get_target_kind() const noexcept
+	  { return _target_kind; }
 
 	  struct_or_union_ref& get_target_sou_ref() const noexcept;
 	  struct_or_union_def& get_target_sou_def() const noexcept;
 
 	private:
-
-	  target_type _target_type;
+	  target_kind _target_kind;
 
 	  union {
 	    struct_or_union_ref *_sour;
 	    struct_or_union_def *_soud;
 	  };
-	};
+      };
 
       class sou_decl_list_node
       {
@@ -1956,18 +1955,18 @@ namespace suse
 	const sou_decl_list_node *cur = this;
 	do {
 	  bool r;
-	  switch (cur->_next.get_target_type()) {
-	  case sou_decl_link::target_type::ref:
+	  switch (cur->_next.get_target_kind()) {
+	  case sou_decl_link::target_kind::ref:
 	    r = c(cur->_next.get_target_sou_ref());
 	    cur = &cur->_next.get_target_sou_ref().get_decl_list_node();
 	    break;
 
-	  case sou_decl_link::target_type::def:
+	  case sou_decl_link::target_kind::def:
 	    r = c(cur->_next.get_target_sou_def());
 	    cur = &cur->_next.get_target_sou_def().get_decl_list_node();
 	    break;
 
-	  case sou_decl_link::target_type::unlinked:
+	  case sou_decl_link::target_kind::unlinked:
 	    assert(0);
 	    __builtin_unreachable();
 	  }
@@ -2443,7 +2442,7 @@ namespace suse
       class linkage
       {
       public:
-	enum class linkage_type
+	enum class linkage_kind
 	  {
 	    none,
 	    internal,
@@ -2454,15 +2453,15 @@ namespace suse
 	linkage(init_declarator &self) noexcept;
 	linkage(function_definition &self) noexcept;
 
-	linkage_type get_linkage_type() const noexcept
-	{ return _linkage_type; }
+	linkage_kind get_linkage_kind() const noexcept
+	{ return _linkage_kind; }
 
-	void set_linkage_type(const linkage_type type) noexcept;
+	void set_linkage_kind(const linkage_kind kind) noexcept;
 
 	void link_to(init_declarator &target,
-		     const linkage_type type) noexcept;
+		     const linkage_kind kind) noexcept;
 	void link_to(function_definition &target,
-		     const linkage_type type) noexcept;
+		     const linkage_kind kind) noexcept;
 
       private:
 	class link
@@ -2472,13 +2471,13 @@ namespace suse
 	  link(function_definition &fd) noexcept;
 
 	private:
-	  enum class link_target_type
+	  enum class link_target_kind
 	  {
 	    init_decl,
 	    function_def,
 	  };
 
-	  link_target_type _target_type;
+	  link_target_kind _target_kind;
 
 	  union {
 	    init_declarator *_target_id;
@@ -2487,9 +2486,9 @@ namespace suse
 	};
 
 	template<typename target_type>
-	void __link_to(target_type &target, const linkage_type type) noexcept;
+	void __link_to(target_type &target, const linkage_kind kind) noexcept;
 
-	linkage_type _linkage_type;
+	linkage_kind _linkage_kind;
 	link _next;
 	link *_prev;
       };
