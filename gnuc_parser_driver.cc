@@ -214,8 +214,6 @@ gnuc_parser_driver::lex(gnuc_parser::semantic_type *value,
     /* fall through */
   case pp_token::type::wchr:
     /* fall through */
-  case pp_token::type::uchr8:
-    /* fall through */
   case pp_token::type::uchr16:
     /* fall through */
   case pp_token::type::uchr32:

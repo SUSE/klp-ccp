@@ -53,9 +53,6 @@ std::string pp_token::stringify() const
   case type::wchr:
     return "L'" + _value + '\'';
 
-  case type::uchr8:
-    return "u8'" + _value + '\'';
-
   case type::uchr16:
     return "u'" + _value + '\'';
 

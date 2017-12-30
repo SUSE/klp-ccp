@@ -24,7 +24,6 @@ namespace suse
 	pp_number,
 	chr,
 	wchr,
-	uchr8,
 	uchr16,
 	uchr32,
 	str,

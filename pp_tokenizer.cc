@@ -483,10 +483,6 @@ pp_token pp_tokenizer::read_next_token()
 	_skip_next_char();
 	_advance_to_next_char();
 	return _tokenize_string('"', true, pp_token::type::ustr8);
-      } else if (_next_next == '\'') {
-	_skip_next_char();
-	_advance_to_next_char();
-	return _tokenize_string('\'', true, pp_token::type::uchr8);
       } else {
 	return _tokenize_id();
       }
