@@ -22,7 +22,7 @@ namespace suse
       template<typename ret_type, typename callable_type>
       _processor<ret_type, callable_type>::_processor(const _processor& p)
 	noexcept
-	: _c(std::forward<callable_type>(p._c))
+	: _c(p._c)
       {}
 
       template<typename ret_type, typename callable_type>
@@ -800,7 +800,7 @@ namespace suse
       template<typename ret_type, typename callable_type>
       _const_processor<ret_type, callable_type>::
       _const_processor(const _const_processor& p) noexcept
-	: _c(std::forward<callable_type>(p._c))
+	: _c(p._c)
       {}
 
       template<typename ret_type, typename callable_type>
