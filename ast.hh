@@ -77,6 +77,13 @@ namespace suse
 	template<typename... types>
 	bool is_any_of() const noexcept;
 
+	template <typename handled_types_pre,
+		  typename handled_types_post,
+		  typename callables_wrapper_type_pre,
+		  typename callables_wrapper_type_post>
+	void for_each_dfs_pre_and_po(callables_wrapper_type_pre &&c_pre,
+				     callables_wrapper_type_post &&c_post);
+
       protected:
 	void _extend_tokens_range(const pp_tokens_range &tr) noexcept;
 
@@ -95,13 +102,13 @@ namespace suse
 	virtual bool _process(processor<bool> &p) = 0;
 	virtual bool _process(const_processor<bool> &p) const = 0;
 
-	template <typename callable_type>
-	void for_each_dfs_po(callable_type &&c);
-
 	template<typename callable_type_pre,
 		 typename callable_type_post>
-	void for_each_dfs_pre_and_po(callable_type_pre &&c_pre,
-				     callable_type_post &&c_post);
+	void _for_each_dfs_pre_and_po(callable_type_pre &&c_pre,
+				      callable_type_post &&c_post);
+
+	template <typename callable_type>
+	void for_each_dfs_po(callable_type &&c);
 
 	pp_tokens_range _tokens_range;
       };
