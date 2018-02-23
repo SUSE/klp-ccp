@@ -1155,7 +1155,7 @@ void _id_resolver::_handle_sou_ref(struct_or_union_ref &sour)
   const sou_decl_link *prev_decl = _lookup_sou_decl(sour.get_id_tok(),
 						    is_standalone_decl);
 
-  struct_or_union prev_tag_kind;
+  types::struct_or_union_kind prev_tag_kind;
   if (is_standalone_decl && prev_decl) {
     // It's a redeclaration, link it to the previous one.
     switch (prev_decl->get_target_kind()) {
@@ -1228,7 +1228,7 @@ void _id_resolver::_handle_sou_def(struct_or_union_def &soud)
 						    true);
   if (prev_decl) {
     // It's a redeclaration, link it to the previous one.
-    struct_or_union prev_tag_kind;
+    types::struct_or_union_kind  prev_tag_kind;
     struct_or_union_def *prev_def = nullptr;
     switch (prev_decl->get_target_kind()) {
     case sou_decl_link::target_kind::ref:

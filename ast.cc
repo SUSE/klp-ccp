@@ -2344,8 +2344,8 @@ bool storage_class_specifier::_process(const_processor<bool> &p) const
 
 
 type_qualifier::type_qualifier(const pp_tokens_range &tr,
-			       const type_qualifier_type &tqt) noexcept
-  : ast_entity(tr), _tqt(tqt)
+			       const types::qualifier q) noexcept
+  : ast_entity(tr), _q(q)
 {}
 
 type_qualifier::~type_qualifier() noexcept = default;
@@ -2765,11 +2765,11 @@ bool struct_declaration_c99::_process(const_processor<bool> &p) const
 
 unnamed_struct_or_union::
 unnamed_struct_or_union(const pp_tokens_range &tr,
-			const struct_or_union sou,
+			const types::struct_or_union_kind souk,
 			struct_declaration_list* &&sdl,
 			attribute_specifier_list* &&asl_before,
 			attribute_specifier_list* &&asl_after) noexcept
-  : ast_entity(tr), _sou(sou), _sdl(mv_p(std::move(sdl))),
+  : ast_entity(tr), _souk(souk), _sdl(mv_p(std::move(sdl))),
     _asl_before(mv_p(std::move(asl_before))),
     _asl_after(mv_p(std::move(asl_after)))
 {
@@ -3052,35 +3052,35 @@ struct_or_union_def* sou_decl_list_node::find_definition() const noexcept
 
 
 struct_or_union_def::struct_or_union_def(const pp_tokens_range &tr,
-					 const struct_or_union sou,
+					 const types::struct_or_union_kind souk,
 					 const pp_token_index id_tok,
 					 struct_declaration_list* &&sdl,
 					 attribute_specifier_list* &&asl_before,
 					 attribute_specifier_list* &&asl_after)
   noexcept
-  : struct_or_union_def(tr, sou, id_tok, std::move(sdl),
+  : struct_or_union_def(tr, souk, id_tok, std::move(sdl),
 			std::move(asl_before), std::move(asl_after), true)
 {}
 
 struct_or_union_def::struct_or_union_def(const pp_tokens_range &tr,
-					 const struct_or_union sou,
+					 const types::struct_or_union_kind souk,
 					 struct_declaration_list* &&sdl,
 					 attribute_specifier_list* &&asl_before,
 					 attribute_specifier_list* &&asl_after)
   noexcept
-  : struct_or_union_def(tr, sou, 0, std::move(sdl),
+  : struct_or_union_def(tr, souk, 0, std::move(sdl),
 			std::move(asl_before), std::move(asl_after), false)
 {}
 
 struct_or_union_def::struct_or_union_def(const pp_tokens_range &tr,
-					 const struct_or_union sou,
+					 const types::struct_or_union_kind souk,
 					 const pp_token_index id_tok,
 					 struct_declaration_list* &&sdl,
 					 attribute_specifier_list* &&asl_before,
 					 attribute_specifier_list* &&asl_after,
 					 const bool id_tok_valid) noexcept
 
-  : type_specifier(tr), _sou(sou), _id_tok(id_tok),
+  : type_specifier(tr), _souk(souk), _id_tok(id_tok),
     _sdl(mv_p(std::move(sdl))), _asl_before(mv_p(std::move(asl_before))),
     _asl_after(mv_p(std::move(asl_after))),
     _decl_list_node(*this), _id_tok_valid(id_tok_valid)
@@ -3150,11 +3150,11 @@ bool struct_or_union_def::_process(const_processor<bool> &p) const
 
 
 struct_or_union_ref::struct_or_union_ref(const pp_tokens_range &tr,
-					 const struct_or_union sou,
+					 const types::struct_or_union_kind souk,
 					 const pp_token_index id_tok,
 					 attribute_specifier_list* &&asl)
   noexcept
-  : type_specifier(tr), _sou(sou), _id_tok(id_tok),
+  : type_specifier(tr), _souk(souk), _id_tok(id_tok),
     _asl(mv_p(std::move(asl))), _decl_list_node(*this)
 {
   if (_asl)

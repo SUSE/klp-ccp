@@ -12,6 +12,7 @@
 #define YYDEBUG 1
 #endif
 
+#include "types.hh"
 #include "ast.hh"
 
 namespace suse {
@@ -30,6 +31,7 @@ namespace suse {
 }
 
 %code {
+using namespace suse::cp;
 using namespace suse::cp::ast;
 
 #define YYLLOC_DEFAULT(Cur, Rhs, N)				\
@@ -77,7 +79,7 @@ static void empty(pp_tokens_range &loc)
   suse::cp::ast::assign_op assign_op;
   suse::cp::ast::binary_op binary_op;
   suse::cp::ast::unary_op_pre unary_op_pre;
-  suse::cp::ast::struct_or_union struct_or_union;
+  suse::cp::types::struct_or_union_kind struct_or_union_kind;
 
   suse::cp::ast::expr *expr;
   suse::cp::ast::string_literal *string_literal;
@@ -141,7 +143,7 @@ static void empty(pp_tokens_range &loc)
 %destructor {} <assign_op>
 %destructor {} <binary_op>
 %destructor {} <unary_op_pre>
-%destructor {} <struct_or_union>
+%destructor {} <struct_or_union_kind>
 %destructor { delete $$; } <*>
 
 /* keyword tokens */
@@ -317,7 +319,7 @@ static void empty(pp_tokens_range &loc)
 %type <expr_list>	expression_list_opt
 %type <expr_list>	expression_list
 %type <type_specifier>	struct_or_union_specifier
-%type <struct_or_union>	struct_or_union
+%type <struct_or_union_kind>	struct_or_union
 %type <token_index>	id_or_tdid
 %type <struct_declaration_list>	struct_declaration_list_opt
 %type <struct_declaration_list>	struct_declaration_list
@@ -685,11 +687,11 @@ type_specifier_no_tdid:
 
 type_qualifier:
 	TOK_KW_CONST
-	  { $$ = new type_qualifier(@$, type_qualifier_type::tqt_const); }
+	  { $$ = new type_qualifier(@$, types::qualifier::q_const); }
 	| TOK_KW_RESTRICT
-	  { $$ = new type_qualifier(@$, type_qualifier_type::tqt_restrict); }
+	  { $$ = new type_qualifier(@$, types::qualifier::q_restrict); }
 	| TOK_KW_VOLATILE
-	  { $$ = new type_qualifier(@$, type_qualifier_type::tqt_volatile); }
+	  { $$ = new type_qualifier(@$, types::qualifier::q_volatile); }
 ;
 
 function_specifier:
@@ -780,9 +782,9 @@ struct_or_union_specifier:
 
 struct_or_union:
 	TOK_KW_STRUCT
-	  { $$ = struct_or_union::sou_struct; }
+	  { $$ = types::struct_or_union_kind::souk_struct; }
 	| TOK_KW_UNION
-	  { $$ = struct_or_union::sou_union; }
+	  { $$ = types::struct_or_union_kind::souk_union; }
 ;
 
 id_or_tdid:

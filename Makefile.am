@@ -30,6 +30,7 @@ noinst_HEADERS =			\
 	target_float.hh		\
 	target_int.hh			\
 	type_set.hh			\
+	types.hh			\
 	used_macros.hh			\
 	used_macro_undefs.hh
 

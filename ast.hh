@@ -11,6 +11,7 @@
 #include "pp_tokens.hh"
 #include "code_remarks.hh"
 #include "code_remark.hh"
+#include "types.hh"
 
 #ifdef DEBUG_PARSER
 #include <iostream>
@@ -1510,9 +1511,12 @@ namespace suse
 
       public:
 	type_qualifier(const pp_tokens_range &tr,
-		       const type_qualifier_type &tqt) noexcept;
+		       const types::qualifier q) noexcept;
 
 	virtual ~type_qualifier() noexcept override;
+
+	types::qualifier get_kind() const noexcept
+	{ return _q; }
 
       private:
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
@@ -1522,7 +1526,7 @@ namespace suse
 	virtual bool _process(processor<bool> &p) override;
 	virtual bool _process(const_processor<bool> &p) const override;
 
-	type_qualifier_type _tqt;
+	types::qualifier _q;
       };
 
       class type_qualifier_list final : public ast_entity<type_qualifier_list>
@@ -1716,12 +1720,6 @@ namespace suse
 	struct_declarator_list &_sdl;
       };
 
-      enum class struct_or_union
-      {
-	sou_struct,
-	sou_union,
-      };
-
       class unnamed_struct_or_union final
 	: public ast_entity<unnamed_struct_or_union>
       {
@@ -1729,7 +1727,7 @@ namespace suse
 	typedef type_set<struct_declaration_unnamed_sou> parent_types;
 
 	unnamed_struct_or_union(const pp_tokens_range &tr,
-				const struct_or_union sou,
+				const types::struct_or_union_kind souk,
 				struct_declaration_list* &&sdl,
 				attribute_specifier_list* &&asl_before,
 				attribute_specifier_list* &&asl_after) noexcept;
@@ -1744,7 +1742,7 @@ namespace suse
 	virtual bool _process(processor<bool> &p) override;
 	virtual bool _process(const_processor<bool> &p) const override;
 
-	struct_or_union _sou;
+	types::struct_or_union_kind _souk;
 	struct_declaration_list *_sdl;
 	attribute_specifier_list *_asl_before;
 	attribute_specifier_list *_asl_after;
@@ -1855,14 +1853,14 @@ namespace suse
       {
       public:
 	struct_or_union_def(const pp_tokens_range &tr,
-			    const struct_or_union sou,
+			    const types::struct_or_union_kind souk,
 			    const pp_token_index id_tok,
 			    struct_declaration_list* &&sdl,
 			    attribute_specifier_list* &&asl_before,
 			    attribute_specifier_list* &&asl_after) noexcept;
 
 	struct_or_union_def(const pp_tokens_range &tr,
-			    const struct_or_union sou,
+			    const types::struct_or_union_kind souk,
 			    struct_declaration_list* &&sdl,
 			    attribute_specifier_list* &&asl_before,
 			    attribute_specifier_list* &&asl_after) noexcept;
@@ -1878,15 +1876,15 @@ namespace suse
 	  return _id_tok;
 	}
 
-	struct_or_union get_tag_kind() const noexcept
-	{ return _sou; }
+	types::struct_or_union_kind get_tag_kind() const noexcept
+	{ return _souk; }
 
 	sou_decl_list_node& get_decl_list_node() noexcept
 	{ return _decl_list_node; }
 
       private:
 	struct_or_union_def(const pp_tokens_range &tr,
-			    const struct_or_union sou,
+			    const types::struct_or_union_kind souk,
 			    const pp_token_index id_tok,
 			    struct_declaration_list* &&sdl,
 			    attribute_specifier_list* &&asl_before,
@@ -1900,7 +1898,7 @@ namespace suse
 	virtual bool _process(processor<bool> &p) override;
 	virtual bool _process(const_processor<bool> &p) const override;
 
-	struct_or_union _sou;
+	types::struct_or_union_kind _souk;
 	pp_token_index _id_tok;
 	struct_declaration_list *_sdl;
 	attribute_specifier_list *_asl_before;
@@ -1913,7 +1911,7 @@ namespace suse
       {
       public:
 	struct_or_union_ref(const pp_tokens_range &tr,
-			    const struct_or_union sou,
+			    const types::struct_or_union_kind souk,
 			    const pp_token_index id_tok,
 			    attribute_specifier_list* &&asl) noexcept;
 
@@ -1922,8 +1920,8 @@ namespace suse
 	pp_token_index get_id_tok() const noexcept
 	{ return _id_tok; }
 
-	struct_or_union get_tag_kind() const noexcept
-	{ return _sou; }
+	types::struct_or_union_kind get_tag_kind() const noexcept
+	{ return _souk; }
 
 	sou_decl_list_node& get_decl_list_node() noexcept
 	{ return _decl_list_node; }
@@ -1941,7 +1939,7 @@ namespace suse
 	virtual bool _process(processor<bool> &p) override;
 	virtual bool _process(const_processor<bool> &p) const override;
 
-	struct_or_union _sou;
+	types::struct_or_union_kind _souk;
 	pp_token_index _id_tok;
 	attribute_specifier_list *_asl;
 	sou_decl_list_node _decl_list_node;
