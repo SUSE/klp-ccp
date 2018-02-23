@@ -17,6 +17,7 @@ noinst_HEADERS =			\
 	header_resolver.hh		\
 	macro.hh			\
 	macro_undef.hh			\
+	mp_arithmetic.hh		\
 	offset_to_line_col_map.hh	\
 	parse_except.hh		\
 	path.hh			\
@@ -26,6 +27,8 @@ noinst_HEADERS =			\
 	pp_tokenizer.hh		\
 	preprocessor.hh		\
 	semantic_except.hh		\
+	target_float.hh		\
+	target_int.hh			\
 	type_set.hh			\
 	used_macros.hh			\
 	used_macro_undefs.hh
@@ -43,6 +46,7 @@ libcp_a_SOURCES =			\
 	header_resolver.cc		\
 	macro.cc			\
 	macro_undef.cc			\
+	mp_arithmetic.cc		\
 	offset_to_line_col_map.cc	\
 	parse_except.cc		\
 	path.cc			\
@@ -52,10 +56,13 @@ libcp_a_SOURCES =			\
 	pp_tokenizer.cc		\
 	preprocessor.cc		\
 	semantic_except.cc		\
+	target_float.cc		\
+	target_int.cc			\
 	used_macros.cc			\
 	used_macro_undefs.cc
 
-check_PROGRAMS = cpp_tokenize normalize_path dirname cpp cparse
+check_PROGRAMS = cpp_tokenize normalize_path dirname cpp cparse \
+	test_mp_arithmetic test_target_int test_target_float
 
 cpp_tokenize_SOURCES = cpp_tokenize.cc
 cpp_tokenize_LDADD = libcp.a
@@ -69,6 +76,14 @@ dirname_LDADD = libcp.a
 cpp_SOURCES = cpp.cc
 cpp_LDADD = libcp.a
 
-
 cparse_SOURCES = cparse.cc
 cparse_LDADD = libcp.a
+
+test_mp_arithmetic_SOURCES = test_mp_arithmetic.cc
+test_mp_arithmetic_LDADD = libcp.a
+
+test_target_int_SOURCES = test_target_int.cc
+test_target_int_LDADD = libcp.a
+
+test_target_float_SOURCES = test_target_float.cc
+test_target_float_LDADD = libcp.a
