@@ -128,6 +128,29 @@ namespace suse
 	template<typename boundary_type_set, typename callable_type>
 	void for_each_ancestor(callable_type &&c);
 
+	template <typename callable_type>
+	void process_parent(callable_type &&c) const;
+
+	template <typename parent_type>
+	const parent_type& get_unique_parent() const noexcept
+	{
+	  static_assert((derived::parent_types::size() == 1 &&
+			 derived::parent_types::template is_member<parent_type>()),
+			"parent type not unique");
+	  assert(_parent);
+	  return dynamic_cast<const parent_type&>(*_parent);
+	}
+
+	template <typename parent_type>
+	parent_type& get_unique_parent() noexcept
+	{
+	  static_assert((derived::parent_types::size() == 1 &&
+			 derived::parent_types::template is_member<parent_type>()),
+			"parent type not unique");
+	  assert(_parent);
+	  return dynamic_cast<parent_type&>(*_parent);
+	}
+
 	template<typename parent_type>
 	void _set_parent(parent_type &p) noexcept
 	{

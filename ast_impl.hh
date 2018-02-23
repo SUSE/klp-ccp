@@ -265,6 +265,22 @@ namespace suse
 	}
       }
 
+      template<typename derived>
+      template <typename callable_type>
+      void ast_entity<derived>::process_parent(callable_type &&c) const
+      {
+	typedef typename derived::parent_types parent_types;
+	auto &&_c =
+	  wrap_callables<default_action_unreachable<void, parent_types>
+			 ::template type>
+	  (std::forward<callable_type>(c));
+	if (parent_types::size() < impl::double_dispatch_threshold) {
+	  parent_types::cast_and_call(_c, *_parent);
+	} else {
+	  auto &&processor = make_processor<void>(_c);
+	  _parent->_process(processor);
+	}
+      }
 
       template <typename handled_types, typename callables_wrapper_type>
       void ast::for_each_dfs_po(callables_wrapper_type &&c)
