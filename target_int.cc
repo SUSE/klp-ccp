@@ -314,13 +314,18 @@ bool target_int::is_negative() const noexcept
   return _is_signed && _is_negative();
 }
 
+mpa::limbs::size_type target_int::min_required_width() const noexcept
+{
+  return is_negative() ? (_limbs.width() - _limbs.clrsb()) : _limbs.ffs();
+}
+
 mpa::limbs::size_type target_int::_to_size_type() const
 {
   if (_is_signed && _is_negative()) {
     throw std::overflow_error("negative size_type");
   }
 
-  return _limbs.to_size_type();
+  return _limbs.to_type<mpa::limbs::size_type>();
 }
 
 void target_int::_assert_same_prec_and_signedness(const target_int &op)

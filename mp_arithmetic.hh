@@ -6,6 +6,7 @@
 #include <utility>
 #include <initializer_list>
 #include <string>
+#include <stdexcept>
 
 namespace suse
 {
@@ -195,8 +196,15 @@ namespace suse
 	bool are_all_set_below(const size_type i) const noexcept;
 
 	static limbs from_size_type(size_type value);
-	bool fits_into_size_type() const noexcept;
-	size_type to_size_type() const;
+
+	template<typename T>
+	bool fits_into_type() const noexcept;
+
+	template<typename T>
+	T to_type() const;
+
+	limbs align(const mpa::limbs::size_type log2_align) const;
+	limbs align_down(const mpa::limbs::size_type log2_align) const;
 
 	static constexpr size_type
 	width_to_size(const size_type width) noexcept
@@ -213,6 +221,31 @@ namespace suse
 
 	_limbs_type _limbs;
       };
+
+      template<typename T>
+      bool limbs::fits_into_type() const noexcept
+      {
+	const size_type width = std::numeric_limits<T>::digits;
+	return !is_any_set_at_or_above(width);
+      }
+
+      template<typename T>
+      T limbs::to_type() const
+      {
+	if (!fits_into_type<T>()) {
+	  throw std::overflow_error("type overflow");
+	}
+
+	T r = 0;
+	const size_type width = std::numeric_limits<size_type>::digits;
+	for (limbs::size_type n = 0, i = 0;
+	     n < width && i < _limbs.size();
+	     n += limb::width, ++i) {
+	  r |= static_cast<size_type>(_limbs[i].value()) << n;
+	}
+
+	return r;
+      }
     }
   }
 }

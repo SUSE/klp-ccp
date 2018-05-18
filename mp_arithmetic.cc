@@ -1,6 +1,5 @@
 #include <cassert>
 #include <algorithm>
-#include <stdexcept>
 #include <array>
 #include "mp_arithmetic.hh"
 
@@ -959,27 +958,27 @@ limbs limbs::from_size_type(size_type value)
   return limbs(std::move(ls));
 }
 
-bool limbs::fits_into_size_type() const noexcept
+limbs limbs::align(const mpa::limbs::size_type log2_align) const
 {
-  const size_type width = std::numeric_limits<size_type>::digits;
-  return !is_any_set_at_or_above(width);
+  if (!log2_align)
+    return *this;
+
+  limbs align_add;
+  align_add.resize(width_to_size(log2_align));
+  align_add.set_bits_below(log2_align, true);
+
+  limbs result = *this + align_add;
+  result.set_bits_below(log2_align, false);
+
+  return result;
 }
 
-limbs::size_type limbs::to_size_type() const
+limbs limbs::align_down(const mpa::limbs::size_type log2_align) const
 {
-  if (!fits_into_size_type()) {
-    throw std::overflow_error("size_type overflow");
-  }
+  limbs result = *this;
+  result.set_bits_below(log2_align, false);
 
-  size_type r = 0;
-  const size_type width = std::numeric_limits<size_type>::digits;
-  for (limbs::size_type n = 0, i = 0;
-       n < width && i < _limbs.size();
-       n += limb::width, ++i) {
-    r |= static_cast<size_type>(_limbs[i].value()) << n;
-  }
-
-  return r;
+  return result;
 }
 
 limbs limbs::from_string(const std::string::const_iterator &begin,

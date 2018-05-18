@@ -334,7 +334,7 @@ target_int target_float::to_int(const mpa::limbs::size_type prec,
     e = e.complement();
     if (!(e.is_any_set_at_or_above
 	  (std::numeric_limits<mpa::limbs::size_type>::digits))) {
-      const mpa::limbs::size_type sr = e.to_size_type();
+      const mpa::limbs::size_type sr = e.to_type<mpa::limbs::size_type>();
       if (sr < _f_width) {
 	val = _f;
 	val = val.rshift(sr, false);
@@ -346,7 +346,7 @@ target_int target_float::to_int(const mpa::limbs::size_type prec,
 	 (std::numeric_limits<mpa::limbs::size_type>::digits))) {
       throw std::overflow_error("implementation limit exceeded");
     }
-    const mpa::limbs::size_type sl = e.to_size_type();
+    const mpa::limbs::size_type sl = e.to_type<mpa::limbs::size_type>();
     if (std::numeric_limits<mpa::limbs::size_type>::max() - sl < _f_width) {
       throw std::overflow_error("implementation limit exceeded");
     }
@@ -411,7 +411,7 @@ target_float target_float::_add(const target_float &op, const bool negate_op)
   const mpa::limbs::size_type e_diff =
       (!(_e_diff.is_any_set_at_or_above
 	 (std::numeric_limits<mpa::limbs::size_type>::digits)) ?
-       _e_diff.to_size_type() :
+       _e_diff.to_type<mpa::limbs::size_type>() :
        std::numeric_limits<mpa::limbs::size_type>::max());
   if (e_diff >= _f_width + 2) {
     return target_float(u._f_width, u._e_width,
@@ -569,7 +569,7 @@ void target_float::_normalize(const mpa::limbs::size_type f_width,
       std::numeric_limits<mpa::limbs::size_type>::max();
     if (!(new_e.is_any_set_at_or_above
 	  (std::numeric_limits<mpa::limbs::size_type>::digits))) {
-      shift = new_e.to_size_type();
+      shift = new_e.to_type<mpa::limbs::size_type>();
       if (shift < std::numeric_limits<mpa::limbs::size_type>::max()) {
 	shift += 1;
       }
