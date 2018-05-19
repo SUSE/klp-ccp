@@ -34,33 +34,33 @@ struct next_pow_of_two<0>
 
 
 template<unsigned int r, unsigned int val, typename = void>
-struct _static_ffs
+struct _static_fls
 {
   static constexpr unsigned int value = r;
 };
 
 template<unsigned int r, unsigned int val>
-struct _static_ffs<r, val,
+struct _static_fls<r, val,
 		   typename std::enable_if<(val >> (r + 1))>::type>
 {
-  static constexpr unsigned int value = _static_ffs<r + 1, val>::value;
+  static constexpr unsigned int value = _static_fls<r + 1, val>::value;
 };
 
 template<unsigned int val>
-struct static_ffs
+struct static_fls
 {
-  static constexpr unsigned int value = _static_ffs<0, val>::value + 1;
+  static constexpr unsigned int value = _static_fls<0, val>::value + 1;
 };
 
 template<>
-struct static_ffs<0>
+struct static_fls<0>
 {
   static constexpr unsigned int value = 0;
 };
 
 
 template<typename T>
-unsigned int ffs(T val)
+unsigned int fls(T val)
 {
   unsigned int r = 0;
 
@@ -80,7 +80,7 @@ unsigned int ffs(T val)
 
   // The general case
   for (int i =
-	static_ffs<next_pow_of_two<std::numeric_limits<T>::digits>::value / 2>
+	static_fls<next_pow_of_two<std::numeric_limits<T>::digits>::value / 2>
 		::value - 1;
        i >= 0; --i) {
     const unsigned int b = 1 << i;
@@ -158,7 +158,7 @@ offset_to_line_col_map::_append_encoded_offset(const std::streamoff off)
   }
 
   // General case
-  const unsigned int needed_payload_bits = ffs(off);
+  const unsigned int needed_payload_bits = fls(off);
   unsigned int needed_payload_bytes =
     needed_payload_bits / std::numeric_limits<unsigned char>::digits;
 
@@ -212,7 +212,7 @@ offset_to_line_col_map::_read_encoded_offset(_enc_map_type::const_iterator &it)
   const unsigned char header = *it++;
   unsigned int payload_bytes =
     (std::numeric_limits<unsigned char>::digits -
-     ffs(static_cast<unsigned char>(~header)));
+     fls(static_cast<unsigned char>(~header)));
   unsigned int payload_bits_in_header =
     std::numeric_limits<unsigned char>::digits - payload_bytes;
   payload_bits_in_header -= payload_bits_in_header ? 1 : 0;
