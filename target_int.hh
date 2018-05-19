@@ -64,14 +64,15 @@ namespace suse
 
       bool is_negative() const noexcept;
 
-    private:
-      void _assert_same_prec_and_signedness(const target_int &op)
-	const noexcept;
 
-      mpa::limbs::size_type _width() const noexcept
+      mpa::limbs::size_type width() const noexcept
       {
 	return _prec + _is_signed;
       }
+
+    private:
+      void _assert_same_prec_and_signedness(const target_int &op)
+	const noexcept;
 
       mpa::limbs::size_type _n_limbs() const noexcept;
 

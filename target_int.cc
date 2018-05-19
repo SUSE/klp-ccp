@@ -10,8 +10,8 @@ target_int::target_int(const mpa::limbs::size_type prec, const bool is_signed,
 {
   assert(prec);
   assert(_limbs.size() == _n_limbs());
-  assert(is_signed || !_limbs.is_any_set_at_or_above(_width()));
-  assert(!is_signed || _limbs.width() - _limbs.clrsb() <= _width());
+  assert(is_signed || !_limbs.is_any_set_at_or_above(width()));
+  assert(!is_signed || _limbs.width() - _limbs.clrsb() <= width());
 }
 
 target_int::target_int(const target_int &ti)
@@ -117,7 +117,7 @@ target_int target_int::operator-(const target_int &op) const
       ls.test_bit(_prec) != _is_negative())
     throw std::overflow_error("integer overflow");
 
-  assert(!_is_signed || ls.width() - ls.clrsb() <= _width());
+  assert(!_is_signed || ls.width() - ls.clrsb() <= width());
 
   ls.resize(_n_limbs());
   _clamp_unsigned(ls);
@@ -261,12 +261,12 @@ target_int target_int::operator|(const target_int &op) const
 target_int target_int::operator<<(const target_int &op) const
 {
   const mpa::limbs::size_type distance = op._to_size_type();
-  if (distance >= _width())
+  if (distance >= width())
     throw std::overflow_error("integer overflow");
 
   mpa::limbs ls = _limbs.lshift(distance);
   if (_is_signed &&
-      (ls.width() - ls.clrsb() > _width() ||
+      (ls.width() - ls.clrsb() > width() ||
        _is_negative() != ls.test_bit(_prec))) {
     throw std::overflow_error("integer overflow");
   }
@@ -277,7 +277,7 @@ target_int target_int::operator<<(const target_int &op) const
 target_int target_int::operator>>(const target_int &op) const
 {
   const mpa::limbs::size_type distance = op._to_size_type();
-  if (distance >= _width())
+  if (distance >= width())
     throw std::overflow_error("integer overflow");
 
   const bool fill_value = (_is_signed && _is_negative()) ? true : false;
@@ -337,7 +337,7 @@ void target_int::_assert_same_prec_and_signedness(const target_int &op)
 
 mpa::limbs::size_type target_int::_n_limbs() const noexcept
 {
-  return mpa::limbs::width_to_size(_width());
+  return mpa::limbs::width_to_size(width());
 }
 
 bool target_int::_is_negative() const noexcept
