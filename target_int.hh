@@ -16,6 +16,8 @@ namespace suse
       target_int(const target_int &ti);
       target_int(target_int &&ti);
 
+      target_int& operator=(target_int &&rhs);
+
       bool operator==(const target_int &op) const noexcept;
 
       bool operator!=(const target_int &op) const noexcept
@@ -85,9 +87,9 @@ namespace suse
 
       mpa::limbs::size_type _to_size_type() const;
 
-      const mpa::limbs::size_type _prec;
-      const bool _is_signed;
-      const mpa::limbs _limbs;
+      mpa::limbs::size_type _prec;
+      bool _is_signed;
+      mpa::limbs _limbs;
     };
   }
 }

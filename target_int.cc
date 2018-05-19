@@ -22,6 +22,17 @@ target_int::target_int(target_int &&ti)
   : _prec(ti._prec), _is_signed(ti._is_signed), _limbs(std::move(ti._limbs))
 {}
 
+target_int& target_int::operator=(target_int &&rhs)
+{
+  if (this == &rhs)
+    return *this;
+
+  _prec = rhs._prec;
+  _is_signed = rhs._is_signed;
+  _limbs = std::move(rhs._limbs);
+  return *this;
+}
+
 bool target_int::operator==(const target_int &op) const noexcept
 {
   _assert_same_prec_and_signedness(op);
