@@ -67,6 +67,9 @@ namespace suse
 
       bool is_negative() const noexcept;
 
+      bool is_signed() const noexcept
+      { return _is_signed; }
+
       mpa::limbs::size_type min_required_width() const noexcept;
 
       mpa::limbs::size_type width() const noexcept
