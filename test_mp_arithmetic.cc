@@ -87,13 +87,13 @@ static int limb_test7()
 
 static int limb_test8()
 {
-  if (limb(0).ffs() != 0)
+  if (limb(0).fls() != 0)
     return -1;
 
-  if (limb(1).ffs() != 1)
+  if (limb(1).fls() != 1)
     return -2;
 
-  if ((~limb(0)).ffs() != limb::width)
+  if ((~limb(0)).fls() != limb::width)
     return -3;
 
   return 0;
@@ -661,11 +661,11 @@ static int limbs_test23()
     limbs ls;
     ls.resize(3);
 
-    if (ls.ffs())
+    if (ls.fls())
       return -1;
 
     ls.set_bits_below(i + 1, true);
-    if (ls.ffs() != i + 1)
+    if (ls.fls() != i + 1)
       return -2;
   }
 

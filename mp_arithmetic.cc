@@ -5,7 +5,7 @@
 
 using namespace suse::cp::mpa;
 
-unsigned int limb::ffs() const noexcept
+unsigned int limb::fls() const noexcept
 {
   // Width must be a power of two
   static_assert((width & -width) == width,
@@ -31,7 +31,7 @@ unsigned int limb::ffs() const noexcept
 
 unsigned int limb::clz() const noexcept
 {
-  return width - ffs();
+  return width - fls();
 }
 
 unsigned int limb::clrsb() const noexcept
@@ -829,7 +829,7 @@ void limbs::resize(const size_type n)
   _limbs.resize(n);
 }
 
-limbs::size_type limbs::ffs() const noexcept
+limbs::size_type limbs::fls() const noexcept
 {
   size_type n;
   for (n = size(); n > 0; --n) {
@@ -841,7 +841,7 @@ limbs::size_type limbs::ffs() const noexcept
     return 0;
 
   --n;
-  return n * limb::width + _limbs[n].ffs();
+  return n * limb::width + _limbs[n].fls();
 }
 
 limbs::size_type limbs::clrsb() const noexcept

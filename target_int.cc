@@ -327,7 +327,7 @@ bool target_int::is_negative() const noexcept
 
 mpa::limbs::size_type target_int::min_required_width() const noexcept
 {
-  return is_negative() ? (_limbs.width() - _limbs.clrsb()) : _limbs.ffs();
+  return is_negative() ? (_limbs.width() - _limbs.clrsb()) : _limbs.fls();
 }
 
 mpa::limbs::size_type target_int::_to_size_type() const

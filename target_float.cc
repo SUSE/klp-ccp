@@ -136,16 +136,16 @@ target_float target_float::operator/(const target_float &op) const
     return _create_inf(_f_width, _e_width, _is_negative ^ op._is_negative);
   }
 
-  // Let n = op._f.ffs(), r = this->_f.ffs().
+  // Let n = op._f.fls(), r = this->_f.fls().
   // Set s = _f_width + 2 + n - r
-  // It follows that 2^s * this->_f will have its ffs() equal to
+  // It follows that 2^s * this->_f will have its fls() equal to
   // s + r = _f_width + 2 + n.
   // Dividing it by op._f will yield an integer with
-  // its ffs() being either of _f_width + 2 + 1 or _f_width + 2
+  // its fls() being either of _f_width + 2 + 1 or _f_width + 2
   // which is enough for rounding.
-  const mpa::limbs::size_type n = op._f.ffs();
+  const mpa::limbs::size_type n = op._f.fls();
   assert(n && n <= _f_width);
-  const mpa::limbs::size_type r = _f.ffs();
+  const mpa::limbs::size_type r = _f.fls();
   assert(r && r <= _f_width);
   const mpa::limbs::size_type s = _f_width + 2 + n - r;
   mpa::limbs u = _f;
@@ -194,7 +194,7 @@ target_float target_float::from_base10_exp(const mpa::limbs::size_type f_width,
   mpa::limbs v;
   if (e10) {
     v = ten;
-    for (mpa::limbs::size_type i = e10.ffs() - 1; i > 0; --i) {
+    for (mpa::limbs::size_type i = e10.fls() - 1; i > 0; --i) {
       v = v * v;
       if (e10.test_bit(i - 1))
 	v = v * ten;
@@ -210,16 +210,16 @@ target_float target_float::from_base10_exp(const mpa::limbs::size_type f_width,
     v = mpa::limbs({1});
 
   // Calculate their quotient, in analogy to the floating point division
-  // Let n = v.ffs(), r = u.ffs().
+  // Let n = v.fls(), r = u.fls().
   // Set s = f_width + 2 + n - r
-  // It follows that 2^s * u will have its ffs() equal to
+  // It follows that 2^s * u will have its fls() equal to
   // s + r = f_width + 2 + n.
   // Dividing it by v will yield an integer with
-  // its ffs() being either of f_width + 2 + 1 or f_width + 2
+  // its fls() being either of f_width + 2 + 1 or f_width + 2
   // which is enough for rounding.
-  const mpa::limbs::size_type n = v.ffs();
+  const mpa::limbs::size_type n = v.fls();
   assert(n);
-  const mpa::limbs::size_type r = u.ffs();
+  const mpa::limbs::size_type r = u.fls();
   assert(r);
   const mpa::limbs::size_type s = f_width + 2 + n - r;
   u.resize(mpa::limbs::width_to_size(s + r));
@@ -263,7 +263,7 @@ target_float target_float::from_base2_exp(const mpa::limbs::size_type f_width,
   mpa::limbs frac_width = mpa::limbs::from_size_type(f_width - 1);
 
   const mpa::limbs::size_type required_e2_width =
-    ((std::max(std::max(frac_width.ffs(), bias.ffs()),
+    ((std::max(std::max(frac_width.fls(), bias.fls()),
 	       e2.width() ? e2.width() - e2.clrsb() - 1 : 0))
      + 3);
 
@@ -493,7 +493,7 @@ void target_float::_normalize(const mpa::limbs::size_type f_width,
 {
   // Search for the significand's end, i.e. set significand_end to
   // point after the highest set bit.
-  mpa::limbs::size_type significand_end = f.ffs();
+  mpa::limbs::size_type significand_end = f.fls();
   if (!significand_end) {
     e.resize(mpa::limbs::width_to_size(e_width));
     f.resize(mpa::limbs::width_to_size(f_width));
@@ -542,7 +542,7 @@ void target_float::_normalize(const mpa::limbs::size_type f_width,
     const mpa::limbs rshift =
       mpa::limbs::from_size_type(significand_end - f_width);
     const mpa::limbs::size_type required_e_width =
-      std::max(rshift.ffs(), e.width() ? e.width() - e.clrsb() - 1 : 0) + 2;
+      std::max(rshift.fls(), e.width() ? e.width() - e.clrsb() - 1 : 0) + 2;
     if (e.width() < required_e_width) {
       const mpa::limbs::size_type old_e_width = e.width();
       e.resize(mpa::limbs::width_to_size(std::max(required_e_width, e_width)));
