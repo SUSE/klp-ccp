@@ -55,7 +55,8 @@ namespace suse
       target_int operator<<(const target_int &op) const;
       target_int operator>>(const target_int &op) const;
 
-      target_int convert(const unsigned int prec, const bool is_signed) const;
+      target_int convert(const mpa::limbs::size_type prec,
+			 const bool is_signed) const;
 
       const mpa::limbs& get_limbs() const noexcept
       {

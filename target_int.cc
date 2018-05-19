@@ -285,7 +285,7 @@ target_int target_int::operator>>(const target_int &op) const
   return target_int(_prec, _is_signed, std::move(ls));
 }
 
-target_int target_int::convert(const unsigned int prec,
+target_int target_int::convert(const mpa::limbs::size_type prec,
 			       const bool is_signed) const
 {
   assert(prec);
