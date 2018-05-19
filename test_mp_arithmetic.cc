@@ -101,6 +101,20 @@ static int limb_test8()
 
 static int limb_test9()
 {
+  if (limb(0).ffs() != 0)
+    return -1;
+
+  if (limb(1).ffs() != 1)
+    return -2;
+
+  if ((~limb(0)).ffs() != 1)
+    return -3;
+
+  return 0;
+}
+
+static int limb_test10()
+{
   if (limb(0).clz() != limb::width)
     return -1;
 
@@ -113,7 +127,7 @@ static int limb_test9()
   return 0;
 }
 
-static int limb_test10()
+static int limb_test11()
 {
   if (limb(0).clrsb() != limb::width - 1)
     return -1;
@@ -678,6 +692,23 @@ static int limbs_test24()
     limbs ls;
     ls.resize(3);
 
+    if (ls.ffs())
+      return -1;
+
+    ls.set_bits_at_and_above(i, true);
+    if (ls.ffs() != i + 1)
+      return -3;
+  }
+
+  return 0;
+}
+
+static int limbs_test25()
+{
+  for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
+    limbs ls;
+    ls.resize(3);
+
     ls.set_bits_below(i, true);
     if (ls.clrsb() != 3 * limb::width - i - 1)
       return -1;
@@ -708,6 +739,7 @@ static const struct test_entry {
   TEST_ENTRY(limb_test8),
   TEST_ENTRY(limb_test9),
   TEST_ENTRY(limb_test10),
+  TEST_ENTRY(limb_test11),
   TEST_ENTRY(double_limb_test1),
   TEST_ENTRY(double_limb_test2),
   TEST_ENTRY(double_limb_test3),
@@ -738,6 +770,7 @@ static const struct test_entry {
   TEST_ENTRY(limbs_test22),
   TEST_ENTRY(limbs_test23),
   TEST_ENTRY(limbs_test24),
+  TEST_ENTRY(limbs_test25),
   { NULL, NULL }
 };
 

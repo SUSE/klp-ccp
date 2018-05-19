@@ -29,6 +29,14 @@ unsigned int limb::fls() const noexcept
   return r;
 }
 
+unsigned int limb::ffs() const noexcept
+{
+  // Clear any bits but the least significant one
+  limb_type tmp = _value & (-_value);
+
+  return limb{tmp}.fls();
+}
+
 unsigned int limb::clz() const noexcept
 {
   return width - fls();
@@ -842,6 +850,20 @@ limbs::size_type limbs::fls() const noexcept
 
   --n;
   return n * limb::width + _limbs[n].fls();
+}
+
+limbs::size_type limbs::ffs() const noexcept
+{
+  size_type n;
+  for (n = 0; n < size(); ++n) {
+    if (_limbs[n])
+      break;
+  }
+
+  if (n == size())
+    return 0;
+
+  return n * limb::width + _limbs[n].ffs();
 }
 
 limbs::size_type limbs::clrsb() const noexcept

@@ -66,6 +66,7 @@ namespace suse
 	}
 
 	unsigned int fls() const noexcept;
+	unsigned int ffs() const noexcept;
 	unsigned int clz() const noexcept;
 	unsigned int clrsb() const noexcept;
 
@@ -187,6 +188,7 @@ namespace suse
 	void resize(const size_type n);
 
 	size_type fls() const noexcept;
+	size_type ffs() const noexcept;
 	size_type clrsb() const noexcept;
 	bool test_bit(const size_type i) const noexcept;
 	void set_bit(const size_type i, const bool value) noexcept;
