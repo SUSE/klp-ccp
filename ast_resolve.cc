@@ -1483,15 +1483,6 @@ void _id_resolver::_resolve_id(expr_id &ei)
     return;
   }
 
-
-  // Accept resolving failure for the second slot of
-  // __builtin_offsetof(), i.e. the member designator.
-  for (const _ast_entity *p = ei.get_parent(); p->is_any_of<expr>();
-       p = p->get_parent()) {
-    if (p->is_any_of<expr_builtin_offsetof>())
-      return;
-  }
-
   // Resolving the identifier failed. Silently accept that for expr_id's
   // being part of attributes.
   for (const _ast_entity *p = ei.get_parent(); p; p = p->get_parent()) {

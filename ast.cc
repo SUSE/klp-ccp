@@ -635,10 +635,117 @@ bool expr_alignof_type_name::_process(const_processor<bool> &p) const
 }
 
 
-expr_builtin_offsetof::expr_builtin_offsetof(const pp_tokens_range &tr,
-					     type_name* &&tn,
-					     expr *&&member_designator)
-noexcept
+offset_member_designator::component::component(const pp_token_index member_tok)
+  noexcept
+  : _k(kind::k_member), _member_tok(member_tok)
+{}
+
+offset_member_designator::component::component(expr* const index_expr) noexcept
+  : _k(kind::k_array_subscript), _index_expr(index_expr)
+{}
+
+offset_member_designator::component::component(component &&c) noexcept
+  : _k(c._k)
+{
+  switch(_k) {
+  case kind::k_member:
+    _member_tok = c._member_tok;
+    break;
+
+  case kind::k_array_subscript:
+    _index_expr = c._index_expr;
+    c._index_expr = nullptr;
+    break;
+  }
+}
+
+offset_member_designator::component::~component() noexcept
+{
+  switch (_k) {
+  case kind::k_member:
+    break;
+
+  case kind::k_array_subscript:
+    if (_index_expr)
+      _index_expr->~expr();
+    break;
+  };
+}
+
+expr& offset_member_designator::component::get_index_expr() noexcept
+{
+  assert(_k == kind::k_array_subscript);
+  return *_index_expr;
+}
+
+offset_member_designator::
+offset_member_designator(const pp_token_index member_tok)
+  : ast_entity(pp_tokens_range{member_tok, member_tok + 1})
+{
+  _components.emplace_back(member_tok);
+}
+
+offset_member_designator::~offset_member_designator() noexcept = default;
+
+void offset_member_designator::extend(const pp_token_index member_tok)
+{
+  _components.emplace_back(member_tok);
+  _extend_tokens_range(pp_tokens_range{member_tok, member_tok + 1});
+}
+
+void offset_member_designator::extend(expr* &&index_expr)
+{
+  expr * const _index_expr = mv_p(std::move(index_expr));
+  try {
+    _components.emplace_back(_index_expr);
+  } catch (...) {
+    delete &_index_expr;
+    throw;
+  }
+  _index_expr->_set_parent(*this);
+  // Account for the trailing ']'.
+  const pp_tokens_range &tr = index_expr->get_tokens_range();
+  _extend_tokens_range(pp_tokens_range{tr.begin, tr.end + 1});
+}
+
+_ast_entity* offset_member_designator::_get_child(const size_t i) noexcept
+{
+  size_t j = 0;
+  for (auto &c : _components) {
+    if (c.get_kind() == component::kind::k_array_subscript) {
+      if (j == i)
+	return &c.get_index_expr();
+      ++j;
+    }
+  }
+
+  return nullptr;
+}
+
+void offset_member_designator::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+void offset_member_designator::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
+bool offset_member_designator::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool offset_member_designator::_process(const_processor<bool> &p) const
+{
+  return p(*this);
+}
+
+
+expr_builtin_offsetof::
+expr_builtin_offsetof(const pp_tokens_range &tr, type_name* &&tn,
+		      offset_member_designator* &&member_designator) noexcept
   : expr(tr), _tn(*mv_p(std::move(tn))),
     _member_designator(*mv_p(std::move(member_designator)))
 {

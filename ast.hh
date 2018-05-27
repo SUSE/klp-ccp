@@ -241,6 +241,7 @@ namespace suse
       class expr_unop_pre;
       class expr_sizeof_expr;
       class expr_alignof_expr;
+      class offset_member_designator;
       class expr_builtin_offsetof;
       class expr_builtin_va_arg;
       class expr_sizeof_type_name;
@@ -375,7 +376,7 @@ namespace suse
 	typedef type_set<expr_list,
 			 expr_cast, expr_unop_pre,
 			 expr_sizeof_expr, expr_alignof_expr,
-			 expr_builtin_offsetof, expr_array_subscript,
+			 offset_member_designator, expr_array_subscript,
 			 expr_func_invocation, expr_member_deref,
 			 expr_unop_post, expr_parenthesized, expr_comma,
 			 expr_assignment, expr_conditional, expr_binop,
@@ -666,11 +667,67 @@ namespace suse
 	type_name &_tn;
       };
 
+      class offset_member_designator
+	: public ast_entity<offset_member_designator>
+      {
+      public:
+	typedef type_set<expr_builtin_offsetof> parent_types;
+
+	offset_member_designator(const pp_token_index member_tok);
+
+	virtual ~offset_member_designator() noexcept override;
+
+	void extend(const pp_token_index member_tok);
+	void extend(expr* &&index_expr);
+
+      private:
+	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+
+	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
+	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
+
+	class component
+	{
+	public:
+	  enum class kind
+	  {
+	    k_member,
+	    k_array_subscript,
+	  };
+
+	  component(const pp_token_index member_tok) noexcept;
+	  component(expr* const index_expr) noexcept;
+
+	  component(const component&) = delete;
+	  component(component &&c) noexcept;
+
+	  ~component() noexcept;
+
+	  kind get_kind() const noexcept
+	  { return _k; }
+
+	  expr& get_index_expr() noexcept;
+
+	private:
+
+	  kind _k;
+	  union
+	  {
+	    pp_token_index _member_tok;
+	    expr *_index_expr;
+	  };
+	};
+
+	std::vector<component> _components;
+      };
+
       class expr_builtin_offsetof final : public expr
       {
       public:
 	expr_builtin_offsetof(const pp_tokens_range &tr, type_name* &&tn,
-			      expr *&&member_designator)
+			      offset_member_designator* &&member_designator)
 	  noexcept;
 
 	virtual ~expr_builtin_offsetof() noexcept override;
@@ -684,7 +741,7 @@ namespace suse
 	virtual bool _process(const_processor<bool> &p) const override;
 
 	type_name &_tn;
-	expr &_member_designator;
+	offset_member_designator &_member_designator;
       };
 
       class expr_builtin_types_compatible_p final : public expr

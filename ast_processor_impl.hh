@@ -108,6 +108,13 @@ namespace suse
       }
 
       template<typename ret_type, typename callable_type>
+      ret_type _processor<ret_type, callable_type>::
+      operator()(offset_member_designator &omd)
+      {
+	return _c(omd);
+      }
+
+      template<typename ret_type, typename callable_type>
       ret_type
       _processor<ret_type, callable_type>::operator()(expr_builtin_offsetof &e)
       {
@@ -889,6 +896,13 @@ namespace suse
       operator()(const expr_alignof_type_name &e)
       {
 	return _c(e);
+      }
+
+      template<typename ret_type, typename callable_type>
+      ret_type _const_processor<ret_type, callable_type>::
+      operator()(const offset_member_designator &omd)
+      {
+	return _c(omd);
       }
 
       template<typename ret_type, typename callable_type>

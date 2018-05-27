@@ -82,6 +82,7 @@ static void empty(pp_tokens_range &loc)
   suse::cp::types::struct_or_union_kind struct_or_union_kind;
 
   suse::cp::ast::expr *expr;
+  suse::cp::ast::offset_member_designator *offset_member_designator;
   suse::cp::ast::string_literal *string_literal;
   suse::cp::ast::expr_list *expr_list;
   suse::cp::ast::attribute *attribute;
@@ -433,6 +434,7 @@ static void empty(pp_tokens_range &loc)
 %type <expr>	cast_expression
 %type <expr>	unary_expression
 %type <unary_op_pre>	unary_operator
+%type <offset_member_designator>	offset_member_designator
 %type <expr>	postfix_expression
 %type <expr>	statement_expression
 %type <expr>	primary_expression
@@ -2173,7 +2175,7 @@ unary_expression:
 	  { $$ = new expr_alignof_expr(@$, std::move($2)); }
 	| TOK_KW_ALIGNOF TOK_LPAREN type_name TOK_RPAREN
 	  { $$ = new expr_alignof_type_name(@$, std::move($3)); }
-	| TOK_KW_BUILTIN_OFFSETOF TOK_LPAREN type_name TOK_COMMA expression TOK_RPAREN
+	| TOK_KW_BUILTIN_OFFSETOF TOK_LPAREN type_name TOK_COMMA offset_member_designator TOK_RPAREN
 	  { $$ = new expr_builtin_offsetof(@$, std::move($3), std::move($5)); }
 	| TOK_KW_BUILTIN_TYPES_COMPATIBLE_P TOK_LPAREN type_name TOK_COMMA type_name TOK_RPAREN
 	  { $$ = new expr_builtin_types_compatible_p(@$, std::move($3), std::move($5)); }
@@ -2192,6 +2194,15 @@ unary_operator:
 	  { $$ = unary_op_pre::bin_neg; }
 	| TOK_OP_LOGICAL_NOT
 	  { $$ = unary_op_pre::logical_not; }
+;
+
+offset_member_designator:
+	TOK_IDENTIFIER
+	  { $$ = new offset_member_designator($1); }
+	| offset_member_designator TOK_DOT TOK_IDENTIFIER
+	  { $$ = MV_P($1); $$->extend($3); }
+	| offset_member_designator TOK_LBRACKET expression TOK_RBRACKET
+	  { $$ = MV_P($1); $$->extend(std::move($3)); }
 ;
 
 postfix_expression:
