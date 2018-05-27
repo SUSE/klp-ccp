@@ -1446,13 +1446,12 @@ _id_resolver::_try_resolve_pending_linkages(direct_declarator_id &ddid,
 
 void _id_resolver::_resolve_id(expr_id &ei)
 {
-  assert(ei.get_parent());
-
   // In case of the expr_id representing the identifier following a
   // goto keyword, try to resolve to a label first.
-  if (ei.get_parent()->is_any_of<stmt_goto>()) {
-    for (_ast_entity *p = ei.get_parent()->get_parent();
-	 p; p = p->get_parent()) {
+  _ast_entity * const non_parens_parent = ei.get_non_parens_parent();
+  assert(non_parens_parent);
+  if (non_parens_parent->is_any_of<stmt_goto>()) {
+    for (_ast_entity *p = non_parens_parent; p; p = p->get_parent()) {
       stmt_compound *sc = dynamic_cast<stmt_compound*>(p);
       if (sc) {
 	stmt_labeled *sl = sc->lookup_label(_ast, ei.get_id_tok());
@@ -1464,14 +1463,12 @@ void _id_resolver::_resolve_id(expr_id &ei)
     }
   }
 
-
   // Otherwise, search "ordinary" identifiers.
   const expr_id::resolved *resolved_id = _lookup_id(ei.get_id_tok());
   if (resolved_id) {
     ei.set_resolved(*resolved_id);
     return;
   }
-
 
   // Otherwise check whether the identifier refers to a builtin
   // and if so, report that fact.
@@ -1490,7 +1487,7 @@ void _id_resolver::_resolve_id(expr_id &ei)
       return;
   }
 
-  if (ei.get_parent()->is_any_of<expr_func_invocation>()) {
+  if (non_parens_parent->is_any_of<expr_func_invocation>()) {
     // warn only about calls to undeclared functions
     code_remark remark(code_remark::severity::warning,
 		       "identifier not declared",

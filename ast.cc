@@ -123,6 +123,55 @@ static pp_tokens_range tr_from_aes(const _ast_entity &ae1,
   };
 }
 
+const expr& expr::skip_parens_down() const noexcept
+{
+  return *this;
+}
+
+const _ast_entity* expr::skip_parens_up() const noexcept
+{
+  return this;
+}
+
+const _ast_entity* expr::skip_parens_up() noexcept
+{
+  return this;
+}
+
+
+const _ast_entity* expr::get_non_parens_parent() const noexcept
+{
+  const _ast_entity *p = this->get_parent();
+
+  if (!p)
+    return p;
+
+  p->process<void, type_set<expr_parenthesized> >
+    (wrap_callables<default_action_nop>
+     ([&](const expr_parenthesized &ep) {
+       p = ep.skip_parens_up();
+      }));
+
+  return p;
+}
+
+_ast_entity* expr::get_non_parens_parent() noexcept
+{
+  _ast_entity *p = this->get_parent();
+
+  if (!p)
+    return p;
+
+  p->process<void, type_set<expr_parenthesized> >
+    (wrap_callables<default_action_nop>
+     ([&](expr_parenthesized &ep) {
+       p = ep.skip_parens_up();
+      }));
+
+  return p;
+}
+
+
 expr_comma::expr_comma(expr* &&l, expr* &&r) noexcept
   : expr(tr_from_aes(*l, *r)),
     _left(*mv_p(std::move(l))), _right(*mv_p(std::move(r)))
@@ -1397,6 +1446,53 @@ expr_parenthesized::expr_parenthesized(const pp_tokens_range &tr,
 expr_parenthesized::~expr_parenthesized() noexcept
 {
   delete &_e;
+}
+
+const expr& expr_parenthesized::skip_parens_down() const noexcept
+{
+  return _e;
+}
+
+const _ast_entity* expr_parenthesized::skip_parens_up() const noexcept
+{
+  const _ast_entity *cur = this->get_parent();
+  const _ast_entity *result = nullptr;
+
+  while(cur &&
+	cur->process<bool, type_set<expr_parenthesized, _ast_entity> >
+	(wrap_callables<default_action_unreachable<bool, type_set<> >::type>
+	 ([&](const expr_parenthesized &ep) {
+	    cur = ep.get_parent();
+	    return true;
+	  },
+	  [&](const _ast_entity &ae) {
+	    result = &ae;
+	    return false;
+	  })))
+    {}
+
+  return result;
+}
+
+_ast_entity* expr_parenthesized::skip_parens_up() noexcept
+{
+  _ast_entity *cur = this->get_parent();
+  _ast_entity *result = nullptr;
+
+  while(cur &&
+	cur->process<bool, type_set<expr_parenthesized, _ast_entity> >
+	(wrap_callables<default_action_unreachable<bool, type_set<> >::type>
+	 ([&](expr_parenthesized &ep) {
+	    cur = ep.get_parent();
+	    return true;
+	  },
+	  [&](_ast_entity &ae) {
+	    result = &ae;
+	    return false;
+	  })))
+    {}
+
+  return result;
 }
 
 _ast_entity* expr_parenthesized::_get_child(const size_t i) noexcept

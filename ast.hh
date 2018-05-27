@@ -399,6 +399,12 @@ namespace suse
 
 	virtual ~expr() noexcept = 0;
 
+	virtual const expr& skip_parens_down() const noexcept;
+	virtual const _ast_entity* skip_parens_up() const noexcept;
+	virtual const _ast_entity* skip_parens_up() noexcept;
+	const _ast_entity* get_non_parens_parent() const noexcept;
+	_ast_entity* get_non_parens_parent() noexcept;
+
       protected:
 	expr(const pp_tokens_range &tr) noexcept;
       };
@@ -1052,6 +1058,10 @@ namespace suse
 	expr_parenthesized(const pp_tokens_range &tr, expr* &&e) noexcept;
 
 	virtual ~expr_parenthesized() noexcept override;
+
+	virtual const expr& skip_parens_down() const noexcept override;
+	virtual const _ast_entity* skip_parens_up() const noexcept override;
+	virtual _ast_entity* skip_parens_up() noexcept override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
