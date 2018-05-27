@@ -1528,6 +1528,7 @@ void _id_resolver::_resolve_id(type_specifier_tdid &ts_tdid)
   static std::set<std::string> builtin_tdids =
     _init_builtin_ids_set(_builtin_tdids);
   if (builtin_tdids.count(id_tok.get_value())) {
+    ts_tdid.set_builtin();
     return;
   }
 
