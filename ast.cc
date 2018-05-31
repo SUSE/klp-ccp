@@ -753,7 +753,7 @@ void offset_member_designator::extend(expr* &&index_expr)
   }
   _index_expr->_set_parent(*this);
   // Account for the trailing ']'.
-  const pp_tokens_range &tr = index_expr->get_tokens_range();
+  const pp_tokens_range &tr = _index_expr->get_tokens_range();
   _extend_tokens_range(pp_tokens_range{tr.begin, tr.end + 1});
 }
 
