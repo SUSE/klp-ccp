@@ -728,7 +728,6 @@ EXTRA_DIST = \
 	inline-28.c \
 	inline-29.c \
 	inline-2.c \
-	inline2.c \
 	inline-30.c \
 	inline-31.c \
 	inline-32a.c \
