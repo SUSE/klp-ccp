@@ -1246,8 +1246,16 @@ expr_id::resolved::resolved(const builtin_tag&) noexcept
   : _kind(resolved_kind::builtin)
 {}
 
-expr_id::resolved::resolved(direct_declarator_id &ddid) noexcept
-  : _kind(resolved_kind::direct_declarator_id), _ddid(&ddid)
+expr_id::resolved::resolved(init_declarator &id) noexcept
+  : _kind(resolved_kind::init_declarator), _id(&id)
+{}
+
+expr_id::resolved::resolved(parameter_declaration_declarator &pdd) noexcept
+  : _kind(resolved_kind::parameter_declaration_declarator), _pdd(&pdd)
+{}
+
+expr_id::resolved::resolved(function_definition &fd) noexcept
+  : _kind(resolved_kind::function_definition), _fd(&fd)
 {}
 
 expr_id::resolved::resolved(stmt_labeled &sl) noexcept
@@ -1262,11 +1270,24 @@ expr_id::resolved::resolved(identifier_list &pil) noexcept
   : _kind(resolved_kind::in_param_id_list), _pil(&pil)
 {}
 
-direct_declarator_id& expr_id::resolved::get_direct_declarator_id()
-  const noexcept
+init_declarator& expr_id::resolved::get_init_declarator() const noexcept
 {
-  assert(_kind == resolved_kind::direct_declarator_id);
-  return *_ddid;
+  assert(_kind == resolved_kind::init_declarator);
+  return *_id;
+}
+
+parameter_declaration_declarator&
+expr_id::resolved::get_parameter_declaration_declarator() const noexcept
+{
+  assert(_kind == resolved_kind::parameter_declaration_declarator);
+  return *_pdd;
+}
+
+function_definition& expr_id::resolved::get_function_definition()
+const noexcept
+{
+  assert(_kind == resolved_kind::function_definition);
+  return *_fd;
 }
 
 stmt_labeled& expr_id::resolved::get_stmt_labeled() const noexcept
@@ -2117,77 +2138,21 @@ direct_declarator::direct_declarator(const pp_tokens_range &tr) noexcept
 direct_declarator::~direct_declarator() noexcept = default;
 
 
-direct_declarator_id::context::context() noexcept
-: _kind(context_kind::unknown)
-{}
-
-direct_declarator_id::context::context(struct_declarator &sd) noexcept
-  : _kind(context_kind::struct_decl), _sd(&sd)
-{}
-
-direct_declarator_id::context::context(parameter_declaration_declarator &pdd)
-  noexcept
-  : _kind(context_kind::parameter_decl), _pdd(&pdd)
-{}
-
-direct_declarator_id::context::context(init_declarator &id) noexcept
-  : _kind(context_kind::init_decl), _id(&id)
-{}
-
-direct_declarator_id::context::context(function_definition &fd) noexcept
-  : _kind(context_kind::function_def), _fd(&fd)
-{}
-
-struct_declarator& direct_declarator_id::context::get_struct_declarator()
-  const noexcept
-{
-  assert(_kind == context_kind::struct_decl);
-  return *_sd;
-}
-
-parameter_declaration_declarator&
-direct_declarator_id::context::get_param_declaration_declarator() const noexcept
-{
-  assert(_kind == context_kind::parameter_decl);
-  return *_pdd;
-}
-
-init_declarator& direct_declarator_id::context::get_init_declarator()
-  const noexcept
-{
-  assert(_kind == context_kind::init_decl);
-  return *_id;
-}
-
-function_definition& direct_declarator_id::context::get_function_definition()
-  const noexcept
-{
-  assert(_kind == context_kind::function_def);
-  return *_fd;
-}
-
 direct_declarator_id::direct_declarator_id(const pp_token_index id_tok) noexcept
   : direct_declarator(pp_tokens_range{id_tok, id_tok + 1}), _id_tok(id_tok)
 {}
 
 direct_declarator_id::~direct_declarator_id() noexcept = default;
 
+const direct_declarator_id& direct_declarator_id::get_direct_declarator_id()
+  const noexcept
+{
+  return *this;
+}
+
 pp_token_index direct_declarator_id::get_id_tok() const noexcept
 {
   return _id_tok;
-}
-
-const direct_declarator_id::context&
-direct_declarator_id::get_context() const noexcept
-{
-  assert(_ctx.get_kind() != context::context_kind::unknown);
-  return _ctx;
-}
-
-void direct_declarator_id::set_context(const context &ctx) noexcept
-{
-  assert(_ctx.get_kind() == context::context_kind::unknown);
-  _ctx = ctx;
 }
 
 bool direct_declarator_id::is_function() const noexcept
@@ -2266,9 +2231,10 @@ direct_declarator_parenthesized::~direct_declarator_parenthesized() noexcept
   delete _asl;
 }
 
-pp_token_index direct_declarator_parenthesized::get_id_tok() const noexcept
+const direct_declarator_id& direct_declarator_parenthesized::
+get_direct_declarator_id() const noexcept
 {
-  return _d.get_id_tok();
+  return _d.get_direct_declarator_id();
 }
 
 _ast_entity* direct_declarator_parenthesized::_get_child(const size_t i)
@@ -2341,9 +2307,10 @@ direct_declarator_array::~direct_declarator_array() noexcept
   delete _size;
 }
 
-pp_token_index direct_declarator_array::get_id_tok() const noexcept
+const direct_declarator_id& direct_declarator_array::get_direct_declarator_id()
+  const noexcept
 {
-  return _dd.get_id_tok();
+  return _dd.get_direct_declarator_id();
 }
 
 _ast_entity* direct_declarator_array::_get_child(const size_t i) noexcept
@@ -2414,9 +2381,10 @@ direct_declarator_func::~direct_declarator_func() noexcept
   delete _il;
 }
 
-pp_token_index direct_declarator_func::get_id_tok() const noexcept
+const direct_declarator_id& direct_declarator_func::get_direct_declarator_id()
+  const noexcept
 {
-  return _dd.get_id_tok();
+  return _dd.get_direct_declarator_id();
 }
 
 _ast_entity* direct_declarator_func::_get_child(const size_t i) noexcept
@@ -2472,9 +2440,15 @@ declarator::~declarator() noexcept
   delete &_dd;
 }
 
+const direct_declarator_id& declarator::get_direct_declarator_id()
+  const noexcept
+{
+  return _dd.get_direct_declarator_id();
+}
+
 pp_token_index declarator::get_id_tok() const noexcept
 {
-  return _dd.get_id_tok();
+  return this->get_direct_declarator_id().get_id_tok();
 }
 
 _ast_entity* declarator::_get_child(const size_t i) noexcept
@@ -2715,15 +2689,30 @@ bool type_specifier_pod::_process(const_processor<bool> &p) const
 
 type_specifier_tdid::type_specifier_tdid(const pp_token_index tdid_tok) noexcept
   : type_specifier(pp_tokens_range{tdid_tok, tdid_tok + 1}),
-    _tdid_tok(tdid_tok), _resolved(nullptr)
+    _tdid_tok(tdid_tok), _resolved(nullptr), _is_builtin(false)
 {}
 
 type_specifier_tdid::~type_specifier_tdid() noexcept = default;
 
-void type_specifier_tdid::set_resolved(direct_declarator_id &ddid) noexcept
+void type_specifier_tdid::set_resolved(const direct_declarator_id &ddid)
+  noexcept
 {
   assert(!_resolved);
+  assert(!_is_builtin);
   _resolved = &ddid;
+}
+
+const direct_declarator_id& type_specifier_tdid::get_resolved() const noexcept
+{
+  assert(!_is_builtin);
+  assert(_resolved);
+  return *_resolved;
+}
+
+void type_specifier_tdid::set_builtin() noexcept
+{
+  assert(!_resolved);
+  assert(!_is_builtin);
 }
 
 _ast_entity* type_specifier_tdid::_get_child(const size_t) noexcept

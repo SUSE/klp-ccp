@@ -936,7 +936,9 @@ namespace suse
 
 	  resolved() noexcept;
 	  resolved(const builtin_tag&) noexcept;
-	  resolved(direct_declarator_id &ddid) noexcept;
+	  resolved(init_declarator &id) noexcept;
+	  resolved(parameter_declaration_declarator &pdd) noexcept;
+	  resolved(function_definition &fd) noexcept;
 	  resolved(stmt_labeled &sl) noexcept;
 	  resolved(enumerator &e) noexcept;
 	  resolved(identifier_list &pil) noexcept;
@@ -945,7 +947,9 @@ namespace suse
 	  {
 	    none,
 	    builtin,
-	    direct_declarator_id,
+	    init_declarator,
+	    parameter_declaration_declarator,
+	    function_definition,
 	    stmt_labeled,
 	    enumerator,
 	    in_param_id_list,
@@ -954,7 +958,10 @@ namespace suse
 	  resolved_kind get_kind() const noexcept
 	  { return _kind; }
 
-	  direct_declarator_id& get_direct_declarator_id() const noexcept;
+	  init_declarator& get_init_declarator() const noexcept;
+	  parameter_declaration_declarator&
+	  get_parameter_declaration_declarator() const noexcept;
+	  function_definition& get_function_definition() const noexcept;
 	  stmt_labeled& get_stmt_labeled() const noexcept;
 	  enumerator& get_enumerator() const noexcept;
 	  identifier_list& get_param_id_list() const noexcept;
@@ -964,7 +971,9 @@ namespace suse
 
 	  union
 	  {
-	    direct_declarator_id *_ddid;
+	    init_declarator *_id;
+	    parameter_declaration_declarator *_pdd;
+	    function_definition *_fd;
 	    stmt_labeled *_sl;
 	    enumerator *_e;
 	    identifier_list *_pil;
@@ -1348,7 +1357,8 @@ namespace suse
 
 	virtual ~direct_declarator() noexcept = 0;
 
-	virtual pp_token_index get_id_tok() const noexcept = 0;
+	virtual  const direct_declarator_id& get_direct_declarator_id()
+	  const noexcept = 0;
 
 	const _ast_entity& get_first_non_declarator_parent() const noexcept;
 
@@ -1359,55 +1369,20 @@ namespace suse
       class direct_declarator_id final : public direct_declarator
       {
       public:
-	class context
-	{
-	public:
-	  context() noexcept;
-	  context(struct_declarator &sd) noexcept;
-	  context(parameter_declaration_declarator &pdd) noexcept;
-	  context(init_declarator &id) noexcept;
-	  context(function_definition &fd) noexcept;
-
-	  enum class context_kind
-	  {
-	    unknown,
-	    struct_decl,
-	    parameter_decl,
-	    init_decl,
-	    function_def,
-	  };
-
-	  context_kind get_kind() const noexcept
-	  { return _kind; }
-
-	  struct_declarator& get_struct_declarator() const noexcept;
-	  parameter_declaration_declarator& get_param_declaration_declarator()
-	    const noexcept;
-	  init_declarator& get_init_declarator() const noexcept;
-	  function_definition& get_function_definition() const noexcept;
-
-	private:
-	  context_kind _kind;
-
-	  union
-	  {
-	    struct_declarator *_sd;
-	    parameter_declaration_declarator *_pdd;
-	    init_declarator *_id;
-	    function_definition *_fd;
-	  };
-	};
-
 	direct_declarator_id(const pp_token_index id_tok) noexcept;
 
 	virtual ~direct_declarator_id() noexcept override;
 
-	virtual pp_token_index get_id_tok() const noexcept override;
+	virtual const direct_declarator_id& get_direct_declarator_id()
+	  const noexcept override;
 
-	const context& get_context() const noexcept;
-	void set_context(const context &ctx) noexcept;
+	pp_token_index get_id_tok() const noexcept;
 
 	bool is_function() const noexcept;
+
+
+
+
 
       private:
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
@@ -1418,7 +1393,6 @@ namespace suse
 	virtual bool _process(const_processor<bool> &p) const override;
 
 	pp_token_index _id_tok;
-	context _ctx;
       };
 
       class direct_declarator_parenthesized final : public direct_declarator
@@ -1431,7 +1405,8 @@ namespace suse
 
 	virtual ~direct_declarator_parenthesized() noexcept override;
 
-	virtual pp_token_index get_id_tok() const noexcept override;
+	virtual const direct_declarator_id& get_direct_declarator_id()
+	  const noexcept override;
 
 	const declarator& get_declarator() const noexcept
 	{
@@ -1467,7 +1442,8 @@ namespace suse
 
 	virtual ~direct_declarator_array() noexcept override;
 
-	virtual pp_token_index get_id_tok() const noexcept override;
+	virtual const direct_declarator_id& get_direct_declarator_id()
+	  const noexcept override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -1499,7 +1475,8 @@ namespace suse
 
 	virtual ~direct_declarator_func() noexcept override;
 
-	virtual pp_token_index get_id_tok() const noexcept override;
+	virtual const direct_declarator_id& get_direct_declarator_id()
+	  const noexcept override;
 
 	const direct_declarator& get_direct_declarator() const noexcept
 	{
@@ -1532,6 +1509,8 @@ namespace suse
 		   direct_declarator* &&dd) noexcept;
 
 	virtual ~declarator() noexcept override;
+
+	const direct_declarator_id& get_direct_declarator_id() const noexcept;
 
 	pp_token_index get_id_tok() const noexcept;
 
@@ -1710,7 +1689,14 @@ namespace suse
 	pp_token_index get_id_tok() const noexcept
 	{ return _tdid_tok; }
 
-	void set_resolved(direct_declarator_id &ddid) noexcept;
+	void set_resolved(const direct_declarator_id &ddid) noexcept;
+
+	const direct_declarator_id& get_resolved() const noexcept;
+
+	void set_builtin() noexcept;
+
+	bool is_builtin() const noexcept
+	{ return _is_builtin; }
 
       private:
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
@@ -1721,7 +1707,8 @@ namespace suse
 	virtual bool _process(const_processor<bool> &p) const override;
 
 	pp_token_index _tdid_tok;
-	direct_declarator_id * _resolved;
+	const direct_declarator_id *_resolved;
+	bool _is_builtin;
       };
 
       class struct_declaration : public ast_entity<struct_declaration>
@@ -1753,6 +1740,9 @@ namespace suse
 	virtual ~struct_declarator() noexcept override;
 
 	void set_asl_before(attribute_specifier_list* &&asl_before) noexcept;
+
+	const declarator* get_declarator() const noexcept
+	{ return _d; }
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -2611,6 +2601,9 @@ namespace suse
 	const linkage& get_linkage() const noexcept
 	{ return _linkage; }
 
+	const declarator& get_declarator() const noexcept
+	{ return _d; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
@@ -2714,6 +2707,11 @@ namespace suse
 	  noexcept;
 
 	virtual ~parameter_declaration_declarator() noexcept override;
+
+	const declarator& get_declarator() const noexcept
+	{
+	  return _d;
+	}
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -3512,6 +3510,9 @@ namespace suse
 	  noexcept;
 
 	virtual ~function_definition() noexcept override;
+
+	const declarator& get_declarator() const noexcept
+	{ return _d; }
 
 	linkage& get_linkage() noexcept
 	{ return _linkage; }
