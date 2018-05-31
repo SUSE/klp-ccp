@@ -2132,7 +2132,7 @@ bool type_name::_process(const_processor<bool> &p) const
 
 
 direct_declarator::direct_declarator(const pp_tokens_range &tr) noexcept
-  : typed_ast_entity(tr)
+  : ast_entity(tr)
 {}
 
 direct_declarator::~direct_declarator() noexcept = default;
