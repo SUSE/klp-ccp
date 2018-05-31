@@ -1384,10 +1384,10 @@ _id_resolver::_try_resolve_pending_linkages(init_declarator &id,
       break;
   }
 
-  id.get_linkage().set_linkage_kind(kind);
-
-  if (it_pl == _pending_linkages.end())
+  if (it_pl == _pending_linkages.end()) {
+    id.get_linkage().set_linkage_kind(kind);
     return;
+  }
 
   init_declarator &pl_id = it_pl->get();
   const linkage::linkage_kind pl_linkage_kind
@@ -1423,8 +1423,10 @@ _id_resolver::_try_resolve_pending_linkages(function_definition &fd,
 
   fd.get_linkage().set_linkage_kind(kind);
 
-  if (it_pl == _pending_linkages.end())
+  if (it_pl == _pending_linkages.end()) {
+    id.get_linkage().set_linkage_kind(kind);
     return;
+  }
 
   init_declarator &pl_id = it_pl->get();
   const linkage::linkage_kind pl_linkage_kind
