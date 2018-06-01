@@ -12,6 +12,8 @@ namespace suse
     class target_float
     {
     public:
+      target_float();
+
       bool operator==(const target_float &op) const noexcept;
 
       bool operator!=(const target_float &op) const noexcept

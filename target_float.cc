@@ -5,6 +5,8 @@
 
 using namespace suse::cp;
 
+target_float::target_float() = default;
+
 target_float::target_float(const mpa::limbs::size_type f_width,
 			   const mpa::limbs::size_type e_width,
 			   const bool is_negative,
