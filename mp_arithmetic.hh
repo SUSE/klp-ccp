@@ -158,6 +158,9 @@ namespace suse
 	limb& operator[](const size_type i) noexcept
 	{ return _limbs[i]; }
 
+	bool empty() const noexcept
+	{ return _limbs.empty(); }
+
 	size_type size() const noexcept
 	{ return _limbs.size(); }
 
