@@ -1,6 +1,7 @@
 #include <cassert>
 #include <stdexcept>
 #include "target_int.hh"
+#include "target_float.hh"
 
 using namespace suse::cp;
 
@@ -320,6 +321,18 @@ target_int target_int::convert(const mpa::limbs::size_type prec,
   }
 
   return target_int(prec, is_signed, std::move(ls));
+}
+
+target_float target_int::to_float(const mpa::limbs::size_type f_width,
+				  const mpa::limbs::size_type e_width) const
+{
+  const bool negative = (_is_signed && is_negative());
+  mpa::limbs m = negative ? _limbs.complement() : _limbs;
+  mpa::limbs e = mpa::limbs::from_size_type(0);
+
+  target_float f = target_float::from_base2_exp(f_width, e_width,
+						std::move(m), std::move(e));
+  return negative ? -f : f;
 }
 
 bool target_int::is_negative() const noexcept

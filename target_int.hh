@@ -7,6 +7,8 @@ namespace suse
 {
   namespace cp
   {
+    class target_float;
+
     class target_int
     {
     public:
@@ -61,6 +63,9 @@ namespace suse
 
       target_int convert(const mpa::limbs::size_type prec,
 			 const bool is_signed) const;
+
+      target_float to_float(const mpa::limbs::size_type f_width,
+			    const mpa::limbs::size_type e_width) const;
 
       const mpa::limbs& get_limbs() const noexcept
       {
