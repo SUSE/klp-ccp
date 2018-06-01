@@ -966,6 +966,27 @@ bool limbs::are_all_set_below(const size_type i) const noexcept
   return true;
 }
 
+bool limbs::are_all_set_at_or_above(const size_type i) const noexcept
+{
+  if (i >= width())
+    return false;
+
+  size_type n = i / limb::width;
+  const unsigned int pos = i % limb::width;
+
+  if ((_limbs[n].value() & ~limb::mask(pos).value()) !=
+      ~limb::mask(pos).value()) {
+    return false;
+  }
+
+  for (++n; n < size(); ++n) {
+    if (~_limbs[n])
+      return false;
+  }
+
+  return true;
+}
+
 limbs limbs::from_size_type(size_type value)
 {
   const size_type width = std::numeric_limits<size_type>::digits;

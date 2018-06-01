@@ -668,8 +668,27 @@ static int limbs_test22()
   return 0;
 }
 
-
 static int limbs_test23()
+{
+  for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
+    limbs ls;
+    ls.resize(3);
+    ls.set_bits_at_and_above(i, true);
+    for (limbs::size_type j = i; j < 3 * limb::width - 1; ++j) {
+      if (!ls.are_all_set_at_or_above(j))
+	return -1;
+    }
+    for (limbs::size_type j = i; j > 0; --j) {
+      if (ls.are_all_set_at_or_above(j - 1))
+	return -2;
+    }
+  }
+
+  return 0;
+}
+
+
+static int limbs_test24()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -686,7 +705,7 @@ static int limbs_test23()
   return 0;
 }
 
-static int limbs_test24()
+static int limbs_test25()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -703,7 +722,7 @@ static int limbs_test24()
   return 0;
 }
 
-static int limbs_test25()
+static int limbs_test26()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -771,6 +790,7 @@ static const struct test_entry {
   TEST_ENTRY(limbs_test23),
   TEST_ENTRY(limbs_test24),
   TEST_ENTRY(limbs_test25),
+  TEST_ENTRY(limbs_test26),
   { NULL, NULL }
 };
 

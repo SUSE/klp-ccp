@@ -196,6 +196,7 @@ namespace suse
 	bool is_any_set_below(const size_type i) const noexcept;
 	bool is_any_set_at_or_above(const size_type i) const noexcept;
 	bool are_all_set_below(const size_type i) const noexcept;
+	bool are_all_set_at_or_above(const size_type i) const noexcept;
 
 	static limbs from_size_type(size_type value);
 
