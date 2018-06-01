@@ -791,6 +791,63 @@ limbs limbs::rshift(const size_type distance, const bool fill_value) const
   return limbs(std::move(result));
 }
 
+limbs limbs::add_signed(const mpa::limbs &op) const
+{
+  // Infinite precision arithmetic where each limb is taken modulo
+  // 2^{its width}.
+  const mpa::limbs::size_type w1 = width();
+  const mpa::limbs::size_type w2 = op.width();
+
+  if (!w1)
+    return op;
+  else if (!w2)
+    return *this;
+
+  mpa::limbs op1 = *this;
+  mpa::limbs op2 = op;
+  const bool op1_is_negative = op1.test_bit(w1 - 1);
+  const bool op2_is_negative = op2.test_bit(w2 - 1);
+  const mpa::limbs::size_type max_w = std::max(w1, w2);
+  if (w1 < max_w) {
+    op1.resize(width_to_size(max_w));
+    op1.set_bits_at_and_above(w1, op1_is_negative);
+  } else if (w2 < max_w) {
+    op2.resize(width_to_size(max_w));
+    op2.set_bits_at_and_above(w2, op2_is_negative);
+  }
+
+  mpa::limbs r = op1 + op2;
+  if (!op1_is_negative && !op2_is_negative) {
+    assert(r.width() == max_w);
+    if (r.test_bit(max_w - 1)) {
+      // Preserve room for sign bit
+      r.resize(width_to_size(max_w) + 1);
+    } else {
+      // Shrink if possible
+      r.resize(width_to_size(r.width() - r.clrsb()));
+    }
+
+  } else if (op1_is_negative && op2_is_negative) {
+    assert(r.width() > max_w);
+    assert(r.test_bit(max_w));
+    assert(!r.is_any_set_at_or_above(max_w + 1));
+    // Propagate sign to high.
+    r.set_bits_at_and_above(max_w, true);
+    // Shrink if possible
+    r.resize(width_to_size(r.width() - r.clrsb()));
+
+  } else {
+    assert(!r.is_any_set_at_or_above(max_w + 1));
+    if (r.width() > max_w) {
+      // Do the modulo operation.
+      r.set_bit(max_w, false);
+    }
+    r.resize(width_to_size(r.width() - r.clrsb()));
+  }
+
+  return r;
+}
+
 void limbs::set_bits_at_and_above(const size_type pos, const bool value)
   noexcept
 {

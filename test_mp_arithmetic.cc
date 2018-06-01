@@ -739,6 +739,123 @@ static int limbs_test26()
   return 0;
 }
 
+static int limbs_test27()
+{
+  limbs ls1;
+  ls1.resize(1);
+  ls1.set_bits_at_and_above(0, true);
+
+  limbs ls2;
+  ls2.resize(2);
+  ls2.set_bits_at_and_above(0, true);
+
+  const limbs ls = ls1.add_signed(ls2);
+  if (ls.size() != 1)
+    return -1;
+
+  if (ls.test_bit(0))
+    return -2;
+
+  if (!ls.are_all_set_at_or_above(1))
+    return -3;
+
+  return 0;
+}
+
+static int limbs_test28()
+{
+  limbs ls1;
+  ls1.resize(1);
+  ls1.set_bits_below(ls1.width() - 1, true);
+
+  limbs ls2;
+  ls2.resize(2);
+  ls2.set_bit(0, true);
+
+  const limbs ls = ls1.add_signed(ls2);
+  if (ls.size() != 2)
+    return -1;
+
+  if (ls.is_any_set_below(ls1.width() - 1))
+    return -2;
+
+  if (!ls.test_bit(ls1.width() - 1))
+    return -3;
+
+  if (ls.is_any_set_at_or_above(ls1.width()))
+    return -4;
+
+  return 0;
+}
+
+static int limbs_test29()
+{
+  limbs ls1;
+  ls1.resize(1);
+  ls1.set_bit(0, true);
+
+  limbs ls2;
+  ls2.resize(2);
+  ls2.set_bit(0, true);
+
+  const limbs ls = ls1.add_signed(ls2);
+  if (ls.size() != 1)
+    return -1;
+
+  if (ls.test_bit(0))
+    return -2;
+
+  if (!ls.test_bit(1))
+    return -3;
+
+  if (ls.is_any_set_at_or_above(2))
+    return -4;
+
+  return 0;
+}
+
+static int limbs_test30()
+{
+  limbs ls1;
+  ls1.resize(1);
+  ls1.set_bit(0, true);
+
+  limbs ls2;
+  ls2.resize(2);
+  ls2.set_bits_at_and_above(0, true);
+
+  const limbs ls = ls1.add_signed(ls2);
+  if (ls.size() != 1)
+    return -1;
+
+  if (ls)
+    return -2;
+
+  return 0;
+}
+
+static int limbs_test31()
+{
+  limbs ls1;
+  ls1.resize(1);
+  ls1.set_bits_below(ls1.width() - 1, true);
+
+  limbs ls2;
+  ls2.resize(2);
+  ls2.set_bits_at_and_above(0, true);
+
+  const limbs ls = ls1.add_signed(ls2);
+  if (ls.size() != 1)
+    return -1;
+
+  if (ls.test_bit(0))
+    return -2;
+
+  if (ls.test_bit(ls.width() - 1))
+    return -3;
+
+  return 0;
+}
 
 
 #define TEST_ENTRY(t)				\
@@ -791,6 +908,11 @@ static const struct test_entry {
   TEST_ENTRY(limbs_test24),
   TEST_ENTRY(limbs_test25),
   TEST_ENTRY(limbs_test26),
+  TEST_ENTRY(limbs_test27),
+  TEST_ENTRY(limbs_test28),
+  TEST_ENTRY(limbs_test29),
+  TEST_ENTRY(limbs_test30),
+  TEST_ENTRY(limbs_test31),
   { NULL, NULL }
 };
 

@@ -181,6 +181,8 @@ namespace suse
 	limbs lshift(const size_type distance) const;
 	limbs rshift(const size_type distance, const bool fill_value) const;
 
+	limbs add_signed(const mpa::limbs &op) const;
+
 	void set_bits_at_and_above(const size_type pos, const bool value)
 	  noexcept;
 	void set_bits_below(const size_type pos, const bool value) noexcept;
