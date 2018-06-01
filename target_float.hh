@@ -2,12 +2,13 @@
 #define TARGET_FLOAT_HH
 
 #include "mp_arithmetic.hh"
-#include "target_int.hh"
 
 namespace suse
 {
   namespace cp
   {
+    class target_int;
+
     class target_float
     {
     public:

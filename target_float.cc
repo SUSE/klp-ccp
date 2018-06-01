@@ -1,6 +1,7 @@
 #include <cassert>
 #include <stdexcept>
 #include "target_float.hh"
+#include "target_int.hh"
 
 using namespace suse::cp;
 
