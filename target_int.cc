@@ -4,6 +4,8 @@
 
 using namespace suse::cp;
 
+target_int::target_int() = default;
+
 target_int::target_int(const mpa::limbs::size_type prec, const bool is_signed,
 		       mpa::limbs &&ls)
   : _prec(prec), _is_signed(is_signed), _limbs(std::move(ls))

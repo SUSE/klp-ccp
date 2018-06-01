@@ -10,6 +10,8 @@ namespace suse
     class target_int
     {
     public:
+      target_int();
+
       target_int(const mpa::limbs::size_type prec, const bool is_signed,
 		 mpa::limbs &&ls);
 
