@@ -84,6 +84,11 @@ namespace suse
 	return _prec + _is_signed;
       }
 
+      static target_int create_zero(const mpa::limbs::size_type prec,
+				    const bool is_signed);
+      static target_int create_one(const mpa::limbs::size_type prec,
+				   const bool is_signed);
+
     private:
       void _assert_same_prec_and_signedness(const target_int &op)
 	const noexcept;

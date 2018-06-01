@@ -345,6 +345,23 @@ mpa::limbs::size_type target_int::min_required_width() const noexcept
   return is_negative() ? (_limbs.width() - _limbs.clrsb()) : _limbs.fls();
 }
 
+target_int target_int::create_zero(const mpa::limbs::size_type prec,
+				   const bool is_signed)
+{
+  mpa::limbs ls;
+  ls.resize(mpa::limbs::width_to_size(prec + is_signed));
+  return target_int(prec, is_signed, std::move(ls));
+}
+
+target_int target_int::create_one(const mpa::limbs::size_type prec,
+				   const bool is_signed)
+{
+  mpa::limbs ls;
+  ls.resize(mpa::limbs::width_to_size(prec + is_signed));
+  ls.set_bit(0, true);
+  return target_int(prec, is_signed, std::move(ls));
+}
+
 mpa::limbs::size_type target_int::_to_size_type() const
 {
   if (_is_signed && _is_negative()) {
