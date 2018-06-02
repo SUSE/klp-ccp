@@ -365,6 +365,7 @@ namespace
 				       const linkage::linkage_kind kind);
 
     void _resolve_id(expr_id &ei);
+    void _resolve_id(expr_label_addr &ela);
     void _resolve_id(type_specifier_tdid &ts_tdid);
 
     suse::cp::ast::ast &_ast;
@@ -524,6 +525,10 @@ void _id_resolver::operator()()
       [this](type_specifier_tdid &ts_tdid) {
 	_resolve_id(ts_tdid);
 	return false;
+      },
+      [this](expr_label_addr &ela) {
+	_resolve_id(ela);
+	return false;
       }));
 
   auto &&post =
@@ -552,6 +557,7 @@ void _id_resolver::operator()()
 	     enum_ref,
 	     enum_def,
 	     expr_id,
+	     expr_label_addr,
 	     type_specifier_tdid>,
     type_set<const _ast_entity> >(std::move(pre), std::move(post));
 }
@@ -1498,6 +1504,28 @@ void _id_resolver::_resolve_id(expr_id &ei)
 
   code_remark remark(code_remark::severity::fatal,
 		     "identifier not declared",
+		     id_tok.get_file_range());
+  _ast.get_remarks().add(remark);
+  throw semantic_except(remark);
+}
+
+void _id_resolver::_resolve_id(expr_label_addr &ela)
+{
+  for ( _ast_entity *p = ela.get_parent(); p; p = p->get_parent()) {
+    stmt_compound *sc = dynamic_cast<stmt_compound *>(p);
+    if (sc) {
+      const stmt_labeled * const sl =
+	sc->lookup_label(_ast, ela.get_label_tok());
+      if (sl) {
+	ela.set_resolved(*sl);
+	return;
+      }
+    }
+  }
+
+  const pp_token &id_tok = _ast.get_pp_tokens()[ela.get_label_tok()];
+  code_remark remark(code_remark::severity::fatal,
+		     "label not found",
 		     id_tok.get_file_range());
   _ast.get_remarks().add(remark);
   throw semantic_except(remark);

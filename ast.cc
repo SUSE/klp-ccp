@@ -448,10 +448,16 @@ bool expr_cast::_process(const_processor<bool> &p) const
 
 expr_label_addr::expr_label_addr(const pp_tokens_range &tr,
 				 const pp_token_index label_tok) noexcept
-  : expr(tr), _label_tok(label_tok)
+  : expr(tr), _label_tok(label_tok), _resolved(nullptr)
 {}
 
 expr_label_addr::~expr_label_addr() noexcept = default;
+
+void expr_label_addr::set_resolved(const stmt_labeled &resolved) noexcept
+{
+  assert(!_resolved);
+  _resolved = &resolved;
+}
 
 _ast_entity* expr_label_addr::_get_child(const size_t) noexcept
 {

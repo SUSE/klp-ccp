@@ -568,6 +568,11 @@ namespace suse
 
 	virtual ~expr_label_addr() noexcept override;
 
+	pp_token_index get_label_tok() const noexcept
+	{ return _label_tok; }
+
+	void set_resolved(const stmt_labeled &resolved) noexcept;
+
       private:
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
@@ -577,6 +582,7 @@ namespace suse
 	virtual bool _process(const_processor<bool> &p) const override;
 
 	pp_token_index _label_tok;
+	const stmt_labeled *_resolved;
       };
 
       class expr_unop_pre final : public expr
