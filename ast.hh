@@ -683,13 +683,22 @@ namespace suse
 	: public ast_entity<offset_member_designator>
       {
       public:
+	struct member
+	{
+	  member(const pp_token_index _member_tok, const bool _ptr_base)
+	    noexcept;
+
+	  pp_token_index member_tok;
+	  bool ptr_base;
+	};
+
 	typedef type_set<expr_builtin_offsetof> parent_types;
 
 	offset_member_designator(const pp_token_index member_tok);
 
 	virtual ~offset_member_designator() noexcept override;
 
-	void extend(const pp_token_index member_tok);
+	void extend(const pp_token_index member_tok, const bool ptr_base);
 	void extend(expr* &&index_expr);
 
       private:
@@ -709,8 +718,8 @@ namespace suse
 	    k_array_subscript,
 	  };
 
-	  component(const pp_token_index member_tok) noexcept;
-	  component(expr* const index_expr) noexcept;
+	  component(const member &m) noexcept;
+	  component(expr &index_expr) noexcept;
 
 	  component(const component&) = delete;
 	  component(component &&c) noexcept;
@@ -723,12 +732,11 @@ namespace suse
 	  expr& get_index_expr() noexcept;
 
 	private:
-
 	  kind _k;
 	  union
 	  {
-	    pp_token_index _member_tok;
-	    expr *_index_expr;
+	    member _m;
+	    expr * _index_expr;
 	  };
 	};
 

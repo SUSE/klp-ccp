@@ -690,13 +690,17 @@ bool expr_alignof_type_name::_process(const_processor<bool> &p) const
 }
 
 
-offset_member_designator::component::component(const pp_token_index member_tok)
-  noexcept
-  : _k(kind::k_member), _member_tok(member_tok)
+offset_member_designator::member::
+member(const pp_token_index _member_tok, const bool _ptr_base) noexcept
+  : member_tok(_member_tok), ptr_base(_ptr_base)
 {}
 
-offset_member_designator::component::component(expr* const index_expr) noexcept
-  : _k(kind::k_array_subscript), _index_expr(index_expr)
+offset_member_designator::component::component(const member &m) noexcept
+  : _k(kind::k_member), _m(m)
+{}
+
+offset_member_designator::component::component(expr &index_expr) noexcept
+  : _k(kind::k_array_subscript), _index_expr(&index_expr)
 {}
 
 offset_member_designator::component::component(component &&c) noexcept
@@ -704,7 +708,7 @@ offset_member_designator::component::component(component &&c) noexcept
 {
   switch(_k) {
   case kind::k_member:
-    _member_tok = c._member_tok;
+    _m = c._m;
     break;
 
   case kind::k_array_subscript:
@@ -737,14 +741,15 @@ offset_member_designator::
 offset_member_designator(const pp_token_index member_tok)
   : ast_entity(pp_tokens_range{member_tok, member_tok + 1})
 {
-  _components.emplace_back(member_tok);
+  _components.emplace_back(member{member_tok, false});
 }
 
 offset_member_designator::~offset_member_designator() noexcept = default;
 
-void offset_member_designator::extend(const pp_token_index member_tok)
+void offset_member_designator::extend(const pp_token_index member_tok,
+				      const bool ptr_base)
 {
-  _components.emplace_back(member_tok);
+  _components.emplace_back(member{member_tok, ptr_base});
   _extend_tokens_range(pp_tokens_range{member_tok, member_tok + 1});
 }
 
@@ -752,7 +757,7 @@ void offset_member_designator::extend(expr* &&index_expr)
 {
   expr * const _index_expr = mv_p(std::move(index_expr));
   try {
-    _components.emplace_back(_index_expr);
+    _components.emplace_back(*_index_expr);
   } catch (...) {
     delete &_index_expr;
     throw;

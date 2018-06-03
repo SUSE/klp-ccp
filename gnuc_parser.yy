@@ -2200,7 +2200,9 @@ offset_member_designator:
 	TOK_IDENTIFIER
 	  { $$ = new offset_member_designator($1); }
 	| offset_member_designator TOK_DOT TOK_IDENTIFIER
-	  { $$ = MV_P($1); $$->extend($3); }
+	  { $$ = MV_P($1); $$->extend($3, false); }
+	| offset_member_designator TOK_OP_DEREF_MEMBER TOK_IDENTIFIER
+	  { $$ = MV_P($1); $$->extend($3, true); }
 	| offset_member_designator TOK_LBRACKET expression TOK_RBRACKET
 	  { $$ = MV_P($1); $$->extend(std::move($3)); }
 ;
