@@ -1427,8 +1427,6 @@ _id_resolver::_try_resolve_pending_linkages(function_definition &fd,
       break;
   }
 
-  fd.get_linkage().set_linkage_kind(kind);
-
   if (it_pl == _pending_linkages.end()) {
     fd.get_linkage().set_linkage_kind(kind);
     return;
