@@ -128,6 +128,21 @@ namespace suse
 	}
       }
 
+      template <typename ret_type, typename handled_types,
+		typename callables_wrapper_type>
+      ret_type _ast_entity::process(callables_wrapper_type &&c)
+      {
+	if (handled_types::size() < impl::double_dispatch_threshold) {
+	  return (handled_types::cast_and_call
+		  (std::forward<callables_wrapper_type>(c), *this));
+	} else {
+	  auto &&processor =
+	    (make_processor<ret_type>
+	     (std::forward<callables_wrapper_type>(c)));
+	  return this->_process(processor);
+	}
+      }
+
       template<typename... types>
       bool _ast_entity::is_any_of() const noexcept
       {

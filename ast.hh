@@ -74,6 +74,10 @@ namespace suse
 		  typename callables_wrapper_type>
 	ret_type process(callables_wrapper_type &&c) const;
 
+	template <typename ret_type, typename handled_types,
+		  typename callables_wrapper_type>
+	ret_type process(callables_wrapper_type &&c);
+
 	template<typename... types>
 	bool is_any_of() const noexcept;
 
