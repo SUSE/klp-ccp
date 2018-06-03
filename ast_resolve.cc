@@ -255,8 +255,12 @@ void suse::cp::ast::ast::_register_labels()
 	 const pp_token_index label_tok = sl.get_label_tok();
 	 stmt_compound *registrar = nullptr;
 
-	 auto &&label_scope_finder
-	   = (wrap_callables<default_action_return_value<bool, true>::type>
+	 for (_ast_entity *p = sl.get_parent(); p;
+	      p && (p = p->get_parent())) {
+	   p->process<void, type_set<stmt_compound,
+				     function_definition,
+				     translation_unit>>
+	     (wrap_callables<default_action_nop>
 	      ([&](stmt_compound &sc) {
 		registrar = &sc;
 
@@ -271,22 +275,23 @@ void suse::cp::ast::ast::_register_labels()
 		// If this label is declared local to this block, finish the
 		// search here.
 		if (sc.is_local_label(*this, label_tok))
-		  return false;
-
-		return true;
+		  p = nullptr;
 	      },
-	      [](const expr_statement&) {
-		// The ancestor search stops here.
-	      },
-	      [](const function_definition&) {
+	      [&](const function_definition&) {
 		// Don't let labels escape function definitions.
-		return false;
+		p = nullptr;
+	      },
+	      [&](const translation_unit&) {
+		// Label is from an expr_statement which is not part
+		// of a function definition.
+		p = nullptr;
+		registrar = nullptr;
 	      }));
+	 }
 
-	 sl.for_each_ancestor<type_set<expr_statement> >(label_scope_finder);
-	 assert(registrar);
-	 registrar->register_label(sl);
-       }));
+	 if (registrar)
+	   registrar->register_label(sl);
+	 }));
 
   this->for_each_dfs_po<type_set<stmt_labeled> >(stmt_labeled_handler);
 }
