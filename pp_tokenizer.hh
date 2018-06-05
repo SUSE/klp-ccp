@@ -1,16 +1,18 @@
 #ifndef PP_TOKENIZER_HH
 #define PP_TOKENIZER_HH
 
-#include <fstream>
 #include <string>
 #include "code_remark.hh"
 #include "code_remarks.hh"
 #include "pp_token.hh"
+#include "source_reader.hh"
 
 namespace suse
 {
   namespace cp
   {
+    class source_reader;
+
     class pp_tokenizer
     {
     public:
@@ -40,7 +42,10 @@ namespace suse
       pp_token _tokenize_ws();
 
       header_inclusion_node &_file;
-      std::ifstream _i;
+      std::unique_ptr<source_reader> _sr;
+      source_reader::buffer_type _buf;
+      source_reader::buffer_type::const_iterator _buf_it;
+
       std::streamoff _line_length;
       std::streamoff _cur_loc;
       std::streamoff _next_loc;

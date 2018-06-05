@@ -27,6 +27,7 @@ noinst_HEADERS =			\
 	pp_tokenizer.hh		\
 	preprocessor.hh		\
 	semantic_except.hh		\
+	source_reader.hh		\
 	target_float.hh		\
 	target_int.hh			\
 	type_set.hh			\
@@ -57,6 +58,7 @@ libcp_a_SOURCES =			\
 	pp_tokenizer.cc		\
 	preprocessor.cc		\
 	semantic_except.cc		\
+	source_reader.cc		\
 	target_float.cc		\
 	target_int.cc			\
 	used_macros.cc			\

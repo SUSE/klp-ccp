@@ -1,4 +1,5 @@
 #include "header_inclusion_tree.hh"
+#include "source_reader.hh"
 
 using namespace suse::cp;
 
@@ -19,6 +20,12 @@ header_inclusion_node::offset_to_line_col(const std::streamoff off)
   const noexcept
 {
   return _offset_to_line_col_map.offset_to_line_col(off);
+}
+
+std::unique_ptr<source_reader> header_inclusion_node::
+create_source_reader() const
+{
+  return std::unique_ptr<source_reader>(new file_source_reader(_filename));
 }
 
 

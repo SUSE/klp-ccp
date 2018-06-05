@@ -13,6 +13,8 @@ namespace suse
 {
   namespace cp
   {
+    class source_reader;
+
     class header_inclusion_child;
 
     class header_inclusion_node
@@ -39,6 +41,8 @@ namespace suse
 
       std::pair<std::streamoff, std::streamoff>
       offset_to_line_col(const std::streamoff off) const noexcept;
+
+      std::unique_ptr<source_reader> create_source_reader() const;
 
     protected:
       header_inclusion_node(header_inclusion_node *parent,

@@ -8,16 +8,12 @@
 using namespace suse::cp;
 
 pp_tokenizer::pp_tokenizer(header_inclusion_node &file)
-  : _file(file), _i(_file.get_filename()),
+  : _file(file), _sr(_file.create_source_reader()),
+    _buf(), _buf_it(_buf.cbegin()),
     _line_length(0), _cur_loc(0), _next_loc(0),
     _expect_qh_str(expect_qh_str::newline),
     _pending(0)
 {
-  if (!_i)
-    throw std::system_error(errno, std::system_category(),
-			    _file.get_filename());
-
-  _i.exceptions(std::ifstream::badbit);
   _cur = _read_next_char(_cur_loc);
   // Compensate for the initial increment in _read_next_char()
   _cur_loc -= 1;
@@ -35,14 +31,19 @@ char pp_tokenizer::_read_next_char_raw()
     return c;
   }
 
-  const char c = static_cast<char>(_i.get());
+  if (_buf_it == _buf.cend()) {
+    _buf = _sr->read();
+    _buf_it = _buf.cbegin();
+    if (_buf.empty())
+      return 0;
+  }
+
+  const char c = static_cast<char>(*_buf_it++);
   ++_line_length;
 
   if (c == '\n') {
     _file.add_line(_line_length);
     _line_length = 0;
-  } else if (_i.eof()) {
-    return 0;
   }
 
   return c;
