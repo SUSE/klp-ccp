@@ -1,5 +1,6 @@
 SUBDIRS = . testsuite
 
+AM_YFLAGS = -d
 BUILT_SOURCES = gnuc_parser.hh stack.hh
 
 noinst_HEADERS =			\
