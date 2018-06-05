@@ -10,13 +10,6 @@ using namespace suse::cp::ast;
 using resolved_kind = expr_id::resolved::resolved_kind;
 
 static const char * const _builtin_ids[] = {
-	"__ATOMIC_ACQ_REL",
-	"__ATOMIC_ACQUIRE",
-	"__ATOMIC_CONSUME",
-	"__ATOMIC_RELAXED",
-	"__ATOMIC_RELEASE",
-	"__ATOMIC_SEQ_CST",
-	"__GCC_ATOMIC_TEST_AND_SET_TRUEVAL",
 	"__atomic_add",
 	"__atomic_add_fetch",
 	"__atomic_and_fetch",

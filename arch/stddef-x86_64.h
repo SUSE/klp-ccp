@@ -69,3 +69,10 @@ typedef unsigned __int128 __uint128_t;
 #define __FILE__ ""
 #define __BASE_FILE__ ""
 
+#define __GCC_ATOMIC_TEST_AND_SET_TRUEVAL 1
+#define __ATOMIC_ACQ_REL 4
+#define __ATOMIC_ACQUIRE 2
+#define __ATOMIC_CONSUME 1
+#define __ATOMIC_RELAXED 0
+#define __ATOMIC_RELEASE 3
+#define __ATOMIC_SEQ_CST 5
