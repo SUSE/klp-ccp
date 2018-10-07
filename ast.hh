@@ -1184,7 +1184,8 @@ namespace suse
 			 init_declarator,
 			 stmt_labeled,
 			 function_definition,
-			 parameter_declaration_declarator> parent_types;
+			 parameter_declaration_declarator,
+			 parameter_declaration_abstract> parent_types;
 
 	attribute_specifier_list(attribute_specifier* &&as);
 
@@ -2703,15 +2704,22 @@ namespace suse
 	typedef type_set<parameter_declaration_list> parent_types;
 
 	parameter_declaration(const pp_tokens_range &tr,
-			      declaration_specifiers* &&ds) noexcept;
+			      declaration_specifiers* &&ds,
+			      attribute_specifier_list* &&asl) noexcept;
 
 	virtual ~parameter_declaration() noexcept = 0;
 
 	declaration_specifiers& get_declaration_specifiers() noexcept
 	{ return _ds; }
 
+	attribute_specifier_list *get_asl() noexcept
+	{
+	  return _asl;
+	}
+
       protected:
 	declaration_specifiers &_ds;
+	attribute_specifier_list *_asl;
       };
 
       class parameter_declaration_declarator final
@@ -2740,7 +2748,6 @@ namespace suse
 	virtual bool _process(const_processor<bool> &p) const override;
 
 	declarator &_d;
-	attribute_specifier_list *_asl;
       };
 
       class parameter_declaration_abstract final
@@ -2749,7 +2756,8 @@ namespace suse
       public:
 	parameter_declaration_abstract(const pp_tokens_range &tr,
 				       declaration_specifiers* &&ds,
-				       abstract_declarator* &&ad)
+				       abstract_declarator* &&ad,
+				       attribute_specifier_list* &&asl)
 	  noexcept;
 
 	virtual ~parameter_declaration_abstract() noexcept override;

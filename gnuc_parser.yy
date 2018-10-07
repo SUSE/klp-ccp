@@ -343,6 +343,8 @@ static void empty(pp_tokens_range &loc)
 %type <type_name>	type_name
 %type <abstract_declarator>	abstract_declarator_opt
 %type <abstract_declarator>	abstract_declarator
+%type <abstract_declarator>	abstract_declarator_ptr
+%type <abstract_declarator>	abstract_declarator_non_ptr
 %type <pointer>	pointer_opt
 %type <pointer>	pointer
 %type <direct_abstract_declarator>	direct_abstract_declarator_opt
@@ -1047,6 +1049,18 @@ abstract_declarator:
 	  { $$ = new abstract_declarator(@$, nullptr, std::move($1)); }
 ;
 
+abstract_declarator_ptr:
+	pointer
+	  { $$ = new abstract_declarator(@$, std::move($1), nullptr); }
+;
+
+abstract_declarator_non_ptr:
+	pointer direct_abstract_declarator
+	  { $$ = new abstract_declarator(@$, std::move($1), std::move($2)); }
+	| direct_abstract_declarator
+	  { $$ = new abstract_declarator(@$, nullptr, std::move($1)); }
+;
+
 pointer_opt:
 	/* empty */
 	  { empty($$, @$); }
@@ -1164,17 +1178,43 @@ parameter_declaration_first:
 						      std::move($2),
 						      std::move($3));
 	  }
-	| declaration_specifiers_w_non_att_no_ts abstract_declarator_opt
+	| declaration_specifiers_w_non_att_no_ts abstract_declarator_ptr
 	  {
 	    pd.enter_td_scope();
 	    $$ = new parameter_declaration_abstract(@$, std::move($1),
-						    std::move($2));
+						    std::move($2), nullptr);
 	  }
-	| declaration_specifiers_ts abstract_declarator_opt
+	| declaration_specifiers_w_non_att_no_ts abstract_declarator_non_ptr attribute_specifier_list_opt
 	  {
 	    pd.enter_td_scope();
 	    $$ = new parameter_declaration_abstract(@$, std::move($1),
-						    std::move($2));
+						    std::move($2),
+						    std::move($3));
+	  }
+	| declaration_specifiers_w_non_att_no_ts
+	  {
+	    pd.enter_td_scope();
+	    $$ = new parameter_declaration_abstract(@$, std::move($1),
+						    nullptr, nullptr);
+	  }
+	| declaration_specifiers_ts abstract_declarator_ptr
+	  {
+	    pd.enter_td_scope();
+	    $$ = new parameter_declaration_abstract(@$, std::move($1),
+						    std::move($2), nullptr);
+	  }
+	| declaration_specifiers_ts abstract_declarator_non_ptr attribute_specifier_list_opt
+	  {
+	    pd.enter_td_scope();
+	    $$ = new parameter_declaration_abstract(@$, std::move($1),
+						    std::move($2),
+						    std::move($3));
+	  }
+	| declaration_specifiers_ts
+	  {
+	    pd.enter_td_scope();
+	    $$ = new parameter_declaration_abstract(@$, std::move($1),
+						    nullptr, nullptr);
 	  }
 ;
 
@@ -1193,15 +1233,38 @@ parameter_declaration:
 						      std::move($2),
 						      std::move($3));
 	  }
-	| declaration_specifiers_no_ts abstract_declarator_opt
+	| declaration_specifiers_no_ts abstract_declarator_ptr
 	  {
 	    $$ = new parameter_declaration_abstract(@$, std::move($1),
-						    std::move($2));
+						    std::move($2), nullptr);
 	  }
-	| declaration_specifiers_ts abstract_declarator_opt
+	| declaration_specifiers_no_ts abstract_declarator_non_ptr attribute_specifier_list_opt
 	  {
 	    $$ = new parameter_declaration_abstract(@$, std::move($1),
-						    std::move($2));
+						    std::move($2),
+						    std::move($3));
+	  }
+	| declaration_specifiers_no_ts
+	  {
+	    $$ = new parameter_declaration_abstract(@$, std::move($1),
+						    nullptr, nullptr);
+	  }
+
+	| declaration_specifiers_ts abstract_declarator_ptr
+	  {
+	    $$ = new parameter_declaration_abstract(@$, std::move($1),
+						    std::move($2), nullptr);
+	  }
+	| declaration_specifiers_ts abstract_declarator_non_ptr attribute_specifier_list_opt
+	  {
+	    $$ = new parameter_declaration_abstract(@$, std::move($1),
+						    std::move($2),
+						    std::move($3));
+	  }
+	| declaration_specifiers_ts
+	  {
+	    $$ = new parameter_declaration_abstract(@$, std::move($1),
+						    nullptr, nullptr);
 	  }
 ;
 

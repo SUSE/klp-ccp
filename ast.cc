@@ -4791,13 +4791,15 @@ bool declaration::_process(const_processor<bool> &p) const
 
 parameter_declaration::
 parameter_declaration(const pp_tokens_range &tr,
-		      declaration_specifiers* &&ds) noexcept
-  : ast_entity(tr), _ds(*mv_p(std::move(ds)))
+		      declaration_specifiers* &&ds,
+		      attribute_specifier_list* &&asl) noexcept
+  : ast_entity(tr), _ds(*mv_p(std::move(ds))), _asl(mv_p(std::move(asl)))
 {}
 
 parameter_declaration::~parameter_declaration() noexcept
 {
   delete &_ds;
+  delete _asl;
 }
 
 
@@ -4806,8 +4808,8 @@ parameter_declaration_declarator(const pp_tokens_range &tr,
 				 declaration_specifiers* &&ds,
 				 declarator* &&d,
 				 attribute_specifier_list* &&asl) noexcept
-  : parameter_declaration(tr, std::move(ds)),
-    _d(*mv_p(std::move(d))), _asl(mv_p(std::move(asl)))
+  : parameter_declaration(tr, std::move(ds), std::move(asl)),
+    _d(*mv_p(std::move(d)))
 {
   get_declaration_specifiers()._set_parent(*this);
   _d._set_parent(*this);
@@ -4818,7 +4820,6 @@ parameter_declaration_declarator(const pp_tokens_range &tr,
 parameter_declaration_declarator::~parameter_declaration_declarator() noexcept
 {
   delete &_d;
-  delete _asl;
 }
 
 _ast_entity* parameter_declaration_declarator::_get_child(const size_t i)
@@ -4866,14 +4867,17 @@ bool parameter_declaration_declarator::_process(const_processor<bool> &p) const
 parameter_declaration_abstract::
 parameter_declaration_abstract(const pp_tokens_range &tr,
 			       declaration_specifiers* &&ds,
-			       abstract_declarator* &&ad)
+			       abstract_declarator* &&ad,
+			       attribute_specifier_list* &&asl)
   noexcept
-  : parameter_declaration(tr, std::move(ds)),
+  : parameter_declaration(tr, std::move(ds), std::move(asl)),
     _ad(mv_p(std::move(ad)))
 {
   get_declaration_specifiers()._set_parent(*this);
   if (_ad)
     _ad->_set_parent(*this);
+  if (_asl)
+    _asl->_set_parent(*this);
 }
 
 parameter_declaration_abstract::~parameter_declaration_abstract() noexcept
@@ -4889,9 +4893,15 @@ _ast_entity* parameter_declaration_abstract::_get_child(const size_t i) noexcept
     return &_ds;
 
   case 1:
-    return _ad;
+    if (_ad)
+      return _ad;
+    else
+      return _asl;
 
   case 2:
+    return _asl;
+
+  case 3:
     return nullptr;
   }
 
