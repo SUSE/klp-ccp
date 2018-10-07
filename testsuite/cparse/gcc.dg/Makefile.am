@@ -601,7 +601,6 @@ EXTRA_DIST = \
 	fold-compare-4.c \
 	fold-compare-5.c \
 	fold-compare-6.c \
-	fold-compare-7.c \
 	fold-compare-8.c \
 	fold-cond-1.c \
 	fold-condcmpconv-1.c \
@@ -612,8 +611,6 @@ EXTRA_DIST = \
 	fold-convnotconv-1.c \
 	fold-convround-1.c \
 	fold-copysign-1.c \
-	fold-cstvecshift.c \
-	fold-cvect.c \
 	fold-div-1.c \
 	fold-div-2.c \
 	fold-div-3.c \
@@ -645,7 +642,6 @@ EXTRA_DIST = \
 	fold-notshift-2.c \
 	fold-notunord.c \
 	fold-overflow-1.c \
-	fold-perm.c \
 	fold-plus-1.c \
 	fold-plus-2.c \
 	fold-plusmult-2.c \
@@ -863,9 +859,6 @@ EXTRA_DIST = \
 	pack-test-4.c \
 	pack-test-5.c \
 	param-type-mismatch.c \
-	parm-impl-decl-1.c \
-	parm-impl-decl-3.c \
-	pedwarn-init.c \
 	pg.c \
 	pg-override.c \
 	pie-7.c \
@@ -1041,7 +1034,6 @@ EXTRA_DIST = \
 	pr28888.c \
 	pr28911.c \
 	pr28935.c \
-	pr29091.c \
 	pr29215.c \
 	pr29254.c \
 	pr29299.c \
@@ -1098,7 +1090,6 @@ EXTRA_DIST = \
 	pr32721.c \
 	pr32773.c \
 	pr32912-1.c \
-	pr32912-3.c \
 	pr32975.c \
 	pr33007.c \
 	pr33017.c \
@@ -1176,7 +1167,6 @@ EXTRA_DIST = \
 	pr36901.h \
 	pr36901-system.h \
 	pr36902.c \
-	pr36991.c \
 	pr36998.c \
 	pr37106-1.c \
 	pr37106-2.c \
@@ -1239,7 +1229,6 @@ EXTRA_DIST = \
 	pr40340-5.c \
 	pr40340.h \
 	pr40501.c \
-	pr40550.c \
 	pr40669.c \
 	pr40792.c \
 	pr40861.c \
@@ -1299,7 +1288,6 @@ EXTRA_DIST = \
 	pr43213.c \
 	pr43245.c \
 	pr43299.c \
-	pr43300.c \
 	pr43305.c \
 	pr43317.c \
 	pr43379.c \
@@ -1322,12 +1310,9 @@ EXTRA_DIST = \
 	pr44024.c \
 	pr44028.c \
 	pr44061.c \
-	pr44136.c \
 	pr44194-1.c \
 	pr44194-2.c \
-	pr44214-1.c \
 	pr44214-2.c \
-	pr44214-3.c \
 	pr44290-1.c \
 	pr44290-2.c \
 	pr44337.c \
@@ -1565,7 +1550,6 @@ EXTRA_DIST = \
 	pr53037-1.c \
 	pr53037-2.c \
 	pr53037-3.c \
-	pr53060.c \
 	pr53119.c \
 	pr53153.c \
 	pr53174.c \
@@ -1621,7 +1605,6 @@ EXTRA_DIST = \
 	pr56144.c \
 	pr56167.c \
 	pr56228.c \
-	pr56275.c \
 	pr56341-1.c \
 	pr56341-2.c \
 	pr56350.c \
@@ -1638,7 +1621,6 @@ EXTRA_DIST = \
 	pr56727-2.c \
 	pr56809.c \
 	pr56824.c \
-	pr56837.c \
 	pr56890-1.c \
 	pr56890-2.c \
 	pr56977.c \
@@ -1682,7 +1664,6 @@ EXTRA_DIST = \
 	pr59350.c \
 	pr59351.c \
 	pr59418.c \
-	pr59471.c \
 	pr59523.c \
 	pr59630.c \
 	pr59643.c \
@@ -1746,8 +1727,6 @@ EXTRA_DIST = \
 	pr63567-4.c \
 	pr63568.c \
 	pr63593.c \
-	pr63594-1.c \
-	pr63594-2.c \
 	pr63626.c \
 	pr63637-1.c \
 	pr63637-2.c \
@@ -1760,7 +1739,6 @@ EXTRA_DIST = \
 	pr63770.c \
 	pr63804.c \
 	pr63835.c \
-	pr63856.c \
 	pr63877.c \
 	pr63914.c \
 	pr64015.c \
@@ -1768,7 +1746,6 @@ EXTRA_DIST = \
 	pr64087.c \
 	pr64223-1.c \
 	pr64223-2.c \
-	pr64252.c \
 	pr64295.c \
 	pr64309.c \
 	pr64316.c \
@@ -1889,20 +1866,16 @@ EXTRA_DIST = \
 	pr69535.c \
 	pr69592.c \
 	pr69619.c \
-	pr69634.c \
 	pr69644.c \
 	pr69801.c \
 	pr69802.c \
 	pr69824.c \
 	pr69885.c \
-	pr69896.c \
 	pr69900.c \
-	pr69915.c \
 	pr69956.c \
 	pr69973.c \
 	pr69990.c \
 	pr70017.c \
-	pr70022.c \
 	pr70026.c \
 	pr70050.c \
 	pr70110.c \
@@ -1912,14 +1885,11 @@ EXTRA_DIST = \
 	pr70169.c \
 	pr70174.c \
 	pr70177.c \
-	pr70219.c \
 	pr70252.c \
 	pr70269.c \
 	pr70281.c \
 	pr70292.c \
 	pr70317.c \
-	pr70326.c \
-	pr70405.c \
 	pr70442.c \
 	pr70700.c \
 	pr70725.c \
@@ -1939,7 +1909,6 @@ EXTRA_DIST = \
 	pr71279.c \
 	pr71280.c \
 	pr71289.c \
-	pr71478.c \
 	pr71518.c \
 	pr71558.c \
 	pr71581.c \
@@ -1953,16 +1922,13 @@ EXTRA_DIST = \
 	pr71969-1.c \
 	pr71969-2.c \
 	pr71969-3.c \
-	pr76783.c \
 	pr77407.c \
-	pr77450.c \
 	pr77454.c \
 	pr77520.c \
 	pr77587a.c \
 	pr77587.c \
 	pr77621.c \
 	pr77673.c \
-	pr77834.c \
 	pr77860.c \
 	pr77862.c \
 	pr77975.c \
@@ -1975,12 +1941,7 @@ EXTRA_DIST = \
 	pr78408-1.c \
 	pr78408-2.c \
 	pr78445.c \
-	pr78526.c \
-	pr78540.c \
 	pr78547.c \
-	pr78575.c \
-	pr78644-1.c \
-	pr78644-2.c \
 	pr78721.c \
 	pr78725-2.c \
 	pr78725.c \
@@ -2007,7 +1968,6 @@ EXTRA_DIST = \
 	pr80020.c \
 	pr80100.c \
 	pr80112.c \
-	pr80286.c \
 	pr80492.c \
 	pr80500.c \
 	pr80632.c \
@@ -2209,7 +2169,6 @@ EXTRA_DIST = \
 	uninit-pr40943.c \
 	uninit-pr61409.c \
 	uninit-pr65686.c \
-	uninit-pr78295.c \
 	uninit-pr78548.c \
 	uninit-pred-2_a.c \
 	uninit-pred-2_b.c \
@@ -2282,9 +2241,6 @@ EXTRA_DIST = \
 	var-expand1.c \
 	var-expand2.c \
 	varpool-1.c \
-	vec-andxor1.c \
-	vector-1.c \
-	vector-shift-2.c \
 	vector-shift.c \
 	verbose-asm-2.c \
 	verbose-asm.c \
@@ -2592,7 +2548,6 @@ EXTRA_DIST = \
 	Wunused-value-3.c \
 	Wunused-var-1.c \
 	Wunused-var-2.c \
-	Wunused-var-3.c \
 	Wvla-1.c \
 	Wvla-2.c \
 	Wvla-4.c \

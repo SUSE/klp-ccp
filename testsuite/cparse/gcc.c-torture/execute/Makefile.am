@@ -263,13 +263,9 @@ EXTRA_DIST = \
 	20050124-1.c \
 	20050218-1.c \
 	20050224-1.c \
-	20050316-1.c \
-	20050316-2.c \
-	20050316-3.c \
 	20050410-1.c \
 	20050502-1.c \
 	20050502-2.c \
-	20050604-1.c \
 	20050613-1.c \
 	20050713-1.c \
 	20050826-1.c \
@@ -948,8 +944,6 @@ EXTRA_DIST = \
 	pr53084.c \
 	pr53160.c \
 	pr53465.c \
-	pr53645-2.c \
-	pr53645.c \
 	pr53688.c \
 	pr54937.c \
 	pr54985.c \
@@ -1007,7 +1001,6 @@ EXTRA_DIST = \
 	pr60062.c \
 	pr60072.c \
 	pr60822.c \
-	pr60960.c \
 	pr61306-3.c \
 	pr61517.c \
 	pr61673.c \
@@ -1035,7 +1028,6 @@ EXTRA_DIST = \
 	pr65216.c \
 	pr65418-1.c \
 	pr65418-2.c \
-	pr65427.c \
 	pr65648.c \
 	pr65956.c \
 	pr66187.c \
@@ -1072,13 +1064,11 @@ EXTRA_DIST = \
 	pr70460.c \
 	pr70586.c \
 	pr70602.c \
-	pr70903.c \
 	pr71083.c \
 	pr71335.c \
 	pr71494.c \
 	pr71550.c \
 	pr71554.c \
-	pr71626-1.c \
 	pr71631.c \
 	pr71700.c \
 	pr7284-1.c \
@@ -1118,15 +1108,8 @@ EXTRA_DIST = \
 	pushpop_macro.c \
 	regstack-1.c \
 	restrict-1.c \
-	scal-to-vec1.c \
-	scal-to-vec2.c \
-	scal-to-vec3.c \
 	scope-1.c \
 	shiftdi.c \
-	simd-1.c \
-	simd-2.c \
-	simd-5.c \
-	simd-6.c \
 	strcpy-2.c \
 	strct-pack-1.c \
 	strct-pack-2.c \

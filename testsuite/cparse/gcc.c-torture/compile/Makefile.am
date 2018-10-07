@@ -279,7 +279,6 @@ EXTRA_DIST = \
 	20041026-1.c \
 	20041211-1.c \
 	20050105-1.c \
-	20050113-1.c \
 	20050119-1.c \
 	20050122-1.c \
 	20050122-2.c \
@@ -804,7 +803,6 @@ EXTRA_DIST = \
 	i.c \
 	i++.c \
 	ic.c \
-	icfmatch.c \
 	icmp.c \
 	ifreg.c \
 	iftrap-1.c \
@@ -1022,8 +1020,6 @@ EXTRA_DIST = \
 	pr33166.c \
 	pr33173.c \
 	pr33382.c \
-	pr33614.c \
-	pr33617.c \
 	pr33641.c \
 	pr33855.c \
 	pr34029-1.c \
@@ -1320,7 +1316,6 @@ EXTRA_DIST = \
 	pr52533.c \
 	pr52555.c \
 	pr52714.c \
-	pr52750.c \
 	pr52773.c \
 	pr52891-1.c \
 	pr52979-1.c \
@@ -1330,13 +1325,11 @@ EXTRA_DIST = \
 	pr53226.c \
 	pr53409.c \
 	pr53410-1.c \
-	pr53410-2.c \
 	pr53411.c \
 	pr53418-1.c \
 	pr53418-2.c \
 	pr53495.c \
 	pr53519.c \
-	pr53748.c \
 	pr53886.c \
 	pr54103-1.c \
 	pr54103-2.c \
@@ -1394,7 +1387,6 @@ EXTRA_DIST = \
 	pr59919.c \
 	pr60071.c \
 	pr60268.c \
-	pr60502.c \
 	pr60556.c \
 	pr60655-1.c \
 	pr60655-2.c \
@@ -1438,13 +1430,9 @@ EXTRA_DIST = \
 	pr69740-2.c \
 	pr69989-2.c \
 	pr69999.c \
-	pr70061.c \
 	pr70190.c \
 	pr70199.c \
-	pr70240.c \
 	pr70263-1.c \
-	pr70355.c \
-	pr70633.c \
 	pr70916.c \
 	pr71112.c \
 	pr71272.c \
@@ -1522,11 +1510,7 @@ EXTRA_DIST = \
 	signext2.c \
 	signext.c \
 	sim.c \
-	simd-1.c \
-	simd-2.c \
 	simd-4.c \
-	simd-5.c \
-	simd-6.c \
 	simple.c \
 	SIset.c \
 	sizeof-macros-1.c \
@@ -1578,10 +1562,7 @@ EXTRA_DIST = \
 	v.c \
 	vector-1.c \
 	vector-2.c \
-	vector-3.c \
 	vector-4.c \
-	vector-5.c \
-	vector-6.c \
 	vla-const-1.c \
 	vla-const-2.c \
 	volatile-1.c \
