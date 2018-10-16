@@ -59,17 +59,18 @@ char pp_tokenizer::_read_next_char(std::streamoff &loc)
   // skip continuation lines
   while (c == '\\') {
     const char next = _read_next_char_raw();
-    if (!c) {
+    if (!next) {
       _remarks.add(code_remark(code_remark::severity::warning,
 			       "no newline after continuation",
 			       file_range(_file, _cur_loc)));
       return 0;
     }
     if (next != '\n') {
+      assert(!_pending);
       _pending = next;
       break;
     } else {
-      loc += 1;
+      loc += 2;
       c = _read_next_char_raw();
     }
   }
