@@ -278,39 +278,47 @@ target_float target_float::from_base10_exp(const mpa::limbs::size_type f_width,
     v = mpa::limbs({1});
   }
 
-  // Now, determine integers u and v such that their ratio is equal
-  // to m * 10^e10
-  mpa::limbs &&u = e10_is_negative ? std::move(m) : m * v;
-  if (!e10_is_negative)
-    v = mpa::limbs({1});
+  // In what follows, the significand is calculated in m. s will be a
+  // number to subtract from the resulting exponent.
+  mpa::limbs::size_type s = 0;
+  if (!e10_is_negative) {
+    m = m * v;
 
-  // Calculate their quotient, in analogy to the floating point division
-  // Let n = v.fls(), r = u.fls().
-  // Set s = f_width + 2 + n - r
-  // It follows that 2^s * u will have its fls() equal to
-  // s + r = f_width + 2 + n.
-  // Dividing it by v will yield an integer with
-  // its fls() being either of f_width + 2 + 1 or f_width + 2
-  // which is enough for rounding.
-  const mpa::limbs::size_type n = v.fls();
-  assert(n);
-  const mpa::limbs::size_type r = u.fls();
-  assert(r);
-  const mpa::limbs::size_type s = f_width + 2 + n - r;
-  u.resize(mpa::limbs::width_to_size(s + r));
-  u = u.lshift(s);
-  std::pair<mpa::limbs, mpa::limbs> qr = u / v;
-  mpa::limbs &quot = qr.first;
-  mpa::limbs &rem = qr.second;
+  } else {
+    // Calculate the quotient m / v, in analogy to the floating point division
+    // Let n = v.fls(), r = m.fls().
+    // Set s = f_width + 2 + n - r
+    // It follows that 2^s * m will have its fls() equal to
+    // s + r = f_width + 2 + n.
+    // Dividing it by v will yield an integer with
+    // its fls() being either of f_width + 2 + 1 or f_width + 2
+    // which is enough for rounding.
+    const mpa::limbs::size_type n = v.fls();
+    assert(n);
+    const mpa::limbs::size_type r = m.fls();
+    assert(r);
+    s = (r <= f_width + 2 + n) ? f_width + 2 + n - r : 0;
+    if (s) {
+      m.resize(mpa::limbs::width_to_size(s + r));
+      m = m.lshift(s);
+    }
+    std::pair<mpa::limbs, mpa::limbs> qr = m / v;
+    mpa::limbs &quot = qr.first;
+    mpa::limbs &rem = qr.second;
 
-  assert(quot.width() >= f_width + 2 + 1);
-  assert(quot.test_bit(f_width + 2) || quot.test_bit(f_width + 1));
-  assert(!quot.is_any_set_at_or_above(f_width + 2 + 1));
+    assert(quot.width() >= f_width + 2 + 1);
+    if (s) {
+      assert(quot.test_bit(f_width + 2) || quot.test_bit(f_width + 1));
+      assert(!quot.is_any_set_at_or_above(f_width + 2 + 1));
+    }
 
-  // Prepare the last bit for proper rounding.
-  if (quot.test_bit(1) && !quot.test_bit(0)) {
-    // Rounding tie, if the remainder is non-zero, enforce rounding up.
-    quot.set_bit(0, !!rem);
+    // Prepare the last bit for proper rounding.
+    if (quot.test_bit(1) && !quot.test_bit(0)) {
+      // Rounding tie, if the remainder is non-zero, enforce rounding up.
+      quot.set_bit(0, !!rem);
+    }
+
+    m = std::move(quot);
   }
 
   // In the interpretation of the floating point significand,
@@ -322,8 +330,8 @@ target_float target_float::from_base10_exp(const mpa::limbs::size_type f_width,
   }
   e = e - mpa::limbs::from_size_type(s);
 
-  _normalize(f_width, e_width, quot, e);
-  return target_float(f_width, e_width, false, std::move(quot), std::move(e));
+  _normalize(f_width, e_width, m, e);
+  return target_float(f_width, e_width, false, std::move(m), std::move(e));
 }
 
 target_float target_float::from_base2_exp(const mpa::limbs::size_type f_width,
