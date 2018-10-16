@@ -322,7 +322,8 @@ target_int target_int::convert(const mpa::limbs::size_type prec,
   ls.resize(n_limbs);
   if (_is_signed && _is_negative()) {
     ls.set_bits_at_and_above(prec, true);
-  } else if (prec < _prec) {
+  }
+  if (!is_signed && prec < ls.width()) {
     ls.set_bits_at_and_above(prec, false);
   }
 
