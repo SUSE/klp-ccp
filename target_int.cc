@@ -131,8 +131,6 @@ target_int target_int::operator-(const target_int &op) const
       ls.test_bit(_prec) != _is_negative())
     throw std::overflow_error("integer overflow");
 
-  assert(!_is_signed || ls.width() - ls.clrsb() <= width());
-
   ls.resize(_n_limbs());
   _clamp_unsigned(ls);
   return target_int(_prec, _is_signed, std::move(ls));
