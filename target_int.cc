@@ -273,15 +273,23 @@ target_int target_int::operator|(const target_int &op) const
 target_int target_int::operator<<(const target_int &op) const
 {
   const mpa::limbs::size_type distance = op._to_size_type();
+  if (!distance)
+    return *this;
+
   if (distance >= width())
     throw std::overflow_error("integer overflow");
 
-  mpa::limbs ls = _limbs.lshift(distance);
+  mpa::limbs ls = _limbs;
+  ls.resize(mpa::limbs::width_to_size(width() + distance));
+  if (_is_signed)
+    ls.set_bits_at_and_above(_prec + 1, ls.test_bit(_prec));
+  ls = ls.lshift(distance);
   if (_is_signed &&
       (ls.width() - ls.clrsb() > width() ||
        _is_negative() != ls.test_bit(_prec))) {
     throw std::overflow_error("integer overflow");
   }
+  ls.resize(mpa::limbs::width_to_size(width()));
   _clamp_unsigned(ls);
   return target_int(_prec, _is_signed, std::move(ls));
 }
