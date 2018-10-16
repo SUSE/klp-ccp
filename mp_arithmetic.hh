@@ -124,8 +124,8 @@ namespace suse
 	limbs();
 	limbs(const std::initializer_list<limb::limb_type> &il);
 	limbs(const std::initializer_list<limb> &il);
-	limbs(const limbs &ls);
 	explicit limbs(const size_type n);
+	limbs(const limbs &ls);
 
 	limbs& operator=(const limbs &rhs);
 

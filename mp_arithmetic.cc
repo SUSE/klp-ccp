@@ -289,6 +289,10 @@ limbs::limbs(const std::initializer_list<limb> &il)
   : _limbs(il)
 {}
 
+limbs::limbs(const size_type n)
+  : limbs(from_size_type(n))
+{}
+
 limbs::limbs(const limbs &ls)
   : _limbs(ls._limbs)
 {}
