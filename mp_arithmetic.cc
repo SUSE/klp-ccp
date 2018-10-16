@@ -1046,13 +1046,17 @@ bool limbs::are_all_set_at_or_above(const size_type i) const noexcept
 
 limbs limbs::from_size_type(size_type value)
 {
-  const size_type width = std::numeric_limits<size_type>::digits;
-  const size_type size = width_to_size(width);
   _limbs_type ls;
-  ls.reserve(size);
-  while (value) {
-    ls.emplace_back(static_cast<limb::limb_type>(value));
-    value >>= limb::width;
+  if (value) {
+    const size_type width = std::numeric_limits<size_type>::digits;
+    const size_type size = width_to_size(width);
+    ls.reserve(size);
+    while (value) {
+      ls.emplace_back(static_cast<limb::limb_type>(value));
+      value >>= limb::width;
+    }
+  } else {
+    ls.resize(1);
   }
 
   return limbs(std::move(ls));
