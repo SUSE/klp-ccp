@@ -192,10 +192,64 @@ target_float target_float::from_base10_exp(const mpa::limbs::size_type f_width,
 					   const mpa::limbs::size_type e_width,
 					   mpa::limbs &&m, mpa::limbs &&e10)
 {
-  // First calculate 10^{|e10|}
-  const bool e10_is_negative = e10.test_bit(e10.width() - 1);
-  if (e10_is_negative)
+  if (!m)
+    return _create_zero(f_width, e_width, false);
+
+  // First calculate v = 10^{|e10|}
+  //
+  // This is expensive for large |e10| and in fact, there's a gcc
+  // testcase involving floating point literals with large exponents.
+  // In order to avoid having this running forever, cancel the computation
+  // when it's clear that m * 10^e10 is larger (smaller) in magnitude
+  // than the largest (smallest) representable value.
+  //
+  // There are two cases:
+  // 1.) e10 > 0: The maximum representable exponent is
+  //     2^e_width - 2 - _bias(e_width)
+  //     == 2^e_width - 2 - (2^{e_width - 1} - 1)
+  //     == 2^{e_width - 1} - 1 == _bias(e_width)
+  //
+  //     Given that m is taken to be an integer >=1, terminate the
+  //     calculation once v > 2^{_bias(e_width)}.
+  //
+  // 2.) e10 < 0: The smallest possible number not rounded unconditionally
+  //     towards zero is
+  //     2^{-f_width} * 2^{1 - _bias(e_width)}.
+  //     Thus, if
+  //     m / v < 2^{-f_width} * 2^{1 - _bias(e_width)} <=>
+  //     m * 2^{f_width} * 2^{-1 + _bias(e_width)} < v
+  //     then the value of m / v will get rounded to zero.
+  //     Since m < 2^{m.fls()}, this condition is guaranteed to become
+  //     true if
+  //     2^{m.fls()} * 2^{f_width} * 2^{-1 + _bias(e_width)} <= v
+  //
+  const bool e10_is_negative = e10 && e10.test_bit(e10.width() - 1);
+
+  mpa::limbs::size_type max_v_log2;
+  if (e10_is_negative) {
     e10 = e10.complement();
+
+    max_v_log2 = _bias(e_width).to_type<mpa::limbs::size_type>();
+    const mpa::limbs::size_type m_fls = m.fls();
+    if (max_v_log2 ==
+	std::numeric_limits<mpa::limbs::size_type>::max() - m_fls + 1) {
+      throw std::overflow_error("max_v_log2 overflow");
+    }
+    max_v_log2 += m_fls;
+
+    if (max_v_log2 ==
+	std::numeric_limits<mpa::limbs::size_type>::max() - f_width + 1) {
+      throw std::overflow_error("max_v_log2 overflow");
+    }
+    max_v_log2 += f_width;
+
+  } else {
+    max_v_log2 = _bias(e_width).to_type<mpa::limbs::size_type>();
+    if (max_v_log2 == std::numeric_limits<mpa::limbs::size_type>::max()) {
+      throw std::overflow_error("max_v_log2 overflow");
+    }
+    max_v_log2 += 1;
+  }
 
   const mpa::limbs ten({10});
   mpa::limbs v;
@@ -205,6 +259,20 @@ target_float target_float::from_base10_exp(const mpa::limbs::size_type f_width,
       v = v * v;
       if (e10.test_bit(i - 1))
 	v = v * ten;
+
+      if (v.is_any_set_at_or_above(max_v_log2)) {
+	if (e10_is_negative) {
+	  // Result will be less than smallest subnormal number,
+	  // return zero.
+	  return _create_zero(f_width, e_width, false);
+
+	} else {
+	  // Result will be larger than largest representable number,
+	  // return infinite.
+	  return _create_inf(f_width, e_width, false);
+
+	}
+      }
     }
   } else {
     v = mpa::limbs({1});
