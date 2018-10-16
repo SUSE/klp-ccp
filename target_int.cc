@@ -311,8 +311,8 @@ target_int target_int::convert(const mpa::limbs::size_type prec,
   assert(prec);
 
   if (is_signed && prec < _prec &&
-      ((_limbs.width() - _limbs.clrsb() - _is_signed > prec) ||
-       (!_is_signed && _limbs.test_bit(_prec - 1)))) {
+      ((_is_signed && _limbs.width() - _limbs.clrsb() > prec + 1) ||
+       (!_is_signed && _limbs.is_any_set_at_or_above(prec)))) {
     throw std::overflow_error("integer overflow");
   }
 
