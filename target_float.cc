@@ -390,6 +390,15 @@ bool target_float::is_zero() const noexcept
 target_float target_float::convert(const mpa::limbs::size_type f_width,
 				   const mpa::limbs::size_type e_width) const
 {
+  // Handle special cases first.
+  if (is_nan()) {
+    return _create_nan(f_width, e_width);
+  } else if (is_inf()) {
+    return _create_inf(f_width, e_width, _is_negative);
+  } else if (is_zero()) {
+    return _create_zero(f_width, e_width, _is_negative);
+  }
+
   mpa::limbs e = _e + _bias(e_width) + mpa::limbs::from_size_type(f_width);
   if (e.test_bit(e.width() - 1)) {
     // Addition overflowed into sign bit, enlarge e.
