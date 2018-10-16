@@ -1108,9 +1108,9 @@ limbs limbs::from_string(const std::string::const_iterator &begin,
     if ('0' <= a && a <= '9') {
       a -= '0';
     } else if ('a' <= a && a <= 'z') {
-      a -= 'a';
+      a -= ('a' - 10);
     } else if ('A' <= a && a <= 'Z') {
-      a -= 'A';
+      a -= 'A' - 10;
     } else {
       throw std::range_error("Unrecognized digit");
     }
