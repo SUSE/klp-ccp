@@ -14,7 +14,9 @@ target_float::target_float(const mpa::limbs::size_type f_width,
 			   const mpa::limbs &e)
   : _f_width(f_width), _e_width(e_width),
     _f(f), _e(e), _is_negative(is_negative)
-{}
+{
+  assert(is_inf() || is_zero() || _f);
+}
 
 target_float::target_float(const mpa::limbs::size_type f_width,
 			   const mpa::limbs::size_type e_width,
@@ -23,7 +25,9 @@ target_float::target_float(const mpa::limbs::size_type f_width,
 			   mpa::limbs &&e)
   : _f_width(f_width), _e_width(e_width),
     _f(std::move(f)), _e(std::move(e)), _is_negative(is_negative)
-{}
+{
+  assert(is_inf() || is_zero() || _f);
+}
 
 bool target_float::operator==(const target_float &op) const noexcept
 {
