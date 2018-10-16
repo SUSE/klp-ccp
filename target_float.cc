@@ -737,8 +737,9 @@ void target_float::_normalize(const mpa::limbs::size_type f_width,
   } else {
     e = std::move(new_e);
     const mpa::limbs::size_type old_e_width = e.width();
+    assert(old_e_width);
     e.resize(mpa::limbs::width_to_size(e_width));
-    if (old_e_width)
+    if (old_e_width < e.width())
       e.set_bits_at_and_above(old_e_width, e.test_bit(old_e_width - 1));
 
   }
