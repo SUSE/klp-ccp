@@ -750,10 +750,13 @@ void target_float::_normalize(const mpa::limbs::size_type f_width,
   } else if (significand_end > f_width) {
     f = f.rshift(significand_end - f_width, false);
   } else if (significand_end < f_width) {
+    if (f.width() < f_width)
+      f.resize(mpa::limbs::width_to_size(f_width));
     f = f.lshift(f_width - significand_end);
   }
 
-  f.resize(mpa::limbs::width_to_size(f_width));
+  if (f.size() != mpa::limbs::width_to_size(f_width))
+    f.resize(mpa::limbs::width_to_size(f_width));
 }
 
 bool target_float::_round_at(mpa::limbs &f, const mpa::limbs::size_type pos)
