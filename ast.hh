@@ -1434,6 +1434,13 @@ namespace suse
 
 	virtual ~type_name() noexcept override;
 
+	const specifier_qualifier_list& get_specifier_qualifier_list()
+	  const noexcept
+	{ return _sql; }
+
+	specifier_qualifier_list& get_specifier_qualifier_list() noexcept
+	{ return _sql; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
