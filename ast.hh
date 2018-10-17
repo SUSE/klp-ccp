@@ -3162,6 +3162,9 @@ namespace suse
 
 	void extend(block_item* &&bi);
 
+	template <typename callable_type>
+	bool for_each_reverse(callable_type &&c) const;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 

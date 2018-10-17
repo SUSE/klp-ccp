@@ -483,6 +483,32 @@ namespace suse
 	}
       }
 
+      template <typename callable_type>
+      bool block_item_list::for_each_reverse(callable_type &&c) const
+      {
+	for (auto it = _bis.rbegin(); it != _bis.rend(); ++it) {
+	  if (!it->get().process<bool,
+				 type_set<block_item_decl,
+					  block_item_stmt,
+					  block_item_function_definition>>
+	      (wrap_callables<default_action_unreachable<bool, type_set<>>
+					::type>
+	       ([&](const block_item_decl &bi) {
+		  return c(bi);
+		},
+		[&](const block_item_stmt &bi) {
+		  return c(bi);
+		},
+		[&](const block_item_function_definition &bi) {
+		  return c(bi);
+		}))) {
+	    return false;
+	  }
+	}
+
+	return true;
+      }
+
     }
   }
 }
