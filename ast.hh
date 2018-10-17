@@ -2161,6 +2161,9 @@ namespace suse
 	types::struct_or_union_kind get_tag_kind() const noexcept
 	{ return _souk; }
 
+	const sou_decl_list_node& get_decl_list_node() const noexcept
+	{ return _decl_list_node; }
+
 	sou_decl_list_node& get_decl_list_node() noexcept
 	{ return _decl_list_node; }
 
