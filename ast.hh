@@ -610,6 +610,9 @@ namespace suse
 
 	virtual ~expr_unop_pre() noexcept override;
 
+	unary_op_pre get_op() const noexcept
+	{ return _op; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
