@@ -1789,6 +1789,11 @@ namespace suse
 
 	virtual ~type_specifier_pod() noexcept override;
 
+	pod_spec get_pod_spec() const noexcept
+	{
+	  return _pod_spec;
+	}
+
       private:
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
