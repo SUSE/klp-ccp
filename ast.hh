@@ -2282,6 +2282,12 @@ namespace suse
 	  return _id_tok;
 	}
 
+	attribute_specifier_list* get_asl_before() noexcept
+	{ return _asl_before; }
+
+	attribute_specifier_list* get_asl_after() noexcept
+	{ return _asl_after; }
+
       private:
 	enum_def(const pp_tokens_range &tr,
 		 const pp_token_index id_tok,
