@@ -2840,6 +2840,9 @@ namespace suse
 	const declarator& get_declarator() const noexcept
 	{ return _d; }
 
+	declarator& get_declarator() noexcept
+	{ return _d; }
+
 	attribute_specifier_list *get_asl_before() noexcept
 	{ return _asl_before; }
 
