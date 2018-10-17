@@ -721,6 +721,9 @@ namespace suse
 	void extend(const pp_token_index member_tok, const bool ptr_base);
 	void extend(expr* &&index_expr);
 
+	template <typename callable_type>
+	void for_each(callable_type &&c) const;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
@@ -749,7 +752,10 @@ namespace suse
 	  kind get_kind() const noexcept
 	  { return _k; }
 
+	  const member& get_member() const noexcept;
+
 	  expr& get_index_expr() noexcept;
+	  const expr& get_index_expr() const noexcept;
 
 	private:
 	  kind _k;

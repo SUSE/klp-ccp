@@ -467,6 +467,22 @@ namespace suse
 	return rti.grab_result();
       }
 
+      template <typename callable_type>
+      void offset_member_designator::for_each(callable_type &&c) const
+      {
+	for (auto &component : _components) {
+	  switch (component.get_kind()) {
+	  case component::kind::k_member:
+	    c(component.get_member());
+	    break;
+
+	  case component::kind::k_array_subscript:
+	    c(component.get_index_expr());
+	    break;
+	  }
+	}
+      }
+
     }
   }
 }

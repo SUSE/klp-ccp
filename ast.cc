@@ -743,7 +743,20 @@ offset_member_designator::component::~component() noexcept
   };
 }
 
+const offset_member_designator::member&
+offset_member_designator::component::get_member() const noexcept
+{
+  assert(_k == kind::k_member);
+  return _m;
+}
+
 expr& offset_member_designator::component::get_index_expr() noexcept
+{
+  assert(_k == kind::k_array_subscript);
+  return *_index_expr;
+}
+
+const expr& offset_member_designator::component::get_index_expr() const noexcept
 {
   assert(_k == kind::k_array_subscript);
   return *_index_expr;
