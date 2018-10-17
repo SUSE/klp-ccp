@@ -2944,6 +2944,10 @@ namespace suse
 	declaration_specifiers& get_declaration_specifiers() noexcept
 	{ return _ds; }
 
+	const declaration_specifiers& get_declaration_specifiers()
+	  const noexcept
+	{ return _ds; }
+
 	attribute_specifier_list *get_asl() noexcept
 	{
 	  return _asl;
