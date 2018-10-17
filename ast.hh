@@ -1603,10 +1603,6 @@ namespace suse
 	virtual direct_declarator_id& get_direct_declarator_id()
 	  noexcept override;
 
-	const direct_declarator& get_direct_declarator() const noexcept
-	{
-	  return _dd;
-	}
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
