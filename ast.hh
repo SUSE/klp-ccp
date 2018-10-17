@@ -2527,6 +2527,9 @@ namespace suse
 
 	virtual void set_designation(designation* &&d) noexcept = 0;
 
+	const designation* get_designation() const noexcept
+	{ return _d; }
+
       protected:
 	void _set_designation(designation* &&d) noexcept;
 
