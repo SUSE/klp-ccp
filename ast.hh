@@ -2709,6 +2709,12 @@ namespace suse
 
 	void extend(initializer* &&i);
 
+	template <typename callable_type>
+	void for_each(callable_type &&c) const;
+
+	template <typename callable_type>
+	void for_each(callable_type &&c);
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 

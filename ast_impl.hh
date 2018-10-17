@@ -506,6 +506,20 @@ namespace suse
       }
 
       template <typename callable_type>
+      void initializer_list::for_each(callable_type &&c) const
+      {
+	for (auto i : _is)
+	  c(const_cast<const initializer&>(i.get()));
+      }
+
+      template <typename callable_type>
+      void initializer_list::for_each(callable_type &&c)
+      {
+	for (auto i : _is)
+	  c(i.get());
+      }
+
+      template <typename callable_type>
       void offset_member_designator::for_each(callable_type &&c) const
       {
 	for (auto &component : _components) {
