@@ -861,6 +861,9 @@ namespace suse
 
 	virtual ~expr_func_invocation() noexcept override;
 
+	const expr& get_func() const noexcept
+	{ return _func; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
