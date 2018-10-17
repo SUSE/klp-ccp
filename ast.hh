@@ -2683,6 +2683,9 @@ namespace suse
 
 	virtual ~designation() noexcept override;
 
+	const designator_list& get_designator_list() const noexcept
+	{ return _dl; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
