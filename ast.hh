@@ -1637,11 +1637,6 @@ namespace suse
 
 	pp_token_index get_id_tok() const noexcept;
 
-	const direct_declarator& get_direct_declarator() const noexcept
-	{
-	  return _dd;
-	}
-
 	const pointer* get_pointer() const noexcept
 	{
 	  return _pt;
