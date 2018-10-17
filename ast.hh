@@ -3190,6 +3190,9 @@ namespace suse
 	bool is_local_label(const ast &ast,
 			    const pp_token_index &label_tok) noexcept;
 
+	const block_item_list * get_block_item_list() const noexcept
+	{ return _bil; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
