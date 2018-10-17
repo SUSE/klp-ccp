@@ -366,6 +366,13 @@ namespace suse
 
 	void extend(expr* &&e);
 
+	std::size_t size() const noexcept
+	{ return _exprs.size(); }
+
+	expr& operator[](const std::size_t i) noexcept;
+
+	const expr& operator[](const std::size_t i) const noexcept;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 

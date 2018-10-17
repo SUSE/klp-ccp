@@ -79,6 +79,18 @@ void expr_list::extend(expr* &&e)
   _extend_tokens_range(_e.get().get_tokens_range());
 }
 
+expr& expr_list::operator[](const std::size_t i) noexcept
+{
+  assert(i < size());
+  return _exprs[i];
+}
+
+const expr& expr_list::operator[](const std::size_t i) const noexcept
+{
+  assert(i < size());
+  return _exprs[i];
+}
+
 _ast_entity* expr_list::_get_child(const size_t i) noexcept
 {
   if (i >= _exprs.size())
