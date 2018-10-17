@@ -1086,6 +1086,9 @@ namespace suse
 
 	void extend(const pp_token_index s);
 
+	const std::vector<pp_token_index>& get_strings() const noexcept
+	{ return _strings; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
