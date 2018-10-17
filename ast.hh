@@ -1272,6 +1272,10 @@ namespace suse
 
 	void extend(const pp_tokens_range &tr, type_qualifier_list* &&tql);
 
+	const std::vector<type_qualifier_list*>&
+	get_type_qualifier_lists() const noexcept
+	{ return _tqls; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
