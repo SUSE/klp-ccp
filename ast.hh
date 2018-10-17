@@ -1955,6 +1955,12 @@ namespace suse
 
 	virtual ~unnamed_struct_or_union() noexcept override;
 
+	attribute_specifier_list* get_asl_before() noexcept
+	{ return _asl_before; }
+
+	attribute_specifier_list* get_asl_after() noexcept
+	{ return _asl_after; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
