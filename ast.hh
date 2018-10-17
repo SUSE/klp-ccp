@@ -2109,6 +2109,12 @@ namespace suse
 	sou_decl_list_node& get_decl_list_node() noexcept
 	{ return _decl_list_node; }
 
+	attribute_specifier_list *get_asl_before() noexcept
+	{ return _asl_before; }
+
+	attribute_specifier_list *get_asl_after() noexcept
+	{ return _asl_after; }
+
       private:
 	struct_or_union_def(const pp_tokens_range &tr,
 			    const types::struct_or_union_kind souk,
