@@ -2715,6 +2715,9 @@ namespace suse
 	template <typename callable_type>
 	void for_each(callable_type &&c);
 
+	std::size_t get_size() const noexcept
+	{ return _is.size(); }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
