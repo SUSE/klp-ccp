@@ -6,6 +6,7 @@
 #include "ast_processor_impl.hh"
 #include "type_set.hh"
 #include "callables_wrapper.hh"
+#include "ret_type_invoker.hh"
 
 namespace suse
 {
@@ -399,6 +400,71 @@ namespace suse
 	}
 
 	return true;
+      }
+
+      template <typename ret_type, typename callables_wrapper_type>
+      ret_type direct_declarator_id::process_context(callables_wrapper_type &&c)
+	const
+      {
+	ret_type_invoker<ret_type> rti;
+
+	this->for_each_ancestor<type_set<struct_declarator,
+					 init_declarator,
+					 parameter_declaration_declarator,
+					 function_definition> >
+	  (wrap_callables<no_default_action>
+	   ([](const declarator&) {
+	      return true;
+	    },
+	    [](const direct_declarator&) {
+	      return true;
+	    },
+	    [&](const struct_declarator &sd) {
+	      rti(c, sd);
+	    },
+	    [&](const init_declarator &id) {
+	      rti(c, id);
+	    },
+	    [&](const parameter_declaration_declarator &pdd) {
+	      rti(c, pdd);
+	    },
+	    [&](const function_definition &fd) {
+	      rti(c, fd);
+	    }));
+
+	return rti.grab_result();
+      }
+
+      template <typename ret_type, typename callables_wrapper_type>
+      ret_type direct_declarator_id::process_context(callables_wrapper_type &&c)
+      {
+	ret_type_invoker<ret_type> rti;
+
+	this->for_each_ancestor<type_set<struct_declarator,
+					 init_declarator,
+					 parameter_declaration_declarator,
+					 function_definition> >
+	  (wrap_callables<no_default_action>
+	   ([](const declarator&) {
+	      return true;
+	    },
+	    [](const direct_declarator&) {
+	      return true;
+	    },
+	    [&](struct_declarator &sd) {
+	      rti(c, sd);
+	    },
+	    [&](init_declarator &id) {
+	      rti(c, id);
+	    },
+	    [&](parameter_declaration_declarator &pdd) {
+	      rti(c, pdd);
+	    },
+	    [&](function_definition &fd) {
+	      rti(c, fd);
+	    }));
+
+	return rti.grab_result();
       }
 
     }

@@ -1414,6 +1414,11 @@ namespace suse
 
 
 
+	template <typename ret_type, typename callables_wrapper_type>
+	ret_type process_context(callables_wrapper_type &&c) const;
+
+	template <typename ret_type, typename callables_wrapper_type>
+	ret_type process_context(callables_wrapper_type &&c);
 
       private:
 	virtual _ast_entity* _get_child(const size_t) noexcept override;

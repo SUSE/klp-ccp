@@ -27,6 +27,7 @@ noinst_HEADERS =			\
 	pp_tokens.hh			\
 	pp_tokenizer.hh		\
 	preprocessor.hh		\
+	ret_type_invoker.hh		\
 	semantic_except.hh		\
 	source_reader.hh		\
 	target_float.hh		\
