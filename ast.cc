@@ -3376,8 +3376,15 @@ const sou_decl_link sou_decl_list_node::get_declaration() const noexcept
 
 struct_or_union_def* sou_decl_list_node::find_definition() const noexcept
 {
+  const sou_decl_link l_decl = get_declaration();
+  if (l_decl.get_target_kind() == sou_decl_link::target_kind::def)
+    return &l_decl.get_target_sou_def();
+
+  assert(l_decl.get_target_kind() == sou_decl_link::target_kind::ref);
+  struct sou_decl_list_node &n_decl =
+    l_decl.get_target_sou_ref().get_decl_list_node();
   _sou_decl_list_def_searcher def_searcher;
-  for_each(def_searcher);
+  n_decl.for_each(def_searcher);
   return def_searcher.get_result();
 }
 
