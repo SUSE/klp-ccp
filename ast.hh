@@ -864,6 +864,9 @@ namespace suse
 	const expr& get_func() const noexcept
 	{ return _func; }
 
+	const expr_list * get_args() const noexcept
+	{ return _args; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
