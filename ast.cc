@@ -1234,7 +1234,8 @@ bool expr_compound_literal::_process(const_processor<bool> &p) const
 }
 
 
-expr_statement::expr_statement(const pp_tokens_range &tr, stmt* &&s) noexcept
+expr_statement::expr_statement(const pp_tokens_range &tr,
+			       stmt_compound* &&s) noexcept
   : expr(tr), _s(*mv_p(std::move(s)))
 {
   _s._set_parent(*this);

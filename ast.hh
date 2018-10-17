@@ -963,7 +963,7 @@ namespace suse
       class expr_statement final : public expr
       {
       public:
-	expr_statement(const pp_tokens_range &tr, stmt* &&s) noexcept;
+	expr_statement(const pp_tokens_range &tr, stmt_compound* &&s) noexcept;
 
 	virtual ~expr_statement() noexcept override;
 
@@ -975,7 +975,7 @@ namespace suse
 	virtual bool _process(processor<bool> &p) override;
 	virtual bool _process(const_processor<bool> &p) const override;
 
-	stmt &_s;
+	stmt_compound &_s;
       };
 
       class expr_id final : public expr
