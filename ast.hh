@@ -1851,6 +1851,10 @@ namespace suse
 	specifier_qualifier_list* get_specifier_qualifier_list() noexcept
 	{ return _sql; }
 
+	const specifier_qualifier_list* get_specifier_qualifier_list()
+	  const noexcept
+	{ return _sql; }
+
       protected:
 	specifier_qualifier_list *_sql;
       };
