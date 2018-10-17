@@ -2805,6 +2805,7 @@ void type_specifier_tdid::set_builtin() noexcept
 {
   assert(!_resolved);
   assert(!_is_builtin);
+  _is_builtin = true;
 }
 
 _ast_entity* type_specifier_tdid::_get_child(const size_t) noexcept
