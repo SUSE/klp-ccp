@@ -1855,6 +1855,12 @@ direct_abstract_declarator(const pp_tokens_range &tr) noexcept
 
 direct_abstract_declarator::~direct_abstract_declarator() noexcept = default;
 
+const direct_abstract_declarator* direct_abstract_declarator::
+skip_trivial_parens_down() const noexcept
+{
+  return this;
+}
+
 
 direct_abstract_declarator_parenthesized::
 direct_abstract_declarator_parenthesized(const pp_tokens_range &tr,
@@ -1874,6 +1880,20 @@ direct_abstract_declarator_parenthesized::
   delete _asl;
   delete &_ad;
 }
+
+const direct_abstract_declarator* direct_abstract_declarator_parenthesized::
+skip_trivial_parens_down() const noexcept
+{
+  if (_ad.get_pointer())
+    return this;
+
+  const direct_abstract_declarator *dad = _ad.get_direct_abstract_declarator();
+  if (!dad)
+    return dad;
+
+  return dad->skip_trivial_parens_down();
+}
+
 
 _ast_entity*
 direct_abstract_declarator_parenthesized::_get_child(const size_t i) noexcept
@@ -2161,6 +2181,7 @@ direct_declarator::direct_declarator(const pp_tokens_range &tr) noexcept
 direct_declarator::~direct_declarator() noexcept = default;
 
 
+
 direct_declarator_id::direct_declarator_id(const pp_token_index id_tok) noexcept
   : direct_declarator(pp_tokens_range{id_tok, id_tok + 1}), _id_tok(id_tok)
 {}
@@ -2259,6 +2280,7 @@ get_direct_declarator_id() const noexcept
 {
   return _d.get_direct_declarator_id();
 }
+
 
 _ast_entity* direct_declarator_parenthesized::_get_child(const size_t i)
   noexcept

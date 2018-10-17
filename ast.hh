@@ -1255,6 +1255,9 @@ namespace suse
 
 	virtual ~direct_abstract_declarator() noexcept;
 
+	virtual const direct_abstract_declarator*
+	skip_trivial_parens_down() const noexcept;
+
       protected:
 	direct_abstract_declarator(const pp_tokens_range &tr) noexcept;
       };
@@ -1269,6 +1272,9 @@ namespace suse
 					abstract_declarator* &&ad) noexcept;
 
 	virtual ~direct_abstract_declarator_parenthesized() noexcept override;
+
+	virtual const direct_abstract_declarator*
+	skip_trivial_parens_down() const noexcept override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -1348,6 +1354,17 @@ namespace suse
 
 	virtual ~abstract_declarator() noexcept override;
 
+	const direct_abstract_declarator*
+	get_direct_abstract_declarator() const noexcept
+	{
+	  return _dad;
+	}
+
+	const pointer* get_pointer() const noexcept
+	{
+	  return _pt;
+	}
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
@@ -1399,6 +1416,7 @@ namespace suse
 	  const noexcept = 0;
 
 	const _ast_entity& get_first_non_declarator_parent() const noexcept;
+
 
       protected:
 	direct_declarator(const pp_tokens_range &tr) noexcept;
@@ -1455,6 +1473,7 @@ namespace suse
 	{
 	  return _d;
 	}
+
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
