@@ -464,6 +464,9 @@ namespace suse
 
 	virtual ~expr_assignment() noexcept override;
 
+	const expr& get_lhs() const noexcept
+	{ return _lhs; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
