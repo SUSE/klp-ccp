@@ -1041,6 +1041,8 @@ namespace suse
 
 	void set_resolved(const resolved &r) noexcept;
 
+	const resolved& get_resolved() const noexcept;
+
       private:
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 

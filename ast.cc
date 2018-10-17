@@ -1358,6 +1358,12 @@ void expr_id::set_resolved(const resolved &r) noexcept
   _resolved = r;
 }
 
+const expr_id::resolved& expr_id::get_resolved() const noexcept
+{
+  assert(_resolved.get_kind() != resolved::resolved_kind::none);
+  return _resolved;
+}
+
 _ast_entity* expr_id::_get_child(const size_t) noexcept
 {
   return nullptr;
