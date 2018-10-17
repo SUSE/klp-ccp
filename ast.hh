@@ -2397,6 +2397,9 @@ namespace suse
 
 	virtual ~typeof_type_name() noexcept override;
 
+	const type_name& get_type_name() const noexcept
+	{ return _tn; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
