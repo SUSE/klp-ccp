@@ -2302,6 +2302,14 @@ namespace suse
 	  return _id_tok;
 	}
 
+	const enumerator_list&
+	get_enumerator_list() const noexcept
+	{ return _el; }
+
+	enumerator_list&
+	get_enumerator_list() noexcept
+	{ return _el; }
+
 	attribute_specifier_list* get_asl_before() noexcept
 	{ return _asl_before; }
 
