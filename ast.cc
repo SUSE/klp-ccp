@@ -3343,6 +3343,37 @@ namespace
   };
 }
 
+const sou_decl_link sou_decl_list_node::get_declaration() const noexcept
+{
+  if (_prev != &_next) {
+    // This node is a member of the list of same-scope declarations at
+    // struct_or_union_def/ref::_decl_list_node and thus, a
+    // declaration already.
+    // _prev should point to this
+    assert(&_prev->get_target_decl_list_node() == this);
+    return *_prev; // points to this.
+
+  } else if (_next.get_target_kind() == sou_decl_link::target_kind::def) {
+    // This node is a struct_or_union_def (and the list of declarations
+    // is otherwise empty).
+    return *_prev;
+
+  }
+
+  // This node is a usage of a struct or union which might not be a
+  // declaration by itself.
+  assert(_next.get_target_kind() == sou_decl_link::target_kind::ref);
+  const struct_or_union_ref &r = _next.get_target_sou_ref();
+  assert (&r.get_decl_list_node() == this);
+  const sou_decl_link &l = r.get_link_to_decl();
+  if (l.get_target_kind() == sou_decl_link::target_kind::unlinked) {
+    // First usage of the struct or union which is a declaration.
+    return *_prev;
+  }
+
+  return l;
+}
+
 struct_or_union_def* sou_decl_list_node::find_definition() const noexcept
 {
   _sou_decl_list_def_searcher def_searcher;

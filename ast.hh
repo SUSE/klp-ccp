@@ -2070,6 +2070,8 @@ namespace suse
 	template <typename callable_type>
 	bool for_each(callable_type &&c) const;
 
+	const sou_decl_link get_declaration() const noexcept;
+
 	struct_or_union_def* find_definition() const noexcept;
 
       private:
