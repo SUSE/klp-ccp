@@ -2577,6 +2577,9 @@ namespace suse
 
 	std::size_t get_size() const noexcept;
 
+	initializer_list* get_initializer_list() noexcept
+	{ return _il; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
