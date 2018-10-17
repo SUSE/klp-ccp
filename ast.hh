@@ -2403,6 +2403,9 @@ namespace suse
 
 	void extend(specifier_qualifier_list* &&sql);
 
+	template <typename callable_type>
+	bool for_each_attribute(callable_type &&c) const;
+
       protected:
 	specifier_qualifier_list(const pp_tokens_range &tr) noexcept;
 
