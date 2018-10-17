@@ -895,6 +895,9 @@ namespace suse
 
 	virtual ~expr_member_deref() noexcept override;
 
+	member_deref_type get_deref_type() const noexcept
+	{ return _deref_type; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
