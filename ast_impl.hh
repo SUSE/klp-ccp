@@ -376,6 +376,31 @@ namespace suse
 	  (std::forward<callables_wrapper_type_pre>(c_pre),
 	   std::forward<callables_wrapper_type_post>(c_post));
       }
+
+      template <typename callable_type>
+      bool attribute_list::for_each_attribute(callable_type &&c)
+      {
+	for (auto a : _attributes) {
+	  if (a) {
+	    if (!c(*a))
+	      return false;
+	  }
+	}
+
+	return true;
+      }
+
+      template <typename callable_type>
+      bool attribute_specifier_list::for_each_attribute(callable_type &&c)
+      {
+	for (auto as : _ass) {
+	  if (!as.get().get_attribute_list().for_each_attribute(c))
+	   return false;
+	}
+
+	return true;
+      }
+
     }
   }
 }
