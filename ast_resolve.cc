@@ -1493,14 +1493,14 @@ void _id_resolver::_resolve_id(expr_id &ei)
   if (non_parens_parent->is_any_of<expr_func_invocation>()) {
     // warn only about calls to undeclared functions
     code_remark remark(code_remark::severity::warning,
-		       "identifier not declared",
+		       "identifier \"" + id_tok.get_value() + "\" not declared",
 		       id_tok.get_file_range());
     _ast.get_remarks().add(remark);
     return;
   }
 
   code_remark remark(code_remark::severity::fatal,
-		     "identifier not declared",
+		     "identifier \"" + id_tok.get_value() + "\" not declared",
 		     id_tok.get_file_range());
   _ast.get_remarks().add(remark);
   throw semantic_except(remark);
