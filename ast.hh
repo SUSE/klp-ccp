@@ -1749,6 +1749,9 @@ namespace suse
 
 	void extend(attribute_specifier_list* &&asl);
 
+	template <typename callable_type>
+	bool for_each_attribute(callable_type &&c);
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 

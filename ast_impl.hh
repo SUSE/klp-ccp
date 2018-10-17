@@ -468,6 +468,17 @@ namespace suse
       }
 
       template <typename callable_type>
+      bool type_qualifier_list::for_each_attribute(callable_type &&c)
+      {
+	for (auto asl : _asls) {
+	  if (!asl.get().for_each_attribute(c))
+	    return false;
+	}
+
+	return true;
+      }
+
+      template <typename callable_type>
       void offset_member_designator::for_each(callable_type &&c) const
       {
 	for (auto &component : _components) {
