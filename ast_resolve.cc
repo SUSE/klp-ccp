@@ -325,15 +325,13 @@ namespace
     void _leave_scope();
 
     const expr_id::resolved* _lookup_id(const pp_token_index id_tok,
-					bool *in_cur_scope = nullptr,
-					bool skip_newest_scope = false)
+					bool *in_cur_scope = nullptr)
       const noexcept;
 
     template <typename predicate_type>
     const expr_id::resolved* _lookup_id(const pp_token_index id_tok,
 					predicate_type &&pred,
-					bool *in_cur_scope = nullptr,
-					bool skip_newest_scope = false)
+					bool *in_cur_scope = nullptr)
       const noexcept;
 
     const sou_decl_link* _lookup_sou_decl(const pp_token_index id_tok,
@@ -431,9 +429,21 @@ void _id_resolver::operator()()
   auto &&pre =
     (wrap_callables<default_action_return_value<bool, false>::type>
      ([this](function_definition &fd) {
-	_enter_scope();
 	_handle_fun_def(fd);
+	// The function's scope gets entered only when the
+	// direct_declarator_id gets processed below.
 	return true;
+      },
+      [this](const direct_declarator_id &ddid) {
+	ddid.process_context<void>
+	  (wrap_callables<default_action_nop>
+	   ([&](const function_definition &fd) {
+	      // It is important to enter a new scope only after the
+	      // function definition's declaration specififers have
+	      // been processed within the containing scope.
+	      _enter_scope();
+	    }));
+	return false;
       },
       [this](const stmt_compound&) {
 	_enter_scope();
@@ -536,7 +546,8 @@ void _id_resolver::operator()()
       }));
 
   _ast.for_each_dfs_pre_and_po<
-    type_set<const function_definition,
+    type_set<function_definition,
+	     const direct_declarator_id,
 	     const stmt_compound,
 	     const stmt_if,
 	     const stmt_switch,
@@ -571,19 +582,17 @@ void _id_resolver::_leave_scope()
 }
 
 const expr_id::resolved* _id_resolver::_lookup_id(const pp_token_index id_tok,
-						  bool *in_cur_scope,
-						  bool skip_newest_scope)
+						  bool *in_cur_scope)
   const noexcept
 {
   return _lookup_id(id_tok, [](const expr_id::resolved&) { return true; },
-		    in_cur_scope, skip_newest_scope);
+		    in_cur_scope);
 }
 
 template <typename predicate_type>
 const expr_id::resolved* _id_resolver::_lookup_id(const pp_token_index id_tok,
 						  predicate_type &&pred,
-						  bool *in_cur_scope,
-						  bool skip_newest_scope)
+						  bool *in_cur_scope)
   const noexcept
 {
   const expr_id::resolved *result = nullptr;
@@ -591,12 +600,8 @@ const expr_id::resolved* _id_resolver::_lookup_id(const pp_token_index id_tok,
   if (in_cur_scope)
     *in_cur_scope = false;
 
-  if (skip_newest_scope)
-    assert(_scopes.size() > 1);
-
   const pp_token &id = _ast.get_pp_tokens()[id_tok];
-  const auto &scopes_begin =
-    !skip_newest_scope ? _scopes.rbegin() : _scopes.rbegin() + 1;
+  const auto &scopes_begin =  _scopes.rbegin();
   for (auto scope_it = scopes_begin; scope_it != _scopes.rend(); ++scope_it) {
     for (auto r_it = scope_it->_declared_ids.rbegin();
 	 !result && r_it != scope_it->_declared_ids.rend();
@@ -988,8 +993,7 @@ void _id_resolver::_handle_fun_def(function_definition &fd)
   // Find a previous declaration visible in the current scope, if any.
   bool prev_is_in_cur_scope;
   const expr_id::resolved * const prev = _lookup_id(ddid.get_id_tok(),
-						    &prev_is_in_cur_scope,
-						    true);
+						    &prev_is_in_cur_scope);
 
   // Check for forbidden redeclarations in the same scope.
   if (prev && prev_is_in_cur_scope) {
@@ -1074,10 +1078,7 @@ void _id_resolver::_handle_fun_def(function_definition &fd)
     }
   }
 
-  // A function definition's id declarator must get added to parent
-  // scope.
-  assert(_scopes.size() >= 2);
-  (_scopes.end() - 2)->_declared_ids.push_back(expr_id::resolved(fd));
+  _scopes.back()._declared_ids.push_back(expr_id::resolved(fd));
 }
 
 void _id_resolver::_handle_sou_ref(struct_or_union_ref &sour)
