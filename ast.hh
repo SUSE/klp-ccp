@@ -1984,6 +1984,10 @@ namespace suse
 
 	virtual ~struct_declaration_unnamed_sou() noexcept override;
 
+	const unnamed_struct_or_union& get_unnamed_struct_or_union()
+	  const noexcept
+	{ return _unnamed_sou; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
