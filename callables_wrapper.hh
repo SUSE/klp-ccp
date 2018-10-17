@@ -229,6 +229,20 @@ namespace suse
 	}
       };
 
+      template<typename arg_type, typename... args_types>
+      struct impl
+	<typename std::enable_if<!mask::template is_member<arg_type>()>::type,
+	 arg_type, args_types...>
+      {
+	impl() noexcept
+	{}
+
+	ret_type operator()(arg_type&&, args_types&&... args) const noexcept
+	{
+	  return impl<void, args_types...>()(std::forward<args_types>(args)...);
+	}
+      };
+
       public:
       template<typename... args_types>
       using type = impl<void, args_types...>;
