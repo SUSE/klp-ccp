@@ -2609,6 +2609,9 @@ namespace suse
 
 	virtual ~designator_member() noexcept override;
 
+	pp_token_index get_member_tok() const noexcept
+	{ return _member_tok; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
