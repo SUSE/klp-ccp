@@ -1152,6 +1152,15 @@ namespace suse
 
 	virtual ~attribute() noexcept override;
 
+	pp_token_index get_name_tok() const noexcept
+	{ return _name_tok; }
+
+	expr_list* get_params() noexcept
+	{ return _params; }
+
+	const expr_list* get_params() const noexcept
+	{ return _params; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
