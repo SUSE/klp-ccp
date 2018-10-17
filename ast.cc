@@ -3973,6 +3973,20 @@ void specifier_qualifier_list::extend(specifier_qualifier_list* &&sql)
   delete _sql;
 }
 
+bool specifier_qualifier_list::is_signed_explicit() const noexcept
+{
+  // Check whether the 'signed' keyword is among the
+  // type specifiers. Needed for bitfields.
+  for (auto ts : _tss) {
+    const type_specifier_pod *ts_pod =
+      dynamic_cast<const type_specifier_pod*>(&ts.get());
+    if (ts_pod && ts_pod->get_pod_spec() == pod_spec::ps_signed)
+      return true;
+  }
+  return false;
+}
+
+
 std::size_t specifier_qualifier_list::_n_children() const noexcept
 {
   return _tss.size() + _tqs.size() + _asls.size();

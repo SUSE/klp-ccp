@@ -2417,6 +2417,8 @@ namespace suse
 
 	void extend(specifier_qualifier_list* &&sql);
 
+	bool is_signed_explicit() const noexcept;
+
 	template <typename callable_type>
 	bool for_each_attribute(callable_type &&c) const;
 
