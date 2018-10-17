@@ -2122,6 +2122,10 @@ namespace suse
 	sou_decl_list_node& get_decl_list_node() noexcept
 	{ return _decl_list_node; }
 
+	const struct_declaration_list*
+	get_struct_declaration_list() const noexcept
+	{ return _sdl; }
+
 	attribute_specifier_list *get_asl_before() noexcept
 	{ return _asl_before; }
 
