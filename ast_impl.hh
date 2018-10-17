@@ -499,6 +499,13 @@ namespace suse
       }
 
       template <typename callable_type>
+      void designator_list::for_each(callable_type &&c) const
+      {
+	for (auto d : _ds)
+	  c(d.get());
+      }
+
+      template <typename callable_type>
       void offset_member_designator::for_each(callable_type &&c) const
       {
 	for (auto &component : _components) {
