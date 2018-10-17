@@ -2548,6 +2548,12 @@ namespace suse
 
 	virtual void set_designation(designation* &&d) noexcept override;
 
+	const expr& get_expr() const noexcept
+	{ return _e; }
+
+	expr& get_expr() noexcept
+	{ return _e; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
