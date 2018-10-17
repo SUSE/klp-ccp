@@ -1871,6 +1871,9 @@ namespace suse
 
 	void set_asl_before(attribute_specifier_list* &&asl_before) noexcept;
 
+	const expr* get_width() const noexcept
+	{ return _width; }
+
 	const declarator* get_declarator() const noexcept
 	{ return _d; }
 
