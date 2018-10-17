@@ -490,6 +490,15 @@ namespace suse
       }
 
       template <typename callable_type>
+      void struct_declarator_list::for_each(callable_type &&c) const
+      {
+	for (auto it = _sds.begin(); it != _sds.end(); ++it) {
+	  c(static_cast<const struct_declarator&>(it->get()),
+	    it + 1 == _sds.end());
+	}
+      }
+
+      template <typename callable_type>
       void offset_member_designator::for_each(callable_type &&c) const
       {
 	for (auto &component : _components) {
