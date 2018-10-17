@@ -2044,6 +2044,8 @@ namespace suse
 	  struct_or_union_ref& get_target_sou_ref() const noexcept;
 	  struct_or_union_def& get_target_sou_def() const noexcept;
 
+	  const sou_decl_list_node& get_target_decl_list_node() const noexcept;
+
 	private:
 	  target_kind _target_kind;
 

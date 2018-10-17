@@ -3258,6 +3258,22 @@ struct_or_union_def& sou_decl_link::get_target_sou_def() const noexcept
   return *_soud;
 }
 
+const sou_decl_list_node& sou_decl_link::get_target_decl_list_node()
+  const noexcept
+{
+  switch (_target_kind) {
+  case target_kind::ref:
+    return _sour->get_decl_list_node();
+
+  case target_kind::def:
+    return _soud->get_decl_list_node();
+
+  case target_kind::unlinked:
+    assert(0);
+    __builtin_unreachable();
+  };
+}
+
 
 sou_decl_list_node::sou_decl_list_node(struct_or_union_ref &self) noexcept
   : _next(self), _prev(&_next)
