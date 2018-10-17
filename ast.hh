@@ -1415,6 +1415,8 @@ namespace suse
 	virtual  const direct_declarator_id& get_direct_declarator_id()
 	  const noexcept = 0;
 
+	virtual direct_declarator_id& get_direct_declarator_id() noexcept = 0;
+
 	const _ast_entity& get_first_non_declarator_parent() const noexcept;
 
 
@@ -1431,6 +1433,9 @@ namespace suse
 
 	virtual const direct_declarator_id& get_direct_declarator_id()
 	  const noexcept override;
+
+	virtual direct_declarator_id& get_direct_declarator_id()
+	  noexcept override;
 
 	pp_token_index get_id_tok() const noexcept;
 
@@ -1468,6 +1473,9 @@ namespace suse
 
 	virtual const direct_declarator_id& get_direct_declarator_id()
 	  const noexcept override;
+
+	virtual direct_declarator_id& get_direct_declarator_id()
+	  noexcept override;
 
 	const declarator& get_declarator() const noexcept
 	{
@@ -1507,6 +1515,9 @@ namespace suse
 	virtual const direct_declarator_id& get_direct_declarator_id()
 	  const noexcept override;
 
+	virtual direct_declarator_id& get_direct_declarator_id()
+	  noexcept override;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
@@ -1539,6 +1550,9 @@ namespace suse
 
 	virtual const direct_declarator_id& get_direct_declarator_id()
 	  const noexcept override;
+
+	virtual direct_declarator_id& get_direct_declarator_id()
+	  noexcept override;
 
 	const direct_declarator& get_direct_declarator() const noexcept
 	{
@@ -1573,6 +1587,8 @@ namespace suse
 	virtual ~declarator() noexcept override;
 
 	const direct_declarator_id& get_direct_declarator_id() const noexcept;
+
+	direct_declarator_id& get_direct_declarator_id() noexcept;
 
 	pp_token_index get_id_tok() const noexcept;
 

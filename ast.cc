@@ -2194,6 +2194,11 @@ const direct_declarator_id& direct_declarator_id::get_direct_declarator_id()
   return *this;
 }
 
+direct_declarator_id& direct_declarator_id::get_direct_declarator_id() noexcept
+{
+  return *this;
+}
+
 pp_token_index direct_declarator_id::get_id_tok() const noexcept
 {
   return _id_tok;
@@ -2281,6 +2286,11 @@ get_direct_declarator_id() const noexcept
   return _d.get_direct_declarator_id();
 }
 
+direct_declarator_id& direct_declarator_parenthesized::
+get_direct_declarator_id() noexcept
+{
+  return _d.get_direct_declarator_id();
+}
 
 _ast_entity* direct_declarator_parenthesized::_get_child(const size_t i)
   noexcept
@@ -2354,6 +2364,12 @@ direct_declarator_array::~direct_declarator_array() noexcept
 
 const direct_declarator_id& direct_declarator_array::get_direct_declarator_id()
   const noexcept
+{
+  return _dd.get_direct_declarator_id();
+}
+
+direct_declarator_id& direct_declarator_array::get_direct_declarator_id()
+  noexcept
 {
   return _dd.get_direct_declarator_id();
 }
@@ -2432,6 +2448,12 @@ const direct_declarator_id& direct_declarator_func::get_direct_declarator_id()
   return _dd.get_direct_declarator_id();
 }
 
+direct_declarator_id& direct_declarator_func::get_direct_declarator_id()
+  noexcept
+{
+  return _dd.get_direct_declarator_id();
+}
+
 _ast_entity* direct_declarator_func::_get_child(const size_t i) noexcept
 {
   if (!i) {
@@ -2487,6 +2509,11 @@ declarator::~declarator() noexcept
 
 const direct_declarator_id& declarator::get_direct_declarator_id()
   const noexcept
+{
+  return _dd.get_direct_declarator_id();
+}
+
+direct_declarator_id& declarator::get_direct_declarator_id() noexcept
 {
   return _dd.get_direct_declarator_id();
 }
