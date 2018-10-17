@@ -132,6 +132,9 @@ namespace suse
 	template<typename boundary_type_set, typename callable_type>
 	void for_each_ancestor(callable_type &&c);
 
+	template<typename boundary_type_set, typename callable_type>
+	void for_each_ancestor(callable_type &&c) const;
+
 	template <typename callable_type>
 	void process_parent(callable_type &&c) const;
 

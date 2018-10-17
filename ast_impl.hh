@@ -60,7 +60,10 @@ namespace suse
 	    return
 	      (boundary_type_set::
 	       template
-	       is_member<typename std::remove_reference<arg_type>::type>());
+	       is_member<typename
+			 std::remove_cv
+				<typename std::remove_reference<arg_type>::type>
+			 ::type>());
 	  }
 
 	  template<typename arg_type>
@@ -281,6 +284,42 @@ namespace suse
       }
 
       template<typename derived>
+      template<typename boundary_type_set, typename callable_type>
+      void
+      ast_entity<derived>::for_each_ancestor(callable_type &&c) const
+      {
+	impl::stop_at_boundary_wrapper<callable_type, boundary_type_set> _c
+	  (std::forward<callable_type>(c));
+
+	typedef
+	  typename
+	  derived::parent_types
+		::template closure<impl::parents_of, boundary_type_set>
+		::add_const
+	  ancestor_types;
+
+	auto &&__c =
+	  wrap_callables<default_action_unreachable<bool, ancestor_types>
+			 ::template type>
+	  (_c);
+	const _ast_entity *p = _parent;
+	if (ancestor_types::size() < impl::double_dispatch_threshold) {
+	  while (p) {
+	    if (!ancestor_types::cast_and_call(__c, *p))
+	      return;
+
+	    p = p->get_parent();
+	  }
+	} else {
+	  auto &&processor = make_const_processor<bool>(__c);
+	  while (p) {
+	    if (!p->_process(processor))
+	      return;
+	    p = p->get_parent();
+	  }
+	}
+      }
+
       template <typename callable_type>
       void ast_entity<derived>::process_parent(callable_type &&c) const
       {
