@@ -2852,6 +2852,9 @@ namespace suse
 	attribute_specifier_list *get_asl_after() noexcept
 	{ return _asl_after; }
 
+	initializer* get_initializer() noexcept
+	{ return _i; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
