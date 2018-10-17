@@ -2631,6 +2631,9 @@ namespace suse
 
 	virtual ~designator_array() noexcept override;
 
+	const expr& get_index_last() const noexcept
+	{ return _index_last ? *_index_last : _index_first; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
