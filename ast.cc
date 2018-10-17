@@ -4710,6 +4710,16 @@ void linkage::link_to(function_definition &target,
   __link_to(target, kind);
 }
 
+bool linkage::is_linked_to(const init_declarator &id) const noexcept
+{
+  return __is_linked_to(id.get_linkage());
+}
+
+bool linkage::is_linked_to(const function_definition &fd) const noexcept
+{
+  return __is_linked_to(fd.get_linkage());
+}
+
 template<typename target_type>
 void linkage::__link_to(target_type &target, const linkage_kind kind) noexcept
 {
@@ -4723,6 +4733,20 @@ void linkage::__link_to(target_type &target, const linkage_kind kind) noexcept
   _next = link{target};
 }
 
+bool linkage::__is_linked_to(const linkage &target) const noexcept
+{
+  if (this == &target)
+    return true;
+
+  for (const linkage *cur = &_next.get_target_linkage();
+       cur != this; cur = &cur->_next.get_target_linkage()) {
+    if (cur == &target)
+      return true;
+  }
+
+  return false;
+}
+
 linkage::link::link(init_declarator &id) noexcept
   : _target_kind(link_target_kind::init_decl),
     _target_id(&id)
@@ -4732,6 +4756,17 @@ linkage::link::link(function_definition &fd) noexcept
   : _target_kind(link_target_kind::function_def),
     _target_fd(&fd)
 {}
+
+const linkage& linkage::link::get_target_linkage() const noexcept
+{
+  switch (_target_kind) {
+  case link_target_kind::init_decl:
+    return _target_id->get_linkage();
+
+  case link_target_kind::function_def:
+    return _target_fd->get_linkage();
+  };
+}
 
 
 init_declarator::init_declarator(const pp_tokens_range &tr,

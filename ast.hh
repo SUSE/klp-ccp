@@ -2722,19 +2722,25 @@ namespace suse
 	void link_to(function_definition &target,
 		     const linkage_kind kind) noexcept;
 
+	bool is_linked_to(const init_declarator &id) const noexcept;
+	bool is_linked_to(const function_definition &fd) const noexcept;
+
       private:
 	class link
 	{
 	public:
-	  link(init_declarator &id) noexcept;
-	  link(function_definition &fd) noexcept;
-
-	private:
 	  enum class link_target_kind
 	  {
 	    init_decl,
 	    function_def,
 	  };
+
+	  link(init_declarator &id) noexcept;
+	  link(function_definition &fd) noexcept;
+
+	  const linkage& get_target_linkage() const noexcept;
+
+	private:
 
 	  link_target_kind _target_kind;
 
@@ -2746,6 +2752,8 @@ namespace suse
 
 	template<typename target_type>
 	void __link_to(target_type &target, const linkage_kind kind) noexcept;
+
+	bool __is_linked_to(const linkage &target) const noexcept;
 
 	linkage_kind _linkage_kind;
 	link _next;
