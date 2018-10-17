@@ -2545,6 +2545,8 @@ namespace suse
 
 	virtual void set_designation(designation* &&d) noexcept override;
 
+	std::size_t get_size() const noexcept;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 

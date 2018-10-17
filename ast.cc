@@ -4343,6 +4343,11 @@ void initializer_init_list::set_designation(designation* &&d) noexcept
   _set_designation(std::move(d));
 }
 
+std::size_t initializer_init_list::get_size() const noexcept
+{
+  return _il ? _il->get_size() : 0;
+}
+
 _ast_entity* initializer_init_list::_get_child(const size_t i) noexcept
 {
   if (!i) {
