@@ -2759,6 +2759,15 @@ namespace suse
 	const declarator& get_declarator() const noexcept
 	{ return _d; }
 
+	attribute_specifier_list *get_asl_before() noexcept
+	{ return _asl_before; }
+
+	attribute_specifier_list *get_asl_middle() noexcept
+	{ return _asl_middle; }
+
+	attribute_specifier_list *get_asl_after() noexcept
+	{ return _asl_after; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
