@@ -2337,6 +2337,8 @@ namespace suse
 
 	void link_to_definition(enum_def &ed) noexcept;
 
+	const enum_def& get_definition() const noexcept;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 

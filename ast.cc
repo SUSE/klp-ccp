@@ -3745,6 +3745,13 @@ void enum_ref::link_to_definition(enum_def &ed) noexcept
   _def = &ed;
 }
 
+const enum_def& enum_ref::get_definition() const noexcept
+{
+  assert(_def);
+  return *_def;
+}
+
+
 _ast_entity* enum_ref::_get_child(const size_t i) noexcept
 {
   if (!i)
