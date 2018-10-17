@@ -1096,8 +1096,8 @@ void _id_resolver::_handle_sou_ref(struct_or_union_ref &sour)
 	[&is_standalone_decl](const struct_declaration_unnamed_sou&) {
 	  // struct_declaration_unnamed_sou can be a parent of a
 	  // specifier_qualifier_list. A specifier_qualifier_list can
-	  // in turn be a parent of our struct_or_union_ref.
-	  // However, these can't be both true for the *same*
+	  // be a parent of our struct_or_union_ref.
+	  // However, this can't both be true for the *same*
 	  // specifier_qualifier_list instance.
 	  assert(0);
 	  __builtin_unreachable();
@@ -1132,7 +1132,7 @@ void _id_resolver::_handle_sou_ref(struct_or_union_ref &sour)
 
   types::struct_or_union_kind prev_tag_kind;
   if (is_standalone_decl && prev_decl) {
-    // It's a redeclaration, link it to the previous one.
+    // It's a redeclaration in the same scope, link it to the previous one.
     switch (prev_decl->get_target_kind()) {
     case sou_decl_link::target_kind::ref:
       prev_tag_kind = prev_decl->get_target_sou_ref().get_tag_kind();
