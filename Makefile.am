@@ -15,6 +15,7 @@ noinst_HEADERS =			\
 	code_remarks.hh		\
 	constexpr_value.hh		\
 	cow_set.hh			\
+	execution_charset_encoder.hh	\
 	file_range.hh			\
 	gnuc_parser_driver.hh		\
 	header_inclusion_tree.hh	\
@@ -50,6 +51,7 @@ libcp_a_SOURCES =			\
 	code_remark.cc			\
 	code_remarks.cc		\
 	constexpr_value.cc		\
+	execution_charset_encoder.cc	\
 	file_range.cc			\
 	gnuc_parser.yy			\
 	gnuc_parser_driver.cc		\

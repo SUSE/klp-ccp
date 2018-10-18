@@ -13,6 +13,8 @@ namespace suse
       class ast;
     }
 
+    class execution_charset_encoder;
+
     enum class int_mode_kind
     {
       imk_none,
@@ -89,6 +91,19 @@ namespace suse
       virtual mpa::limbs get_va_list_size() const = 0;
 
       virtual mpa::limbs::size_type get_va_list_alignment() const = 0;
+
+      enum class execution_charset_encoding
+      {
+	ecse_char,
+	ecse_wchar,
+	ecse_char8,
+	ecse_char16,
+	ecse_char32,
+      };
+
+      virtual std::unique_ptr<execution_charset_encoder>
+      get_execution_charset_encoder(const execution_charset_encoding e)
+	const = 0;
 
       virtual void evaluate_enum_type(ast::ast &a, types::enum_content &ec,
 				      const bool packed,
