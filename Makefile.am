@@ -4,10 +4,12 @@ AM_YFLAGS = -d
 BUILT_SOURCES = gnuc_parser.hh stack.hh
 
 noinst_HEADERS =			\
+	architecture.hh		\
 	ast.hh				\
 	ast_impl.hh			\
 	ast_processor.hh		\
 	ast_processor_impl.hh		\
+	builtins.hh			\
 	callables_wrapper.hh		\
 	code_remark.hh			\
 	code_remarks.hh		\
@@ -35,13 +37,16 @@ noinst_HEADERS =			\
 	target_int.hh			\
 	type_set.hh			\
 	types.hh			\
+	types_impl.hh			\
 	used_macros.hh			\
 	used_macro_undefs.hh
 
 noinst_LIBRARIES = libcp.a
 libcp_a_SOURCES =			\
+	architecture.cc		\
 	ast.cc				\
 	ast_resolve.cc			\
+	builtins.cc			\
 	code_remark.cc			\
 	code_remarks.cc		\
 	constexpr_value.cc		\
@@ -65,6 +70,7 @@ libcp_a_SOURCES =			\
 	source_reader.cc		\
 	target_float.cc		\
 	target_int.cc			\
+	types.cc			\
 	used_macros.cc			\
 	used_macro_undefs.cc
 
