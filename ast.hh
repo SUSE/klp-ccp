@@ -3281,6 +3281,9 @@ namespace suse
 
 	virtual ~block_item_stmt() noexcept override;
 
+	const stmt& get_stmt() const noexcept
+	{ return _s; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
