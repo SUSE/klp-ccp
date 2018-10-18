@@ -18,8 +18,8 @@
 #define __UINT64_TYPE__ unsigned long
 #define __INT_LEAST64_TYPE__ long
 #define __UINT_LEAST64_TYPE__ unsigned long
-#define __CHAR16_TYPE__ short
-#define __CHAR32_TYPE__ int
+#define __CHAR16_TYPE__ unsigned short
+#define __CHAR32_TYPE__ unsigned int
 #define __WCHAR_TYPE__ int
 #define __WINT_TYPE__ long
 
