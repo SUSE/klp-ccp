@@ -10,6 +10,14 @@ namespace suse
 {
   namespace cp
   {
+    class architecture;
+
+    namespace types
+    {
+      class int_type;
+      class real_float_type;
+    };
+
     namespace ast
     {
       class init_declarator;
@@ -135,6 +143,11 @@ namespace suse
 	const target_float& get_float_value() const noexcept;
 	const address_constant& get_address_value() const noexcept;
 	address_constant& get_address_value() noexcept;
+
+	target_int convert_to(const architecture &arch,
+			      const types::int_type &it) const;
+	target_float convert_to(const architecture &arch,
+				const types::real_float_type &ft) const;
 
 	bool is_zero() const noexcept;
 

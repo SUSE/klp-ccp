@@ -1,5 +1,6 @@
 #include "constexpr_value.hh"
 #include "ast.hh"
+#include "types.hh"
 #include <cassert>
 
 using namespace suse::cp;
@@ -281,6 +282,45 @@ constexpr_value::address_constant& constexpr_value::get_address_value() noexcept
 {
   assert(_value_kind == value_kind::vk_address);
   return _ac;
+}
+
+target_int constexpr_value::convert_to(const architecture &arch,
+				       const int_type &it) const
+{
+  const bool is_signed = it.is_signed(arch);
+  const mpa::limbs::size_type prec = it.get_width(arch) - is_signed;
+
+  switch(_value_kind) {
+  case value_kind::vk_int:
+    return _ti.convert(prec, is_signed);
+
+  case value_kind::vk_float:
+    return _tf.to_int(prec, is_signed);
+
+  case value_kind::vk_address:
+    assert(0);
+    __builtin_unreachable();
+  };
+}
+
+target_float constexpr_value::convert_to(const architecture &arch,
+					 const types::real_float_type &ft) const
+{
+  const mpa::limbs::size_type significand_width =
+    ft.get_significand_width(arch);
+  const mpa::limbs::size_type exponent_width = ft.get_exponent_width(arch);
+
+  switch(_value_kind) {
+  case value_kind::vk_int:
+    return _ti.to_float(significand_width, exponent_width);
+
+  case value_kind::vk_float:
+    return _tf.convert(significand_width, exponent_width);
+
+  case value_kind::vk_address:
+    assert(0);
+    __builtin_unreachable();
+  };
 }
 
 bool constexpr_value::is_zero() const noexcept
