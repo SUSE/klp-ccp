@@ -60,6 +60,7 @@ typedef unsigned __int128 __uint128_t;
 #define __SIZEOF_DOUBLE__ sizeof(double)
 #define __SIZEOF_LONG_DOUBLE__ sizeof(long double)
 
+#define __BIGGEST_ALIGNMENT__ 16
 
 #define NULL ((void *) 0)
 
