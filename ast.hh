@@ -3027,6 +3027,9 @@ namespace suse
 	bool is_variadic() const noexcept
 	{ return _variadic; }
 
+	template<typename callable_type>
+	void for_each(callable_type&& c) const;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 

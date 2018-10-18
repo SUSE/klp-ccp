@@ -519,6 +519,13 @@ namespace suse
 	  c(i.get());
       }
 
+      template<typename callable_type>
+      void parameter_declaration_list::for_each(callable_type&& c) const
+      {
+	for (auto pd : _pds)
+	  c(static_cast<const parameter_declaration&>(pd.get()));
+      }
+
       template <typename callable_type>
       void offset_member_designator::for_each(callable_type &&c) const
       {
