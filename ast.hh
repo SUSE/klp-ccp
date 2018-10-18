@@ -12,6 +12,7 @@
 #include "code_remarks.hh"
 #include "code_remark.hh"
 #include "types.hh"
+#include "builtins.hh"
 
 #ifdef DEBUG_PARSER
 #include <iostream>
@@ -984,10 +985,8 @@ namespace suse
 	class resolved
 	{
 	public:
-	  struct builtin_tag {};
-
 	  resolved() noexcept;
-	  resolved(const builtin_tag&) noexcept;
+	  resolved(const builtin_func::factory builtin_func_fac) noexcept;
 	  resolved(init_declarator &id) noexcept;
 	  resolved(parameter_declaration_declarator &pdd) noexcept;
 	  resolved(function_definition &fd) noexcept;
@@ -998,7 +997,7 @@ namespace suse
 	  enum class resolved_kind
 	  {
 	    none,
-	    builtin,
+	    builtin_func,
 	    init_declarator,
 	    parameter_declaration_declarator,
 	    function_definition,
@@ -1010,6 +1009,7 @@ namespace suse
 	  resolved_kind get_kind() const noexcept
 	  { return _kind; }
 
+	  builtin_func::factory get_builtin_func_factory() const noexcept;
 	  init_declarator& get_init_declarator() const noexcept;
 	  parameter_declaration_declarator&
 	  get_parameter_declaration_declarator() const noexcept;
@@ -1023,6 +1023,7 @@ namespace suse
 
 	  union
 	  {
+	    builtin_func::factory _builtin_func_fac;
 	    init_declarator *_id;
 	    parameter_declaration_declarator *_pdd;
 	    function_definition *_fd;

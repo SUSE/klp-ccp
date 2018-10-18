@@ -9,186 +9,10 @@ using namespace suse::cp::ast;
 
 using resolved_kind = expr_id::resolved::resolved_kind;
 
-static const char * const _builtin_ids[] = {
-	"__atomic_add",
-	"__atomic_add_fetch",
-	"__atomic_and_fetch",
-	"__atomic_clear",
-	"__atomic_compare_exchange",
-	"__atomic_compare_exchange_n",
-	"__atomic_exchange",
-	"__atomic_exchange_n",
-	"__atomic_fetch_add",
-	"__atomic_fetch_and",
-	"__atomic_fetch_nand",
-	"__atomic_fetch_or",
-	"__atomic_fetch_sub",
-	"__atomic_fetch_xor",
-	"__atomic_load",
-	"__atomic_load_n",
-	"__atomic_nand_fetch",
-	"__atomic_or_fetch",
-	"__atomic_signal_fence",
-	"__atomic_store",
-	"__atomic_store_",
-	"__atomic_store_n",
-	"__atomic_sub_fetch",
-	"__atomic_test_and_set",
-	"__atomic_thread_fence",
-	"__atomic_xor_fetch",
-	"__builtin_abort",
-	"__builtin_abs",
-	"__builtin_add_overflow",
-	"__builtin_aligned_alloc",
-	"__builtin_alloca",
-	"__builtin_alloca_with_align",
-	"__builtin_apply",
-	"__builtin_apply_args",
-	"__builtin_assume_aligned",
-	"__builtin_atan",
-	"__builtin_bcmp",
-	"__builtin_bcopy",
-	"__builtin_bswap",
-	"__builtin_bzero",
-	"__builtin_cabs",
-	"__builtin_cabsf",
-	"__builtin_cabsl",
-	"__builtin_calloc",
-	"__builtin_cexpi",
-	"__builtin_choose_expr",
-	"__builtin___clear_cache",
-	"__builtin_clrsb",
-	"__builtin_clrsbl",
-	"__builtin_clrsbll",
-	"__builtin_clz",
-	"__builtin_clzl",
-	"__builtin_clzll",
-	"__builtin_complex",
-	"__builtin_constant_p",
-	"__builtin_copysign",
-	"__builtin_copysignf",
-	"__builtin_cos",
-	"__builtin_ctz",
-	"__builtin_ctzl",
-	"__builtin_ctzll",
-	"__builtin_exit",
-	"__builtin_exp",
-	"__builtin_expect",
-	"__builtin_fabs",
-	"__builtin_ffs",
-	"__builtin_ffsl",
-	"__builtin_ffsll",
-	"__builtin_finite",
-	"__builtin_finitef",
-	"__builtin_finitel",
-	"__builtin_fma",
-	"__builtin_fpclassify",
-	"__builtin_frame_address",
-	"__builtin_free",
-	"__builtin_inf",
-	"__builtin_infl",
-	"__builtin_irint",
-	"__builtin_iround",
-	"__builtin_isfinite",
-	"__builtin_isgreater",
-	"__builtin_isgreaterequal",
-	"__builtin_isinf",
-	"__builtin_isinff",
-	"__builtin_isinfl",
-	"__builtin_isinf_sign",
-	"__builtin_isless",
-	"__builtin_islessequal",
-	"__builtin_islessgreater",
-	"__builtin_isnan",
-	"__builtin_isnanf",
-	"__builtin_isnanl",
-	"__builtin_isnormal",
-	"__builtin_isunordered",
-	"__builtin_labs",
-	"__builtin_lceil",
-	"__builtin_lfloor",
-	"__builtin_llabs",
-	"__builtin_llceil",
-	"__builtin_llfloor",
-	"__builtin_llround",
-	"__builtin_lround",
-	"__builtin_lroundf",
-	"__builtin_malloc",
-	"__builtin_memcmp",
-	"__builtin_memcpy",
-	"__builtin___memcpy_chk",
-	"__builtin_memmove",
-	"__builtin___memmove_chk",
-	"__builtin_mempcpy",
-	"__builtin___mempcpy_chk",
-	"__builtin_memset",
-	"__builtin___memset_chk",
-	"__builtin_mul_overflow",
-	"__builtin_nan",
-	"__builtin_nanl",
-	"__builtin_next_arg",
-	"__builtin_object_size",
-	"__builtin_offsetof",
-	"__builtin_parity",
-	"__builtin_parityl",
-	"__builtin_parityll",
-	"__builtin_popcount",
-	"__builtin_popcountl",
-	"__builtin_popcountll",
-	"__builtin_pow",
-	"__builtin_powi",
-	"__builtin_powif",
-	"__builtin_powil",
-	"__builtin_prefetch",
-	"__builtin_printf",
-	"__builtin_puts",
-	"__builtin_realloc",
-	"__builtin_return",
-	"__builtin_return_address",
-	"__builtin_setjmp",
-	"__builtin_shuffle",
-	"__builtin_signbit",
-	"__builtin_signbitf",
-	"__builtin_signbitl",
-	"__builtin_significandl",
-	"__builtin_sin",
-	"__builtin_sincos",
-	"__builtin_sincosl",
-	"__builtin_snprintf",
-	"__builtin___snprintf_chk",
-	"__builtin_sprintf",
-	"__builtin_sqrt",
-	"__builtin_sqrtf",
-	"__builtin_sqrtl",
-	"__builtin_stack_restore",
-	"__builtin_stack_save",
-	"__builtin_stpcpy",
-	"__builtin___stpcpy_chk",
-	"__builtin_stpncpy",
-	"__builtin_strcat",
-	"__builtin___strcat_chk",
-	"__builtin_strchr",
-	"__builtin_strcmp",
-	"__builtin_strcpy",
-	"__builtin___strcpy_chk",
-	"__builtin_strdup",
-	"__builtin_strlen",
-	"__builtin_strncat",
-	"__builtin_strncmp",
-	"__builtin_strncpy",
-	"__builtin_strstr",
-	"__builtin_trap",
-	"__builtin_types_compatible_p",
-	"__builtin_unreachable",
-	"__builtin_va_arg_pack",
-	nullptr
-};
-
 static const char * const _builtin_tdids[] = {
 	"__builtin_va_list",
 	nullptr
 };
-
 
 static std::set<std::string>
 _init_builtin_ids_set(const char * const builtin_ids[])
@@ -659,7 +483,7 @@ const expr_id::resolved* _id_resolver::_lookup_id(const pp_token_index id_tok,
 
       case resolved_kind::none:
 	/* fall through */
-      case resolved_kind::builtin:
+      case resolved_kind::builtin_func:
 	/* fall through */
       case resolved_kind::stmt_labeled:
 	// These are never elements of _declared_ids
@@ -856,7 +680,7 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
 
 	  case resolved_kind::none:
 	    /* fall through */
-	  case resolved_kind::builtin:
+	  case resolved_kind::builtin_func:
 	    /* fall through */
 	  case resolved_kind::stmt_labeled:
 	    /* fall through */
@@ -1311,7 +1135,7 @@ _id_resolver::_get_linkage_kind(const expr_id::resolved &resolved) noexcept
 
   case resolved_kind::none:
     /* fall through */
-  case resolved_kind::builtin:
+  case resolved_kind::builtin_func:
     /* fall through */
   case resolved_kind::parameter_declaration_declarator:
     /* fall through */
@@ -1347,7 +1171,7 @@ void _id_resolver::_link_to(linkage &l, const expr_id::resolved &resolved)
 
   case resolved_kind::none:
     /* fall through */
-  case resolved_kind::builtin:
+  case resolved_kind::builtin_func:
     /* fall through */
   case resolved_kind::parameter_declaration_declarator:
     /* fall through */
@@ -1476,10 +1300,10 @@ void _id_resolver::_resolve_id(expr_id &ei)
   // Otherwise check whether the identifier refers to a builtin
   // and if so, report that fact.
   const pp_token &id_tok = _ast.get_pp_tokens()[ei.get_id_tok()];
-  static std::set<std::string> builtin_ids =
-    _init_builtin_ids_set(_builtin_ids);
-  if (builtin_ids.count(id_tok.get_value())) {
-    ei.set_resolved(expr_id::resolved(expr_id::resolved::builtin_tag{}));
+  const builtin_func::factory builtin_func_fac =
+    builtin_func::lookup(id_tok.get_value());
+  if (builtin_func_fac) {
+    ei.set_resolved(expr_id::resolved(builtin_func_fac));
     return;
   }
 

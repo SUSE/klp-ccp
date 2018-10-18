@@ -40,6 +40,8 @@ namespace suse
       virtual evaluation_result_type
       evaluate(ast::ast &a, const architecture &arch,
 	       const ast::expr_func_invocation &efi) const = 0;
+
+      static factory lookup(const std::string &id);
     };
   }
 }

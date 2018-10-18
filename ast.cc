@@ -1279,8 +1279,9 @@ expr_id::resolved::resolved() noexcept
   : _kind(resolved_kind::none)
 {}
 
-expr_id::resolved::resolved(const builtin_tag&) noexcept
-  : _kind(resolved_kind::builtin)
+expr_id::resolved::resolved(const builtin_func::factory builtin_func_fac)
+  noexcept
+  : _kind(resolved_kind::builtin_func), _builtin_func_fac(builtin_func_fac)
 {}
 
 expr_id::resolved::resolved(init_declarator &id) noexcept
@@ -1306,6 +1307,13 @@ expr_id::resolved::resolved(enumerator &e) noexcept
 expr_id::resolved::resolved(identifier_list &pil) noexcept
   : _kind(resolved_kind::in_param_id_list), _pil(&pil)
 {}
+
+suse::cp::builtin_func::factory expr_id::resolved::get_builtin_func_factory()
+  const noexcept
+{
+  assert(_kind == resolved_kind::builtin_func);
+  return _builtin_func_fac;
+}
 
 init_declarator& expr_id::resolved::get_init_declarator() const noexcept
 {
