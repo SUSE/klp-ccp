@@ -3024,6 +3024,9 @@ namespace suse
 
 	void set_variadic(const pp_tokens_range &triple_dot_tr) noexcept;
 
+	bool is_variadic() const noexcept
+	{ return _variadic; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
