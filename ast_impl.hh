@@ -6,6 +6,7 @@
 #include "ast_processor_impl.hh"
 #include "type_set.hh"
 #include "callables_wrapper.hh"
+#include "constexpr_value.hh"
 #include "ret_type_invoker.hh"
 
 namespace suse
@@ -248,6 +249,18 @@ namespace suse
 	  c(*this);
       }
 
+
+      template <typename derived>
+      ast_entity<derived>::ast_entity(const pp_tokens_range &tr)
+	noexcept
+	: _ast_entity(tr)
+      {}
+
+      template <typename derived>
+      ast_entity<derived>::ast_entity(const ast_entity &ae) noexcept
+	: _ast_entity(ae)
+      {}
+
       template<typename derived>
       template<typename boundary_type_set, typename callable_type>
       void
@@ -321,6 +334,7 @@ namespace suse
 	}
       }
 
+      template<typename derived>
       template <typename callable_type>
       void ast_entity<derived>::process_parent(callable_type &&c) const
       {
@@ -336,6 +350,54 @@ namespace suse
 	  _parent->_process(processor);
 	}
       }
+
+
+      template <typename derived, typename type>
+      typed_ast_entity<derived, type>::
+      typed_ast_entity(const pp_tokens_range &tr) noexcept
+	: ast_entity<derived>(tr)
+      {}
+
+      template <typename derived, typename type>
+      typed_ast_entity<derived, type>::~typed_ast_entity() noexcept = default;
+
+      template <typename derived, typename type>
+      const std::shared_ptr<const type>&
+      typed_ast_entity<derived, type>::get_type() const noexcept
+      {
+	assert(static_cast<bool>(_type));
+	return _type;
+      }
+
+      template <typename derived, typename type>
+      bool typed_ast_entity<derived, type>::is_evaluated() const noexcept
+      {
+	return static_cast<bool>(_type);
+      }
+
+      template <typename derived, typename type>
+      void typed_ast_entity<derived, type>::
+      _set_type(std::shared_ptr<const type> &&t) noexcept
+      {
+	assert(!static_cast<bool>(_type));
+	_type = std::move(t);
+      }
+
+      template <typename derived, typename type>
+      void typed_ast_entity<derived, type>::
+      _set_type(const std::shared_ptr<const type> &t) noexcept
+      {
+	assert(!static_cast<bool>(_type));
+	_type = t;
+      }
+
+      template <typename derived, typename type>
+      void typed_ast_entity<derived, type>::
+      _reset_type(std::shared_ptr<const type> &&t) noexcept
+      {
+	_type = std::move(t);
+      }
+
 
       template <typename handled_types, typename callables_wrapper_type>
       void ast::for_each_dfs_po(callables_wrapper_type &&c)
@@ -524,6 +586,13 @@ namespace suse
       {
 	for (auto pd : _pds)
 	  c(static_cast<const parameter_declaration&>(pd.get()));
+      }
+
+      template<typename... args_types>
+      void expr::_set_value(args_types&&... args)
+      {
+	assert(!_value);
+	_value.reset(new constexpr_value(std::forward<args_types>(args)...));
       }
 
       template <typename callable_type>

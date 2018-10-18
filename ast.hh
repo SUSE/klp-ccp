@@ -6,6 +6,7 @@
 #include <initializer_list>
 #include <functional>
 #include <memory>
+#include <utility>
 #include "type_set.hh"
 #include "header_inclusion_tree.hh"
 #include "pp_tokens.hh"
@@ -22,6 +23,8 @@ namespace suse
 {
   namespace cp
   {
+    class architecture;
+
     namespace ast
     {
       typedef std::size_t pp_token_index;
@@ -49,6 +52,10 @@ namespace suse
 
       template<typename ret_type>
       class const_processor;
+
+      class constexpr_value;
+
+      class ast;
 
       template<typename derived>
       class ast_entity;
@@ -180,16 +187,41 @@ namespace suse
 	}
       };
 
-      template <typename derived>
-      ast_entity<derived>::ast_entity(const pp_tokens_range &tr)
-	noexcept
-	: _ast_entity(tr)
-      {}
 
-      template <typename derived>
-      ast_entity<derived>::ast_entity(const ast_entity &ae) noexcept
-	: _ast_entity(ae)
-      {}
+      class _typed
+      {
+      public:
+	virtual ~_typed() noexcept;
+
+	virtual void evaluate_type(ast &a, const architecture &arch) = 0;
+
+	virtual bool is_evaluated() const noexcept = 0;
+
+      protected:
+	_typed() noexcept = default;
+      };
+
+
+      template <typename derived, typename type>
+      class typed_ast_entity : public ast_entity<derived>, public _typed
+      {
+      public:
+	virtual ~typed_ast_entity() noexcept;
+
+	const std::shared_ptr<const type>& get_type() const noexcept;
+
+	virtual bool is_evaluated() const noexcept override;
+
+      protected:
+	typed_ast_entity(const pp_tokens_range &tr) noexcept;
+
+	void _set_type(std::shared_ptr<const type> &&t) noexcept;
+	void _set_type(const std::shared_ptr<const type> &t) noexcept;
+	void _reset_type(std::shared_ptr<const type> &&t) noexcept;
+
+      private:
+	std::shared_ptr<const type> _type;
+      };
 
       class ast;
       class expr;
@@ -385,7 +417,7 @@ namespace suse
 	std::vector<std::reference_wrapper<expr> > _exprs;
       };
 
-      class expr : public ast_entity<expr>
+      class expr : public typed_ast_entity<expr, types::type>
       {
       public:
 	typedef type_set<expr_list,
@@ -414,14 +446,39 @@ namespace suse
 
 	virtual ~expr() noexcept = 0;
 
+	bool is_constexpr() const noexcept;
+
+	bool is_dereferenced_const_addr() const noexcept;
+
+	const constexpr_value&
+	get_constexpr_value() const noexcept;
+
 	virtual const expr& skip_parens_down() const noexcept;
 	virtual const _ast_entity* skip_parens_up() const noexcept;
 	virtual const _ast_entity* skip_parens_up() noexcept;
 	const _ast_entity* get_non_parens_parent() const noexcept;
 	_ast_entity* get_non_parens_parent() noexcept;
 
+	bool is_lvalue() const noexcept;
+
+	void decay_array_types();
+
       protected:
 	expr(const pp_tokens_range &tr) noexcept;
+
+
+	void _set_value(std::unique_ptr<constexpr_value> &&cv);
+
+	template<typename... args_types>
+	void _set_value(args_types&&... args);
+
+	void _set_lvalue(const bool is_lvalue) noexcept;
+
+	void _convert_type_for_expr_context();
+
+      private:
+	std::unique_ptr<constexpr_value> _value;
+	bool _is_lvalue;
       };
 
       class expr_comma final : public expr
@@ -430,6 +487,8 @@ namespace suse
 	expr_comma(expr* &&l, expr* &&r) noexcept;
 
 	virtual ~expr_comma() noexcept override;
+
+	virtual void evaluate_type(ast&, const architecture&) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -468,6 +527,8 @@ namespace suse
 	const expr& get_lhs() const noexcept
 	{ return _lhs; }
 
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
@@ -490,6 +551,8 @@ namespace suse
 	expr_conditional(expr* &&cond, expr* &&expr_false) noexcept;
 
 	virtual ~expr_conditional() noexcept override;
+
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -533,6 +596,8 @@ namespace suse
 
 	virtual ~expr_binop() noexcept override;
 
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
@@ -540,6 +605,33 @@ namespace suse
 	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
 	virtual bool _process(const_processor<bool> &p) const override;
+
+	void _evaluate_arith_binop(const types::arithmetic_type &at_left,
+				   const types::arithmetic_type &at_right,
+				   ast &a, const architecture &arch);
+	void _evaluate_ptr_sub(const types::pointer_type &pt_left,
+			       const types::pointer_type &pt_right,
+			       ast &a, const architecture &arch);
+	void _evaluate_shift(const types::int_type &it_left,
+			     const types::int_type &it_right,
+			     ast &a, const architecture &arch);
+	void _evaluate_bin_binop(const types::int_type &it_left,
+				 const types::int_type &it_right,
+				 ast &a, const architecture &arch);
+	void _evaluate_logical_binop(const architecture &arch);
+
+	void _evaluate_cmp(const types::pointer_type &pt_left,
+			   const types::pointer_type &pt_right,
+			   ast &a, const architecture &arch);
+	void _evaluate_cmp(const types::pointer_type &pt_left,
+			   const types::int_type &it_right,
+			   ast &a, const architecture &arch);
+	void _evaluate_cmp(const types::int_type &it_left,
+			   const types::pointer_type &pt_right,
+			   ast &a, const architecture &arch);
+	void _evaluate_cmp(const types::arithmetic_type &at_left,
+			   const types::arithmetic_type &at_right,
+			   ast &a, const architecture &arch);
 
 	binary_op _op;
 	expr &_left;
@@ -553,6 +645,8 @@ namespace suse
 	  noexcept;
 
 	virtual ~expr_cast() noexcept override;
+
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -591,6 +685,8 @@ namespace suse
 
 	void set_resolved(const stmt_labeled &resolved) noexcept;
 
+	virtual void evaluate_type(ast&, const architecture&) override;
+
       private:
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
@@ -614,6 +710,8 @@ namespace suse
 	unary_op_pre get_op() const noexcept
 	{ return _op; }
 
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
@@ -632,6 +730,8 @@ namespace suse
 	expr_sizeof_expr(const pp_tokens_range &tr, expr* &&e) noexcept;
 
 	virtual ~expr_sizeof_expr() noexcept override;
+
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -652,6 +752,8 @@ namespace suse
 
 	virtual ~expr_sizeof_type_name() noexcept override;
 
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
@@ -669,6 +771,8 @@ namespace suse
 	expr_alignof_expr(const pp_tokens_range &tr, expr* &&e) noexcept;
 
 	virtual ~expr_alignof_expr() noexcept override;
+
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -688,6 +792,8 @@ namespace suse
 	  noexcept;
 
 	virtual ~expr_alignof_type_name() noexcept override;
+
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -779,6 +885,8 @@ namespace suse
 
 	virtual ~expr_builtin_offsetof() noexcept override;
 
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
@@ -800,6 +908,8 @@ namespace suse
 
 	virtual ~expr_builtin_types_compatible_p() noexcept override;
 
+	virtual void evaluate_type(ast&, const architecture &arch) override;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
@@ -819,6 +929,8 @@ namespace suse
 			    expr* &&e, type_name* &&tn) noexcept;
 
 	virtual ~expr_builtin_va_arg() noexcept override;
+
+	virtual void evaluate_type(ast&, const architecture&) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -840,6 +952,8 @@ namespace suse
 
 	virtual ~expr_array_subscript() noexcept override;
 
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
@@ -847,6 +961,10 @@ namespace suse
 	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
 	virtual bool _process(const_processor<bool> &p) const override;
+
+	void _evaluate_type(ast &a, const architecture &arch,
+			    const types::pointer_type &pt_base,
+			    const expr &e_base, const expr &e_index);
 
 	expr &_base;
 	expr &_index;
@@ -867,6 +985,8 @@ namespace suse
 
 	const expr_list * get_args() const noexcept
 	{ return _args; }
+
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -899,6 +1019,8 @@ namespace suse
 	member_deref_type get_deref_type() const noexcept
 	{ return _deref_type; }
 
+	virtual void evaluate_type(ast &a, const architecture&) override;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
@@ -929,6 +1051,8 @@ namespace suse
 	unary_op_post get_op() const noexcept
 	{ return _op; }
 
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
@@ -949,6 +1073,8 @@ namespace suse
 
 	virtual ~expr_compound_literal() noexcept override;
 
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
@@ -967,6 +1093,8 @@ namespace suse
 	expr_statement(const pp_tokens_range &tr, stmt_compound* &&s) noexcept;
 
 	virtual ~expr_statement() noexcept override;
+
+	virtual void evaluate_type(ast&, const architecture&) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -1044,6 +1172,8 @@ namespace suse
 
 	const resolved& get_resolved() const noexcept;
 
+	virtual void evaluate_type(ast &a, const architecture&) override;
+
       private:
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
 
@@ -1062,6 +1192,8 @@ namespace suse
 	expr_constant(const pp_token_index const_tok) noexcept;
 
 	virtual ~expr_constant() noexcept override;
+
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t) noexcept override;
@@ -1108,6 +1240,8 @@ namespace suse
 
 	virtual ~expr_string_literal() noexcept override;
 
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
@@ -1129,6 +1263,8 @@ namespace suse
 	virtual const expr& skip_parens_down() const noexcept override;
 	virtual const _ast_entity* skip_parens_up() const noexcept override;
 	virtual _ast_entity* skip_parens_up() noexcept override;
+
+	virtual void evaluate_type(ast&, const architecture&) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -1289,7 +1425,8 @@ namespace suse
       };
 
       class direct_abstract_declarator
-	: public ast_entity<direct_abstract_declarator>
+	: public typed_ast_entity<direct_abstract_declarator,
+				  types::addressable_type>
       {
       public:
 	typedef type_set<abstract_declarator,
@@ -1298,11 +1435,17 @@ namespace suse
 
 	virtual ~direct_abstract_declarator() noexcept;
 
+	virtual std::shared_ptr<const types::addressable_type>
+	get_innermost_type() const noexcept = 0;
+
 	virtual const direct_abstract_declarator*
 	skip_trivial_parens_down() const noexcept;
 
       protected:
 	direct_abstract_declarator(const pp_tokens_range &tr) noexcept;
+
+	std::shared_ptr<const types::addressable_type>
+	_get_enclosing_type() const noexcept;
       };
 
       class direct_abstract_declarator_parenthesized final
@@ -1315,6 +1458,11 @@ namespace suse
 					abstract_declarator* &&ad) noexcept;
 
 	virtual ~direct_abstract_declarator_parenthesized() noexcept override;
+
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
+
+	virtual std::shared_ptr<const types::addressable_type>
+	get_innermost_type() const noexcept override;
 
 	virtual const direct_abstract_declarator*
 	skip_trivial_parens_down() const noexcept override;
@@ -1348,6 +1496,11 @@ namespace suse
 
 	virtual ~direct_abstract_declarator_array() noexcept override;
 
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
+
+	virtual std::shared_ptr<const types::addressable_type>
+	get_innermost_type() const noexcept override;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
@@ -1374,6 +1527,11 @@ namespace suse
 
 	virtual ~direct_abstract_declarator_func() noexcept override;
 
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
+
+	virtual std::shared_ptr<const types::addressable_type>
+	get_innermost_type() const noexcept override;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
@@ -1386,7 +1544,8 @@ namespace suse
 	parameter_declaration_list *_ptl;
       };
 
-      class abstract_declarator final : public ast_entity<abstract_declarator>
+      class abstract_declarator final
+	: public typed_ast_entity<abstract_declarator, types::addressable_type>
       {
       public:
 	typedef type_set<type_name, direct_abstract_declarator_parenthesized,
@@ -1408,6 +1567,11 @@ namespace suse
 	  return _pt;
 	}
 
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
+
+	std::shared_ptr<const types::addressable_type>
+	get_innermost_type() const noexcept;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
@@ -1416,11 +1580,15 @@ namespace suse
 	virtual bool _process(processor<bool> &p) override;
 	virtual bool _process(const_processor<bool> &p) const override;
 
+	std::shared_ptr<const types::addressable_type>
+	_get_enclosing_type() const noexcept;
+
 	pointer *_pt;
 	direct_abstract_declarator *_dad;
       };
 
-      class type_name final : public ast_entity<type_name>
+      class type_name final
+	: public typed_ast_entity<type_name, types::addressable_type>
       {
       public:
 	typedef type_set<typeof_type_name, expr_sizeof_type_name,
@@ -1442,6 +1610,8 @@ namespace suse
 	specifier_qualifier_list& get_specifier_qualifier_list() noexcept
 	{ return _sql; }
 
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
@@ -1454,7 +1624,8 @@ namespace suse
 	abstract_declarator *_ad;
       };
 
-      class direct_declarator : public ast_entity<direct_declarator>
+      class direct_declarator
+	: public typed_ast_entity<direct_declarator, types::addressable_type>
       {
       public:
 	typedef type_set<declarator, direct_declarator_array,
@@ -1469,9 +1640,11 @@ namespace suse
 
 	const _ast_entity& get_first_non_declarator_parent() const noexcept;
 
-
       protected:
 	direct_declarator(const pp_tokens_range &tr) noexcept;
+
+	std::shared_ptr<const types::addressable_type>
+	_get_enclosing_type() const noexcept;
       };
 
       class direct_declarator_id final : public direct_declarator
@@ -1491,8 +1664,9 @@ namespace suse
 
 	bool is_function() const noexcept;
 
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
-
+	void complete_type(std::shared_ptr<const types::array_type> &&at);
 
 	template <typename ret_type, typename callables_wrapper_type>
 	ret_type process_context(callables_wrapper_type &&c) const;
@@ -1532,6 +1706,7 @@ namespace suse
 	  return _d;
 	}
 
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -1567,6 +1742,8 @@ namespace suse
 
 	virtual direct_declarator_id& get_direct_declarator_id()
 	  noexcept override;
+
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -1604,6 +1781,7 @@ namespace suse
 	virtual direct_declarator_id& get_direct_declarator_id()
 	  noexcept override;
 
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -1618,7 +1796,8 @@ namespace suse
 	identifier_list *_il;
       };
 
-      class declarator final : public ast_entity<declarator>
+      class declarator final
+	: public typed_ast_entity<declarator, types::addressable_type>
       {
       public:
 	typedef type_set<direct_declarator_parenthesized,
@@ -1643,6 +1822,11 @@ namespace suse
 	  return _pt;
 	}
 
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
+
+	std::shared_ptr<const types::addressable_type>
+	get_innermost_type() const noexcept;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
@@ -1650,6 +1834,9 @@ namespace suse
 	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
 	virtual bool _process(const_processor<bool> &p) const override;
+
+	std::shared_ptr<const types::addressable_type>
+	_get_enclosing_type() const noexcept;
 
 	pointer *_pt;
 	direct_declarator &_dd;
@@ -1740,6 +1927,9 @@ namespace suse
 	void extend(type_qualifier* &&tq);
 
 	void extend(attribute_specifier_list* &&asl);
+
+	const types::qualifiers
+	get_qualifiers() const;
 
 	template <typename callable_type>
 	bool for_each_attribute(callable_type &&c);
@@ -1859,7 +2049,8 @@ namespace suse
 	specifier_qualifier_list *_sql;
       };
 
-      class struct_declarator final : public ast_entity<struct_declarator>
+      class struct_declarator final
+	: public typed_ast_entity<struct_declarator, types::type>
       {
       public:
 	typedef type_set<struct_declarator_list> parent_types;
@@ -1875,8 +2066,13 @@ namespace suse
 	const expr* get_width() const noexcept
 	{ return _width; }
 
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
+
 	const declarator* get_declarator() const noexcept
 	{ return _d; }
+
+	std::pair<types::alignment, bool>
+	find_align_attribute(suse::cp::ast::ast &a, const architecture &arch);
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -1945,7 +2141,8 @@ namespace suse
       };
 
       class unnamed_struct_or_union final
-	: public ast_entity<unnamed_struct_or_union>
+	: public typed_ast_entity<unnamed_struct_or_union,
+				  types::struct_or_union_type>
       {
       public:
 	typedef type_set<struct_declaration_unnamed_sou> parent_types;
@@ -1958,11 +2155,16 @@ namespace suse
 
 	virtual ~unnamed_struct_or_union() noexcept override;
 
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
+
 	attribute_specifier_list* get_asl_before() noexcept
 	{ return _asl_before; }
 
 	attribute_specifier_list* get_asl_after() noexcept
 	{ return _asl_after; }
+
+	const types::struct_or_union_content& get_content() const noexcept
+	{ return _content; }
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -1972,10 +2174,14 @@ namespace suse
 	virtual bool _process(processor<bool> &p) override;
 	virtual bool _process(const_processor<bool> &p) const override;
 
+	void _layout_content(ast &a, const architecture &arch);
+
 	types::struct_or_union_kind _souk;
 	struct_declaration_list *_sdl;
 	attribute_specifier_list *_asl_before;
 	attribute_specifier_list *_asl_after;
+
+	types::struct_or_union_content _content;
       };
 
       class struct_declaration_unnamed_sou final : public struct_declaration
@@ -2016,6 +2222,9 @@ namespace suse
 	virtual ~struct_declaration_list() noexcept override;
 
 	void extend(struct_declaration* &&sd);
+
+	types::struct_or_union_content
+	create_content(ast &a, const types::struct_or_union_kind souk) const;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -2133,6 +2342,14 @@ namespace suse
 	attribute_specifier_list *get_asl_after() noexcept
 	{ return _asl_after; }
 
+	void layout_content(ast &a, const architecture &arch);
+
+	const types::struct_or_union_content& get_content() const noexcept
+	{ return _content; }
+
+	types::struct_or_union_content& get_content() noexcept
+	{ return _content; }
+
       private:
 	struct_or_union_def(const pp_tokens_range &tr,
 			    const types::struct_or_union_kind souk,
@@ -2156,6 +2373,8 @@ namespace suse
 	attribute_specifier_list *_asl_after;
 	sou_decl_list_node _decl_list_node;
 	bool _id_tok_valid;
+
+	types::struct_or_union_content _content;
       };
 
       class struct_or_union_ref final : public type_specifier
@@ -2244,6 +2463,11 @@ namespace suse
 	pp_token_index get_id_tok() const noexcept
 	{ return _id_tok; }
 
+	void register_at_parent(ast &a, const architecture &arch);
+
+	const types::enum_content::member& to_member(const ast &a)
+	  const noexcept;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
@@ -2267,6 +2491,12 @@ namespace suse
 
 	void extend(enumerator* &&e);
 
+	const types::enum_content& get_content() const noexcept
+	{ return _content; }
+
+	types::enum_content& get_content() noexcept
+	{ return _content; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
@@ -2276,6 +2506,8 @@ namespace suse
 	virtual bool _process(const_processor<bool> &p) const override;
 
 	std::vector<std::reference_wrapper<enumerator> > _es;
+
+	types::enum_content _content;
       };
 
       class enum_def final : public type_specifier
@@ -2433,7 +2665,8 @@ namespace suse
       };
 
       class specifier_qualifier_list
-	: public ast_entity<specifier_qualifier_list>
+	: public typed_ast_entity<specifier_qualifier_list,
+				  types::addressable_type>
       {
       public:
 	typedef type_set<struct_declaration_c99, struct_declaration_unnamed_sou,
@@ -2457,6 +2690,11 @@ namespace suse
 	void extend(attribute_specifier_list* &&asl);
 
 	void extend(specifier_qualifier_list* &&sql);
+
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
+
+	const types::qualifiers
+	get_qualifiers() const;
 
 	bool is_signed_explicit() const noexcept;
 
@@ -2949,10 +3187,13 @@ namespace suse
 	  const noexcept
 	{ return _ds; }
 
-	attribute_specifier_list *get_asl() noexcept
+	attribute_specifier_list *get_asl() const noexcept
 	{
 	  return _asl;
 	}
+
+	virtual std::shared_ptr<const types::addressable_type>
+	get_type(ast &a, const architecture &arch) const = 0;
 
       protected:
 	declaration_specifiers &_ds;
@@ -2970,6 +3211,9 @@ namespace suse
 	  noexcept;
 
 	virtual ~parameter_declaration_declarator() noexcept override;
+
+	virtual std::shared_ptr<const types::addressable_type>
+	get_type(ast&, const architecture&) const override;
 
 	const declarator& get_declarator() const noexcept
 	{
@@ -2998,6 +3242,9 @@ namespace suse
 	  noexcept;
 
 	virtual ~parameter_declaration_abstract() noexcept override;
+
+	virtual std::shared_ptr<const types::addressable_type>
+	get_type(ast &a, const architecture &arch) const override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -3030,6 +3277,8 @@ namespace suse
 
 	template<typename callable_type>
 	void for_each(callable_type&& c) const;
+
+	bool is_single_void(ast &a, const architecture &arch) const;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -3940,6 +4189,8 @@ namespace suse
 	{ return _tokens; }
 
 	void resolve();
+
+	void evaluate(const architecture &arch);
 
 	code_remarks& get_remarks() noexcept
 	{ return _remarks; }

@@ -6,6 +6,7 @@ BUILT_SOURCES = gnuc_parser.hh stack.hh
 noinst_HEADERS =				\
 	architecture.hh			\
 	ast.hh					\
+	ast_evaluate.hh			\
 	ast_impl.hh				\
 	ast_processor.hh			\
 	ast_processor_impl.hh			\
@@ -47,6 +48,7 @@ noinst_LIBRARIES = libcp.a
 libcp_a_SOURCES =				\
 	architecture.cc			\
 	ast.cc					\
+	ast_evaluate.cc			\
 	ast_resolve.cc				\
 	builtins.cc				\
 	code_remark.cc				\

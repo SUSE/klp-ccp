@@ -40,6 +40,10 @@ void _ast_entity::_extend_tokens_range(const pp_tokens_range &tr) noexcept
 }
 
 
+_typed::~_typed() noexcept = default;
+
+
+
 expr_list::expr_list(expr* &&e)
   : ast_entity(e->get_tokens_range())
 {
@@ -121,7 +125,7 @@ bool expr_list::_process(const_processor<bool> &p) const
 
 
 expr::expr(const pp_tokens_range &tr) noexcept
-  : ast_entity(tr)
+  : typed_ast_entity(tr), _is_lvalue(false)
 {}
 
 expr::~expr() noexcept = default;
@@ -133,6 +137,29 @@ static pp_tokens_range tr_from_aes(const _ast_entity &ae1,
     ae1.get_tokens_range().begin,
     ae2.get_tokens_range().end
   };
+}
+
+bool expr::is_constexpr() const noexcept
+{
+  return (static_cast<bool>(_value) &&
+	  ((_value->get_value_kind() !=
+	    constexpr_value::value_kind::vk_address) ||
+	   !_value->get_address_value().is_dereferenced()));
+}
+
+bool expr::is_dereferenced_const_addr() const noexcept
+{
+  return (static_cast<bool>(_value) &&
+	  (_value->get_value_kind() ==
+	   constexpr_value::value_kind::vk_address) &&
+	  _value->get_address_value().is_dereferenced());
+}
+
+const constexpr_value&
+expr::get_constexpr_value() const noexcept
+{
+  assert(static_cast<bool>(_value));
+  return *_value;
 }
 
 const expr& expr::skip_parens_down() const noexcept
@@ -181,6 +208,24 @@ _ast_entity* expr::get_non_parens_parent() noexcept
       }));
 
   return p;
+}
+
+bool expr::is_lvalue() const noexcept
+{
+  // The expr should have been evaluated.
+  assert(this->get_type());
+  return _is_lvalue;
+}
+
+void expr::_set_value(std::unique_ptr<constexpr_value> &&cv)
+{
+  assert(!_value);
+  _value = std::move(cv);
+}
+
+void expr::_set_lvalue(const bool is_lvalue) noexcept
+{
+  _is_lvalue = is_lvalue;
 }
 
 
@@ -422,7 +467,7 @@ expr_cast::~expr_cast() noexcept
 
 _ast_entity* expr_cast::_get_child(const size_t i) noexcept
 {
-    switch (i)
+  switch (i)
   {
   case 0:
     return &_tn;
@@ -1878,10 +1923,26 @@ bool pointer::_process(const_processor<bool> &p) const
 
 direct_abstract_declarator::
 direct_abstract_declarator(const pp_tokens_range &tr) noexcept
-  : ast_entity(tr)
+  : typed_ast_entity(tr)
 {}
 
 direct_abstract_declarator::~direct_abstract_declarator() noexcept = default;
+
+std::shared_ptr<const suse::cp::types::addressable_type>
+direct_abstract_declarator::_get_enclosing_type() const noexcept
+{
+  std::shared_ptr<const types::addressable_type> pt;
+
+  process_parent
+    (wrap_callables<no_default_action>
+     ([&pt](const direct_abstract_declarator &dad) {
+	pt = dad.get_type();
+      },
+      [&pt](const abstract_declarator &ad) {
+	pt = ad.get_type();
+      }));
+  return pt;
+}
 
 const direct_abstract_declarator* direct_abstract_declarator::
 skip_trivial_parens_down() const noexcept
@@ -1907,6 +1968,13 @@ direct_abstract_declarator_parenthesized::
 {
   delete _asl;
   delete &_ad;
+}
+
+std::shared_ptr<const suse::cp::types::addressable_type>
+direct_abstract_declarator_parenthesized::
+get_innermost_type() const noexcept
+{
+  return _ad.get_innermost_type();
 }
 
 const direct_abstract_declarator* direct_abstract_declarator_parenthesized::
@@ -1997,6 +2065,14 @@ direct_abstract_declarator_array::
   delete _size;
 }
 
+std::shared_ptr<const suse::cp::types::addressable_type>
+direct_abstract_declarator_array::get_innermost_type() const noexcept
+{
+  if (_dad)
+    return _dad->get_innermost_type();
+  return get_type();
+}
+
 _ast_entity* direct_abstract_declarator_array::_get_child(const size_t i)
   noexcept
 {
@@ -2066,6 +2142,14 @@ direct_abstract_declarator_func::~direct_abstract_declarator_func() noexcept
   delete _ptl;
 }
 
+std::shared_ptr<const suse::cp::types::addressable_type>
+direct_abstract_declarator_func::get_innermost_type() const noexcept
+{
+  if (_dad)
+    return _dad->get_innermost_type();
+  return get_type();
+}
+
 _ast_entity* direct_abstract_declarator_func::_get_child(const size_t i)
   noexcept
 {
@@ -2106,7 +2190,7 @@ abstract_declarator::abstract_declarator(const pp_tokens_range &tr,
 					 pointer* &&pt,
 					 direct_abstract_declarator* &&dad)
 noexcept
-  : ast_entity(tr), _pt(mv_p(std::move(pt))), _dad(mv_p(std::move(dad)))
+  : typed_ast_entity(tr), _pt(mv_p(std::move(pt))), _dad(mv_p(std::move(dad)))
 {
   if (_pt)
     _pt->_set_parent(*this);
@@ -2118,6 +2202,16 @@ abstract_declarator::~abstract_declarator() noexcept
 {
   delete _pt;
   delete _dad;
+}
+
+std::shared_ptr<const suse::cp::types::addressable_type>
+abstract_declarator::
+get_innermost_type() const noexcept
+{
+  if (_dad)
+    return _dad->get_innermost_type();
+
+  return get_type();
 }
 
 _ast_entity* abstract_declarator::_get_child(const size_t i) noexcept
@@ -2154,10 +2248,33 @@ bool abstract_declarator::_process(const_processor<bool> &p) const
   return p(*this);
 }
 
+std::shared_ptr<const suse::cp::types::addressable_type>
+abstract_declarator::_get_enclosing_type() const noexcept
+{
+  std::shared_ptr<const types::addressable_type> pt;
+
+  process_parent
+    (wrap_callables<no_default_action>
+     ([&pt](const direct_abstract_declarator_parenthesized &dadp) {
+	pt = dadp.get_type();
+	assert(pt);
+      },
+      [&pt](const type_name &tn) {
+	pt = tn.get_specifier_qualifier_list().get_type();
+	assert(pt);
+      },
+      [&pt](const parameter_declaration_abstract &pda) {
+	pt = pda.get_declaration_specifiers().get_type();
+	assert(pt);
+      }));
+
+  return pt;
+}
+
 
 type_name::type_name(const pp_tokens_range &tr, specifier_qualifier_list* &&sql,
 		     abstract_declarator* &&ad) noexcept
-  : ast_entity(tr), _sql(*mv_p(std::move(sql))), _ad(mv_p(std::move(ad)))
+  : typed_ast_entity(tr), _sql(*mv_p(std::move(sql))), _ad(mv_p(std::move(ad)))
 {
   _sql._set_parent(*this);
   if (_ad)
@@ -2203,11 +2320,26 @@ bool type_name::_process(const_processor<bool> &p) const
 
 
 direct_declarator::direct_declarator(const pp_tokens_range &tr) noexcept
-  : ast_entity(tr)
+  : typed_ast_entity(tr)
 {}
 
 direct_declarator::~direct_declarator() noexcept = default;
 
+std::shared_ptr<const suse::cp::types::addressable_type>
+direct_declarator::_get_enclosing_type() const noexcept
+{
+  std::shared_ptr<const types::addressable_type> pt;
+
+  process_parent
+    (wrap_callables<no_default_action>
+     ([&pt](const direct_declarator& dd) {
+	pt = dd.get_type();
+      },
+      [&pt](const declarator& d) {
+	pt = d.get_type();
+      }));
+  return pt;
+}
 
 
 direct_declarator_id::direct_declarator_id(const pp_token_index id_tok) noexcept
@@ -2262,6 +2394,11 @@ bool direct_declarator_id::is_function() const noexcept
   return p->is_any_of<direct_declarator_func>();
 }
 
+void direct_declarator_id::
+complete_type(std::shared_ptr<const types::array_type> &&at)
+{
+  _reset_type(std::move(at));
+}
 
 _ast_entity* direct_declarator_id::_get_child(const size_t) noexcept
 {
@@ -2521,7 +2658,7 @@ bool direct_declarator_func::_process(const_processor<bool> &p) const
 
 declarator::declarator(const pp_tokens_range &tr, pointer* &&pt,
 		       direct_declarator* &&dd) noexcept
-  : ast_entity(tr), _pt(mv_p(std::move(pt))),
+  : typed_ast_entity(tr), _pt(mv_p(std::move(pt))),
     _dd(*mv_p(std::move(dd)))
 {
   _dd._set_parent(*this);
@@ -2549,6 +2686,12 @@ direct_declarator_id& declarator::get_direct_declarator_id() noexcept
 pp_token_index declarator::get_id_tok() const noexcept
 {
   return this->get_direct_declarator_id().get_id_tok();
+}
+
+std::shared_ptr<const suse::cp::types::addressable_type>
+declarator::get_innermost_type() const noexcept
+{
+  return get_direct_declarator_id().get_type();
 }
 
 _ast_entity* declarator::_get_child(const size_t i) noexcept
@@ -2583,6 +2726,42 @@ bool declarator::_process(processor<bool> &p)
 bool declarator::_process(const_processor<bool> &p) const
 {
   return p(*this);
+}
+
+std::shared_ptr<const suse::cp::types::addressable_type>
+declarator::_get_enclosing_type() const noexcept
+{
+  std::shared_ptr<const types::addressable_type> pt;
+
+  process_parent
+    (wrap_callables<no_default_action>
+     ([&pt](const direct_declarator_parenthesized &ddp) {
+	pt = ddp.get_type();
+	assert(pt);
+      },
+      [&pt](const struct_declarator &sd) {
+	const specifier_qualifier_list *sql =
+	  (sd.get_unique_parent<struct_declarator_list>()
+	   .get_unique_parent<struct_declaration_c99>()
+	   .get_specifier_qualifier_list());
+	pt = sql->get_type();
+	assert(pt);
+      },
+      [&pt](const init_declarator &id) {
+	const declaration &d = id.get_containing_declaration();
+	pt = d.get_declaration_specifiers().get_type();
+	assert(pt);
+      },
+      [&pt](const parameter_declaration_declarator &pdd) {
+	pt = pdd.get_declaration_specifiers().get_type();
+	assert(pt);
+      },
+      [&pt](const function_definition &fd) {
+	pt = fd.get_declaration_specifiers().get_type();
+	assert(pt);
+      }));
+
+  return pt;
 }
 
 
@@ -2713,6 +2892,16 @@ void type_qualifier_list::extend(attribute_specifier_list* &&asl)
   }
   _extend_tokens_range(_asl.get().get_tokens_range());
   _asl.get()._set_parent(*this);
+}
+
+const suse::cp::types::qualifiers
+type_qualifier_list::get_qualifiers() const
+{
+  types::qualifiers qs;
+  for (auto q : _tqs)
+    qs.add(q.get().get_kind());
+
+  return qs;
 }
 
 _ast_entity* type_qualifier_list::_get_child(const size_t i) noexcept
@@ -2858,7 +3047,7 @@ struct_declarator::struct_declarator(const pp_tokens_range &tr,
 				     declarator* &&d, expr* &&width,
 				     attribute_specifier_list* &&asl_after)
   noexcept
-  : ast_entity(tr), _d(mv_p(std::move(d))),
+  : typed_ast_entity(tr), _d(mv_p(std::move(d))),
     _width(mv_p(std::move(width))),
     _asl_before(nullptr), _asl_after(mv_p(std::move(asl_after)))
 {
@@ -3062,7 +3251,7 @@ unnamed_struct_or_union(const pp_tokens_range &tr,
 			struct_declaration_list* &&sdl,
 			attribute_specifier_list* &&asl_before,
 			attribute_specifier_list* &&asl_after) noexcept
-  : ast_entity(tr), _souk(souk), _sdl(mv_p(std::move(sdl))),
+  : typed_ast_entity(tr), _souk(souk), _sdl(mv_p(std::move(sdl))),
     _asl_before(mv_p(std::move(asl_before))),
     _asl_after(mv_p(std::move(asl_after)))
 {
@@ -3564,6 +3753,16 @@ enumerator::~enumerator() noexcept
   delete _value;
 }
 
+const suse::cp::types::enum_content::member& enumerator::to_member(const ast &a)
+  const noexcept
+{
+  const std::string& name = a.get_pp_tokens()[_id_tok].get_value();
+  const enumerator_list &el = get_unique_parent<enumerator_list>();
+  const types::enum_content::member *m = el.get_content().lookup(name);
+  assert(m);
+  return *m;
+}
+
 _ast_entity* enumerator::_get_child(const size_t i) noexcept
 {
   if (!i)
@@ -3905,7 +4104,7 @@ bool function_specifier::_process(const_processor<bool> &p) const
 
 
 specifier_qualifier_list::specifier_qualifier_list(type_specifier* &&ts)
-  : ast_entity(ts->get_tokens_range())
+  : typed_ast_entity(ts->get_tokens_range())
 {
   auto _ts = std::ref(*mv_p(std::move(ts)));
   try {
@@ -3918,7 +4117,7 @@ specifier_qualifier_list::specifier_qualifier_list(type_specifier* &&ts)
 }
 
 specifier_qualifier_list::specifier_qualifier_list(type_qualifier* &&tq)
-  : ast_entity(tq->get_tokens_range())
+  : typed_ast_entity::typed_ast_entity(tq->get_tokens_range())
 {
   auto _tq = std::ref(*mv_p(std::move(tq)));
   try {
@@ -3932,7 +4131,7 @@ specifier_qualifier_list::specifier_qualifier_list(type_qualifier* &&tq)
 
 specifier_qualifier_list::
 specifier_qualifier_list(attribute_specifier_list* &&asl)
-  : ast_entity(asl->get_tokens_range())
+  : typed_ast_entity(asl->get_tokens_range())
 {
   auto _asl = std::ref(*mv_p(std::move(asl)));
   try {
@@ -3946,7 +4145,7 @@ specifier_qualifier_list(attribute_specifier_list* &&asl)
 
 specifier_qualifier_list::specifier_qualifier_list(const pp_tokens_range &tr)
   noexcept
-  : ast_entity(tr)
+  : typed_ast_entity(tr)
 {}
 
 specifier_qualifier_list::~specifier_qualifier_list() noexcept
@@ -4041,6 +4240,16 @@ void specifier_qualifier_list::extend(specifier_qualifier_list* &&sql)
 
   _extend_tokens_range(_sql->get_tokens_range());
   delete _sql;
+}
+
+const suse::cp::types::qualifiers
+specifier_qualifier_list::get_qualifiers() const
+{
+  types::qualifiers qs;
+  for (auto q : _tqs)
+    qs.add(q.get().get_kind());
+
+  return qs;
 }
 
 bool specifier_qualifier_list::is_signed_explicit() const noexcept
@@ -5027,6 +5236,12 @@ parameter_declaration_declarator::~parameter_declaration_declarator() noexcept
   delete &_d;
 }
 
+std::shared_ptr<const suse::cp::types::addressable_type>
+parameter_declaration_declarator::get_type(ast&, const architecture&) const
+{
+  return _d.get_innermost_type();
+}
+
 _ast_entity* parameter_declaration_declarator::_get_child(const size_t i)
   noexcept
 {
@@ -5173,6 +5388,31 @@ parameter_declaration_list::set_variadic(const pp_tokens_range &triple_dot_tr)
 {
   _variadic = true;
   _extend_tokens_range(triple_dot_tr);
+}
+
+bool parameter_declaration_list::
+is_single_void(ast &a, const architecture &arch) const
+{
+  if (_variadic || _pds.size() > 1)
+    return false;
+  assert(_pds.size() == 1);
+
+  const parameter_declaration &pd = _pds[0].get();
+  return (pd.process<bool, type_set<parameter_declaration_abstract>>
+	  (wrap_callables<default_action_return_value<bool, false>::type>
+	   ([&](const parameter_declaration_abstract &pda) {
+	     if (pda.get_declaration_specifiers().get_storage_class(a) !=
+		 storage_class::sc_none)
+	       return false;
+
+	     const types::void_type * const vt =
+	       dynamic_cast<const types::void_type *>(pda.get_type(a, arch)
+						      .get());
+	     if (!vt || vt->get_qualifiers().any())
+	       return false;
+
+	     return true;
+	    })));
 }
 
 _ast_entity* parameter_declaration_list::_get_child(const size_t i) noexcept
