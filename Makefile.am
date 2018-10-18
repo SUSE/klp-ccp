@@ -11,6 +11,7 @@ noinst_HEADERS =			\
 	callables_wrapper.hh		\
 	code_remark.hh			\
 	code_remarks.hh		\
+	constexpr_value.hh		\
 	cow_set.hh			\
 	file_range.hh			\
 	gnuc_parser_driver.hh		\
@@ -43,6 +44,7 @@ libcp_a_SOURCES =			\
 	ast_resolve.cc			\
 	code_remark.cc			\
 	code_remarks.cc		\
+	constexpr_value.cc		\
 	file_range.cc			\
 	gnuc_parser.yy			\
 	gnuc_parser_driver.cc		\
