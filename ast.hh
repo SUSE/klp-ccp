@@ -3575,6 +3575,9 @@ namespace suse
 
 	virtual ~stmt_return() noexcept override;
 
+	const expr *get_expr() const noexcept
+	{ return _e; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
 
