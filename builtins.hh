@@ -43,6 +43,8 @@ namespace suse
 
       static factory lookup(const std::string &id);
     };
+
+    std::unique_ptr<builtin_func> builtin_func_choose_expr_create();
   }
 }
 

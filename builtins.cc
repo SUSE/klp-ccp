@@ -259,6 +259,78 @@ evaluate(suse::cp::ast::ast &a, const architecture &arch,
 
 namespace
 {
+  class builtin_func_choose_expr final : public builtin_func
+  {
+  public:
+    builtin_func_choose_expr() noexcept;
+
+    virtual ~builtin_func_choose_expr() noexcept override;
+
+    virtual evaluation_result_type
+    evaluate(suse::cp::ast::ast &a, const architecture &arch,
+	     const expr_func_invocation &efi) const override;
+  };
+}
+
+builtin_func_choose_expr::builtin_func_choose_expr() noexcept = default;
+
+builtin_func_choose_expr::~builtin_func_choose_expr() noexcept = default;
+
+builtin_func::evaluation_result_type
+builtin_func_choose_expr::evaluate(suse::cp::ast::ast &a, const architecture&,
+				   const expr_func_invocation &efi) const
+{
+  const expr_list * const args = efi.get_args();
+  const std::size_t n_args = !args ? 0 : args->size();
+
+  if (n_args != 3) {
+    const pp_token &tok =
+      a.get_pp_tokens()[efi.get_tokens_range().begin];
+    code_remark remark
+      (code_remark::severity::warning,
+       "wrong number of arguments to __builtin_choose_expr()",
+       tok.get_file_range());
+    a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  // Note: GCC really requires an integer constant expression
+  // for the first argument.
+  const expr &e_cond = (*args)[0];
+  if (!e_cond.is_constexpr() ||
+      !(e_cond.get_constexpr_value().has_constness
+	(constexpr_value::constness::c_integer_constant_expr))) {
+    const pp_token &tok =
+      a.get_pp_tokens()[e_cond.get_tokens_range().begin];
+    code_remark remark
+      (code_remark::severity::warning,
+       "first argument to __builtin_choose_expr() is not a constant",
+       tok.get_file_range());
+    a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  const constexpr_value &cv_cond = e_cond.get_constexpr_value();
+  const expr &e_result = cv_cond.is_zero() ? (*args)[2] : (*args)[1];
+  std::unique_ptr<constexpr_value> value;
+  if (e_result.is_constexpr()) {
+    value = e_result.get_constexpr_value().clone();
+  }
+
+  return evaluation_result_type{e_result.get_type(),
+				std::move(value),
+				e_result.is_lvalue()};
+}
+
+std::unique_ptr<builtin_func> suse::cp::builtin_func_choose_expr_create()
+{
+  return (std::unique_ptr<builtin_func_choose_expr>
+	  (new builtin_func_choose_expr()));
+}
+
+
+namespace
+{
   class builtin_func_constant_p final : public builtin_func
   {
   public:
@@ -1345,6 +1417,7 @@ builtin_func::factory builtin_func::lookup(const std::string &id)
     { "__builtin_bswap32", bfspf_u32_u32::create },
     { "__builtin_bswap64", bfspf_u64_u64::create },
     { "__builtin_calloc", bfspf_pv_sz_sz::create },
+    { "__builtin_choose_expr", builtin_func_choose_expr_create },
     { "__builtin___clear_cache", bfspf_v_pv_pv::create },
     { "__builtin_classify_type", bfspf_i_var::create },
     { "__builtin_clz", bfspf_i_u::create },

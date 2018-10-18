@@ -2739,6 +2739,7 @@ void expr::_convert_type_for_expr_context()
     oc_nonptr_member_deref,
     oc_assignment_lhs,
     oc_initializer,
+    oc_builtin_choose_expr,
     oc_other,
   };
 
@@ -2751,7 +2752,8 @@ void expr::_convert_type_for_expr_context()
 					expr_unop_post,
 					expr_member_deref,
 					expr_assignment,
-					initializer_expr> >
+					initializer_expr,
+					expr_list> >
       (wrap_callables<default_action_nop>
        ([&](const expr_sizeof_expr&) {
 	  oc = operand_context::oc_sizeof;
@@ -2797,12 +2799,54 @@ void expr::_convert_type_for_expr_context()
 	      break;
 	    }
 	  }
+	},
+	[&](const initializer_expr &) {
+	  oc = operand_context::oc_initializer;
+	},
+	[&](const expr_list &el) {
+	  // Check whether this is the second or third argument of
+	  // a __builtin_func_choose_expr() invocation.
+	  if (el.size() != 3)
+	    return;
+
+	  if (!el.get_parent())
+	    return;
+	  const expr_func_invocation *efi = nullptr;
+	  el.get_parent()->process<void, type_set<expr_func_invocation> >
+	    (wrap_callables<default_action_nop>
+	     ([&](const expr_func_invocation &_efi) {
+		efi = &_efi;
+	      }));
+	  if (!efi)
+	    return;
+
+	  handle_types<void>
+	    ((wrap_callables<default_action_nop>
+	      ([&](const builtin_func_type &bft) {
+		 if (bft.get_builtin_func_factory() !=
+		     builtin_func_choose_expr_create) {
+		   return;
+		 }
+
+		 // Alright, this expression is some subexpression of a
+		 // __builtin_choose_expr() invocation.  Check that it
+		 // is a subexpression of either the second or third argument.
+		 for (const _ast_entity *p = this;
+		      p && p != &el; p = p->get_parent()) {
+		   if (p == &el[1] || p == &el[2]) {
+		     oc = operand_context::oc_builtin_choose_expr;
+		     break;
+		   }
+		 }
+	       })),
+	     *efi->get_func().get_type());
 	}));
   }
 
   if (oc == operand_context::oc_sizeof ||
       oc == operand_context::oc_typeof ||
-      oc == operand_context::oc_unary_address) {
+      oc == operand_context::oc_unary_address ||
+      oc == operand_context::oc_builtin_choose_expr) {
     return;
   }
 
