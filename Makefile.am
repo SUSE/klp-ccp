@@ -4,6 +4,7 @@ AM_YFLAGS = -d
 BUILT_SOURCES = gnuc_parser.hh stack.hh
 
 noinst_HEADERS =				\
+	arch_gcc48_x86_64.hh			\
 	architecture.hh			\
 	ast.hh					\
 	ast_evaluate.hh			\
@@ -46,6 +47,7 @@ noinst_HEADERS =				\
 
 noinst_LIBRARIES = libcp.a
 libcp_a_SOURCES =				\
+	arch_gcc48_x86_64.cc			\
 	architecture.cc			\
 	ast.cc					\
 	ast_evaluate.cc			\
