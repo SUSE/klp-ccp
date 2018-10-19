@@ -10,3 +10,6 @@ L1:return 1;
 L2:abort ();
 L3:;
 }
+
+/* cp-out: warning: [^:]*: line 8, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 10, columns 3-8: identifier "abort" not declared */

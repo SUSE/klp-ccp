@@ -27,3 +27,5 @@ int main(void)
 
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 14, columns 31-43: pointers to different integer types in assignment */

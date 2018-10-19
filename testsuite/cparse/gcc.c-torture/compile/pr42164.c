@@ -23,3 +23,6 @@ pte_t swp_entry_to_pte (swp_entry_t entry)
   __BUG_ON ((unsigned long) pte_file ((pte_t) {arch_entry.val}));
   return (pte_t) {arch_entry.val};
 }
+
+/* cp-out: warning: [^:]*: line 22, columns 42-52: identifier "swp_offset" not declared */
+/* cp-out: warning: [^:]*: line 23, columns 2-10: identifier "__BUG_ON" not declared */

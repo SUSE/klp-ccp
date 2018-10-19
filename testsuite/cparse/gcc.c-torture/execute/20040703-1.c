@@ -146,3 +146,8 @@ int main()
 
    exit (0);
 }
+
+/* cp-out: warning: [^:]*: line 139, columns 5-10: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 142, columns 5-10: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 145, columns 5-10: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 147, columns 3-7: identifier "exit" not declared */

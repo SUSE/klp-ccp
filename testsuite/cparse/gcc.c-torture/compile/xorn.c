@@ -29,3 +29,5 @@ main ()
 	      1 & xor (i, not (j)),
 	      1 & xorn (i, j));
 }
+
+/* cp-out: warning: [^:]*: line 28, columns 6-12: identifier "printf" not declared */

@@ -46,3 +46,38 @@ struct s2 d4[][0] = { 1, 2 }; /* { dg-warning "excess elements|near init" } */
 struct s2 d5[][0][0] = { 1, 2 }; /* { dg-warning "excess elements|near init" } */
 struct s2 d6[][0][1] = { 1, 2 }; /* { dg-warning "excess elements|near init" } */
 struct s2 d7[][1][0] = { 1, 2 }; /* { dg-warning "excess elements|near init" } */
+
+/* cp-out: warning: [^:]*: line 12, columns 14-15: excess elements in intializer */
+/* cp-out: warning: [^:]*: line 13, columns 17-18: excess elements in intializer */
+/* cp-out: warning: [^:]*: line 14, columns 17-18: excess elements in intializer */
+/* cp-out: warning: [^:]*: line 15, columns 17-18: excess elements in initialization of zero length array */
+/* cp-out: warning: [^:]*: line 16, columns 16-17: excess elements in initialization of zero length array */
+/* cp-out: warning: [^:]*: line 17, columns 19-20: excess elements in initialization of zero length array */
+/* cp-out: warning: [^:]*: line 18, columns 19-20: excess elements in initialization of zero length array */
+/* cp-out: warning: [^:]*: line 19, columns 19-20: excess elements in initialization of zero length array */
+/* cp-out: warning: [^:]*: line 21, columns 20-21: excess elements in intializer */
+/* cp-out: warning: [^:]*: line 22, columns 23-24: excess elements in intializer */
+/* cp-out: warning: [^:]*: line 23, columns 23-24: excess elements in intializer */
+/* cp-out: warning: [^:]*: line 24, columns 23-24: excess elements in initialization of zero length array */
+/* cp-out: warning: [^:]*: line 25, columns 22-23: excess elements in initialization of zero length array */
+/* cp-out: warning: [^:]*: line 26, columns 25-26: excess elements in initialization of zero length array */
+/* cp-out: warning: [^:]*: line 27, columns 25-26: excess elements in initialization of zero length array */
+/* cp-out: warning: [^:]*: line 28, columns 25-26: excess elements in initialization of zero length array */
+/* cp-out: warning: [^:]*: line 29, columns 20-21: excess elements initialization of empty struct/union */
+/* cp-out: warning: [^:]*: line 30, columns 19-20: excess elements initialization of empty struct/union */
+/* cp-out: warning: [^:]*: line 32, columns 20-21: excess elements in intializer */
+/* cp-out: warning: [^:]*: line 33, columns 23-24: excess elements in intializer */
+/* cp-out: warning: [^:]*: line 34, columns 23-24: excess elements in intializer */
+/* cp-out: warning: [^:]*: line 35, columns 23-24: excess elements in initialization of zero length array */
+/* cp-out: warning: [^:]*: line 36, columns 22-23: excess elements in initialization of zero length array */
+/* cp-out: warning: [^:]*: line 37, columns 25-26: excess elements in initialization of zero length array */
+/* cp-out: warning: [^:]*: line 38, columns 25-26: excess elements in initialization of zero length array */
+/* cp-out: warning: [^:]*: line 39, columns 25-26: excess elements in initialization of zero length array */
+/* cp-out: warning: [^:]*: line 41, columns 20-21: excess elements in intializer */
+/* cp-out: warning: [^:]*: line 42, columns 23-24: excess elements in intializer */
+/* cp-out: warning: [^:]*: line 43, columns 23-24: excess elements in intializer */
+/* cp-out: warning: [^:]*: line 44, columns 23-24: excess elements in initialization of zero length array */
+/* cp-out: warning: [^:]*: line 45, columns 22-23: excess elements in initialization of zero length array */
+/* cp-out: warning: [^:]*: line 46, columns 25-26: excess elements in initialization of zero length array */
+/* cp-out: warning: [^:]*: line 47, columns 25-26: excess elements in initialization of zero length array */
+/* cp-out: warning: [^:]*: line 48, columns 25-26: excess elements in initialization of zero length array */

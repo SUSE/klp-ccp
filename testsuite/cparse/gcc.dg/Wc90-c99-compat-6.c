@@ -27,3 +27,5 @@ fn5 (void)
 }
 
 __extension__ void fn7 (int n, int a[n]);
+
+/* cp-xfail */

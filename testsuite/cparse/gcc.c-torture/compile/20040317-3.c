@@ -9,3 +9,4 @@ I_wacom ()
   RequestData (0);
 }
 
+/* cp-out: warning: [^:]*: line 7, columns 4-7: identifier "foo" not declared */

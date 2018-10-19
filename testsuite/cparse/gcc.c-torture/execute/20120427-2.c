@@ -36,3 +36,7 @@ int main()
   }
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 32, columns 54-59: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 33, columns 54-59: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 34, columns 53-58: identifier "abort" not declared */

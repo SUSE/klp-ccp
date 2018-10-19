@@ -114,3 +114,13 @@ main ()
   test8 (1, 2, 3, 4, 5, 6, 7, 8, VALUE, AFTER);
   exit (0);
 }
+
+/* cp-out: warning: [^:]*: line 10, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 20, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 31, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 43, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 70, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 85, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 101, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 115, columns 2-6: identifier "exit" not declared */

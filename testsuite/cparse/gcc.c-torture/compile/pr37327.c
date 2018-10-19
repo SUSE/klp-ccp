@@ -47,3 +47,10 @@ func_26 (uint16_t p_27)
     }
 }
 
+/* cp-out: warning: [^:]*: line 30, columns 6-13: identifier "func_93" not declared */
+/* cp-out: warning: [^:]*: line 30, columns 15-22: identifier "func_59" not declared */
+/* cp-out: warning: [^:]*: line 31, columns 6-14: identifier "func_124" not declared */
+/* cp-out: warning: [^:]*: line 33, columns 4-12: identifier "func_117" not declared */
+/* cp-out: warning: [^:]*: line 34, columns 15-36: identifier "safe_add_uint64_t_u_u" not declared */
+/* cp-out: warning: [^:]*: line 42, columns 10-30: identifier "safe_mul_int32_t_s_s" not declared */
+/* cp-out: warning: [^:]*: line 44, columns 12-19: identifier "func_59" not declared */

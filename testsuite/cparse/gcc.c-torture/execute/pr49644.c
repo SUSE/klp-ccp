@@ -14,3 +14,5 @@ main ()
     abort ();
   return 0;
 }
+
+/* cp-xfail */

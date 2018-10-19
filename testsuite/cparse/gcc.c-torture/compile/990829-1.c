@@ -11,3 +11,5 @@ bar()
   y.b = 1 < y.a;
   foo(&y);
 }
+
+/* cp-out: warning: [^:]*: line 12, columns 2-5: identifier "foo" not declared */

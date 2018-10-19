@@ -18,3 +18,5 @@ fubar (tupleseps)
           ;
     }
 }
+
+/* cp-out: warning: [^:]*: line 15, columns 6-9: identifier "bar" not declared */

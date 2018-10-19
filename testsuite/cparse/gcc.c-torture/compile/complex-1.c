@@ -10,3 +10,5 @@ void g (__complex__ float x)
 {
   v (0, x);
 }
+
+/* cp-xfail */

@@ -21,3 +21,5 @@ main ()
   f (0, 1, 1);
   exit (0);
 }
+
+/* cp-out: warning: [^:]*: line 22, columns 2-6: identifier "exit" not declared */

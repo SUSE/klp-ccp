@@ -15,3 +15,5 @@ foo (struct S *x)
     x->m = 0;
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 14, columns 6-7: pointer comparison against non-NULL integer */

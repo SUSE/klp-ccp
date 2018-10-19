@@ -22,3 +22,5 @@ main ()
   qr = dm (100, 30);
   printf ("%u, %u\n", qr.q, qr.r);
 }
+
+/* cp-out: warning: [^:]*: line 23, columns 2-8: identifier "printf" not declared */

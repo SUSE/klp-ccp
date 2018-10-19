@@ -19,3 +19,5 @@ int bar (void)
   if( i ) return 0;
   else    return 1;
 }
+
+/* cp-out: warning: [^:]*: line 13, columns 10-16: return without value in function returning non-void */

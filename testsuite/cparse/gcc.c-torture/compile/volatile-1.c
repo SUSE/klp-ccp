@@ -16,3 +16,6 @@ int catch_exceptions_with_msg (int *gdberrmsg)
     foo ();
   return exception.reason;
 }
+
+/* cp-out: warning: [^:]*: line 14, columns 2-26: identifier "exceptions_state_mc_init" not declared */
+/* cp-out: warning: [^:]*: line 16, columns 4-7: identifier "foo" not declared */

@@ -124,3 +124,7 @@ int main()
   h = DUPFFexgcd(&cf, &cg, f, g);
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 67, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 69, columns 44-49: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 123, columns 2-8: identifier "printf" not declared */

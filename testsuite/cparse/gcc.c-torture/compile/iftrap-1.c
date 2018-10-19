@@ -97,3 +97,16 @@ void f11(int p)
   while (1)
     baz();
 }
+
+/* cp-out: warning: [^:]*: line 14, columns 4-7: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 20, columns 4-7: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 29, columns 6-9: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 31, columns 1-4: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 42, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 48, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 67, columns 6-9: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 76, columns 6-9: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 88, columns 4-7: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 96, columns 4-7: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 98, columns 4-7: identifier "baz" not declared */
+

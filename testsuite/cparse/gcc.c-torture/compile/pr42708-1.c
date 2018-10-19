@@ -8,3 +8,5 @@ void yylex (int b)
 {
   yylval = (YYSTYPE) (b ? 0 : (char *) malloc (4));
 }
+
+/* cp-out: warning: [^:]*: line 9, columns 11-12: invalid types in cast */

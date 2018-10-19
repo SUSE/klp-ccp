@@ -11,3 +11,5 @@ main (void)
   else
     return 0;
 }
+
+/* cp-out: warning: [^:]*: line 9, columns 14-25: integer overflow in addition */

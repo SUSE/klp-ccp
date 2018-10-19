@@ -123,3 +123,5 @@ fn15 (_Complex volatile int *z)
 {
   return *z * ~*z;
 }
+
+/* cp-xfail */

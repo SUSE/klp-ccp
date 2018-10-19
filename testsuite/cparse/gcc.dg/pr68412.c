@@ -39,3 +39,7 @@ fn6 (int i)
 {
   return i == 1 >> -1; /* { dg-warning "right shift count" } */
 }
+
+/* cp-out: warning: [^:]*: line 16, columns 15-16: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 22, columns 14-16: integer overflow in shift operation */
+/* cp-out: error: [^:]*: line 28, columns 14-15: negative shift distance */

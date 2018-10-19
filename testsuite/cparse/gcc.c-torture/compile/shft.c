@@ -13,3 +13,5 @@ main ()
   if (foo (0x00ffffff) == 1)
     puts ("y");
 }
+
+/* cp-out: warning: [^:]*: line 14, columns 4-8: identifier "puts" not declared */

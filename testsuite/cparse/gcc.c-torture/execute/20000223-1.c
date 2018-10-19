@@ -59,3 +59,5 @@ int main ()
   check (struct A);
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 12, columns 6-11: identifier "abort" not declared */

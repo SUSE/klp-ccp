@@ -22,3 +22,7 @@ L2:
     if ( b )     goto L0;
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 13, columns 18-24: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 15, columns 8-14: identifier "printf" not declared */
+

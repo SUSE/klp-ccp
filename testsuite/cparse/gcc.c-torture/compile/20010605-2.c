@@ -15,3 +15,8 @@ foo (void)
   b = (union u) a;
   b = (uu) a;
 }
+
+/* cp-out: warning: [^:]*: line 13, columns 6-7: invalid types in cast */
+/* cp-out: warning: [^:]*: line 14, columns 6-7: invalid types in cast */
+/* cp-out: warning: [^:]*: line 15, columns 6-7: invalid types in cast */
+/* cp-out: warning: [^:]*: line 16, columns 6-7: invalid types in cast */

@@ -8,3 +8,5 @@ foo (long x)
   if (((x >> -2) & 1) != 0)
     bar ();
 }
+
+/* cp-out: warning: [^:]*: line 9, columns 4-7: identifier "bar" not declared */

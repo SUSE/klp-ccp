@@ -39,3 +39,5 @@ test(char *ret, int *counter, void *schema,
   error (1, 0, 0, node, "%s", name);
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 35, columns 2-16: identifier "__snprintf_chk" not declared */

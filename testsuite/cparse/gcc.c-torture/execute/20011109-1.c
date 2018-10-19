@@ -56,3 +56,10 @@ int main(void)
   foo (1);
   exit (0);
 }
+
+/* cp-out: warning: [^:]*: line 3, columns 2-7: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 7, columns 2-7: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 11, columns 2-7: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 15, columns 2-7: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 46, columns 6-11: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 57, columns 2-6: identifier "exit" not declared */

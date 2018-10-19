@@ -32,3 +32,5 @@ foo (int x, int y)
   struct S m;
   while ((y = bar (x, &m)) >= 0);
 }
+
+/* cp-out: warning: [^:]*: line 16, columns 9-10: assignment's source qualifiers are not a subset of target ones */

@@ -83,3 +83,15 @@ main (void)
 }
 
 /* { dg-message "note: expected '\[^\n'\]*' but argument is of type '\[^\n'\]*'" "note: expected" { target *-*-* } 0 } */
+
+/* cp-out: warning: [^:]*: line 55, columns 6-7: assigning pointers to integer types of different width */
+/* cp-out: warning: [^:]*: line 57, columns 6-7: assigning pointers to integer types of different width */
+/* cp-out: warning: [^:]*: line 59, columns 6-7: assigning pointers to integer types of different width */
+/* cp-out: warning: [^:]*: line 61, columns 6-7: assigning pointers to integer types of different width */
+/* cp-out: warning: [^:]*: line 63, columns 6-7: assigning pointers to integer types of different width */
+/* cp-out: warning: [^:]*: line 65, columns 6-7: assigning pointers to integer types of different width */
+/* cp-out: warning: [^:]*: line 67, columns 6-7: assigning pointers to integer types of different width */
+/* cp-out: warning: [^:]*: line 69, columns 6-7: assigning pointers to integer types of different width */
+/* cp-out: warning: [^:]*: line 71, columns 6-7: assigning pointers to integer types of different width */
+/* cp-out: warning: [^:]*: line 73, columns 6-7: assigning pointers to integer types of different width */
+/* cp-out: error: [^:]*: line 74, columns 7-8: invalid type for assignment target */

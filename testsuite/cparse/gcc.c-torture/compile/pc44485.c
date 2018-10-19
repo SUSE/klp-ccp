@@ -44,3 +44,5 @@ lbl_28:for (p_25 = 0; p_25 < 9; p_25 += 1)
     }
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 42, columns 23-26: assignment to integer from pointer */

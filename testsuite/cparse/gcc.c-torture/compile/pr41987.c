@@ -20,3 +20,5 @@ void qparm_colvar(void)
   TESTIT (long);
   TESTIT (long long);
 }
+
+/* cp-xfail */

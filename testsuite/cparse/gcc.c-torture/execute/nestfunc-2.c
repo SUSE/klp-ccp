@@ -47,3 +47,7 @@ foo (int a, int b, int (* fp) (int, int, int, int, int, int, int))
 {
   return fp (a, b, a, b, a, b, a);
 }
+
+/* cp-out: warning: [^:]*: line 37, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 40, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 42, columns 2-6: identifier "exit" not declared */

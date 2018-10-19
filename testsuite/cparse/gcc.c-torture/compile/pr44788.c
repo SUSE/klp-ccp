@@ -6,3 +6,5 @@ void joint_decode(float* mlt_buffer1, int t) {
         mlt_buffer1[i] = i * decode_buffer[t];
     }
 }
+
+/* cp-out: warning: [^:]*: line 4, columns 4-7: identifier "foo" not declared */

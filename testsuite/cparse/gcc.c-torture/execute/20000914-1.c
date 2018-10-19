@@ -290,3 +290,6 @@ main()
   convert_like_real (convs);
   exit (0);
 }
+
+/* cp-out: warning: [^:]*: line 282, columns 3-8: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 291, columns 2-6: identifier "exit" not declared */

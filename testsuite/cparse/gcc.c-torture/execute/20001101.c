@@ -39,3 +39,5 @@ int main()
   exit(0);
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 39, columns 2-6: identifier "exit" not declared */

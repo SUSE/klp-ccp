@@ -66,3 +66,14 @@ f (int ch, char *fp, char *ap)
 
  error:;
 }
+
+/* cp-out: warning: [^:]*: line 50, columns 119-120: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 50, columns 228-229: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 53, columns 66-67: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 54, columns 62-63: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 55, columns 114-115: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 55, columns 223-224: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 69-70: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 58, columns 69-70: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 60, columns 66-67: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 61, columns 83-84: identifier "g" not declared */

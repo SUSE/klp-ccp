@@ -19,3 +19,6 @@ L:
    p = &&L;
    *p; /* { dg-warning "dereferencing 'void \\*' pointer" } */
 }
+
+/* cp-out: warning: [^:]*: line 11, columns 3-5: dereferencing pointer to incomplete type */
+/* cp-out: warning: [^:]*: line 20, columns 4-5: dereferencing pointer to incomplete type */

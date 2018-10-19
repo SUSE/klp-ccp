@@ -14,3 +14,9 @@ main ()
   else
     puts ("bar");
 }
+
+/* cp-out: warning: [^:]*: line 9, columns 4-8: identifier "puts" not declared */
+/* cp-out: warning: [^:]*: line 11, columns 4-8: identifier "puts" not declared */
+/* cp-out: warning: [^:]*: line 13, columns 4-8: identifier "puts" not declared */
+/* cp-out: warning: [^:]*: line 15, columns 4-8: identifier "puts" not declared */
+/* cp-out: warning: [^:]*: line 3, columns 15-16: integer overflow in shift operation */

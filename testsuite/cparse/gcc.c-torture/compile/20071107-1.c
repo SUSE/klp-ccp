@@ -330,3 +330,39 @@ void gtk_settings_class_init (void)
      }
      else g_assert_warning();
 }
+
+/* cp-out: warning: [^:]*: line 9, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 18, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 27, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 36, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 45, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 54, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 63, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 72, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 81, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 90, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 99, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 108, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 117, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 126, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 135, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 144, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 153, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 162, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 171, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 180, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 189, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 198, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 207, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 216, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 225, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 234, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 243, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 252, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 261, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 270, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 279, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 288, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 297, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 306, columns 13-45: identifier "settings_install_property_parser" not declared */
+/* cp-out: warning: [^:]*: line 315, columns 13-45: identifier "settings_install_property_parser" not declared */

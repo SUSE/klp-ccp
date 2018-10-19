@@ -10,3 +10,5 @@ X (*p)[][0];
 Y (*q)[][0];
 
 typeof(*(0 ? p : q)) x = { 0 }; /* { dg-warning "excess elements in array initializer|near initialization" } */
+
+/* cp-out: warning: [^:]*: line 12, columns 27-28: excess elements in initialization of zero length array */

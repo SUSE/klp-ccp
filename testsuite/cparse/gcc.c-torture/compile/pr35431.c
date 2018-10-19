@@ -13,3 +13,5 @@ void foo(int i)
   if (k)
     bar();
 }
+
+/* cp-xfail */

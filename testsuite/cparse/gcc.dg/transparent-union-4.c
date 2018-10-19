@@ -7,3 +7,5 @@
 typedef union { union w *u; int *i; } H __attribute__ ((transparent_union));
 void (*h) (H);
 void g (int *s) { h (s); } /* { dg-warning "ISO C prohibits argument conversion to union type" } */
+
+/* cp-out: error: [^:]*: line 9, columns 21-22: invalid type for assignment target */

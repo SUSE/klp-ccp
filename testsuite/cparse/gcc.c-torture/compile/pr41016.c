@@ -15,3 +15,5 @@ CompareRNAStructures (FILE * ofp, int start, int L, char *ss_true, char *ss)
       || ((int) agree % 2 != 0))
     Die ("Error in CompareRNAStrutures(); odd number of paired nucleotides\n");
 }
+
+/* cp-out: warning: [^:]*: line 16, columns 4-7: identifier "Die" not declared */

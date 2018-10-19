@@ -31,3 +31,7 @@ int main ()
   puts ("");
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 14, columns 4-10: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 16, columns 4-10: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 31, columns 2-6: identifier "puts" not declared */

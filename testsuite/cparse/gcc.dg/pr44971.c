@@ -26,3 +26,7 @@ void _XftCloseint (int dpy, XftintInfo * info,XftintInfo  * *prev)
   for (prev = &_XftintInfo; info = *prev; prev = &(*prev)->next)
     ;
 }
+
+/* cp-out: warning: [^:]*: line 25, columns 18-21: assignment to pointer from integer which is not NULL */
+/* cp-out: warning: [^:]*: line 26, columns 14-15: incompatible pointer types in assignment */
+/* cp-out: warning: [^:]*: line 26, columns 49-50: incompatible pointer types in assignment */

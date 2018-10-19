@@ -74,3 +74,8 @@ f0 (void)
   if (washere++ || iop->i12.e0 != 32 || iop->i16.e0 != 32)
     abort ();
 }
+
+/* cp-out: warning: [^:]*: line 57, columns 2-7: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 65, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 66, columns 2-6: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 75, columns 4-9: identifier "abort" not declared */

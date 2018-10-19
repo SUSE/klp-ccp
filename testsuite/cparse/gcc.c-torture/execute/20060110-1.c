@@ -14,3 +14,5 @@ main ()
     abort ();
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 9, columns 15-35: integer overflow in shift operation */

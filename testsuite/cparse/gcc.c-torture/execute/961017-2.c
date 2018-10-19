@@ -30,3 +30,9 @@ main ()
   else
     exit (0);
 }
+
+/* cp-out: warning: [^:]*: line 14, columns 3-8: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 16, columns 6-10: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 26, columns 3-8: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 28, columns 6-10: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 31, columns 4-8: identifier "exit" not declared */

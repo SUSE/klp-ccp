@@ -49,3 +49,7 @@ int main(void)
   return 0;
 }
 
+/* cp-out: warning: [^:]*: line 44, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 45, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 48, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 7, columns 7-8: assignment's source qualifiers are not a subset of target ones */

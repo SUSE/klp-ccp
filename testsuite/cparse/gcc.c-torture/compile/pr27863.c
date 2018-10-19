@@ -29,3 +29,5 @@ _loc66:;
 SetTermStruc:
  goto *(*esp--);
 }
+
+/* cp-out: error: [^:]*: line 17, columns 6-7: dereferencing something which is not a pointer */

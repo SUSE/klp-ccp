@@ -23,3 +23,5 @@ main ()
     abort ();
   exit (0);
 }
+
+/* cp-out: warning: [^:]*: line 22, columns 25-26: integer overflow in cast */

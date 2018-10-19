@@ -11,3 +11,5 @@ void f(void)
         bl++;
     }
 }
+
+/* cp-out: warning: [^:]*: line 10, columns 8-10: identifier "ff" not declared */

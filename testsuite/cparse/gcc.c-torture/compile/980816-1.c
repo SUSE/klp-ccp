@@ -49,3 +49,6 @@ Widget AddButtons(Widget Parent, Widget Top,
 	return(Buttons[Count-1].W);
 }
 
+/* cp-out: warning: [^:]*: line 37, columns 18-41: identifier "XtVaCreateManagedWidget" not declared */
+/* cp-out: warning: [^:]*: line 46, columns 2-15: identifier "XtAddCallback" not declared */
+/* cp-out: warning: [^:]*: line 37, columns 18-41: assignment to pointer from integer which is not NULL */

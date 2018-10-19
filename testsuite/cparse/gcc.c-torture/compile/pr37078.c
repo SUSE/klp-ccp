@@ -4,3 +4,5 @@ int foo (int b)
     return __builtin_abs (b);
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 3, columns 11-12: integer overflow in cast */

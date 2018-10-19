@@ -1,10 +1,97 @@
-proc run_cparse { test } {
+# Extract the expected output from special comments prefixed with
+# "cp-out" within the source code file.
+# A line spanning comment containing only "cp-xfail" marks the test
+# as expected to fail.
+proc get_expected_result {filename} {
+    set fp [open "$filename"]
+
+    set expected_msgs [list]
+    set is_xfailer 0
+    while {[gets $fp line] >= 0} {
+	if {[regexp {(?:\s*/\*)(?:\s*)(?:cp-out:\s*)(.+[^\s])(?:\s*\*/)(?:\s*)} $line -> m]} {
+	    lappend expected_msgs "$m"
+	} elseif {[regexp {(?:\s*/\*)(?:\s*)(?:cp-xfail)(?:\s*\*/)(?:\s*)} $line]} {
+	    set is_xfailer 1
+	}
+    }
+
+    close $fp
+    return [list $expected_msgs $is_xfailer]
+}
+
+proc do_fail {is_xfailer msg} {
+    if $is_xfailer {
+	xfail "$msg"
+    } else {
+	fail "$msg"
+    }
+}
+
+proc do_pass {is_xfailer msg} {
+    if $is_xfailer {
+	xpass "$msg"
+    } else {
+	pass "$msg"
+    }
+}
+
+proc run_cparse {test} {
     global objdir
     global srcdir
 
-    if {[catch {exec $objdir/../cparse --include=$srcdir/../arch/stddef-x86_64.h $test > /dev/null 2>&1 }]} {
-	fail "cparse failed on $test\n"
+    set expected_result [get_expected_result "$test"]
+    set expected_msgs [lindex $expected_result 0]
+    set is_xfailer [lindex $expected_result 1]
+
+    set cmd "$objdir/../cparse"
+    if {[catch {spawn "$cmd" "--include=$srcdir/../arch/stddef-x86_64.h" "$test"}]} {
+	error "$test: failed to spawn $cmd"
+    }
+
+    set should_fail 0
+    set timeout 120
+    match_max 8192
+    foreach msg $expected_msgs {
+	if {[regexp {^error:} "$msg"]} {
+	    set should_fail 1
+	}
+	expect {
+	    timeout		{do_fail $is_xfailer "$test: timeout"}
+	    -re {^(\n|\r)+}	{exp_continue}
+	    -re "^$msg"	{}
+	    full_buffer	{do_fail $is_xfailer "$test: expect buffer full"}
+	    eof		{
+		if {[string length "$expect_out(buffer)"]} {
+		    do_fail $is_xfailer "$test: unexpected output: \"$expect_out(buffer)\""
+		    return
+		} else {
+		    do_fail $is_xfailer "$test: unexpected EOF, expected: \"$msg\""
+		    return
+		}
+	    }
+	}
+    }
+    expect {
+	-re {^(\n|\r)+}	{exp_continue}
+	full_buffer		{do_fail $is_xfailer "$test: expect buffer full"}
+	eof			{
+	    if {[string length "$expect_out(buffer)"]} {
+		do_fail $is_xfailer "$test: unexpected output: \"$expect_out(buffer)\""
+		return
+	    }
+	}
+    }
+
+    lassign [wait] p spawnid os_error_flag value
+    if {$os_error_flag} {
+	error "$test: failed to wait for $cmd: errno=$value"
+    }
+
+    if { $should_fail && $value } {
+	do_pass $is_xfailer "$test"
+    } elseif { !$should_fail && !$value } {
+	do_pass $is_xfailer "$test"
     } else {
-	pass "$test"
+	do_fail $is_xfailer "$test"
     }
 }

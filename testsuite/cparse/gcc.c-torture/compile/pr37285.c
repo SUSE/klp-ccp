@@ -13,3 +13,4 @@ _bfd_xcoff_canonicalize_dynamic_reloc (unsigned long long l_symndx)
   }
 }
 
+/* cp-out: warning: [^:]*: line 11, columns 9-19: identifier "_bfd_abort" not declared */

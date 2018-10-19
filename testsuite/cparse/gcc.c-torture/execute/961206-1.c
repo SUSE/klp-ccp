@@ -50,3 +50,9 @@ main()
 
   exit (0);
 }
+
+/* cp-out: warning: [^:]*: line 40, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 43, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 46, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 49, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 51, columns 2-6: identifier "exit" not declared */

@@ -10,3 +10,4 @@ int foo (void)
 
 /* { dg-warning "unrecognized command line option .-Wno-foobar." "" { target *-*-* } 0 } */
 
+/* cp-out: warning: [^:]*: line 7, columns 12-13: division by zero */

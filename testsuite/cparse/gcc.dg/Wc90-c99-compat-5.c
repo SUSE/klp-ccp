@@ -52,3 +52,5 @@ fn6 (void)
 }
 
 void fn7 (int n, int a[n]);
+
+/* cp-xfail */

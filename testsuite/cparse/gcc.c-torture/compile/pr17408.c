@@ -3,3 +3,5 @@ extern int t;
 extern int t = 0;
 void f(){t =0;}
 void g(){h(&t);}
+
+/* cp-out: warning: [^:]*: line 5, columns 9-10: identifier "h" not declared */

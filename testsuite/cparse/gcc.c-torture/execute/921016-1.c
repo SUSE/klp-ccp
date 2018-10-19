@@ -8,3 +8,6 @@ signed int m:11;
 if((l.m=j)==j)abort();
 exit(0);
 }
+
+/* cp-out: warning: [^:]*: line 8, columns 14-19: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 9, columns 0-4: identifier "exit" not declared */

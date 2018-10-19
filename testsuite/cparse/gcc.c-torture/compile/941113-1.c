@@ -10,3 +10,5 @@ f (x)
   else
     g (0);
 }
+
+/* cp-out: warning: [^:]*: line 11, columns 4-5: identifier "g" not declared */

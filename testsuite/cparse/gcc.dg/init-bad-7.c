@@ -9,3 +9,5 @@ struct f
 
 char b[10];
 struct f g = {b}; /* { dg-warning "initialization of 'int \\*' from incompatible pointer type|near initialization for" } */
+
+/* cp-out: warning: [^:]*: line 11, columns 14-15: assigning pointers to integer types of different width */

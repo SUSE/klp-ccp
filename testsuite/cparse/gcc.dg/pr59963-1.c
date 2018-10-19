@@ -12,3 +12,5 @@ foo (float f)
   baz (f); /* { dg-warning "8:implicit conversion" } */
   qux (42, f); /* { dg-warning "12:implicit conversion" } */
 }
+
+/* cp-out: warning: [^:]*: line 11, columns 2-5: identifier "bar" not declared */

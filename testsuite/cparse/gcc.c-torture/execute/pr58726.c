@@ -24,3 +24,5 @@ main ()
     __builtin_abort ();
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 23, columns 11-12: integer overflow in cast */

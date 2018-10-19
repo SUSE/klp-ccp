@@ -13,3 +13,5 @@ int main (void)
 {
   return checkScc2 (s);
 }
+
+/* cp-xfail */

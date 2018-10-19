@@ -80,3 +80,6 @@ int jbd2_journal_wipe(journal_t *journal, int write)
  load_superblock(journal);
  return 0;
 }
+
+/* cp-out: warning: [^:]*: line 38, columns 6-21: identifier "buffer_uptodate" not declared */
+/* cp-out: warning: [^:]*: line 39, columns 7-22: identifier "buffer_uptodate" not declared */

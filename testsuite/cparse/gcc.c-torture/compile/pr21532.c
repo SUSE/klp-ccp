@@ -12,3 +12,5 @@ bar (unsigned char key)
 
   return foo (b);
 }
+
+/* cp-out: warning: [^:]*: line 13, columns 9-12: identifier "foo" not declared */

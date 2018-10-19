@@ -20,3 +20,5 @@ char *Foo (union tree_node * num_string)
 			       ->string.str)))._nq;
   return str;
 }
+
+/* cp-out: warning: [^:]*: line 17, columns 15-16: invalid types in cast */

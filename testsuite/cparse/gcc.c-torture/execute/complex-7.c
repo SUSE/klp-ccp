@@ -54,3 +54,5 @@ main (void)
   check_long_double (0, ld1, ld2, ld3, ld4, ld5);
   exit (0);
 }
+
+/* cp-xfail */

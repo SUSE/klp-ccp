@@ -10,3 +10,5 @@ main ()
   int a = foo ((long long) 2, (long long) 3);
   printf ("%d\n", a);
 }
+
+/* cp-out: warning: [^:]*: line 11, columns 2-8: identifier "printf" not declared */

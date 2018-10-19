@@ -9,3 +9,5 @@ omit (a, b)
   foo ((int)x);
   return x + 1;
 }
+
+/* cp-out: warning: [^:]*: line 9, columns 2-5: identifier "foo" not declared */

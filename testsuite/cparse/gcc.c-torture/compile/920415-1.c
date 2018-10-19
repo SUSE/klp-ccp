@@ -17,3 +17,5 @@ f ()
  l:
   exit (0);
 }
+
+/* cp-out: warning: [^:]*: line 16, columns 2-8: return without value in function returning non-void */

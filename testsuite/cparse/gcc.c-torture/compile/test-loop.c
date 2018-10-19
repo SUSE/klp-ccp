@@ -5,3 +5,5 @@ main ()
     foo ();
 
 }
+
+/* cp-out: warning: [^:]*: line 5, columns 4-7: identifier "foo" not declared */

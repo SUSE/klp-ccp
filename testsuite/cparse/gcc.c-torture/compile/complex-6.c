@@ -16,3 +16,4 @@ int foo()
   return i == 0;
 }
 
+/* cp-xfail */

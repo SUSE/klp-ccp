@@ -11,3 +11,5 @@ _Complex int g (void)
   h(f);
   return x;
 }
+
+/* cp-xfail */

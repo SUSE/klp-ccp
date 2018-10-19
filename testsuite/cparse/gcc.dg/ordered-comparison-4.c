@@ -19,3 +19,6 @@ void f() {
  if ((void*)0 >=z) /* { dg-warning "distinct pointer types lacks a cast" } */
     z();
 }
+
+/* cp-out: warning: [^:]*: line 17, columns 5-6: comparison between incompatible pointers without cast */
+/* cp-out: warning: [^:]*: line 19, columns 5-6: comparison between incompatible pointers without cast */

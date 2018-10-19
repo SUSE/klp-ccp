@@ -18,3 +18,6 @@ f (unsigned short Z[48])
       *--p = t1;
     }
 }
+
+/* cp-out: warning: [^:]*: line 12, columns 11-14: identifier "inv" not declared */
+/* cp-out: warning: [^:]*: line 15, columns 13-16: identifier "inv" not declared */

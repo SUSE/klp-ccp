@@ -11,3 +11,6 @@ main ()
 {
   printf ("%d\n", foo ());
 }
+
+/* cp-out: warning: [^:]*: line 12, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 12, columns 18-21: wrong number of arguments to function invocation */

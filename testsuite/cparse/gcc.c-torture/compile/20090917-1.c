@@ -53,3 +53,7 @@ build_access_matrix (unsigned max)
 	return 0;
     }
 }
+
+/* cp-out: warning: [^:]*: line 52, columns 36-39: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 40, columns 13-21: pointer comparison against non-NULL integer */
+/* cp-out: warning: [^:]*: line 52, columns 36-39: assignment to pointer from integer which is not NULL */

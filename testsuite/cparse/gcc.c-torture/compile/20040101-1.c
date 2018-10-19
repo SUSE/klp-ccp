@@ -28,3 +28,5 @@ void test16(uint16_t x, uint32_t eflags)
         printf("%08x %04x bsrw %02x %08x bsfw %02x %08x\n",
                 x, eflags, bsr_result, bsr_eflags, bsf_result, bsf_eflags);
 }
+
+/* cp-out: warning: [^:]*: line 28, columns 8-14: identifier "printf" not declared */

@@ -12,3 +12,5 @@ int
 bar (void)
 {
 }		/* { dg-warning "control reaches end" } */
+
+/* cp-out: warning: [^:]*: line 8, columns 2-8: return without value in function returning non-void */

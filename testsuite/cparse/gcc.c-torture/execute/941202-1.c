@@ -20,3 +20,7 @@ main ()
   f (3);
   exit (0);
 };
+
+/* cp-out: warning: [^:]*: line 5, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 13, columns 16-22: identifier "alloca" not declared */
+/* cp-out: warning: [^:]*: line 21, columns 2-6: identifier "exit" not declared */

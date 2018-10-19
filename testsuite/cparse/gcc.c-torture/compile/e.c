@@ -8,3 +8,5 @@ foo (short a, int *p, short *s)
       s[i] = a;
     }
 }
+
+/* cp-out: warning: [^:]*: line 6, columns 18-21: identifier "bar" not declared */

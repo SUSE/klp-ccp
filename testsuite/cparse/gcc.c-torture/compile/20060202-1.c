@@ -52,3 +52,5 @@ get_imp (Class class, SEL sel)
 	}
     }
 }
+
+/* cp-out: warning: [^:]*: line 42, columns 19-29: identifier "sarray_get" not declared */

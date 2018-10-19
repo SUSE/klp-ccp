@@ -34,3 +34,5 @@ line
       }
   }
 }
+
+/* cp-out: warning: [^:]*: line 32, columns 8-28: identifier "cpp_interpret_string" not declared */

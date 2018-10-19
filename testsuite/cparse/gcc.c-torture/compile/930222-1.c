@@ -14,3 +14,5 @@ f (T *n1, T *n2)
       return f == 0.0 ? 0 : (f > 0.0 ? 1 : -1);
     }
 }
+
+/* cp-out: warning: [^:]*: line 9, columns 6-7: identifier "g" not declared */

@@ -43,3 +43,7 @@ test_3 (void)
    fn3ijkl
    { dg-end-multiline-output "" } */
 }
+
+/* cp-out: warning: [^:]*: line 11, columns 2-9: identifier "fn1badc" not declared */
+/* cp-out: warning: [^:]*: line 25, columns 2-9: identifier "fn2fehg" not declared */
+/* cp-out: warning: [^:]*: line 39, columns 2-9: identifier "fn3jilk" not declared */

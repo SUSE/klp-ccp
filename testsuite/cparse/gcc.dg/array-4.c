@@ -23,3 +23,6 @@ int main()
       abort ();
   exit(0);
 }
+
+/* cp-out: warning: [^:]*: line 15, columns 27-28: excess elements in intializer */
+

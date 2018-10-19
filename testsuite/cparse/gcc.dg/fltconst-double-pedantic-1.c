@@ -11,3 +11,5 @@ double f = 1.id;	/* { dg-warning "imaginary constants" } */
 double g = 1.jd;	/* { dg-warning "imaginary constants" } */
 
 double h = 0x1.5p1d;	/* { dg-warning "double constant" } */
+
+/* cp-xfail */

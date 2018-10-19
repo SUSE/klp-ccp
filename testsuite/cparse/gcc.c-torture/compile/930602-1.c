@@ -11,3 +11,5 @@ f (w, l, r)
   for (i = l; i < r; i++)
     g (w->f[i]);
 }
+
+/* cp-out: warning: [^:]*: line 12, columns 4-5: identifier "g" not declared */

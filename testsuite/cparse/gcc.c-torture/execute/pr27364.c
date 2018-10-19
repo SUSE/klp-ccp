@@ -11,3 +11,5 @@ int main(void)
     __builtin_abort ();
   exit (0);
 }
+
+/* cp-out: warning: [^:]*: line 12, columns 2-6: identifier "exit" not declared */

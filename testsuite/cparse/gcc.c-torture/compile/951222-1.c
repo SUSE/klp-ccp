@@ -13,3 +13,5 @@ sub1 ()
   c = a - b;
   return c;
 }
+
+/* cp-out: warning: [^:]*: line 11, columns 2-8: identifier "setjmp" not declared */

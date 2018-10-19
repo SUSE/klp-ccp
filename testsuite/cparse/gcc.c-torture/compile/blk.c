@@ -16,3 +16,6 @@ main ()
   foobar ();
   printf ("%lf\n", foo.g);
 }
+
+/* cp-out: warning: [^:]*: line 9, columns 2-5: identifier "xxx" not declared */
+/* cp-out: warning: [^:]*: line 17, columns 2-8: identifier "printf" not declared */

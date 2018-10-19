@@ -22,3 +22,5 @@ bar (void)
     }
   foo (node);
 }
+
+/* cp-out: warning: [^:]*: line 23, columns 2-5: identifier "foo" not declared */

@@ -36,3 +36,5 @@ f(int i1, int i2)
   i1 = 1;
   goto L3;
 }
+
+/* cp-out: warning: [^:]*: line 21, columns 7-8: wrong number of arguments to function invocation */

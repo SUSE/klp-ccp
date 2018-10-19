@@ -25,3 +25,6 @@ main ()
   foo (&g_339);
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 14, columns 4-7: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 25, columns 2-5: identifier "foo" not declared */

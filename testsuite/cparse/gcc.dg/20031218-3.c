@@ -12,3 +12,5 @@ int x (char *s)
   int y () { return (strlen (s)); }
   return y (s);
 }
+
+/* cp-out: warning: [^:]*: line 13, columns 9-10: wrong number of arguments to function invocation */

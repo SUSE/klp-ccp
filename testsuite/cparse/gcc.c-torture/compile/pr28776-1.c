@@ -14,3 +14,5 @@ void output_call_frame_info (void)
       tree_contains_struct_check_failed (fde_table[i].decl);
     }
 }
+
+/* cp-out: warning: [^:]*: line 14, columns 6-39: identifier "tree_contains_struct_check_failed" not declared */

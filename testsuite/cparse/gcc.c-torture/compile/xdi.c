@@ -13,3 +13,5 @@ bar (p, pp)
     *p++ = *pp--;
   return (int) p;
 }
+
+/* cp-out: warning: [^:]*: line 11, columns 2-5: identifier "fee" not declared */

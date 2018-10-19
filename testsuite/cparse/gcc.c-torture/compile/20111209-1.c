@@ -11,3 +11,5 @@ __gnat_getenv (char *name, int *len, char **value)
   *value = getenv (name);
   *len = strlen (*value);
 }
+
+/* cp-out: error: [^:]*: line 3, columns 46-48: invalid 'mode' attribute specifier for pointer type */

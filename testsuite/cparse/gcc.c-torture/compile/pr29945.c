@@ -6,3 +6,5 @@ parse_real (unsigned char c)
   if ((__ctype_ptr[c]&04) && c != '.')
    unget_char ( c);
 }
+
+/* cp-out: warning: [^:]*: line 7, columns 3-13: identifier "unget_char" not declared */

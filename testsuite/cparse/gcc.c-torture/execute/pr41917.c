@@ -19,3 +19,5 @@ main (void)
 
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 11, columns 27-28: integer overflow in cast */

@@ -68,3 +68,5 @@ main()
   invalidate_memory(&writes);
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 52, columns 53-58: identifier "abort" not declared */

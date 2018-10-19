@@ -13,3 +13,5 @@ int dsdblm_CreateBlock(unsigned int address)
      error_LocalAssert();
    return address;
 }
+
+/* cp-out: warning: [^:]*: line 12, columns 7-14: pointer comparison against non-NULL integer */

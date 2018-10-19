@@ -20,3 +20,4 @@ main (void)
   return 0;
 }
 
+/* cp-xfail */

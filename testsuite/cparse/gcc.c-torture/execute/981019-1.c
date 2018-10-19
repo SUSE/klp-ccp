@@ -44,3 +44,6 @@ int main(void)
 int f3(void) { static int x = 0; x = !x; return x; }
 void f1(void) { abort(); }
 int f2(void) { abort(); }
+
+/* cp-out: warning: [^:]*: line 45, columns 16-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 46, columns 15-20: identifier "abort" not declared */

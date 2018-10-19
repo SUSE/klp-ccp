@@ -13,3 +13,5 @@ xnanosleep (_Bool overflow)
         break;
     }
 }
+
+/* cp-out: warning: [^:]*: line 12, columns 10-13: identifier "foo" not declared */

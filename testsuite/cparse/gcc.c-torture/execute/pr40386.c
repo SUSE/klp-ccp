@@ -102,3 +102,42 @@ main ()
 
   exit (0);
 }
+
+/* cp-out: warning: [^:]*: line 20, columns 9-19: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 21, columns 10-21: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 31, columns 25-49: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 31, columns 25-49: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 31, columns 25-49: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 34, columns 25-49: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 34, columns 25-49: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 34, columns 25-49: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 37, columns 25-50: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 37, columns 25-50: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 37, columns 25-50: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 40, columns 25-50: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 40, columns 25-50: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 40, columns 25-50: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 43, columns 25-48: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 46, columns 25-48: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 49, columns 25-49: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 52, columns 25-49: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 55, columns 26-48: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 58, columns 26-48: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 61, columns 26-48: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 64, columns 26-48: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 67, columns 25-49: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 67, columns 25-49: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 67, columns 25-49: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 70, columns 25-49: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 70, columns 25-49: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 70, columns 25-49: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 73, columns 25-50: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 73, columns 25-50: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 73, columns 25-50: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 76, columns 25-50: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 76, columns 25-50: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 76, columns 25-50: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 91, columns 26-48: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 94, columns 26-48: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 97, columns 26-48: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 100, columns 26-48: integer overflow in shift operation */

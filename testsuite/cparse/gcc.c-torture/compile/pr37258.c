@@ -57,3 +57,10 @@ func_77 (int64_t p_79)
     }
 }
 
+/* cp-out: warning: [^:]*: line 36, columns 6-13: identifier "mod_rhs" not declared */
+/* cp-out: warning: [^:]*: line 42, columns 6-16: identifier "lshift_s_s" not declared */
+/* cp-out: warning: [^:]*: line 42, columns 21-29: identifier "func_112" not declared */
+/* cp-out: warning: [^:]*: line 48, columns 10-17: identifier "func_23" not declared */
+/* cp-out: warning: [^:]*: line 53, columns 19-26: identifier "func_82" not declared */
+/* cp-out: warning: [^:]*: line 54, columns 18-25: identifier "func_82" not declared */
+/* cp-out: warning: [^:]*: line 55, columns 36-44: identifier "func_112" not declared */

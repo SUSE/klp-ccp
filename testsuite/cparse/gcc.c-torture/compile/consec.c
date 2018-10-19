@@ -16,3 +16,7 @@ conseq (a, b, c, d)
   ((int *)glob)[2] = c;
   ((int *)glob)[3] = d;
 }
+
+/* cp-out: warning: [^:]*: line 9, columns 2-10: identifier "sequence" not declared */
+/* cp-out: warning: [^:]*: line 10, columns 2-10: identifier "sequence" not declared */
+/* cp-out: warning: [^:]*: line 15, columns 2-10: identifier "sequence" not declared */

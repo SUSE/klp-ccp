@@ -26,3 +26,5 @@ e->r = i1, e->s = i1;
 *++e = p;
 return 3;
 }
+
+/* cp-out: warning: [^:]*: line 10, columns 8-9: identifier "g" not declared */

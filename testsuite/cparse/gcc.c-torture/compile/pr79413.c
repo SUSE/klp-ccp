@@ -12,3 +12,5 @@ bar (void)
 {
   foo ();
 }
+
+/* cp-out: warning: [^:]*: line 7, columns 10-11: division by zero */

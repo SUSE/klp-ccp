@@ -29,3 +29,5 @@ doSignalsSetup (void)
       sigemptyset (&sa.sa_mask);
     }
 }
+
+/* cp-out: warning: [^:]*: line 29, columns 6-17: identifier "sigemptyset" not declared */

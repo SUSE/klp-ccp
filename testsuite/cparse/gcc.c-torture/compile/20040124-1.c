@@ -20,3 +20,6 @@ f1 (int a, int b)
 
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 19, columns 6-8: identifier "f2" not declared */
+/* cp-out: warning: [^:]*: line 19, columns 10-12: identifier "f3" not declared */

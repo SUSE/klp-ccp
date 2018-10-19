@@ -82,3 +82,5 @@ int metronomefb_probe (struct platform_device *dev)
 {
 	return load_waveform ((u8 *) fw_entry->data, fw_entry->size, 3, 31, par);
 }
+
+/* cp-out: warning: [^:]*: line 75, columns 1-6: identifier "abort" not declared */

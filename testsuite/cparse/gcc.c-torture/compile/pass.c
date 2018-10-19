@@ -12,3 +12,5 @@ bar ()
 
   return foo ((int) & q, q, w, e, q, (int) &w);
 }
+
+/* cp-out: warning: [^:]*: line 13, columns 9-12: wrong number of arguments to function invocation */

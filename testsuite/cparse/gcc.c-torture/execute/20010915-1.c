@@ -69,3 +69,11 @@ int r (const char *f)
   cnt++;
   return 1;
 }
+
+/* cp-out: warning: [^:]*: line 18, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 19, columns 2-6: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 43, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 52, columns 20-25: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 55, columns 6-12: identifier "strcmp" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 67, columns 4-9: identifier "abort" not declared */

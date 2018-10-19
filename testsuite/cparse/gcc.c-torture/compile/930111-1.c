@@ -8,3 +8,6 @@ f(a)
     ;
   return d;
 }
+
+/* cp-out: warning: [^:]*: line 5, columns 10-16: identifier "strcmp" not declared */
+/* cp-out: warning: [^:]*: line 7, columns 9-14: identifier "vfork" not declared */

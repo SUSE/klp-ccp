@@ -13,3 +13,5 @@ x:
 y:
   return;
 }
+
+/* cp-out: warning: [^:]*: line 12, columns 4-15: identifier "dont_remove" not declared */

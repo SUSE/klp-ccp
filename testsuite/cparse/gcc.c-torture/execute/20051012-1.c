@@ -23,3 +23,5 @@ main (void)
     abort ();
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 22, columns 6-9: wrong number of arguments to function invocation */

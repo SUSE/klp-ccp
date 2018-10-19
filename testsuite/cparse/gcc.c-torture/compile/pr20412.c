@@ -18,3 +18,7 @@ foo(void)
  
   return stop;
 }
+
+/* cp-out: warning: [^:]*: line 12, columns 8-12: identifier "bar1" not declared */
+/* cp-out: warning: [^:]*: line 13, columns 8-12: identifier "bar2" not declared */
+/* cp-out: warning: [^:]*: line 14, columns 8-12: identifier "bar3" not declared */

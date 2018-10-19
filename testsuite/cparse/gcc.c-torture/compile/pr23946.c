@@ -69,4 +69,10 @@ avi_parse_comments (int fd, char *buf, int space_left)
   return len;
 }
 
-
+/* cp-out: warning: [^:]*: line 13, columns 2-8: identifier "memset" not declared */
+/* cp-out: warning: [^:]*: line 16, columns 15-21: identifier "malloc" not declared */
+/* cp-out: warning: [^:]*: line 37, columns 3-9: identifier "memcpy" not declared */
+/* cp-out: warning: [^:]*: line 41, columns 3-11: identifier "long2str" not declared */
+/* cp-out: warning: [^:]*: line 45, columns 3-9: identifier "memcpy" not declared */
+/* cp-out: warning: [^:]*: line 67, columns 2-6: identifier "free" not declared */
+/* cp-out: warning: [^:]*: line 16, columns 15-21: assignment to pointer from integer which is not NULL */

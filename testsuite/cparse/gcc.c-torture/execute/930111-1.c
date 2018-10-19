@@ -20,3 +20,7 @@ wwrite(long long i)
       return 123;
     }
 }
+
+/* cp-out: warning: [^:]*: line 3, columns 6-12: identifier "wwrite" not declared */
+/* cp-out: warning: [^:]*: line 4, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 5, columns 2-6: identifier "exit" not declared */

@@ -72,3 +72,6 @@ cb[150] = cons (1, (cons (2, (cons (3, (cons (4, (cons (5, (cons (6, 0))))))))))
 cb[148] = tO7;
 return cb;
 }
+
+/* cp-out: warning: [^:]*: line 43, columns 28-29: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 45, columns 28-29: integer overflow in shift operation */

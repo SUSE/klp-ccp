@@ -107,3 +107,5 @@ main ()
 /* { dg-final { scan-tree-dump-times "ADD_OVERFLOW" 2 "optimized" } } */
 /* { dg-final { scan-tree-dump-times "SUB_OVERFLOW" 0 "optimized" } } */
 /* { dg-final { scan-tree-dump-times "MUL_OVERFLOW" 3 "optimized" } } */
+
+/* cp-xfail */

@@ -6,3 +6,5 @@ void foo(void)
 {
   int i =  1/0;
 }
+
+/* cp-out: warning: [^:]*: line 7, columns 13-14: division by zero */

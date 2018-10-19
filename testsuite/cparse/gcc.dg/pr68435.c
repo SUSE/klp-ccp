@@ -51,3 +51,5 @@ _cpp_parse_expr (pfile)
 }
 
 /* { dg-final { scan-rtl-dump "2 true changes made" "ce1" } } */
+
+/* cp-out: warning: [^:]*: line 41, columns 16-21: assignment to pointer from integer which is not NULL */

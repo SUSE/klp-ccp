@@ -22,3 +22,5 @@ swap64 (int64_t n)
 	  ((n & (((int64_t) 0xff) << 48)) >> 40) |
 	  ((n & (((int64_t) 0xff) << 56)) >> 56));
 }
+
+/* cp-out: warning: [^:]*: line 23, columns 10-11: integer overflow in shift operation */

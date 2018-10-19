@@ -10,3 +10,5 @@ main (int argc, char *argv[])
   d = cp0count + 3;
   printf ("%d\n", d);
 }
+
+/* cp-out: warning: [^:]*: line 11, columns 2-8: identifier "printf" not declared */

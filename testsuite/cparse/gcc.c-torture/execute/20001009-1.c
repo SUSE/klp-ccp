@@ -10,3 +10,6 @@ main()
   else
     abort();
 }
+
+/* cp-out: warning: [^:]*: line 11, columns 4-9: identifier "abort" not declared */
+

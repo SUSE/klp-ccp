@@ -19,3 +19,5 @@ main()
   if (*ptr)
     __builtin_abort ();
 }
+
+/* cp-out: warning: [^:]*: line 6, columns 14-15: incompatible pointer types in assignment */

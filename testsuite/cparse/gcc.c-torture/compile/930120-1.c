@@ -137,3 +137,27 @@ f(fcount,ifp,itype,ptype)
   }
   return(fp);
 }
+
+/* cp-out: warning: [^:]*: line 42, columns 11-14: identifier "get" not declared */
+/* cp-out: warning: [^:]*: line 61, columns 6-12: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 65, columns 6-12: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 68, columns 6-12: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 71, columns 6-12: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 74, columns 6-13: identifier "psymoff" not declared */
+/* cp-out: warning: [^:]*: line 78, columns 6-13: identifier "psymoff" not declared */
+/* cp-out: warning: [^:]*: line 81, columns 6-12: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 84, columns 6-12: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 88, columns 1-9: identifier "printesc" not declared */
+/* cp-out: warning: [^:]*: line 90, columns 1-7: identifier "printc" not declared */
+/* cp-out: warning: [^:]*: line 95, columns 6-12: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 99, columns 6-12: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 107, columns 7-13: identifier "inkdot" not declared */
+/* cp-out: warning: [^:]*: line 109, columns 3-11: identifier "printesc" not declared */
+/* cp-out: warning: [^:]*: line 111, columns 3-9: identifier "printc" not declared */
+/* cp-out: warning: [^:]*: line 113, columns 1-8: identifier "endline" not declared */
+/* cp-out: warning: [^:]*: line 115, columns 8-11: identifier "get" not declared */
+/* cp-out: warning: [^:]*: line 122, columns 6-9: identifier "get" not declared */
+/* cp-out: warning: [^:]*: line 124, columns 6-11: identifier "iDasm" not declared */
+/* cp-out: warning: [^:]*: line 125, columns 6-12: identifier "printc" not declared */
+/* cp-out: warning: [^:]*: line 129, columns 6-12: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 133, columns 6-12: identifier "printf" not declared */

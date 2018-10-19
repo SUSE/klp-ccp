@@ -34,3 +34,6 @@ main ()
   f (mem + 100, mem + 6, mem + 8, mem + 99, mem + 99);
   exit (0);
 }
+
+/* cp-out: warning: [^:]*: line 28, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 35, columns 2-6: identifier "exit" not declared */

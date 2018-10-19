@@ -17,3 +17,5 @@ g(p)t p;
 	ff(p,fx+w-s-y,fy+h+x);
     }
 }
+
+/* cp-out: warning: [^:]*: line 17, columns 1-3: identifier "ff" not declared */

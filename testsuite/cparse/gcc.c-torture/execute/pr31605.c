@@ -11,3 +11,6 @@ main ()
   put_field (0, 1);
   abort ();
 }
+
+/* cp-out: warning: [^:]*: line 5, columns 4-8: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 12, columns 2-7: identifier "abort" not declared */

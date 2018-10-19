@@ -29,3 +29,5 @@ main()
   object three = foo(x,y);
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 5, columns 2-7: identifier "abort" not declared */

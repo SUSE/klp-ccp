@@ -102,3 +102,6 @@ int main(void)
 	dump_bfd_file(0, 0, 0, (CORE_ADDR)0xdeadbeef, hello, (int)0x1eadbeef);
 	exit(0);
 }
+
+/* cp-out: warning: [^:]*: line 95, columns 2-7: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 103, columns 1-5: identifier "exit" not declared */

@@ -14,3 +14,4 @@ int ___pskb_trim(void)
   return 0;
 }
 
+/* cp-out: warning: [^:]*: line 4, columns 9-21: identifier "___pskb_trim" not declared */

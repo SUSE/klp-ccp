@@ -25,3 +25,5 @@ main ()
 
   exit (0);
 }
+
+/* cp-xfail */

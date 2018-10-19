@@ -48,3 +48,32 @@ int main ()
   if (s_d_ld.ld != 35.0) abort ();
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 21, columns 22-27: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 22, columns 21-26: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 23, columns 22-27: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 24, columns 21-26: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 25, columns 21-26: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 26, columns 21-26: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 27, columns 22-27: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 28, columns 23-28: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 29, columns 21-26: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 30, columns 23-28: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 31, columns 22-27: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 32, columns 23-28: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 33, columns 21-26: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 34, columns 23-28: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 35, columns 21-26: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 36, columns 23-28: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 37, columns 23-28: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 38, columns 23-28: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 39, columns 23-28: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 40, columns 25-30: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 41, columns 22-27: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 42, columns 25-30: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 43, columns 22-27: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 44, columns 25-30: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 45, columns 24-29: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 46, columns 25-30: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 47, columns 24-29: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 48, columns 25-30: identifier "abort" not declared */

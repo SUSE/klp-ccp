@@ -18,3 +18,5 @@ main ()
   write_at (&g1, &g2 - &g1, 12345);
   printf ("%d\n", g2);
 }
+
+/* cp-out: warning: [^:]*: line 19, columns 2-8: identifier "printf" not declared */

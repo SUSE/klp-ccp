@@ -11,3 +11,5 @@ foo (int m)
 {
   return !(m & ((int) 0x80000000));
 }
+
+/* cp-out: warning: [^:]*: line 12, columns 16-17: integer overflow in cast */

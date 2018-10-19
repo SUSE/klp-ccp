@@ -58,3 +58,28 @@ main ()
     abort ();
   exit (0);
 }
+
+/* cp-out: warning: [^:]*: line 56, columns 2-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 2-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 2-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 2-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 2-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 2-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 2-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 2-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 2-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 2-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 2-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 2-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 2-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 2-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 2-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 2-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 2-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 2-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 2-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 2-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 2-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 56, columns 2-21: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 58, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 59, columns 2-6: identifier "exit" not declared */

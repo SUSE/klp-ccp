@@ -9,3 +9,4 @@ void FuncMakeConsequencesPres (long *objDefs1)
     ErrorQuit ();
 }
 
+/* cp-out: warning: [^:]*: line 9, columns 4-13: identifier "ErrorQuit" not declared */

@@ -27,3 +27,5 @@ void foo (int i)
   if (~i) bar (i);
   i ? noret1 () : noret2 ();
 }
+
+/* cp-out: warning: [^:]*: line 22, columns 4-10: wrong number of arguments to function invocation */

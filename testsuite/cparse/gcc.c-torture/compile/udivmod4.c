@@ -54,3 +54,13 @@ main ()
     }
 
 }
+
+/* cp-out: warning: [^:]*: line 11, columns 10-16: identifier "random" not declared */
+/* cp-out: warning: [^:]*: line 41, columns 1-7: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 46, columns 3-9: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 47, columns 3-9: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 48, columns 3-9: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 49, columns 3-9: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 50, columns 3-9: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 51, columns 3-9: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 52, columns 3-8: identifier "abort" not declared */

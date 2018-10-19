@@ -13,3 +13,5 @@ int ptplib_send_announce(int sequenceId, int i)
     ((long long *)tx_packet.tlv[0].valueField)[sequenceId] = i;
     f(&tx_packet);
 }
+
+/* cp-out: warning: [^:]*: line 14, columns 4-5: identifier "f" not declared */

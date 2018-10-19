@@ -83,3 +83,16 @@ f (char *km, char *h)
  L:
   g (q[map], V, c);
 }
+
+/* cp-out: warning: [^:]*: line 39, columns 12-16: identifier "midn" not declared */
+/* cp-out: warning: [^:]*: line 39, columns 21-27: identifier "strlen" not declared */
+/* cp-out: warning: [^:]*: line 45, columns 21-27: identifier "strlen" not declared */
+/* cp-out: warning: [^:]*: line 52, columns 9-15: identifier "strcmp" not declared */
+/* cp-out: warning: [^:]*: line 60, columns 11-17: identifier "memcmp" not declared */
+/* cp-out: warning: [^:]*: line 73, columns 14-16: identifier "cr" not declared */
+/* cp-out: warning: [^:]*: line 77, columns 13-15: identifier "sp" not declared */
+/* cp-out: warning: [^:]*: line 81, columns 10-12: identifier "cs" not declared */
+/* cp-out: warning: [^:]*: line 67, columns 11-12: assignment to pointer from integer which is not NULL */
+/* cp-out: warning: [^:]*: line 72, columns 11-12: assignment to pointer from integer which is not NULL */
+/* cp-out: warning: [^:]*: line 73, columns 14-16: assignment to pointer from integer which is not NULL */
+/* cp-out: warning: [^:]*: line 81, columns 10-12: assignment to pointer from integer which is not NULL */

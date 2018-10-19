@@ -10,3 +10,5 @@ void bar (struct b *c)
 {
   c->b1 = c->b2 = ((struct a) { foo(), 0 });
 }
+
+/* cp-out: warning: [^:]*: line 11, columns 32-35: identifier "foo" not declared */

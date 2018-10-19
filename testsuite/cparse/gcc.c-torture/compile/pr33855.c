@@ -25,3 +25,5 @@ void foo(int next_job, int ain_num, int iped, long t) {
         iped = vsorc.nsant;
     }
 }
+
+/* cp-xfail */

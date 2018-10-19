@@ -46,3 +46,4 @@ test2(void)
 	use_cplx(cplx);
 }
 
+/* cp-xfail */

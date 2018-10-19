@@ -24,3 +24,7 @@ f ()
   if (a[0] != 0 || a[1] != 1)
     abort ();
 }
+
+/* cp-out: warning: [^:]*: line 3, columns 2-3: identifier "f" not declared */
+/* cp-out: warning: [^:]*: line 4, columns 2-6: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 25, columns 4-9: identifier "abort" not declared */

@@ -15,3 +15,8 @@ int caller (unsigned int reg_type)
       return (int) fooz();
     }
 }
+
+/* cp-out: warning: [^:]*: line 6, columns 18-21: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 9, columns 19-22: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 12, columns 19-22: identifier "baz" not declared */
+/* cp-out: warning: [^:]*: line 15, columns 19-23: identifier "fooz" not declared */

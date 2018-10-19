@@ -24,4 +24,5 @@ main(int na, char* argv[])
 	}
 }
 
-
+/* cp-out: warning: [^:]*: line 5, columns 1-5: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 11, columns 4-8: identifier "exit" not declared */

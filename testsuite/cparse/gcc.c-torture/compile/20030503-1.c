@@ -10,3 +10,5 @@ void foo ()
 	return;
       }
 }
+
+/* cp-out: warning: [^:]*: line 9, columns 1-4: identifier "bar" not declared */

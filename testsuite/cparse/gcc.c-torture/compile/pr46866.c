@@ -17,3 +17,5 @@ void openssl_crl_load(void)
   T *this = create_empty();
   destroy(this);
 }
+
+/* cp-out: warning: [^:]*: line 12, columns 27-35: incompatible pointer types in assignment */

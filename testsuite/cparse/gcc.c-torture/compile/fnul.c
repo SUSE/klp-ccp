@@ -21,3 +21,7 @@ main ()
 	printf ("%d\n", i);
     }
 }
+
+/* cp-out: warning: [^:]*: line 12, columns 3-9: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 17, columns 3-9: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 21, columns 1-7: identifier "printf" not declared */

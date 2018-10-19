@@ -35,3 +35,9 @@ main ()
 
   exit (0);
 }
+
+/* cp-out: warning: [^:]*: line 14, columns 6-12: identifier "alloca" not declared */
+/* cp-out: warning: [^:]*: line 31, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 34, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 36, columns 2-6: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 14, columns 6-12: assignment to pointer from integer which is not NULL */

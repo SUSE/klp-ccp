@@ -12,3 +12,5 @@ g (int *p)
   /* { dg-warning "unbounded use of 'alloca'" "unbounded" { target *-*-* } .-1 } */
   f (q);
 }
+
+/* cp-out: warning: [^:]*: line 11, columns 30-31: assignment to integer from pointer */

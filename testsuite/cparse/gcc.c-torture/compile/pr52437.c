@@ -16,3 +16,5 @@ fn1 ()
 	}
     }
 }
+
+/* cp-out: warning: [^:]*: line 10, columns 6-9: identifier "fn2" not declared */

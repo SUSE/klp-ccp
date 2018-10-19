@@ -24,3 +24,14 @@ int main()
   scp = ucp;	/* { dg-bogus " pointer targets in assignment differ in signedness" } */
   scp = cp;	/* { dg-bogus " pointer targets in assignment differ in signedness" } */
 }
+
+/* cp-out: warning: [^:]*: line 15, columns 8-10: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 16, columns 7-10: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 17, columns 5-8: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 18, columns 5-7: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 20, columns 7-10: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 21, columns 7-10: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 22, columns 8-11: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 23, columns 8-10: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 24, columns 8-11: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 25, columns 8-10: pointers to different integer types in assignment */

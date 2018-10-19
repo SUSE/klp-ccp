@@ -67,3 +67,8 @@ main ()
     abort ();
   exit (0);
 }
+
+/* cp-out: warning: [^:]*: line 63, columns 15-16: invalid types in cast */
+/* cp-out: warning: [^:]*: line 63, columns 38-39: invalid types in cast */
+/* cp-out: warning: [^:]*: line 66, columns 15-16: invalid types in cast */
+/* cp-out: warning: [^:]*: line 66, columns 38-39: invalid types in cast */

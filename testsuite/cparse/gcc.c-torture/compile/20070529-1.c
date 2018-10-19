@@ -14,3 +14,5 @@ int hfs_free_fork( int type)
  for (i = 0; i < 3; extent++, i++)
   blocks += __fswab16((( __u16)(__be16)(extent[i].count)));
 }
+
+/* cp-out: warning: [^:]*: line 15, columns 12-21: identifier "__fswab16" not declared */

@@ -28,3 +28,6 @@ f2 (struct x *y)
   if (y->f != 1 || y->c != 42)
     abort ();
 }
+
+/* cp-out: warning: [^:]*: line 13, columns 2-6: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 29, columns 4-9: identifier "abort" not declared */

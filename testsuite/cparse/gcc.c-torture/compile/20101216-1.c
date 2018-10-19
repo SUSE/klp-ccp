@@ -30,3 +30,5 @@ ieee_double_shape_type gh_u;
 __kernel_sin();
      }
 }
+
+/* cp-out: warning: [^:]*: line 30, columns 0-12: identifier "__kernel_sin" not declared */

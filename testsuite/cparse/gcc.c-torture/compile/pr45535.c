@@ -36,3 +36,5 @@ void clear_page_tables(struct mm_struct *mm, unsigned long first, int nr)
       free_one_pgd(page_dir);
   } while (--nr);
 }
+
+/* cp-out: warning: [^:]*: line 27, columns 45-54: identifier "__pgd_val" not declared */

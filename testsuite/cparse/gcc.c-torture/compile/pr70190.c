@@ -12,3 +12,4 @@ fn1 ()
  l2: return 0;
 }
 
+/* cp-out: error: [^:]*: line 11, columns 11-12: dereferencing something which is not a pointer */

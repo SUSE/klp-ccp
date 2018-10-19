@@ -17,3 +17,4 @@ foo ()
   printf ("%d\n", d);
 }
 
+/* cp-out: warning: [^:]*: line 17, columns 2-8: identifier "printf" not declared */

@@ -173,3 +173,17 @@ _swrast_choose_texture_sample_func (const struct gl_texture_object *t)
 	      return &sample_lambda_2d;
 	}
 }
+
+/* cp-out: warning: [^:]*: line 84, columns 16-35: identifier "linear_mipmap_level" not declared */
+/* cp-out: warning: [^:]*: line 85, columns 2-19: identifier "sample_2d_nearest" not declared */
+/* cp-out: warning: [^:]*: line 87, columns 2-19: identifier "sample_2d_nearest" not declared */
+/* cp-out: warning: [^:]*: line 88, columns 2-19: identifier "sample_2d_nearest" not declared */
+/* cp-out: warning: [^:]*: line 100, columns 20-39: identifier "linear_mipmap_level" not declared */
+/* cp-out: warning: [^:]*: line 104, columns 36-42: identifier "ifloor" not declared */
+/* cp-out: warning: [^:]*: line 123, columns 2-24: identifier "compute_min_mag_ranges" not declared */
+/* cp-out: warning: [^:]*: line 134, columns 4-21: identifier "opt_sample_rgb_2d" not declared */
+/* cp-out: warning: [^:]*: line 137, columns 4-22: identifier "opt_sample_rgba_2d" not declared */
+/* cp-out: warning: [^:]*: line 141, columns 7-24: identifier "sample_nearest_2d" not declared */
+/* cp-out: warning: [^:]*: line 158, columns 4-21: identifier "opt_sample_rgb_2d" not declared */
+/* cp-out: warning: [^:]*: line 160, columns 4-22: identifier "opt_sample_rgba_2d" not declared */
+/* cp-out: warning: [^:]*: line 162, columns 18-35: identifier "sample_nearest_2d" not declared */

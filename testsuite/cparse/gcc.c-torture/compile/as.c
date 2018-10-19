@@ -12,3 +12,5 @@ main ()
 {
   printf ("%d%d\n", foo (-1), foo (0));
 }
+
+/* cp-out: warning: [^:]*: line 13, columns 2-8: identifier "printf" not declared */

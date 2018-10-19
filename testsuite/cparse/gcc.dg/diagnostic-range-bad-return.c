@@ -50,3 +50,7 @@ int missing_return_value (void)
 /* TODO: ideally we'd underline the return type i.e. "int", but that
    location isn't captured.  */
 }
+
+/* cp-out: warning: [^:]*: line 15, columns 2-8: return with value in function returning void */
+/* cp-out: warning: [^:]*: line 28, columns 2-8: return with value in function returning void */
+/* cp-out: warning: [^:]*: line 41, columns 2-8: return without value in function returning non-void */

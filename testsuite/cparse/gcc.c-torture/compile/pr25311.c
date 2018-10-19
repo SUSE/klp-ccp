@@ -45,3 +45,4 @@ set_size (struct w *w, int new_size, int nodelete, int set_height)
     }
 }
 
+/* cp-out: warning: [^:]*: line 44, columns 3-6: identifier "use" not declared */

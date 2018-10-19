@@ -31,3 +31,5 @@ main ()
   baz ();
   return 0;
 }
+
+/* cp-xfail */

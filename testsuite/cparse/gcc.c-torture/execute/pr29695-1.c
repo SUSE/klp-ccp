@@ -81,3 +81,6 @@ main (void)
     abort ();
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 64, columns 6-7: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 64, columns 28-29: integer overflow in cast */

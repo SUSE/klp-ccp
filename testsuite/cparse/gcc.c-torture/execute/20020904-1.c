@@ -17,3 +17,5 @@ int main(void)
     abort ();
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 17, columns 4-9: identifier "abort" not declared */

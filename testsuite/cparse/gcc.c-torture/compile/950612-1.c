@@ -132,3 +132,7 @@ f (pc)
       printf("%08lx.%08lx\n", (long)(((unsigned long long) acc) >> 32) , (long)(((unsigned long long) acc) & 0xffffffff));
     }
 }
+
+/* cp-out: warning: [^:]*: line 116, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 132, columns 6-12: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 31, columns 72-73: integer overflow in shift operation */

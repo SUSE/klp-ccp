@@ -10,3 +10,5 @@ main ()
   if (foo (-1))
     puts ("The largest possible unsigned <= 0 on this machine...");
 }
+
+/* cp-out: warning: [^:]*: line 11, columns 4-8: identifier "puts" not declared */

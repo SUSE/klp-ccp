@@ -24,3 +24,5 @@ bar ()
   if (foo ())
     return;
 }
+
+/* cp-out: warning: [^:]*: line 25, columns 4-10: return without value in function returning non-void */

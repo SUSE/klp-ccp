@@ -20,3 +20,6 @@ int main (void)
   foo ();
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 13, columns 37-42: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 14, columns 27-32: identifier "abort" not declared */

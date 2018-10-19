@@ -16,3 +16,5 @@ main ()
   bar (&q);
   return 0;
 }
+
+/* cp-xfail */

@@ -20,3 +20,6 @@ bar (const char *a, const char *b)
   */
   return strcmp (a, b); /* { dg-bogus "implicit" "implicit declaration warning for strcmp" } */
 }
+
+/* cp-out: warning: [^:]*: line 9, columns 2-5: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 21, columns 9-15: identifier "strcmp" not declared */

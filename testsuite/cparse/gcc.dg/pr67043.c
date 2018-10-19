@@ -30,3 +30,5 @@ __rt_mutex_slowlock (int p1) {
       signal_pending ();
   }
 }
+
+/* cp-out: warning: [^:]*: line 23, columns 8-9: assignment to integer from pointer */

@@ -5,6 +5,7 @@
 #include "pp_except.hh"
 #include "parse_except.hh"
 #include "semantic_except.hh"
+#include "arch_gcc48_x86_64.hh"
 
 using namespace suse::cp;
 
@@ -81,23 +82,39 @@ int main(int argc, char* argv[])
     pd.parse();
 #endif
   } catch (const pp_except&) {
-    r = 1;
-  } catch (const parse_except&) {
     r = 2;
+  } catch (const parse_except&) {
+    r = 3;
   }
 
   if (!pd.get_remarks().empty())
     std::cerr << pd.get_remarks();
+  if (r)
+    return r;
 
   ast::ast ast(pd.grab_result());
   try {
     ast.resolve();
   } catch (const semantic_except&) {
-    r = 3;
+    r = 4;
   }
-
   if (!ast.get_remarks().empty())
     std::cerr << ast.get_remarks();
+  ast.get_remarks().clear();
+  if (r)
+    return r;
+
+  arch_gcc48_x86_64 arch;
+  try {
+    ast.evaluate(arch);
+  } catch (const semantic_except&) {
+    r = 5;
+  }
+  if (!ast.get_remarks().empty())
+    std::cerr << ast.get_remarks();
+  ast.get_remarks().clear();
+  if (r)
+    return r;
 
   return r;
 }

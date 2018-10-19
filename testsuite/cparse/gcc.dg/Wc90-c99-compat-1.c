@@ -54,3 +54,5 @@ fn6 (void)
 }
 
 void fn7 (int n, int a[n]); /* { dg-warning "ISO C90 forbids variable length array .a." } */
+
+/* cp-xfail */

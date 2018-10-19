@@ -66,3 +66,11 @@ main ()
   printf ("%lf, %u, %d\n", ID_3, ui, si);
 
 }
+
+/* cp-out: warning: [^:]*: line 48, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 51, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 54, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 57, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 60, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 63, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 66, columns 2-8: identifier "printf" not declared */

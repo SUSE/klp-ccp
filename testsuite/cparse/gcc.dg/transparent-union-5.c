@@ -35,3 +35,5 @@ int main()
   test2 (&wstatus);
   return 0;
 }
+
+/* cp-out: error: [^:]*: line 34, columns 9-10: invalid type for assignment target */

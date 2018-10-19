@@ -16,3 +16,5 @@ void bar()
     break;
   }
 }
+
+/* cp-out: warning: [^:]*: line 15, columns 6-12: identifier "printf" not declared */

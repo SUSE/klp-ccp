@@ -10,3 +10,5 @@ if(x)
 g();
 }
 }
+
+/* cp-out: warning: [^:]*: line 8, columns 2-3: identifier "h" not declared */

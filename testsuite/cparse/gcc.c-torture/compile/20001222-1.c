@@ -4,3 +4,5 @@ f (void)
 {
   return ~(1.0 + 2.0i);
 }
+
+/* cp-xfail */

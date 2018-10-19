@@ -277,3 +277,6 @@ synth(insn_t *sequence,
       recurse(COPY, n_values,  (0x20 + 1) ,  0, v, 1, sequence, n_insns, values, n_values + 1, goal_value, allowed_cost, co,  prune_hint & ~CY_JUST_SET);
     }
 }
+
+/* cp-out: warning: [^:]*: line 66, columns 6-11: identifier "synth" not declared */
+/* cp-out: warning: [^:]*: line 78, columns 6-19: identifier "test_sequence" not declared */

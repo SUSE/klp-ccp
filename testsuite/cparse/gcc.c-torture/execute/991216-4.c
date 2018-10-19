@@ -14,3 +14,5 @@ int main()
     bug(5, 10);
     exit (0);
 }
+
+/* cp-out: warning: [^:]*: line 15, columns 4-8: identifier "exit" not declared */

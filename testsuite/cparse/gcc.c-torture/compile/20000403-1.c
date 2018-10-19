@@ -16,3 +16,5 @@ uname(name)
 				*p = ' ';
 	}
 }
+
+/* cp-out: warning: [^:]*: line 13, columns 5-11: identifier "sysctl" not declared */

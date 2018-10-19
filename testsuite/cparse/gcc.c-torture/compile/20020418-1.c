@@ -16,3 +16,5 @@ double bar (void)
 {
   baz ();
 }
+
+/* cp-out: warning: [^:]*: line 12, columns 2-8: return without value in function returning non-void */

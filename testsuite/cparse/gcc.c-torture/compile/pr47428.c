@@ -41,3 +41,5 @@ bar (struct S x)
     for (; x.s;)
       b = 0 ? : baz (0, 0);
 }
+
+/* cp-out: warning: [^:]*: line 24, columns 2-4: identifier "fn" not declared */

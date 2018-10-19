@@ -11,3 +11,5 @@ bar ()
   foobar[2].a = 'b';
   barfoo (foobar);
 }
+
+/* cp-out: warning: [^:]*: line 12, columns 2-8: identifier "barfoo" not declared */

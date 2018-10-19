@@ -9,3 +9,5 @@ void lpfc_sli_brdrestart(void)
   mb->mbxCommand = 0x1A;
   __writel((*(unsigned int *) mb));
 }
+
+/* cp-out: warning: [^:]*: line 10, columns 2-10: identifier "__writel" not declared */

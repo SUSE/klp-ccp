@@ -9,3 +9,5 @@ main ()
 {
   printf ("%d\n", foo (0));
 }
+
+/* cp-out: warning: [^:]*: line 10, columns 2-8: identifier "printf" not declared */

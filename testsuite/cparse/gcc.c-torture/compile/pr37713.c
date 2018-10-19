@@ -8,3 +8,5 @@ void add_opush(void)
 	dtds[i] = &dtd;
     sdp_seq_alloc(dtds);
 }
+
+/* cp-out: warning: [^:]*: line 9, columns 4-17: identifier "sdp_seq_alloc" not declared */

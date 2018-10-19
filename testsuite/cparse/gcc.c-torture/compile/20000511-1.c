@@ -29,3 +29,7 @@ int f(X x, X y)
 
   return x.x[0] + y.x[0];
 }
+
+/* cp-out: warning: [^:]*: line 12, columns 9-10: identifier "f" not declared */
+/* cp-out: warning: [^:]*: line 21, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 22, columns 2-6: identifier "exit" not declared */

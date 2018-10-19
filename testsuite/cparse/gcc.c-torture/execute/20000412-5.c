@@ -9,3 +9,5 @@ int main( void ) {
     exit (0);
 }
 
+/* cp-out: warning: [^:]*: line 8, columns 6-11: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 9, columns 4-8: identifier "exit" not declared */

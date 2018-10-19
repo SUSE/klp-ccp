@@ -19,3 +19,5 @@ int bar (void)
   if( i ) return; /* { dg-warning "'return' with no value, in function returning non-void" } */
   else    return 1;
 }		
+
+/* cp-out: warning: [^:]*: line 19, columns 10-16: return without value in function returning non-void */

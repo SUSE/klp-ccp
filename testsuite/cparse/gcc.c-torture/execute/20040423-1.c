@@ -28,3 +28,6 @@ main ()
 
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 12, columns 6-12: identifier "memcpy" not declared */
+/* cp-out: warning: [^:]*: line 27, columns 4-9: identifier "abort" not declared */

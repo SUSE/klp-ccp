@@ -20,3 +20,5 @@ ms (int sw, int cm)
         goto fx;
     }
 }
+
+/* cp-out: warning: [^:]*: line 19, columns 14-15: division by zero */

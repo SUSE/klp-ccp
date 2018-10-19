@@ -61,3 +61,7 @@ int test_3 (int first, int second, float third)
             ^~~~~~~~
      { dg-end-multiline-output "" } */
 }
+
+/* cp-out: warning: [^:]*: line 14, columns 26-32: assignment to pointer from integer which is not NULL */
+/* cp-out: warning: [^:]*: line 32, columns 26-32: assignment to pointer from integer which is not NULL */
+/* cp-out: warning: [^:]*: line 53, columns 26-32: assignment to pointer from integer which is not NULL */

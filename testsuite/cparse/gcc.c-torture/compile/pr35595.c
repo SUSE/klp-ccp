@@ -57,3 +57,5 @@ __ieee754_lgammaf_r (float x, int *signgamp)
     t = sin_pif (x);
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 42, columns 8-21: identifier "__kernel_sinf" not declared */

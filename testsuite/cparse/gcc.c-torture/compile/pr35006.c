@@ -28,3 +28,9 @@ grub_cmdline_get (unsigned max_len, int echo_char)
  grub_size_t n = lpos;
  cl_delete (n);
 }
+
+/* cp-out: warning: [^:]*: line 15, columns 10-22: identifier "grub_putchar" not declared */
+/* cp-out: warning: [^:]*: line 16, columns 8-20: identifier "grub_putchar" not declared */
+/* cp-out: warning: [^:]*: line 21, columns 3-13: identifier "cl_set_pos" not declared */
+/* cp-out: warning: [^:]*: line 23, columns 3-15: identifier "grub_memmove" not declared */
+/* cp-out: warning: [^:]*: line 25, columns 3-13: identifier "cl_set_pos" not declared */

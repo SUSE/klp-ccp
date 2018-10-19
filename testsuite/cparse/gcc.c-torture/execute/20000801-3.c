@@ -22,3 +22,5 @@ main (void)
   else
     abort ();
 }
+
+/* cp-out: warning: [^:]*: line 21, columns 4-8: identifier "exit" not declared */

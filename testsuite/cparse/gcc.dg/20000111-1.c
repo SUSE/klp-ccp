@@ -15,3 +15,5 @@ bar () {
   if (foo (p))
     do_something ();
 }
+
+/* cp-out: warning: [^:]*: line 16, columns 4-16: identifier "do_something" not declared */

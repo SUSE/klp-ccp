@@ -15,3 +15,5 @@ double c = 1.2;		/* { dg-warning "unsuffixed float constant" } */
 
 double d = 0x5.0p1;	/* No warning for hex constant.  */
 double e = 3.1i;	/* No warning for imaginary constant.  */
+
+/* cp-xfail */

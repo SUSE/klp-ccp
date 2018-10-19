@@ -53,3 +53,7 @@ void DES_encrypt1 (long *, DES_key_schedule *, int);
        (*((iv2)++) = (unsigned char) (((xor1)) & 0xff), *((iv2)++) =        (unsigned char) (((xor1) >> 8L) & 0xff), *((iv2)++) =        (unsigned char) (((xor1) >> 16L) & 0xff), *((iv2)++) =        (unsigned char) (((xor1) >> 24L) & 0xff));
      }
  }
+
+/* cp-out: warning: [^:]*: line 25, columns 18-21: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 26, columns 18-21: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 38, columns 18-21: pointers to different integer types in assignment */

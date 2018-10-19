@@ -38,3 +38,5 @@ double jd = 0.5jd;
 double jD = 0.5jD;
 double Jd = 0.5Jd;
 double JD = 0.5JD;
+
+/* cp-xfail */

@@ -29,3 +29,9 @@ int main ()
   if (foo(2, sh+3) != 3) abort();
   exit(0);
 }
+
+/* cp-out: warning: [^:]*: line 10, columns 2-7: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 27, columns 23-28: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 28, columns 24-29: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 29, columns 25-30: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 30, columns 2-6: identifier "exit" not declared */

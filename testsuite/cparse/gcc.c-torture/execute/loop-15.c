@@ -38,3 +38,7 @@ main (void)
 
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 28, columns 5-10: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 32, columns 5-10: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 36, columns 5-10: identifier "abort" not declared */

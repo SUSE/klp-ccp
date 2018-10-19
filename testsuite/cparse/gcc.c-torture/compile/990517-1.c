@@ -28,3 +28,5 @@ sdbm__splpage (char *pag, char *New, long int sbit)
 		n -= 2;
 	}
 }
+
+/* cp-out: warning: [^:]*: line 17, columns 8-14: identifier "memcpy" not declared */

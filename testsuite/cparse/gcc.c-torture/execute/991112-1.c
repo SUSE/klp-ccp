@@ -17,3 +17,7 @@ int main(void)
     abort();
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 8, columns 9-16: identifier "isprint" not declared */
+/* cp-out: warning: [^:]*: line 15, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 17, columns 4-9: identifier "abort" not declared */

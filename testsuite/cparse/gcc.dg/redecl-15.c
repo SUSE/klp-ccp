@@ -12,3 +12,5 @@ f (void)
     void g(); /* { dg-warning "conflicting types for 'g'" } */
   }
 }
+
+/* cp-out: warning: [^:]*: line 10, columns 2-3: identifier "g" not declared */

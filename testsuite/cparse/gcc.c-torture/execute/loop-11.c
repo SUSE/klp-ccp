@@ -18,3 +18,5 @@ main ()
       abort ();
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 18, columns 6-11: identifier "abort" not declared */

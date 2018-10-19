@@ -26,3 +26,5 @@ foo (Nrrd *nout, Nrrd *nin, const NrrdKernel *kernel, const double *parm,
 	}
     }
 }
+
+/* cp-out: warning: [^:]*: line 21, columns 12-23: identifier "_nrrdCenter" not declared */

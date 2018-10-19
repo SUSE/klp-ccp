@@ -8,3 +8,5 @@ foo ()
   _Bool (*f) () = __builtin_abs;	/* { dg-warning "initialization of '_Bool \\(\\*\\)\\(\\)' from incompatible pointer type" } */
   return f (0);
 }
+
+/* cp-out: error: [^:]*: line 8, columns 18-31: invalid type for assignment target */

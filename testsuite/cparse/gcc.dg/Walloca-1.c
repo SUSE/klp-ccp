@@ -63,3 +63,5 @@ void foo3 (unsigned char a)
   if (a == 0)
     useit (__builtin_alloca (a)); // { dg-warning "argument to 'alloca' is zero" }
 }
+
+/* cp-xfail */

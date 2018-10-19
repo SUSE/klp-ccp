@@ -110,3 +110,16 @@ main (int argc, char **argv)
     }
   setup ();
 }
+
+/* cp-out: warning: [^:]*: line 35, columns 6-24: identifier "external_function5" not declared */
+/* cp-out: warning: [^:]*: line 45, columns 6-10: identifier "fn10" not declared */
+/* cp-out: warning: [^:]*: line 49, columns 12-30: identifier "external_function1" not declared */
+/* cp-out: warning: [^:]*: line 52, columns 6-24: identifier "external_function6" not declared */
+/* cp-out: warning: [^:]*: line 61, columns 6-24: identifier "external_function3" not declared */
+/* cp-out: warning: [^:]*: line 75, columns 6-9: identifier "fn2" not declared */
+/* cp-out: warning: [^:]*: line 77, columns 6-9: identifier "fn4" not declared */
+/* cp-out: warning: [^:]*: line 87, columns 6-23: identifier "external_function" not declared */
+/* cp-out: warning: [^:]*: line 89, columns 6-23: identifier "external_function" not declared */
+/* cp-out: warning: [^:]*: line 91, columns 6-23: identifier "external_function" not declared */
+/* cp-out: warning: [^:]*: line 94, columns 3-14: identifier "getopt_long" not declared */
+/* cp-out: warning: [^:]*: line 102, columns 3-20: identifier "external_function" not declared */

@@ -24,3 +24,6 @@ int main()
   if (glob != 42) abort(); 
   exit (0); 
 }
+
+/* cp-out: warning: [^:]*: line 24, columns 18-23: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 25, columns 2-6: identifier "exit" not declared */

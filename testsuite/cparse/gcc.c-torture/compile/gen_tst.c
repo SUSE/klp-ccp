@@ -65,3 +65,10 @@ main_assign ()
 }
 
 main () {main_assign ();}
+
+/* cp-out: warning: [^:]*: line 42, columns 3-9: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 43, columns 3-9: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 44, columns 3-9: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 59, columns 3-9: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 60, columns 3-9: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 61, columns 3-9: identifier "printf" not declared */

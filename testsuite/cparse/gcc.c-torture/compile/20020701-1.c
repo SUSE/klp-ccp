@@ -73,3 +73,5 @@ f (const char* p1, const char* p2, char p3)
   f1 (v4);
   return r;
 }
+
+/* cp-out: warning: [^:]*: line 33, columns 2-8: identifier "memcpy" not declared */

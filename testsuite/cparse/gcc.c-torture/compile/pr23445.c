@@ -8,3 +8,5 @@
      if (bhsec)       __brelse(bhsec);
    }
  }
+
+/* cp-out: warning: [^:]*: line 8, columns 22-30: identifier "__brelse" not declared */

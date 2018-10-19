@@ -20,3 +20,6 @@ main ()
   sister (f, 1, 2);
   exit (0);
 }
+
+/* cp-out: warning: [^:]*: line 7, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 21, columns 2-6: identifier "exit" not declared */

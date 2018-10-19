@@ -54,3 +54,9 @@ yy_find_action:
     }
   }
 }
+
+/* cp-out: warning: [^:]*: line 37, columns 1-7: identifier "addlit" not declared */
+/* cp-out: warning: [^:]*: line 39, columns 1-7: identifier "addlit" not declared */
+/* cp-out: warning: [^:]*: line 41, columns 1-15: identifier "yy_fatal_error" not declared */
+/* cp-out: warning: [^:]*: line 47, columns 11-19: identifier "_IO_getc" not declared */
+/* cp-out: warning: [^:]*: line 51, columns 22-43: identifier "yy_get_previous_state" not declared */

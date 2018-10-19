@@ -95,3 +95,12 @@ DoFullScreen (void)
 	}
     }
 }
+
+/* cp-out: warning: [^:]*: line 54, columns 6-11: identifier "ioctl" not declared */
+/* cp-out: warning: [^:]*: line 62, columns 6-12: identifier "perror" not declared */
+/* cp-out: warning: [^:]*: line 64, columns 7-28: identifier "XTranslateCoordinates" not declared */
+/* cp-out: warning: [^:]*: line 75, columns 6-11: identifier "ioctl" not declared */
+/* cp-out: warning: [^:]*: line 83, columns 6-32: identifier "XF86VidModeGetAllModeLines" not declared */
+/* cp-out: warning: [^:]*: line 83, columns 43-57: identifier "XDefaultScreen" not declared */
+/* cp-out: warning: [^:]*: line 93, columns 3-25: identifier "XF86VidModeSetViewPort" not declared */
+/* cp-out: warning: [^:]*: line 93, columns 36-50: identifier "XDefaultScreen" not declared */

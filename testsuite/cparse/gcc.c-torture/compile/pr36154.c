@@ -9,3 +9,5 @@ int cmd_unaligned(const void *p)
   return memcmp(p, pkt_unaligned.packet, 1);
 }
 
+
+/* cp-out: warning: [^:]*: line 9, columns 9-15: identifier "memcmp" not declared */

@@ -187,3 +187,5 @@ int a5[][0][0] = { 1, 2 }; /* { dg-line pr_81405 } */
  int a5[][0][0] = { 1, 2 };
  ^~~
      { dg-end-multiline-output "" } */
+
+/* cp-out: warning: [^:]*: line 167, columns 19-20: excess elements in initialization of zero length array */

@@ -58,3 +58,5 @@ main ()
   glob_idx ();
   exit (0);
 }
+
+/* cp-out: warning: [^:]*: line 59, columns 2-6: identifier "exit" not declared */

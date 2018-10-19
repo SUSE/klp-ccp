@@ -30,3 +30,12 @@ main ()
   printf ("%u, %u, %u\n", d2u (u2d (~0)), d2u (u2d (1 << 31)), d2u (u2d (1)));
   printf ("%d, %d, %d\n", d2i (i2d (~0)), d2i (i2d (1 << 31)), d2i (i2d (1)));
 }
+
+/* cp-out: warning: [^:]*: line 27, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 28, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 30, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 31, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 27, columns 44-45: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 28, columns 44-45: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 30, columns 52-53: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 31, columns 52-53: integer overflow in shift operation */

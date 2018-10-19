@@ -13,3 +13,6 @@ bar (void)
   void *x = 0;
   foo (x);
 }
+
+/* cp-out: warning: [^:]*: line 6, columns 10-13: identifier "baz" not declared */
+/* cp-out: warning: [^:]*: line 14, columns 2-5: wrong number of arguments to function invocation */

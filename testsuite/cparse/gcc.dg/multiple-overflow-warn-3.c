@@ -10,4 +10,5 @@ g (void)
   return wc;
 }
 
-
+/* cp-out: warning: [^:]*: line 8, columns 18-19: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 8, columns 17-18: integer overflow in subtraction */

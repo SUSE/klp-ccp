@@ -18,3 +18,5 @@ __complex__ long long f ()
   return v;
   g (&v);
 }
+
+/* cp-xfail */

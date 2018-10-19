@@ -17,3 +17,7 @@ void foo(struct A *p)
         bar3(a.c);
     }
 }
+
+/* cp-out: warning: [^:]*: line 13, columns 8-12: identifier "bar1" not declared */
+/* cp-out: warning: [^:]*: line 16, columns 15-19: identifier "bar2" not declared */
+/* cp-out: warning: [^:]*: line 17, columns 8-12: identifier "bar3" not declared */

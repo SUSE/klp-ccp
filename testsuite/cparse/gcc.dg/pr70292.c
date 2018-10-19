@@ -10,3 +10,5 @@ int t106_1mul(unsigned int x, unsigned int y) {
     }
     return r;
 }
+
+/* cp-xfail */

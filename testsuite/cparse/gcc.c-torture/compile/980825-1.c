@@ -28,3 +28,6 @@ static void applyTagInclusionList( list )
 	    default: error(FATAL, "-i: Invalid tag option '%c'", *p);	break;
 	}
 }
+
+/* cp-out: warning: [^:]*: line 20, columns 2-14: identifier "clearTagList" not declared */
+/* cp-out: warning: [^:]*: line 28, columns 14-19: identifier "error" not declared */

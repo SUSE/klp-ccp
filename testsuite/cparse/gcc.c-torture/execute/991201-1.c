@@ -37,3 +37,6 @@ int main()
 	reset_palette(0);
 	exit(0);
 }
+
+/* cp-out: warning: [^:]*: line 32, columns 2-7: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 38, columns 1-5: identifier "exit" not declared */

@@ -12,3 +12,4 @@ int sendto(const struct sockaddr *to)
    return _pure_socketcall(to);
 }
 
+/* cp-out: error: [^:]*: line 8, columns 16-17: invalid type for assignment target */

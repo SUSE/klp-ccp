@@ -20,3 +20,5 @@ int main()
     abort ();
   return 0;
 }
+
+/* cp-out: warning: [^:]*: line 20, columns 4-9: identifier "abort" not declared */

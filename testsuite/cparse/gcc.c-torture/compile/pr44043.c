@@ -85,3 +85,7 @@ int raw_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 {
   raw_send_hdrinc(sk, msg->msg_iov, len, (void *)0, msg->msg_flags);
 }
+
+/* cp-out: warning: [^:]*: line 28, columns 12-26: identifier "nf_hook_thresh" not declared */
+/* cp-out: warning: [^:]*: line 74, columns 4-18: identifier "ip_local_error" not declared */
+/* cp-out: warning: [^:]*: line 78, columns 4-18: identifier "icmp_out_count" not declared */

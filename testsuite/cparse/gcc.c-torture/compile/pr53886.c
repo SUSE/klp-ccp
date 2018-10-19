@@ -66,3 +66,8 @@ err:
     EC_PRIVATEKEY_free (priv_key);
   return (ok ? ret : 0);
 }
+
+/* cp-out: warning: [^:]*: line 33, columns 6-19: identifier "ERR_put_error" not declared */
+/* cp-out: warning: [^:]*: line 40, columns 6-19: identifier "ERR_put_error" not declared */
+/* cp-out: warning: [^:]*: line 58, columns 13-30: identifier "i2d_EC_PRIVATEKEY" not declared */
+/* cp-out: warning: [^:]*: line 64, columns 4-15: identifier "CRYPTO_free" not declared */

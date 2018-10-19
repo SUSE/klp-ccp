@@ -14,3 +14,6 @@ main (void)
 {
   foo (0, 4);
 }
+
+/* cp-out: warning: [^:]*: line 5, columns 4-8: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 7, columns 4-9: identifier "abort" not declared */

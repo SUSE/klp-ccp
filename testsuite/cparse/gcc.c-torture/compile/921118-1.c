@@ -6,3 +6,5 @@ g()
 {
   f(9);
 }
+
+/* cp-out: warning: [^:]*: line 3, columns 2-3: identifier "h" not declared */

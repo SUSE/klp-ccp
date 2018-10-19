@@ -22,3 +22,5 @@ f3 (void)
   int x;
   return x;	/* { dg-warning "is used uninitialized in this function" } */
 }
+
+/* cp-xfail */

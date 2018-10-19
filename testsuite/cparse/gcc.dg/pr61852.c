@@ -8,3 +8,5 @@ f (int a)
   int b = a + a + a + ff (a); /* { dg-warning "23:implicit declaration of function" } */
   return b;
 }
+
+/* cp-out: warning: [^:]*: line 8, columns 22-24: identifier "ff" not declared */

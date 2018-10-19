@@ -29,3 +29,6 @@ adjust_xy (x, y)
 {
   *x = adjust.kx_x * *x + adjust.kx_y * *y + adjust.kx;
 }
+
+/* cp-out: warning: [^:]*: line 20, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 22, columns 2-6: identifier "exit" not declared */

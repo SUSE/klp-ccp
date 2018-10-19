@@ -74,3 +74,7 @@ main(int argc, char **argv)
 	do_isofs_readdir(&i,&f);
 	abort ();
 }
+
+/* cp-out: warning: [^:]*: line 21, columns 3-8: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 22, columns 1-5: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 75, columns 1-6: identifier "abort" not declared */

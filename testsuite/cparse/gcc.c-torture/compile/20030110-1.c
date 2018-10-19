@@ -37,3 +37,7 @@ void foo()
     }
 }
 
+/* cp-out: warning: [^:]*: line 11, columns 14-17: identifier "inb" not declared */
+/* cp-out: warning: [^:]*: line 19, columns 14-17: identifier "inb" not declared */
+/* cp-out: warning: [^:]*: line 27, columns 8-11: identifier "inb" not declared */
+/* cp-out: warning: [^:]*: line 34, columns 10-13: identifier "inb" not declared */

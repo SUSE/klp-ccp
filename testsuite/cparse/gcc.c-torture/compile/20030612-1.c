@@ -9,3 +9,5 @@ test (void)
 {
   foo (0, 1);
 }
+
+/* cp-out: warning: [^:]*: line 4, columns 2-5: identifier "bar" not declared */

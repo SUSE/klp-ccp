@@ -18,3 +18,5 @@ cur_token (void)
     return;
   struct paramed_type b = { };
 }
+
+/* cp-out: warning: [^:]*: line 17, columns 26-35: incompatible pointer types in assignment */

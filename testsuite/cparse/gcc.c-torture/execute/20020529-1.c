@@ -80,3 +80,8 @@ f2 (void)
 {
   abort ();
 }
+
+/* cp-out: warning: [^:]*: line 65, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 66, columns 2-6: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 74, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 81, columns 2-7: identifier "abort" not declared */

@@ -21,3 +21,5 @@ void S_scan_heredoc(PerlInterpreter *my_perl, char *s, int i)
   else
     S_missingterm(my_perl->Itokenbuf);
 }
+
+/* cp-out: warning: [^:]*: line 10, columns 6-12: identifier "strchr" not declared */
