@@ -17,6 +17,7 @@ if [[ "x$enable_debug_parser" = xyes ]]; then
 fi
 
 AC_CONFIG_FILES([Makefile
+		 arch/Makefile
 		 testsuite/Makefile
 		 testsuite/lib/Makefile
 		 testsuite/cpp/Makefile
