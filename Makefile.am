@@ -2,6 +2,10 @@ SUBDIRS = . arch testsuite
 
 AM_YFLAGS = -d
 BUILT_SOURCES = gnuc_parser.hh stack.hh
+EXTRA_DIST = stack.hh
+
+stack.hh: gnuc_parser.hh
+
 
 noinst_HEADERS =				\
 	arch_gcc48_x86_64.hh			\
