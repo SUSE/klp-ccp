@@ -480,7 +480,6 @@ EXTRA_DIST = \
 	conv-1.c \
 	conv-2.c \
 	conv-3.c \
-	cparse.exp \
 	ctor1.c \
 	darwin-20040809-2.c \
 	darwin-20040812-1.c \
