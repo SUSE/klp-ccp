@@ -694,14 +694,13 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
   }
 
 
-  assert((sc == storage_class::sc_none ||
-	  sc == storage_class::sc_static ||
-	  sc == storage_class::sc_extern) ||
+  assert((sc == storage_class::sc_static && is_at_file_scope) ||
+	 (sc == storage_class::sc_none && (is_at_file_scope || is_fun)) ||
+	 (sc == storage_class::sc_extern) ||
 	 (is_fun && !is_at_file_scope && sc == storage_class::sc_auto));
-  assert(is_fun || is_at_file_scope || sc == storage_class::sc_extern);
-
-  if (is_at_file_scope && sc == storage_class::sc_static) {
+  if (sc == storage_class::sc_static) {
     // Internal linkage.
+    assert(is_at_file_scope);
     if (prev) {
       assert(prev_is_in_cur_scope &&
 	     (prev->get_kind() == resolved_kind::init_declarator ||
@@ -780,8 +779,8 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
       _add_pending_linkage(id);
     }
 
-  } else if (is_at_file_scope) {
-    assert(sc == storage_class::sc_none && !is_fun);
+  } else if (sc == storage_class::sc_none) {
+    assert(is_at_file_scope && !is_fun);
     // Object at file scope with no storage class specifier: external
     // linkage.
     if (prev) {
@@ -832,8 +831,8 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
     }
 
   } else {
-    assert(sc == storage_class::sc_static && is_fun && !is_at_file_scope);
     assert(0);
+    __builtin_unreachable();
   }
 
   _scopes.back()._declared_ids.push_back(expr_id::resolved(id));
