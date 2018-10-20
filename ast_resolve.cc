@@ -628,9 +628,12 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
   }
 
   const bool is_fun = ddid.is_function();
-  // The 'register' storage class is not allowed at function
-  // declarations.
-  if (is_fun && sc == storage_class::sc_register) {
+  // The 'register' storage class is never allowed at function
+  // declarations and function declarations at block scope
+  // must be sc_none, sc_extern or, by GCC extension, sc_auto.
+  if (is_fun &&
+      (sc == storage_class::sc_register ||
+       (!is_at_file_scope && sc == storage_class::sc_static))) {
     const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
     code_remark remark(code_remark::severity::fatal,
 		       "invalid storage class at function declaration",
@@ -814,13 +817,7 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
 
   } else {
     assert(sc == storage_class::sc_static && is_fun && !is_at_file_scope);
-    // That's not allowed.
-    const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
-    code_remark remark(code_remark::severity::fatal,
-		       "static specifier at non-local function declaration",
-		       id_tok.get_file_range());
-    _ast.get_remarks().add(remark);
-    throw semantic_except(remark);
+    assert(0);
   }
 
   _scopes.back()._declared_ids.push_back(expr_id::resolved(id));
