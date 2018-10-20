@@ -652,11 +652,8 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
     // In old-style parameter declarations, the declaration obviously
     // has to declare some id of the function prototype's identifier
     // list. So that's Ok.
-    const bool is_local_nonfun =
-      !is_fun && !is_at_file_scope && sc != storage_class::sc_extern;
     const bool is_oldstyle_param_decl
-      = (is_local_nonfun &&
-	 (prev->get_kind() == resolved_kind::in_param_id_list) &&
+      = (prev->get_kind() == resolved_kind::in_param_id_list &&
 	 d.get_parent()->is_any_of<declaration_list>());
     if (!is_oldstyle_param_decl) {
       const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
@@ -666,7 +663,6 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
       _ast.get_remarks().add(remark);
       throw semantic_except(remark);
     }
-
   }
 
   if (no_linkage) {
