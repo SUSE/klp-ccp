@@ -595,6 +595,30 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
   const expr_id::resolved *prev = _lookup_id(ddid.get_id_tok(),
 					     &prev_is_in_cur_scope);
 
+  // Handle old-style parameter declarations. These have no linkage
+  // and must correspond to some identifier in the function defintion's
+  // identifier list.
+  if (d.get_parent()->is_any_of<declaration_list>()) {
+    if (!prev || !prev_is_in_cur_scope) {
+      const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+      code_remark remark(code_remark::severity::fatal,
+			 "old-style parameter not in identifier list",
+			 id_tok.get_file_range());
+      _ast.get_remarks().add(remark);
+      throw semantic_except(remark);
+    } else if (prev->get_kind() != resolved_kind::in_param_id_list) {
+      const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+      code_remark remark(code_remark::severity::fatal,
+			 "invalid redeclaration",
+			 id_tok.get_file_range());
+      _ast.get_remarks().add(remark);
+      throw semantic_except(remark);
+    }
+
+    _scopes.back()._declared_ids.push_back(expr_id::resolved(id));
+    return;
+  }
+
   // Handle typedefs
   const bool prev_is_td_in_cur_scope=
     (prev && prev_is_in_cur_scope &&
@@ -649,20 +673,12 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
   // the same scope.
   if (prev && prev_is_in_cur_scope &&
       (no_linkage || _get_linkage_kind(*prev) == linkage::linkage_kind::none)) {
-    // In old-style parameter declarations, the declaration obviously
-    // has to declare some id of the function prototype's identifier
-    // list. So that's Ok.
-    const bool is_oldstyle_param_decl
-      = (prev->get_kind() == resolved_kind::in_param_id_list &&
-	 d.get_parent()->is_any_of<declaration_list>());
-    if (!is_oldstyle_param_decl) {
-      const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
-      code_remark remark(code_remark::severity::fatal,
-			 "invalid redeclaration",
-			 id_tok.get_file_range());
-      _ast.get_remarks().add(remark);
-      throw semantic_except(remark);
-    }
+    const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+    code_remark remark(code_remark::severity::fatal,
+		       "invalid redeclaration",
+		       id_tok.get_file_range());
+    _ast.get_remarks().add(remark);
+    throw semantic_except(remark);
   }
 
   if (no_linkage) {
