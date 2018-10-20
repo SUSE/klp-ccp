@@ -595,6 +595,38 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
   const expr_id::resolved *prev = _lookup_id(ddid.get_id_tok(),
 					     &prev_is_in_cur_scope);
 
+  // Handle typedefs
+  const bool prev_is_td_in_cur_scope=
+    (prev && prev_is_in_cur_scope &&
+     (prev->get_kind() == resolved_kind::init_declarator) &&
+     ((prev->get_init_declarator().get_containing_declaration()
+       .get_declaration_specifiers().get_storage_class(_ast)) ==
+      storage_class::sc_typedef));
+
+  if (sc == storage_class::sc_typedef) {
+    if (prev) {
+      if (prev_is_in_cur_scope && !prev_is_td_in_cur_scope) {
+	const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+	code_remark remark(code_remark::severity::fatal,
+			   "redeclaration of non-typedef symbol as typedef",
+			   id_tok.get_file_range());
+	_ast.get_remarks().add(remark);
+	throw semantic_except(remark);
+      }
+    }
+
+    _scopes.back()._declared_ids.push_back(expr_id::resolved(id));
+    return;
+
+  } else if (prev_is_td_in_cur_scope) {
+    const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+    code_remark remark(code_remark::severity::fatal,
+		       "redeclaration of typedef symbol as non-typedef",
+		       id_tok.get_file_range());
+    _ast.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
   // Let's be good citizens and check for forbidden redeclarations in
   // the same scope.
   const bool is_fun = ddid.is_function();
@@ -608,13 +640,6 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
      is_local_nonfun);
   if (prev && prev_is_in_cur_scope &&
       (no_linkage || _get_linkage_kind(*prev) == linkage::linkage_kind::none)) {
-    // typedef redeclarations are possible if they yield the same result.
-    const bool prev_is_typedef
-      = ((prev->get_kind() == resolved_kind::init_declarator) &&
-	 ((prev->get_init_declarator().get_containing_declaration()
-	   .get_declaration_specifiers().get_storage_class(_ast)) ==
-	  storage_class::sc_typedef));
-
     // In old-style parameter declarations, the declaration obviously
     // has to declare some id of the function prototype's identifier
     // list. So that's Ok.
@@ -622,9 +647,7 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
       = (is_local_nonfun &&
 	 (prev->get_kind() == resolved_kind::in_param_id_list) &&
 	 d.get_parent()->is_any_of<declaration_list>());
-
-    if (!(is_oldstyle_param_decl ||
-	  (sc == storage_class::sc_typedef && prev_is_typedef))) {
+    if (!is_oldstyle_param_decl) {
       const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
       code_remark remark(code_remark::severity::fatal,
 			 "invalid redeclaration",
