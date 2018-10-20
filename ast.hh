@@ -3187,13 +3187,13 @@ namespace suse
 	  const noexcept
 	{ return _ds; }
 
-	attribute_specifier_list *get_asl() const noexcept
+	attribute_specifier_list *get_asl() noexcept
 	{
 	  return _asl;
 	}
 
-	virtual std::shared_ptr<const types::addressable_type>
-	get_type(ast &a, const architecture &arch) const = 0;
+	virtual std::shared_ptr<const types::addressable_type> get_type()
+	  const = 0;
 
       protected:
 	declaration_specifiers &_ds;
@@ -3212,8 +3212,8 @@ namespace suse
 
 	virtual ~parameter_declaration_declarator() noexcept override;
 
-	virtual std::shared_ptr<const types::addressable_type>
-	get_type(ast&, const architecture&) const override;
+	virtual std::shared_ptr<const types::addressable_type> get_type()
+	  const override;
 
 	const declarator& get_declarator() const noexcept
 	{
@@ -3243,8 +3243,10 @@ namespace suse
 
 	virtual ~parameter_declaration_abstract() noexcept override;
 
-	virtual std::shared_ptr<const types::addressable_type>
-	get_type(ast &a, const architecture &arch) const override;
+	virtual std::shared_ptr<const types::addressable_type> get_type()
+	  const override;
+
+	void evaluate_type(ast &a, const architecture &arch);
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) noexcept override;
@@ -3255,6 +3257,7 @@ namespace suse
 	virtual bool _process(const_processor<bool> &p) const override;
 
 	abstract_declarator *_ad;
+	std::shared_ptr<const types::addressable_type> _type;
       };
 
       class parameter_declaration_list final

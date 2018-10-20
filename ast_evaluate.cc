@@ -83,6 +83,9 @@ void _evaluator::operator()()
       [](init_declarator&) {
 	return true;
       },
+      [](parameter_declaration_abstract&) {
+	return true;
+      },
       [](const stmt_return&) {
 	return true;
       },
@@ -100,6 +103,9 @@ void _evaluator::operator()()
       [this](init_declarator &i) {
 	_complete_type_from_init(_ast, _arch, i);
       },
+      [this](parameter_declaration_abstract &pda) {
+	pda.evaluate_type(_ast, _arch);
+      },
       [this](const stmt_return &ret_stmt) {
 	_check_return_stmt(ret_stmt);
       },
@@ -113,10 +119,12 @@ void _evaluator::operator()()
 				       direct_declarator,
 				       enumerator,
 				       init_declarator,
+				       parameter_declaration_abstract,
 				       stmt_return,
 				       _typed>,
 			      type_set<enumerator,
 				       init_declarator,
+				       parameter_declaration_abstract,
 				       stmt_return,
 				       _typed> >
     (std::move(pre), std::move(post));
@@ -1744,50 +1752,68 @@ evaluate_type(ast &a, const architecture &arch)
 
 
 std::shared_ptr<const suse::cp::types::addressable_type>
-parameter_declaration_abstract::get_type(ast &a, const architecture &arch) const
+parameter_declaration_declarator::get_type() const
 {
-  if (!_ad) {
-    // It can happen that the current type is of array or function
-    // type: namely with typedefs passing the
-    // direct_abstract_declarator_array and
-    // direct_abstract_declarator_func logic. Decay the type to
-    // pointers in this case.
-    std::shared_ptr<const addressable_type> t =
-      handle_types<std::shared_ptr<const addressable_type>>
-      ((wrap_callables<default_action_unreachable
-		<std::shared_ptr<const addressable_type>,
-		 type_set<> >::type>
-	([&](const std::shared_ptr<const array_type> &at) {
-	   return (at->get_element_type()
-		   ->amend_qualifiers(at->get_qualifiers())
-		   ->derive_pointer());
-	 },
-	 [&](const std::shared_ptr<const function_type> &ft) {
-	   return ft->derive_pointer();
-	 },
-	 [&](const std::shared_ptr<const addressable_type> &_t) {
-	   return _t;
-	 })),
-       _ds.get_type());
+  return _d.get_innermost_type();
+}
 
-    align_attribute_finder aaf(a, arch, true);
-    mode_attribute_finder maf(a, arch);
-    if (get_asl()) {
-      get_asl()->for_each_attribute(aaf);
-      get_asl()->for_each_attribute(maf);
-    }
-    get_declaration_specifiers().for_each_attribute(aaf);
-    get_declaration_specifiers().for_each_attribute(maf);
 
-    t = maf.apply_to_type(std::move(t));
-    alignment align = aaf.grab_result();
-    if (align.is_set())
-      t = t->set_user_alignment(std::move(align));
+void parameter_declaration_abstract::
+evaluate_type(ast &a, const architecture &arch)
+{
+  if (static_cast<bool>(_type))
+    return;
 
-    return t;
+  if (_ad) {
+    // The type has already been determined in the abstract declarator.
+    _type = _ad->get_innermost_type();
+    return;
   }
 
-  return _ad->get_innermost_type();
+  // There's no abstract_declarator.
+  // It can happen that the current type is of array or function
+  // type: namely with typedefs passing the
+  // direct_abstract_declarator_array and
+  // direct_abstract_declarator_func logic. Decay the type to
+  // pointers in this case.
+  _type =
+    handle_types<std::shared_ptr<const addressable_type>>
+    ((wrap_callables<default_action_unreachable
+		     <std::shared_ptr<const addressable_type>,
+		      type_set<> >::type>
+      ([&](const std::shared_ptr<const array_type> &at) {
+	 return (at->get_element_type()
+		 ->amend_qualifiers(at->get_qualifiers())
+		 ->derive_pointer());
+       },
+       [&](const std::shared_ptr<const function_type> &ft) {
+	 return ft->derive_pointer();
+       },
+       [&](const std::shared_ptr<const addressable_type> &_t) {
+	 return _t;
+       })),
+     _ds.get_type());
+
+  align_attribute_finder aaf(a, arch, true);
+  mode_attribute_finder maf(a, arch);
+  if (get_asl()) {
+    get_asl()->for_each_attribute(aaf);
+    get_asl()->for_each_attribute(maf);
+  }
+  get_declaration_specifiers().for_each_attribute(aaf);
+  get_declaration_specifiers().for_each_attribute(maf);
+
+  _type = maf.apply_to_type(std::move(_type));
+  alignment align = aaf.grab_result();
+  if (align.is_set())
+    _type = _type->set_user_alignment(std::move(align));
+}
+
+std::shared_ptr<const suse::cp::types::addressable_type>
+parameter_declaration_abstract::get_type()const
+{
+  assert(static_cast<bool>(_type));
+  return _type;
 }
 
 
@@ -1956,7 +1982,7 @@ evaluate_type(ast &a, const architecture &arch)
     types::parameter_type_list ptl;
     if (!_ptl->is_single_void(a, arch)) {
       _ptl->for_each([&](const parameter_declaration &pd) {
-		       ptl.emplace_back(pd.get_type(a, arch));
+		       ptl.emplace_back(pd.get_type());
 		     });
     }
 
@@ -2249,7 +2275,7 @@ evaluate_type(ast &a, const architecture &arch)
     types::parameter_type_list ptl;
     if (!_ptl->is_single_void(a, arch)) {
       _ptl->for_each([&](const parameter_declaration &pd) {
-		       ptl.emplace_back(pd.get_type(a, arch));
+		       ptl.emplace_back(pd.get_type());
 		     });
     }
 

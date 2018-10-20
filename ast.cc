@@ -5236,12 +5236,6 @@ parameter_declaration_declarator::~parameter_declaration_declarator() noexcept
   delete &_d;
 }
 
-std::shared_ptr<const suse::cp::types::addressable_type>
-parameter_declaration_declarator::get_type(ast&, const architecture&) const
-{
-  return _d.get_innermost_type();
-}
-
 _ast_entity* parameter_declaration_declarator::_get_child(const size_t i)
   noexcept
 {
@@ -5406,8 +5400,7 @@ is_single_void(ast &a, const architecture &arch) const
 	       return false;
 
 	     const types::void_type * const vt =
-	       dynamic_cast<const types::void_type *>(pda.get_type(a, arch)
-						      .get());
+	       dynamic_cast<const types::void_type *>(pda.get_type().get());
 	     if (!vt || vt->get_qualifiers().any())
 	       return false;
 
