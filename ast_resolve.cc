@@ -599,7 +599,14 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
   // and must correspond to some identifier in the function defintion's
   // identifier list.
   if (d.get_parent()->is_any_of<declaration_list>()) {
-    if (!prev || !prev_is_in_cur_scope) {
+    if (sc != storage_class::sc_none && sc != storage_class::sc_register) {
+      const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+      code_remark remark(code_remark::severity::fatal,
+			 "invalid storage class at parameter declaration",
+			 id_tok.get_file_range());
+      _ast.get_remarks().add(remark);
+      throw semantic_except(remark);
+    } else if (!prev || !prev_is_in_cur_scope) {
       const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
       code_remark remark(code_remark::severity::fatal,
 			 "old-style parameter not in identifier list",
@@ -834,6 +841,19 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
 
 void _id_resolver::_handle_param_decl(parameter_declaration_declarator &pdd)
 {
+  const storage_class sc =
+    pdd.get_declaration_specifiers().get_storage_class(_ast);
+  if (sc != storage_class::sc_none && sc != storage_class::sc_register) {
+    const direct_declarator_id &ddid =
+      pdd.get_declarator().get_direct_declarator_id();
+    const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+    code_remark remark(code_remark::severity::fatal,
+		       "invalid storage class at parameter declaration",
+		       id_tok.get_file_range());
+    _ast.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
   _scopes.back()._declared_ids.push_back(expr_id::resolved(pdd));
 }
 
