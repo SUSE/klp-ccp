@@ -642,14 +642,9 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
     throw semantic_except(remark);
   }
 
-  const bool is_local_nonfun =
-    !is_fun && !is_at_file_scope && sc != storage_class::sc_extern;
   const bool no_linkage =
-    ((sc != storage_class::sc_none &&
-      sc != storage_class::sc_static &&
-      sc != storage_class::sc_extern &&
-      !(is_fun && !is_at_file_scope && sc == storage_class::sc_auto)) ||
-     is_local_nonfun);
+    (sc == storage_class::sc_register ||
+     (!is_fun && !is_at_file_scope && sc != storage_class::sc_extern));
   // Let's be good citizens and check for forbidden redeclarations in
   // the same scope.
   if (prev && prev_is_in_cur_scope &&
@@ -657,6 +652,8 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
     // In old-style parameter declarations, the declaration obviously
     // has to declare some id of the function prototype's identifier
     // list. So that's Ok.
+    const bool is_local_nonfun =
+      !is_fun && !is_at_file_scope && sc != storage_class::sc_extern;
     const bool is_oldstyle_param_decl
       = (is_local_nonfun &&
 	 (prev->get_kind() == resolved_kind::in_param_id_list) &&
