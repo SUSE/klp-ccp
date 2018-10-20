@@ -4899,14 +4899,10 @@ bool asm_label::_process(const_processor<bool> &p) const
 }
 
 
-linkage::linkage(init_declarator &self) noexcept
+linkage::linkage() noexcept
   : _linkage_kind(linkage_kind::none),
-    _next(self), _prev(&_next)
-{}
-
-linkage::linkage(function_definition &self) noexcept
-  : _linkage_kind(linkage_kind::none),
-    _next(self), _prev(&_next)
+    _target_kind(link_target_kind::unlinked),
+    _target_is_visible(false)
 {}
 
 void linkage::set_linkage_kind(const linkage_kind kind) noexcept
@@ -4915,74 +4911,64 @@ void linkage::set_linkage_kind(const linkage_kind kind) noexcept
   _linkage_kind = kind;
 }
 
-void linkage::link_to(init_declarator &target,
-		      const linkage_kind kind) noexcept
+void linkage::link_to(init_declarator &target, const linkage_kind kind,
+		      const bool target_is_visible) noexcept
 {
-  __link_to(target, kind);
+  assert(target.get_linkage().get_linkage_kind() == kind);
+  set_linkage_kind(kind);
+
+  assert(_target_kind == link_target_kind::unlinked);
+  _target_kind = link_target_kind::init_decl;
+  _target_id = &target;
+
+  _target_is_visible = target_is_visible;
 }
 
 void linkage::link_to(function_definition &target,
-		      const linkage_kind kind) noexcept
+		      const linkage_kind kind,
+		      const bool target_is_visible) noexcept
 {
-  __link_to(target, kind);
+  assert(target.get_linkage().get_linkage_kind() == kind);
+  set_linkage_kind(kind);
+
+  assert(_target_kind == link_target_kind::unlinked);
+  _target_kind = link_target_kind::function_def;
+  _target_fd = &target;
+
+  _target_is_visible = target_is_visible;
 }
 
 bool linkage::is_linked_to(const init_declarator &id) const noexcept
 {
-  return __is_linked_to(id.get_linkage());
+  return _is_linked_to(id.get_linkage());
 }
 
 bool linkage::is_linked_to(const function_definition &fd) const noexcept
 {
-  return __is_linked_to(fd.get_linkage());
+  return _is_linked_to(fd.get_linkage());
 }
 
-template<typename target_type>
-void linkage::__link_to(target_type &target, const linkage_kind kind) noexcept
+const linkage& linkage::_find_linkage_root() const noexcept
 {
-  set_linkage_kind(kind);
-  assert(_prev == &_next);
+  const linkage *cur = this;
+  while (cur->_target_kind != link_target_kind::unlinked) {
+    switch (cur->_target_kind) {
+    case link_target_kind::init_decl:
+      cur = &cur->_target_id->get_linkage();
+      break;
 
-  linkage &target_linkage = target.get_linkage();
-  _prev = target_linkage._prev;
-  target_linkage._prev = &_next;
-  *_prev = _next; // links previous node to this one
-  _next = link{target};
-}
-
-bool linkage::__is_linked_to(const linkage &target) const noexcept
-{
-  if (this == &target)
-    return true;
-
-  for (const linkage *cur = &_next.get_target_linkage();
-       cur != this; cur = &cur->_next.get_target_linkage()) {
-    if (cur == &target)
-      return true;
+    case link_target_kind::function_def:
+      cur = &cur->_target_fd->get_linkage();
+      break;
+    }
   }
 
-  return false;
+  return *this;
 }
 
-linkage::link::link(init_declarator &id) noexcept
-  : _target_kind(link_target_kind::init_decl),
-    _target_id(&id)
-{}
-
-linkage::link::link(function_definition &fd) noexcept
-  : _target_kind(link_target_kind::function_def),
-    _target_fd(&fd)
-{}
-
-const linkage& linkage::link::get_target_linkage() const noexcept
+bool linkage::_is_linked_to(const linkage &target) const noexcept
 {
-  switch (_target_kind) {
-  case link_target_kind::init_decl:
-    return _target_id->get_linkage();
-
-  case link_target_kind::function_def:
-    return _target_fd->get_linkage();
-  };
+  return &this->_find_linkage_root() == &target._find_linkage_root();
 }
 
 
@@ -4994,8 +4980,7 @@ init_declarator::init_declarator(const pp_tokens_range &tr,
   : ast_entity(tr), _d(*mv_p(std::move(d))), _i(mv_p(std::move(i))),
     _al(mv_p(std::move(al))), _asl_before(nullptr),
     _asl_middle(mv_p(std::move(asl_middle))),
-    _asl_after(mv_p(std::move(asl_after))),
-    _linkage(*this)
+    _asl_after(mv_p(std::move(asl_after)))
 {
   _d._set_parent(*this);
   if (_i)
@@ -7056,8 +7041,7 @@ function_definition::function_definition(const pp_tokens_range &tr,
 					 stmt_compound* &&sc) noexcept
   : ast_entity(tr), _ds(*mv_p(std::move(ds))), _d(*mv_p(std::move(d))),
     _asl(mv_p(std::move(asl))), _dl(mv_p(std::move(dl))),
-    _sc(*mv_p(std::move(sc))),
-    _linkage(*this)
+    _sc(*mv_p(std::move(sc)))
 {
   _ds._set_parent(*this);
   _d._set_parent(*this);

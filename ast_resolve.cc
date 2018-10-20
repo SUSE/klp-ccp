@@ -1229,7 +1229,7 @@ void _id_resolver::_link_to(linkage &l, const expr_id::resolved &resolved)
     {
       init_declarator &id = resolved.get_init_declarator();
       const linkage::linkage_kind kind = id.get_linkage().get_linkage_kind();
-      l.link_to(id, kind);
+      l.link_to(id, kind, true);
     }
     break;
 
@@ -1237,7 +1237,7 @@ void _id_resolver::_link_to(linkage &l, const expr_id::resolved &resolved)
     {
       function_definition &fd = resolved.get_function_definition();
       const linkage::linkage_kind kind = fd.get_linkage().get_linkage_kind();
-      l.link_to(fd, kind);
+      l.link_to(fd, kind, true);
     }
     break;
 
@@ -1303,7 +1303,7 @@ _id_resolver::_try_resolve_pending_linkages(init_declarator &id,
   }
 
   _pending_linkages.erase(it_pl);
-  _link_to(id.get_linkage(), pl_id);
+  id.get_linkage().link_to(pl_id, kind, false);
 }
 
 void
@@ -1340,7 +1340,7 @@ _id_resolver::_try_resolve_pending_linkages(function_definition &fd,
   }
 
   _pending_linkages.erase(it_pl);
-  _link_to(fd.get_linkage(), pl_id);
+  fd.get_linkage().link_to(pl_id, kind, false);
 }
 
 void _id_resolver::_resolve_id(expr_id &ei)

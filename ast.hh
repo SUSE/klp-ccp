@@ -3002,55 +3002,44 @@ namespace suse
 	    nested_fun_auto,
 	  };
 
-	linkage(init_declarator &self) noexcept;
-	linkage(function_definition &self) noexcept;
+	linkage() noexcept;
 
 	linkage_kind get_linkage_kind() const noexcept
 	{ return _linkage_kind; }
 
 	void set_linkage_kind(const linkage_kind kind) noexcept;
 
-	void link_to(init_declarator &target,
-		     const linkage_kind kind) noexcept;
-	void link_to(function_definition &target,
-		     const linkage_kind kind) noexcept;
+	void link_to(init_declarator &target, const linkage_kind kind,
+		     const bool target_is_visible) noexcept;
+	void link_to(function_definition &target, const linkage_kind kind,
+		     const bool target_is_visible) noexcept;
 
 	bool is_linked_to(const init_declarator &id) const noexcept;
 	bool is_linked_to(const function_definition &fd) const noexcept;
 
       private:
-	class link
-	{
-	public:
-	  enum class link_target_kind
-	  {
-	    init_decl,
-	    function_def,
-	  };
+	const linkage& _find_linkage_root() const noexcept;
 
-	  link(init_declarator &id) noexcept;
-	  link(function_definition &fd) noexcept;
-
-	  const linkage& get_target_linkage() const noexcept;
-
-	private:
-
-	  link_target_kind _target_kind;
-
-	  union {
-	    init_declarator *_target_id;
-	    function_definition *_target_fd;
-	  };
-	};
-
-	template<typename target_type>
-	void __link_to(target_type &target, const linkage_kind kind) noexcept;
-
-	bool __is_linked_to(const linkage &target) const noexcept;
+	bool _is_linked_to(const linkage &target) const noexcept;
 
 	linkage_kind _linkage_kind;
-	link _next;
-	link *_prev;
+
+	enum class link_target_kind
+	{
+	    unlinked,
+	    init_decl,
+	    function_def,
+	};
+
+	link_target_kind _target_kind;
+
+	union
+	{
+	  init_declarator *_target_id;
+	  function_definition *_target_fd;
+	};
+
+	bool _target_is_visible;
       };
 
       class init_declarator final : public ast_entity<init_declarator>
