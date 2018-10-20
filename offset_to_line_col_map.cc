@@ -41,7 +41,7 @@ struct _static_fls
 
 template<unsigned int r, unsigned int val>
 struct _static_fls<r, val,
-		   typename std::enable_if<(val >> (r + 1))>::type>
+		   typename std::enable_if<!!(val >> (r + 1))>::type>
 {
   static constexpr unsigned int value = _static_fls<r + 1, val>::value;
 };
