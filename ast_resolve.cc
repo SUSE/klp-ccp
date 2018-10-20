@@ -627,9 +627,18 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
     throw semantic_except(remark);
   }
 
-  // Let's be good citizens and check for forbidden redeclarations in
-  // the same scope.
   const bool is_fun = ddid.is_function();
+  // The 'register' storage class is not allowed at function
+  // declarations.
+  if (is_fun && sc == storage_class::sc_register) {
+    const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+    code_remark remark(code_remark::severity::fatal,
+		       "invalid storage class at function declaration",
+		       id_tok.get_file_range());
+    _ast.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
   const bool is_local_nonfun =
     !is_fun && !is_at_file_scope && sc != storage_class::sc_extern;
   const bool no_linkage =
@@ -638,6 +647,8 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
       sc != storage_class::sc_extern &&
       !(is_fun && !is_at_file_scope && sc == storage_class::sc_auto)) ||
      is_local_nonfun);
+  // Let's be good citizens and check for forbidden redeclarations in
+  // the same scope.
   if (prev && prev_is_in_cur_scope &&
       (no_linkage || _get_linkage_kind(*prev) == linkage::linkage_kind::none)) {
     // In old-style parameter declarations, the declaration obviously
