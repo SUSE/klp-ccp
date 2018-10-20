@@ -576,8 +576,19 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
   const declaration &d = id.get_containing_declaration();
   const storage_class sc
     = d.get_declaration_specifiers().get_storage_class(_ast);
-  const bool is_fun = ddid.is_function();
   const bool is_at_file_scope = d.is_at_file_scope();
+
+  // Check for invalid 'auto' storage class at file scope.
+  // In violation of C99 6.9(2), GCC accepts the 'register'
+  // storage class at file scope.
+  if (is_at_file_scope && sc == storage_class::sc_auto) {
+      const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+      code_remark remark(code_remark::severity::fatal,
+			 "invalid storage class at file scope",
+			 id_tok.get_file_range());
+      _ast.get_remarks().add(remark);
+      throw semantic_except(remark);
+  }
 
   // Find a previous declaration visible in the current scope, if any.
   bool prev_is_in_cur_scope;
@@ -586,6 +597,7 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
 
   // Let's be good citizens and check for forbidden redeclarations in
   // the same scope.
+  const bool is_fun = ddid.is_function();
   const bool is_local_nonfun =
     !is_fun && !is_at_file_scope && sc != storage_class::sc_extern;
   const bool no_linkage =
