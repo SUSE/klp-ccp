@@ -264,7 +264,7 @@ namespace
     bool _descend_cursor(const expr &e_init);
 
 
-    ast::ast &_a;
+    suse::cp::ast::ast &_a;
     const architecture &_arch;
     const array_type * const _at_start;
     const struct_or_union_type * const _sout_start;

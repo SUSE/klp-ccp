@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <queue>
+#include <functional>
 #include "pp_tokens.hh"
 #include "code_remarks.hh"
 #include "header_resolver.hh"

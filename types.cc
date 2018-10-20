@@ -8,6 +8,11 @@
 using namespace suse::cp;
 using namespace suse::cp::types;
 
+
+// Explicit instantiation is needed by clang++.
+template class std::shared_ptr<const types::struct_or_union_type>;
+
+
 qualifiers::qualifiers() noexcept
   : _qs{}
 {}
