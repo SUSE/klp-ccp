@@ -595,8 +595,7 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
       !(is_fun && !is_at_file_scope && sc == storage_class::sc_auto)) ||
      is_local_nonfun);
   if (prev && prev_is_in_cur_scope &&
-      (no_linkage || prev->get_kind() == resolved_kind::enumerator)) {
-
+      (no_linkage || _get_linkage_kind(*prev) == linkage::linkage_kind::none)) {
     // typedef redeclarations are possible if they yield the same result.
     const bool prev_is_typedef
       = ((prev->get_kind() == resolved_kind::init_declarator) &&
@@ -621,6 +620,7 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
       _ast.get_remarks().add(remark);
       throw semantic_except(remark);
     }
+
   }
 
   if (no_linkage) {
@@ -1133,17 +1133,18 @@ _id_resolver::_get_linkage_kind(const expr_id::resolved &resolved) noexcept
   case resolved_kind::function_definition:
     return resolved.get_function_definition().get_linkage().get_linkage_kind();
 
-  case resolved_kind::none:
-    /* fall through */
-  case resolved_kind::builtin_func:
-    /* fall through */
   case resolved_kind::parameter_declaration_declarator:
-    /* fall through */
-  case resolved_kind::stmt_labeled:
     /* fall through */
   case resolved_kind::enumerator:
     /* fall through */
   case resolved_kind::in_param_id_list:
+    return linkage::linkage_kind::none;
+
+  case resolved_kind::none:
+    /* fall through */
+  case resolved_kind::builtin_func:
+    /* fall through */
+  case resolved_kind::stmt_labeled:
     assert(0);
   __builtin_unreachable();
   };
