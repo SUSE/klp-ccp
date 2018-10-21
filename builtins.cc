@@ -1410,6 +1410,7 @@ builtin_func::factory builtin_func::lookup(const std::string &id)
     { "__builtin_aggregate_incoming_address", bfspf_pv_var::create },
     { "__builtin_aligned_alloc", bfspf_pv_sz_sz::create },
     { "__builtin_alloca", bfspf_pv_sz::create },
+    { "__builtin_alloca_with_align", bfspf_pv_sz_sz::create },
     { "__builtin_apply", bfspf_pv_pF_v_var__pv_sz::create },
     { "__builtin_apply_args", bfspf_pv_var::create },
     { "__builtin_assume_aligned", bfspf_pv_pcv_sz_var::create },
