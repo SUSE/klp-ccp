@@ -4990,14 +4990,31 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
 	   _set_lvalue(!is_local_label_ptr_deref);
 	   _convert_type_for_expr_context();
 	 },
-	 [&](const type&) {
-	   const pp_token &tok =
-	     a.get_pp_tokens()[_e.get_tokens_range().begin];
-	   code_remark remark(code_remark::severity::fatal,
-			      "dereferencing something which is not a pointer",
-			      tok.get_file_range());
-	   a.get_remarks().add(remark);
-	   throw semantic_except(remark);
+	 [&](const type &t) {
+	   // As an (undocumented!) extension, GCC allows computed gotos
+	   // with integer targets. Accept that too, but warn.
+	   if (is_type<int_type>(t) &&
+	       this->get_parent()->is_any_of<stmt_goto>()) {
+	     const pp_token &tok =
+	       a.get_pp_tokens()[_e.get_tokens_range().begin];
+	     code_remark remark
+	       (code_remark::severity::warning,
+		"dereferencing integer at computed goto",
+		tok.get_file_range());
+	     a.get_remarks().add(remark);
+
+	     _set_type(void_type::create());
+
+	   } else {
+	     const pp_token &tok =
+	       a.get_pp_tokens()[_e.get_tokens_range().begin];
+	     code_remark remark
+	       (code_remark::severity::fatal,
+		"dereferencing something which is not a pointer",
+		tok.get_file_range());
+	     a.get_remarks().add(remark);
+	     throw semantic_except(remark);
+	   }
 	 })),
        *t);
 

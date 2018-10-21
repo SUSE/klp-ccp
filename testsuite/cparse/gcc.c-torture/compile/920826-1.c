@@ -2,4 +2,4 @@
 
 f(int*x){goto*(char)*x;}
 
-/* cp-out: error: [^:]*: line 3, columns 14-15: dereferencing something which is not a pointer */
+/* cp-out: warning: [^:]*: line 3, columns 14-15: dereferencing integer at computed goto */

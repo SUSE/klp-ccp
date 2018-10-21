@@ -30,4 +30,5 @@ SetTermStruc:
  goto *(*esp--);
 }
 
-/* cp-out: error: [^:]*: line 17, columns 6-7: dereferencing something which is not a pointer */
+/* cp-out: warning: [^:]*: line 17, columns 6-7: dereferencing integer at computed goto */
+/* cp-out: warning: [^:]*: line 30, columns 7-8: dereferencing integer at computed goto */
