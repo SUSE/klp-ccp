@@ -2207,7 +2207,8 @@ evaluate_type(ast &a, const architecture &arch)
 			 tok.get_file_range());
       a.get_remarks().add(remark);
 
-    } else if (l->is_target_visible()) {
+    } else if (l->get_linkage_kind() != linkage::linkage_kind::none &&
+	       l->is_target_visible()) {
       // See whether composite type construction gives something new.
       std::shared_ptr<const addressable_type> comp_type
 	= a_t->construct_composite(arch, *prev_ddid->get_type());

@@ -644,6 +644,9 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
 	_ast.get_remarks().add(remark);
 	throw semantic_except(remark);
       }
+
+      id.get_linkage().link_to(prev->get_init_declarator(),
+			       linkage::linkage_kind::none, true);
     }
 
     _scopes.back()._declared_ids.push_back(expr_id::resolved(id));
