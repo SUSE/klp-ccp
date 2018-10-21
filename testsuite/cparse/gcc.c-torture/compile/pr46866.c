@@ -18,4 +18,5 @@ void openssl_crl_load(void)
   destroy(this);
 }
 
+/* cp-out: warning: [^:]*: line 8, columns 5-12: incompatible redeclaration */
 /* cp-out: warning: [^:]*: line 12, columns 27-35: incompatible pointer types in assignment */

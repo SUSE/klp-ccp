@@ -3002,6 +3002,13 @@ namespace suse
 	    nested_fun_auto,
 	  };
 
+	enum class link_target_kind
+	{
+	    unlinked,
+	    init_decl,
+	    function_def,
+	};
+
 	linkage() noexcept;
 
 	linkage_kind get_linkage_kind() const noexcept
@@ -3017,6 +3024,16 @@ namespace suse
 	bool is_linked_to(const init_declarator &id) const noexcept;
 	bool is_linked_to(const function_definition &fd) const noexcept;
 
+	link_target_kind get_link_target_kind() const noexcept
+	{ return _target_kind; };
+
+	const init_declarator& get_target_init_declarator() const noexcept;
+	const function_definition& get_target_function_definition()
+	  const noexcept;
+
+	bool is_target_visible() const noexcept
+	{ return _target_is_visible; }
+
       private:
 	const linkage& _find_linkage_root() const noexcept;
 
@@ -3024,12 +3041,6 @@ namespace suse
 
 	linkage_kind _linkage_kind;
 
-	enum class link_target_kind
-	{
-	    unlinked,
-	    init_decl,
-	    function_def,
-	};
 
 	link_target_kind _target_kind;
 

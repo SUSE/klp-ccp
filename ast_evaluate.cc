@@ -2105,6 +2105,8 @@ evaluate_type(ast &a, const architecture &arch)
   // in the enclosing context -- these take precedence
   // over anything we've got so far (base type alignment and
   // 'aligned' attributes at declarators).
+  // Also, extract the linkage information, if any.
+  const linkage *l = nullptr;
   this->process_context<void>
     (wrap_callables<default_action_unreachable<void, type_set<> >::type>
      ([](const struct_declarator&) {
@@ -2140,6 +2142,8 @@ evaluate_type(ast &a, const architecture &arch)
 	alignment align = aaf.grab_result();
 	if (align.is_set())
 	  a_t = a_t->set_user_alignment(std::move(align));
+
+	l = &id.get_linkage();
       },
       [&](parameter_declaration_declarator &pdd) {
 	// First, it can still happen that the current type is of
@@ -2174,10 +2178,45 @@ evaluate_type(ast &a, const architecture &arch)
 	if (align.is_set())
 	  a_t = a_t->set_user_alignment(std::move(align));
       },
-      [](const function_definition&) {
+      [&](const function_definition &fd) {
 	// Ignore alignment of functions, it's not an attribute of their
 	// type.
+	l = &fd.get_linkage();
       }));
+
+  // Examine any previous declaration relate by linkage.
+  if (l && l->get_link_target_kind() != linkage::link_target_kind::unlinked) {
+    const direct_declarator_id *prev_ddid = nullptr;
+    switch (l->get_link_target_kind()) {
+    case linkage::link_target_kind::init_decl:
+      prev_ddid = &(l->get_target_init_declarator().get_declarator()
+		    .get_direct_declarator_id());
+      break;
+
+    case linkage::link_target_kind::function_def:
+      prev_ddid = &(l->get_target_function_definition().get_declarator()
+		    .get_direct_declarator_id());
+      break;
+    }
+
+    if (!a_t->is_compatible_with(arch, *prev_ddid->get_type(), false)) {
+      const pp_token &tok =
+	a.get_pp_tokens()[get_tokens_range().begin];
+      code_remark remark(code_remark::severity::warning,
+			 "incompatible redeclaration",
+			 tok.get_file_range());
+      a.get_remarks().add(remark);
+
+    } else if (l->is_target_visible()) {
+      // See whether composite type construction gives something new.
+      std::shared_ptr<const addressable_type> comp_type
+	= a_t->construct_composite(arch, *prev_ddid->get_type());
+      if (comp_type) {
+	// It did.
+	a_t = std::move(comp_type);
+      }
+    }
+  }
 
   _set_type(std::move(a_t));
 }

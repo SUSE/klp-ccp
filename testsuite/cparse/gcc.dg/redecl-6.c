@@ -22,3 +22,5 @@ f (void)
     ap = &array10;
   }
 }
+
+/* cp-out: warning: [^:]*: line 22, columns 9-10: incompatible pointer types in assignment */

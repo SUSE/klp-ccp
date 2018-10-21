@@ -12,3 +12,5 @@ f (x, y)
 {
   return x + y;
 }
+
+/* cp-out: warning: [^:]*: line 9, columns 0-1: incompatible redeclaration */

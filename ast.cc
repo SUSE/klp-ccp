@@ -4948,6 +4948,19 @@ bool linkage::is_linked_to(const function_definition &fd) const noexcept
   return _is_linked_to(fd.get_linkage());
 }
 
+const init_declarator& linkage::get_target_init_declarator() const noexcept
+{
+  assert(_target_kind == link_target_kind::init_decl);
+  return *_target_id;
+}
+
+const function_definition& linkage::get_target_function_definition()
+  const noexcept
+{
+  assert(_target_kind == link_target_kind::function_def);
+  return *_target_fd;
+}
+
 const linkage& linkage::_find_linkage_root() const noexcept
 {
   const linkage *cur = this;

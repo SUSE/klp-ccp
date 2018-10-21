@@ -6,3 +6,5 @@ enum e { e_1 };
 
 extern int i[sizeof (enum e)];
 int i[1];
+
+/* cp-out: warning: [^:]*: line 8, columns 4-5: incompatible redeclaration */

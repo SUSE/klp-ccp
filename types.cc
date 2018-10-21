@@ -77,10 +77,29 @@ alignment& alignment::operator=(const mpa::limbs::size_type log2_value)
   return *this;
 }
 
+bool alignment::operator==(const alignment &rhs) const noexcept
+{
+  return this->_align_ffs == rhs._align_ffs;
+}
+
 mpa::limbs::size_type alignment::get_log2_value() const noexcept
 {
   assert(is_set());
   return _align_ffs - 1;
+}
+
+const alignment& alignment::max(const alignment &a1, const alignment &a2)
+  noexcept
+{
+  if (!a2.is_set())
+    return a1;
+  else if (!a1.is_set())
+    return a2;
+
+  if (a1._align_ffs < a2._align_ffs)
+    return a2;
+
+  return a1;
 }
 
 
@@ -273,6 +292,52 @@ addressable_type::get_effective_alignment(const architecture &arch)
   return get_type_alignment(arch);
 }
 
+std::shared_ptr<const addressable_type>
+addressable_type::construct_composite(const architecture &arch,
+				      const addressable_type& prev_type) const
+{
+  // Function parameters' qualifiers are ignored in
+  // prototyped_function_type::is_compatible_with(). So there can be a
+  // difference in case we're currently construction a parameter's
+  // composite type.
+  assert(this->is_compatible_with(arch, prev_type, true));
+  // The default is to use the original, unmodified type.
+  return nullptr;
+}
+
+std::shared_ptr<const array_type>
+addressable_type::_construct_composite(const architecture &arch,
+				       const array_type& next_type) const
+{
+  // The default is to use the original, unmodified type.
+  return nullptr;
+}
+
+std::shared_ptr<const prototyped_function_type> addressable_type::
+_construct_composite(const architecture &arch,
+		     const unprototyped_function_type& next_type) const
+{
+  // The default is to use the original, unmodified type.
+  return nullptr;
+}
+
+std::shared_ptr<const prototyped_function_type> addressable_type::
+_construct_composite(const architecture &arch,
+		     const prototyped_function_type& next_type) const
+{
+  // The default is to use the original, unmodified type.
+  return nullptr;
+}
+
+std::shared_ptr<const pointer_type>
+addressable_type::_construct_composite(const architecture &arch,
+				       const pointer_type& next_type) const
+{
+  // The default is to use the original, unmodified type.
+  return nullptr;
+}
+
+
 
 function_type::function_type(std::shared_ptr<const returnable_type> &&rt)
   : _return_type(std::move(rt))
@@ -352,6 +417,16 @@ object_type::derive_array(const bool unspec_vla) const
 	  (new array_type(std::move(self), unspec_vla)));
 }
 
+std::shared_ptr<const object_type>
+object_type::_construct_composite(const architecture &arch,
+				  const object_type& prev_type) const
+{
+  assert(this->is_compatible_with(arch, prev_type, false));
+  // The default is to use the original, unmodified type.
+  return nullptr;
+}
+
+
 
 returnable_type::returnable_type() = default;
 
@@ -385,6 +460,15 @@ returnable_type::derive_function(const std::size_t n_args) const
   return (std::shared_ptr<const unprototyped_function_type>
 	  (new unprototyped_function_type
 	   (std::move(self), n_args)));
+}
+
+std::shared_ptr<const returnable_type>
+returnable_type::_construct_composite(const architecture &arch,
+				      const returnable_type& prev_type) const
+{
+  assert(this->is_compatible_with(arch, prev_type, false));
+  // The default is to use the original, unmodified type.
+  return nullptr;
 }
 
 
@@ -470,6 +554,83 @@ is_compatible_with(const architecture &arch,
 		   const bool ignore_qualifiers) const
 {
   return t.is_compatible_with(arch, *this, ignore_qualifiers);
+}
+
+std::shared_ptr<const addressable_type> prototyped_function_type::
+construct_composite(const architecture &arch,
+		    const addressable_type& prev_type) const
+{
+  assert(this->is_compatible_with(arch, prev_type, false));
+  return prev_type._construct_composite(arch, *this);
+}
+
+std::shared_ptr<const prototyped_function_type> prototyped_function_type::
+_construct_composite(const architecture &arch,
+		     const unprototyped_function_type& next_type)
+  const
+{
+  return this->_self_ptr<prototyped_function_type>();
+}
+
+std::shared_ptr<const prototyped_function_type> prototyped_function_type::
+_construct_composite(const architecture &arch,
+		     const prototyped_function_type& next_type)
+  const
+{
+  const parameter_type_list &prev_ptl = this->_ptl;
+  const parameter_type_list &next_ptl = next_type._ptl;
+  assert(prev_ptl.size() == next_ptl.size());
+  assert(this->_variadic == next_type._variadic);
+  const parameter_type_list::size_type n = next_ptl.size();
+
+  parameter_type_list comp_ptl;
+  comp_ptl.reserve(n);
+
+  bool ptl_unchanged = true;
+  for (parameter_type_list::size_type i = 0; i < n; ++i) {
+    std::shared_ptr<const addressable_type> comp_param_type =
+      next_ptl[i]->construct_composite(arch, *prev_ptl[i]);
+    if (!comp_param_type)
+      comp_param_type = next_ptl[i];
+    else
+      ptl_unchanged = false;
+
+    comp_ptl.push_back(std::move(comp_param_type));
+  }
+
+  std::shared_ptr<const returnable_type> comp_ret_type
+    = (next_type.get_return_type()
+       ->_construct_composite(arch, *this->get_return_type()));
+  if (!comp_ret_type) {
+    if (ptl_unchanged) {
+      // Type composition did not alter the type.
+      return nullptr;
+    }
+
+    // Composition did not alter the return type.
+    // Set it to the original for the code below
+    comp_ret_type = next_type.get_return_type();
+
+  } else if (comp_ret_type == this->get_return_type()) {
+    // The composite return type equals the one from the previous
+    // declaration. Compare the ptl against the one from the previous
+    // declaration.
+    ptl_unchanged = true;
+    for (parameter_type_list::size_type i = 0; i < n; ++i) {
+      if (comp_ptl[i] != this->_ptl[i]) {
+	ptl_unchanged = false;
+	break;
+      }
+    }
+
+    if (ptl_unchanged)
+      return this->_self_ptr<prototyped_function_type>();
+  }
+
+  // Ok, the composite type is neither of the two, create a new one
+  return (std::shared_ptr<const prototyped_function_type>
+	  (new prototyped_function_type
+	   (std::move(comp_ret_type), std::move(comp_ptl), _variadic)));
 }
 
 
@@ -568,23 +729,44 @@ std::size_t unprototyped_function_type::get_n_args() const noexcept
   return _n_args;
 }
 
+std::shared_ptr<const addressable_type> unprototyped_function_type::
+construct_composite(const architecture &arch,
+		    const addressable_type& prev_type) const
+{
+  assert(this->is_compatible_with(arch, prev_type, false));
+  return prev_type._construct_composite(arch, *this);
+}
+
+std::shared_ptr<const prototyped_function_type> unprototyped_function_type::
+_construct_composite(const architecture &arch,
+		     const prototyped_function_type& next_type) const
+{
+  // This reverses next_type and prev_type, but that doesn't matter.
+  return next_type._construct_composite(arch, *this);
+}
+
+
 
 array_type::array_type(std::shared_ptr<const object_type> &&element_type,
-		       const ast::expr * const length_expr)
-  : _element_type(std::move(element_type)), _length_expr(length_expr),
+		       const ast::expr * const length_expr,
+		       const alignment &user_align)
+  : addressable_type(user_align), _element_type(std::move(element_type)),
+    _length_expr(length_expr), _unspec_vla(false)
+{}
+
+array_type::array_type(std::shared_ptr<const object_type> &&element_type,
+		       mpa::limbs &&initializer_length,
+		       const alignment &user_align)
+  : addressable_type(user_align), _element_type(std::move(element_type)),
+    _length_expr(nullptr), _initializer_length(std::move(initializer_length)),
     _unspec_vla(false)
 {}
 
 array_type::array_type(std::shared_ptr<const object_type> &&element_type,
-		       mpa::limbs &&initializer_length)
-  : _element_type(std::move(element_type)), _length_expr(nullptr),
-    _initializer_length(std::move(initializer_length)), _unspec_vla(false)
-{}
-
-array_type::array_type(std::shared_ptr<const object_type> &&element_type,
-		       const bool unspec_vla)
-  : _element_type(std::move(element_type)), _length_expr(nullptr),
-    _unspec_vla(unspec_vla)
+		       const bool unspec_vla,
+		       const alignment &user_align)
+  : addressable_type(user_align), _element_type(std::move(element_type)),
+    _length_expr(nullptr), _unspec_vla(unspec_vla)
 {}
 
 array_type::array_type(const array_type&) = default;
@@ -659,6 +841,13 @@ array_type::get_type_alignment(const architecture &arch) const noexcept
   return _element_type->get_effective_alignment(arch);
 }
 
+std::shared_ptr<const array_type>
+array_type::set_user_alignment(const alignment &user_align) const
+{
+  return _set_user_alignment(_self_ptr<array_type>(),
+			     user_align, &array_type::_clone);
+}
+
 bool array_type::is_length_constant() const noexcept
 {
   if (_unspec_vla)
@@ -708,6 +897,138 @@ void array_type::_amend_qualifiers(const qualifiers &qs)
   // array type itself.
   _element_type = _element_type->amend_qualifiers(qs);
 }
+
+std::shared_ptr<const addressable_type>
+array_type::construct_composite(const architecture &arch,
+				const addressable_type& prev_type) const
+{
+  assert(this->is_compatible_with(arch, prev_type, false));
+  return prev_type._construct_composite(arch, *this);
+}
+
+std::shared_ptr<const object_type>
+array_type::_construct_composite(const architecture &arch,
+				 const object_type& prev_type) const
+{
+  assert(this->is_compatible_with(arch, prev_type, false));
+  return prev_type.addressable_type::_construct_composite(arch, *this);
+}
+
+std::shared_ptr<const array_type>
+array_type::_construct_composite(const architecture &arch,
+				 const array_type& next_type) const
+{
+  std::shared_ptr<const object_type> comp_element_type
+    = next_type._element_type->_construct_composite(arch, *_element_type);
+  if (!comp_element_type)
+    comp_element_type = next_type._element_type;
+
+  const alignment &comp_user_align =
+    alignment::max(this->get_user_alignment(), next_type.get_user_alignment());
+
+  // If one of the two array's has known constant length, the
+  // resulting composite array type has that length.
+  if (next_type.is_length_constant()) {
+    // Try to return the original type, if type composition doesn't
+    // alter it.
+    if (comp_element_type == next_type._element_type) {
+      if (comp_user_align == next_type.get_user_alignment()) {
+	// Signal that type composition does not modify the type.
+	return nullptr;
+      } else {
+	return next_type.set_user_alignment(comp_user_align);
+      }
+    } else {
+      return (std::shared_ptr<const array_type>
+	      (new array_type(std::move(comp_element_type),
+			      mpa::limbs{next_type.get_length()},
+			      comp_user_align)));
+    }
+  } else if (this->is_length_constant()) {
+    if (comp_element_type == this->_element_type) {
+      if (comp_user_align == this->get_user_alignment()) {
+	return this->_self_ptr<array_type>();
+      } else {
+	return this->set_user_alignment(comp_user_align);
+      }
+    } else {
+      return (std::shared_ptr<const array_type>
+	      (new array_type(std::move(comp_element_type),
+			      mpa::limbs{this->get_length()},
+			      comp_user_align)));
+    }
+  }
+
+  // Non-constant array length. Return the array type with a size
+  // expression, if any.
+  if (next_type._length_expr) {
+    // Try to return the original type, if type composition doesn't
+    // alter it.
+    if (comp_element_type == next_type._element_type) {
+      if (comp_user_align == next_type.get_user_alignment()) {
+	// Signal that type composition does not modify the type.
+	return nullptr;
+      } else {
+	return next_type.set_user_alignment(comp_user_align);
+      }
+    } else {
+      return (std::shared_ptr<const array_type>
+	      (new array_type(std::move(comp_element_type),
+			      next_type._length_expr,
+			      comp_user_align)));
+    }
+  } else if (this->_length_expr) {
+    if (comp_element_type == this->_element_type) {
+      if (comp_user_align == this->get_user_alignment()) {
+	return this->_self_ptr<array_type>();
+      } else {
+	return this->set_user_alignment(comp_user_align);
+      }
+    } else {
+      return (std::shared_ptr<const array_type>
+	      (new array_type(std::move(comp_element_type),
+			      this->_length_expr,
+			      comp_user_align)));
+    }
+  }
+
+  // No length expression. Return an array type with _unspec_vla
+  // set if any of the two array types has it set.
+  if (next_type._unspec_vla) {
+    // Try to return the original type, if type composition doesn't
+    // alter it.
+    if (comp_element_type == next_type._element_type) {
+      if (comp_user_align == next_type.get_user_alignment()) {
+	// Signal that type composition does not modify the type.
+	return nullptr;
+      } else {
+	return next_type.set_user_alignment(comp_user_align);
+      }
+    } else {
+      return (std::shared_ptr<const array_type>
+	      (new array_type(std::move(comp_element_type), true,
+			      comp_user_align)));
+    }
+  } else if (this->_unspec_vla) {
+    if (comp_element_type == this->_element_type) {
+      if (comp_user_align == this->get_user_alignment()) {
+	return this->_self_ptr<array_type>();
+      } else {
+	return this->set_user_alignment(comp_user_align);
+      }
+    } else {
+      return (std::shared_ptr<const array_type>
+	      (new array_type(std::move(comp_element_type), true,
+			      comp_user_align)));
+    }
+  }
+
+  // Type composition does not alter the original type.
+  if (comp_user_align != next_type.get_user_alignment())
+    return next_type.set_user_alignment(comp_user_align);
+  return nullptr;
+}
+
 
 
 void_type::void_type(const qualifiers &qs)
@@ -818,6 +1139,75 @@ mpa::limbs::size_type
 pointer_type::get_type_alignment(const architecture &arch) const noexcept
 {
   return arch.get_pointer_alignment();
+}
+
+std::shared_ptr<const pointer_type>
+pointer_type::set_user_alignment(const alignment &user_align) const
+{
+   return _set_user_alignment(_self_ptr<pointer_type>(),
+			      user_align, &pointer_type::_clone);
+}
+
+std::shared_ptr<const addressable_type>
+pointer_type::construct_composite(const architecture &arch,
+				  const addressable_type& prev_type) const
+{
+  // Function parameters' qualifiers are ignored in
+  // prototyped_function_type::is_compatible_with(). So there can be a
+  // difference in case we're currently construction a parameter's
+  // composite type.
+  assert(this->is_compatible_with(arch, prev_type, true));
+  return prev_type._construct_composite(arch, *this);
+}
+
+std::shared_ptr<const object_type>
+pointer_type::_construct_composite(const architecture &arch,
+				   const object_type& prev_type) const
+{
+  assert(this->is_compatible_with(arch, prev_type, false));
+  return prev_type.addressable_type::_construct_composite(arch, *this);
+}
+
+std::shared_ptr<const returnable_type>
+pointer_type::_construct_composite(const architecture &arch,
+				   const returnable_type& prev_type) const
+{
+  assert(this->is_compatible_with(arch, prev_type, false));
+  return prev_type.addressable_type::_construct_composite(arch, *this);
+}
+
+std::shared_ptr<const pointer_type>
+pointer_type::_construct_composite(const architecture &arch,
+				   const pointer_type& next_type) const
+{
+  std::shared_ptr<const addressable_type> comp_pointed_to_type =
+    (next_type._pointed_to_type->construct_composite
+     (arch, *this->_pointed_to_type));
+
+  const alignment &comp_user_align =
+    alignment::max(this->get_user_alignment(), next_type.get_user_alignment());
+
+  if (!comp_pointed_to_type) {
+    if (comp_user_align == next_type.get_user_alignment()) {
+      // Type composition does not alter the type
+      return nullptr;
+    } else {
+      return next_type.set_user_alignment(comp_user_align);
+    }
+  }
+
+  if (comp_pointed_to_type == this->_pointed_to_type) {
+    if (comp_user_align == this->get_user_alignment()) {
+      // The composite type comes unmodified from the previous declaration.
+      return this->_self_ptr<pointer_type>();
+    } else {
+      return this->set_user_alignment(comp_user_align);
+    }
+  }
+
+  return (std::shared_ptr<const pointer_type>
+	  (new pointer_type(std::move(comp_pointed_to_type), get_qualifiers(),
+			    comp_user_align)));
 }
 
 

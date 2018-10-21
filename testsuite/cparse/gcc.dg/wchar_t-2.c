@@ -4,3 +4,5 @@
 
 extern int i[sizeof (L'a')];
 int i[sizeof (unsigned short)];
+
+/* cp-out: warning: [^:]*: line 6, columns 4-5: incompatible redeclaration */

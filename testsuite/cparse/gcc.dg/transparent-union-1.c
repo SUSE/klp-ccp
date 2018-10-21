@@ -84,6 +84,14 @@ main (void)
 
 /* { dg-message "note: expected '\[^\n'\]*' but argument is of type '\[^\n'\]*'" "note: expected" { target *-*-* } 0 } */
 
+/* cp-out: warning: [^:]*: line 14, columns 12-14: incompatible redeclaration */
+/* cp-out: warning: [^:]*: line 19, columns 12-14: incompatible redeclaration */
+/* cp-out: warning: [^:]*: line 22, columns 12-14: incompatible redeclaration */
+/* cp-out: warning: [^:]*: line 25, columns 12-14: incompatible redeclaration */
+/* cp-out: warning: [^:]*: line 30, columns 12-14: incompatible redeclaration */
+/* cp-out: warning: [^:]*: line 35, columns 12-14: incompatible redeclaration */
+/* cp-out: warning: [^:]*: line 38, columns 12-14: incompatible redeclaration */
+/* cp-out: warning: [^:]*: line 41, columns 12-14: incompatible redeclaration */
 /* cp-out: warning: [^:]*: line 55, columns 6-7: assigning pointers to integer types of different width */
 /* cp-out: warning: [^:]*: line 57, columns 6-7: assigning pointers to integer types of different width */
 /* cp-out: warning: [^:]*: line 59, columns 6-7: assigning pointers to integer types of different width */

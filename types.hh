@@ -92,10 +92,18 @@ namespace suse
 	alignment& operator=(const mpa::limbs::size_type log2_value)
 	  noexcept;
 
+	bool operator==(const alignment &rhs) const noexcept;
+
+	bool operator!=(const alignment &rhs) const noexcept
+	{ return !(*this == rhs); }
+
 	bool is_set() const noexcept
 	{ return !!_align_ffs; }
 
 	mpa::limbs::size_type get_log2_value() const noexcept;
+
+	static const alignment& max(const alignment &a1, const alignment &a2)
+	  noexcept;
 
       private:
 	mpa::limbs::size_type _align_ffs;
@@ -232,11 +240,19 @@ namespace suse
 	get_user_alignment() noexcept
 	{ return _user_align; }
 
+	const alignment&
+	get_user_alignment() const noexcept
+	{ return _user_align; }
+
 	std::shared_ptr<const addressable_type>
 	set_user_alignment(const alignment &user_align) const;
 
 	mpa::limbs::size_type get_effective_alignment(const architecture &arch)
 	  const noexcept;
+
+	virtual std::shared_ptr<const addressable_type>
+	construct_composite(const architecture &arch,
+			    const addressable_type& prev_type) const;
 
       protected:
 	addressable_type();
@@ -246,7 +262,28 @@ namespace suse
 	addressable_type(const addressable_type&);
 
       private:
+	friend class prototyped_function_type;
+	friend class unprototyped_function_type;
+	friend class array_type;
+	friend class pointer_type;
+
 	virtual addressable_type* _clone() const override = 0;
+
+	virtual std::shared_ptr<const array_type>
+	_construct_composite(const architecture &arch,
+			     const array_type& next_type) const;
+
+	virtual std::shared_ptr<const prototyped_function_type>
+	_construct_composite(const architecture &arch,
+			     const unprototyped_function_type& next_type) const;
+
+	virtual std::shared_ptr<const prototyped_function_type>
+	_construct_composite(const architecture &arch,
+			     const prototyped_function_type& next_type) const;
+
+	virtual std::shared_ptr<const pointer_type>
+	_construct_composite(const architecture &arch,
+			     const pointer_type& next_type) const;
 
 	alignment _user_align;
       };
@@ -304,7 +341,13 @@ namespace suse
 	object_type(const object_type&);
 
       private:
+	friend class array_type;
+
 	virtual object_type* _clone() const override = 0;
+
+	virtual std::shared_ptr<const object_type>
+	_construct_composite(const architecture &arch,
+			     const object_type& prev_type) const;
       };
 
       class returnable_type : public virtual addressable_type
@@ -328,7 +371,13 @@ namespace suse
 	returnable_type(const returnable_type&);
 
       private:
+	friend class prototyped_function_type;
+
 	virtual returnable_type* _clone() const override = 0;
+
+	virtual std::shared_ptr<const returnable_type>
+	_construct_composite(const architecture &arch,
+			     const returnable_type& prev_type) const;
       };
 
       class returnable_object_type : public object_type, public returnable_type
@@ -377,6 +426,7 @@ namespace suse
 
       private:
 	friend class returnable_type;
+	friend class unprototyped_function_type;
 
 	prototyped_function_type(std::shared_ptr<const returnable_type> &&rt,
 				 parameter_type_list &&ptl,
@@ -385,6 +435,20 @@ namespace suse
 	prototyped_function_type(const prototyped_function_type&);
 
 	virtual prototyped_function_type* _clone() const override;
+
+	virtual std::shared_ptr<const addressable_type>
+	construct_composite(const architecture &arch,
+			    const addressable_type& prev_type) const override;
+
+	virtual std::shared_ptr<const prototyped_function_type>
+	_construct_composite(const architecture &arch,
+			     const unprototyped_function_type& next_type)
+	  const override;
+
+	virtual std::shared_ptr<const prototyped_function_type>
+	_construct_composite(const architecture &arch,
+			     const prototyped_function_type& next_type)
+	  const override;
 
 	const parameter_type_list _ptl;
 	const bool _variadic;
@@ -427,6 +491,15 @@ namespace suse
 
 	virtual unprototyped_function_type* _clone() const override;
 
+	virtual std::shared_ptr<const addressable_type>
+	construct_composite(const architecture &arch,
+			    const addressable_type& prev_type) const override;
+
+	virtual std::shared_ptr<const prototyped_function_type>
+	_construct_composite(const architecture &arch,
+			     const prototyped_function_type& next_type)
+	  const override;
+
 	const std::size_t _n_args;
 	const bool _from_definition;
       };
@@ -455,6 +528,9 @@ namespace suse
 	virtual mpa::limbs::size_type
 	get_type_alignment(const architecture &arch) const noexcept override;
 
+	std::shared_ptr<const array_type>
+	set_user_alignment(const alignment &user_align) const;
+
 	const std::shared_ptr<const object_type>&
 	get_element_type() const noexcept
 	{ return _element_type; }
@@ -470,17 +546,33 @@ namespace suse
 	friend class object_type;
 
 	array_type(std::shared_ptr<const object_type> &&element_type,
-		   const ast::expr * const length_expr);
+		   const ast::expr * const length_expr,
+		   const alignment &user_align = alignment{});
 	array_type(std::shared_ptr<const object_type> &&element_type,
-		   mpa::limbs &&initializer_length);
+		   mpa::limbs &&initializer_length,
+		   const alignment &user_align = alignment{});
 	array_type(std::shared_ptr<const object_type> &&element_type,
-		   const bool unspec_vla);
+		   const bool unspec_vla,
+		   const alignment &user_align = alignment{});
 
 	array_type(const array_type&);
 
 	virtual array_type* _clone() const override;
 
 	virtual void _amend_qualifiers(const qualifiers &qs) override;
+
+	virtual std::shared_ptr<const addressable_type>
+	construct_composite(const architecture &arch,
+			    const addressable_type& prev_type) const override;
+
+	virtual std::shared_ptr<const object_type>
+	_construct_composite(const architecture &arch,
+			     const object_type& prev_type) const override;
+
+	virtual std::shared_ptr<const array_type>
+	_construct_composite(const architecture &arch,
+			     const array_type& next_type) const override;
+
 
 	std::shared_ptr<const object_type> _element_type;
 	const ast::expr * const _length_expr;
@@ -543,6 +635,9 @@ namespace suse
 	virtual mpa::limbs::size_type
 	get_type_alignment(const architecture &arch) const noexcept override;
 
+	std::shared_ptr<const pointer_type>
+	set_user_alignment(const alignment &user_align) const;
+
 	const std::shared_ptr<const addressable_type>&
 	get_pointed_to_type() const noexcept
 	{ return _pointed_to_type; }
@@ -556,6 +651,22 @@ namespace suse
 	pointer_type(const pointer_type&);
 
 	virtual pointer_type* _clone() const override;
+
+	virtual std::shared_ptr<const addressable_type>
+	construct_composite(const architecture &arch,
+			    const addressable_type& prev_type) const override;
+
+	virtual std::shared_ptr<const object_type>
+	_construct_composite(const architecture &arch,
+			     const object_type& prev_type) const override;
+
+	virtual std::shared_ptr<const returnable_type>
+	_construct_composite(const architecture &arch,
+			     const returnable_type& prev_type) const override;
+
+	virtual std::shared_ptr<const pointer_type>
+	_construct_composite(const architecture &arch,
+			     const pointer_type& next_type) const override;
 
 	const std::shared_ptr<const addressable_type> _pointed_to_type;
       };
