@@ -576,9 +576,8 @@ array_type::array_type(std::shared_ptr<const object_type> &&element_type,
 {}
 
 array_type::array_type(std::shared_ptr<const object_type> &&element_type,
-		       mpa::limbs &&initializer_length,
-		       const qualifiers &qs)
-  : type(qs), _element_type(std::move(element_type)), _length_expr(nullptr),
+		       mpa::limbs &&initializer_length)
+  : _element_type(std::move(element_type)), _length_expr(nullptr),
     _initializer_length(std::move(initializer_length)), _unspec_vla(false)
 {}
 
@@ -691,7 +690,7 @@ array_type::set_length_from_initializer(mpa::limbs &&l) const
   return (std::shared_ptr<const array_type>
 	  (new array_type
 	   (std::shared_ptr<const object_type>{_element_type},
-	    std::move(l), get_qualifiers())));
+	    std::move(l))));
 }
 
 void array_type::_amend_qualifiers(const qualifiers &qs)

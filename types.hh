@@ -470,7 +470,7 @@ namespace suse
 	array_type(std::shared_ptr<const object_type> &&element_type,
 		   const ast::expr * const length_expr);
 	array_type(std::shared_ptr<const object_type> &&element_type,
-		   mpa::limbs &&initializer_length, const qualifiers &qs = {});
+		   mpa::limbs &&initializer_length);
 	array_type(std::shared_ptr<const object_type> &&element_type,
 		   const bool unspec_vla);
 
