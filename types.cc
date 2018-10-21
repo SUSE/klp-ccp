@@ -619,7 +619,7 @@ bool array_type::is_compatible_with(const architecture &arch,
   if (!this->is_complete() || !t.is_complete())
     return true;
 
-  if (!this->is_size_constant() || !t.is_size_constant())
+  if (!this->is_length_constant() || !t.is_length_constant())
     return true;
 
   return this->get_length() == t.get_length();
@@ -639,19 +639,10 @@ bool array_type::is_size_constant() const noexcept
   if (!_element_type->is_size_constant())
     return false;
 
-  if (_unspec_vla)
+  if (!is_length_constant())
     return false;
 
-  if (!_length_expr)
-    return !_initializer_length.empty();
-
-  if (!_length_expr->is_constexpr())
-      return false;
-
-  const ast::constexpr_value &length_expr_cv =
-    _length_expr->get_constexpr_value();
-  return (length_expr_cv.has_constness
-	  (ast::constexpr_value::constness::c_integer_constant_expr));
+  return true;
 }
 
 mpa::limbs array_type::get_size(const architecture &arch) const
@@ -668,9 +659,27 @@ array_type::get_type_alignment(const architecture &arch) const noexcept
   return _element_type->get_effective_alignment(arch);
 }
 
+bool array_type::is_length_constant() const noexcept
+{
+  if (_unspec_vla)
+    return false;
+
+  if (!_length_expr)
+    return !_initializer_length.empty();
+
+  if (!_length_expr->is_constexpr())
+      return false;
+
+  const ast::constexpr_value &length_expr_cv =
+    _length_expr->get_constexpr_value();
+  return (length_expr_cv.has_constness
+	  (ast::constexpr_value::constness::c_integer_constant_expr));
+}
+
+
 const mpa::limbs& array_type::get_length() const noexcept
 {
-  assert(is_size_constant());
+  assert(is_length_constant());
   if (_length_expr) {
     const ast::constexpr_value &length_expr_cv =
       _length_expr->get_constexpr_value();

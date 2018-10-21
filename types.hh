@@ -459,6 +459,8 @@ namespace suse
 	get_element_type() const noexcept
 	{ return _element_type; }
 
+	bool is_length_constant() const noexcept;
+
 	const mpa::limbs& get_length() const noexcept;
 
 	std::shared_ptr<const array_type>
