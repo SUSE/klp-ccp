@@ -404,6 +404,342 @@ std::unique_ptr<builtin_func> builtin_func_constant_p::create()
 
 namespace
 {
+  class builtin_overflow : public builtin_func
+  {
+  public:
+    enum class op
+    {
+      add,
+      sub,
+      mul,
+    };
+
+    typedef std::shared_ptr<const int_type>(*t_fac)();
+
+    virtual evaluation_result_type
+    evaluate(suse::cp::ast::ast &a, const architecture &arch,
+	     const expr_func_invocation &efi) const override;
+
+    template <t_fac tfac, bool p_variant, op o>
+    static std::unique_ptr<builtin_func> create();
+
+    static std::shared_ptr<const int_type> fac_i();
+    static std::shared_ptr<const int_type> fac_u();
+    static std::shared_ptr<const int_type> fac_l();
+    static std::shared_ptr<const int_type> fac_ul();
+    static std::shared_ptr<const int_type> fac_ll();
+    static std::shared_ptr<const int_type> fac_ull();
+
+  private:
+    t_fac _target_fac;
+    bool _p_variant;
+    op _op;
+
+    builtin_overflow(const t_fac expected_it_fac, const bool p_variant,
+		     const op op) noexcept;
+  };
+}
+
+builtin_overflow::builtin_overflow(const t_fac target_fac,
+				   const bool p_variant,
+				   const op op) noexcept
+  : _target_fac(target_fac), _p_variant(p_variant), _op(op)
+{}
+
+template <builtin_overflow::t_fac tfac, bool p_variant, builtin_overflow::op o>
+std::unique_ptr<builtin_func> builtin_overflow::create()
+{
+  return (std::unique_ptr<builtin_func>
+	  (new builtin_overflow(tfac, p_variant, o)));
+}
+
+builtin_func::evaluation_result_type
+builtin_overflow::evaluate(suse::cp::ast::ast &a, const architecture &arch,
+			       const expr_func_invocation &efi) const
+{
+  auto &&myname =
+    [this]() -> std::string {
+      switch (_op) {
+      case op::add:
+	if (_p_variant)
+	  return std::string{"__builtin_add_overflow_p()"};
+	else
+	  return std::string{"__builtin_add_overflow()"};
+
+      case op::sub:
+	if (_p_variant)
+	  return std::string{"__builtin_sub_overflow_p()"};
+	else
+	  return std::string{"__builtin_sub_overflow()"};
+
+      case op::mul:
+	if (_p_variant)
+	  return std::string{"__builtin_mul_overflow_p()"};
+	else
+	  return std::string{"__builtin_mul_overflow()"};
+      }
+    };
+
+  if (!efi.get_args() || efi.get_args()->size() != 3) {
+    const pp_token &tok =
+      a.get_pp_tokens()[efi.get_tokens_range().begin];
+    code_remark remark
+      (code_remark::severity::warning,
+       "wrong number of arguments to " + myname(),
+       tok.get_file_range());
+    a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  const expr_list &args = *efi.get_args();
+  bool types_ok = true;
+  std::shared_ptr<const int_type> it_target;
+  const std::shared_ptr<const int_type> it_target_spec =
+    _target_fac ? _target_fac() : nullptr;
+  if (!it_target_spec) {
+    // The first two or, for the _p variant, all arguments shall be of
+    // integer type.
+    for (unsigned int i = 0; i < (_p_variant ? 3 : 2); ++i) {
+      handle_types<void>
+	((wrap_callables<default_action_nop>
+	  ([&](const std::shared_ptr<const int_type> &t) {
+	     if (i == 2)
+	       it_target = t;
+	   },
+	   [&](const std::shared_ptr<const type>&) {
+	     types_ok = false;
+
+	     const pp_token &tok =
+	       a.get_pp_tokens()[args[i].get_tokens_range().begin];
+	     code_remark remark
+	       (code_remark::severity::warning,
+		"non-integer argument to " + myname(),
+		tok.get_file_range());
+	     a.get_remarks().add(remark);
+	   })),
+	 args[i].get_type());
+    }
+  } else {
+    // The first two or, for the _p_variant, all arguments shall be of
+    // arithmetic type.
+    for (unsigned int i = 0; i < (_p_variant ? 3 : 2); ++i) {
+      handle_types<void>
+	((wrap_callables<default_action_nop>
+	  ([&](const std::shared_ptr<const arithmetic_type> &t) {
+	     if (i == 2)
+	       it_target = it_target_spec;
+	   },
+	   [&](const std::shared_ptr<const type>&) {
+	     types_ok = false;
+
+	     const pp_token &tok =
+	       a.get_pp_tokens()[args[i].get_tokens_range().begin];
+	     code_remark remark
+	       (code_remark::severity::warning,
+		"non-arithmetic argument to " + myname(),
+		tok.get_file_range());
+	     a.get_remarks().add(remark);
+	   })),
+	 args[i].get_type());
+    }
+  }
+
+  // Extract the third argument's type for !_p_variant.
+  if (!_p_variant) {
+    // The third argument is expected to be a pointer to int.
+    handle_types<void>
+      ((wrap_callables<default_action_nop>
+	([&](const pointer_type &pt) {
+	   handle_types<void>
+	     ((wrap_callables<default_action_nop>
+	       ([&](const std::shared_ptr<const int_type> &t) {
+		  if (it_target_spec) {
+		    if (it_target_spec->is_compatible_with(arch, *t, true)) {
+		      it_target = it_target_spec;
+
+		    } else {
+		      types_ok = false;
+
+		      const pp_token &tok =
+			a.get_pp_tokens()[args[2].get_tokens_range().begin];
+		      code_remark remark
+			(code_remark::severity::warning,
+			 ("third argument to " + myname() +
+			  " has incompatible pointer type"),
+			 tok.get_file_range());
+		      a.get_remarks().add(remark);
+		    }
+
+		  } else {
+		    it_target = t;
+		  }
+		},
+		[&](const std::shared_ptr<const type>&) {
+		  types_ok = false;
+
+		  const pp_token &tok =
+		    a.get_pp_tokens()[args[2].get_tokens_range().begin];
+		  code_remark remark
+		    (code_remark::severity::warning,
+		     ("third argument to " + myname() +
+		      " is not a pointer to integer"),
+		     tok.get_file_range());
+		  a.get_remarks().add(remark);
+		})),
+	      pt.get_pointed_to_type());
+	 },
+	 [&](const type&) {
+	   types_ok = false;
+
+	   const pp_token &tok =
+	     a.get_pp_tokens()[args[2].get_tokens_range().begin];
+	   code_remark remark
+	     (code_remark::severity::warning,
+	      "third argument to " + myname() + " is not a pointer",
+	      tok.get_file_range());
+	   a.get_remarks().add(remark);
+	   throw semantic_except(remark);
+	 })),
+       *args[2].get_type());
+  }
+
+
+  if (!args[0].is_constexpr() || !args[1].is_constexpr() || !types_ok) {
+    return evaluation_result_type{bool_type::create(), nullptr, false};
+  }
+
+  assert(it_target);
+
+  const constexpr_value &cv0 = args[0].get_constexpr_value();
+  const target_int &i0 =
+    (!it_target_spec ?
+     cv0.get_int_value() :
+     cv0.convert_to(arch, *it_target_spec));
+  const constexpr_value &cv1 = args[1].get_constexpr_value();
+  const target_int &i1 =
+    (!it_target_spec ?
+     cv1.get_int_value() :
+     cv1.convert_to(arch, *it_target_spec));
+
+  mpa::limbs r;
+  if (_op == op::add || _op == op::sub) {
+    mpa::limbs ls0 = i0.get_limbs();
+    if (!i0.is_signed()) {
+      // Make room for an additional sign bit.
+      ls0.resize(mpa::limbs::width_to_size(i0.width() + 1));
+    }
+    mpa::limbs ls1 = i1.get_limbs();
+    if (_op == op::sub) {
+      // Make room for an additional sign bit unconditionally.
+      ls1.resize(mpa::limbs::width_to_size(i1.width() + 1));
+      if (i1.is_signed()) {
+	ls1.set_bits_at_and_above(i1.width(), ls1.test_bit(i1.width() - 1));
+      }
+      // And complement
+      ls1 = ls1.complement();
+    } if (!i1.is_signed()) {
+      // Make room for an additional sign bit.
+      ls1.resize(mpa::limbs::width_to_size(i1.width() + 1));
+    }
+
+    r = ls0.add_signed(ls1);
+
+  } else {
+    assert(_op == op::mul);
+    bool is_negative = false;
+    mpa::limbs ls0 = i0.get_limbs();
+    if (i0.is_signed() && i0.is_negative()) {
+      is_negative = true;
+      ls0 = ls0.complement();
+    }
+    mpa::limbs ls1 = i1.get_limbs();
+    if (i1.is_signed() && i1.is_negative()) {
+      is_negative ^= true;
+      ls1 = ls1.complement();
+    }
+
+    r = ls0 * ls1;
+    r.resize(mpa::limbs::width_to_size(r.width() + 1));
+    if (is_negative)
+      r = r.complement();
+  }
+
+  bool overflow = false;
+  if (it_target->is_signed(arch)) {
+    if (it_target->get_width(arch) < r.width() - r.clrsb())
+      overflow = true;
+  } else {
+    if (r.test_bit(r.width() - 1))
+      overflow = true;
+    else if (r.is_any_set_at_or_above(it_target->get_width(arch)))
+      overflow = true;
+  }
+
+  std::shared_ptr<const bool_type> t_result = bool_type::create();
+  const mpa::limbs::size_type w = t_result->get_width(arch);
+  const bool is_signed = t_result->is_signed(arch);
+  target_int ti_result =
+    (overflow ?
+     target_int::create_one(w - is_signed, is_signed) :
+     target_int::create_zero(w - is_signed, is_signed));
+  std::unique_ptr<constexpr_value> cv_result;
+  if (_p_variant &&
+      (cv0.has_constness
+       (constexpr_value::constness::c_integer_constant_expr)) &&
+      (cv1.has_constness
+       (constexpr_value::constness::c_integer_constant_expr))) {
+    cv_result.reset
+      (new constexpr_value(constexpr_value::integer_constant_expr_tag{},
+			   ti_result));
+  } else if (_p_variant &&
+	     (cv0.has_constness
+	      (constexpr_value::constness::c_arithmetic_constant_expr)) &&
+	     (cv1.has_constness
+	      (constexpr_value::constness::c_arithmetic_constant_expr))) {
+    cv_result.reset
+      (new constexpr_value(constexpr_value::arithmetic_constant_expr_tag{},
+			   ti_result));
+  } else {
+    cv_result.reset(new constexpr_value(ti_result));
+  }
+
+  return evaluation_result_type{std::move(t_result), std::move(cv_result),
+				false};
+}
+
+std::shared_ptr<const int_type> builtin_overflow::fac_i()
+{
+  return std_int_type::create(std_int_type::kind::k_int, true);
+}
+
+std::shared_ptr<const int_type> builtin_overflow::fac_u()
+{
+  return std_int_type::create(std_int_type::kind::k_int, false);
+}
+
+std::shared_ptr<const int_type> builtin_overflow::fac_l()
+{
+  return std_int_type::create(std_int_type::kind::k_long, true);
+}
+
+std::shared_ptr<const int_type> builtin_overflow::fac_ul()
+{
+  return std_int_type::create(std_int_type::kind::k_long, false);
+}
+
+std::shared_ptr<const int_type> builtin_overflow::fac_ll()
+{
+  return std_int_type::create(std_int_type::kind::k_long_long, true);
+}
+
+std::shared_ptr<const int_type> builtin_overflow::fac_ull()
+{
+  return std_int_type::create(std_int_type::kind::k_long_long, false);
+}
+
+
+namespace
+{
   static std::shared_ptr<const addressable_type>
   mk_v(const architecture&)
   {
@@ -1404,6 +1740,74 @@ builtin_func::factory builtin_func::lookup(const std::string &id)
     { "__builtin_towlower", bfspf_wi_wi::create },
     { "__builtin_towupper", bfspf_wi_wi::create },
 
+    // Category: overflow builtins
+    { "__builtin_add_overflow",
+      builtin_overflow::create<nullptr, false, builtin_overflow::op::add> },
+    { "__builtin_add_overflow_p",
+      builtin_overflow::create<nullptr, true, builtin_overflow::op::add> },
+    { "__builtin_sadd_overflow",
+      builtin_overflow::create<builtin_overflow::fac_i, false,
+			       builtin_overflow::op::add> },
+    { "__builtin_saddl_overflow",
+      builtin_overflow::create<builtin_overflow::fac_l, false,
+			       builtin_overflow::op::add> },
+    { "__builtin_saddll_overflow",
+      builtin_overflow::create<builtin_overflow::fac_ll, false,
+			       builtin_overflow::op::add> },
+    { "__builtin_uadd_overflow",
+      builtin_overflow::create<builtin_overflow::fac_u, false,
+			       builtin_overflow::op::add> },
+    { "__builtin_uaddl_overflow",
+      builtin_overflow::create<builtin_overflow::fac_ul, false,
+			       builtin_overflow::op::add> },
+    { "__builtin_uaddll_overflow",
+      builtin_overflow::create<builtin_overflow::fac_ull, false,
+			       builtin_overflow::op::add> },
+    { "__builtin_sub_overflow",
+      builtin_overflow::create<nullptr, false, builtin_overflow::op::sub> },
+    { "__builtin_sub_overflow_p",
+      builtin_overflow::create<nullptr, true, builtin_overflow::op::sub> },
+    { "__builtin_ssub_overflow",
+      builtin_overflow::create<builtin_overflow::fac_i, false,
+			       builtin_overflow::op::sub> },
+    { "__builtin_ssubl_overflow",
+      builtin_overflow::create<builtin_overflow::fac_l, false,
+			       builtin_overflow::op::sub> },
+    { "__builtin_ssubll_overflow",
+      builtin_overflow::create<builtin_overflow::fac_ll, false,
+			       builtin_overflow::op::sub> },
+    { "__builtin_usub_overflow",
+      builtin_overflow::create<builtin_overflow::fac_u, false,
+			       builtin_overflow::op::sub> },
+    { "__builtin_usubl_overflow",
+      builtin_overflow::create<builtin_overflow::fac_ul, false,
+			       builtin_overflow::op::sub> },
+    { "__builtin_usubll_overflow",
+      builtin_overflow::create<builtin_overflow::fac_ull, false,
+			       builtin_overflow::op::sub> },
+    { "__builtin_mul_overflow",
+      builtin_overflow::create<nullptr, false, builtin_overflow::op::mul> },
+    { "__builtin_mul_overflow_p",
+      builtin_overflow::create<nullptr, true, builtin_overflow::op::mul> },
+    { "__builtin_smul_overflow",
+      builtin_overflow::create<builtin_overflow::fac_i, false,
+			       builtin_overflow::op::mul> },
+    { "__builtin_smull_overflow",
+      builtin_overflow::create<builtin_overflow::fac_l, false,
+			       builtin_overflow::op::mul> },
+    { "__builtin_smulll_overflow",
+      builtin_overflow::create<builtin_overflow::fac_ll, false,
+			       builtin_overflow::op::mul> },
+    { "__builtin_umul_overflow",
+      builtin_overflow::create<builtin_overflow::fac_u, false,
+			       builtin_overflow::op::mul> },
+    { "__builtin_umull_overflow",
+      builtin_overflow::create<builtin_overflow::fac_ul, false,
+			       builtin_overflow::op::mul> },
+    { "__builtin_umulll_overflow",
+      builtin_overflow::create<builtin_overflow::fac_ull, false,
+			       builtin_overflow::op::mul> },
+
     // Category: miscellaneous builtins.
     { "__builtin_abort", bfspf_v::create },
     { "__builtin_abs", bfspf_i_i::create },
@@ -1499,6 +1903,8 @@ builtin_func::factory builtin_func::lookup(const std::string &id)
     { "__builtin_return_address", bfspf_pv_u::create },
     { "__builtin_saveregs", bfspf_pv_var::create },
     { "__builtin_setjmp", bfspf_i_pv::create },
+    { "__builtin_stack_restore", bfspf_v_pv::create },
+    { "__builtin_stack_save", bfspf_pv::create },
     { "__builtin_strfmon", bfspf_ssz_pc_sz_pcc_var::create },
     { "__builtin_strftime", bfspf_sz_pc_sz_pcc_pcv::create },
     { "__builtin_trap", bfspf_v::create },

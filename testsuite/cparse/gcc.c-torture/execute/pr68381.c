@@ -19,5 +19,3 @@ main (void)
     __builtin_abort ();
   return 0;
 }
-
-/* cp-xfail */

@@ -108,4 +108,5 @@ main ()
 /* { dg-final { scan-tree-dump-times "SUB_OVERFLOW" 0 "optimized" } } */
 /* { dg-final { scan-tree-dump-times "MUL_OVERFLOW" 3 "optimized" } } */
 
-/* cp-xfail */
+/* cp-out: warning: [^:]*: line 69, columns 45-46: integer overflow in multiplication */
+/* cp-out: warning: [^:]*: line 74, columns 29-30: integer overflow in cast */

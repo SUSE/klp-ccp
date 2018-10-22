@@ -12,5 +12,3 @@ int foo (int i)
   bar ("", 0);
   return 6;
 }
-
-/* cp-xfail */
