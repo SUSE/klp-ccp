@@ -14,12 +14,14 @@ namespace cp
     class file_range
     {
     public:
+      typedef std::streamoff loc_type;
+
       file_range() = default;
       file_range(const inclusion_node &inclusion_node,
-		 const std::streamoff &start_loc,
-		 const std::streamoff &end_loc);
+		 const loc_type &start_loc,
+		 const loc_type &end_loc);
       file_range(const inclusion_node &inclusion_node,
-		 const std::streamoff &loc);
+		 const loc_type &loc);
 
       file_range(const file_range &start,
 		 const file_range &end);
@@ -28,17 +30,17 @@ namespace cp
 
       const header_inclusion_node& get_header_inclusion_node() const noexcept;
 
-      std::streamoff get_start_loc() const noexcept
+      loc_type get_start_loc() const noexcept
       { return _start_loc; }
 
-      std::streamoff get_start_line() const noexcept;
+      loc_type get_start_line() const noexcept;
 
       friend std::ostream& operator<<(std::ostream &o, const file_range &r);
 
     private:
       const inclusion_node *_inclusion_node;
-      std::streamoff _start_loc;
-      std::streamoff _end_loc;
+      loc_type _start_loc;
+      loc_type _end_loc;
     };
 
     std::ostream& operator<<(std::ostream &o, const file_range &r);

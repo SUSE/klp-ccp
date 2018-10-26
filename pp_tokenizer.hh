@@ -31,7 +31,7 @@ namespace suse
     private:
       char _read_next_char_raw();
 
-      char _read_next_char(std::streamoff &loc);
+      char _read_next_char(file_range::loc_type &loc);
       void _advance_to_next_char();
       void _skip_next_char();
 
@@ -49,11 +49,11 @@ namespace suse
       source_reader::buffer_type _buf;
       source_reader::buffer_type::const_iterator _buf_it;
 
-      std::streamoff _line_length;
-      std::streamoff _cur_loc;
-      std::streamoff _next_loc;
-      std::streamoff _next_next_loc;
-      std::streamoff _tok_loc;
+      file_range::loc_type _line_length;
+      file_range::loc_type _cur_loc;
+      file_range::loc_type _next_loc;
+      file_range::loc_type _next_next_loc;
+      file_range::loc_type _tok_loc;
       enum class expect_qh_str
       {
 	no,

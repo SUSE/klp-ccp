@@ -49,7 +49,7 @@ char pp_tokenizer::_read_next_char_raw()
   return c;
 }
 
-char pp_tokenizer::_read_next_char(std::streamoff &loc)
+char pp_tokenizer::_read_next_char(file_range::loc_type &loc)
 {
   char c = _read_next_char_raw();
   loc += 1;

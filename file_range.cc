@@ -6,13 +6,13 @@
 using namespace suse::cp;
 
 file_range::file_range(const inclusion_node &inclusion_node,
-		       const std::streamoff &start_loc,
-		       const std::streamoff &end_loc)
+		       const loc_type &start_loc,
+		       const loc_type &end_loc)
   : _inclusion_node(&inclusion_node), _start_loc(start_loc), _end_loc(end_loc)
 {}
 
 file_range::file_range(const inclusion_node &inclusion_node,
-		       const std::streamoff &loc)
+		       const loc_type &loc)
   : _inclusion_node(&inclusion_node), _start_loc(loc), _end_loc(loc)
 {}
 
@@ -38,7 +38,7 @@ const header_inclusion_node& file_range::get_header_inclusion_node()
   return _inclusion_node->get_containing_header();
 }
 
-std::streamoff file_range::get_start_line() const noexcept
+file_range::loc_type file_range::get_start_line() const noexcept
 {
   return get_header_inclusion_node().offset_to_line_col(_start_loc).first;
 }
@@ -46,9 +46,10 @@ std::streamoff file_range::get_start_line() const noexcept
 std::ostream& suse::cp::operator<<(std::ostream &o, const file_range &r)
 {
   const header_inclusion_node &file = r.get_header_inclusion_node();
-  const std::pair<std::streamoff, std::streamoff> start
+  typedef file_range::loc_type loc_type;
+  const std::pair<loc_type, loc_type> start
     = file.offset_to_line_col(r._start_loc);
-  const std::pair<std::streamoff, std::streamoff> end
+  const std::pair<loc_type, loc_type> end
     = file.offset_to_line_col(r._end_loc);
   o << file.get_filename() << ": line " << start.first << ',';
   if (start.first == end.first) {

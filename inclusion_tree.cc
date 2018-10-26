@@ -47,13 +47,13 @@ header_inclusion_node::get_containing_header() const noexcept
   return *this;
 }
 
-void header_inclusion_node::add_line(const std::streamoff length)
+void header_inclusion_node::add_line(const file_range::loc_type length)
 {
   _offset_to_line_col_map.add_line(length);
 }
 
-std::pair<std::streamoff, std::streamoff>
-header_inclusion_node::offset_to_line_col(const std::streamoff off)
+std::pair<file_range::loc_type, file_range::loc_type>
+header_inclusion_node::offset_to_line_col(const file_range::loc_type off)
   const noexcept
 {
   return _offset_to_line_col_map.offset_to_line_col(off);
