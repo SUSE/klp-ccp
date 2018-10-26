@@ -8,16 +8,17 @@ namespace suse
 {
 namespace cp
   {
+    class inclusion_node;
     class header_inclusion_node;
 
     class file_range
     {
     public:
       file_range() = default;
-      file_range(const header_inclusion_node &file,
+      file_range(const inclusion_node &inclusion_node,
 		 const std::streamoff &start_loc,
 		 const std::streamoff &end_loc);
-      file_range(const header_inclusion_node &file,
+      file_range(const inclusion_node &inclusion_node,
 		 const std::streamoff &loc);
 
       file_range(const file_range &start,
@@ -25,8 +26,7 @@ namespace cp
 
       bool operator==(const file_range &rhs) const noexcept;
 
-      const header_inclusion_node& get_header_inclusion_node() const noexcept
-      { return *_file; }
+      const header_inclusion_node& get_header_inclusion_node() const noexcept;
 
       std::streamoff get_start_loc() const noexcept
       { return _start_loc; }
@@ -36,7 +36,7 @@ namespace cp
       friend std::ostream& operator<<(std::ostream &o, const file_range &r);
 
     private:
-      const header_inclusion_node *_file;
+      const inclusion_node *_inclusion_node;
       std::streamoff _start_loc;
       std::streamoff _end_loc;
     };
