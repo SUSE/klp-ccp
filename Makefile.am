@@ -25,7 +25,7 @@ noinst_HEADERS =				\
 	execution_charset_encoder_iconv.hh	\
 	file_range.hh				\
 	gnuc_parser_driver.hh			\
-	header_inclusion_tree.hh		\
+	inclusion_tree.hh			\
 	header_resolver.hh			\
 	macro.hh				\
 	macro_undef.hh				\
@@ -65,7 +65,7 @@ libcp_a_SOURCES =				\
 	file_range.cc				\
 	gnuc_parser.yy				\
 	gnuc_parser_driver.cc			\
-	header_inclusion_tree.cc		\
+	inclusion_tree.cc			\
 	header_resolver.cc			\
 	macro.cc				\
 	macro_undef.cc				\

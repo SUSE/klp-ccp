@@ -12,7 +12,6 @@
 #include "header_resolver.hh"
 #include "macro.hh"
 #include "pp_tokenizer.hh"
-#include "header_inclusion_tree.hh"
 
 namespace suse
 {
@@ -20,7 +19,7 @@ namespace suse
   {
     class pp_tokenizer;
     class header_inclusion_root;
-    class header_inclusion_node;
+    class inclusion_node;
 
     namespace _preprocessor_impl
     {
@@ -90,7 +89,7 @@ namespace suse
 
       header_inclusion_roots_type &_header_inclusion_roots;
       header_inclusion_roots_type::iterator _cur_header_inclusion_root;
-      header_inclusion_node *_cur_header_inclusion_node;
+      std::stack<std::reference_wrapper<inclusion_node> > _inclusions;
 
       std::stack<pp_tokenizer> _tokenizers;
       _preprocessor_impl::_expansion_state _root_expansion_state;

@@ -1,7 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include "pp_tokenizer.hh"
-#include "header_inclusion_tree.hh"
+#include "inclusion_tree.hh"
 
 using namespace suse::cp;
 

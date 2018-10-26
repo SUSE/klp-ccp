@@ -1,7 +1,7 @@
 #include <ostream>
 #include <cassert>
 #include "file_range.hh"
-#include "header_inclusion_tree.hh"
+#include "inclusion_tree.hh"
 
 using namespace suse::cp;
 

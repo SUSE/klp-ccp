@@ -25,6 +25,9 @@ namespace suse
 
       pp_token read_next_token();
 
+      const header_inclusion_node& get_header_inclusion_node() const noexcept
+      { return _file; }
+
     private:
       char _read_next_char_raw();
 

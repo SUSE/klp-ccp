@@ -1,4 +1,5 @@
 #include <iostream>
+#include "inclusion_tree.hh"
 #include "preprocessor.hh"
 #include "pp_except.hh"
 

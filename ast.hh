@@ -8,7 +8,7 @@
 #include <memory>
 #include <utility>
 #include "type_set.hh"
-#include "header_inclusion_tree.hh"
+#include "inclusion_tree.hh"
 #include "pp_tokens.hh"
 #include "code_remarks.hh"
 #include "code_remark.hh"

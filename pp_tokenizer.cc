@@ -3,7 +3,7 @@
 #include <system_error>
 #include "pp_tokenizer.hh"
 #include "pp_except.hh"
-#include "header_inclusion_tree.hh"
+#include "inclusion_tree.hh"
 
 using namespace suse::cp;
 

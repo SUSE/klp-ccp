@@ -3,7 +3,7 @@
 #include "preprocessor.hh"
 #include "pp_except.hh"
 #include "macro_undef.hh"
-#include "header_inclusion_tree.hh"
+#include "inclusion_tree.hh"
 #include "path.hh"
 
 using namespace suse::cp;
@@ -14,12 +14,12 @@ preprocessor::preprocessor(header_inclusion_roots_type &header_inclusion_roots,
   : _header_resolver(header_resolver),
     _header_inclusion_roots(header_inclusion_roots),
     _cur_header_inclusion_root(_header_inclusion_roots.begin()),
-    _cur_header_inclusion_node(_header_inclusion_roots[0].get()),
     _root_expansion_state(), __counter__(0),
     _maybe_pp_directive(true), _line_empty(true)
 {
   assert(!header_inclusion_roots.empty());
-  _tokenizers.emplace(*_cur_header_inclusion_node);
+  _tokenizers.emplace(**_cur_header_inclusion_root);
+  _inclusions.emplace(std::ref(**_cur_header_inclusion_root));
 }
 
 pp_token preprocessor::read_next_token()
@@ -191,13 +191,12 @@ pp_token preprocessor::_read_next_plain_token()
 
     if (tok.is_eof()) {
       _tokenizers.pop();
+      _inclusions.pop();
       if (_tokenizers.empty()) {
 	if (++_cur_header_inclusion_root == _header_inclusion_roots.end())
 	  return tok;
-	_cur_header_inclusion_node = _cur_header_inclusion_root->get();
-	_tokenizers.emplace(*_cur_header_inclusion_node);
-      } else {
-	_cur_header_inclusion_node = _cur_header_inclusion_node->get_parent();
+	_tokenizers.emplace(**_cur_header_inclusion_root);
+	_inclusions.emplace(std::ref(**_cur_header_inclusion_root));
       }
       _maybe_pp_directive = true;
       goto again;
@@ -784,7 +783,8 @@ void preprocessor::_handle_include(pp_tokens &&directive_toks)
   std::string resolved
     = (is_qstr ?
        _header_resolver.resolve(unresolved,
-				_cur_header_inclusion_node->get_filename()) :
+				(_tokenizers.top().get_header_inclusion_node()
+				 .get_filename())) :
        _header_resolver.resolve(unresolved));
 
   if (resolved.empty()) {
@@ -801,10 +801,12 @@ void preprocessor::_handle_include(pp_tokens &&directive_toks)
   file_range fr (directive_toks.cbegin()->get_file_range(),
 		 (directive_toks.cend() - 1)->get_file_range());
 
-  _cur_header_inclusion_node =
-    &_cur_header_inclusion_node->add_child(resolved, std::move(fr),
-					   std::move(um), std::move(umu));
-  _tokenizers.emplace(*_cur_header_inclusion_node);
+  header_inclusion_child &new_header_inclusion_node
+    = _inclusions.top().get().add_header_inclusion(resolved, std::move(fr),
+						   std::move(um),
+						   std::move(umu));
+  _tokenizers.emplace(new_header_inclusion_node);
+  _inclusions.emplace(std::ref(new_header_inclusion_node));
 }
 
 
