@@ -25,13 +25,24 @@ preprocessor::preprocessor(header_inclusion_roots_type &header_inclusion_roots,
 pp_token preprocessor::read_next_token()
 {
   // Basically, this is just a wrapper around _expand()
-  // which removes or adds whitespace as needed.
+  // which removes or adds whitespace as needed:
+  // - Whitespace at the end of lines gets removed.
+  // - Only the first out of a sequence of empty lines is kept.
+  // - Whitespace gets inserted inbetween certain kind of tokens
+  //   in order to guarantee idempotency of preprocessing.
   //
-  // There are two cases for _pending_tokens: either it
-  // consists of a single ws token, in which case it's
-  // not clear yet whether it should get emitted or
-  // it consists of empties + ws + something else
-  // in which case all of these but the last should get emitted.
+  // A queue of lookahead tokens is maintained in ::_pending_tokens.
+  //
+  // By virtue of ::_expand(), there can't be any consecutive
+  // sequences of whitespace and empty tokens with more than one
+  // whitespace token. For simplicity, empty tokens after a
+  // whitespace one get moved in front of that.
+  //
+  // The following patters are possible for _pending_tokens at
+  // any time:
+  // - a single whitespace,
+  // - one or more empties + whitespace or
+  // - possibly one or more empties + (added whitespace) + something else.
   assert(_pending_tokens.size() != 1 || !_pending_tokens.front().is_empty());
   if (_pending_tokens.size() > 1 ||
       (_pending_tokens.size() == 1 &&
