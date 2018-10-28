@@ -397,25 +397,21 @@ preprocessor::_expand(_preprocessor_impl::_expansion_state &state,
   if (tok.is_id()) {
     // Check for the predefined macros first.
     if (tok.get_value() == "__FILE__") {
-      state.last_ws = false;
       return pp_token(pp_token::type::str,
 		tok.get_file_range().get_header_inclusion_node().get_filename(),
 		tok.get_file_range(), used_macros(),
 		std::move(tok.used_macros()), tok.used_macro_undefs());
     } else if (tok.get_value() == "__LINE__") {
       auto line = tok.get_file_range().get_start_line();
-      state.last_ws = false;
       return pp_token(pp_token::type::pp_number, std::to_string(line),
 		      tok.get_file_range(), used_macros(),
 		      std::move(tok.used_macros()), tok.used_macro_undefs());
     } else if (tok.get_value() == "__INCLUDE_LEVEL__") {
-      state.last_ws = false;
       return pp_token(pp_token::type::pp_number,
 		      std::to_string(_tokenizers.size() - 1),
 		      tok.get_file_range(), used_macros(),
 		      std::move(tok.used_macros()), tok.used_macro_undefs());
     } else if (tok.get_value() == "__COUNTER__") {
-      state.last_ws = false;
       return pp_token(pp_token::type::pp_number, std::to_string(__counter__++),
 		      tok.get_file_range(), used_macros(),
 		      std::move(tok.used_macros()), tok.used_macro_undefs());
@@ -429,31 +425,14 @@ preprocessor::_expand(_preprocessor_impl::_expansion_state &state,
 	goto read_next;
       } else {
 	pp_token next_tok = read_tok();
-	bool last_ws = false;
-	while (true) {
-	  if (next_tok.is_eof()) {
-	    state.pending_tokens.push(std::move(next_tok));
-	    state.last_ws = false;
-	    return tok;
-	  } else if (next_tok.is_ws()) {
-	    if (!last_ws) {
-	      state.pending_tokens.push(std::move(next_tok));
-	      last_ws = true;
-	    }
-	  } else if (next_tok.is_newline()) {
-	      state.pending_tokens.push(std::move(next_tok));
-	      last_ws = false;
-	  } else if (next_tok.is_empty()) {
-	    state.pending_tokens.push(std::move(next_tok));
-	  } else {
-	    break;
-	  }
+	while (next_tok.is_ws() || next_tok.is_newline() ||
+	       next_tok.is_empty()) {
+	  state.pending_tokens.push(std::move(next_tok));
 	  next_tok = read_tok();
-	};
+	}
 
 	// Not a macro invocation?
 	if (!next_tok.is_punctuator("(")) {
-	  state.last_ws = false;
 	  state.pending_tokens.push(std::move(next_tok));
 	  return tok;
 	}
@@ -481,14 +460,6 @@ preprocessor::_expand(_preprocessor_impl::_expansion_state &state,
       if (it_m_undef != _macro_undefs.end())
 	tok.used_macro_undefs() += it_m_undef->second;
     }
-  }
-
-  if (tok.is_ws()) {
-      if (state.last_ws)
-	goto read_next;
-      state.last_ws = true;
-  } else if (!tok.is_empty()) {
-    state.last_ws = false;
   }
 
   return tok;
@@ -891,5 +862,4 @@ void preprocessor::_handle_include(pp_tokens &&directive_toks)
 
 
 _expansion_state::_expansion_state()
-  : last_ws(false)
 {}

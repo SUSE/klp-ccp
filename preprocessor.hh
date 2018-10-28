@@ -29,7 +29,6 @@ namespace suse
 
 	std::vector<macro::instance> macro_instances;
 	std::queue<pp_token> pending_tokens;
-	bool last_ws;
       };
     }
 
