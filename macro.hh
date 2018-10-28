@@ -68,7 +68,6 @@ namespace suse
 	std::unique_ptr<pp_token> _concat_token;
 	bool _in_concat;
 
-	bool _last_ws;
 	bool _anything_emitted;
       };
 
