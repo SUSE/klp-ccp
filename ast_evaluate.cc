@@ -4352,27 +4352,27 @@ void expr_binop::_evaluate_cmp(const types::arithmetic_type &at_left,
 	 bool result;
 	 switch (_op) {
 	 case binary_op::eq:
-	      result = (f_left == f_left);
+	      result = (f_left == f_right);
 	      break;
 
 	    case binary_op::neq:
-	      result = (f_left != f_left);
+	      result = (f_left != f_right);
 	      break;
 
 	    case binary_op::lt:
-	      result = (f_left < f_left);
+	      result = (f_left < f_right);
 	      break;
 
 	    case binary_op::gt:
-	      result = (f_left > f_left);
+	      result = (f_left > f_right);
 	      break;
 
 	    case binary_op::leq:
-	      result = (f_left <= f_left);
+	      result = (f_left <= f_right);
 	      break;
 
 	    case binary_op::geq:
-	      result = (f_left >= f_left);
+	      result = (f_left >= f_right);
 	      break;
 	    };
 
@@ -4393,27 +4393,27 @@ void expr_binop::_evaluate_cmp(const types::arithmetic_type &at_left,
 	    bool result;
 	    switch (_op) {
 	    case binary_op::eq:
-	      result = (i_left == i_left);
+	      result = (i_left == i_right);
 	      break;
 
 	    case binary_op::neq:
-	      result = (i_left != i_left);
+	      result = (i_left != i_right);
 	      break;
 
 	    case binary_op::lt:
-	      result = (i_left < i_left);
+	      result = (i_left < i_right);
 	      break;
 
 	    case binary_op::gt:
-	      result = (i_left > i_left);
+	      result = (i_left > i_right);
 	      break;
 
 	    case binary_op::leq:
-	      result = (i_left <= i_left);
+	      result = (i_left <= i_right);
 	      break;
 
 	    case binary_op::geq:
-	      result = (i_left >= i_left);
+	      result = (i_left >= i_right);
 	      break;
 	    };
 

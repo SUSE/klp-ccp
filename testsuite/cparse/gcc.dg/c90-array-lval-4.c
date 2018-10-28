@@ -24,3 +24,5 @@ ASSERT (r2, sizeof ((a = b).c) == 17);
 ASSERT (s0, sizeof (0, (d ? b : c).c) == 17); /* { dg-bogus "array" "bad non-lvalue array handling" } */
 ASSERT (s0, sizeof (0, (d, b).c) == 17); /* { dg-bogus "array" "bad non-lvalue array handling" } */
 ASSERT (s0, sizeof (0, (a = b).c) == 17); /* { dg-bogus "array" "bad non-lvalue array handling" } */
+
+/* cp-out: error: [^:]*: line 24, columns 0-44: array size expression is negative */

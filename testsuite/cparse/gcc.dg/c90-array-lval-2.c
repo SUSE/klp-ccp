@@ -18,3 +18,5 @@ ASSERT (r, sizeof ((foo ()).c) == 17);
    has (non-lvalue) array type.
 */
 ASSERT (s, sizeof (0, (foo ()).c) == 17); /* { dg-bogus "array" "bad non-lvalue array handling" } */
+
+/* cp-out: error: [^:]*: line 20, columns 0-40: array size expression is negative */
