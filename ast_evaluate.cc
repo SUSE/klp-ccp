@@ -1398,6 +1398,28 @@ void ast_translation_unit::evaluate(const architecture &arch)
   ev();
 }
 
+
+bool ast_pp_expr::evaluate(const architecture &arch)
+{
+  _evaluator ev(*this, *_e, arch);
+  ev();
+
+  if (!_e->is_constexpr() ||
+      !(_e->get_constexpr_value().has_constness
+	(constexpr_value::constness::c_integer_constant_expr))) {
+    const pp_token &tok = get_pp_tokens()[_e->get_tokens_range().begin];
+    code_remark remark
+      (code_remark::severity::fatal,
+       "preprocesser conditional is not an integer constant expression",
+       tok.get_file_range());
+    get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  return !_e->get_constexpr_value().is_zero();
+}
+
+
 void suse::cp::ast::specifier_qualifier_list::
 evaluate_type(ast &a, const architecture &arch)
 {

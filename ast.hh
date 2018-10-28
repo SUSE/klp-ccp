@@ -4224,7 +4224,21 @@ namespace suse
 
 	header_inclusion_roots_type _hirs;
 	std::unique_ptr<translation_unit> _tu;
+      };
 
+      class ast_pp_expr final : public ast
+      {
+      public:
+	ast_pp_expr(pp_tokens &&tokens, std::unique_ptr<expr> &&e);
+
+	ast_pp_expr(ast_pp_expr &&a);
+
+	virtual ~ast_pp_expr() noexcept override;
+
+	bool evaluate(const architecture &arch);
+
+      private:
+	std::unique_ptr<expr> _e;
       };
     }
   }

@@ -7347,3 +7347,14 @@ ast_translation_unit::ast_translation_unit(ast_translation_unit &&a)
 {}
 
 ast_translation_unit::~ast_translation_unit() noexcept = default;
+
+
+ast_pp_expr::ast_pp_expr(pp_tokens &&tokens, std::unique_ptr<expr> &&e)
+  : ast(std::move(tokens)), _e(std::move(e))
+{}
+
+ast_pp_expr::ast_pp_expr(ast_pp_expr &&a)
+  : ast(std::move(a)), _e(std::move(a._e))
+{}
+
+ast_pp_expr::~ast_pp_expr() noexcept = default;
