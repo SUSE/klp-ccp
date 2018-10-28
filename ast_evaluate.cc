@@ -2567,7 +2567,16 @@ void struct_declarator::evaluate_type(ast &a, const architecture &arch)
     throw semantic_except(remark);
   }
 
-  _set_type(bitfield_type::create(std::move(ri_t), width));
+  std::shared_ptr<const bitfield_type> bft =
+    bitfield_type::create(std::move(ri_t), width);
+
+  if (align.second)
+    bft = bft->set_packed();
+
+  if (align.first.is_set())
+    bft = bft->set_user_alignment(align.first);
+
+  _set_type(std::move(bft));
 }
 
 types::struct_or_union_content struct_declaration_list::
