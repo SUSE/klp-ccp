@@ -64,7 +64,7 @@ bool stmt_compound::is_local_label(const ast &ast,
 }
 
 
-void suse::cp::ast::ast::_register_labels()
+void ast_translation_unit::_register_labels()
 {
   auto &&stmt_labeled_handler
     = (wrap_callables<default_action_nop>
@@ -82,10 +82,11 @@ void suse::cp::ast::ast::_register_labels()
 		registrar = &sc;
 
 		if (sc.lookup_label(*this, label_tok)) {
-		  code_remark remark(code_remark::severity::fatal,
-				     "label redefined",
-				     _tokens[label_tok].get_file_range());
-		  _remarks.add(remark);
+		  code_remark remark
+		    (code_remark::severity::fatal,
+		     "label redefined",
+		     get_pp_tokens()[label_tok].get_file_range());
+		  get_remarks().add(remark);
 		  throw semantic_except(remark);
 		}
 
@@ -140,7 +141,7 @@ namespace
   class _id_resolver
   {
   public:
-    _id_resolver(suse::cp::ast::ast &ast);
+    _id_resolver(ast_translation_unit &ast);
 
     void operator()();
 
@@ -188,7 +189,7 @@ namespace
     void _resolve_id(expr_label_addr &ela);
     void _resolve_id(type_specifier_tdid &ts_tdid);
 
-    suse::cp::ast::ast &_ast;
+    ast_translation_unit &_ast;
 
     struct _scope
     {
@@ -203,10 +204,9 @@ namespace
     std::vector<std::reference_wrapper<init_declarator> >
       _pending_linkages;
   };
-
 }
 
-_id_resolver::_id_resolver(suse::cp::ast::ast &ast)
+_id_resolver::_id_resolver(ast_translation_unit &ast)
   : _ast(ast)
 {
   _enter_scope();
@@ -1466,13 +1466,13 @@ void _id_resolver::_resolve_id(type_specifier_tdid &ts_tdid)
 
 
 
-void suse::cp::ast::ast::_resolve_ids()
+void ast_translation_unit::_resolve_ids()
 {
   _id_resolver ir(*this);
   ir();
 }
 
-void suse::cp::ast::ast::resolve()
+void ast_translation_unit::resolve()
 {
   _register_labels();
   _resolve_ids();

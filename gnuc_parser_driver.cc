@@ -166,13 +166,13 @@ void gnuc_parser_driver::parse_debug()
 }
 #endif
 
-ast gnuc_parser_driver::grab_result()
+ast_translation_unit gnuc_parser_driver::grab_result()
 {
   std::unique_ptr<translation_unit> tu(_result);
   _result = nullptr;
 
-  return ast::ast(_pp.grab_header_inclusion_roots(),
-		  std::move(_tokens), std::move(tu));
+  return ast_translation_unit(_pp.grab_header_inclusion_roots(),
+			      std::move(_tokens), std::move(tu));
 }
 
 gnuc_parser::token_type

@@ -102,7 +102,7 @@ namespace suse
 	_ast_entity *_parent;
 
       private:
-	friend class ast;
+	friend class ast_translation_unit;
 
 	template<typename derived>
 	friend class ast_entity;
@@ -4172,11 +4172,36 @@ namespace suse
       class ast
       {
       public:
+	ast(pp_tokens &&tokens);
+
+	ast(ast &&a);
+
+	virtual ~ast() noexcept = 0;
+
+	const pp_tokens& get_pp_tokens() const noexcept
+	{ return _tokens; }
+
+	code_remarks& get_remarks() noexcept
+	{ return _remarks; }
+
+      private:
+	pp_tokens _tokens;
+	code_remarks _remarks;
+      };
+
+      class ast_translation_unit final : public ast
+      {
+      public:
 	typedef std::vector<std::unique_ptr<header_inclusion_root> >
 	header_inclusion_roots_type;
 
-	ast(header_inclusion_roots_type &&hirs, pp_tokens &&tokens,
-	    std::unique_ptr<translation_unit> &&tu);
+	ast_translation_unit(header_inclusion_roots_type &&hirs,
+			     pp_tokens &&tokens,
+			     std::unique_ptr<translation_unit> &&tu);
+
+	ast_translation_unit(ast_translation_unit &&a);
+
+	virtual ~ast_translation_unit() noexcept override;
 
 	template <typename handled_types, typename callables_wrapper_type>
 	void for_each_dfs_po(callables_wrapper_type &&c);
@@ -4188,15 +4213,9 @@ namespace suse
 	void for_each_dfs_pre_and_po(callables_wrapper_type_pre &&c_pre,
 				     callables_wrapper_type_post &&c_post);
 
-	const pp_tokens& get_pp_tokens() const noexcept
-	{ return _tokens; }
-
 	void resolve();
 
 	void evaluate(const architecture &arch);
-
-	code_remarks& get_remarks() noexcept
-	{ return _remarks; }
 
       private:
 	void _register_labels();
@@ -4204,10 +4223,8 @@ namespace suse
 	void _resolve_ids();
 
 	header_inclusion_roots_type _hirs;
-	pp_tokens _tokens;
 	std::unique_ptr<translation_unit> _tu;
 
-	code_remarks _remarks;
       };
     }
   }

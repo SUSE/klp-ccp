@@ -7324,8 +7324,26 @@ bool translation_unit::_process(const_processor<bool> &p) const
 }
 
 
-ast::ast(header_inclusion_roots_type &&hirs, pp_tokens &&tokens,
-	 std::unique_ptr<translation_unit> &&tu)
-  : _hirs(std::move(hirs)), _tokens(std::move(tokens)),
+ast::ast(pp_tokens &&tokens)
+  : _tokens(std::move(tokens))
+{}
+
+ast::ast(ast &&a)
+  : _tokens(std::move(a._tokens))
+{}
+
+ast::~ast() noexcept = default;
+
+
+ast_translation_unit::
+ast_translation_unit(header_inclusion_roots_type &&hirs, pp_tokens &&tokens,
+		     std::unique_ptr<translation_unit> &&tu)
+  : ast(std::move(tokens)), _hirs(std::move(hirs)),
     _tu(std::move(tu))
 {}
+
+ast_translation_unit::ast_translation_unit(ast_translation_unit &&a)
+  : ast(std::move(a)), _hirs(std::move(a._hirs)), _tu(std::move(a._tu))
+{}
+
+ast_translation_unit::~ast_translation_unit() noexcept = default;

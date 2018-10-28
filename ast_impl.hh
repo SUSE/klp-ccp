@@ -400,7 +400,7 @@ namespace suse
 
 
       template <typename handled_types, typename callables_wrapper_type>
-      void ast::for_each_dfs_po(callables_wrapper_type &&c)
+      void ast_translation_unit::for_each_dfs_po(callables_wrapper_type &&c)
       {
 	static_assert((handled_types::size() ==
 		       (std::remove_reference<callables_wrapper_type>::type::
@@ -428,8 +428,9 @@ namespace suse
 		typename handled_types_post,
 		typename callables_wrapper_type_pre,
 		typename callables_wrapper_type_post>
-      void ast::for_each_dfs_pre_and_po(callables_wrapper_type_pre &&c_pre,
-					callables_wrapper_type_post &&c_post)
+      void ast_translation_unit::
+      for_each_dfs_pre_and_po(callables_wrapper_type_pre &&c_pre,
+			      callables_wrapper_type_post &&c_post)
       {
 	if (!_tu)
 	  return;

@@ -35,7 +35,7 @@ namespace suse
 	{ return _remarks; }
 
 
-	ast::ast grab_result();
+	ast::ast_translation_unit grab_result();
 
       private:
 	suse::cp::yy::gnuc_parser::token_type

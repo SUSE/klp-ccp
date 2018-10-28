@@ -1392,7 +1392,7 @@ apply_to_type(std::shared_ptr<const addressable_type> &&orig_t)
 
 
 
-void suse::cp::ast::ast::evaluate(const architecture &arch)
+void ast_translation_unit::evaluate(const architecture &arch)
 {
   _evaluator ev(*this, *_tu, arch);
   ev();
