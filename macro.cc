@@ -31,7 +31,6 @@ macro::instance::instance(const std::shared_ptr<const macro> &macro,
   for (auto arg_name : _macro->_arg_names) {
     assert(_macro->shall_expand_arg(i) || exp_arg_it->empty());
     ++i;
-    exp_arg_it->normalize_ws();
     _args.insert(std::make_pair(arg_name,
 				std::make_pair(std::move(*arg_it++),
 					       std::move(*exp_arg_it++))));
@@ -144,45 +143,17 @@ pp_token macro::instance::read_next_token()
   // Finally, after the list of replacement tokens has been exhausted,
   // a final pp_token::type::eof marker is returned.
   //
-  //
-  // Any pp_tokens sequence from the arguments must be in normalized
-  // form as follows:
-  // - For the non-expanded argument value, which is used for
-  //   stringifications and concatenations, there must not be
-  //   - any empty token,
-  //   - multiple consecutive whitespace tokens or
-  //   - any leading or trailing whitespace.
+  // For the non-expanded argument values, which are used in
+  // concatenations and stringifications, the associated pp_tokens
+  // sequence must not contain any
+  // - empty token,
+  // - multiple consecutive whitespace tokens or
+  // - leading or trailing whitespace.
   // - For the expanded argument value, there must not be
   //   - any sequence of empties and whitespace tokens with more
   //     than one whitespace token in it,
   //   - any leading or trailing whitespace token that doesn't have
   //     any empty token next to it.
-  //
-  // The rules w.r.t. leading/trailing whitespace are so, in order to
-  // allow for the macro expansion results as in the examples
-  // below. Consider
-  //
-  //   #define a
-  //   #define b
-  //
-  //   #define __str(x) #x
-  //   #define str(x) __str(x)
-  //   #define id(x) x
-  //
-  // Then
-  //   __str( : ) -> ":"
-  //   str(a : b) -> __str(<empty> : <empty>) -> ":"
-  // i.e. leading and trailing spaces get discared from
-  // non-expanded macro arguments, independent of the presence of empties.
-  //
-  // Compare this to the behaviour with expanded macro arguments:
-  //   |id( : )| -> |:|
-  // i.e. leading and trailing space not delimited by empties gets
-  // discarded from expanded arguments, just as it is the case with
-  // the non-expanded arguments. OTOH, for expanded arguments with
-  // leading/trailing whitespace which is delimited by "outer"
-  // empties, the whitespace is retained:
-  //   |id(a : b)| -> |<empty> : <empty>| -> | : |
   //
   if (_concat_token) {
     // The previous run assembled a concatenated token, detected that
@@ -282,7 +253,8 @@ pp_token macro::instance::read_next_token()
 	++_it_repl;
       }
 
-      _anything_emitted = _anything_emitted || !tok.is_ws();
+      assert(!tok.is_ws() || _anything_emitted);
+      _anything_emitted = true;
       return tok;
     }
   }
@@ -384,7 +356,7 @@ pp_token macro::instance::read_next_token()
   }
 
   // All the cases below will emit something.
-  _anything_emitted = _anything_emitted || !_it_repl->is_ws();
+  _anything_emitted = true;
 
   if (_macro->_is_stringification(_it_repl)) {
     return _handle_stringification();

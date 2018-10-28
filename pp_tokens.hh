@@ -102,8 +102,6 @@ namespace suse
 
       std::string stringify(const bool as_string) const;
 
-      void normalize_ws();
-
     private:
       _pp_tokens_type _tokens;
     };
