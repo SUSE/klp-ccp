@@ -618,7 +618,7 @@ namespace suse
 	void _evaluate_bin_binop(const types::int_type &it_left,
 				 const types::int_type &it_right,
 				 ast &a, const architecture &arch);
-	void _evaluate_logical_binop(const architecture &arch);
+	void _evaluate_logical_binop(const ast &a, const architecture &arch);
 
 	void _evaluate_cmp(const types::pointer_type &pt_left,
 			   const types::pointer_type &pt_right,
@@ -4172,7 +4172,7 @@ namespace suse
       class ast
       {
       public:
-	ast(pp_tokens &&tokens);
+	ast(pp_tokens &&tokens, const bool is_pp_expr);
 
 	ast(ast &&a);
 
@@ -4184,9 +4184,13 @@ namespace suse
 	code_remarks& get_remarks() noexcept
 	{ return _remarks; }
 
+	bool is_pp_expr() const noexcept
+	{ return _is_pp_expr; }
+
       private:
 	pp_tokens _tokens;
 	code_remarks _remarks;
+	bool _is_pp_expr;
       };
 
       class ast_translation_unit final : public ast

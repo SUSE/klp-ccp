@@ -7324,12 +7324,12 @@ bool translation_unit::_process(const_processor<bool> &p) const
 }
 
 
-ast::ast(pp_tokens &&tokens)
-  : _tokens(std::move(tokens))
+ast::ast(pp_tokens &&tokens, const bool is_pp_expr)
+  : _tokens(std::move(tokens)), _is_pp_expr(is_pp_expr)
 {}
 
 ast::ast(ast &&a)
-  : _tokens(std::move(a._tokens))
+  : _tokens(std::move(a._tokens)), _is_pp_expr(a._is_pp_expr)
 {}
 
 ast::~ast() noexcept = default;
@@ -7338,7 +7338,7 @@ ast::~ast() noexcept = default;
 ast_translation_unit::
 ast_translation_unit(header_inclusion_roots_type &&hirs, pp_tokens &&tokens,
 		     std::unique_ptr<translation_unit> &&tu)
-  : ast(std::move(tokens)), _hirs(std::move(hirs)),
+  : ast(std::move(tokens), false), _hirs(std::move(hirs)),
     _tu(std::move(tu))
 {}
 
@@ -7350,7 +7350,7 @@ ast_translation_unit::~ast_translation_unit() noexcept = default;
 
 
 ast_pp_expr::ast_pp_expr(pp_tokens &&tokens, std::unique_ptr<expr> &&e)
-  : ast(std::move(tokens)), _e(std::move(e))
+  : ast(std::move(tokens), true), _e(std::move(e))
 {}
 
 ast_pp_expr::ast_pp_expr(ast_pp_expr &&a)

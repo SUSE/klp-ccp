@@ -3952,10 +3952,13 @@ void expr_binop::_evaluate_bin_binop(const types::int_type &it_left,
       }
 }
 
-void expr_binop::_evaluate_logical_binop(const architecture &arch)
+void expr_binop::_evaluate_logical_binop(const ast &a, const architecture &arch)
 {
   const std::shared_ptr<const std_int_type> it_result
-    = std_int_type::create(std_int_type::kind::k_int, true);
+    = std_int_type::create((!a.is_pp_expr() ?
+			    std_int_type::kind::k_int :
+			    arch.get_int_max_kind()),
+			   true);
 
   if (_left.is_constexpr()) {
     const constexpr_value &cv_left = _left.get_constexpr_value();
@@ -4350,7 +4353,10 @@ void expr_binop::_evaluate_cmp(const types::arithmetic_type &at_left,
 			       ast &a, const architecture &arch)
 {
   const std::shared_ptr<const std_int_type> it_result
-    = std_int_type::create(std_int_type::kind::k_int, true);
+    = std_int_type::create((!a.is_pp_expr() ?
+			    std_int_type::kind::k_int :
+			    arch.get_int_max_kind()),
+			   true);
   _set_type(it_result);
 
   if (!(_left.is_constexpr() && _right.is_constexpr()))
@@ -4636,7 +4642,7 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
       throw semantic_except(remark);
     }
 
-    _evaluate_logical_binop(arch);
+    _evaluate_logical_binop(a, arch);
 
     break;
 
@@ -5186,7 +5192,10 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
 
     {
       const std::shared_ptr<const std_int_type> it_result
-	= std_int_type::create(std_int_type::kind::k_int, true);
+	= std_int_type::create((!a.is_pp_expr() ?
+				std_int_type::kind::k_int :
+				arch.get_int_max_kind()),
+			       true);
 
       if (_e.is_constexpr()) {
 	const constexpr_value &cv = _e.get_constexpr_value();
@@ -6179,13 +6188,16 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
       // implementation defined, c.f. the GNU cpp manual, sec. 11.1
       // "Implementation defined behavior.
       mpa::limbs value;
+      const std_int_type::kind target_int_kind
+	= !a.is_pp_expr() ? std_int_type::kind::k_int : arch.get_int_max_kind();
       const mpa::limbs::size_type target_int_width =
-	arch.get_std_int_width(types::std_int_type::kind::k_int);
+	arch.get_std_int_width(target_int_kind);
       if (encoded.size() == 1) {
 	value = encoded[0];
 	value.resize(mpa::limbs::width_to_size(target_int_width));
 	if (target_char_is_signed) {
 	  // Propagate sign bit to high.
+	  assert(target_char_width <= target_int_width);
 	  value.set_bits_at_and_above(target_char_width,
 				      value.test_bit(target_char_width - 1));
 	}
@@ -6216,8 +6228,7 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
 		   target_int(target_int_width - 1, true, std::move(value)));
       }
 
-      _set_type(types::std_int_type::create(types::std_int_type::kind::k_int,
-					    true));
+      _set_type(types::std_int_type::create(target_int_kind, true));
       return;
 
     } else {
@@ -6230,18 +6241,26 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
 	  throw semantic_except(remark);
       }
 
+      std_int_type::kind target_int_kind = target_char_kind;
+      mpa::limbs::size_type target_int_width = target_char_width;
+      if (a.is_pp_expr()) {
+	target_int_kind = arch.get_int_max_kind();
+	target_int_width = arch.get_std_int_width(target_char_kind);
+      }
+
       mpa::limbs value = encoded[0];
-      value.resize(mpa::limbs::width_to_size(target_char_width));
+      value.resize(mpa::limbs::width_to_size(target_int_width));
       if (target_char_is_signed) {
 	// Propagate sign to high.
+	assert(target_char_width <= target_int_width);
 	value.set_bits_at_and_above(target_char_width,
 				    value.test_bit(target_char_width - 1));
       }
 
       _set_value(constexpr_value::integer_constant_expr_tag{},
-		 target_int(target_char_width - target_char_is_signed,
+		 target_int(target_int_width - target_char_is_signed,
 			    target_char_is_signed, std::move(value)));
-      _set_type(types::std_int_type::create(target_char_kind,
+      _set_type(types::std_int_type::create(target_int_kind,
 					    target_char_is_signed));
       return;
     }
@@ -6311,6 +6330,14 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
 
   if (it_dot != val.end() || it_flt_exp != val.end()) {
     // Floating point constant
+    if (a.is_pp_expr()) {
+      code_remark remark(code_remark::severity::fatal,
+			 "floating point constant in preprocessor expression",
+			 val_tok.get_file_range());
+      a.get_remarks().add(remark);
+      throw semantic_except(remark);
+    }
+
     if (b == base::hex && it_flt_exp == val.end()) {
       code_remark remark(code_remark::severity::fatal,
 			 "hexadecimal floating constant requires exponent",
@@ -6559,6 +6586,9 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
     if (last)
       break;
   }
+
+  if (a.is_pp_expr())
+    k = arch.get_int_max_kind();
 
   if (val_begin == it_int_suffix) {
     code_remark remark
