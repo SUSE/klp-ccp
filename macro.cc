@@ -31,7 +31,6 @@ macro::instance::instance(const std::shared_ptr<const macro> &macro,
   for (auto arg_name : _macro->_arg_names) {
     assert(_macro->shall_expand_arg(i) || exp_arg_it->empty());
     ++i;
-    arg_it->normalize_ws();
     exp_arg_it->normalize_ws();
     _args.insert(std::make_pair(arg_name,
 				std::make_pair(std::move(*arg_it++),

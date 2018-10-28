@@ -588,53 +588,100 @@ preprocessor::_create_macro_arg(const std::function<pp_token()> &token_reader,
   std::size_t lparens = 0;
   pp_token end_delim(pp_token::type::eof, std::string(), file_range());
 
-  bool last_ws = false;
+  pp_token pending_tok(pp_token::type::eof, std::string(), file_range());
+  bool pending_tok_valid = false;
+
+  bool leading_ws = true; // Strip leading whitespace.
   auto read_arg_tok = [&]() {
-  skip_ws_or_empty:
-    auto tok = token_reader();
+    pp_token tok =
+      [&]() {
+	if (!pending_tok_valid || pending_tok.is_ws()) {
+	  while (true) {
+	    pp_token tok = token_reader();
 
-    if (tok.is_eof()) {
-      code_remark remark(code_remark::severity::fatal,
-			 "no closing right parenthesis in macro invocation",
-			 tok.get_file_range());
-      _remarks.add(remark);
-      throw pp_except(remark);
-    }
+	    used_macros_base += tok.used_macros();
+	    tok.used_macros().clear();
+	    used_macro_undefs_base += tok.used_macro_undefs();
+	    tok.used_macro_undefs().clear();
 
-    used_macros_base += tok.used_macros();
-    tok.used_macros().clear();
-    used_macro_undefs_base += tok.used_macro_undefs();
-    tok.used_macro_undefs().clear();
+	    if (tok.is_empty())
+	      continue;
 
-    if (tok.is_empty())
-      goto skip_ws_or_empty;
+	    if (tok.is_eof()) {
+	      code_remark remark
+		(code_remark::severity::fatal,
+		 "no closing right parenthesis in macro invocation",
+		 tok.get_file_range());
+	      _remarks.add(remark);
+	      throw pp_except(remark);
+	    }
 
-    if (!lparens &&
-	((!variadic && tok.is_punctuator(",")) || tok.is_punctuator(")"))) {
-      end_delim = std::move(tok);
-      return pp_token(pp_token::type::eof, std::string(),
-		      end_delim.get_file_range());
-    }
+	    // Turn all whitespace into single spaces.
+	    if (tok.is_newline()) {
+	      tok.set_type_and_value(pp_token::type::ws, " ");
+	    } else if (tok.is_ws() && tok.get_value().size() > 1) {
+	      tok.set_type_and_value(pp_token::type::ws, " ");
+	    }
 
-    if (tok.is_punctuator("("))
+	    if (pending_tok_valid && tok.is_ws()) {
+	      assert(pending_tok.is_ws());
+	      // Skip multiple consecutive whitespace.
+	      continue;
+
+	    } else if (leading_ws && tok.is_ws()) {
+	      // Drop leading whitespace.
+	      assert(!pending_tok_valid);
+	      continue;
+
+	    } else if (tok.is_ws()) {
+	      // Queue pending whitespace and examine next token.
+	      assert(!pending_tok_valid);
+	      pending_tok = std::move(tok);
+	      pending_tok_valid = true;
+	      continue;
+
+	    } else if (!lparens &&
+		       ((!variadic && tok.is_punctuator(",")) ||
+			tok.is_punctuator(")"))) {
+	      // End of macro argument. Skip queued whitespace.
+	      pending_tok_valid = false;
+	      end_delim = std::move(tok);
+	      return pp_token(pp_token::type::eof, std::string(),
+			      end_delim.get_file_range());
+
+	    } else if (pending_tok_valid) {
+	      // Return queued whitespace and queue next non-whitespace
+	      // token.
+	      assert(pending_tok.is_ws());
+	      std::swap(pending_tok, tok);
+	      return tok;
+
+	    } else {
+	      // No queued whitespace and current token also isn't
+	      // whitespace, return it.
+	      leading_ws = false;
+	      return tok;
+	    }
+	  }
+
+	} else {
+	  // Return queued non-whitespace token.
+	  leading_ws = false;
+	  pp_token tok = std::move(pending_tok);
+	  assert(!tok.is_ws() || tok.is_eof());
+	  pending_tok_valid = false;
+	  return tok;
+	}
+      }();
+
+    if (tok.is_punctuator("(")) {
       ++lparens;
-    else if (tok.is_punctuator(")"))
+    } else if (tok.is_punctuator(")")) {
       --lparens;
-    else if (tok.is_newline()) {
-      tok = pp_token(pp_token::type::ws, " ", tok.get_file_range());
-    } else if (tok.is_ws() && tok.get_value().size() > 1) {
-      tok.set_type_and_value(pp_token::type::ws, " ");
     }
 
-    if (tok.is_ws()) {
-      if (last_ws)
-	goto skip_ws_or_empty;
-      last_ws = true;
-    } else if (!tok.is_empty()) {
-      last_ws = false;
-    }
-
-    arg.push_back(tok);
+    if (!tok.is_eof())
+      arg.push_back(tok);
     return tok;
   };
 
