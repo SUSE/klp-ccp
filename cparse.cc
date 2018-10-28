@@ -73,7 +73,8 @@ int main(int argc, char* argv[])
   std::unique_ptr<header_inclusion_root> hir{
     new header_inclusion_root(argv[optind], false)};
   hirs.emplace_back(std::move(hir));
-  yy::gnuc_parser_driver pd(preprocessor{hirs, hr});
+  arch_gcc48_x86_64 arch;
+  yy::gnuc_parser_driver pd(preprocessor{hirs, hr, arch});
 
   try {
 #ifdef DEBUG_PARSER
@@ -85,6 +86,8 @@ int main(int argc, char* argv[])
     r = 2;
   } catch (const parse_except&) {
     r = 3;
+  } catch (const semantic_except&) {
+    r = 4;
   }
 
   if (!pd.get_remarks().empty())
@@ -92,11 +95,11 @@ int main(int argc, char* argv[])
   if (r)
     return r;
 
-  ast::ast ast(pd.grab_result());
+  ast::ast_translation_unit ast(pd.grab_result());
   try {
     ast.resolve();
   } catch (const semantic_except&) {
-    r = 4;
+    r = 5;
   }
   if (!ast.get_remarks().empty())
     std::cerr << ast.get_remarks();
@@ -104,11 +107,10 @@ int main(int argc, char* argv[])
   if (r)
     return r;
 
-  arch_gcc48_x86_64 arch;
   try {
     ast.evaluate(arch);
   } catch (const semantic_except&) {
-    r = 5;
+    r = 6;
   }
   if (!ast.get_remarks().empty())
     std::cerr << ast.get_remarks();

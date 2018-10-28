@@ -62,12 +62,13 @@ namespace suse
       size_type size() const noexcept
       { return _tokens.size(); }
 
-      const value_type&
-      front() const noexcept
+      const value_type& front() const noexcept
       { return _tokens.front(); }
 
-      const value_type&
-      back() const noexcept
+      const value_type& back() const noexcept
+      { return _tokens.back(); }
+
+      value_type& back() noexcept
       { return _tokens.back(); }
 
       template<typename... Targs>

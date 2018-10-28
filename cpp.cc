@@ -2,6 +2,9 @@
 #include "inclusion_tree.hh"
 #include "preprocessor.hh"
 #include "pp_except.hh"
+#include "parse_except.hh"
+#include "semantic_except.hh"
+#include "arch_gcc48_x86_64.hh"
 
 using namespace suse::cp;
 
@@ -12,12 +15,13 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  header_resolver hr;
   std::unique_ptr<header_inclusion_root> hir{
     new header_inclusion_root(argv[1], false) };
   preprocessor::header_inclusion_roots_type hirs;
   hirs.emplace_back(std::move(hir));
-  preprocessor p(hirs, hr);
+  header_resolver hr;
+  arch_gcc48_x86_64 arch;
+  preprocessor p(hirs, hr, arch);
 
   while(true) {
     try {
@@ -35,6 +39,12 @@ int main(int argc, char* argv[])
     } catch (const pp_except&) {
 	std::cerr << p.get_remarks();
 	return 1;
+    } catch (const parse_except&) {
+      std::cerr << p.get_remarks();
+      return 2;
+    } catch (const semantic_except&) {
+      std::cerr << p.get_remarks();
+      return 3;
     }
   }
 

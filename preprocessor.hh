@@ -20,9 +20,22 @@ namespace suse
     class pp_tokenizer;
     class header_inclusion_root;
     class inclusion_node;
+    class conditional_inclusion_node;
+    class architecture;
 
     namespace _preprocessor_impl
     {
+      struct _cond_incl_state
+      {
+	_cond_incl_state(const file_range::loc_type _start_loc);
+
+	file_range::loc_type start_loc;
+	used_macros used_macros;
+	used_macro_undefs used_macro_undefs;
+	conditional_inclusion_node *incl_node;
+	bool branch_active;
+      };
+
       struct _expansion_state
       {
 	_expansion_state();
@@ -39,7 +52,8 @@ namespace suse
 	header_inclusion_roots_type;
 
       preprocessor(header_inclusion_roots_type &header_inclusion_roots,
-		   const header_resolver &header_resolver);
+		   const header_resolver &header_resolver,
+		   const architecture &arch);
 
       preprocessor(std::vector<header_inclusion_root*> &&roots);
 
@@ -57,12 +71,13 @@ namespace suse
       void _grab_remarks_from(T &from);
 
       pp_token _read_next_plain_token();
-
+      void _handle_eof_from_tokenizer(pp_token &&eof_tok);
       void _handle_pp_directive(pp_token &&sharp_tok);
 
       pp_token
       _expand(_preprocessor_impl::_expansion_state &state,
-	      const std::function<pp_token()> &token_reader);
+	      const std::function<pp_token()> &token_reader,
+	      const bool from_cond_incl_cond = false);
 
       macro::instance
       _handle_object_macro_invocation(const std::shared_ptr<const macro> &macro,
@@ -84,11 +99,25 @@ namespace suse
 
       void _handle_include(pp_tokens &&directive_toks);
 
+      bool _cond_incl_inactive() const noexcept;
+
+      bool _cur_incl_node_is_cond() const noexcept;
+
+      void _enter_cond_incl();
+
+      void _pop_cond_incl(const file_range::loc_type end_loc);
+
+      bool _eval_conditional_inclusion(pp_tokens &&directive_toks);
+
+
       const header_resolver &_header_resolver;
+      const architecture &_arch;
 
       header_inclusion_roots_type &_header_inclusion_roots;
       header_inclusion_roots_type::iterator _cur_header_inclusion_root;
       std::stack<std::reference_wrapper<inclusion_node> > _inclusions;
+      std::stack<_preprocessor_impl::_cond_incl_state> _cond_incl_states;
+      std::size_t _cond_incl_nesting;
 
       std::stack<pp_tokenizer> _tokenizers;
       _preprocessor_impl::_expansion_state _root_expansion_state;
@@ -98,6 +127,7 @@ namespace suse
       code_remarks _remarks;
 
       std::size_t __counter__;
+      pp_token _eof_tok;
       std::queue<pp_token> _pending_tokens;
       bool _maybe_pp_directive;
       bool _line_empty;

@@ -1,20 +1,26 @@
 #include <cassert>
 #include <functional>
 #include "preprocessor.hh"
+#include "architecture.hh"
 #include "pp_except.hh"
+#include "parse_except.hh"
+#include "semantic_except.hh"
 #include "macro_undef.hh"
 #include "inclusion_tree.hh"
 #include "path.hh"
+#include "pp_expr_parser_driver.hh"
 
 using namespace suse::cp;
 using namespace suse::cp::_preprocessor_impl;
 
 preprocessor::preprocessor(header_inclusion_roots_type &header_inclusion_roots,
-			   const header_resolver &header_resolver)
-  : _header_resolver(header_resolver),
+			   const header_resolver &header_resolver,
+			   const architecture &arch)
+  : _header_resolver(header_resolver), _arch(arch),
     _header_inclusion_roots(header_inclusion_roots),
     _cur_header_inclusion_root(_header_inclusion_roots.begin()),
-    _root_expansion_state(), __counter__(0),
+    _cond_incl_nesting(0), _root_expansion_state(), __counter__(0),
+    _eof_tok(pp_token::type::empty, "", file_range()),
     _maybe_pp_directive(true), _line_empty(true)
 {
   assert(!header_inclusion_roots.empty());
@@ -217,32 +223,29 @@ void preprocessor::_grab_remarks_from(T &from)
 pp_token preprocessor::_read_next_plain_token()
 {
  again:
+  // Has the final eof token been seen?
+  if (_eof_tok.get_type() != pp_token::type::empty)
+    return _eof_tok;
   assert(!_tokenizers.empty());
   try {
     auto tok = _tokenizers.top().read_next_token();
     _grab_remarks_from(_tokenizers.top());
 
     if (tok.is_eof()) {
-      _tokenizers.pop();
-      _inclusions.pop();
-      if (_tokenizers.empty()) {
-	if (++_cur_header_inclusion_root == _header_inclusion_roots.end())
-	  return tok;
-	_tokenizers.emplace(**_cur_header_inclusion_root);
-	_inclusions.emplace(std::ref(**_cur_header_inclusion_root));
-      }
+      _handle_eof_from_tokenizer(std::move(tok));
       _maybe_pp_directive = true;
       goto again;
     } else if (tok.is_newline()) {
       _maybe_pp_directive = true;
     } else if (_maybe_pp_directive && tok.is_punctuator("#")) {
-      _maybe_pp_directive = false;
       _handle_pp_directive(std::move(tok));
-      _maybe_pp_directive = true;
       goto again;
     } else if (!tok.is_ws()) {
       _maybe_pp_directive = false;
     }
+
+    if (_cond_incl_inactive())
+      goto again;
 
     return tok;
   } catch (const pp_except&) {
@@ -251,18 +254,86 @@ pp_token preprocessor::_read_next_plain_token()
   }
 }
 
-void
-preprocessor::_handle_pp_directive(pp_token &&sharp_tok)
+void preprocessor::_handle_eof_from_tokenizer(pp_token &&eof_tok)
+{
+  // If the topmost inclusion tree node is an (unfinished) conditional
+  // inclusion, that's an error.
+  if (_cur_incl_node_is_cond()) {
+    code_remark remark(code_remark::severity::fatal,
+		       "missing #endif at end of file",
+		       eof_tok.get_file_range());
+    _remarks.add(remark);
+    throw pp_except(remark);
+  }
+  _tokenizers.pop();
+  _inclusions.pop();
+
+  if (_tokenizers.empty()) {
+    if (++_cur_header_inclusion_root == _header_inclusion_roots.end()) {
+      _eof_tok = std::move(eof_tok);
+      return;
+    }
+
+    _tokenizers.emplace(**_cur_header_inclusion_root);
+    _inclusions.emplace(std::ref(**_cur_header_inclusion_root));
+  }
+}
+
+void preprocessor::_handle_pp_directive(pp_token &&sharp_tok)
 {
   pp_tokens directive_toks{1U, std::move(sharp_tok)};
-
+  bool endif_possible = true;
+  bool is_endif = false;
   while (true) {
-    auto tok = _read_next_plain_token();
-    directive_toks.push_back(std::move(tok));
+    assert(!_tokenizers.empty());
+    auto tok = _tokenizers.top().read_next_token();
+    _grab_remarks_from(_tokenizers.top());
 
-    if (tok.is_newline() || tok.is_eof())
+    if (tok.is_eof()) {
+      directive_toks.push_back(tok);
+      _handle_eof_from_tokenizer(std::move(tok));
       break;
+
+    } else if (tok.is_newline()) {
+      directive_toks.push_back(tok);
+      break;
+
+    } else if (endif_possible && tok.get_type() == pp_token::type::id &&
+	       tok.get_value() == "endif") {
+      // Be careful not to read until the end of line or end of file
+      // for #endif directives: _handle_eof_from_tokenizer() will
+      // throw an exception if there's some conditional inclusion
+      // pending.
+      is_endif = true;
+      endif_possible = false;
+
+      if (!_cur_incl_node_is_cond()) {
+	code_remark remark(code_remark::severity::fatal,
+			   "#endif without #if",
+			   tok.get_file_range());
+	_remarks.add(remark);
+	throw pp_except(remark);
+      }
+
+      if (_cond_incl_nesting == _cond_incl_states.size())
+	_pop_cond_incl(directive_toks.back().get_file_range().get_end_loc());
+      --_cond_incl_nesting;
+
+    } else if (!tok.is_ws()) {
+      endif_possible = false;
+      if (is_endif) {
+	code_remark remark(code_remark::severity::warning,
+			   "garbage after #endif",
+			   tok.get_file_range());
+	_remarks.add(remark);
+      }
+    }
+
+    directive_toks.push_back(std::move(tok));
   }
+
+  if (is_endif)
+    return;
 
   auto it_tok = directive_toks.cbegin() + 1;
   assert(it_tok != directive_toks.cend());
@@ -283,6 +354,107 @@ preprocessor::_handle_pp_directive(pp_token &&sharp_tok)
     _remarks.add(remark);
     throw pp_except(remark);
   }
+
+
+  // First, process conditional inclusion directives: those
+  // must be looked at even if within a non-taken branch of
+  // another conditional inclusion.
+  if (it_tok->get_value() == "if") {
+    ++_cond_incl_nesting;
+    if (_cond_incl_inactive())
+      return;
+
+    _cond_incl_states.emplace
+      (directive_toks.begin()->get_file_range().get_start_loc());
+
+    if (_eval_conditional_inclusion(std::move(directive_toks)))
+      _enter_cond_incl();
+
+  } else if (it_tok->get_value() == "ifdef") {
+    ++_cond_incl_nesting;
+    if (_cond_incl_inactive())
+      return;
+
+    ++it_tok;
+    if (it_tok->is_ws())
+      ++it_tok;
+
+    if (!it_tok->is_id()) {
+      code_remark remark(code_remark::severity::fatal,
+			 "identifier expected after #ifdef",
+			 it_tok->get_file_range());
+      _remarks.add(remark);
+      throw pp_except(remark);
+    }
+
+    _cond_incl_states.emplace
+      (directive_toks.begin()->get_file_range().get_start_loc());
+
+    auto it_m = _macros.find(it_tok->get_value());
+    if (it_m != _macros.end()) {
+      _cond_incl_states.top().used_macros += it_m->second;
+      _enter_cond_incl();
+    } else {
+      auto it_m_undef = _macro_undefs.find(it_tok->get_value());
+      if (it_m_undef != _macro_undefs.end())
+	_cond_incl_states.top().used_macro_undefs += it_m_undef->second;
+    }
+
+  } else if (it_tok->get_value() == "ifndef") {
+    ++_cond_incl_nesting;
+    if (_cond_incl_inactive())
+      return;
+
+    ++it_tok;
+    if (it_tok->is_ws())
+      ++it_tok;
+
+    if (!it_tok->is_id()) {
+      code_remark remark(code_remark::severity::fatal,
+			 "identifier expected after #ifndef",
+			 it_tok->get_file_range());
+      _remarks.add(remark);
+      throw pp_except(remark);
+    }
+
+    _cond_incl_states.emplace
+      (directive_toks.begin()->get_file_range().get_start_loc());
+
+    auto it_m = _macros.find(it_tok->get_value());
+    if (it_m != _macros.end()) {
+      _cond_incl_states.top().used_macros += it_m->second;
+    } else {
+      auto it_m_undef = _macro_undefs.find(it_tok->get_value());
+      if (it_m_undef != _macro_undefs.end())
+	_cond_incl_states.top().used_macro_undefs += it_m_undef->second;
+      _enter_cond_incl();
+    }
+
+  } else if (it_tok->get_value() == "elif") {
+    if (!_cur_incl_node_is_cond()) {
+      code_remark remark(code_remark::severity::fatal,
+			 "#elif without #if",
+			 it_tok->get_file_range());
+      _remarks.add(remark);
+      throw pp_except(remark);
+    }
+
+    if (_cond_incl_nesting > _cond_incl_states.size())
+      return;
+
+    if (!_cond_incl_states.top().incl_node) {
+      if (_eval_conditional_inclusion(std::move(directive_toks)))
+	_enter_cond_incl();
+    } else {
+      _cond_incl_states.top().branch_active = false;
+    }
+
+  }
+
+  // Look at the other directives only if they're not within a
+  // non-taken conditional inclusion branch.
+  if (_cond_incl_inactive())
+    return;
 
   if (it_tok->get_value() == "define") {
     ++it_tok;
@@ -355,14 +527,17 @@ preprocessor::_handle_pp_directive(pp_token &&sharp_tok)
 					  std::move(mu)));
       _macros.erase(it_m);
     }
+
   } else if (it_tok->get_value() == "include") {
     _handle_include(std::move(directive_toks));
+
   }
 }
 
 pp_token
 preprocessor::_expand(_preprocessor_impl::_expansion_state &state,
-		      const std::function<pp_token()> &token_reader)
+		      const std::function<pp_token()> &token_reader,
+		      const bool from_cond_incl_cond)
 {
   auto read_tok = [&]() {
     while (!state.macro_instances.empty()) {
@@ -459,6 +634,65 @@ preprocessor::_expand(_preprocessor_impl::_expansion_state &state,
       auto it_m_undef = _macro_undefs.find(tok.get_value());
       if (it_m_undef != _macro_undefs.end())
 	tok.used_macro_undefs() += it_m_undef->second;
+    }
+
+    if (from_cond_incl_cond && tok.get_value() == "defined") {
+      file_range invocation_range = tok.get_file_range();
+      used_macros um(std::move(tok.used_macros()));
+      used_macro_undefs umu(std::move(tok.used_macro_undefs()));
+      do {
+	tok = read_tok();
+	um += tok.used_macros();
+	umu += tok.used_macro_undefs();
+      } while (tok.is_ws() || tok.is_newline() || tok.is_empty());
+
+      // No opening parenthesis?
+      if (!tok.is_punctuator("(")) {
+	code_remark remark(code_remark::severity::fatal,
+			   "operator \"defined\" without arguments",
+			   invocation_range);
+	_remarks.add(remark);
+	throw pp_except(remark);
+      }
+
+      std::tuple<pp_tokens, pp_tokens, pp_token> arg
+	= _create_macro_arg(read_tok, false, false, um, umu);
+      const char arg_delim = std::get<2>(arg).get_value()[0];
+      if (arg_delim == ',') {
+	code_remark remark(code_remark::severity::fatal,
+			   "too many arguments to \"defined\" operator",
+			   invocation_range);
+	_remarks.add(remark);
+	throw pp_except(remark);
+      }
+      assert(arg_delim == ')');
+
+      if (std::get<0>(arg).size() != 1 ||
+	  std::get<0>(arg)[0].get_type() != pp_token::type::id) {
+	code_remark remark(code_remark::severity::fatal,
+			   "invalid argument to \"defined\" operator",
+			   invocation_range);
+	_remarks.add(remark);
+	throw pp_except(remark);
+      }
+
+      const std::string &id = std::get<0>(arg)[0].get_value();
+      bool is_defined = false;
+      auto it_m = _macros.find(id);
+      if (it_m != _macros.end()) {
+	um += it_m->second;
+	is_defined = true;
+      } else {
+	auto it_m_undef = _macro_undefs.find(id);
+	if (it_m_undef != _macro_undefs.end())
+	  umu += it_m_undef->second;
+      }
+
+      return pp_token(pp_token::type::pp_number,
+		      is_defined ? "1" : "0",
+		      file_range(invocation_range,
+				 std::get<2>(arg).get_file_range()),
+		      used_macros{}, std::move(um), std::move(umu));
     }
   }
 
@@ -859,6 +1093,131 @@ void preprocessor::_handle_include(pp_tokens &&directive_toks)
   _tokenizers.emplace(new_header_inclusion_node);
   _inclusions.emplace(std::ref(new_header_inclusion_node));
 }
+
+bool preprocessor::_cond_incl_inactive() const noexcept
+{
+  return !_cond_incl_states.empty() && !_cond_incl_states.top().branch_active;
+}
+
+bool preprocessor::_cur_incl_node_is_cond() const noexcept
+{
+  if (_cond_incl_states.empty())
+    return false;
+
+  // Is there some conditional inclusion pending from which neither any
+  // of its branches has evaluated to true yet?
+  if (!_cond_incl_states.top().incl_node)
+    return true;
+
+  return &_inclusions.top().get() == _cond_incl_states.top().incl_node;
+}
+
+void preprocessor::_enter_cond_incl()
+{
+  _preprocessor_impl::_cond_incl_state &cond_incl_state =
+    _cond_incl_states.top();
+  assert(!cond_incl_state.incl_node);
+
+  conditional_inclusion_node &new_conditional_inclusion_node =
+    (_inclusions.top().get().add_conditional_inclusion
+     (cond_incl_state.start_loc, std::move(cond_incl_state.used_macros),
+      std::move(cond_incl_state.used_macro_undefs)));
+
+  cond_incl_state.incl_node = &new_conditional_inclusion_node;
+  cond_incl_state.branch_active = true;
+  _inclusions.emplace(std::ref(new_conditional_inclusion_node));
+}
+
+void preprocessor::_pop_cond_incl(const file_range::loc_type end_loc)
+{
+  _preprocessor_impl::_cond_incl_state &cond_incl_state =
+    _cond_incl_states.top();
+
+  if (!cond_incl_state.incl_node) {
+    // None of the branches had been taken. Insert the conditional inclusion
+    // into the inclusion tree now.
+    conditional_inclusion_node &node
+      = (_inclusions.top().get().add_conditional_inclusion
+	 (cond_incl_state.start_loc, std::move(cond_incl_state.used_macros),
+	  std::move(cond_incl_state.used_macro_undefs)));
+    node.set_end_loc(end_loc);
+
+  } else {
+    cond_incl_state.incl_node->set_end_loc(end_loc);
+    assert(cond_incl_state.incl_node == &_inclusions.top().get());
+    _inclusions.pop();
+  }
+
+  _cond_incl_states.pop();
+}
+
+bool preprocessor::_eval_conditional_inclusion(pp_tokens &&directive_toks)
+{
+  auto it = directive_toks.begin() + 1;
+  if (it->is_ws())
+    ++it;
+  assert(it->get_type() == pp_token::type::id &&
+	 (it->get_value() == "if" || it->get_value() == "elif"));
+  ++it;
+
+  file_range eof_file_range
+    (directive_toks.back().get_file_range().get_inclusion_node(),
+     directive_toks.back().get_file_range().get_end_loc());
+
+  auto read_tok =
+    [&]() -> pp_token {
+      if (it == directive_toks.end())
+	return pp_token(pp_token::type::eof, std::string(), eof_file_range);
+
+      return std::move(*(it++));
+    };
+
+  _expansion_state state;
+  auto exp_read_tok =
+    [&]() -> pp_token {
+      auto tok = _expand(state, read_tok, true);
+
+      tok.expansion_history().clear();
+      _cond_incl_states.top().used_macros += tok.used_macros();
+      tok.used_macros().clear();
+      _cond_incl_states.top().used_macro_undefs += tok.used_macro_undefs();
+      tok.used_macro_undefs().clear();
+
+      return tok;
+    };
+
+  yy::pp_expr_parser_driver pd(exp_read_tok);
+  try {
+    pd.parse();
+  } catch (const pp_except&) {
+    _remarks += pd.get_remarks();
+    pd.get_remarks().clear();
+    throw;
+  } catch (const parse_except&) {
+    _remarks += pd.get_remarks();
+    pd.get_remarks().clear();
+    throw;
+  }
+
+  ast::ast_pp_expr a = pd.grab_result();
+  bool result;
+  try {
+    result = a.evaluate(_arch);
+  } catch (const semantic_except&) {
+    _remarks += a.get_remarks();
+    a.get_remarks().clear();
+    throw;
+  }
+  _remarks += a.get_remarks();
+  a.get_remarks().clear();
+
+  return result;
+}
+
+
+_cond_incl_state::_cond_incl_state(const file_range::loc_type _start_loc)
+  : start_loc(_start_loc), incl_node(nullptr), branch_active(false)
+{}
 
 
 _expansion_state::_expansion_state()

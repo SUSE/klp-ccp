@@ -28,10 +28,16 @@ namespace cp
 
       bool operator==(const file_range &rhs) const noexcept;
 
+      const inclusion_node& get_inclusion_node() const noexcept
+      { return *_inclusion_node; }
+
       const header_inclusion_node& get_header_inclusion_node() const noexcept;
 
       loc_type get_start_loc() const noexcept
       { return _start_loc; }
+
+      loc_type get_end_loc() const noexcept
+      { return _end_loc; }
 
       loc_type get_start_line() const noexcept;
 
