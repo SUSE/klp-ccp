@@ -29,6 +29,20 @@ inclusion_node::add_header_inclusion(const std::string &filename,
   return _new_child;
 }
 
+conditional_inclusion_node&
+inclusion_node::add_conditional_inclusion(const file_range::loc_type start_loc,
+					  used_macros &&used_macros,
+					  used_macro_undefs &&used_macro_undefs)
+{
+  std::unique_ptr<conditional_inclusion_node> new_child
+     (new conditional_inclusion_node(*this, start_loc,
+				     std::move(used_macros),
+				     std::move(used_macro_undefs)));
+  conditional_inclusion_node &_new_child = *new_child;
+  _children.push_back(std::move(new_child));
+  return _new_child;
+}
+
 
 header_inclusion_node::header_inclusion_node(const std::string &filename)
   : _filename(filename)
@@ -87,3 +101,28 @@ header_inclusion_child::header_inclusion_child(
 {}
 
 header_inclusion_child::~header_inclusion_child() noexcept = default;
+
+
+conditional_inclusion_node::
+conditional_inclusion_node(const inclusion_node &parent,
+			   const file_range::loc_type start_loc,
+			   used_macros &&used_macros,
+			   used_macro_undefs &&used_macro_undefs)
+  : inclusion_node(&parent), _start_loc(start_loc),
+    _used_macros(std::move(used_macros)),
+    _used_macro_undefs(std::move(used_macro_undefs))
+{}
+
+conditional_inclusion_node::~conditional_inclusion_node() = default;
+
+const header_inclusion_node&
+conditional_inclusion_node::get_containing_header() const noexcept
+{
+  return _parent->get_containing_header();
+}
+
+void conditional_inclusion_node::set_end_loc(const file_range::loc_type end_loc)
+  noexcept
+{
+  _end_loc = end_loc;
+}

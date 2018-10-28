@@ -16,8 +16,8 @@ namespace suse
     class source_reader;
 
     class header_inclusion_child;
-
     class header_inclusion_node;
+    class conditional_inclusion_node;
 
     class inclusion_node
     {
@@ -36,12 +36,18 @@ namespace suse
 			   used_macros &&used_macros,
 			   used_macro_undefs &&used_macro_undefs);
 
+      conditional_inclusion_node&
+      add_conditional_inclusion(const file_range::loc_type start_loc,
+				used_macros &&used_macros,
+				used_macro_undefs &&used_macro_undefs);
+
     protected:
       inclusion_node();
       inclusion_node(const inclusion_node * const parent);
 
-    private:
       const inclusion_node * const _parent;
+
+    private:
       std::vector<std::unique_ptr<inclusion_node> > _children;
     };
 
@@ -106,6 +112,28 @@ namespace suse
 			     used_macro_undefs &&used_macro_undefs);
 
       file_range _file_range;
+      used_macros _used_macros;
+      used_macro_undefs _used_macro_undefs;
+    };
+
+    class conditional_inclusion_node final : public inclusion_node
+    {
+    public:
+      conditional_inclusion_node(const inclusion_node &parent,
+				 const file_range::loc_type start_loc,
+				 used_macros &&used_macros,
+				 used_macro_undefs &&used_macro_undefs);
+
+      virtual ~conditional_inclusion_node();
+
+      virtual const header_inclusion_node&
+      get_containing_header() const noexcept override;
+
+      void set_end_loc(const file_range::loc_type end_loc) noexcept;
+
+    private:
+      const file_range::loc_type _start_loc;
+      file_range::loc_type _end_loc;
       used_macros _used_macros;
       used_macro_undefs _used_macro_undefs;
     };
