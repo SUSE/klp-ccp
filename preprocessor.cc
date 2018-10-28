@@ -27,32 +27,38 @@ pp_token preprocessor::read_next_token()
   // Basically, this is just a wrapper around _expand()
   // which removes or adds whitespace as needed:
   // - Whitespace at the end of lines gets removed.
-  // - Only the first out of a sequence of empty lines is kept.
+  // - Multiple whitespace tokens in a sequence of whitespace
+  //   and empty tokens get converted into empties.
+  // - Empty lines are removed.
   // - Whitespace gets inserted inbetween certain kind of tokens
   //   in order to guarantee idempotency of preprocessing.
   //
   // A queue of lookahead tokens is maintained in ::_pending_tokens.
   //
-  // By virtue of ::_expand(), there can't be any consecutive
-  // sequences of whitespace and empty tokens with more than one
-  // whitespace token. For simplicity, empty tokens after a
-  // whitespace one get moved in front of that.
-  //
-  // The following patters are possible for _pending_tokens at
-  // any time:
-  // - a single whitespace,
+  // The following patters are possible for _pending_tokens at each
+  // invocation:
+  // - a single whitespace + zero or more empties,
+  // - zero or more empties + end of line or eof,
   // - one or more empties + whitespace or
-  // - possibly one or more empties + (added whitespace) + something else.
-  assert(_pending_tokens.size() != 1 || !_pending_tokens.front().is_empty());
-  if (_pending_tokens.size() > 1 ||
-      (_pending_tokens.size() == 1 &&
-       (_pending_tokens.front().is_eof() ||
-	_pending_tokens.front().is_newline()))) {
-    auto tok = _pending_tokens.front();
-    if (tok.is_newline())
-      _line_empty = true;
+  // - zero or more empties + (added) whitespace + something else.
+  if (!_pending_tokens.empty() &&
+      (_pending_tokens.front().is_empty() ||
+       _pending_tokens.front().is_newline() ||
+       _pending_tokens.front().is_eof() ||
+       (_pending_tokens.size() > 1 &&
+	_pending_tokens.front().is_ws() &&
+	!_pending_tokens.back().is_empty()))) {
+    auto tok = std::move(_pending_tokens.front());
     _pending_tokens.pop();
-    return tok;
+    if (tok.is_newline()) {
+      assert(_pending_tokens.empty());
+      if (!_line_empty) {
+	_line_empty = true;
+	return tok;
+      }
+    } else {
+      return tok;
+    }
   }
 
  read_next:
@@ -60,20 +66,36 @@ pp_token preprocessor::read_next_token()
 			std::bind(&preprocessor::_read_next_plain_token, this));
   next_tok.expansion_history().clear();
 
-  if (_pending_tokens.size() == 1 && _pending_tokens.front().is_ws()) {
+  if (!_pending_tokens.empty() && _pending_tokens.front().is_ws()) {
     if (next_tok.is_newline() || next_tok.is_eof()) {
+      // Queued whitespace at end of line. Turn it into an empty.
+      _pending_tokens.front().set_type_and_value(pp_token::type::empty, "");
+      _pending_tokens.push(std::move(next_tok));
+      next_tok = std::move(_pending_tokens.front());
       _pending_tokens.pop();
-      if (_line_empty && next_tok.is_newline())
-	goto read_next;
-      _line_empty = true;
       return next_tok;
+
     } else if (next_tok.is_empty()) {
-      return next_tok;
+      _pending_tokens.push(std::move(next_tok));
+      goto read_next;
+
+    } else if (next_tok.is_ws()) {
+      // Sequence of multipe whitespace tokens, possibly intermixed
+      // with empties. Turn the current whitespace token into an empty.
+      next_tok.set_type_and_value(pp_token::type::empty, "");
+      _pending_tokens.push(std::move(next_tok));
+      goto read_next;
     }
-    assert(!next_tok.is_ws());
+
+    // Something which is not an EOF, newline, whitespace or empty
+    // token. Emit the pending whitespace and queue the current
+    // token.
     _line_empty = false;
-    std::swap(next_tok, _pending_tokens.front());
+    _pending_tokens.push(std::move(next_tok));
+    next_tok = std::move(_pending_tokens.front());
+    _pending_tokens.pop();
     return next_tok;
+
   }
 
   assert(_pending_tokens.empty() ||
