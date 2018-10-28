@@ -1,10 +1,10 @@
 SUBDIRS = . arch testsuite
 
 AM_YFLAGS = -d
-BUILT_SOURCES = gnuc_parser.hh stack.hh
+BUILT_SOURCES = gnuc_parser.hh pp_expr_parser.hh stack.hh
 EXTRA_DIST = stack.hh
 
-stack.hh: gnuc_parser.hh
+stack.hh: gnuc_parser.hh pp_expr_parser.hh
 
 
 noinst_HEADERS =				\
@@ -34,6 +34,7 @@ noinst_HEADERS =				\
 	parse_except.hh			\
 	path.hh				\
 	pp_except.hh				\
+	pp_expr_parser_driver.hh		\
 	pp_token.hh				\
 	pp_tokens.hh				\
 	pp_tokenizer.hh			\
@@ -74,6 +75,8 @@ libcp_a_SOURCES =				\
 	parse_except.cc			\
 	path.cc				\
 	pp_except.cc				\
+	pp_expr_parser.yy			\
+	pp_expr_parser_driver.cc		\
 	pp_token.cc				\
 	pp_tokens.cc				\
 	pp_tokenizer.cc			\
