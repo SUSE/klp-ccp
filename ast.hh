@@ -96,14 +96,15 @@ namespace suse
 	void for_each_dfs_pre_and_po(callables_wrapper_type_pre &&c_pre,
 				     callables_wrapper_type_post &&c_post);
 
+	template <typename handled_types, typename callables_wrapper_type>
+	void for_each_dfs_po(callables_wrapper_type &&c);
+
       protected:
 	void _extend_tokens_range(const pp_tokens_range &tr) noexcept;
 
 	_ast_entity *_parent;
 
       private:
-	friend class ast_translation_unit;
-
 	template<typename derived>
 	friend class ast_entity;
 
@@ -120,7 +121,7 @@ namespace suse
 				      callable_type_post &&c_post);
 
 	template <typename callable_type>
-	void for_each_dfs_po(callable_type &&c);
+	void _for_each_dfs_po(callable_type &&c);
 
 	pp_tokens_range _tokens_range;
       };
