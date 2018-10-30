@@ -95,7 +95,7 @@ const expr& expr_list::operator[](const std::size_t i) const noexcept
   return _exprs[i];
 }
 
-_ast_entity* expr_list::_get_child(const size_t i) noexcept
+_ast_entity* expr_list::_get_child(const size_t i) const noexcept
 {
   if (i >= _exprs.size())
     return nullptr;
@@ -243,7 +243,7 @@ expr_comma::~expr_comma() noexcept
   delete &_right;
 }
 
-_ast_entity* expr_comma::_get_child(const size_t i) noexcept
+_ast_entity* expr_comma::_get_child(const size_t i) const noexcept
 {
   switch (i)
   {
@@ -296,7 +296,7 @@ expr_assignment::~expr_assignment() noexcept
   delete &_rhs;
 }
 
-_ast_entity* expr_assignment::_get_child(const size_t i) noexcept
+_ast_entity* expr_assignment::_get_child(const size_t i) const noexcept
 {
   switch (i)
   {
@@ -362,7 +362,7 @@ expr_conditional::~expr_conditional() noexcept
   delete &_expr_false;
 }
 
-_ast_entity* expr_conditional::_get_child(const size_t i) noexcept
+_ast_entity* expr_conditional::_get_child(const size_t i) const noexcept
 {
   if (!i) {
     return &_cond;
@@ -413,7 +413,7 @@ expr_binop::~expr_binop() noexcept
   delete &_right;
 }
 
-_ast_entity* expr_binop::_get_child(const size_t i) noexcept
+_ast_entity* expr_binop::_get_child(const size_t i) const noexcept
 {
   switch (i)
   {
@@ -465,7 +465,7 @@ expr_cast::~expr_cast() noexcept
   delete &_e;
 }
 
-_ast_entity* expr_cast::_get_child(const size_t i) noexcept
+_ast_entity* expr_cast::_get_child(const size_t i) const noexcept
 {
   switch (i)
   {
@@ -516,7 +516,7 @@ void expr_label_addr::set_resolved(const stmt_labeled &resolved) noexcept
   _resolved = &resolved;
 }
 
-_ast_entity* expr_label_addr::_get_child(const size_t) noexcept
+_ast_entity* expr_label_addr::_get_child(const size_t) const noexcept
 {
   return nullptr;
 }
@@ -554,7 +554,7 @@ expr_unop_pre::~expr_unop_pre() noexcept
   delete &_e;
 }
 
-_ast_entity* expr_unop_pre::_get_child(const size_t i) noexcept
+_ast_entity* expr_unop_pre::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_e;
@@ -595,7 +595,7 @@ expr_sizeof_expr::~expr_sizeof_expr() noexcept
   delete &_e;
 }
 
-_ast_entity* expr_sizeof_expr::_get_child(const size_t i) noexcept
+_ast_entity* expr_sizeof_expr::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_e;
@@ -636,7 +636,7 @@ expr_sizeof_type_name::~expr_sizeof_type_name() noexcept
   delete &_tn;
 }
 
-_ast_entity* expr_sizeof_type_name::_get_child(const size_t i) noexcept
+_ast_entity* expr_sizeof_type_name::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_tn;
@@ -677,7 +677,7 @@ expr_alignof_expr::~expr_alignof_expr() noexcept
   delete &_e;
 }
 
-_ast_entity* expr_alignof_expr::_get_child(const size_t i) noexcept
+_ast_entity* expr_alignof_expr::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_e;
@@ -718,7 +718,7 @@ expr_alignof_type_name::~expr_alignof_type_name() noexcept
   delete &_tn;
 }
 
-_ast_entity* expr_alignof_type_name::_get_child(const size_t i) noexcept
+_ast_entity* expr_alignof_type_name::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_tn;
@@ -838,13 +838,13 @@ void offset_member_designator::extend(expr* &&index_expr)
   _extend_tokens_range(pp_tokens_range{tr.begin, tr.end + 1});
 }
 
-_ast_entity* offset_member_designator::_get_child(const size_t i) noexcept
+_ast_entity* offset_member_designator::_get_child(const size_t i) const noexcept
 {
   size_t j = 0;
   for (auto &c : _components) {
     if (c.get_kind() == component::kind::k_array_subscript) {
       if (j == i)
-	return &c.get_index_expr();
+	return const_cast<expr *>(&c.get_index_expr());
       ++j;
     }
   }
@@ -889,7 +889,7 @@ expr_builtin_offsetof::~expr_builtin_offsetof() noexcept
   delete &_member_designator;
 }
 
-_ast_entity* expr_builtin_offsetof::_get_child(const size_t i) noexcept
+_ast_entity* expr_builtin_offsetof::_get_child(const size_t i) const noexcept
 {
     switch (i)
   {
@@ -942,7 +942,7 @@ expr_builtin_types_compatible_p::~expr_builtin_types_compatible_p() noexcept
 }
 
 _ast_entity* expr_builtin_types_compatible_p::_get_child(const size_t i)
-  noexcept
+  const noexcept
 {
   switch (i)
   {
@@ -994,7 +994,7 @@ expr_builtin_va_arg::~expr_builtin_va_arg() noexcept
   delete &_tn;
 }
 
-_ast_entity* expr_builtin_va_arg::_get_child(const size_t i) noexcept
+_ast_entity* expr_builtin_va_arg::_get_child(const size_t i) const noexcept
 {
   switch (i)
   {
@@ -1047,7 +1047,7 @@ expr_array_subscript::~expr_array_subscript() noexcept
   delete &_index;
 }
 
-_ast_entity* expr_array_subscript::_get_child(const size_t i) noexcept
+_ast_entity* expr_array_subscript::_get_child(const size_t i) const noexcept
 {
     switch (i)
   {
@@ -1106,7 +1106,7 @@ expr_func_invocation::~expr_func_invocation() noexcept
   delete _args;
 }
 
-_ast_entity* expr_func_invocation::_get_child(const size_t i) noexcept
+_ast_entity* expr_func_invocation::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_func;
@@ -1155,7 +1155,7 @@ expr_member_deref::~expr_member_deref() noexcept
   delete &_base;
 }
 
-_ast_entity* expr_member_deref::_get_child(const size_t i) noexcept
+_ast_entity* expr_member_deref::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_base;
@@ -1196,7 +1196,7 @@ expr_unop_post::~expr_unop_post() noexcept
   delete &_e;
 }
 
-_ast_entity* expr_unop_post::_get_child(const size_t i) noexcept
+_ast_entity* expr_unop_post::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_e;
@@ -1241,7 +1241,7 @@ expr_compound_literal::~expr_compound_literal() noexcept
   delete _il;
 }
 
-_ast_entity* expr_compound_literal::_get_child(const size_t i) noexcept
+_ast_entity* expr_compound_literal::_get_child(const size_t i) const noexcept
 {
     switch (i)
   {
@@ -1291,7 +1291,7 @@ expr_statement::~expr_statement() noexcept
   delete &_s;
 }
 
-_ast_entity* expr_statement::_get_child(const size_t i) noexcept
+_ast_entity* expr_statement::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_s;
@@ -1417,7 +1417,7 @@ const expr_id::resolved& expr_id::get_resolved() const noexcept
   return _resolved;
 }
 
-_ast_entity* expr_id::_get_child(const size_t) noexcept
+_ast_entity* expr_id::_get_child(const size_t) const noexcept
 {
   return nullptr;
 }
@@ -1449,7 +1449,7 @@ expr_constant::expr_constant(const pp_token_index const_tok) noexcept
 
 expr_constant::~expr_constant() noexcept = default;
 
-_ast_entity* expr_constant::_get_child(const size_t) noexcept
+_ast_entity* expr_constant::_get_child(const size_t) const noexcept
 {
   return nullptr;
 }
@@ -1487,7 +1487,7 @@ void string_literal::extend(const pp_token_index s)
   _extend_tokens_range(pp_tokens_range{s, s+1});
 }
 
-_ast_entity* string_literal::_get_child(const size_t) noexcept
+_ast_entity* string_literal::_get_child(const size_t) const noexcept
 {
   return nullptr;
 }
@@ -1524,7 +1524,7 @@ expr_string_literal::~expr_string_literal() noexcept
   delete &_sl;
 }
 
-_ast_entity* expr_string_literal::_get_child(const size_t i) noexcept
+_ast_entity* expr_string_literal::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_sl;
@@ -1612,7 +1612,7 @@ _ast_entity* expr_parenthesized::skip_parens_up() noexcept
   return result;
 }
 
-_ast_entity* expr_parenthesized::_get_child(const size_t i) noexcept
+_ast_entity* expr_parenthesized::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_e;
@@ -1659,7 +1659,7 @@ attribute::~attribute() noexcept
   delete _params;
 }
 
-_ast_entity* attribute::_get_child(const size_t i) noexcept
+_ast_entity* attribute::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return _params;
@@ -1722,7 +1722,7 @@ void attribute_list::extend(const pp_tokens_range &tr, attribute* &&a)
   _extend_tokens_range(tr);
 }
 
-_ast_entity* attribute_list::_get_child(const size_t i) noexcept
+_ast_entity* attribute_list::_get_child(const size_t i) const noexcept
 {
   size_t _i = 0;
 
@@ -1764,7 +1764,7 @@ attribute_specifier::attribute_specifier(const pp_tokens_range &tr,
 
 attribute_specifier::~attribute_specifier() noexcept = default;
 
-_ast_entity* attribute_specifier::_get_child(const size_t i) noexcept
+_ast_entity* attribute_specifier::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_al;
@@ -1825,7 +1825,7 @@ void attribute_specifier_list::extend(attribute_specifier* &&as)
   _as.get()._set_parent(*this);
 }
 
-_ast_entity* attribute_specifier_list::_get_child(const size_t i) noexcept
+_ast_entity* attribute_specifier_list::_get_child(const size_t i) const noexcept
 {
   if (i >= _ass.size())
     return nullptr;
@@ -1888,7 +1888,7 @@ void pointer::extend(const pp_tokens_range &tr, type_qualifier_list* &&tql)
     _tql->_set_parent(*this);
 }
 
-_ast_entity* pointer::_get_child(const size_t i) noexcept
+_ast_entity* pointer::_get_child(const size_t i) const noexcept
 {
   std::size_t _i = 0;
 
@@ -1992,7 +1992,7 @@ skip_trivial_parens_down() const noexcept
 
 
 _ast_entity*
-direct_abstract_declarator_parenthesized::_get_child(const size_t i) noexcept
+direct_abstract_declarator_parenthesized::_get_child(const size_t i) const noexcept
 {
   if (!i) {
     if (_asl)
@@ -2074,7 +2074,7 @@ direct_abstract_declarator_array::get_innermost_type() const noexcept
 }
 
 _ast_entity* direct_abstract_declarator_array::_get_child(const size_t i)
-  noexcept
+  const noexcept
 {
   std::size_t _i = i;
 
@@ -2151,7 +2151,7 @@ direct_abstract_declarator_func::get_innermost_type() const noexcept
 }
 
 _ast_entity* direct_abstract_declarator_func::_get_child(const size_t i)
-  noexcept
+  const noexcept
 {
   if (!i) {
     if (_dad)
@@ -2214,7 +2214,7 @@ get_innermost_type() const noexcept
   return get_type();
 }
 
-_ast_entity* abstract_declarator::_get_child(const size_t i) noexcept
+_ast_entity* abstract_declarator::_get_child(const size_t i) const noexcept
 {
   if (!i) {
     if (_pt)
@@ -2287,7 +2287,7 @@ type_name::~type_name() noexcept
   delete _ad;
 }
 
-_ast_entity* type_name::_get_child(const size_t i) noexcept
+_ast_entity* type_name::_get_child(const size_t i) const noexcept
 {
   if (!i) {
     return &_sql;
@@ -2400,7 +2400,7 @@ complete_type(std::shared_ptr<const types::array_type> &&at)
   _reset_type(std::move(at));
 }
 
-_ast_entity* direct_declarator_id::_get_child(const size_t) noexcept
+_ast_entity* direct_declarator_id::_get_child(const size_t) const noexcept
 {
   return nullptr;
 }
@@ -2458,7 +2458,7 @@ get_direct_declarator_id() noexcept
 }
 
 _ast_entity* direct_declarator_parenthesized::_get_child(const size_t i)
-  noexcept
+  const noexcept
 {
   if (!i) {
     return &_d;
@@ -2539,7 +2539,7 @@ direct_declarator_id& direct_declarator_array::get_direct_declarator_id()
   return _dd.get_direct_declarator_id();
 }
 
-_ast_entity* direct_declarator_array::_get_child(const size_t i) noexcept
+_ast_entity* direct_declarator_array::_get_child(const size_t i) const noexcept
 {
   if (!i) {
     return &_dd;
@@ -2619,7 +2619,7 @@ direct_declarator_id& direct_declarator_func::get_direct_declarator_id()
   return _dd.get_direct_declarator_id();
 }
 
-_ast_entity* direct_declarator_func::_get_child(const size_t i) noexcept
+_ast_entity* direct_declarator_func::_get_child(const size_t i) const noexcept
 {
   if (!i) {
     return &_dd;
@@ -2694,7 +2694,7 @@ declarator::get_innermost_type() const noexcept
   return get_direct_declarator_id().get_type();
 }
 
-_ast_entity* declarator::_get_child(const size_t i) noexcept
+_ast_entity* declarator::_get_child(const size_t i) const noexcept
 {
   if (!i) {
     if (_pt)
@@ -2773,7 +2773,7 @@ storage_class_specifier(const pp_tokens_range &tr,
 
 storage_class_specifier::~storage_class_specifier() noexcept = default;
 
-_ast_entity* storage_class_specifier::_get_child(const size_t) noexcept
+_ast_entity* storage_class_specifier::_get_child(const size_t) const noexcept
 {
   return nullptr;
 }
@@ -2806,7 +2806,7 @@ type_qualifier::type_qualifier(const pp_tokens_range &tr,
 
 type_qualifier::~type_qualifier() noexcept = default;
 
-_ast_entity* type_qualifier::_get_child(const size_t) noexcept
+_ast_entity* type_qualifier::_get_child(const size_t) const noexcept
 {
   return nullptr;
 }
@@ -2904,7 +2904,7 @@ type_qualifier_list::get_qualifiers() const
   return qs;
 }
 
-_ast_entity* type_qualifier_list::_get_child(const size_t i) noexcept
+_ast_entity* type_qualifier_list::_get_child(const size_t i) const noexcept
 {
   if (i < _tqs.size()) {
     return &_tqs[i].get();
@@ -2950,7 +2950,7 @@ type_specifier_pod::type_specifier_pod(const pp_tokens_range &tr,
 
 type_specifier_pod::~type_specifier_pod() noexcept = default;
 
-_ast_entity* type_specifier_pod::_get_child(const size_t) noexcept
+_ast_entity* type_specifier_pod::_get_child(const size_t) const noexcept
 {
   return nullptr;
 }
@@ -3005,7 +3005,7 @@ void type_specifier_tdid::set_builtin() noexcept
   _is_builtin = true;
 }
 
-_ast_entity* type_specifier_tdid::_get_child(const size_t) noexcept
+_ast_entity* type_specifier_tdid::_get_child(const size_t) const noexcept
 {
   return nullptr;
 }
@@ -3076,7 +3076,7 @@ void struct_declarator::set_asl_before(attribute_specifier_list* &&asl_before)
     _asl_before->_set_parent(*this);
 }
 
-_ast_entity* struct_declarator::_get_child(const size_t i) noexcept
+_ast_entity* struct_declarator::_get_child(const size_t i) const noexcept
 {
   size_t _i = i;
 
@@ -3165,7 +3165,7 @@ bool struct_declarator_list::empty() const noexcept
   return _sds.empty();
 }
 
-_ast_entity* struct_declarator_list::_get_child(const size_t i) noexcept
+_ast_entity* struct_declarator_list::_get_child(const size_t i) const noexcept
 {
   if (i >= _sds.size())
     return nullptr;
@@ -3210,7 +3210,7 @@ struct_declaration_c99::~struct_declaration_c99() noexcept
   delete &_sdl;
 }
 
-_ast_entity* struct_declaration_c99::_get_child(const size_t i) noexcept
+_ast_entity* struct_declaration_c99::_get_child(const size_t i) const noexcept
 {
   if (!i) {
     if (_sql)
@@ -3270,7 +3270,7 @@ unnamed_struct_or_union::~unnamed_struct_or_union() noexcept
   delete _asl_after;
 }
 
-_ast_entity* unnamed_struct_or_union::_get_child(const size_t i) noexcept
+_ast_entity* unnamed_struct_or_union::_get_child(const size_t i) const noexcept
 {
   std::size_t _i = i;
 
@@ -3337,7 +3337,7 @@ struct_declaration_unnamed_sou::~struct_declaration_unnamed_sou() noexcept
   delete &_unnamed_sou;
 }
 
-_ast_entity* struct_declaration_unnamed_sou::_get_child(const size_t i) noexcept
+_ast_entity* struct_declaration_unnamed_sou::_get_child(const size_t i) const noexcept
 {
   if (!i) {
     if (_sql)
@@ -3403,7 +3403,7 @@ void struct_declaration_list::extend(struct_declaration* &&sd)
   _sd.get()._set_parent(*this);
 }
 
-_ast_entity* struct_declaration_list::_get_child(const size_t i) noexcept
+_ast_entity* struct_declaration_list::_get_child(const size_t i) const noexcept
 {
   if (i >= _sds.size())
     return nullptr;
@@ -3636,7 +3636,7 @@ struct_or_union_def::~struct_or_union_def() noexcept
   delete _asl_after;
 }
 
-_ast_entity* struct_or_union_def::_get_child(const size_t i) noexcept
+_ast_entity* struct_or_union_def::_get_child(const size_t i) const noexcept
 {
   std::size_t _i = i;
 
@@ -3711,7 +3711,7 @@ void struct_or_union_ref::link_to_declaration(const sou_decl_link &target)
   _link_to_decl = target;
 }
 
-_ast_entity* struct_or_union_ref::_get_child(const size_t i) noexcept
+_ast_entity* struct_or_union_ref::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return _asl;
@@ -3763,7 +3763,7 @@ const suse::cp::types::enum_content::member& enumerator::to_member(const ast &a)
   return *m;
 }
 
-_ast_entity* enumerator::_get_child(const size_t i) noexcept
+_ast_entity* enumerator::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return _value;
@@ -3824,7 +3824,7 @@ void enumerator_list::extend(enumerator* &&e)
   _e.get()._set_parent(*this);
 }
 
-_ast_entity* enumerator_list::_get_child(const size_t i) noexcept
+_ast_entity* enumerator_list::_get_child(const size_t i) const noexcept
 {
   if (i >= _es.size())
     return nullptr;
@@ -3894,7 +3894,7 @@ enum_def::~enum_def() noexcept
   delete _asl_after;
 }
 
-_ast_entity* enum_def::_get_child(const size_t i) noexcept
+_ast_entity* enum_def::_get_child(const size_t i) const noexcept
 {
   if (!i) {
     return &_el;
@@ -3959,7 +3959,7 @@ const enum_def& enum_ref::get_definition() const noexcept
 }
 
 
-_ast_entity* enum_ref::_get_child(const size_t i) noexcept
+_ast_entity* enum_ref::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return _asl;
@@ -4000,7 +4000,7 @@ typeof_expr::~typeof_expr() noexcept
   delete &_e;
 }
 
-_ast_entity* typeof_expr::_get_child(const size_t i) noexcept
+_ast_entity* typeof_expr::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_e;
@@ -4041,7 +4041,7 @@ typeof_type_name::~typeof_type_name() noexcept
   delete &_tn;
 }
 
-_ast_entity* typeof_type_name::_get_child(const size_t i) noexcept
+_ast_entity* typeof_type_name::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_tn;
@@ -4077,7 +4077,7 @@ function_specifier::function_specifier(const pp_token_index spec_tok) noexcept
 
 function_specifier::~function_specifier() noexcept = default;
 
-_ast_entity* function_specifier::_get_child(const size_t) noexcept
+_ast_entity* function_specifier::_get_child(const size_t) const noexcept
 {
   return nullptr;
 }
@@ -4271,7 +4271,7 @@ std::size_t specifier_qualifier_list::_n_children() const noexcept
   return _tss.size() + _tqs.size() + _asls.size();
 }
 
-_ast_entity* specifier_qualifier_list::_get_child(const size_t i) noexcept
+_ast_entity* specifier_qualifier_list::_get_child(const size_t i) const noexcept
 {
   if (i < _tss.size()) {
     return &_tss[i].get();
@@ -4454,7 +4454,7 @@ storage_class declaration_specifiers::get_storage_class(ast &ast) const
 }
 
 
-_ast_entity* declaration_specifiers::_get_child(const size_t i) noexcept
+_ast_entity* declaration_specifiers::_get_child(const size_t i) const noexcept
 {
   const size_t _sql_n_children = specifier_qualifier_list::_n_children();
 
@@ -4505,7 +4505,7 @@ void initializer_expr::set_designation(designation* &&d) noexcept
 }
 
 
-_ast_entity* initializer_expr::_get_child(const size_t i) noexcept
+_ast_entity* initializer_expr::_get_child(const size_t i) const noexcept
 {
   if (!i) {
     if (_d)
@@ -4565,7 +4565,7 @@ std::size_t initializer_init_list::get_size() const noexcept
   return _il ? _il->get_size() : 0;
 }
 
-_ast_entity* initializer_init_list::_get_child(const size_t i) noexcept
+_ast_entity* initializer_init_list::_get_child(const size_t i) const noexcept
 {
   if (!i) {
     if (_d)
@@ -4614,7 +4614,7 @@ designator_member::designator_member(const pp_tokens_range &tr,
 
 designator_member::~designator_member() noexcept = default;
 
-_ast_entity* designator_member::_get_child(const size_t) noexcept
+_ast_entity* designator_member::_get_child(const size_t) const noexcept
 {
   return nullptr;
 }
@@ -4657,7 +4657,7 @@ designator_array::~designator_array() noexcept
   delete _index_last;
 }
 
-_ast_entity* designator_array::_get_child(const size_t i) noexcept
+_ast_entity* designator_array::_get_child(const size_t i) const noexcept
 {
   switch (i)
   {
@@ -4727,7 +4727,7 @@ void designator_list::extend(designator* &&d)
   _d.get()._set_parent(*this);
 }
 
-_ast_entity* designator_list::_get_child(const size_t i) noexcept
+_ast_entity* designator_list::_get_child(const size_t i) const noexcept
 {
   if (i >= _ds.size())
     return nullptr;
@@ -4768,7 +4768,7 @@ designation::~designation() noexcept
   delete &_dl;
 }
 
-_ast_entity* designation::_get_child(const size_t i) noexcept
+_ast_entity* designation::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_dl;
@@ -4829,7 +4829,7 @@ void initializer_list::extend(initializer* &&i)
   _i.get()._set_parent(*this);
 }
 
-_ast_entity* initializer_list::_get_child(const size_t i) noexcept
+_ast_entity* initializer_list::_get_child(const size_t i) const noexcept
 {
   if (i >= _is.size())
     return nullptr;
@@ -4870,7 +4870,7 @@ asm_label::~asm_label() noexcept
   delete &_label;
 }
 
-_ast_entity* asm_label::_get_child(const size_t i) noexcept
+_ast_entity* asm_label::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_label;
@@ -5023,7 +5023,7 @@ void init_declarator::set_asl_before(attribute_specifier_list* &&asl_before)
     _asl_before->_set_parent(*this);
 }
 
-_ast_entity* init_declarator::_get_child(const size_t i) noexcept
+_ast_entity* init_declarator::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_d;
@@ -5120,7 +5120,7 @@ void init_declarator_list::extend(init_declarator* &&id)
   _id.get()._set_parent(*this);
 }
 
-_ast_entity* init_declarator_list::_get_child(const size_t i) noexcept
+_ast_entity* init_declarator_list::_get_child(const size_t i) const noexcept
 {
   if (i >= _ids.size())
     return nullptr;
@@ -5170,7 +5170,7 @@ bool declaration::is_at_file_scope() const noexcept
   return get_parent()->is_any_of<external_declaration>();
 }
 
-_ast_entity* declaration::_get_child(const size_t i) noexcept
+_ast_entity* declaration::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_ds;
@@ -5235,7 +5235,7 @@ parameter_declaration_declarator::~parameter_declaration_declarator() noexcept
 }
 
 _ast_entity* parameter_declaration_declarator::_get_child(const size_t i)
-  noexcept
+  const noexcept
 {
   switch (i)
   {
@@ -5297,7 +5297,7 @@ parameter_declaration_abstract::~parameter_declaration_abstract() noexcept
   delete _ad;
 }
 
-_ast_entity* parameter_declaration_abstract::_get_child(const size_t i) noexcept
+_ast_entity* parameter_declaration_abstract::_get_child(const size_t i) const noexcept
 {
   switch (i)
   {
@@ -5406,7 +5406,7 @@ is_single_void(ast &a, const architecture &arch) const
 	    })));
 }
 
-_ast_entity* parameter_declaration_list::_get_child(const size_t i) noexcept
+_ast_entity* parameter_declaration_list::_get_child(const size_t i) const noexcept
 {
   if (i >= _pds.size())
     return nullptr;
@@ -5448,7 +5448,7 @@ void identifier_list::extend(const pp_token_index id_tok)
   _extend_tokens_range(pp_tokens_range{id_tok, id_tok + 1});
 }
 
-_ast_entity* identifier_list::_get_child(const size_t) noexcept
+_ast_entity* identifier_list::_get_child(const size_t) const noexcept
 {
   return nullptr;
 }
@@ -5505,7 +5505,7 @@ void declaration_list::extend(declaration* &&d)
   _d.get()._set_parent(*this);
 }
 
-_ast_entity* declaration_list::_get_child(const size_t i) noexcept
+_ast_entity* declaration_list::_get_child(const size_t i) const noexcept
 {
   if (i >= _ds.size())
     return nullptr;
@@ -5558,7 +5558,7 @@ stmt_labeled::~stmt_labeled() noexcept
   delete _asl;
 }
 
-_ast_entity* stmt_labeled::_get_child(const size_t i) noexcept
+_ast_entity* stmt_labeled::_get_child(const size_t i) const noexcept
 {
     switch (i)
   {
@@ -5610,7 +5610,7 @@ stmt_case::~stmt_case() noexcept
   delete &_s;
 }
 
-_ast_entity* stmt_case::_get_child(const size_t i) noexcept
+_ast_entity* stmt_case::_get_child(const size_t i) const noexcept
 {
   switch (i)
   {
@@ -5666,7 +5666,7 @@ stmt_case_range::~stmt_case_range() noexcept
   delete &_s;
 }
 
-_ast_entity* stmt_case_range::_get_child(const size_t i) noexcept
+_ast_entity* stmt_case_range::_get_child(const size_t i) const noexcept
 {
     switch (i)
   {
@@ -5718,7 +5718,7 @@ stmt_default::~stmt_default() noexcept
   delete &_s;
 }
 
-_ast_entity* stmt_default::_get_child(const size_t i) noexcept
+_ast_entity* stmt_default::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_s;
@@ -5760,7 +5760,7 @@ local_label_declaration::~local_label_declaration() noexcept
   delete &_idl;
 }
 
-_ast_entity* local_label_declaration::_get_child(const size_t i) noexcept
+_ast_entity* local_label_declaration::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_idl;
@@ -5822,7 +5822,7 @@ void local_label_declaration_list::extend(local_label_declaration* &&lld)
   _lld.get()._set_parent(*this);
 }
 
-_ast_entity* local_label_declaration_list::_get_child(const size_t i) noexcept
+_ast_entity* local_label_declaration_list::_get_child(const size_t i) const noexcept
 {
   if (i >= _llds.size())
     return nullptr;
@@ -5869,7 +5869,7 @@ block_item_decl::~block_item_decl() noexcept
   delete &_d;
 }
 
-_ast_entity* block_item_decl::_get_child(const size_t i) noexcept
+_ast_entity* block_item_decl::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_d;
@@ -5910,7 +5910,7 @@ block_item_stmt::~block_item_stmt() noexcept
   delete &_s;
 }
 
-_ast_entity* block_item_stmt::_get_child(const size_t i) noexcept
+_ast_entity* block_item_stmt::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_s;
@@ -5951,7 +5951,7 @@ block_item_function_definition::~block_item_function_definition() noexcept
   delete &_fd;
 }
 
-_ast_entity* block_item_function_definition::_get_child(const size_t i) noexcept
+_ast_entity* block_item_function_definition::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_fd;
@@ -6012,7 +6012,7 @@ void block_item_list::extend(block_item* &&bi)
   _bi.get()._set_parent(*this);
 }
 
-_ast_entity* block_item_list::_get_child(const size_t i) noexcept
+_ast_entity* block_item_list::_get_child(const size_t i) const noexcept
 {
   if (i >= _bis.size())
     return nullptr;
@@ -6058,7 +6058,7 @@ stmt_compound::~stmt_compound() noexcept
   delete _bil;
 }
 
-_ast_entity* stmt_compound::_get_child(const size_t i) noexcept
+_ast_entity* stmt_compound::_get_child(const size_t i) const noexcept
 {
   if (!i) {
     if (_lldl)
@@ -6105,7 +6105,7 @@ stmt_expr::~stmt_expr() noexcept
   delete _e;
 }
 
-_ast_entity* stmt_expr::_get_child(const size_t i) noexcept
+_ast_entity* stmt_expr::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return _e;
@@ -6153,7 +6153,7 @@ stmt_if::~stmt_if() noexcept
   delete _s_false;
 }
 
-_ast_entity* stmt_if::_get_child(const size_t i) noexcept
+_ast_entity* stmt_if::_get_child(const size_t i) const noexcept
 {
     switch (i)
   {
@@ -6208,7 +6208,7 @@ stmt_switch::~stmt_switch() noexcept
   delete &_s;
 }
 
-_ast_entity* stmt_switch::_get_child(const size_t i) noexcept
+_ast_entity* stmt_switch::_get_child(const size_t i) const noexcept
 {
     switch (i)
   {
@@ -6260,7 +6260,7 @@ stmt_while::~stmt_while() noexcept
   delete &_s;
 }
 
-_ast_entity* stmt_while::_get_child(const size_t i) noexcept
+_ast_entity* stmt_while::_get_child(const size_t i) const noexcept
 {
   switch (i)
   {
@@ -6312,7 +6312,7 @@ stmt_do::~stmt_do() noexcept
   delete &_s;
 }
 
-_ast_entity* stmt_do::_get_child(const size_t i) noexcept
+_ast_entity* stmt_do::_get_child(const size_t i) const noexcept
 {
   switch (i)
   {
@@ -6373,7 +6373,7 @@ stmt_for_init_expr::~stmt_for_init_expr() noexcept
   delete &_s;
 }
 
-_ast_entity* stmt_for_init_expr::_get_child(const size_t i) noexcept
+_ast_entity* stmt_for_init_expr::_get_child(const size_t i) const noexcept
 {
   std::size_t _i = i;
 
@@ -6448,7 +6448,7 @@ stmt_for_init_decl::~stmt_for_init_decl() noexcept
   delete &_s;
 }
 
-_ast_entity* stmt_for_init_decl::_get_child(const size_t i) noexcept
+_ast_entity* stmt_for_init_decl::_get_child(const size_t i) const noexcept
 {
   if (!i)
       return &_d;
@@ -6506,7 +6506,7 @@ stmt_goto::~stmt_goto() noexcept
   delete &_e;
 }
 
-_ast_entity* stmt_goto::_get_child(const size_t i) noexcept
+_ast_entity* stmt_goto::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_e;
@@ -6541,7 +6541,7 @@ stmt_continue::stmt_continue(const pp_tokens_range &tr) noexcept
 
 stmt_continue::~stmt_continue() noexcept = default;
 
-_ast_entity* stmt_continue::_get_child(const size_t) noexcept
+_ast_entity* stmt_continue::_get_child(const size_t) const noexcept
 {
   return nullptr;
 }
@@ -6573,7 +6573,7 @@ stmt_break::stmt_break(const pp_tokens_range &tr) noexcept
 
 stmt_break::~stmt_break() noexcept = default;
 
-_ast_entity* stmt_break::_get_child(const size_t) noexcept
+_ast_entity* stmt_break::_get_child(const size_t) const noexcept
 {
   return nullptr;
 }
@@ -6611,7 +6611,7 @@ stmt_return::~stmt_return() noexcept
   delete _e;
 }
 
-_ast_entity* stmt_return::_get_child(const size_t i) noexcept
+_ast_entity* stmt_return::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return _e;
@@ -6651,7 +6651,7 @@ stmt_asm::~stmt_asm() noexcept
   delete &_ad;
 }
 
-_ast_entity* stmt_asm::_get_child(const size_t i) noexcept
+_ast_entity* stmt_asm::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_ad;
@@ -6694,7 +6694,7 @@ void asm_qualifier_list::extend(const pp_tokens_range &tr,
   _extend_tokens_range(tr);
 }
 
-_ast_entity* asm_qualifier_list::_get_child(const size_t) noexcept
+_ast_entity* asm_qualifier_list::_get_child(const size_t) const noexcept
 {
   return nullptr;
 }
@@ -6727,7 +6727,7 @@ asm_operand_name::asm_operand_name(const pp_tokens_range &tr,
 
 asm_operand_name::~asm_operand_name() noexcept = default;
 
-_ast_entity* asm_operand_name::_get_child(const size_t) noexcept
+_ast_entity* asm_operand_name::_get_child(const size_t) const noexcept
 {
   return nullptr;
 }
@@ -6770,7 +6770,7 @@ asm_operand::~asm_operand() noexcept
   delete &_e;
 }
 
-_ast_entity* asm_operand::_get_child(const size_t i) noexcept
+_ast_entity* asm_operand::_get_child(const size_t i) const noexcept
 {
   if (!i) {
     if (_aon)
@@ -6837,7 +6837,7 @@ void asm_operand_list::extend(asm_operand* &&ao)
   _ao.get()._set_parent(*this);
 }
 
-_ast_entity* asm_operand_list::_get_child(const size_t i) noexcept
+_ast_entity* asm_operand_list::_get_child(const size_t i) const noexcept
 {
   if (i >= _aos.size())
     return nullptr;
@@ -6879,7 +6879,7 @@ void asm_clobber_list::extend(const pp_token_index clobber_tok)
   _extend_tokens_range(pp_tokens_range{clobber_tok, clobber_tok + 1});
 }
 
-_ast_entity* asm_clobber_list::_get_child(const size_t) noexcept
+_ast_entity* asm_clobber_list::_get_child(const size_t) const noexcept
 {
   return nullptr;
 }
@@ -6918,7 +6918,7 @@ void asm_jump_to_label_list::extend(const pp_token_index label_tok)
   _extend_tokens_range(pp_tokens_range{label_tok, label_tok + 1});
 }
 
-_ast_entity* asm_jump_to_label_list::_get_child(const size_t) noexcept
+_ast_entity* asm_jump_to_label_list::_get_child(const size_t) const noexcept
 {
   return nullptr;
 }
@@ -6978,7 +6978,7 @@ asm_directive::~asm_directive() noexcept
   delete _ajtll;
 }
 
-_ast_entity* asm_directive::_get_child(const size_t i) noexcept
+_ast_entity* asm_directive::_get_child(const size_t i) const noexcept
 {
   std::size_t _i = i;
 
@@ -7080,7 +7080,7 @@ bool function_definition::is_at_file_scope() const noexcept
 }
 
 
-_ast_entity* function_definition::_get_child(const size_t i) noexcept
+_ast_entity* function_definition::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_ds;
@@ -7147,7 +7147,7 @@ external_declaration_decl::~external_declaration_decl() noexcept
   delete &_d;
 }
 
-_ast_entity* external_declaration_decl::_get_child(const size_t i) noexcept
+_ast_entity* external_declaration_decl::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_d;
@@ -7188,7 +7188,7 @@ external_declaration_func::~external_declaration_func() noexcept
   delete &_fd;
 }
 
-_ast_entity* external_declaration_func::_get_child(const size_t i) noexcept
+_ast_entity* external_declaration_func::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_fd;
@@ -7229,7 +7229,7 @@ external_declaration_asm::~external_declaration_asm() noexcept
   delete &_ad;
 }
 
-_ast_entity* external_declaration_asm::_get_child(const size_t i) noexcept
+_ast_entity* external_declaration_asm::_get_child(const size_t i) const noexcept
 {
   if (!i)
     return &_ad;
@@ -7295,7 +7295,7 @@ void translation_unit::extend_tokens_range(const pp_tokens_range &tr) noexcept
   _extend_tokens_range(tr);
 }
 
-_ast_entity* translation_unit::_get_child(const size_t i) noexcept
+_ast_entity* translation_unit::_get_child(const size_t i) const noexcept
 {
   if (i >= _eds.size())
     return nullptr;

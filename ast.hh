@@ -107,7 +107,7 @@ namespace suse
 	template<typename derived>
 	friend class ast_entity;
 
-	virtual _ast_entity* _get_child(const size_t i) noexcept = 0;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept = 0;
 
 	virtual void _process(processor<void> &p) = 0;
 	virtual void _process(const_processor<void> &p) const = 0;
@@ -407,7 +407,7 @@ namespace suse
 	const expr& operator[](const std::size_t i) const noexcept;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -491,7 +491,7 @@ namespace suse
 	virtual void evaluate_type(ast&, const architecture&) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -530,7 +530,7 @@ namespace suse
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -555,7 +555,7 @@ namespace suse
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -599,7 +599,7 @@ namespace suse
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -649,7 +649,7 @@ namespace suse
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -688,7 +688,7 @@ namespace suse
 	virtual void evaluate_type(ast&, const architecture&) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -713,7 +713,7 @@ namespace suse
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -734,7 +734,7 @@ namespace suse
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -755,7 +755,7 @@ namespace suse
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -775,7 +775,7 @@ namespace suse
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -796,7 +796,7 @@ namespace suse
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -832,7 +832,7 @@ namespace suse
 	void for_each(callable_type &&c) const;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -888,7 +888,7 @@ namespace suse
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -911,7 +911,7 @@ namespace suse
 	virtual void evaluate_type(ast&, const architecture &arch) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -933,7 +933,7 @@ namespace suse
 	virtual void evaluate_type(ast&, const architecture&) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -955,7 +955,7 @@ namespace suse
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -989,7 +989,7 @@ namespace suse
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1022,7 +1022,7 @@ namespace suse
 	virtual void evaluate_type(ast &a, const architecture&) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1054,7 +1054,7 @@ namespace suse
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1076,7 +1076,7 @@ namespace suse
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1097,7 +1097,7 @@ namespace suse
 	virtual void evaluate_type(ast&, const architecture&) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1175,7 +1175,7 @@ namespace suse
 	virtual void evaluate_type(ast &a, const architecture&) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1196,7 +1196,7 @@ namespace suse
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1223,7 +1223,7 @@ namespace suse
 	{ return _strings; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1243,7 +1243,7 @@ namespace suse
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1267,7 +1267,7 @@ namespace suse
 	virtual void evaluate_type(ast&, const architecture&) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1299,7 +1299,7 @@ namespace suse
 	{ return _params; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1325,7 +1325,7 @@ namespace suse
 	bool for_each_attribute(callable_type &&c);
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1350,7 +1350,7 @@ namespace suse
 	{ return _al; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1388,7 +1388,7 @@ namespace suse
 	bool for_each_attribute(callable_type &&c);
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1414,7 +1414,7 @@ namespace suse
 	{ return _tqls; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1468,7 +1468,7 @@ namespace suse
 	skip_trivial_parens_down() const noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1502,7 +1502,7 @@ namespace suse
 	get_innermost_type() const noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1533,7 +1533,7 @@ namespace suse
 	get_innermost_type() const noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1573,7 +1573,7 @@ namespace suse
 	get_innermost_type() const noexcept;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1613,7 +1613,7 @@ namespace suse
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1675,7 +1675,7 @@ namespace suse
 	ret_type process_context(callables_wrapper_type &&c);
 
       private:
-	virtual _ast_entity* _get_child(const size_t) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1709,7 +1709,7 @@ namespace suse
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1746,7 +1746,7 @@ namespace suse
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1784,7 +1784,7 @@ namespace suse
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1828,7 +1828,7 @@ namespace suse
 	get_innermost_type() const noexcept;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1868,7 +1868,7 @@ namespace suse
 	{ return _sc; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1901,7 +1901,7 @@ namespace suse
 	{ return _q; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1935,7 +1935,7 @@ namespace suse
 	bool for_each_attribute(callable_type &&c);
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -1986,7 +1986,7 @@ namespace suse
 	}
 
       private:
-	virtual _ast_entity* _get_child(const size_t) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2016,7 +2016,7 @@ namespace suse
 	{ return _is_builtin; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2075,7 +2075,7 @@ namespace suse
 	find_align_attribute(suse::cp::ast::ast &a, const architecture &arch);
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2106,7 +2106,7 @@ namespace suse
 	void for_each(callable_type &&c) const;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2130,7 +2130,7 @@ namespace suse
 	{ return _sdl; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2167,7 +2167,7 @@ namespace suse
 	{ return _content; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2199,7 +2199,7 @@ namespace suse
 	{ return _unnamed_sou; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2227,7 +2227,7 @@ namespace suse
 	create_content(ast &a, const types::struct_or_union_kind souk) const;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2359,7 +2359,7 @@ namespace suse
 			    attribute_specifier_list* &&asl_after,
 			    const bool id_tok_valid) noexcept;
 
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2405,7 +2405,7 @@ namespace suse
 	void link_to_declaration(const sou_decl_link &target) noexcept;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2469,7 +2469,7 @@ namespace suse
 	  const noexcept;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2498,7 +2498,7 @@ namespace suse
 	{ return _content; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2557,7 +2557,7 @@ namespace suse
 		 attribute_specifier_list* &&asl_after,
 		 const bool id_tok_valid) noexcept;
 
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2588,7 +2588,7 @@ namespace suse
 	const enum_def& get_definition() const noexcept;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2612,7 +2612,7 @@ namespace suse
 	{ return _e; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2634,7 +2634,7 @@ namespace suse
 	{ return _tn; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2654,7 +2654,7 @@ namespace suse
 	virtual ~function_specifier() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2706,7 +2706,7 @@ namespace suse
 
 	std::size_t _n_children() const noexcept;
 
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2751,7 +2751,7 @@ namespace suse
 	storage_class get_storage_class(ast &ast) const;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	std::vector<std::reference_wrapper<storage_class_specifier> > _scss;
 	std::vector<std::reference_wrapper<function_specifier> > _fss;
@@ -2794,7 +2794,7 @@ namespace suse
 	{ return _e; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2820,7 +2820,7 @@ namespace suse
 	{ return _il; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2852,7 +2852,7 @@ namespace suse
 	{ return _member_tok; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2874,7 +2874,7 @@ namespace suse
 	{ return _index_last ? *_index_last : _index_first; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2901,7 +2901,7 @@ namespace suse
 	void for_each(callable_type &&c) const;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2926,7 +2926,7 @@ namespace suse
 	{ return _dl; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2958,7 +2958,7 @@ namespace suse
 	{ return _is.size(); }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -2981,7 +2981,7 @@ namespace suse
 	virtual ~asm_label() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3095,7 +3095,7 @@ namespace suse
 	{ return _i; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3124,7 +3124,7 @@ namespace suse
 	void extend(init_declarator* &&id);
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3158,7 +3158,7 @@ namespace suse
 	{ return _idl; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3221,7 +3221,7 @@ namespace suse
 	}
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3249,7 +3249,7 @@ namespace suse
 	void evaluate_type(ast &a, const architecture &arch);
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3284,7 +3284,7 @@ namespace suse
 	bool is_single_void(ast &a, const architecture &arch) const;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3313,7 +3313,7 @@ namespace suse
 	{ return _ids; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3335,7 +3335,7 @@ namespace suse
 	void extend(declaration* &&d);
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3375,7 +3375,7 @@ namespace suse
 	{ return _label_tok; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3396,7 +3396,7 @@ namespace suse
 	virtual ~stmt_case() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3416,7 +3416,7 @@ namespace suse
 	virtual ~stmt_case_range() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3436,7 +3436,7 @@ namespace suse
 	virtual ~stmt_default() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3462,7 +3462,7 @@ namespace suse
 	{ return _idl; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3489,7 +3489,7 @@ namespace suse
 	{ return _llds; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3517,7 +3517,7 @@ namespace suse
 	virtual ~block_item_decl() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3538,7 +3538,7 @@ namespace suse
 	{ return _s; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3556,7 +3556,7 @@ namespace suse
 	virtual ~block_item_function_definition() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3581,7 +3581,7 @@ namespace suse
 	bool for_each_reverse(callable_type &&c) const;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3612,7 +3612,7 @@ namespace suse
 	{ return _bil; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3636,7 +3636,7 @@ namespace suse
 	{ return _e; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3656,7 +3656,7 @@ namespace suse
 	virtual ~stmt_if() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3676,7 +3676,7 @@ namespace suse
 	virtual ~stmt_switch() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3695,7 +3695,7 @@ namespace suse
 	virtual ~stmt_while() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3714,7 +3714,7 @@ namespace suse
 	virtual ~stmt_do() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3735,7 +3735,7 @@ namespace suse
 	virtual ~stmt_for_init_expr() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3758,7 +3758,7 @@ namespace suse
 	virtual ~stmt_for_init_decl() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3779,7 +3779,7 @@ namespace suse
 	virtual ~stmt_goto() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3797,7 +3797,7 @@ namespace suse
 	virtual ~stmt_continue() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3813,7 +3813,7 @@ namespace suse
 	virtual ~stmt_break() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3832,7 +3832,7 @@ namespace suse
 	{ return _e; }
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3850,7 +3850,7 @@ namespace suse
 	virtual ~stmt_asm() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3881,7 +3881,7 @@ namespace suse
 		    const asm_qualifier aq);
 
       private:
-	virtual _ast_entity* _get_child(const size_t) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3902,7 +3902,7 @@ namespace suse
 	virtual ~asm_operand_name() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3923,7 +3923,7 @@ namespace suse
 	virtual ~asm_operand() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3948,7 +3948,7 @@ namespace suse
 	void extend(asm_operand* &&ao);
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3970,7 +3970,7 @@ namespace suse
 	void extend(const pp_token_index clobber_tok);
 
       private:
-	virtual _ast_entity* _get_child(const size_t) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -3993,7 +3993,7 @@ namespace suse
 	void extend(const pp_token_index label_tok);
 
       private:
-	virtual _ast_entity* _get_child(const size_t) noexcept override;
+	virtual _ast_entity* _get_child(const size_t) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -4018,7 +4018,7 @@ namespace suse
 	virtual ~asm_directive() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -4063,7 +4063,7 @@ namespace suse
 	bool is_at_file_scope() const noexcept;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -4097,7 +4097,7 @@ namespace suse
 	virtual ~external_declaration_decl() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -4114,8 +4114,11 @@ namespace suse
 
 	virtual ~external_declaration_func() noexcept override;
 
+	const function_definition &get_function_definition() const noexcept
+	{ return _fd; }
+
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -4133,7 +4136,7 @@ namespace suse
 	virtual ~external_declaration_asm() noexcept override;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
@@ -4158,7 +4161,7 @@ namespace suse
 	void extend_tokens_range(const pp_tokens_range &tr) noexcept;
 
       private:
-	virtual _ast_entity* _get_child(const size_t i) noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
