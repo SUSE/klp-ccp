@@ -3474,11 +3474,11 @@ const sou_decl_list_node& sou_decl_link::get_target_decl_list_node()
 
 
 sou_decl_list_node::sou_decl_list_node(struct_or_union_ref &self) noexcept
-  : _next(self), _prev(&_next)
+  : _next(self), _prev(&_next), _first_in_list(true)
 {}
 
 sou_decl_list_node::sou_decl_list_node(struct_or_union_def &self) noexcept
-  : _next(self), _prev(&_next)
+  : _next(self), _prev(&_next), _first_in_list(true)
 {}
 
 void sou_decl_list_node::link_to(struct_or_union_ref &target) noexcept
@@ -3511,6 +3511,7 @@ void sou_decl_list_node::__link_to(target_type &target) noexcept
   target_node._prev = &_next;
   *_prev = _next; // links previous node to this one
   _next = sou_decl_link{target};
+  _first_in_list = false;
 }
 
 namespace
@@ -3541,49 +3542,76 @@ namespace
   };
 }
 
-const sou_decl_link sou_decl_list_node::get_declaration() const noexcept
+const sou_id sou_decl_list_node::get_id() const noexcept
 {
-  if (_prev != &_next) {
-    // This node is a member of the list of same-scope declarations at
-    // struct_or_union_def/ref::_decl_list_node and thus, a
-    // declaration already.
-    // _prev should point to this
-    assert(&_prev->get_target_decl_list_node() == this);
-    return *_prev; // points to this.
-
-  } else if (_next.get_target_kind() == sou_decl_link::target_kind::def) {
-    // This node is a struct_or_union_def (and the list of declarations
-    // is otherwise empty).
-    return *_prev;
-
-  }
-
-  // This node is a usage of a struct or union which might not be a
-  // declaration by itself.
-  assert(_next.get_target_kind() == sou_decl_link::target_kind::ref);
-  const struct_or_union_ref &r = _next.get_target_sou_ref();
-  assert (&r.get_decl_list_node() == this);
-  const sou_decl_link &l = r.get_link_to_decl();
-  if (l.get_target_kind() == sou_decl_link::target_kind::unlinked) {
-    // First usage of the struct or union which is a declaration.
-    return *_prev;
-  }
-
-  return l;
+  return sou_id(&this->_find_first_decl_node());
 }
 
 struct_or_union_def* sou_decl_list_node::find_definition() const noexcept
 {
-  const sou_decl_link l_decl = get_declaration();
-  if (l_decl.get_target_kind() == sou_decl_link::target_kind::def)
-    return &l_decl.get_target_sou_def();
+  // As an optimization, start the search at the resolved declaration
+  // node itself.
+  const sou_decl_list_node &start =
+    _find_decl_node()._prev->get_target_decl_list_node();
+  const sou_decl_list_node *cur = &start;
+  do {
+    switch(cur->_next.get_target_kind()) {
+    case sou_decl_link::target_kind::ref:
+      cur = &cur->_next.get_target_sou_ref().get_decl_list_node();
+      break;
 
-  assert(l_decl.get_target_kind() == sou_decl_link::target_kind::ref);
-  struct sou_decl_list_node &n_decl =
-    l_decl.get_target_sou_ref().get_decl_list_node();
-  _sou_decl_list_def_searcher def_searcher;
-  n_decl.for_each(def_searcher);
-  return def_searcher.get_result();
+    case sou_decl_link::target_kind::def:
+      return &cur->_next.get_target_sou_def();
+      break;
+
+    case sou_decl_link::target_kind::unlinked:
+      assert(0);
+      __builtin_unreachable();
+    }
+  } while (cur != &start);
+
+  return nullptr;
+}
+
+const sou_decl_list_node &sou_decl_list_node::_find_decl_node()
+  const noexcept
+{
+  if (_prev != &_next) {
+    // This node is on some list of redeclarations and thus, a
+    // declaration by itseld.
+    return *this;
+  } else if (_prev->get_target_kind() == sou_decl_link::target_kind::def) {
+    // This node is embedded in a definition (which is always a declaration).
+    return *this;
+  }
+
+  // Get the struct_or_union_ref this sou_decl_list_node is embedded
+  // into and resolve either to the declaration link target or, if
+  // none has been set, to self.
+  const struct_or_union_ref &sour = _prev->get_target_sou_ref();
+  switch (sour.get_link_to_decl().get_target_kind()) {
+  case sou_decl_link::target_kind::unlinked:
+    return *this;
+
+  case sou_decl_link::target_kind::def:
+    return sour.get_link_to_decl().get_target_sou_def().get_decl_list_node();
+
+  case sou_decl_link::target_kind::ref:
+    return sour.get_link_to_decl().get_target_sou_ref().get_decl_list_node();
+  }
+}
+
+const sou_decl_list_node& sou_decl_list_node::_find_first_decl_node()
+  const noexcept
+{
+  const sou_decl_list_node &start = _find_decl_node();
+  const sou_decl_list_node *cur = &start;
+  while (!cur->_first_in_list) {
+    cur = &cur->_next.get_target_decl_list_node();
+    assert(cur != &start);
+  }
+
+  return *cur;
 }
 
 

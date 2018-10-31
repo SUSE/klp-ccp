@@ -2269,6 +2269,50 @@ namespace suse
 	  };
       };
 
+      class sou_decl_list_node;
+
+      class sou_id
+      {
+      public:
+	sou_id() noexcept
+	: _first_node(nullptr)
+	{}
+
+	sou_id(const sou_id &id) noexcept
+	: _first_node(id._first_node)
+	{}
+
+	sou_id& operator=(const sou_id &id) noexcept
+	{
+	  _first_node = id._first_node;
+	  return *this;
+	}
+
+	bool operator==(const sou_id op) const noexcept
+	{
+	  return this->_first_node == op._first_node;
+	}
+
+	bool operator!=(const sou_id op) const noexcept
+	{
+	  return this->_first_node != op._first_node;
+	}
+
+	bool operator<(const sou_id op) const noexcept
+	{
+	  return this->_first_node < op._first_node;
+	}
+
+      private:
+	friend class sou_decl_list_node;
+
+	sou_id(const sou_decl_list_node *first_node) noexcept
+	  : _first_node(first_node)
+	{}
+
+	const sou_decl_list_node *_first_node;
+      };
+
       class sou_decl_list_node
       {
       public:
@@ -2284,7 +2328,7 @@ namespace suse
 	template <typename callable_type>
 	bool for_each(callable_type &&c) const;
 
-	const sou_decl_link get_declaration() const noexcept;
+	const sou_id get_id() const noexcept;
 
 	struct_or_union_def* find_definition() const noexcept;
 
@@ -2292,8 +2336,12 @@ namespace suse
 	template <typename target_type>
 	void __link_to(target_type &target) noexcept;
 
+	const sou_decl_list_node &_find_decl_node() const noexcept;
+	const sou_decl_list_node &_find_first_decl_node() const noexcept;
+
 	sou_decl_link _next;
 	sou_decl_link *_prev;
+	bool _first_in_list;
       };
 
 
