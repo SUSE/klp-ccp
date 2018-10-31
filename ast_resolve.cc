@@ -160,7 +160,8 @@ namespace
       const noexcept;
 
     const sou_decl_link* _lookup_sou_decl(const pp_token_index id_tok,
-					  const bool only_in_cur_scope)
+					  const bool only_in_cur_scope,
+					  const bool skip_cur_scope)
       const noexcept;
 
     enum_def* _lookup_enum_def(const pp_token_index id_tok,
@@ -508,7 +509,8 @@ const expr_id::resolved* _id_resolver::_lookup_id(const pp_token_index id_tok,
 }
 
 const sou_decl_link* _id_resolver::
-_lookup_sou_decl(const pp_token_index id_tok, const bool only_in_cur_scope)
+_lookup_sou_decl(const pp_token_index id_tok, const bool only_in_cur_scope,
+		 const bool skip_cur_scope)
   const noexcept
 {
   const pp_token &_id_tok = _ast.get_pp_tokens()[id_tok];
@@ -517,7 +519,11 @@ _lookup_sou_decl(const pp_token_index id_tok, const bool only_in_cur_scope)
     (!only_in_cur_scope ?
      _scopes.rend() :
      _scopes.rbegin() + 1);
-  for (auto scope_it = _scopes.rbegin(); scope_it != scopes_end; ++scope_it) {
+  const auto scopes_begin =
+    (!skip_cur_scope ?
+     _scopes.rbegin() :
+     _scopes.rbegin() + 1);
+  for (auto scope_it = scopes_begin; scope_it != scopes_end; ++scope_it) {
     for (auto d_it = scope_it->_declared_sous.begin();
 	 d_it != scope_it->_declared_sous.end(); ++d_it) {
       pp_token_index d_id_tok;
@@ -1026,10 +1032,16 @@ void _id_resolver::_handle_sou_ref(struct_or_union_ref &sour)
   // If the 'struct foo' construct is standalone, i.e. is a
   // declaration of that tag, then search only the current scope.
   const sou_decl_link *prev_decl = _lookup_sou_decl(sour.get_id_tok(),
-						    is_standalone_decl);
+						    is_standalone_decl, false);
 
+  // Non-standalone struct or union usages can potentially serve as
+  // declarations, even with all prior same-scope declarations
+  // removed. Check for this case and link the current usage into the
+  // list of declararions, if so.
+  const sou_decl_link *prev_outer_scope_decl =
+    _lookup_sou_decl(sour.get_id_tok(), false, true);
   types::struct_or_union_kind prev_tag_kind;
-  if (is_standalone_decl && prev_decl) {
+  if ((is_standalone_decl || !prev_outer_scope_decl) && prev_decl) {
     // It's a redeclaration in the same scope, link it to the previous one.
     switch (prev_decl->get_target_kind()) {
     case sou_decl_link::target_kind::ref:
@@ -1098,7 +1110,7 @@ void _id_resolver::_handle_sou_def(struct_or_union_def &soud)
     return;
 
   const sou_decl_link *prev_decl = _lookup_sou_decl(soud.get_id_tok(),
-						    true);
+						    true, false);
   if (prev_decl) {
     // It's a redeclaration, link it to the previous one.
     types::struct_or_union_kind  prev_tag_kind;
@@ -1170,7 +1182,7 @@ void _id_resolver::_handle_enum_def(enum_def &ed)
 		       id_tok.get_file_range());
     _ast.get_remarks().add(remark);
     throw semantic_except(remark);
-  } else if (_lookup_sou_decl(ed.get_id_tok(), true)) {
+  } else if (_lookup_sou_decl(ed.get_id_tok(), true, false)) {
     const pp_token &id_tok = _ast.get_pp_tokens()[ed.get_id_tok()];
     code_remark remark(code_remark::severity::fatal,
 		       "tag redeclared as a different kind",
