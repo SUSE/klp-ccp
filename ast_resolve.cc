@@ -524,8 +524,8 @@ _lookup_sou_decl(const pp_token_index id_tok, const bool only_in_cur_scope,
      _scopes.rbegin() :
      _scopes.rbegin() + 1);
   for (auto scope_it = scopes_begin; scope_it != scopes_end; ++scope_it) {
-    for (auto d_it = scope_it->_declared_sous.begin();
-	 d_it != scope_it->_declared_sous.end(); ++d_it) {
+    for (auto d_it = scope_it->_declared_sous.rbegin();
+	 d_it != scope_it->_declared_sous.rend(); ++d_it) {
       pp_token_index d_id_tok;
       switch (d_it->get_target_kind()) {
       case sou_decl_link::target_kind::ref:
@@ -1059,6 +1059,8 @@ void _id_resolver::_handle_sou_ref(struct_or_union_ref &sour)
       __builtin_unreachable();
     }
 
+    _scopes.back()._declared_sous.push_back(sou_decl_link(sour));
+
   } else if (!prev_decl) {
     // It's the first occurence and thus a declaration.
     if (_lookup_enum_def(sour.get_id_tok(), true)) {
@@ -1074,7 +1076,8 @@ void _id_resolver::_handle_sou_ref(struct_or_union_ref &sour)
     return;
 
   } else {
-    assert (!is_standalone_decl && prev_decl);
+    assert (!is_standalone_decl && prev_outer_scope_decl && prev_decl);
+    assert(prev_decl == prev_outer_scope_decl);
     // It isnt't a declaration for that tag, but a real usage.
     switch (prev_decl->get_target_kind()) {
     case sou_decl_link::target_kind::ref:
@@ -1165,9 +1168,9 @@ void _id_resolver::_handle_sou_def(struct_or_union_def &soud)
       _ast.get_remarks().add(remark);
       throw semantic_except(remark);
     }
-
-    _scopes.back()._declared_sous.push_back(sou_decl_link(soud));
   }
+
+  _scopes.back()._declared_sous.push_back(sou_decl_link(soud));
 }
 
 void _id_resolver::_handle_enum_def(enum_def &ed)
