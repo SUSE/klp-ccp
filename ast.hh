@@ -2454,6 +2454,9 @@ namespace suse
 	attribute_specifier_list *get_asl_before() noexcept
 	{ return _asl_before; }
 
+	const attribute_specifier_list *get_asl_before() const noexcept
+	{ return _asl_before; }
+
 	attribute_specifier_list *get_asl_after() noexcept
 	{ return _asl_after; }
 
