@@ -3739,6 +3739,52 @@ void struct_or_union_ref::link_to_declaration(const sou_decl_link &target)
   _link_to_decl = target;
 }
 
+bool struct_or_union_ref::is_standalone_decl() const noexcept
+{
+  bool is_standalone = false;
+  auto &&standalone_decl_checker
+    = (wrap_callables<no_default_action>
+       ([](const specifier_qualifier_list&) {
+	  // Move on searching upwards the tree.
+	  return true;
+	},
+	[&is_standalone](const struct_declaration_c99 &sd) {
+	  is_standalone = sd.get_struct_declarator_list().empty();
+	},
+	[&is_standalone](const struct_declaration_unnamed_sou&) {
+	  // struct_declaration_unnamed_sou can be a parent of a
+	  // specifier_qualifier_list. A specifier_qualifier_list can
+	  // be a parent of our struct_or_union_ref.
+	  // However, this can't both be true for the *same*
+	  // specifier_qualifier_list instance.
+	  assert(0);
+	  __builtin_unreachable();
+	},
+	[&is_standalone](const type_name&) {
+	  is_standalone = false;
+	},
+	[&is_standalone](const declaration &d) {
+	  is_standalone = !d.get_init_declarator_list();
+	},
+	[&is_standalone](const parameter_declaration_declarator&) {
+	  is_standalone = false;
+	},
+	[&is_standalone](const parameter_declaration_abstract&) {
+	  is_standalone = false;
+	},
+	[&is_standalone](const function_definition&) {
+	  is_standalone = false;
+	}));
+  this->for_each_ancestor<type_set<struct_declaration_c99,
+				   struct_declaration_unnamed_sou,
+				   type_name, declaration,
+				   parameter_declaration_declarator,
+				   parameter_declaration_abstract,
+				   function_definition> >
+    (standalone_decl_checker);
+  return is_standalone;
+}
+
 _ast_entity* struct_or_union_ref::_get_child(const size_t i) const noexcept
 {
   if (!i)

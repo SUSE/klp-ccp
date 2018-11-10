@@ -987,48 +987,7 @@ void _id_resolver::_handle_fun_def(function_definition &fd)
 
 void _id_resolver::_handle_sou_ref(struct_or_union_ref &sour)
 {
-  bool is_standalone_decl = false;
-  auto &&standalone_decl_checker
-    = (wrap_callables<no_default_action>
-       ([](const specifier_qualifier_list&) {
-	 // Move on searching upwards the tree.
-	 return true;
-	},
-	[&is_standalone_decl](const struct_declaration_c99 &sd) {
-	  is_standalone_decl = sd.get_struct_declarator_list().empty();
-	},
-	[&is_standalone_decl](const struct_declaration_unnamed_sou&) {
-	  // struct_declaration_unnamed_sou can be a parent of a
-	  // specifier_qualifier_list. A specifier_qualifier_list can
-	  // be a parent of our struct_or_union_ref.
-	  // However, this can't both be true for the *same*
-	  // specifier_qualifier_list instance.
-	  assert(0);
-	  __builtin_unreachable();
-	},
-	[&is_standalone_decl](const type_name&) {
-	  is_standalone_decl = false;
-	},
-	[&is_standalone_decl](const declaration &d) {
-	  is_standalone_decl = !d.get_init_declarator_list();
-	},
-	[&is_standalone_decl](const parameter_declaration_declarator&) {
-	  is_standalone_decl = false;
-	},
-	[&is_standalone_decl](const parameter_declaration_abstract&) {
-	  is_standalone_decl = false;
-	},
-	[&is_standalone_decl](const function_definition&) {
-	  is_standalone_decl = false;
-	}));
-  sour.for_each_ancestor<type_set<struct_declaration_c99,
-				  struct_declaration_unnamed_sou,
-				  type_name, declaration,
-				  parameter_declaration_declarator,
-				  parameter_declaration_abstract,
-				  function_definition> >
-    (standalone_decl_checker);
-
+  bool is_standalone_decl = sour.is_standalone_decl();
   // If the 'struct foo' construct is standalone, i.e. is a
   // declaration of that tag, then search only the current scope.
   const sou_decl_link *prev_decl = _lookup_sou_decl(sour.get_id_tok(),

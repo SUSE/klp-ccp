@@ -2472,6 +2472,8 @@ namespace suse
 
 	void link_to_declaration(const sou_decl_link &target) noexcept;
 
+	bool is_standalone_decl() const noexcept;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
