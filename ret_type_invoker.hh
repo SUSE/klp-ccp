@@ -29,7 +29,7 @@ namespace suse
       }
 
     private:
-      std::aligned_storage<sizeof(ret_type)> _result;
+      typename std::aligned_storage<sizeof(ret_type)>::type _result;
     };
 
     template <>
