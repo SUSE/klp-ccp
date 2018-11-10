@@ -224,6 +224,8 @@ namespace suse
 				 const std::string::const_iterator &end,
 				 const limb &base);
 
+	std::string to_string(const limb &base) const;
+
       private:
 	limbs(_limbs_type &&ls);
 

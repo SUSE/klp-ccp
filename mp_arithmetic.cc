@@ -1133,3 +1133,29 @@ limbs limbs::from_string(const std::string::const_iterator &begin,
 
   return r;
 }
+
+std::string limbs::to_string(const limb &base) const
+{
+  mpa::limbs val = *this;
+  const mpa::limbs ls_base{base};
+  std::string result;
+  do {
+    auto div = val / ls_base;
+    val = std::move(div.first);
+
+    assert(div.second.size() == 1);
+    const limb::limb_type &remainder = div.second[0].value();
+    assert(remainder < base.value());
+
+    // Build the resulting string in reverse order for efficiency and
+    // reverse it below.
+    if (remainder <= 9) {
+      result.append(1, remainder + '0');
+    } else {
+      result.append(1, remainder + 'a' - 10);
+    }
+  } while (val);
+
+  std::reverse(result.begin(), result.end());
+  return result;
+}
