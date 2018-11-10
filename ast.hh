@@ -4280,6 +4280,9 @@ namespace suse
 
 	virtual ~external_declaration_decl() noexcept override;
 
+	const declaration& get_declaration() const noexcept
+	{ return _d; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
