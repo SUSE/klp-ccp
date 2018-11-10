@@ -681,6 +681,14 @@ namespace suse
       }
 
       template <typename callable_type>
+      void declaration_specifiers::
+      for_each_storage_class_specifier(callable_type &&c) const
+      {
+	for (auto scs : _scss)
+	  c(const_cast<const storage_class_specifier&>(scs.get()));
+      }
+
+      template <typename callable_type>
       void struct_declarator_list::for_each(callable_type &&c) const
       {
 	for (auto it = _sds.begin(); it != _sds.end(); ++it) {
