@@ -814,6 +814,28 @@ namespace suse
 	return true;
       }
 
+      template <typename callable_type>
+      void translation_unit::for_each_external_declaration(callable_type &&c)
+	const
+      {
+	for (auto ed : _eds) {
+	  ed.get().process<void,
+			   type_set<external_declaration_decl,
+				    external_declaration_func,
+				    external_declaration_asm>>
+	    (wrap_callables<default_action_unreachable<void, type_set<>>
+					::type>
+	     ([&](const external_declaration_decl &edd) {
+		c(edd);
+	      },
+	      [&](const external_declaration_func &edf) {
+		c(edf);
+	      },
+	      [&](const external_declaration_asm &eda) {
+		c(eda);
+	      }));
+	}
+      }
     }
   }
 }

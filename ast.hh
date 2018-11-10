@@ -4273,6 +4273,9 @@ namespace suse
 
 	void extend_tokens_range(const pp_tokens_range &tr) noexcept;
 
+	template <typename callable_type>
+	void for_each_external_declaration(callable_type &&c) const;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
