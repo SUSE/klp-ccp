@@ -711,6 +711,39 @@ namespace suse
       }
 
       template <typename callable_type>
+      void linkage::for_each_visible(callable_type &&c) const
+      {
+	const linkage *cur = this;
+	while (cur) {
+	  switch (cur->_target_kind) {
+	  case linkage::link_target_kind::unlinked:
+	    cur = nullptr;
+	    break;
+
+	  case linkage::link_target_kind::init_decl:
+	    if (cur->_target_is_visible) {
+	      const init_declarator &id = *cur->_target_id;
+	      c(id);
+	      cur = &id.get_linkage();
+	    } else {
+	      cur = nullptr;
+	    }
+	    break;
+
+	  case linkage::link_target_kind::function_def:
+	    if (cur->_target_is_visible) {
+	      const function_definition &fd = *cur->_target_fd;
+	      c(fd);
+	      cur = &fd.get_linkage();
+	    } else {
+	      cur = nullptr;
+	    }
+	    break;
+	  }
+	}
+      }
+
+      template <typename callable_type>
       void init_declarator_list::for_each(callable_type &&c) const
       {
 	for (auto id : _ids)

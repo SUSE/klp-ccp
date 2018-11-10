@@ -3141,8 +3141,10 @@ namespace suse
 
 	linkage_id get_id() const noexcept;
 
-      private:
+	template <typename callable_type>
+	void for_each_visible(callable_type &&c) const;
 
+      private:
 	bool _is_linked_to(const linkage &target) const noexcept;
 
 	linkage_kind _linkage_kind;
