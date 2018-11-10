@@ -1461,19 +1461,7 @@ bool struct_or_union_type::is_compatible_with(const architecture&,
     return (_content == t._content);
 
   if (_decl_node && t._decl_node) {
-    const ast::sou_decl_list_node &my_decl =
-      _decl_node->get_declaration().get_target_decl_list_node();
-    const ast::sou_decl_list_node &other_decl =
-      t._decl_node->get_declaration().get_target_decl_list_node();
-
-    return (!(other_decl.for_each
-	      (wrap_callables<no_default_action>
-	       ([&](const ast::struct_or_union_def &sd) {
-		  return &my_decl != &sd.get_decl_list_node();
-		},
-		[&](const ast::struct_or_union_ref &sr) {
-		  return &my_decl != &sr.get_decl_list_node();
-		}))));
+    return _decl_node->get_id() == t._decl_node->get_id();
   }
 
   return false;
