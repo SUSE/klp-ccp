@@ -7,6 +7,7 @@
 #include <functional>
 #include <memory>
 #include <utility>
+#include <limits>
 #include "type_set.hh"
 #include "inclusion_tree.hh"
 #include "pp_tokens.hh"
@@ -31,13 +32,22 @@ namespace suse
       struct pp_tokens_range
       {
 	pp_tokens_range() noexcept
-	  : begin(0), end(0)
+	: begin(std::numeric_limits<pp_token_index>::max()),
+	  end(0)
 	{}
 
 	pp_tokens_range(const pp_token_index _begin,
 			const pp_token_index _end) noexcept
 	  : begin(_begin), end(_end)
-	{}
+	{
+	  assert(begin <= end);
+	}
+
+	bool is_builtin() const noexcept
+	{
+	  return (begin == std::numeric_limits<pp_token_index>::max() &&
+		  end == 0);
+	}
 
 	pp_token_index begin;
 	pp_token_index end;
