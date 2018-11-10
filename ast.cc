@@ -2364,34 +2364,36 @@ pp_token_index direct_declarator_id::get_id_tok() const noexcept
   return _id_tok;
 }
 
-bool direct_declarator_id::is_function() const noexcept
+const direct_declarator_func* direct_declarator_id::is_function() const noexcept
 {
-  const _ast_entity *p = get_parent();
-  assert(p);
+  const direct_declarator_func *ddf = nullptr;
+  for_each_ancestor<type_set<direct_declarator_func,
+			     direct_declarator_array,
+			     struct_declarator,
+			     init_declarator,
+			     parameter_declaration_declarator,
+			     function_definition> >
+    (wrap_callables<no_default_action>
+     ([](const declarator &d) {
+	if (d.get_pointer()) {
+	  // Will be a "pointer to ... function returning ..." at best.
+	  return false;
+	}
+	return true;
+      },
+      [](const direct_declarator_parenthesized&) {
+	return true;
+      },
+      [&](const direct_declarator_func &_ddf) {
+	ddf = &_ddf;
+      },
+      [](const direct_declarator_array&) {},
+      [](const struct_declarator&) {},
+      [](const init_declarator&) {},
+      [](const parameter_declaration_declarator&) {},
+      [](const function_definition&) {}));
 
-  // Find the first parent which is not a parenthesises-only direct
-  // declarator.
-  const declarator *d = dynamic_cast<const declarator*>(p);
-  while (d) {
-    if (d->get_pointer()) {
-      // Will be a "pointer to ... function returning ..." at best.
-      return false;
-    }
-
-    p = d->get_parent();
-    assert(p);
-    const direct_declarator_parenthesized *pddp
-      = dynamic_cast<const direct_declarator_parenthesized*>(p);
-    if (!pddp)
-      return false;
-
-    p = pddp->get_parent();
-    assert(p);
-
-    d = dynamic_cast<const declarator*>(p);
-  }
-
-  return p->is_any_of<direct_declarator_func>();
+  return ddf;
 }
 
 void direct_declarator_id::

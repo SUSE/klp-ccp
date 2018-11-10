@@ -1682,7 +1682,7 @@ namespace suse
 
 	pp_token_index get_id_tok() const noexcept;
 
-	bool is_function() const noexcept;
+	const direct_declarator_func* is_function() const noexcept;
 
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
