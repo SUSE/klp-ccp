@@ -96,8 +96,19 @@ namespace suse
 	void for_each_dfs_pre_and_po(callables_wrapper_type_pre &&c_pre,
 				     callables_wrapper_type_post &&c_post);
 
+	template <typename handled_types_pre,
+		  typename handled_types_post,
+		  typename callables_wrapper_type_pre,
+		  typename callables_wrapper_type_post>
+	void for_each_dfs_pre_and_po(callables_wrapper_type_pre &&c_pre,
+				     callables_wrapper_type_post &&c_post)
+	  const;
+
 	template <typename handled_types, typename callables_wrapper_type>
 	void for_each_dfs_po(callables_wrapper_type &&c);
+
+	template <typename handled_types, typename callables_wrapper_type>
+	void for_each_dfs_po(callables_wrapper_type &&c) const;
 
       protected:
 	void _extend_tokens_range(const pp_tokens_range &tr) noexcept;
@@ -120,8 +131,16 @@ namespace suse
 	void _for_each_dfs_pre_and_po(callable_type_pre &&c_pre,
 				      callable_type_post &&c_post);
 
+	template<typename callable_type_pre,
+		 typename callable_type_post>
+	void _for_each_dfs_pre_and_po(callable_type_pre &&c_pre,
+				      callable_type_post &&c_post) const;
+
 	template <typename callable_type>
 	void _for_each_dfs_po(callable_type &&c);
+
+	template <typename callable_type>
+	void _for_each_dfs_po(callable_type &&c) const;
 
 	pp_tokens_range _tokens_range;
       };
