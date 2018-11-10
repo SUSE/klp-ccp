@@ -2351,6 +2351,9 @@ namespace suse
 
 	struct_or_union_def* find_definition() const noexcept;
 
+	bool is_first() const noexcept
+	{ return _first_in_list; }
+
       private:
 	template <typename target_type>
 	void __link_to(target_type &target) noexcept;
