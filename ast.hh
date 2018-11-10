@@ -3043,6 +3043,38 @@ namespace suse
       class linkage
       {
       public:
+	class linkage_id
+	{
+	public:
+	  linkage_id() noexcept
+	    : _l(nullptr)
+	  {}
+
+	  linkage_id& operator=(const linkage_id &lid)
+	  {
+	    _l = lid._l;
+	    return *this;
+	  }
+
+	  bool operator==(const linkage_id op) const noexcept
+	  { return this->_l == op._l; }
+
+	  bool operator!=(const linkage_id op) const noexcept
+	  { return this->_l != op._l; }
+
+	  bool operator<(const linkage_id op) const noexcept
+	  { return this->_l < op._l; }
+
+	private:
+	  friend class linkage;
+
+	  linkage_id(const linkage &l) noexcept
+	    : _l(&l)
+	  {}
+
+	  const linkage * _l;
+	};
+
 	enum class linkage_kind
 	  {
 	    none,
@@ -3083,13 +3115,13 @@ namespace suse
 	bool is_target_visible() const noexcept
 	{ return _target_is_visible; }
 
+	linkage_id get_id() const noexcept;
+
       private:
-	const linkage& _find_linkage_root() const noexcept;
 
 	bool _is_linked_to(const linkage &target) const noexcept;
 
 	linkage_kind _linkage_kind;
-
 
 	link_target_kind _target_kind;
 

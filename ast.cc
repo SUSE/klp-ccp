@@ -4989,7 +4989,7 @@ const function_definition& linkage::get_target_function_definition()
   return *_target_fd;
 }
 
-const linkage& linkage::_find_linkage_root() const noexcept
+linkage::linkage_id linkage::get_id() const noexcept
 {
   const linkage *cur = this;
   while (cur->_target_kind != link_target_kind::unlinked) {
@@ -5004,12 +5004,12 @@ const linkage& linkage::_find_linkage_root() const noexcept
     }
   }
 
-  return *this;
+  return linkage_id(*cur);
 }
 
 bool linkage::_is_linked_to(const linkage &target) const noexcept
 {
-  return &this->_find_linkage_root() == &target._find_linkage_root();
+  return this->get_id() == target.get_id();
 }
 
 
