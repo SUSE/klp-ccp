@@ -1799,6 +1799,12 @@ namespace suse
 
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
+	const type_qualifier_list* get_type_qualifier_list() const noexcept
+	{ return _tql; }
+
+	const expr* get_size() const noexcept
+	{ return _size; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
