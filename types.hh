@@ -1198,6 +1198,9 @@ namespace suse
 	const std::shared_ptr<const std_int_type>&
 	get_underlying_type() const noexcept;
 
+	const ast::enum_def& get_enum_def() const noexcept
+	{ return _ed; }
+
       private:
 	enum_type(const ast::enum_def &ed, const qualifiers qs);
 
