@@ -4414,6 +4414,9 @@ namespace suse
 
 	void evaluate(const architecture &arch);
 
+	const translation_unit& get_translation_unit() const
+	{ return *_tu; }
+
       private:
 	void _register_labels();
 
