@@ -1843,6 +1843,10 @@ namespace suse
 
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
+	const parameter_declaration_list* get_parameter_declaration_list()
+	  const noexcept
+	{ return _ptl; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
