@@ -678,6 +678,9 @@ namespace suse
 
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
+	const type_name& get_type_name() const noexcept
+	{ return _tn; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
@@ -784,6 +787,9 @@ namespace suse
 
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
+	const type_name& get_type_name() const noexcept
+	{ return _tn; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
@@ -824,6 +830,9 @@ namespace suse
 	virtual ~expr_alignof_type_name() noexcept override;
 
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
+
+	const type_name& get_type_name() const noexcept
+	{ return _tn; }
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -917,6 +926,9 @@ namespace suse
 
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
+	const type_name& get_type_name() const noexcept
+	{ return _tn; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
@@ -939,6 +951,12 @@ namespace suse
 	virtual ~expr_builtin_types_compatible_p() noexcept override;
 
 	virtual void evaluate_type(ast&, const architecture &arch) override;
+
+	const type_name& get_type_name1() const noexcept
+	{ return _tn1; }
+
+	const type_name& get_type_name2() const noexcept
+	{ return _tn2; }
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -1104,6 +1122,9 @@ namespace suse
 	virtual ~expr_compound_literal() noexcept override;
 
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
+
+	const type_name& get_type_name() const noexcept
+	{ return _tn; }
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
