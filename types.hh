@@ -809,6 +809,9 @@ namespace suse
 	const struct_or_union_kind get_kind() const noexcept
 	{ return _kind; }
 
+	const ast::sou_decl_list_node* get_decl_list_node() const noexcept
+	{ return _decl_node; }
+
       private:
 	struct_or_union_type(const struct_or_union_kind kind,
 			     const ast::sou_decl_list_node &decl_node,
