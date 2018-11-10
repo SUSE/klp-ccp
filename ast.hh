@@ -3242,16 +3242,28 @@ namespace suse
 	declarator& get_declarator() noexcept
 	{ return _d; }
 
+	const attribute_specifier_list *get_asl_before() const noexcept
+	{ return _asl_before; }
+
 	attribute_specifier_list *get_asl_before() noexcept
 	{ return _asl_before; }
 
+	const attribute_specifier_list *get_asl_middle() const noexcept
+	{ return _asl_middle; }
+
 	attribute_specifier_list *get_asl_middle() noexcept
 	{ return _asl_middle; }
+
+	const attribute_specifier_list *get_asl_after() const noexcept
+	{ return _asl_after; }
 
 	attribute_specifier_list *get_asl_after() noexcept
 	{ return _asl_after; }
 
 	initializer* get_initializer() noexcept
+	{ return _i; }
+
+	const initializer* get_initializer() const noexcept
 	{ return _i; }
 
       private:
