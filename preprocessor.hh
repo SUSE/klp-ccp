@@ -30,8 +30,8 @@ namespace suse
 	_cond_incl_state(const file_range::loc_type _start_loc);
 
 	file_range::loc_type start_loc;
-	used_macros used_macros;
-	used_macro_undefs used_macro_undefs;
+	used_macros um;
+	used_macro_undefs umu;
 	conditional_inclusion_node *incl_node;
 	bool branch_active;
       };

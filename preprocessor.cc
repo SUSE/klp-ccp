@@ -392,12 +392,12 @@ void preprocessor::_handle_pp_directive(pp_token &&sharp_tok)
 
     auto it_m = _macros.find(it_tok->get_value());
     if (it_m != _macros.end()) {
-      _cond_incl_states.top().used_macros += it_m->second;
+      _cond_incl_states.top().um += it_m->second;
       _enter_cond_incl();
     } else {
       auto it_m_undef = _macro_undefs.find(it_tok->get_value());
       if (it_m_undef != _macro_undefs.end())
-	_cond_incl_states.top().used_macro_undefs += it_m_undef->second;
+	_cond_incl_states.top().umu += it_m_undef->second;
     }
 
   } else if (it_tok->get_value() == "ifndef") {
@@ -422,11 +422,11 @@ void preprocessor::_handle_pp_directive(pp_token &&sharp_tok)
 
     auto it_m = _macros.find(it_tok->get_value());
     if (it_m != _macros.end()) {
-      _cond_incl_states.top().used_macros += it_m->second;
+      _cond_incl_states.top().um += it_m->second;
     } else {
       auto it_m_undef = _macro_undefs.find(it_tok->get_value());
       if (it_m_undef != _macro_undefs.end())
-	_cond_incl_states.top().used_macro_undefs += it_m_undef->second;
+	_cond_incl_states.top().umu += it_m_undef->second;
       _enter_cond_incl();
     }
 
@@ -1120,8 +1120,8 @@ void preprocessor::_enter_cond_incl()
 
   conditional_inclusion_node &new_conditional_inclusion_node =
     (_inclusions.top().get().add_conditional_inclusion
-     (cond_incl_state.start_loc, std::move(cond_incl_state.used_macros),
-      std::move(cond_incl_state.used_macro_undefs)));
+     (cond_incl_state.start_loc, std::move(cond_incl_state.um),
+      std::move(cond_incl_state.umu)));
 
   cond_incl_state.incl_node = &new_conditional_inclusion_node;
   cond_incl_state.branch_active = true;
@@ -1138,8 +1138,8 @@ void preprocessor::_pop_cond_incl(const file_range::loc_type end_loc)
     // into the inclusion tree now.
     conditional_inclusion_node &node
       = (_inclusions.top().get().add_conditional_inclusion
-	 (cond_incl_state.start_loc, std::move(cond_incl_state.used_macros),
-	  std::move(cond_incl_state.used_macro_undefs)));
+	 (cond_incl_state.start_loc, std::move(cond_incl_state.um),
+	  std::move(cond_incl_state.umu)));
     node.set_end_loc(end_loc);
 
   } else {
@@ -1178,9 +1178,9 @@ bool preprocessor::_eval_conditional_inclusion(pp_tokens &&directive_toks)
       auto tok = _expand(state, read_tok, true);
 
       tok.expansion_history().clear();
-      _cond_incl_states.top().used_macros += tok.used_macros();
+      _cond_incl_states.top().um += tok.used_macros();
       tok.used_macros().clear();
-      _cond_incl_states.top().used_macro_undefs += tok.used_macro_undefs();
+      _cond_incl_states.top().umu += tok.used_macro_undefs();
       tok.used_macro_undefs().clear();
 
       return tok;
