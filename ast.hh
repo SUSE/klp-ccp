@@ -4237,6 +4237,15 @@ namespace suse
 
 	bool is_at_file_scope() const noexcept;
 
+	const attribute_specifier_list* get_asl() const noexcept
+	{ return _asl; }
+
+	const declaration_list* get_declaration_list() const noexcept
+	{ return _dl; }
+
+	const stmt_compound& get_stmt_compound() const noexcept
+	{ return _sc; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
