@@ -4,7 +4,7 @@
 #include "code_remark.hh"
 #include "semantic_except.hh"
 
-using namespace suse::cp::ast;
+using namespace klp::ccp::ast;
 
 template<typename T>
 static T* mv_p(T* &&p)
@@ -16,7 +16,7 @@ static T* mv_p(T* &&p)
 
 #ifdef DEBUG_PARSER
 std::ostream&
-suse::cp::ast::operator<<(std::ostream &o, const pp_tokens_range &r)
+klp::ccp::ast::operator<<(std::ostream &o, const pp_tokens_range &r)
 {
   o << r.begin << '-' << r.end;
   return o;
@@ -1353,7 +1353,7 @@ expr_id::resolved::resolved(identifier_list &pil) noexcept
   : _kind(resolved_kind::in_param_id_list), _pil(&pil)
 {}
 
-suse::cp::builtin_func::factory expr_id::resolved::get_builtin_func_factory()
+klp::ccp::builtin_func::factory expr_id::resolved::get_builtin_func_factory()
   const noexcept
 {
   assert(_kind == resolved_kind::builtin_func);
@@ -1928,7 +1928,7 @@ direct_abstract_declarator(const pp_tokens_range &tr) noexcept
 
 direct_abstract_declarator::~direct_abstract_declarator() noexcept = default;
 
-std::shared_ptr<const suse::cp::types::addressable_type>
+std::shared_ptr<const klp::ccp::types::addressable_type>
 direct_abstract_declarator::_get_enclosing_type() const noexcept
 {
   std::shared_ptr<const types::addressable_type> pt;
@@ -1970,7 +1970,7 @@ direct_abstract_declarator_parenthesized::
   delete &_ad;
 }
 
-std::shared_ptr<const suse::cp::types::addressable_type>
+std::shared_ptr<const klp::ccp::types::addressable_type>
 direct_abstract_declarator_parenthesized::
 get_innermost_type() const noexcept
 {
@@ -2065,7 +2065,7 @@ direct_abstract_declarator_array::
   delete _size;
 }
 
-std::shared_ptr<const suse::cp::types::addressable_type>
+std::shared_ptr<const klp::ccp::types::addressable_type>
 direct_abstract_declarator_array::get_innermost_type() const noexcept
 {
   if (_dad)
@@ -2142,7 +2142,7 @@ direct_abstract_declarator_func::~direct_abstract_declarator_func() noexcept
   delete _ptl;
 }
 
-std::shared_ptr<const suse::cp::types::addressable_type>
+std::shared_ptr<const klp::ccp::types::addressable_type>
 direct_abstract_declarator_func::get_innermost_type() const noexcept
 {
   if (_dad)
@@ -2204,7 +2204,7 @@ abstract_declarator::~abstract_declarator() noexcept
   delete _dad;
 }
 
-std::shared_ptr<const suse::cp::types::addressable_type>
+std::shared_ptr<const klp::ccp::types::addressable_type>
 abstract_declarator::
 get_innermost_type() const noexcept
 {
@@ -2248,7 +2248,7 @@ bool abstract_declarator::_process(const_processor<bool> &p) const
   return p(*this);
 }
 
-std::shared_ptr<const suse::cp::types::addressable_type>
+std::shared_ptr<const klp::ccp::types::addressable_type>
 abstract_declarator::_get_enclosing_type() const noexcept
 {
   std::shared_ptr<const types::addressable_type> pt;
@@ -2325,7 +2325,7 @@ direct_declarator::direct_declarator(const pp_tokens_range &tr) noexcept
 
 direct_declarator::~direct_declarator() noexcept = default;
 
-std::shared_ptr<const suse::cp::types::addressable_type>
+std::shared_ptr<const klp::ccp::types::addressable_type>
 direct_declarator::_get_enclosing_type() const noexcept
 {
   std::shared_ptr<const types::addressable_type> pt;
@@ -2690,7 +2690,7 @@ pp_token_index declarator::get_id_tok() const noexcept
   return this->get_direct_declarator_id().get_id_tok();
 }
 
-std::shared_ptr<const suse::cp::types::addressable_type>
+std::shared_ptr<const klp::ccp::types::addressable_type>
 declarator::get_innermost_type() const noexcept
 {
   return get_direct_declarator_id().get_type();
@@ -2730,7 +2730,7 @@ bool declarator::_process(const_processor<bool> &p) const
   return p(*this);
 }
 
-std::shared_ptr<const suse::cp::types::addressable_type>
+std::shared_ptr<const klp::ccp::types::addressable_type>
 declarator::_get_enclosing_type() const noexcept
 {
   std::shared_ptr<const types::addressable_type> pt;
@@ -2896,7 +2896,7 @@ void type_qualifier_list::extend(attribute_specifier_list* &&asl)
   _asl.get()._set_parent(*this);
 }
 
-const suse::cp::types::qualifiers
+const klp::ccp::types::qualifiers
 type_qualifier_list::get_qualifiers() const
 {
   types::qualifiers qs;
@@ -3829,7 +3829,7 @@ enumerator::~enumerator() noexcept
   delete _value;
 }
 
-const suse::cp::types::enum_content::member& enumerator::to_member(const ast &a)
+const klp::ccp::types::enum_content::member& enumerator::to_member(const ast &a)
   const noexcept
 {
   const std::string& name = a.get_pp_tokens()[_id_tok].get_value();
@@ -4318,7 +4318,7 @@ void specifier_qualifier_list::extend(specifier_qualifier_list* &&sql)
   delete _sql;
 }
 
-const suse::cp::types::qualifiers
+const klp::ccp::types::qualifiers
 specifier_qualifier_list::get_qualifiers() const
 {
   types::qualifiers qs;

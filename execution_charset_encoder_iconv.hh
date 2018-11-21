@@ -4,9 +4,9 @@
 #include "execution_charset_encoder.hh"
 #include <iconv.h>
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     class execution_charset_encoder_iconv final
       : public execution_charset_encoder

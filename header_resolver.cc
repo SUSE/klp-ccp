@@ -1,7 +1,7 @@
 #include "header_resolver.hh"
 #include "path.hh"
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 const struct header_resolver::cwd_tag header_resolver::cwd;
 

@@ -5,7 +5,7 @@
 #include "pp_except.hh"
 #include "inclusion_tree.hh"
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 pp_tokenizer::pp_tokenizer(header_inclusion_node &file)
   : _file(file), _sr(_file.create_source_reader()),

@@ -4,8 +4,8 @@
 #include "ast_impl.hh"
 #include "semantic_except.hh"
 
-using namespace suse::cp;
-using namespace suse::cp::ast;
+using namespace klp::ccp;
+using namespace klp::ccp::ast;
 
 using resolved_kind = expr_id::resolved::resolved_kind;
 

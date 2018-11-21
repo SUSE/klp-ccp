@@ -3,7 +3,7 @@
 #include "file_range.hh"
 #include "inclusion_tree.hh"
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 file_range::file_range(const inclusion_node &inclusion_node,
 		       const loc_type &start_loc,
@@ -43,7 +43,7 @@ file_range::loc_type file_range::get_start_line() const noexcept
   return get_header_inclusion_node().offset_to_line_col(_start_loc).first;
 }
 
-std::ostream& suse::cp::operator<<(std::ostream &o, const file_range &r)
+std::ostream& klp::ccp::operator<<(std::ostream &o, const file_range &r)
 {
   const header_inclusion_node &file = r.get_header_inclusion_node();
   typedef file_range::loc_type loc_type;

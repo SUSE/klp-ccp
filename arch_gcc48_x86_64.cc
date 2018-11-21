@@ -4,8 +4,8 @@
 #include "semantic_except.hh"
 #include "arch_gcc48_x86_64.hh"
 
-using namespace suse::cp;
-using namespace suse::cp::types;
+using namespace klp::ccp;
+using namespace klp::ccp::types;
 
 bool arch_gcc48_x86_64::is_char_signed() const noexcept
 {

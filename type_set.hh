@@ -5,9 +5,9 @@
 #include <utility>
 #include <cassert>
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     template<typename... types>
     class type_set;

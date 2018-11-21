@@ -9,9 +9,9 @@
 #include "constexpr_value.hh"
 #include "ret_type_invoker.hh"
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     namespace ast
     {
@@ -39,7 +39,7 @@ namespace suse
 
 	template<typename callable_type, typename... args_types>
 	using has_overload =
-	  suse::cp::impl::has_overload<callable_type, args_types...>;
+	  klp::ccp::impl::has_overload<callable_type, args_types...>;
 
 	template<typename callable_type, typename boundary_type_set>
 	class stop_at_boundary_wrapper;

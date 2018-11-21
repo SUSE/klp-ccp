@@ -13,9 +13,9 @@
 #include "macro.hh"
 #include "pp_tokenizer.hh"
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     class pp_tokenizer;
     class header_inclusion_root;

@@ -6,7 +6,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 source_reader::~source_reader() noexcept = default;
 

@@ -4,9 +4,9 @@
 #include <vector>
 #include <ios>
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     class code_remark;
 

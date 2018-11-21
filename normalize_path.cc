@@ -8,7 +8,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  std::cout << suse::cp::normalize_path(argv[1])
+  std::cout << klp::ccp::normalize_path(argv[1])
 	    << std::endl;
 
   return 0;

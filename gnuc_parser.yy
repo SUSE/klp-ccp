@@ -1,7 +1,7 @@
 %language "C++"
 %skeleton "lalr1.cc"
 %defines
-%define namespace "suse::cp::yy"
+%define namespace "klp::ccp::yy"
 %define parser_class_name "gnuc_parser"
 %name-prefix "pd."
 %define api.location.type pp_tokens_range
@@ -15,14 +15,14 @@
 #include "types.hh"
 #include "ast.hh"
 
-namespace suse {
-  namespace cp
+namespace klp {
+  namespace ccp
   {
     namespace yy
     {
       // Bison doesn't accept namespace specifications at
       // %define api.location.type. Pull the type in.
-      typedef suse::cp::ast::pp_tokens_range pp_tokens_range;
+      typedef klp::ccp::ast::pp_tokens_range pp_tokens_range;
 
       class gnuc_parser_driver;
     }
@@ -31,8 +31,8 @@ namespace suse {
 }
 
 %code {
-using namespace suse::cp;
-using namespace suse::cp::ast;
+using namespace klp::ccp;
+using namespace klp::ccp::ast;
 
 #define YYLLOC_DEFAULT(Cur, Rhs, N)				\
   do {								\
@@ -71,73 +71,73 @@ static void empty(pp_tokens_range &loc)
 
 }
 
-%parse-param {suse::cp::yy::gnuc_parser_driver &pd}
+%parse-param {klp::ccp::yy::gnuc_parser_driver &pd}
 
 
 %union {
-  suse::cp::ast::pp_token_index token_index;
-  suse::cp::ast::assign_op assign_op;
-  suse::cp::ast::binary_op binary_op;
-  suse::cp::ast::unary_op_pre unary_op_pre;
-  suse::cp::types::struct_or_union_kind struct_or_union_kind;
+  klp::ccp::ast::pp_token_index token_index;
+  klp::ccp::ast::assign_op assign_op;
+  klp::ccp::ast::binary_op binary_op;
+  klp::ccp::ast::unary_op_pre unary_op_pre;
+  klp::ccp::types::struct_or_union_kind struct_or_union_kind;
 
-  suse::cp::ast::expr *expr;
-  suse::cp::ast::offset_member_designator *offset_member_designator;
-  suse::cp::ast::string_literal *string_literal;
-  suse::cp::ast::expr_list *expr_list;
-  suse::cp::ast::attribute *attribute;
-  suse::cp::ast::attribute_list *attribute_list;
-  suse::cp::ast::attribute_specifier *attribute_specifier;
-  suse::cp::ast::attribute_specifier_list *attribute_specifier_list;
-  suse::cp::ast::pointer *pointer;
-  suse::cp::ast::direct_abstract_declarator *direct_abstract_declarator;
-  suse::cp::ast::abstract_declarator *abstract_declarator;
-  suse::cp::ast::type_name *type_name;
-  suse::cp::ast::direct_declarator *direct_declarator;
-  suse::cp::ast::declarator *declarator;
-  suse::cp::ast::storage_class_specifier *storage_class_specifier;
-  suse::cp::ast::type_qualifier *type_qualifier;
-  suse::cp::ast::type_qualifier_list *type_qualifier_list;
-  suse::cp::ast::type_specifier *type_specifier;
-  suse::cp::ast::struct_declaration *struct_declaration;
-  suse::cp::ast::struct_declarator *struct_declarator;
-  suse::cp::ast::struct_declarator_list *struct_declarator_list;
-  suse::cp::ast::unnamed_struct_or_union *unnamed_struct_or_union;
-  suse::cp::ast::struct_declaration_list *struct_declaration_list;
-  suse::cp::ast::enumerator *enumerator;
-  suse::cp::ast::enumerator_list *enumerator_list;
-  suse::cp::ast::function_specifier *function_specifier;
-  suse::cp::ast::specifier_qualifier_list *specifier_qualifier_list;
-  suse::cp::ast::declaration_specifiers *declaration_specifiers;
-  suse::cp::ast::initializer *initializer;
-  suse::cp::ast::initializer_list *initializer_list;
-  suse::cp::ast::designator *designator;
-  suse::cp::ast::designator_list *designator_list;
-  suse::cp::ast::designation *designation;
-  suse::cp::ast::asm_label *asm_label;
-  suse::cp::ast::init_declarator *init_declarator;
-  suse::cp::ast::init_declarator_list *init_declarator_list;
-  suse::cp::ast::declaration *declaration;
-  suse::cp::ast::parameter_declaration *parameter_declaration;
-  suse::cp::ast::parameter_declaration_list *parameter_declaration_list;
-  suse::cp::ast::identifier_list *identifier_list;
-  suse::cp::ast::declaration_list *declaration_list;
-  suse::cp::ast::stmt *stmt;
-  suse::cp::ast::stmt_compound *stmt_compound;
-  suse::cp::ast::local_label_declaration *local_label_declaration;
-  suse::cp::ast::local_label_declaration_list *local_label_declaration_list;
-  suse::cp::ast::block_item *block_item;
-  suse::cp::ast::block_item_list *block_item_list;
-  suse::cp::ast::asm_directive *asm_directive;
-  suse::cp::ast::asm_qualifier_list *asm_qualifier_list;
-  suse::cp::ast::asm_operand_name *asm_operand_name;
-  suse::cp::ast::asm_operand *asm_operand;
-  suse::cp::ast::asm_operand_list *asm_operand_list;
-  suse::cp::ast::asm_clobber_list *asm_clobber_list;
-  suse::cp::ast::asm_jump_to_label_list *asm_jump_to_label_list;
-  suse::cp::ast::function_definition *function_definition;
-  suse::cp::ast::external_declaration *external_declaration;
-  suse::cp::ast::translation_unit *translation_unit;
+  klp::ccp::ast::expr *expr;
+  klp::ccp::ast::offset_member_designator *offset_member_designator;
+  klp::ccp::ast::string_literal *string_literal;
+  klp::ccp::ast::expr_list *expr_list;
+  klp::ccp::ast::attribute *attribute;
+  klp::ccp::ast::attribute_list *attribute_list;
+  klp::ccp::ast::attribute_specifier *attribute_specifier;
+  klp::ccp::ast::attribute_specifier_list *attribute_specifier_list;
+  klp::ccp::ast::pointer *pointer;
+  klp::ccp::ast::direct_abstract_declarator *direct_abstract_declarator;
+  klp::ccp::ast::abstract_declarator *abstract_declarator;
+  klp::ccp::ast::type_name *type_name;
+  klp::ccp::ast::direct_declarator *direct_declarator;
+  klp::ccp::ast::declarator *declarator;
+  klp::ccp::ast::storage_class_specifier *storage_class_specifier;
+  klp::ccp::ast::type_qualifier *type_qualifier;
+  klp::ccp::ast::type_qualifier_list *type_qualifier_list;
+  klp::ccp::ast::type_specifier *type_specifier;
+  klp::ccp::ast::struct_declaration *struct_declaration;
+  klp::ccp::ast::struct_declarator *struct_declarator;
+  klp::ccp::ast::struct_declarator_list *struct_declarator_list;
+  klp::ccp::ast::unnamed_struct_or_union *unnamed_struct_or_union;
+  klp::ccp::ast::struct_declaration_list *struct_declaration_list;
+  klp::ccp::ast::enumerator *enumerator;
+  klp::ccp::ast::enumerator_list *enumerator_list;
+  klp::ccp::ast::function_specifier *function_specifier;
+  klp::ccp::ast::specifier_qualifier_list *specifier_qualifier_list;
+  klp::ccp::ast::declaration_specifiers *declaration_specifiers;
+  klp::ccp::ast::initializer *initializer;
+  klp::ccp::ast::initializer_list *initializer_list;
+  klp::ccp::ast::designator *designator;
+  klp::ccp::ast::designator_list *designator_list;
+  klp::ccp::ast::designation *designation;
+  klp::ccp::ast::asm_label *asm_label;
+  klp::ccp::ast::init_declarator *init_declarator;
+  klp::ccp::ast::init_declarator_list *init_declarator_list;
+  klp::ccp::ast::declaration *declaration;
+  klp::ccp::ast::parameter_declaration *parameter_declaration;
+  klp::ccp::ast::parameter_declaration_list *parameter_declaration_list;
+  klp::ccp::ast::identifier_list *identifier_list;
+  klp::ccp::ast::declaration_list *declaration_list;
+  klp::ccp::ast::stmt *stmt;
+  klp::ccp::ast::stmt_compound *stmt_compound;
+  klp::ccp::ast::local_label_declaration *local_label_declaration;
+  klp::ccp::ast::local_label_declaration_list *local_label_declaration_list;
+  klp::ccp::ast::block_item *block_item;
+  klp::ccp::ast::block_item_list *block_item_list;
+  klp::ccp::ast::asm_directive *asm_directive;
+  klp::ccp::ast::asm_qualifier_list *asm_qualifier_list;
+  klp::ccp::ast::asm_operand_name *asm_operand_name;
+  klp::ccp::ast::asm_operand *asm_operand;
+  klp::ccp::ast::asm_operand_list *asm_operand_list;
+  klp::ccp::ast::asm_clobber_list *asm_clobber_list;
+  klp::ccp::ast::asm_jump_to_label_list *asm_jump_to_label_list;
+  klp::ccp::ast::function_definition *function_definition;
+  klp::ccp::ast::external_declaration *external_declaration;
+  klp::ccp::ast::translation_unit *translation_unit;
 }
 
 %destructor {} <token_index>
@@ -2331,7 +2331,7 @@ string_literal:
 
 %%
 
-void suse::cp::yy::gnuc_parser::error(const location_type& loc,
+void klp::ccp::yy::gnuc_parser::error(const location_type& loc,
 				      const std::string& msg)
 {
   pd.error(loc, msg);

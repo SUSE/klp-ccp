@@ -1,7 +1,7 @@
 #include "semantic_except.hh"
 #include <sstream>
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 semantic_except::semantic_except(const code_remark &remark)
 {

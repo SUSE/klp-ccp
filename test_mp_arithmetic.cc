@@ -1,7 +1,7 @@
 #include <dejagnu.h>
 #include "mp_arithmetic.hh"
 
-using namespace suse::cp::mpa;
+using namespace klp::ccp::mpa;
 
 static int limb_test1()
 {

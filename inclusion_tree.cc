@@ -1,7 +1,7 @@
 #include "inclusion_tree.hh"
 #include "source_reader.hh"
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 inclusion_node::inclusion_node()
   : _parent(nullptr)

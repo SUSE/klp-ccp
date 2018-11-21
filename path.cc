@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include "path.hh"
 
-std::string suse::cp::normalize_path(std::string &&p)
+std::string klp::ccp::normalize_path(std::string &&p)
 {
   bool last_is_sep = false;
 
@@ -57,7 +57,7 @@ std::string suse::cp::normalize_path(std::string &&p)
   return std::move(p);
 }
 
-std::string suse::cp::dirname(const std::string &p)
+std::string klp::ccp::dirname(const std::string &p)
 {
   std::string _p{p};
   _p = normalize_path(std::move(_p));
@@ -70,7 +70,7 @@ std::string suse::cp::dirname(const std::string &p)
   return std::string(std::move(_p), 0, end_pos);
 }
 
-bool suse::cp::file_readable(const std::string &p)
+bool klp::ccp::file_readable(const std::string &p)
 {
   if (access(p.c_str(), R_OK))
     return false;
@@ -84,7 +84,7 @@ bool suse::cp::file_readable(const std::string &p)
   return S_ISREG(s.st_mode);
 }
 
-std::string suse::cp::getcwd()
+std::string klp::ccp::getcwd()
 {
   char *p = ::getcwd(nullptr, 0);
 

@@ -7,7 +7,7 @@
 #include "ast.hh"
 #include "execution_charset_encoder_iconv.hh"
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 #if defined(WORDS_BIGENDIAN)
 #define UCS4_CODE "UCS-4BE"

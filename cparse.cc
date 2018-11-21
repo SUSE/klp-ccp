@@ -7,7 +7,7 @@
 #include "semantic_except.hh"
 #include "arch_gcc48_x86_64.hh"
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 static const option options[] = {
   { "include", true, nullptr, 'i' },

@@ -3,9 +3,9 @@
 
 #include "mp_arithmetic.hh"
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     class target_int;
 

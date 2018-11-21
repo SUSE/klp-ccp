@@ -6,9 +6,9 @@
 
 #include "file_range.hh"
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     class offset_to_line_col_map
     {

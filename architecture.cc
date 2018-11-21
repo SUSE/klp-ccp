@@ -1,9 +1,9 @@
 #include "architecture.hh"
 #include <stdexcept>
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
-mpa::limbs::size_type suse::cp::int_mode_to_width(const int_mode_kind m) noexcept
+mpa::limbs::size_type klp::ccp::int_mode_to_width(const int_mode_kind m) noexcept
 {
   switch (m) {
   case int_mode_kind::imk_none:
@@ -27,7 +27,7 @@ mpa::limbs::size_type suse::cp::int_mode_to_width(const int_mode_kind m) noexcep
   }
 }
 
-int_mode_kind suse::cp::width_to_int_mode(const mpa::limbs::size_type w)
+int_mode_kind klp::ccp::width_to_int_mode(const mpa::limbs::size_type w)
 {
   if (w > 128) {
     throw std::overflow_error("no mode for integer width");

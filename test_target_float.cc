@@ -2,7 +2,7 @@
 #include "target_float.hh"
 #include "target_int.hh"
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 static const mpa::limbs::size_type f_width = 24;
 static const mpa::limbs::size_type e_width = 8;

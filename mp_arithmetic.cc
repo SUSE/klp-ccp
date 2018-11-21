@@ -3,7 +3,7 @@
 #include <array>
 #include "mp_arithmetic.hh"
 
-using namespace suse::cp::mpa;
+using namespace klp::ccp::mpa;
 
 unsigned int limb::fls() const noexcept
 {

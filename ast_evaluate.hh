@@ -3,9 +3,9 @@
 
 #include <memory>
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     class arch;
 
@@ -22,7 +22,7 @@ namespace suse
     }
 
     void
-    check_types_assignment(suse::cp::ast::ast &a, const architecture &arch,
+    check_types_assignment(klp::ccp::ast::ast &a, const architecture &arch,
 			   const types::type &t_target,
 			   const ast::expr &e_source);
   }

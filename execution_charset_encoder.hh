@@ -5,9 +5,9 @@
 #include "mp_arithmetic.hh"
 #include "types.hh"
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     class pp_token;
     class file_range;

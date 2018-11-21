@@ -6,9 +6,9 @@
 #include <type_traits>
 #include <cassert>
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     template<typename Key, typename Compare = std::less<Key>,
 	     typename Allocator = std::allocator<Key> >

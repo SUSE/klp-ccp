@@ -5,9 +5,9 @@
 #include <string>
 #include "code_remark.hh"
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     class pp_except : std::exception
     {

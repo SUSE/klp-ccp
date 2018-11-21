@@ -2,7 +2,7 @@
 #include <iterator>
 #include <algorithm>
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 used_macros::used_macros(_used_macros_type &&um)
   : _used_macros(std::move(um))

@@ -5,8 +5,8 @@
 #include "parse_except.hh"
 
 
-using namespace suse::cp::yy;
-using namespace suse::cp::ast;
+using namespace klp::ccp::yy;
+using namespace klp::ccp::ast;
 
 struct _val_tok_map_entry {
   const char *value;

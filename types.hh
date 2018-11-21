@@ -9,9 +9,9 @@
 #include "target_int.hh"
 #include "builtins.hh"
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     class architecture;
 

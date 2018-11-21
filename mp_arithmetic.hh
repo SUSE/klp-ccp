@@ -8,9 +8,9 @@
 #include <string>
 #include <stdexcept>
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     namespace mpa
     {

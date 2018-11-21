@@ -4,9 +4,9 @@
 #include <vector>
 #include <string>
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     class source_reader
     {

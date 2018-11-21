@@ -2,7 +2,7 @@
 #include <cassert>
 #include "offset_to_line_col_map.hh"
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 template<unsigned int val, unsigned int shift, typename = void>
 struct _next_pow_of_two

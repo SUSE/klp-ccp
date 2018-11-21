@@ -1,7 +1,7 @@
 #include "pp_except.hh"
 #include <sstream>
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 pp_except::pp_except(const code_remark &remark)
 {

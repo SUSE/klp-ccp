@@ -3,7 +3,7 @@
 #include "pp_tokenizer.hh"
 #include "inclusion_tree.hh"
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 static const char* type2name(pp_token::type type)
 {

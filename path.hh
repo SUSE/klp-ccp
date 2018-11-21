@@ -3,9 +3,9 @@
 
 #include <string>
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     std::string normalize_path(std::string &&p);
     std::string dirname(const std::string &p);

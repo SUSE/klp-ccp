@@ -4,7 +4,7 @@
 #include "semantic_except.hh"
 #include "architecture.hh"
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 execution_charset_encoder::
 execution_charset_encoder(const architecture &arch,

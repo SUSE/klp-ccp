@@ -3,9 +3,9 @@
 
 #include "architecture.hh"
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     class arch_gcc48_x86_64 final : public architecture
     {

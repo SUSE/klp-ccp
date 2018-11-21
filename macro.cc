@@ -7,7 +7,7 @@
 #include "pp_token.hh"
 #include "pp_except.hh"
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 macro::instance::instance(const std::shared_ptr<const macro> &macro,
 			  used_macros &&used_macros_base,

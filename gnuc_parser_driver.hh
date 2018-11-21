@@ -10,9 +10,9 @@
 #include "preprocessor.hh"
 #include "code_remarks.hh"
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     namespace yy
     {
@@ -38,7 +38,7 @@ namespace suse
 	ast::ast_translation_unit grab_result();
 
       private:
-	suse::cp::yy::gnuc_parser::token_type
+	klp::ccp::yy::gnuc_parser::token_type
 	lex(gnuc_parser::semantic_type *value,
 	    gnuc_parser::location_type *loc);
 

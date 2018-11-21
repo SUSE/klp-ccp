@@ -4,9 +4,9 @@
 #include <memory>
 #include "cow_set.hh"
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     class macro_undef;
 

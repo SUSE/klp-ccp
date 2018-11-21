@@ -1,14 +1,14 @@
 #include <ostream>
 #include "code_remark.hh"
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 code_remark::code_remark(const severity sev, const std::string &msg,
 			 const file_range &file_range)
   : _msg(msg), _file_range(file_range), _sev(sev)
 {}
 
-std::ostream& suse::cp::operator<<(std::ostream &o, const code_remark &remark)
+std::ostream& klp::ccp::operator<<(std::ostream &o, const code_remark &remark)
 {
   o << ((remark.get_severity() == code_remark::severity::fatal)
 	? "error" : "warning");

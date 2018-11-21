@@ -3,9 +3,9 @@
 #include "types.hh"
 #include <cassert>
 
-using namespace suse::cp;
-using namespace suse::cp::ast;
-using namespace suse::cp::types;
+using namespace klp::ccp;
+using namespace klp::ccp::ast;
+using namespace klp::ccp::types;
 
 constexpr_value::address_constant::
 address_constant()

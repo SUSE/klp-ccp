@@ -7,9 +7,9 @@
 #include "callables_wrapper.hh"
 #include "type_set.hh"
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     namespace types
     {

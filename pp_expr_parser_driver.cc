@@ -3,8 +3,8 @@
 #include "pp_except.hh"
 #include "parse_except.hh"
 
-using namespace suse::cp::yy;
-using namespace suse::cp::ast;
+using namespace klp::ccp::yy;
+using namespace klp::ccp::ast;
 
 struct _val_tok_map_entry {
   const char *value;
@@ -97,7 +97,7 @@ ast_pp_expr pp_expr_parser_driver::grab_result()
   return ast_pp_expr(std::move(_tokens), std::move(e));
 }
 
-suse::cp::yy::pp_expr_parser::token_type
+klp::ccp::yy::pp_expr_parser::token_type
 pp_expr_parser_driver::lex(pp_expr_parser::semantic_type *value,
 			   pp_expr_parser::location_type *loc)
 {

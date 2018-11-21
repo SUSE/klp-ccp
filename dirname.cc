@@ -8,7 +8,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  std::cout << suse::cp::dirname(argv[1])
+  std::cout << klp::ccp::dirname(argv[1])
 	    << std::endl;
 
   return 0;

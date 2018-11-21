@@ -3,9 +3,9 @@
 
 #include <type_traits>
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     // Detangle return value returning from function invocation.
     template <typename ret_type>

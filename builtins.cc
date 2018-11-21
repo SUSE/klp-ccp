@@ -9,9 +9,9 @@
 #include <functional>
 #include <initializer_list>
 
-using namespace suse::cp;
-using namespace suse::cp::ast;
-using namespace suse::cp::types;
+using namespace klp::ccp;
+using namespace klp::ccp::ast;
+using namespace klp::ccp::types;
 
 constexpr builtin_func::builtin_func() noexcept = default;
 builtin_func::~builtin_func() noexcept = default;
@@ -32,7 +32,7 @@ namespace
     virtual ~builtin_func_simple_proto() noexcept override;
 
     virtual evaluation_result_type
-    evaluate(suse::cp::ast::ast &a, const architecture &arch,
+    evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 	     const expr_func_invocation &efi) const override;
 
   private:
@@ -64,7 +64,7 @@ builtin_func_simple_proto(const t_fac ret_fac,
 builtin_func_simple_proto::~builtin_func_simple_proto() noexcept = default;
 
 builtin_func::evaluation_result_type builtin_func_simple_proto::
-evaluate(suse::cp::ast::ast &a, const architecture &arch,
+evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 	 const expr_func_invocation &efi) const
 {
   const expr_list * const args = efi.get_args();
@@ -116,7 +116,7 @@ namespace
     virtual ~builtin_func_pi_overload() noexcept override;
 
     virtual evaluation_result_type
-    evaluate(suse::cp::ast::ast &a, const architecture &arch,
+    evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 	     const expr_func_invocation &efi) const override;
 
   private:
@@ -159,7 +159,7 @@ builtin_func_pi_overload(const unsigned int pi_arg_index,
 builtin_func_pi_overload::~builtin_func_pi_overload() noexcept = default;
 
 builtin_func::evaluation_result_type builtin_func_pi_overload::
-evaluate(suse::cp::ast::ast &a, const architecture &arch,
+evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 	     const expr_func_invocation &efi) const
 {
   const expr_list * const args = efi.get_args();
@@ -267,7 +267,7 @@ namespace
     virtual ~builtin_func_choose_expr() noexcept override;
 
     virtual evaluation_result_type
-    evaluate(suse::cp::ast::ast &a, const architecture &arch,
+    evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 	     const expr_func_invocation &efi) const override;
   };
 }
@@ -277,7 +277,7 @@ builtin_func_choose_expr::builtin_func_choose_expr() noexcept = default;
 builtin_func_choose_expr::~builtin_func_choose_expr() noexcept = default;
 
 builtin_func::evaluation_result_type
-builtin_func_choose_expr::evaluate(suse::cp::ast::ast &a, const architecture&,
+builtin_func_choose_expr::evaluate(klp::ccp::ast::ast &a, const architecture&,
 				   const expr_func_invocation &efi) const
 {
   const expr_list * const args = efi.get_args();
@@ -322,7 +322,7 @@ builtin_func_choose_expr::evaluate(suse::cp::ast::ast &a, const architecture&,
 				e_result.is_lvalue()};
 }
 
-std::unique_ptr<builtin_func> suse::cp::builtin_func_choose_expr_create()
+std::unique_ptr<builtin_func> klp::ccp::builtin_func_choose_expr_create()
 {
   return (std::unique_ptr<builtin_func_choose_expr>
 	  (new builtin_func_choose_expr()));
@@ -339,7 +339,7 @@ namespace
     virtual ~builtin_func_constant_p() noexcept override;
 
     virtual evaluation_result_type
-    evaluate(suse::cp::ast::ast &a, const architecture &arch,
+    evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 	     const expr_func_invocation &efi) const override;
 
     static std::unique_ptr<builtin_func> create();
@@ -351,7 +351,7 @@ builtin_func_constant_p::builtin_func_constant_p() noexcept = default;
 builtin_func_constant_p::~builtin_func_constant_p() noexcept = default;
 
 builtin_func::evaluation_result_type
-builtin_func_constant_p::evaluate(suse::cp::ast::ast &a, const architecture &arch,
+builtin_func_constant_p::evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 				  const expr_func_invocation &efi) const
 {
   const expr_list * const args = efi.get_args();
@@ -417,7 +417,7 @@ namespace
     typedef std::shared_ptr<const int_type>(*t_fac)();
 
     virtual evaluation_result_type
-    evaluate(suse::cp::ast::ast &a, const architecture &arch,
+    evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 	     const expr_func_invocation &efi) const override;
 
     template <t_fac tfac, bool p_variant, op o>
@@ -454,7 +454,7 @@ std::unique_ptr<builtin_func> builtin_overflow::create()
 }
 
 builtin_func::evaluation_result_type
-builtin_overflow::evaluate(suse::cp::ast::ast &a, const architecture &arch,
+builtin_overflow::evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 			       const expr_func_invocation &efi) const
 {
   auto &&myname =

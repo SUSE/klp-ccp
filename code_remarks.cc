@@ -2,7 +2,7 @@
 #include "code_remark.hh"
 #include "code_remarks.hh"
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 void code_remarks::add(const code_remark &r)
 {
@@ -41,7 +41,7 @@ code_remarks& code_remarks::operator+=(const code_remarks &remarks)
   return *this;
 }
 
-std::ostream& suse::cp::operator<<(std::ostream &o, const code_remarks &rs)
+std::ostream& klp::ccp::operator<<(std::ostream &o, const code_remarks &rs)
 {
   for(auto &&r : rs._remarks) {
     o << r;

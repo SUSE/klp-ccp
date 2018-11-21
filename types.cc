@@ -5,8 +5,8 @@
 #include "callables_wrapper.hh"
 #include "constexpr_value.hh"
 
-using namespace suse::cp;
-using namespace suse::cp::types;
+using namespace klp::ccp;
+using namespace klp::ccp::types;
 
 
 // Explicit instantiation is needed by clang++.

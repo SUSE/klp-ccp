@@ -3,7 +3,7 @@
 #include "pp_tokens.hh"
 #include "pp_token.hh"
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 static std::string __escape_string(std::string &&s)
 {

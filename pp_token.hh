@@ -7,9 +7,9 @@
 #include "used_macros.hh"
 #include "used_macro_undefs.hh"
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     class code_remarks;
 

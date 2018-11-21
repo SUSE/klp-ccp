@@ -4,9 +4,9 @@
 #include <utility>
 #include <type_traits>
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     namespace impl
     {

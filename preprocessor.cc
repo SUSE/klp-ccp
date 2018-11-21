@@ -10,8 +10,8 @@
 #include "path.hh"
 #include "pp_expr_parser_driver.hh"
 
-using namespace suse::cp;
-using namespace suse::cp::_preprocessor_impl;
+using namespace klp::ccp;
+using namespace klp::ccp::_preprocessor_impl;
 
 preprocessor::preprocessor(header_inclusion_roots_type &header_inclusion_roots,
 			   const header_resolver &header_resolver,

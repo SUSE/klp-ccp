@@ -1,7 +1,7 @@
 #include <dejagnu.h>
 #include "target_int.hh"
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 static const mpa::limbs::size_type long_width = 3 * mpa::limb::width;
 static const mpa::limbs::size_type short_width = mpa::limb::width / 2;

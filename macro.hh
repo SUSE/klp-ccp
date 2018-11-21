@@ -11,9 +11,9 @@
 #include "code_remark.hh"
 #include "code_remarks.hh"
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     class macro
     {

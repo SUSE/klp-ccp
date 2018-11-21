@@ -20,9 +20,9 @@
 #include <iostream>
 #endif
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     class architecture;
 
@@ -2136,7 +2136,7 @@ namespace suse
 	{ return _d; }
 
 	std::pair<types::alignment, bool>
-	find_align_attribute(suse::cp::ast::ast &a, const architecture &arch);
+	find_align_attribute(klp::ccp::ast::ast &a, const architecture &arch);
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;

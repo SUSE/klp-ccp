@@ -1,7 +1,7 @@
 %language "C++"
 %skeleton "lalr1.cc"
 %defines
-%define namespace "suse::cp::yy"
+%define namespace "klp::ccp::yy"
 %define parser_class_name "pp_expr_parser"
 %name-prefix "pd."
 %define api.location.type pp_tokens_range
@@ -14,14 +14,14 @@
 
 #include "ast.hh"
 
-namespace suse {
-  namespace cp
+namespace klp {
+  namespace ccp
   {
     namespace yy
     {
       // Bison doesn't accept namespace specifications at
       // %define api.location.type. Pull the type in.
-      typedef suse::cp::ast::pp_tokens_range pp_tokens_range;
+      typedef klp::ccp::ast::pp_tokens_range pp_tokens_range;
 
       class pp_expr_parser_driver;
     }
@@ -30,8 +30,8 @@ namespace suse {
 }
 
 %code {
-using namespace suse::cp;
-using namespace suse::cp::ast;
+using namespace klp::ccp;
+using namespace klp::ccp::ast;
 
 #define YYLLOC_DEFAULT(Cur, Rhs, N)				\
   do {								\
@@ -58,15 +58,15 @@ static T* mv_p(T* &&p)
 
 }
 
-%parse-param {suse::cp::yy::pp_expr_parser_driver &pd}
+%parse-param {klp::ccp::yy::pp_expr_parser_driver &pd}
 
 
 %union {
-  suse::cp::ast::pp_token_index token_index;
-  suse::cp::ast::binary_op binary_op;
-  suse::cp::ast::unary_op_pre unary_op_pre;
+  klp::ccp::ast::pp_token_index token_index;
+  klp::ccp::ast::binary_op binary_op;
+  klp::ccp::ast::unary_op_pre unary_op_pre;
 
-  suse::cp::ast::expr *expr;
+  klp::ccp::ast::expr *expr;
 }
 
 %destructor {} <token_index>
@@ -339,7 +339,7 @@ primary_expression:
 
 %%
 
-void suse::cp::yy::pp_expr_parser::error(const location_type& loc,
+void klp::ccp::yy::pp_expr_parser::error(const location_type& loc,
 					 const std::string& msg)
 {
   pd.error(loc, msg);

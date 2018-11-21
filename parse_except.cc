@@ -1,7 +1,7 @@
 #include "parse_except.hh"
 #include <sstream>
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 parse_except::parse_except(const code_remark &remark)
 {

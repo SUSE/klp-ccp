@@ -3,7 +3,7 @@
 #include "target_int.hh"
 #include "target_float.hh"
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 target_int::target_int() = default;
 

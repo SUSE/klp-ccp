@@ -2,7 +2,7 @@
 #include <iterator>
 #include <algorithm>
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 used_macro_undefs::used_macro_undefs(_used_macro_undefs_type &&um)
   : _used_macro_undefs(std::move(um))

@@ -7,9 +7,9 @@
 #include "pp_token.hh"
 #include "source_reader.hh"
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     class source_reader;
 

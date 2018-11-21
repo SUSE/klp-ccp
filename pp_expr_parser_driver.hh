@@ -6,9 +6,9 @@
 #include "pp_tokens.hh"
 #include "code_remarks.hh"
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     namespace yy
     {
@@ -27,7 +27,7 @@ namespace suse
 	ast::ast_pp_expr grab_result();
 
       private:
-	suse::cp::yy::pp_expr_parser::token_type
+	klp::ccp::yy::pp_expr_parser::token_type
 	lex(pp_expr_parser::semantic_type *value,
 	    pp_expr_parser::location_type *loc);
 

@@ -5,7 +5,7 @@
 #include "code_remark.hh"
 #include "pp_except.hh"
 
-using namespace suse::cp;
+using namespace klp::ccp;
 
 pp_token::pp_token(const type type, const std::string &value,
 		   const file_range &file_range)

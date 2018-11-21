@@ -12,14 +12,14 @@
 #include "execution_charset_encoder.hh"
 #include "ast_evaluate.hh"
 
-using namespace suse::cp;
-using namespace suse::cp::ast;
-using namespace suse::cp::types;
+using namespace klp::ccp;
+using namespace klp::ccp::ast;
+using namespace klp::ccp::types;
 
 using constness = constexpr_value::constness;
 
 
-static void _complete_type_from_init(suse::cp::ast::ast &a,
+static void _complete_type_from_init(klp::ccp::ast::ast &a,
 				     const architecture &arch,
 				     init_declarator &i);
 
@@ -28,23 +28,23 @@ namespace
   class _evaluator
   {
   public:
-    _evaluator(suse::cp::ast::ast &ast,
-	       suse::cp::ast::_ast_entity &ae,
+    _evaluator(klp::ccp::ast::ast &ast,
+	       klp::ccp::ast::_ast_entity &ae,
 	       const architecture &arch) noexcept;
 
     void operator()();
 
   private:
-    void _check_return_stmt(const suse::cp::ast::stmt_return &ret_stmt);
+    void _check_return_stmt(const klp::ccp::ast::stmt_return &ret_stmt);
 
-    suse::cp::ast::ast &_ast;
-    suse::cp::ast::_ast_entity &_ae;
+    klp::ccp::ast::ast &_ast;
+    klp::ccp::ast::_ast_entity &_ae;
     const architecture &_arch;
   };
 }
 
-_evaluator::_evaluator(suse::cp::ast::ast &ast,
-		       suse::cp::ast::_ast_entity &ae,
+_evaluator::_evaluator(klp::ccp::ast::ast &ast,
+		       klp::ccp::ast::_ast_entity &ae,
 		       const architecture &arch) noexcept
   : _ast(ast), _ae(ae), _arch(arch)
 {}
@@ -130,7 +130,7 @@ void _evaluator::operator()()
     (std::move(pre), std::move(post));
 }
 
-void _evaluator::_check_return_stmt(const suse::cp::ast::stmt_return &ret_stmt)
+void _evaluator::_check_return_stmt(const klp::ccp::ast::stmt_return &ret_stmt)
 {
   const function_definition *fd = nullptr;
 
@@ -236,11 +236,11 @@ static bool _is_compound_literal_expr(const expr &e)
 }
 
 static std::shared_ptr<const array_type>
-_evaluate_init(suse::cp::ast::ast &a, const architecture &arch,
+_evaluate_init(klp::ccp::ast::ast &a, const architecture &arch,
 	       const type &t_target, initializer_expr &ie);
 
 static std::shared_ptr<const array_type>
-_evaluate_init(suse::cp::ast::ast &a, const architecture &arch,
+_evaluate_init(klp::ccp::ast::ast &a, const architecture &arch,
 	       const type &t_target, initializer_list * const il);
 
 namespace
@@ -248,12 +248,12 @@ namespace
   class _initializer_list_evaluator
   {
   public:
-    _initializer_list_evaluator(suse::cp::ast::ast &a,
+    _initializer_list_evaluator(klp::ccp::ast::ast &a,
 				const architecture &arch,
 				const array_type &at,
 				initializer_list &il);
 
-    _initializer_list_evaluator(suse::cp::ast::ast &a,
+    _initializer_list_evaluator(klp::ccp::ast::ast &a,
 				const architecture &arch,
 				const struct_or_union_type &sout,
 				initializer_list &il);
@@ -272,7 +272,7 @@ namespace
     bool _descend_cursor(const expr &e_init);
 
 
-    suse::cp::ast::ast &_a;
+    klp::ccp::ast::ast &_a;
     const architecture &_arch;
     const array_type * const _at_start;
     const struct_or_union_type * const _sout_start;
@@ -297,13 +297,13 @@ namespace
 }
 
 _initializer_list_evaluator::
-_initializer_list_evaluator(suse::cp::ast::ast &a, const architecture &arch,
+_initializer_list_evaluator(klp::ccp::ast::ast &a, const architecture &arch,
 			    const array_type &at, initializer_list &il)
   : _a(a), _arch(arch), _at_start(&at), _sout_start(nullptr), _il(il)
 {}
 
 _initializer_list_evaluator::
-_initializer_list_evaluator(suse::cp::ast::ast &a, const architecture &arch,
+_initializer_list_evaluator(klp::ccp::ast::ast &a, const architecture &arch,
 			    const struct_or_union_type &sout,
 			    initializer_list &il)
   : _a(a), _arch(arch), _at_start(nullptr), _sout_start(&sout), _il(il)
@@ -714,7 +714,7 @@ _cur_obj::_cur_obj(const struct_or_union_type &_sout,
 
 
 static std::shared_ptr<const array_type>
-_evaluate_array_init_from_string_literal (suse::cp::ast::ast &a,
+_evaluate_array_init_from_string_literal (klp::ccp::ast::ast &a,
 					  const architecture &arch,
 					  const array_type &at_target,
 					  const expr &e)
@@ -770,7 +770,7 @@ _evaluate_array_init_from_string_literal (suse::cp::ast::ast &a,
 }
 
 static std::shared_ptr<const array_type>
-_evaluate_array_init(suse::cp::ast::ast &a, const architecture &arch,
+_evaluate_array_init(klp::ccp::ast::ast &a, const architecture &arch,
 		     const array_type &at_target,
 		     const initializer_expr &ie)
 {
@@ -875,7 +875,7 @@ _try_unwrap_initializer_list(initializer_list &il)
 }
 
 static std::shared_ptr<const array_type>
-_evaluate_array_init(suse::cp::ast::ast &a, const architecture &arch,
+_evaluate_array_init(klp::ccp::ast::ast &a, const architecture &arch,
 		     const array_type &at_target,
 		     initializer_list &il)
 {
@@ -912,7 +912,7 @@ _evaluate_array_init(suse::cp::ast::ast &a, const architecture &arch,
 }
 
 static void
-_evaluate_sou_init(suse::cp::ast::ast &a, const architecture &arch,
+_evaluate_sou_init(klp::ccp::ast::ast &a, const architecture &arch,
 		   const struct_or_union_type &sout_target,
 		   initializer_list &il)
 {
@@ -932,7 +932,7 @@ _evaluate_sou_init(suse::cp::ast::ast &a, const architecture &arch,
 }
 
 static std::shared_ptr<const array_type>
-_evaluate_init(suse::cp::ast::ast &a, const architecture &arch,
+_evaluate_init(klp::ccp::ast::ast &a, const architecture &arch,
 	       const type &t_target, initializer_expr &ie)
 {
   return
@@ -951,7 +951,7 @@ _evaluate_init(suse::cp::ast::ast &a, const architecture &arch,
 }
 
 static std::shared_ptr<const array_type>
-_evaluate_init(suse::cp::ast::ast &a, const architecture &arch,
+_evaluate_init(klp::ccp::ast::ast &a, const architecture &arch,
 	       const type &t_target, initializer_list * const il)
 {
   std::shared_ptr<const array_type> completed_at;
@@ -1002,7 +1002,7 @@ _evaluate_init(suse::cp::ast::ast &a, const architecture &arch,
 }
 
 static std::shared_ptr<const array_type>
-_evaluate_init(suse::cp::ast::ast &a, const architecture &arch,
+_evaluate_init(klp::ccp::ast::ast &a, const architecture &arch,
 	       const type &t_target, initializer &i)
 {
   std::shared_ptr<const array_type> completed_at;
@@ -1020,7 +1020,7 @@ _evaluate_init(suse::cp::ast::ast &a, const architecture &arch,
   return completed_at;
 }
 
-static void _complete_type_from_init(suse::cp::ast::ast &a,
+static void _complete_type_from_init(klp::ccp::ast::ast &a,
 				     const architecture &arch,
 				     init_declarator &i)
 
@@ -1044,7 +1044,7 @@ static void _complete_type_from_init(suse::cp::ast::ast &a,
 class align_attribute_finder
 {
 public:
-  align_attribute_finder(suse::cp::ast::ast &a, const architecture &arch,
+  align_attribute_finder(klp::ccp::ast::ast &a, const architecture &arch,
 			 const bool choose_max)
     noexcept;
 
@@ -1054,13 +1054,13 @@ public:
 
 private:
   alignment _result;
-  suse::cp::ast::ast &_a;
+  klp::ccp::ast::ast &_a;
   const architecture &_arch;
   const bool _choose_max;
 };
 
 
-align_attribute_finder::align_attribute_finder(suse::cp::ast::ast &a,
+align_attribute_finder::align_attribute_finder(klp::ccp::ast::ast &a,
 					       const architecture &arch,
 					       const bool choose_max)
   noexcept
@@ -1170,7 +1170,7 @@ alignment align_attribute_finder::grab_result()
 class packed_attribute_finder
 {
 public:
-  packed_attribute_finder(suse::cp::ast::ast &a) noexcept;
+  packed_attribute_finder(klp::ccp::ast::ast &a) noexcept;
 
   bool operator()(const attribute &attr);
 
@@ -1178,11 +1178,11 @@ public:
   { return _has_packed_attribute; }
 
 private:
-  suse::cp::ast::ast &_a;
+  klp::ccp::ast::ast &_a;
   bool _has_packed_attribute;
 };
 
-packed_attribute_finder::packed_attribute_finder(suse::cp::ast::ast &a) noexcept
+packed_attribute_finder::packed_attribute_finder(klp::ccp::ast::ast &a) noexcept
   : _a(a), _has_packed_attribute(false)
 {}
 
@@ -1210,7 +1210,7 @@ class mode_attribute_finder
 {
 public:
 
-  mode_attribute_finder(suse::cp::ast::ast &a, const architecture &arch)
+  mode_attribute_finder(klp::ccp::ast::ast &a, const architecture &arch)
     noexcept;
 
   bool operator()(const attribute &attr);
@@ -1228,14 +1228,14 @@ public:
   apply_to_type(std::shared_ptr<const addressable_type> &&orig_t) const;
 
 private:
-  suse::cp::ast::ast &_a;
+  klp::ccp::ast::ast &_a;
   const architecture &_arch;
   int_mode_kind _imk;
   float_mode_kind _fmk;
   pp_token_index _mode_tok;
 };
 
-mode_attribute_finder::mode_attribute_finder(suse::cp::ast::ast &a,
+mode_attribute_finder::mode_attribute_finder(klp::ccp::ast::ast &a,
 					     const architecture &arch)
   noexcept
   : _a(a), _arch(arch),
@@ -1420,7 +1420,7 @@ bool ast_pp_expr::evaluate(const architecture &arch)
 }
 
 
-void suse::cp::ast::specifier_qualifier_list::
+void klp::ccp::ast::specifier_qualifier_list::
 evaluate_type(ast &a, const architecture &arch)
 {
   types::qualifiers qs;
@@ -1773,7 +1773,7 @@ evaluate_type(ast &a, const architecture &arch)
 }
 
 
-std::shared_ptr<const suse::cp::types::addressable_type>
+std::shared_ptr<const klp::ccp::types::addressable_type>
 parameter_declaration_declarator::get_type() const
 {
   return _d.get_innermost_type();
@@ -1831,7 +1831,7 @@ evaluate_type(ast &a, const architecture &arch)
     _type = _type->set_user_alignment(std::move(align));
 }
 
-std::shared_ptr<const suse::cp::types::addressable_type>
+std::shared_ptr<const klp::ccp::types::addressable_type>
 parameter_declaration_abstract::get_type()const
 {
   assert(static_cast<bool>(_type));
@@ -1861,7 +1861,7 @@ evaluate_type(ast &a, const architecture &arch)
   _set_type(std::move(t));
 }
 
-static void evaluate_array_size_expr(expr &size, suse::cp::ast::ast &a,
+static void evaluate_array_size_expr(expr &size, klp::ccp::ast::ast &a,
 				     const architecture &arch)
 {
   // Array declarators are evaluated in DFS pre, evaluate the size
@@ -1885,7 +1885,7 @@ static void evaluate_array_size_expr(expr &size, suse::cp::ast::ast &a,
 
   const constexpr_value &size_cv = size.get_constexpr_value();
   assert(size_cv.get_value_kind() ==
-	 suse::cp::ast::constexpr_value::value_kind::vk_int);
+	 klp::ccp::ast::constexpr_value::value_kind::vk_int);
   if (size_cv.get_int_value().is_negative()) {
     const pp_token &tok =
       a.get_pp_tokens()[size.get_tokens_range().begin];
@@ -2407,7 +2407,7 @@ void type_name::evaluate_type(ast&, const architecture&)
 }
 
 std::pair<types::alignment, bool>
-struct_declarator::find_align_attribute(suse::cp::ast::ast &a,
+struct_declarator::find_align_attribute(klp::ccp::ast::ast &a,
 					const architecture &arch)
 {
   struct_declaration_c99 &enclosing_decl =
@@ -2697,7 +2697,7 @@ create_content(ast &a, const struct_or_union_kind souk) const
   return content;
 }
 
-void suse::cp::ast::unnamed_struct_or_union::
+void klp::ccp::ast::unnamed_struct_or_union::
 _layout_content(ast &a, const architecture &arch)
 {
   align_attribute_finder aaf(a, arch, false);
@@ -2726,7 +2726,7 @@ void unnamed_struct_or_union::evaluate_type(ast &a, const architecture &arch)
   _set_type(struct_or_union_type::create(_souk, _content));
 }
 
-void suse::cp::ast::struct_or_union_def::
+void klp::ccp::ast::struct_or_union_def::
 layout_content(ast &a, const architecture &arch)
 {
   align_attribute_finder aaf(a, arch, false);
@@ -2991,7 +2991,7 @@ void expr_comma::evaluate_type(ast&, const architecture&)
 }
 
 
-static mpa::limbs _check_pointer_arithmetic(suse::cp::ast::ast &a,
+static mpa::limbs _check_pointer_arithmetic(klp::ccp::ast::ast &a,
 					    const pointer_type &pt,
 					    const expr &e,
 					    const architecture &arch)
@@ -3057,7 +3057,7 @@ _do_pointer_arithmetic(const constexpr_value &cv_pointer,
 }
 
 void
-suse::cp::check_types_assignment(suse::cp::ast::ast &a,
+klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 				 const architecture &arch,
 				 const type &t_target,
 				 const expr &e_source)

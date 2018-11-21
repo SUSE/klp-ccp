@@ -4,9 +4,9 @@
 #include <utility>
 #include "ast.hh"
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     namespace ast
     {

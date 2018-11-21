@@ -5,9 +5,9 @@
 #include <utility>
 #include "file_range.hh"
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     class macro;
 

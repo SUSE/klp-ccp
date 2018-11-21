@@ -4,9 +4,9 @@
 #include <string>
 #include <ios>
 
-namespace suse
+namespace klp
 {
-namespace cp
+namespace ccp
   {
     class inclusion_node;
     class header_inclusion_node;

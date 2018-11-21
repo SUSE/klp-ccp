@@ -5,9 +5,9 @@
 #include <string>
 #include <utility>
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     class header_resolver
     {

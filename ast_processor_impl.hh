@@ -3,9 +3,9 @@
 
 #include "ast_processor.hh"
 
-namespace suse
+namespace klp
 {
-  namespace cp
+  namespace ccp
   {
     namespace ast
     {
