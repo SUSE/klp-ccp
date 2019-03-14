@@ -199,7 +199,7 @@ namespace
       std::vector<sou_decl_link> _declared_sous;
       std::vector<enum_decl_link> _declared_enums;
     };
-    typedef std::vector<expr_id::resolved> _scope_type;
+
     typedef std::vector<_scope> _scopes_type;
     _scopes_type _scopes;
 
