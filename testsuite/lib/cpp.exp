@@ -15,5 +15,5 @@ proc run_cpp { test } {
 	pass "$test"
     }
 
-    exec rm -rf $gnucpp_out $mycpp_out > /dev/null 2>&1
+    file delete -- $gnucpp_out $mycpp_out
 }
