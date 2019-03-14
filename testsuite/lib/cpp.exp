@@ -9,7 +9,7 @@ proc run_cpp { test } {
 	fail "GNU cpp failed to preprocess $test\n"
     } elseif {[catch {exec $objdir/../cpp $test | sed {s/^[[:space:]]*//; /^$/ d;} > $mycpp_out}]} {
 	fail "cpp failed to preprocess $test\n"
-    } elseif {[catch {exec diff $gnucpp_out $mycpp_out > /dev/null 2>&1}]} {
+    } elseif {[catch {exec diff $gnucpp_out $mycpp_out > /dev/null 2>@1}]} {
 	fail "GNU cpp's result for $test is different\n"
     } else {
 	pass "$test"
