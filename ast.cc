@@ -3516,34 +3516,6 @@ void sou_decl_list_node::__link_to(target_type &target) noexcept
   _first_in_list = false;
 }
 
-namespace
-{
-  class _sou_decl_list_def_searcher
-  {
-  public:
-    _sou_decl_list_def_searcher() noexcept
-      : _found(nullptr)
-    {}
-
-    bool operator()(struct_or_union_def &soud) noexcept
-    {
-      _found = &soud;
-      return false;
-    }
-
-    bool operator()(struct_or_union_ref&) const noexcept
-    {
-      return true;
-    }
-
-    struct_or_union_def *get_result() noexcept
-    { return _found; }
-
-  private:
-    struct_or_union_def *_found;
-  };
-}
-
 const sou_id sou_decl_list_node::get_id() const noexcept
 {
   return sou_id(&this->_find_first_decl_node());
