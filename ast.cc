@@ -3552,7 +3552,7 @@ const sou_decl_list_node &sou_decl_list_node::_find_decl_node()
 {
   if (_prev != &_next) {
     // This node is on some list of redeclarations and thus, a
-    // declaration by itseld.
+    // declaration by itself.
     return *this;
   } else if (_prev->get_target_kind() == sou_decl_link::target_kind::def) {
     // This node is embedded in a definition (which is always a declaration).
