@@ -2630,6 +2630,114 @@ namespace klp
 	types::enum_content _content;
       };
 
+      class enum_decl_list_node;
+
+      class enum_decl_link
+      {
+      public:
+	enum_decl_link() noexcept;
+	enum_decl_link(enum_ref &er) noexcept;
+	enum_decl_link (enum_def &ed) noexcept;
+
+	enum class target_kind
+	{
+	  unlinked,
+	  ref,
+	  def,
+	};
+
+	target_kind get_target_kind() const noexcept
+	{ return _target_kind; }
+
+	enum_ref& get_target_enum_ref() const noexcept;
+
+	enum_def& get_target_enum_def() const noexcept;
+
+	const enum_decl_list_node& get_target_decl_list_node() const noexcept;
+
+      private:
+	target_kind _target_kind;
+
+	union {
+	  enum_ref *_er;
+	  enum_def *_ed;
+	};
+      };
+
+      class enum_id
+      {
+      public:
+	enum_id() noexcept
+	: _first_node(nullptr)
+	{}
+
+	enum_id(const enum_id &id) noexcept
+	: _first_node(id._first_node)
+	{}
+
+	enum_id& operator=(const enum_id &id) noexcept
+	{
+	  _first_node = id._first_node;
+	  return *this;
+	}
+
+	bool operator==(const enum_id op) const noexcept
+	{
+	  return this->_first_node == op._first_node;
+	}
+
+	bool operator!=(const enum_id op) const noexcept
+	{
+	  return this->_first_node != op._first_node;
+	}
+
+	bool operator<(const enum_id op) const noexcept
+	{
+	  return this->_first_node < op._first_node;
+	}
+
+      private:
+	friend class enum_decl_list_node;
+
+	enum_id(const enum_decl_list_node *first_node) noexcept
+	  : _first_node(first_node)
+	{}
+
+	const enum_decl_list_node *_first_node;
+      };
+
+      class enum_decl_list_node
+      {
+      public:
+	enum_decl_list_node(enum_ref &self) noexcept;
+	enum_decl_list_node(enum_def &self) noexcept;
+
+	void link_to(enum_ref &target) noexcept;
+	void link_to(enum_def &target) noexcept;
+
+	const enum_decl_link& get_next() const noexcept
+	{ return _next; }
+
+	const enum_id get_id() const noexcept;
+
+	enum_def* find_definition() const noexcept;
+
+	bool is_first() const noexcept
+	{ return _first_in_list; }
+
+      private:
+	template <typename target_type>
+	void __link_to(target_type &target) noexcept;
+
+	const enum_decl_list_node& _find_decl_node() const noexcept;
+	const enum_decl_list_node& _find_first_decl_node() const noexcept;
+
+	enum_decl_link _next;
+	enum_decl_link *_prev;
+	bool _first_in_list;
+      };
+
+
       class enum_def final : public type_specifier
       {
       public:
@@ -2654,6 +2762,12 @@ namespace klp
 	  assert(_id_tok_valid);
 	  return _id_tok;
 	}
+
+	const enum_decl_list_node& get_decl_list_node() const noexcept
+	{ return _decl_list_node; }
+
+	enum_decl_list_node& get_decl_list_node() noexcept
+	{ return _decl_list_node; }
 
 	const enumerator_list&
 	get_enumerator_list() const noexcept
@@ -2691,6 +2805,7 @@ namespace klp
 	enumerator_list &_el;
 	attribute_specifier_list *_asl_before;
 	attribute_specifier_list *_asl_after;
+	enum_decl_list_node _decl_list_node;
 	bool _id_tok_valid;
       };
 
@@ -2706,9 +2821,18 @@ namespace klp
 	pp_token_index get_id_tok() const noexcept
 	{ return _id_tok; }
 
-	void link_to_definition(enum_def &ed) noexcept;
+	const enum_decl_list_node& get_decl_list_node() const noexcept
+	{ return _decl_list_node; }
 
-	const enum_def& get_definition() const noexcept;
+	enum_decl_list_node& get_decl_list_node() noexcept
+	{ return _decl_list_node; }
+
+	const enum_decl_link& get_link_to_decl() const noexcept
+	{ return _link_to_decl; }
+
+	void link_to_declaration(const enum_decl_link &target) noexcept;
+
+	bool is_standalone_decl() const noexcept;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -2720,7 +2844,8 @@ namespace klp
 
 	pp_token_index _id_tok;
 	attribute_specifier_list *_asl;
-	enum_def *_def;
+	enum_decl_list_node _decl_list_node;
+	enum_decl_link _link_to_decl;
       };
 
       class typeof_expr final : public type_specifier

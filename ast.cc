@@ -3929,6 +3929,161 @@ bool enumerator_list::_process(const_processor<bool> &p) const
 }
 
 
+enum_decl_link::enum_decl_link() noexcept
+  : _target_kind(target_kind::unlinked)
+{}
+
+enum_decl_link::enum_decl_link(enum_ref &er) noexcept
+  : _target_kind(target_kind::ref), _er(&er)
+{}
+
+enum_decl_link::enum_decl_link (enum_def &ed) noexcept
+  : _target_kind(target_kind::def), _ed(&ed)
+{}
+
+enum_ref& enum_decl_link::get_target_enum_ref() const noexcept
+{
+  assert(_target_kind == target_kind::ref);
+  return *_er;
+}
+
+enum_def& enum_decl_link::get_target_enum_def() const noexcept
+{
+  assert(_target_kind == target_kind::def);
+  return *_ed;
+}
+
+const enum_decl_list_node& enum_decl_link::get_target_decl_list_node()
+  const noexcept
+{
+  switch (_target_kind) {
+  case target_kind::ref:
+    return _er->get_decl_list_node();
+
+  case target_kind::def:
+    return _ed->get_decl_list_node();
+
+  case target_kind::unlinked:
+    assert(0);
+    __builtin_unreachable();
+  };
+}
+
+
+enum_decl_list_node::enum_decl_list_node(enum_ref &self) noexcept
+  : _next(self), _prev(&_next), _first_in_list(true)
+{}
+
+enum_decl_list_node::enum_decl_list_node(enum_def &self) noexcept
+  : _next(self), _prev(&_next), _first_in_list(true)
+{}
+
+void enum_decl_list_node::link_to(enum_ref &target) noexcept
+{
+  // Any enum_ref on this list is a declaration by itself and thus,
+  // must not have a link to a declaration set. Our _decl_list_node
+  // should point to ourselves. The assertion thus checks that the
+  // containing enum_ref, if any, hasn't been linked to any
+  // declaration.
+  assert(_next.get_target_kind() != enum_decl_link::target_kind::ref ||
+	 (_next.get_target_enum_ref().get_link_to_decl().get_target_kind() ==
+	  enum_decl_link::target_kind::unlinked));
+  assert(target.get_link_to_decl().get_target_kind() ==
+	 enum_decl_link::target_kind::unlinked);
+  __link_to(target);
+}
+
+void enum_decl_list_node::link_to(enum_def &target) noexcept
+{
+  __link_to(target);
+}
+
+template <typename target_type>
+void enum_decl_list_node::__link_to(target_type &target) noexcept
+{
+  assert(_prev == &_next);
+
+  enum_decl_list_node &target_node = target.get_decl_list_node();
+  _prev = target_node._prev;
+  target_node._prev = &_next;
+  *_prev = _next; // links previous node to this one
+  _next = enum_decl_link{target};
+  _first_in_list = false;
+}
+
+const enum_id enum_decl_list_node::get_id() const noexcept
+{
+  return enum_id(&this->_find_first_decl_node());
+}
+
+enum_def* enum_decl_list_node::find_definition() const noexcept
+{
+  // As an optimization, start the search at the resolved declaration
+  // node itself.
+  const enum_decl_list_node &start =
+    _find_decl_node()._prev->get_target_decl_list_node();
+  const enum_decl_list_node *cur = &start;
+  do {
+    switch(cur->_next.get_target_kind()) {
+    case enum_decl_link::target_kind::ref:
+      cur = &cur->_next.get_target_enum_ref().get_decl_list_node();
+      break;
+
+    case enum_decl_link::target_kind::def:
+      return &cur->_next.get_target_enum_def();
+      break;
+
+    case enum_decl_link::target_kind::unlinked:
+      assert(0);
+      __builtin_unreachable();
+    }
+  } while (cur != &start);
+
+  return nullptr;
+}
+
+const enum_decl_list_node& enum_decl_list_node::_find_decl_node()
+  const noexcept
+{
+  if (_prev != &_next) {
+    // This node is on some list of redeclarations and thus, a
+    // declaration by itself.
+    return *this;
+  } else if (_prev->get_target_kind() == enum_decl_link::target_kind::def) {
+    // This node is embedded in a definition (which is always a declaration).
+    return *this;
+  }
+
+  // Get the enum_ref this sou_decl_list_node is embedded
+  // into and resolve either to the declaration link target or, if
+  // none has been set, to self.
+  const enum_ref &er = _prev->get_target_enum_ref();
+  switch (er.get_link_to_decl().get_target_kind()) {
+  case enum_decl_link::target_kind::unlinked:
+    return *this;
+
+  case enum_decl_link::target_kind::def:
+    return er.get_link_to_decl().get_target_enum_def().get_decl_list_node();
+
+  case enum_decl_link::target_kind::ref:
+    return er.get_link_to_decl().get_target_enum_ref().get_decl_list_node();
+  }
+}
+
+const enum_decl_list_node& enum_decl_list_node::_find_first_decl_node()
+  const noexcept
+{
+  const enum_decl_list_node &start = _find_decl_node();
+  const enum_decl_list_node *cur = &start;
+  while (!cur->_first_in_list) {
+    cur = &cur->_next.get_target_decl_list_node();
+    assert(cur != &start);
+  }
+
+  return *cur;
+}
+
+
 enum_def::enum_def(const pp_tokens_range &tr,
 		   const pp_token_index id_tok,
 		   enumerator_list* &&el,
@@ -3954,7 +4109,8 @@ enum_def::enum_def(const pp_tokens_range &tr,
 		   const bool id_tok_valid) noexcept
   : type_specifier(tr), _id_tok(id_tok),
     _el(*mv_p(std::move(el))), _asl_before(mv_p(std::move(asl_before))),
-    _asl_after(mv_p(std::move(asl_after))), _id_tok_valid(id_tok_valid)
+    _asl_after(mv_p(std::move(asl_after))),
+    _decl_list_node(*this), _id_tok_valid(id_tok_valid)
 {
   _el._set_parent(*this);
   if (_asl_before)
@@ -4011,7 +4167,7 @@ enum_ref::enum_ref(const pp_tokens_range &tr,
 		   const pp_token_index id_tok,
 		   attribute_specifier_list* &&asl) noexcept
   : type_specifier(tr), _id_tok(id_tok), _asl(mv_p(std::move(asl))),
-    _def(nullptr)
+    _decl_list_node(*this)
 {
   if (_asl)
     _asl->_set_parent(*this);
@@ -4022,18 +4178,59 @@ enum_ref::~enum_ref() noexcept
   delete _asl;
 }
 
-void enum_ref::link_to_definition(enum_def &ed) noexcept
+void enum_ref::link_to_declaration(const enum_decl_link &target) noexcept
 {
-  assert(!_def);
-  _def = &ed;
+  assert(_link_to_decl.get_target_kind() ==
+	 enum_decl_link::target_kind::unlinked);
+  assert(&_decl_list_node.get_next().get_target_enum_ref() == this);
+  _link_to_decl = target;
 }
 
-const enum_def& enum_ref::get_definition() const noexcept
+bool enum_ref::is_standalone_decl() const noexcept
 {
-  assert(_def);
-  return *_def;
+  bool is_standalone = false;
+  auto &&standalone_decl_checker
+    = (wrap_callables<no_default_action>
+       ([](const specifier_qualifier_list&) {
+	  // Move on searching upwards the tree.
+	  return true;
+	},
+	[&is_standalone](const struct_declaration_c99 &sd) {
+	  is_standalone = sd.get_struct_declarator_list().empty();
+	},
+	[&is_standalone](const struct_declaration_unnamed_sou&) {
+	  // struct_declaration_unnamed_sou can be a parent of a
+	  // specifier_qualifier_list. A specifier_qualifier_list can
+	  // be a parent of our struct_or_union_ref.
+	  // However, this can't both be true for the *same*
+	  // specifier_qualifier_list instance.
+	  assert(0);
+	  __builtin_unreachable();
+	},
+	[&is_standalone](const type_name&) {
+	  is_standalone = false;
+	},
+	[&is_standalone](const declaration &d) {
+	  is_standalone = !d.get_init_declarator_list();
+	},
+	[&is_standalone](const parameter_declaration_declarator&) {
+	  is_standalone = false;
+	},
+	[&is_standalone](const parameter_declaration_abstract&) {
+	  is_standalone = false;
+	},
+	[&is_standalone](const function_definition&) {
+	  is_standalone = false;
+	}));
+  this->for_each_ancestor<type_set<struct_declaration_c99,
+				   struct_declaration_unnamed_sou,
+				   type_name, declaration,
+				   parameter_declaration_declarator,
+				   parameter_declaration_abstract,
+				   function_definition> >
+    (standalone_decl_checker);
+  return is_standalone;
 }
-
 
 _ast_entity* enum_ref::_get_child(const size_t i) const noexcept
 {

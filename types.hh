@@ -19,7 +19,7 @@ namespace klp
     {
       class expr;
       class sou_decl_list_node;
-      class enum_def;
+      class enum_decl_list_node;
       class enumerator;
     }
 
@@ -1163,7 +1163,7 @@ namespace klp
 	virtual ~enum_type() noexcept;
 
 	static std::shared_ptr<const enum_type>
-	create(const ast::enum_def &ed, const qualifiers &qs);
+	create(const ast::enum_decl_list_node &decl_node, const qualifiers &qs);
 
 	virtual type_id get_type_id() const noexcept override;
 
@@ -1177,6 +1177,8 @@ namespace klp
 					const std_int_type &t,
 					const bool ignore_qualifiers)
 	  const override;
+
+	virtual bool is_complete() const noexcept override;
 
 	virtual mpa::limbs get_size(const architecture &arch) const override;
 
@@ -1198,17 +1200,19 @@ namespace klp
 	const std::shared_ptr<const std_int_type>&
 	get_underlying_type() const noexcept;
 
-	const ast::enum_def& get_enum_def() const noexcept
-	{ return _ed; }
-
       private:
-	enum_type(const ast::enum_def &ed, const qualifiers qs);
+	enum_type(const ast::enum_decl_list_node &decl_node,
+		  const qualifiers qs);
 
 	enum_type(const enum_type&);
 
 	virtual enum_type* _clone() const override;
 
-	const ast::enum_def &_ed;
+	const enum_content* _get_content() const noexcept;
+
+	const ast::enum_decl_list_node &_decl_node;
+
+	mutable const enum_content *_content;
       };
 
       class bitfield_type final : public int_type

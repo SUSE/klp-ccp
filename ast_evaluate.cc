@@ -1339,6 +1339,17 @@ apply_to_type(std::shared_ptr<const addressable_type> &&orig_t)
 	   throw semantic_except(remark);
 	 }
 
+	 if (!orig_t->is_complete()) {
+	   const pp_token &tok =
+	     _a.get_pp_tokens()[_mode_tok];
+	   code_remark remark
+	     (code_remark::severity::fatal,
+	      "applying 'mode' attribute specifier to incomplete integer type",
+	      tok.get_file_range());
+	   _a.get_remarks().add(remark);
+	   throw semantic_except(remark);
+	 }
+
 	 return std_int_type::create(_arch.int_mode_to_std_int_kind(_imk),
 				     it->is_signed(_arch),
 				     it->get_qualifiers());
@@ -1492,10 +1503,10 @@ evaluate_type(ast &a, const architecture &arch)
 	enum_content &ec = ed.get_enumerator_list().get_content();
 	arch.evaluate_enum_type(a, ec, paf.get_result(),
 				maf.get_int_mode_result(), aaf.grab_result());
-	result = enum_type::create(ed, qs);
+	result = enum_type::create(ed.get_decl_list_node(), qs);
       },
       [&](const enum_ref &er) {
-	result = enum_type::create(er.get_definition(), qs);
+	result = enum_type::create(er.get_decl_list_node(), qs);
       },
       [&](const typeof_expr &to_e) {
 	handle_types<void>
@@ -2499,6 +2510,17 @@ void struct_declarator::evaluate_type(ast &a, const architecture &arch)
        ((wrap_callables<no_default_action>
 	 ([&](const std::shared_ptr<const enum_type> &et) {
 	    // Bitfield's base type is an enum type specifier.
+	    if (!et->is_complete()) {
+	      const pp_token &tok =
+		a.get_pp_tokens()[get_tokens_range().begin];
+	      code_remark remark
+		(code_remark::severity::fatal,
+		 "bitfield base type is an incomplete enum type",
+		 tok.get_file_range());
+	      a.get_remarks().add(remark);
+	      throw semantic_except(remark);
+	    }
+
 	    return et->get_underlying_type();
 	  },
 	  [&](std::shared_ptr<const returnable_int_type> &&_r_it) {
@@ -3062,9 +3084,47 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 				 const type &t_target,
 				 const expr &e_source)
 {
+  auto &&check_enum_completeness_lhs =
+    [&](const type &t_lhs) {
+	 handle_types<void>
+	   ((wrap_callables<default_action_nop>
+	     ([&](const enum_type &et_lhs) {
+		if (!et_lhs.is_complete()) {
+		  const pp_token &tok =
+		    a.get_pp_tokens()[e_source.get_tokens_range().begin];
+		  code_remark remark(code_remark::severity::fatal,
+				     "assignment to incomplete enum type",
+				     tok.get_file_range());
+		  a.get_remarks().add(remark);
+		  throw semantic_except(remark);
+		}
+	      })),
+	    t_lhs);
+    };
+
+  auto &&check_enum_completeness_rhs =
+    [&](const type &t_rhs) {
+	 handle_types<void>
+	   ((wrap_callables<default_action_nop>
+	     ([&](const enum_type &et_rhs) {
+		if (!et_rhs.is_complete()) {
+		  const pp_token &tok =
+		    a.get_pp_tokens()[e_source.get_tokens_range().begin];
+		  code_remark remark(code_remark::severity::fatal,
+				     "assignment from incomplete enum type",
+				     tok.get_file_range());
+		  a.get_remarks().add(remark);
+		  throw semantic_except(remark);
+		}
+	      })),
+	    t_rhs);
+    };
+
   handle_types<void>
     ((wrap_callables<no_default_action>
-      ([](const bool_type&, const arithmetic_type&) {
+      ([&](const bool_type&, const arithmetic_type &source) {
+	 check_enum_completeness_rhs(source);
+
 	 // Always Ok
 
        },
@@ -3072,7 +3132,10 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 	 // Always Ok
 
        },
-       [](const arithmetic_type&, const arithmetic_type&) {
+       [&](const arithmetic_type &target, const arithmetic_type &source) {
+	 check_enum_completeness_lhs(target);
+	 check_enum_completeness_rhs(source);
+
 	 // Always Ok
 
        },
@@ -3091,7 +3154,7 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 	 }
 
        },
-       [&](const int_type&, const pointer_type&) {
+       [&](const int_type &target, const pointer_type&) {
 	 const pp_token &tok =
 	   a.get_pp_tokens()[e_source.get_tokens_range().begin];
 	 code_remark remark
@@ -3100,8 +3163,9 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 	    tok.get_file_range());
 	 a.get_remarks().add(remark);
 
+	 check_enum_completeness_lhs(target);
        },
-       [&](const pointer_type&, const int_type&) {
+       [&](const pointer_type&, const int_type &source) {
 	 // Source expression shall be a zero integer constant
 	 // expression.
 	 if (!e_source.is_constexpr() ||
@@ -3115,6 +3179,8 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 	      tok.get_file_range());
 	   a.get_remarks().add(remark);
 	 }
+
+	 check_enum_completeness_lhs(source);
 
        },
        [&](const pointer_type &target, const pointer_type &source) {
@@ -3145,7 +3211,9 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 				::type>
 	       ([&](const int_type &ptt_it_target,
 		    const int_type &ptt_it_source) {
-		  if (ptt_it_target.get_width(arch) !=
+		  if (pointed_to_type_target.is_complete() &&
+		      pointed_to_type_source.is_complete() &&
+		      ptt_it_target.get_width(arch) !=
 		      ptt_it_source.get_width(arch)) {
 		    const pp_token &tok =
 		      a.get_pp_tokens()[e_source.get_tokens_range().begin];
@@ -3229,6 +3297,42 @@ void expr_assignment::evaluate_type(ast &a, const architecture &arch)
   const std::shared_ptr<const type> &t_lhs = _lhs.get_type();
   const std::shared_ptr<const type> &t_rhs = _rhs.get_type();
 
+  auto &&check_enum_completeness_lhs =
+    [&]() {
+      handle_types<void>
+	   ((wrap_callables<default_action_nop>
+	     ([&](const enum_type &et_lhs) {
+		if (!et_lhs.is_complete()) {
+		  const pp_token &tok =
+		    a.get_pp_tokens()[_lhs.get_tokens_range().begin];
+		  code_remark remark(code_remark::severity::fatal,
+				     "assignment to incomplete enum type",
+				     tok.get_file_range());
+		  a.get_remarks().add(remark);
+		  throw semantic_except(remark);
+		}
+	      })),
+	    *t_lhs);
+    };
+
+  auto &&check_enum_completeness_rhs =
+    [&]() {
+	 handle_types<void>
+	   ((wrap_callables<default_action_nop>
+	     ([&](const enum_type &et_rhs) {
+		if (!et_rhs.is_complete()) {
+		  const pp_token &tok =
+		    a.get_pp_tokens()[_rhs.get_tokens_range().begin];
+		  code_remark remark(code_remark::severity::fatal,
+				     "assignment from incomplete enum type",
+				     tok.get_file_range());
+		  a.get_remarks().add(remark);
+		  throw semantic_except(remark);
+		}
+	      })),
+	    *t_rhs);
+    };
+
   switch (_op) {
   case assign_op::set:
     {
@@ -3246,6 +3350,7 @@ void expr_assignment::evaluate_type(ast &a, const architecture &arch)
 	 ((wrap_callables<default_action_return_value<bool, false>::type>
 	   ([&](const pointer_type &pt_lhs, const int_type&) {
 	      _check_pointer_arithmetic(a, pt_lhs, _lhs, arch);
+	      check_enum_completeness_rhs();
 	      _set_type(pt_lhs.strip_qualifiers());
 	      _convert_type_for_expr_context();
 	      return true;
@@ -3261,6 +3366,9 @@ void expr_assignment::evaluate_type(ast &a, const architecture &arch)
     handle_types<void>
       ((wrap_callables<no_default_action>
 	([&](const arithmetic_type&, const arithmetic_type&) {
+	   check_enum_completeness_lhs();
+	   check_enum_completeness_rhs();
+
 	   // Ok
 	   _set_type(t_lhs);
 	   _convert_type_for_expr_context();
@@ -3288,6 +3396,9 @@ void expr_assignment::evaluate_type(ast &a, const architecture &arch)
     handle_types<void>
       ((wrap_callables<no_default_action>
 	([&](const int_type&, const int_type&) {
+	   check_enum_completeness_lhs();
+	   check_enum_completeness_rhs();
+
 	   _set_type(t_lhs);
 	   _convert_type_for_expr_context();
 	 },
@@ -3334,9 +3445,50 @@ void expr_conditional::evaluate_type(ast &a, const architecture &arch)
   const std::shared_ptr<const type> &t_true = expr_true.get_type();
   const std::shared_ptr<const type> &t_false = _expr_false.get_type();
 
+  auto &&check_enum_completeness_t_true =
+    [&]() {
+      handle_types<void>
+	   ((wrap_callables<default_action_nop>
+	     ([&](const enum_type &et_true) {
+		if (!et_true.is_complete()) {
+		  const pp_token &tok =
+		    a.get_pp_tokens()[expr_true.get_tokens_range().begin];
+		  code_remark remark
+		    (code_remark::severity::fatal,
+		     "ternary operator's operand has incomplete enum type",
+		     tok.get_file_range());
+		  a.get_remarks().add(remark);
+		  throw semantic_except(remark);
+		}
+	      })),
+	    *t_true);
+    };
+
+  auto &&check_enum_completeness_t_false =
+    [&]() {
+      handle_types<void>
+	   ((wrap_callables<default_action_nop>
+	     ([&](const enum_type &et_false) {
+		if (!et_false.is_complete()) {
+		  const pp_token &tok =
+		    a.get_pp_tokens()[_expr_false.get_tokens_range().begin];
+		  code_remark remark
+		    (code_remark::severity::fatal,
+		     "ternary operator's operand has incomplete enum type",
+		     tok.get_file_range());
+		  a.get_remarks().add(remark);
+		  throw semantic_except(remark);
+		}
+	      })),
+	    *t_true);
+    };
+
   handle_types<void>
     ((wrap_callables<no_default_action>
       ([&](const arithmetic_type &at_true, const arithmetic_type &at_false) {
+	 check_enum_completeness_t_true();
+	 check_enum_completeness_t_false();
+
 	 const std::shared_ptr<const arithmetic_type> at_result
 	   = at_true.arithmetic_conversion(arch, at_false);
 	 _set_type(at_result);
@@ -3474,6 +3626,8 @@ void expr_conditional::evaluate_type(ast &a, const architecture &arch)
 	   throw semantic_except(remark);
 	 }
 
+	 check_enum_completeness_t_false();
+
 	 _set_type(t_true);
 	 _convert_type_for_expr_context();
 
@@ -3503,6 +3657,8 @@ void expr_conditional::evaluate_type(ast &a, const architecture &arch)
 	   a.get_remarks().add(remark);
 	   throw semantic_except(remark);
 	 }
+
+	 check_enum_completeness_t_true();
 
 	 _set_type(t_false);
 	 _convert_type_for_expr_context();
@@ -4468,6 +4624,25 @@ void expr_binop::_evaluate_cmp(const types::arithmetic_type &at_left,
 
 void expr_binop::evaluate_type(ast &a, const architecture &arch)
 {
+  auto &&check_enum_completeness_op =
+    [&](const expr &e_op) {
+	 handle_types<void>
+	   ((wrap_callables<default_action_nop>
+	     ([&](const enum_type &et_op) {
+		if (!et_op.is_complete()) {
+		  const pp_token &tok =
+		    a.get_pp_tokens()[e_op.get_tokens_range().begin];
+		  code_remark remark
+		    (code_remark::severity::fatal,
+		     "binary expression's operand has incomplete enum type",
+		     tok.get_file_range());
+		  a.get_remarks().add(remark);
+		  throw semantic_except(remark);
+		}
+	      })),
+	    *e_op.get_type());
+    };
+
   switch(_op) {
   case binary_op::sub:
     handle_types<void>
@@ -4480,6 +4655,8 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
 	   const mpa::limbs pointed_to_size =
 	     _check_pointer_arithmetic(a, pt_left, *this, arch);
 
+	   check_enum_completeness_op(_right);
+
 	   _set_type(_left.get_type());
 	   _convert_type_for_expr_context();
 
@@ -4491,6 +4668,8 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
 
 	 },
 	 [&](const arithmetic_type &at_left, const arithmetic_type &at_right) {
+	   check_enum_completeness_op(_left);
+	   check_enum_completeness_op(_right);
 	   _evaluate_arith_binop(at_left, at_right, a, arch);
 
 	 },
@@ -4514,6 +4693,8 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
 	   const mpa::limbs pointed_to_size =
 	     _check_pointer_arithmetic(a, pt_left, *this, arch);
 
+	   check_enum_completeness_op(_right);
+
 	   _set_type(_left.get_type());
 	   _convert_type_for_expr_context();
 
@@ -4528,6 +4709,8 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
 	   const mpa::limbs pointed_to_size =
 	     _check_pointer_arithmetic(a, pt_right, *this, arch);
 
+	   check_enum_completeness_op(_left);
+
 	   _set_type(_right.get_type());
 	   _convert_type_for_expr_context();
 
@@ -4539,6 +4722,8 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
 
 	 },
 	 [&](const arithmetic_type &at_left, const arithmetic_type &at_right) {
+	   check_enum_completeness_op(_left);
+	   check_enum_completeness_op(_right);
 	   _evaluate_arith_binop(at_left, at_right, a, arch);
 
 	 },
@@ -4561,6 +4746,8 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
     handle_types<void>
       ((wrap_callables<no_default_action>
 	([&](const arithmetic_type &at_left, const arithmetic_type &at_right) {
+	   check_enum_completeness_op(_left);
+	   check_enum_completeness_op(_right);
 	   _evaluate_arith_binop(at_left, at_right, a, arch);
 
 	 },
@@ -4584,6 +4771,8 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
     handle_types<void>
       ((wrap_callables<no_default_action>
 	([&](const int_type &it_left, const int_type &it_right) {
+	   check_enum_completeness_op(_left);
+	   check_enum_completeness_op(_right);
 	   _evaluate_shift(it_left, it_right, a, arch);
 
 	 },
@@ -4610,6 +4799,8 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
     handle_types<void>
       ((wrap_callables<no_default_action>
 	([&](const int_type &it_left, const int_type &it_right) {
+	   check_enum_completeness_op(_left);
+	   check_enum_completeness_op(_right);
 	   _evaluate_bin_binop(it_left, it_right, a, arch);
 
 	 },
@@ -4642,6 +4833,8 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
       throw semantic_except(remark);
     }
 
+    check_enum_completeness_op(_left);
+    check_enum_completeness_op(_right);
     _evaluate_logical_binop(a, arch);
 
     break;
@@ -4664,14 +4857,18 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
 
 	 },
 	 [&](const pointer_type &pt_left, const int_type &it_right) {
+	   check_enum_completeness_op(_right);
 	   _evaluate_cmp(pt_left, it_right, a, arch);
 
 	 },
 	 [&](const int_type &it_left, const pointer_type &pt_right) {
+	   check_enum_completeness_op(_left);
 	   _evaluate_cmp(it_left, pt_right, a, arch);
 
 	 },
 	 [&](const arithmetic_type &at_left, const arithmetic_type &at_right) {
+	   check_enum_completeness_op(_left);
+	   check_enum_completeness_op(_right);
 	   _evaluate_cmp(at_left, at_right, a, arch);
 
 	 },
@@ -4695,6 +4892,42 @@ void expr_cast::evaluate_type(ast &a, const architecture &arch)
   const std::shared_ptr<const addressable_type> &t_target = _tn.get_type();
   const std::shared_ptr<const type> t_source = _e.get_type();
 
+  auto &&check_enum_completeness_target =
+    [&]() {
+      handle_types<void>
+	   ((wrap_callables<default_action_nop>
+	     ([&](const enum_type &et_target) {
+		if (!et_target.is_complete()) {
+		  const pp_token &tok =
+		    a.get_pp_tokens()[get_tokens_range().begin];
+		  code_remark remark(code_remark::severity::fatal,
+				     "cast to incomplete enum type",
+				     tok.get_file_range());
+		  a.get_remarks().add(remark);
+		  throw semantic_except(remark);
+		}
+	      })),
+	    *t_target);
+    };
+
+  auto &&check_enum_completeness_source =
+    [&]() {
+      handle_types<void>
+	   ((wrap_callables<default_action_nop>
+	     ([&](const enum_type &et_source) {
+		if (!et_source.is_complete()) {
+		  const pp_token &tok =
+		    a.get_pp_tokens()[_e.get_tokens_range().begin];
+		  code_remark remark(code_remark::severity::fatal,
+				     "cast from incomplete enum type",
+				     tok.get_file_range());
+		  a.get_remarks().add(remark);
+		  throw semantic_except(remark);
+		}
+	      })),
+	    *t_source);
+    };
+
   handle_types<void>
     ((wrap_callables<no_default_action>
       ([&](const std::shared_ptr<const void_type> &vt_target,
@@ -4705,6 +4938,10 @@ void expr_cast::evaluate_type(ast &a, const architecture &arch)
        },
        [&](const std::shared_ptr<const int_type> &it_target,
 	   const std::shared_ptr<const int_type> &it_source) {
+
+	 check_enum_completeness_source();
+	 check_enum_completeness_target();
+
 	 _set_type(it_target);
 	 _convert_type_for_expr_context();
 
@@ -4750,6 +4987,8 @@ void expr_cast::evaluate_type(ast &a, const architecture &arch)
        },
        [&](const std::shared_ptr<const int_type> &it_target,
 	   const std::shared_ptr<const float_type> &ft_source) {
+	 check_enum_completeness_target();
+
 	 _set_type(it_target);
 	 _convert_type_for_expr_context();
 
@@ -4785,6 +5024,8 @@ void expr_cast::evaluate_type(ast &a, const architecture &arch)
        },
        [&](const std::shared_ptr<const int_type> &it_target,
 	   const std::shared_ptr<const pointer_type> &pt_source) {
+	 check_enum_completeness_target();
+
 	 _set_type(it_target);
 	 _convert_type_for_expr_context();
 
@@ -4826,6 +5067,8 @@ void expr_cast::evaluate_type(ast &a, const architecture &arch)
        },
        [&](const std::shared_ptr<const real_float_type> &rft_target,
 	   const std::shared_ptr<const arithmetic_type> &at_source) {
+	 check_enum_completeness_source();
+
 	 _set_type(rft_target);
 	 _convert_type_for_expr_context();
 
@@ -4847,12 +5090,16 @@ void expr_cast::evaluate_type(ast &a, const architecture &arch)
        },
        [&](const std::shared_ptr<const complex_float_type> &cft_target,
 	   const std::shared_ptr<const arithmetic_type> &at_source) {
+	 check_enum_completeness_source();
+
 	 _set_type(cft_target);
 	 _convert_type_for_expr_context();
 
        },
        [&](const std::shared_ptr<const pointer_type> &pt_target,
 	   const std::shared_ptr<const int_type> &it_source) {
+	 check_enum_completeness_source();
+
 	 _set_type(pt_target);
 	 _convert_type_for_expr_context();
 
@@ -4911,6 +5158,25 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
 {
   const std::shared_ptr<const type> &t = _e.get_type();
 
+  auto &&check_enum_completeness_op =
+    [&]() {
+	 handle_types<void>
+	   ((wrap_callables<default_action_nop>
+	     ([&](const enum_type &et_op) {
+		if (!et_op.is_complete()) {
+		  const pp_token &tok =
+		    a.get_pp_tokens()[_e.get_tokens_range().begin];
+		  code_remark remark
+		    (code_remark::severity::fatal,
+		     "unary expression's operand has incomplete enum type",
+		     tok.get_file_range());
+		  a.get_remarks().add(remark);
+		  throw semantic_except(remark);
+		}
+	      })),
+	    *t);
+    };
+
   switch(_op) {
   case unary_op_pre::inc:
     /* fall through */
@@ -4928,6 +5194,7 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
     handle_types<void>
       ((wrap_callables<no_default_action>
 	([&](const arithmetic_type&) {
+	   check_enum_completeness_op();
 	   _set_type(t);
 	   _convert_type_for_expr_context();
 
@@ -5041,6 +5308,8 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
 		tok.get_file_range());
 	     a.get_remarks().add(remark);
 
+	     check_enum_completeness_op();
+
 	     _set_type(void_type::create());
 
 	   } else {
@@ -5064,6 +5333,8 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
     handle_types<void>
       ((wrap_callables<no_default_action>
 	([&](const std::shared_ptr<const int_type> &it) {
+	   check_enum_completeness_op();
+
 	   std::shared_ptr<const std_int_type> it_result =
 	     it->promote(arch);
 
@@ -5131,6 +5402,8 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
     handle_types<void>
       ((wrap_callables<no_default_action>
 	([&](const std::shared_ptr<const int_type> &it) {
+	   check_enum_completeness_op();
+
 	   std::shared_ptr<const std_int_type> it_result =
 	     it->promote(arch);
 
@@ -5189,6 +5462,8 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
       a.get_remarks().add(remark);
       throw semantic_except(remark);
     }
+
+    check_enum_completeness_op();
 
     {
       const std::shared_ptr<const std_int_type> it_result
@@ -5550,6 +5825,22 @@ void expr_builtin_offsetof::evaluate_type(ast &a, const architecture &arch)
 	  throw semantic_except(remark);
 	}
 
+	handle_types<void>
+	  ((wrap_callables<default_action_nop>
+	    ([&](const enum_type &et_index) {
+	       if (!et_index.is_complete()) {
+		 const pp_token &tok =
+		   a.get_pp_tokens()[e_index.get_tokens_range().begin];
+		 code_remark remark
+		   (code_remark::severity::fatal,
+		    "array index expression has incomplete enum type",
+		    tok.get_file_range());
+		 a.get_remarks().add(remark);
+		 throw semantic_except(remark);
+	       }
+	     })),
+	   *e_index.get_type());
+
 	t_base = &ot_element;
 	base_tok_ix = e_index.get_tokens_range().begin;
 
@@ -5643,12 +5934,33 @@ void expr_array_subscript::_evaluate_type(ast &a, const architecture &arch,
 
 void expr_array_subscript::evaluate_type(ast &a, const architecture &arch)
 {
+  auto &&check_enum_completeness_index =
+    [&](const expr &e_index) {
+      handle_types<void>
+	((wrap_callables<default_action_nop>
+	  ([&](const enum_type &et_index) {
+	     if (!et_index.is_complete()) {
+	       const pp_token &tok =
+		 a.get_pp_tokens()[e_index.get_tokens_range().begin];
+	       code_remark remark
+		 (code_remark::severity::fatal,
+		  "array index expression has incomplete enum type",
+		  tok.get_file_range());
+	       a.get_remarks().add(remark);
+	       throw semantic_except(remark);
+	     }
+	   })),
+	 *e_index.get_type());
+    };
+
   handle_types<void>
     ((wrap_callables<default_action_nop>
       ([&](const pointer_type &pt_base, const int_type &it_index) {
+	 check_enum_completeness_index(_index);
 	 _evaluate_type(a, arch, pt_base, _base, _index);
        },
        [&](const int_type &it_index, const pointer_type &pt_base) {
+	 check_enum_completeness_index(_base);
 	 _evaluate_type(a, arch, pt_base, _index, _base);
        },
        [&](const type&, const type&) {
@@ -5915,6 +6227,22 @@ void expr_unop_post::evaluate_type(ast &a, const architecture &arch)
   handle_types<void>
     ((wrap_callables<default_action_nop>
       ([&](std::shared_ptr<const arithmetic_type> &&at) {
+	 handle_types<void>
+	   ((wrap_callables<default_action_nop>
+	     ([&](const enum_type &et_op) {
+		if (!et_op.is_complete()) {
+		  const pp_token &tok =
+		    a.get_pp_tokens()[_e.get_tokens_range().begin];
+		  code_remark remark
+		    (code_remark::severity::fatal,
+		     "unary expression's operand has incomplete enum type",
+		     tok.get_file_range());
+		  a.get_remarks().add(remark);
+		  throw semantic_except(remark);
+		}
+	      })),
+	    *at);
+
 	 _set_type(std::move(at));
 	 _convert_type_for_expr_context();
        },
@@ -6744,4 +7072,3 @@ void expr_parenthesized::evaluate_type(ast&, const architecture&)
   _set_type(_e.get_type());
   _set_lvalue(_e.is_lvalue());
 }
-

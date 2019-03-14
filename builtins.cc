@@ -187,6 +187,23 @@ evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 	    (handle_types<mpa::limbs::size_type>
 	     ((wrap_callables<default_action_nop>
 	       ([&](const int_type &_it) {
+		  handle_types<void>
+		    ((wrap_callables<default_action_nop>
+		      ([&](const enum_type &et) {
+			 if (!et.is_complete()) {
+			   const pp_token &tok =
+			     a.get_pp_tokens()[e_pi_arg.get_tokens_range()
+					       .begin];
+			   code_remark remark
+			     (code_remark::severity::fatal,
+			      "incomplete enum type passed to builtin function",
+			      tok.get_file_range());
+			   a.get_remarks().add(remark);
+			   throw semantic_except(remark);
+			 }
+		       })),
+		     _it);
+
 		  return _it.get_width(arch);
 		},
 		[&](const pointer_type&) {
@@ -503,6 +520,23 @@ builtin_overflow::evaluate(klp::ccp::ast::ast &a, const architecture &arch,
       handle_types<void>
 	((wrap_callables<default_action_nop>
 	  ([&](const std::shared_ptr<const int_type> &t) {
+	     handle_types<void>
+	       ((wrap_callables<default_action_nop>
+		 ([&](const enum_type &et) {
+		    if (!et.is_complete()) {
+		      const pp_token &tok =
+			a.get_pp_tokens()[args[i].get_tokens_range().begin];
+		      code_remark remark
+			(code_remark::severity::fatal,
+			 ("argument to " + myname() +
+			  " has incomplete enum type"),
+			 tok.get_file_range());
+		      a.get_remarks().add(remark);
+		      throw semantic_except(remark);
+		    }
+		  })),
+		*t);
+
 	     if (i == 2)
 	       it_target = t;
 	   },
@@ -526,6 +560,23 @@ builtin_overflow::evaluate(klp::ccp::ast::ast &a, const architecture &arch,
       handle_types<void>
 	((wrap_callables<default_action_nop>
 	  ([&](const std::shared_ptr<const arithmetic_type> &t) {
+	     handle_types<void>
+	       ((wrap_callables<default_action_nop>
+		 ([&](const enum_type &et) {
+		    if (!et.is_complete()) {
+		      const pp_token &tok =
+			a.get_pp_tokens()[args[i].get_tokens_range().begin];
+		      code_remark remark
+			(code_remark::severity::fatal,
+			 ("argument to " + myname() +
+			  " has incomplete enum type"),
+			 tok.get_file_range());
+		      a.get_remarks().add(remark);
+		      throw semantic_except(remark);
+		    }
+		  })),
+		*t);
+
 	     if (i == 2)
 	       it_target = it_target_spec;
 	   },
@@ -553,6 +604,24 @@ builtin_overflow::evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 	   handle_types<void>
 	     ((wrap_callables<default_action_nop>
 	       ([&](const std::shared_ptr<const int_type> &t) {
+		  handle_types<void>
+		    ((wrap_callables<default_action_nop>
+		      ([&](const enum_type &et) {
+			 if (!et.is_complete()) {
+			   const pp_token &tok =
+			     a.get_pp_tokens()[args[2].get_tokens_range()
+					       .begin];
+			   code_remark remark
+			     (code_remark::severity::fatal,
+			      ("argument to " + myname() +
+			       " is of pointer to incomplete enum type"),
+			      tok.get_file_range());
+			   a.get_remarks().add(remark);
+			   throw semantic_except(remark);
+			 }
+		       })),
+		     *t);
+
 		  if (it_target_spec) {
 		    if (it_target_spec->is_compatible_with(arch, *t, true)) {
 		      it_target = it_target_spec;

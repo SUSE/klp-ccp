@@ -487,6 +487,7 @@ bool returnable_object_type::is_complete() const noexcept
 
 bool returnable_object_type::is_size_constant() const noexcept
 {
+  assert(this->is_complete());
   return true;
 }
 
@@ -2001,13 +2002,13 @@ void enum_content::set_underlying_type(std::shared_ptr<const std_int_type> &&ut)
 const std::shared_ptr<const std_int_type>&
 enum_content::get_underlying_type() const noexcept
 {
-  assert(_underlying_type);
   return _underlying_type;
 }
 
 
-enum_type::enum_type(const ast::enum_def &ed, const qualifiers qs)
-  : type(qs), _ed(ed)
+enum_type::enum_type(const ast::enum_decl_list_node &decl_node,
+		     const qualifiers qs)
+  : type(qs), _decl_node(decl_node), _content(nullptr)
 {}
 
 enum_type::enum_type(const enum_type&) = default;
@@ -2020,9 +2021,10 @@ enum_type* enum_type::_clone() const
 }
 
 std::shared_ptr<const enum_type>
-enum_type::create(const ast::enum_def &ed, const qualifiers &qs)
+enum_type::create(const ast::enum_decl_list_node &decl_node,
+		  const qualifiers &qs)
 {
-  return std::shared_ptr<const enum_type>(new enum_type(ed, qs));
+  return std::shared_ptr<const enum_type>(new enum_type(decl_node, qs));
 }
 
 type::type_id enum_type::get_type_id() const noexcept
@@ -2042,7 +2044,7 @@ bool enum_type::is_compatible_with(const architecture&, const enum_type &t,
   if (!ignore_qualifiers && (this->get_qualifiers() != t.get_qualifiers()))
     return false;
 
-  return &_ed == &t._ed;
+  return _decl_node.get_id() == t._decl_node.get_id();
 }
 
 bool enum_type::is_compatible_with(const architecture &arch,
@@ -2052,7 +2054,18 @@ bool enum_type::is_compatible_with(const architecture &arch,
   if (!ignore_qualifiers && (this->get_qualifiers() != t.get_qualifiers()))
     return false;
 
+  if (!this->is_complete())
+    return false;
   return this->get_underlying_type()->is_compatible_with(arch, t, false);
+}
+
+bool enum_type::is_complete() const noexcept
+{
+  const enum_content *content = _get_content();
+  if (!content)
+    return false;
+
+  return !!content->get_underlying_type();
 }
 
 mpa::limbs enum_type::get_size(const architecture &arch) const
@@ -2091,7 +2104,23 @@ std::shared_ptr<const returnable_int_type> enum_type::to_unsigned() const
 const std::shared_ptr<const std_int_type>& enum_type::get_underlying_type()
   const noexcept
 {
-  return _ed.get_enumerator_list().get_content().get_underlying_type();
+  assert(this->is_complete());
+  return _get_content()->get_underlying_type();
+}
+
+const enum_content* enum_type::_get_content() const noexcept
+{
+  if (_content) {
+    // cached from previous invocation
+    return _content;
+  }
+
+  const ast::enum_def * const ed = _decl_node.find_definition();
+  if (!ed)
+    return nullptr;
+
+  _content = &ed->get_enumerator_list().get_content();
+  return _content;
 }
 
 
