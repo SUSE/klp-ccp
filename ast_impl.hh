@@ -731,8 +731,10 @@ namespace klp
 	  case linkage::link_target_kind::init_decl:
 	    if (cur->_target_is_visible) {
 	      const init_declarator &id = *cur->_target_id;
-	      c(id);
-	      cur = &id.get_linkage();
+	      if (c(id))
+		cur = &id.get_linkage();
+	      else
+		cur = nullptr;
 	    } else {
 	      cur = nullptr;
 	    }
@@ -741,8 +743,10 @@ namespace klp
 	  case linkage::link_target_kind::function_def:
 	    if (cur->_target_is_visible) {
 	      const function_definition &fd = *cur->_target_fd;
-	      c(fd);
-	      cur = &fd.get_linkage();
+	      if (c(fd))
+		cur = &fd.get_linkage();
+	      else
+		cur = nullptr;
 	    } else {
 	      cur = nullptr;
 	    }
