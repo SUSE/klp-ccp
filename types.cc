@@ -1296,7 +1296,9 @@ bool struct_or_union_content::member::has_constant_offset() const noexcept
 }
 
 
-struct_or_union_content::struct_or_union_content() = default;
+struct_or_union_content::struct_or_union_content()
+  : _align_ffs(0), _size(0), _is_size_constant(false)
+{}
 
 void struct_or_union_content::add_member(member &&m)
 {
