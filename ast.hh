@@ -3612,7 +3612,7 @@ namespace klp
 	template<typename callable_type>
 	void for_each(callable_type&& c) const;
 
-	bool is_single_void(ast &a, const architecture &arch) const;
+	bool is_single_void(ast &a) const;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;

@@ -2134,7 +2134,7 @@ evaluate_type(ast &a, const architecture &arch)
     e();
 
     types::parameter_type_list ptl;
-    if (!_ptl->is_single_void(a, arch)) {
+    if (!_ptl->is_single_void(a)) {
       _ptl->for_each([&](const parameter_declaration &pd) {
 		       ptl.emplace_back(pd.get_type());
 		     });
@@ -2471,7 +2471,7 @@ evaluate_type(ast &a, const architecture &arch)
     e();
 
     types::parameter_type_list ptl;
-    if (!_ptl->is_single_void(a, arch)) {
+    if (!_ptl->is_single_void(a)) {
       _ptl->for_each([&](const parameter_declaration &pd) {
 		       ptl.emplace_back(pd.get_type());
 		     });

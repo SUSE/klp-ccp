@@ -5764,7 +5764,7 @@ parameter_declaration_list::set_variadic(const pp_tokens_range &triple_dot_tr)
 }
 
 bool parameter_declaration_list::
-is_single_void(ast &a, const architecture &arch) const
+is_single_void(ast &a) const
 {
   if (_variadic || _pds.size() > 1)
     return false;
