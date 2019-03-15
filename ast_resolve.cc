@@ -661,8 +661,8 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
       storage_class::sc_typedef));
 
   if (sc == storage_class::sc_typedef) {
-    if (prev) {
-      if (prev_is_in_cur_scope && !prev_is_td_in_cur_scope) {
+    if (prev && prev_is_in_cur_scope) {
+      if (!prev_is_td_in_cur_scope) {
 	const pp_token &id_tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
 	code_remark remark(code_remark::severity::fatal,
 			   "redeclaration of non-typedef symbol as typedef",
