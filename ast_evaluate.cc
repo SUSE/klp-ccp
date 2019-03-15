@@ -2218,7 +2218,7 @@ evaluate_type(ast &a, const architecture &arch)
       }));
 
   // Examine any previous declaration relate by linkage.
-  if (l && l->get_link_target_kind() != linkage::link_target_kind::unlinked) {
+  if (l && !l->is_first_in_chain()) {
     const direct_declarator_id *prev_ddid = nullptr;
     switch (l->get_link_target_kind()) {
     case linkage::link_target_kind::init_decl:
@@ -2230,6 +2230,10 @@ evaluate_type(ast &a, const architecture &arch)
       prev_ddid = &(l->get_target_function_definition().get_declarator()
 		    .get_direct_declarator_id());
       break;
+
+    case linkage::link_target_kind::unlinked:
+      assert(0);
+      __builtin_unreachable();
     }
 
     if (!a_t->is_compatible_with(arch, *prev_ddid->get_type(), false)) {

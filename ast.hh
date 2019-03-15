@@ -3299,16 +3299,29 @@ namespace klp
 
 	void set_linkage_kind(const linkage_kind kind) noexcept;
 
-	void link_to(init_declarator &target, const linkage_kind kind,
-		     const bool target_is_visible) noexcept;
-	void link_to(function_definition &target, const linkage_kind kind,
-		     const bool target_is_visible) noexcept;
+	static void link(init_declarator &source, init_declarator &target,
+			 const linkage_kind kind, const bool target_is_visible,
+			 const bool update_last_at_file_scope) noexcept;
+	static void link(init_declarator &source, function_definition &target,
+			 const linkage_kind kind, const bool target_is_visible,
+			 const bool update_last_at_file_scope) noexcept;
+	static void link(function_definition &source, init_declarator &target,
+			 const linkage_kind kind, const bool target_is_visible,
+			 const bool update_last_at_file_scope) noexcept;
+	static void link(function_definition &source,
+			 function_definition &target,
+			 const linkage_kind kind, const bool target_is_visible,
+			 const bool update_last_at_file_scope) noexcept;
+
+	static void set_first_at_file_scope(init_declarator &first) noexcept;
+	static void set_first_at_file_scope(function_definition &first)
+	  noexcept;
 
 	bool is_linked_to(const init_declarator &id) const noexcept;
 	bool is_linked_to(const function_definition &fd) const noexcept;
 
 	link_target_kind get_link_target_kind() const noexcept
-	{ return _target_kind; };
+	{ return _target_kind; }
 
 	const init_declarator& get_target_init_declarator() const noexcept;
 	const function_definition& get_target_function_definition()
@@ -3319,10 +3332,26 @@ namespace klp
 
 	linkage_id get_id() const noexcept;
 
+	const linkage& find_last_in_file_scope_chain() const noexcept;
+
+	const bool is_first_in_chain() const noexcept
+	{ return _first_in_chain; }
+
+	const bool is_last_in_file_scope_chain() const noexcept
+	{ return _last_in_file_scope_chain; }
+
 	template <typename callable_type>
 	void for_each_visible(callable_type &&c) const;
 
       private:
+	void _link_to(init_declarator &target, const linkage_kind kind,
+		      const bool target_is_visible) noexcept;
+
+	void _link_to(function_definition &target, const linkage_kind kind,
+		      const bool target_is_visible) noexcept;
+
+	linkage& _set_last_in_file_scope_chain() noexcept;
+
 	bool _is_linked_to(const linkage &target) const noexcept;
 
 	linkage_kind _linkage_kind;
@@ -3336,6 +3365,8 @@ namespace klp
 	};
 
 	bool _target_is_visible;
+	bool _first_in_chain;
+	bool _last_in_file_scope_chain;
       };
 
       class init_declarator final : public ast_entity<init_declarator>

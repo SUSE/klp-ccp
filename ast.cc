@@ -5147,40 +5147,88 @@ bool asm_label::_process(const_processor<bool> &p) const
 linkage::linkage() noexcept
   : _linkage_kind(linkage_kind::none),
     _target_kind(link_target_kind::unlinked),
-    _target_is_visible(false)
+    _target_is_visible(false), _first_in_chain(true),
+    _last_in_file_scope_chain(false)
 {}
 
 void linkage::set_linkage_kind(const linkage_kind kind) noexcept
 {
-  assert(_linkage_kind == linkage_kind::none);
+  assert(_linkage_kind == linkage_kind::none || _linkage_kind == kind);
   _linkage_kind = kind;
 }
 
-void linkage::link_to(init_declarator &target, const linkage_kind kind,
-		      const bool target_is_visible) noexcept
+void linkage::link(init_declarator &source, init_declarator &target,
+		   const linkage_kind kind, const bool target_is_visible,
+		   const bool update_last_at_file_scope) noexcept
 {
-  assert(target.get_linkage().get_linkage_kind() == kind);
-  set_linkage_kind(kind);
+  linkage &l = source.get_linkage();
+  assert(l._target_kind == link_target_kind::unlinked);
+  l._first_in_chain = false;
+  l._link_to(target, kind, target_is_visible);
 
-  assert(_target_kind == link_target_kind::unlinked);
-  _target_kind = link_target_kind::init_decl;
-  _target_id = &target;
-
-  _target_is_visible = target_is_visible;
+  if (update_last_at_file_scope) {
+    linkage &first_in_chain = l._set_last_in_file_scope_chain();
+    first_in_chain._link_to(source, kind, false);
+  }
 }
 
-void linkage::link_to(function_definition &target,
-		      const linkage_kind kind,
-		      const bool target_is_visible) noexcept
+void linkage::link(init_declarator &source, function_definition &target,
+		   const linkage_kind kind, const bool target_is_visible,
+		   const bool update_last_at_file_scope) noexcept
 {
-  assert(target.get_linkage().get_linkage_kind() == kind);
-  set_linkage_kind(kind);
+  linkage &l = source.get_linkage();
+  assert(l._target_kind == link_target_kind::unlinked);
+  l._first_in_chain = false;
+  l._link_to(target, kind, target_is_visible);
 
-  assert(_target_kind == link_target_kind::unlinked);
-  _target_kind = link_target_kind::function_def;
-  _target_fd = &target;
+  if (update_last_at_file_scope) {
+    linkage &first_in_chain = l._set_last_in_file_scope_chain();
+    first_in_chain._link_to(source, kind, false);
+  }
+}
 
-  _target_is_visible = target_is_visible;
+void linkage::link(function_definition &source, init_declarator &target,
+		   const linkage_kind kind, const bool target_is_visible,
+		   const bool update_last_at_file_scope) noexcept
+{
+  linkage &l = source.get_linkage();
+  assert(l._target_kind == link_target_kind::unlinked);
+  l._first_in_chain = false;
+  l._link_to(target, kind, target_is_visible);
+
+  if (update_last_at_file_scope) {
+    linkage &first_in_chain = l._set_last_in_file_scope_chain();
+    first_in_chain._link_to(source, kind, false);
+  }
+}
+
+void linkage::link(function_definition &source, function_definition &target,
+		   const linkage_kind kind, const bool target_is_visible,
+		   const bool update_last_at_file_scope) noexcept
+{
+  linkage &l = source.get_linkage();
+  assert(l._target_kind == link_target_kind::unlinked);
+  l._first_in_chain = false;
+  l._link_to(target, kind, target_is_visible);
+
+  if (update_last_at_file_scope) {
+    linkage &first_in_chain = l._set_last_in_file_scope_chain();
+    first_in_chain._link_to(source, kind, false);
+  }
+}
+
+void linkage::set_first_at_file_scope(init_declarator &first) noexcept
+{
+  linkage &first_in_chain = first.get_linkage()._set_last_in_file_scope_chain();
+  assert(first_in_chain._target_kind == link_target_kind::unlinked);
+  first_in_chain._link_to(first, first_in_chain._linkage_kind, false);
+}
+
+void linkage::set_first_at_file_scope(function_definition &first) noexcept
+{
+  linkage &first_in_chain = first.get_linkage()._set_last_in_file_scope_chain();
+  assert(first_in_chain._target_kind == link_target_kind::unlinked);
+  first_in_chain._link_to(first, first_in_chain._linkage_kind, false);
 }
 
 bool linkage::is_linked_to(const init_declarator &id) const noexcept
@@ -5209,7 +5257,7 @@ const function_definition& linkage::get_target_function_definition()
 linkage::linkage_id linkage::get_id() const noexcept
 {
   const linkage *cur = this;
-  while (cur->_target_kind != link_target_kind::unlinked) {
+  while (!cur->_first_in_chain) {
     switch (cur->_target_kind) {
     case link_target_kind::init_decl:
       cur = &cur->_target_id->get_linkage();
@@ -5218,10 +5266,98 @@ linkage::linkage_id linkage::get_id() const noexcept
     case link_target_kind::function_def:
       cur = &cur->_target_fd->get_linkage();
       break;
+
+    case link_target_kind::unlinked:
+      assert(0);
+      __builtin_unreachable();
     }
   }
 
   return linkage_id(*cur);
+}
+
+const linkage& linkage::find_last_in_file_scope_chain() const noexcept
+{
+  // This actual returns the first linkage in a file scope chain,
+  // because that one refers back to the last init_declarator
+  // resp. function_definition.
+  const linkage *cur = this;
+  while (!cur->_first_in_chain) {
+    switch (cur->_target_kind) {
+    case link_target_kind::init_decl:
+      cur = &cur->_target_id->get_linkage();
+      break;
+
+    case link_target_kind::function_def:
+      cur = &cur->_target_fd->get_linkage();
+      break;
+
+    case link_target_kind::unlinked:
+      assert(0);
+      __builtin_unreachable();
+    }
+  }
+
+  assert(cur->_target_kind != link_target_kind::unlinked);
+  return *cur;
+}
+
+void linkage::_link_to(init_declarator &target, const linkage_kind kind,
+		       const bool target_is_visible) noexcept
+{
+  assert(target.get_linkage().get_linkage_kind() == kind);
+  set_linkage_kind(kind);
+
+  assert(_target_kind == link_target_kind::unlinked || _first_in_chain);
+  assert(!_first_in_chain || !target_is_visible);
+  _target_kind = link_target_kind::init_decl;
+  _target_id = &target;
+
+  _target_is_visible = target_is_visible;
+}
+
+void linkage::_link_to(function_definition &target,
+		       const linkage_kind kind,
+		       const bool target_is_visible) noexcept
+{
+  assert(target.get_linkage().get_linkage_kind() == kind);
+  set_linkage_kind(kind);
+
+  assert(_target_kind == link_target_kind::unlinked || _first_in_chain);
+  assert(!_first_in_chain || !target_is_visible);
+  _target_kind = link_target_kind::function_def;
+  _target_fd = &target;
+
+  _target_is_visible = target_is_visible;
+}
+
+linkage& linkage::_set_last_in_file_scope_chain() noexcept
+{
+  _last_in_file_scope_chain = true;
+
+  // Find the first linkage in the file-scope chain and return it
+  // such that the caller can link it back to the init_declarator or
+  // function_definition enclosing *this;
+  linkage *cur = this;
+  while (!cur->_first_in_chain) {
+    switch (cur->_target_kind) {
+    case link_target_kind::init_decl:
+      cur = &cur->_target_id->get_linkage();
+      break;
+
+    case link_target_kind::function_def:
+      cur = &cur->_target_fd->get_linkage();
+      break;
+
+    case link_target_kind::unlinked:
+      assert(0);
+      __builtin_unreachable();
+    }
+
+    cur->_last_in_file_scope_chain = false;
+  }
+
+  return *cur;
 }
 
 bool linkage::_is_linked_to(const linkage &target) const noexcept

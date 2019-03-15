@@ -179,8 +179,10 @@ namespace
 
     static linkage::linkage_kind
     _get_linkage_kind(const expr_id::resolved &resolved) noexcept;
-    static void _link_to(linkage &l, const expr_id::resolved &resolved)
-      noexcept;
+
+    template <typename source_type>
+    static void _link_to(source_type &source, const expr_id::resolved &resolved,
+			 bool is_at_file_scope) noexcept;
     void _add_pending_linkage(init_declarator &id);
     void _try_resolve_pending_linkages(init_declarator &id,
 				       const linkage::linkage_kind kind);
@@ -669,8 +671,10 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
 	throw semantic_except(remark);
       }
 
-      id.get_linkage().link_to(prev->get_init_declarator(),
-			       linkage::linkage_kind::none, true);
+      linkage::link(id, prev->get_init_declarator(),
+		    linkage::linkage_kind::none, true, _scopes.size() == 1);
+    } else if (_scopes.size() == 1) {
+      linkage::set_first_at_file_scope(id);
     }
 
     _scopes.back()._declared_ids.push_back(expr_id::resolved(id));
@@ -743,11 +747,11 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
 	throw semantic_except(remark);
       }
 
-      _link_to(id.get_linkage(), *prev);
+      _link_to(id, *prev, true);
 
     } else {
       _try_resolve_pending_linkages(id, linkage::linkage_kind::internal);
-
+      linkage::set_first_at_file_scope(id);
     }
 
   } else if (sc == storage_class::sc_extern ||
@@ -781,6 +785,7 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
       };
 
       if (!has_linkage(*prev)) {
+	assert(!is_at_file_scope);
 	// C99, 6.2.2(4): if the prior declaration doesn't specify a
 	// linkage, the linkage is extern. Check that this is
 	// compatible with any declaration in turn preceeding the
@@ -801,9 +806,11 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
     }
 
     if (prev) {
-      _link_to(id.get_linkage(), *prev);
+      _link_to(id, *prev, is_at_file_scope);
     } else {
       _add_pending_linkage(id);
+      if (is_at_file_scope)
+	linkage::set_first_at_file_scope(id);
     }
 
   } else if (sc == storage_class::sc_none) {
@@ -825,10 +832,11 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
 	throw semantic_except(remark);
       }
 
-      _link_to(id.get_linkage(), *prev);
+      _link_to(id, *prev, true);
 
     } else {
       _try_resolve_pending_linkages(id, linkage::linkage_kind::external);
+      linkage::set_first_at_file_scope(id);
     }
 
   } else if (is_fun && !is_at_file_scope && sc == storage_class::sc_auto) {
@@ -850,7 +858,7 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
 	throw semantic_except(remark);
       }
 
-      _link_to(id.get_linkage(), *prev);
+      _link_to(id, *prev, false);
 
     } else {
       id.get_linkage()
@@ -955,7 +963,7 @@ void _id_resolver::_handle_fun_def(function_definition &fd)
 	throw semantic_except(remark);
       }
 
-      _link_to(fd.get_linkage(), *prev);
+      _link_to(fd, *prev, false);
 
     } else {
       fd.get_linkage().set_linkage_kind(linkage::linkage_kind::nested_fun_auto);
@@ -978,10 +986,11 @@ void _id_resolver::_handle_fun_def(function_definition &fd)
 	throw semantic_except(remark);
       }
 
-      _link_to(fd.get_linkage(), *prev);
+      _link_to(fd, *prev, true);
 
     } else {
       _try_resolve_pending_linkages(fd, linkage::linkage_kind::internal);
+      linkage::set_first_at_file_scope(fd);
     }
 
   } else {
@@ -993,10 +1002,11 @@ void _id_resolver::_handle_fun_def(function_definition &fd)
       const linkage::linkage_kind prev_linkage = _get_linkage_kind(*prev);
       assert(prev_linkage != linkage::linkage_kind::none);
 
-      _link_to(fd.get_linkage(), *prev);
+      _link_to(fd, *prev, true);
 
     } else {
       _try_resolve_pending_linkages(fd, linkage::linkage_kind::external);
+      linkage::set_first_at_file_scope(fd);
     }
   }
 
@@ -1300,15 +1310,17 @@ _id_resolver::_get_linkage_kind(const expr_id::resolved &resolved) noexcept
   };
 }
 
-void _id_resolver::_link_to(linkage &l, const expr_id::resolved &resolved)
-  noexcept
+template <typename source_type>
+void _id_resolver::_link_to(source_type &source,
+			    const expr_id::resolved &resolved,
+			    bool is_at_file_scope) noexcept
 {
   switch (resolved.get_kind()) {
   case resolved_kind::init_declarator:
     {
       init_declarator &id = resolved.get_init_declarator();
       const linkage::linkage_kind kind = id.get_linkage().get_linkage_kind();
-      l.link_to(id, kind, true);
+      linkage::link(source, id, kind, true, is_at_file_scope);
     }
     break;
 
@@ -1316,7 +1328,7 @@ void _id_resolver::_link_to(linkage &l, const expr_id::resolved &resolved)
     {
       function_definition &fd = resolved.get_function_definition();
       const linkage::linkage_kind kind = fd.get_linkage().get_linkage_kind();
-      l.link_to(fd, kind, true);
+      linkage::link(source, fd, kind, true, is_at_file_scope);
     }
     break;
 
@@ -1382,7 +1394,7 @@ _id_resolver::_try_resolve_pending_linkages(init_declarator &id,
   }
 
   _pending_linkages.erase(it_pl);
-  id.get_linkage().link_to(pl_id, kind, false);
+  linkage::link(id, pl_id, kind, false, false);
 }
 
 void
@@ -1419,7 +1431,7 @@ _id_resolver::_try_resolve_pending_linkages(function_definition &fd,
   }
 
   _pending_linkages.erase(it_pl);
-  fd.get_linkage().link_to(pl_id, kind, false);
+  linkage::link(fd, pl_id, kind, false, false);
 }
 
 void _id_resolver::_resolve_id(expr_id &ei)
