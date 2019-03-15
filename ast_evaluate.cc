@@ -23,6 +23,10 @@ static void _complete_type_from_init(klp::ccp::ast::ast &a,
 				     const architecture &arch,
 				     init_declarator &i);
 
+static void
+_check_type_completeness_local(klp::ccp::ast::ast &a,
+			       const klp::ccp::ast::init_declarator &i);
+
 namespace
 {
   class _evaluator
@@ -102,6 +106,7 @@ void _evaluator::operator()()
       },
       [this](init_declarator &i) {
 	_complete_type_from_init(_ast, _arch, i);
+	_check_type_completeness_local(_ast, i);
       },
       [this](parameter_declaration_abstract &pda) {
 	pda.evaluate_type(_ast, _arch);
@@ -1040,6 +1045,106 @@ static void _complete_type_from_init(klp::ccp::ast::ast &a,
 }
 
 
+static
+void _check_type_completeness_global(klp::ccp::ast::ast &a,
+				     const klp::ccp::ast::declaration &d,
+				     const klp::ccp::ast::init_declarator &i)
+{
+  const direct_declarator_id &ddid =
+    i.get_declarator().get_direct_declarator_id();
+  const addressable_type &t = *ddid.get_type();
+
+  if (t.is_complete())
+    return;
+  assert(!ddid.is_function());
+
+  const storage_class sc = d.get_declaration_specifiers().get_storage_class(a);
+  if (sc == storage_class::sc_typedef)
+    return;
+
+  assert(d.is_at_file_scope());
+  // Declaration is at file scope and we're asked not to ignore
+  // incomplete types here.
+  const linkage &l = i.get_linkage();
+  if (!l.is_last_in_file_scope_chain()) {
+    // The last declaration of this identifier will have its type to
+    // be the composite type from all prior declarations.
+    // We'll check type completeness on that one, if required.
+    return;
+  }
+
+  // We'll need type completeness if any of the current identifier's
+  // declarations are definitions, i.e. either have no or 'static'
+  // storage class.
+  bool need_completeness = false;
+  if (sc == storage_class::sc_none || sc == storage_class::sc_static) {
+    need_completeness = true;
+  } else {
+    l.for_each_visible
+      (wrap_callables<default_action_unreachable<bool, type_set<>>::type>
+       ([&](const init_declarator &prev_id) {
+	  const declaration &prev_d = i.get_containing_declaration();
+	  const storage_class prev_sc =
+	    prev_d.get_declaration_specifiers().get_storage_class(a);
+	  if (prev_sc == storage_class::sc_none ||
+	      prev_sc == storage_class::sc_static) {
+	    need_completeness = true;
+	    return false;
+	  }
+	  return true;
+	}));
+  }
+
+  if (!need_completeness)
+    return;
+
+  const pp_token &tok = a.get_pp_tokens()[ddid.get_id_tok()];
+  code_remark remark (code_remark::severity::warning,
+		      "init declarator has incomplete type",
+		      tok.get_file_range());
+  a.get_remarks().add(remark);
+}
+
+void
+_check_type_completeness_local(klp::ccp::ast::ast &a,
+			       const klp::ccp::ast::init_declarator &i)
+{
+  const direct_declarator_id &ddid =
+    i.get_declarator().get_direct_declarator_id();
+  const addressable_type &t = *ddid.get_type();
+
+  if (t.is_complete())
+    return;
+  assert(!ddid.is_function());
+
+  const declaration &d = i.get_containing_declaration();
+  const storage_class sc = d.get_declaration_specifiers().get_storage_class(a);
+  if (sc == storage_class::sc_typedef)
+    return;
+
+  // At file scope, GCC supports completion by later declarations:
+  //  struct A foo; struct A { int a; };
+  // This can only be checked after the whole translation unit has
+  // been processed -- ignore it for now.
+  if (d.is_at_file_scope())
+    return;
+
+  // Non-file scope extern declarations don't need to be complete.
+  if (sc == storage_class::sc_extern)
+    return;
+
+  // Arrays w/o a length specifier are Ok for an old-style function
+  // definition's parameter definition.
+  if (is_type<array_type>(t) && d.get_parent()->is_any_of<declaration_list>())
+    return;
+
+  const pp_token &tok = a.get_pp_tokens()[ddid.get_id_tok()];
+  code_remark remark (code_remark::severity::warning,
+		      "init declarator has incomplete type",
+		      tok.get_file_range());
+  a.get_remarks().add(remark);
+}
+
 
 class align_attribute_finder
 {
@@ -1407,6 +1512,22 @@ void ast_translation_unit::evaluate(const architecture &arch)
 {
   _evaluator ev(*this, *_tu, arch);
   ev();
+
+  // Finally, sweep over all global objects defined in this
+  // translation unit and check that their types are complete.
+  _tu->for_each_external_declaration
+    (wrap_callables<default_action_nop>
+     ([&](const external_declaration_decl &edd) {
+	const declaration &d = edd.get_declaration();
+	const init_declarator_list * const il = d.get_init_declarator_list();
+	if (!il)
+	  return;
+
+	il->for_each
+	  ([&](const init_declarator &id) {
+	     _check_type_completeness_global(*this, d, id);
+	   });
+      }));
 }
 
 
