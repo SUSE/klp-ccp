@@ -40,6 +40,8 @@ namespace
 
   private:
     void _check_return_stmt(const klp::ccp::ast::stmt_return &ret_stmt);
+    void
+    _check_function_definition(const klp::ccp::ast::function_definition &fd);
 
     klp::ccp::ast::ast &_ast;
     klp::ccp::ast::_ast_entity &_ae;
@@ -93,6 +95,9 @@ void _evaluator::operator()()
       [](const stmt_return&) {
 	return true;
       },
+      [](const function_definition&) {
+	return true;
+      },
       [](_typed &t) {
 	if (t.is_evaluated())
 	  return false;
@@ -114,6 +119,9 @@ void _evaluator::operator()()
       [this](const stmt_return &ret_stmt) {
 	_check_return_stmt(ret_stmt);
       },
+      [this](const function_definition &fd) {
+	_check_function_definition(fd);
+      },
       [this](_typed &t) {
 	t.evaluate_type(_ast, _arch);
      }));
@@ -126,11 +134,13 @@ void _evaluator::operator()()
 				       init_declarator,
 				       parameter_declaration_abstract,
 				       stmt_return,
+				       function_definition,
 				       _typed>,
 			      type_set<enumerator,
 				       init_declarator,
 				       parameter_declaration_abstract,
 				       stmt_return,
+				       function_definition,
 				       _typed> >
     (std::move(pre), std::move(post));
 }
@@ -159,26 +169,26 @@ void _evaluator::_check_return_stmt(const klp::ccp::ast::stmt_return &ret_stmt)
     throw semantic_except(remark);
   }
 
-  const function_type &ft =
-    (handle_types<const function_type&>
-     ((wrap_callables<default_action_unreachable<const function_type&,
+  const function_type * const ft =
+    (handle_types<const function_type *>
+     ((wrap_callables<default_action_unreachable<const function_type*,
 						 type_set<> >::type>
-       ([&](const function_type &_ft) -> const function_type& {
-	  return _ft;
+       ([&](const function_type &_ft) -> const function_type* {
+	  return &_ft;
 	},
-	[&](const type&) -> const function_type& {
-	  const pp_token &tok =
-	    _ast.get_pp_tokens()[fd->get_tokens_range().begin];
-	  code_remark remark
-	    (code_remark::severity::fatal,
-	     "non-function type declarator at function definition",
-	     tok.get_file_range());
-	  _ast.get_remarks().add(remark);
-	  throw semantic_except(remark);
+	[&](const type&) -> const function_type* {
+	  // Ok, this function definition has a declarator which does
+	  // not yield function type. This will be reported when the
+	  // function_definition as a whole gets checked, i.e.
+	  // from _check_function_definition().
+	  return nullptr;
 	})),
       *fd->get_declarator().get_innermost_type()));
+  if (!ft)
+    return;
+
   const std::shared_ptr<const returnable_type> &ret_type
-    = ft.get_return_type();
+    = ft->get_return_type();
 
   const expr * const ret_e = ret_stmt.get_expr();
   const bool ret_type_is_void = is_type<void_type>(*ret_type);
@@ -207,6 +217,65 @@ void _evaluator::_check_return_stmt(const klp::ccp::ast::stmt_return &ret_stmt)
   }
 }
 
+void _evaluator::
+_check_function_definition(const klp::ccp::ast::function_definition &fd)
+{
+  const declarator &d = fd.get_declarator();
+  const direct_declarator_id &ddid = d.get_direct_declarator_id();
+
+  const function_type &ft =
+    (handle_types<const function_type&>
+     ((wrap_callables<default_action_unreachable<const function_type&,
+       type_set<> >::type>
+       ([&](const function_type &_ft) -> const function_type& {
+	  return _ft;
+	},
+	 [&](const type&) -> const function_type& {
+	   const pp_token &tok =
+	     _ast.get_pp_tokens()[fd.get_tokens_range().begin];
+	   code_remark remark
+	     (code_remark::severity::fatal,
+	      "non-function type declarator at function definition",
+	      tok.get_file_range());
+	   _ast.get_remarks().add(remark);
+	   throw semantic_except(remark);
+	 })),
+      *ddid.get_type()));
+
+  const std::shared_ptr<const returnable_type> &ret_type
+    = ft.get_return_type();
+
+  if (!ret_type->is_complete() && !is_type<void_type>(*ret_type)) {
+    const pp_token &tok = _ast.get_pp_tokens()[ddid.get_id_tok()];
+    code_remark remark
+      (code_remark::severity::warning,
+       "function definition's return value has incomplete type",
+       tok.get_file_range());
+    _ast.get_remarks().add(remark);
+  }
+
+  const direct_declarator_func &ddf = *ddid.is_function();
+  const parameter_declaration_list * const pdl =
+    ddf.get_parameter_declaration_list();
+  if (!pdl)
+    return;
+
+  if (pdl->is_single_void(_ast))
+    return;
+
+  pdl->for_each
+    ([&](const parameter_declaration &pd) {
+       if (!pd.get_type()->is_complete()) {
+	 const pp_token &tok =
+	   _ast.get_pp_tokens()[pd.get_tokens_range().begin];
+	 code_remark remark
+	   (code_remark::severity::warning,
+	    "parameter in function definition has incomplete type",
+	    tok.get_file_range());
+	 _ast.get_remarks().add(remark);
+       }
+     });
+}
 
 static bool _is_string_literal_expr(const expr &e)
 {
