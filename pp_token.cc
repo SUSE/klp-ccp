@@ -2,7 +2,6 @@
 #include <cassert>
 #include "pp_token.hh"
 #include "code_remarks.hh"
-#include "code_remark.hh"
 #include "pp_except.hh"
 
 using namespace klp::ccp;
@@ -127,9 +126,10 @@ pp_token::concat(const pp_token &tok, code_remarks &remarks)
 			       ('A' <= c && c <= 'Z') ||
 			       ('0' <= c && c <= '9'));
 		     })) {
-      code_remark remark(code_remark::severity::fatal,
-			 "can't concatenate " + _value + " and " + tok._value,
-			 tok.get_file_range());
+      code_remark_raw remark
+	(code_remark_raw::severity::fatal,
+	 "can't concatenate " + _value + " and " + tok._value,
+	 tok.get_file_range());
       remarks.add(remark);
       throw pp_except(remark);
     }
@@ -146,23 +146,23 @@ pp_token::concat(const pp_token &tok, code_remarks &remarks)
   }
 
   if (_type != tok._type) {
-      code_remark remark(code_remark::severity::fatal,
-			 "can't concatenate tokens of different type",
-			 tok.get_file_range());
-      remarks.add(remark);
-      throw pp_except(remark);
+    code_remark_raw remark(code_remark_raw::severity::fatal,
+			   "can't concatenate tokens of different type",
+			   tok.get_file_range());
+    remarks.add(remark);
+    throw pp_except(remark);
   } else if(_type == type::chr || _type == type::wchr) {
-      code_remark remark(code_remark::severity::fatal,
-			 "can't concatenate character constants",
-			 tok.get_file_range());
-      remarks.add(remark);
-      throw pp_except(remark);
+    code_remark_raw remark(code_remark_raw::severity::fatal,
+			   "can't concatenate character constants",
+			   tok.get_file_range());
+    remarks.add(remark);
+    throw pp_except(remark);
   } else if (_type == type::non_ws_char) {
-      code_remark remark(code_remark::severity::fatal,
-			 "can't concatenate " + _value + " and " + tok._value,
-			 tok.get_file_range());
-      remarks.add(remark);
-      throw pp_except(remark);
+    code_remark_raw remark(code_remark_raw::severity::fatal,
+			   "can't concatenate " + _value + " and " + tok._value,
+			   tok.get_file_range());
+    remarks.add(remark);
+    throw pp_except(remark);
   }
 
   _value += tok._value;
@@ -176,9 +176,10 @@ pp_token::concat(const pp_token &tok, code_remarks &remarks)
 	_value != "^=" && _value != "|=" && _value != "##" && _value != "<:" &&
 	_value != ":>" && _value != "<%" && _value != "%>" && _value != "%:" &&
 	_value != "%:%:") {
-      code_remark remark(code_remark::severity::fatal,
-			 "can't concatenate " + _value + " and " + tok._value,
-			 tok.get_file_range());
+      code_remark_raw remark
+	(code_remark_raw::severity::fatal,
+	 "can't concatenate " + _value + " and " + tok._value,
+	 tok.get_file_range());
       remarks.add(remark);
       throw pp_except(remark);
     }

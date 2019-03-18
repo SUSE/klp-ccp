@@ -459,8 +459,9 @@ macro::parse_macro_definition(const pp_tokens::const_iterator begin,
   it = skip_ws(it + 1);
 
   if (!it->is_id()) {
-    code_remark remark(code_remark::severity::fatal,
-		       "no identifier following #define", it->get_file_range());
+    code_remark_raw remark(code_remark_raw::severity::fatal,
+			   "no identifier following #define",
+			   it->get_file_range());
     remarks.add(remark);
     throw pp_except(remark);
   }
@@ -478,32 +479,32 @@ macro::parse_macro_definition(const pp_tokens::const_iterator begin,
     it = skip_ws(it + 1);
     while (it != end && !it->is_punctuator(")")) {
       if (variadic) {
-	code_remark remark(code_remark::severity::fatal,
-			   "garbage in macro argument list after ...",
-			   it->get_file_range());
+	code_remark_raw remark(code_remark_raw::severity::fatal,
+			       "garbage in macro argument list after ...",
+			       it->get_file_range());
 	remarks.add(remark);
 	throw pp_except(remark);
       }
 
       if (!arg_names.empty() && !it->is_punctuator(",")) {
-	code_remark remark(code_remark::severity::fatal,
-			   "comma expected in macro argument list",
-			   it->get_file_range());
+	code_remark_raw remark(code_remark_raw::severity::fatal,
+			       "comma expected in macro argument list",
+			       it->get_file_range());
 	remarks.add(remark);
 	throw pp_except(remark);
       } else if (it->is_punctuator(",")) {
 	if (arg_names.empty()) {
-	  code_remark remark(code_remark::severity::fatal,
-			     "leading comma in macro argument list",
-			     it->get_file_range());
+	  code_remark_raw remark(code_remark_raw::severity::fatal,
+				 "leading comma in macro argument list",
+				 it->get_file_range());
 	  remarks.add(remark);
 	  throw pp_except(remark);
 	}
 	it = skip_ws(it + 1);
 	if (it == end || it->is_punctuator(")")) {
-	  code_remark remark(code_remark::severity::fatal,
-			     "trailing comma in macro argument list",
-			     it->get_file_range());
+	  code_remark_raw remark(code_remark_raw::severity::fatal,
+				 "trailing comma in macro argument list",
+				 it->get_file_range());
 	  remarks.add(remark);
 	  throw pp_except(remark);
 	}
@@ -516,15 +517,16 @@ macro::parse_macro_definition(const pp_tokens::const_iterator begin,
 	it = skip_ws(it + 1);
       } else if (it->is_id()) {
 	if (it->get_value() == "__VA_ARGS__") {
-	  code_remark remark(code_remark::severity::fatal,
-			     "__VA_ARGS__ not allowed as a macro argument name",
-			     it->get_file_range());
+	  code_remark_raw remark
+	    (code_remark_raw::severity::fatal,
+	     "__VA_ARGS__ not allowed as a macro argument name",
+	     it->get_file_range());
 	  remarks.add(remark);
 	  throw pp_except(remark);
 	} else if (!unique_arg_names.insert(it->get_value()).second) {
-	  code_remark remark(code_remark::severity::fatal,
-			     "duplicate macro argument name",
-			     it->get_file_range());
+	  code_remark_raw remark(code_remark_raw::severity::fatal,
+				 "duplicate macro argument name",
+				 it->get_file_range());
 	  remarks.add(remark);
 	  throw pp_except(remark);
 	}
@@ -536,17 +538,17 @@ macro::parse_macro_definition(const pp_tokens::const_iterator begin,
 	  it = skip_ws(it + 1);
 	}
       } else {
-	code_remark remark(code_remark::severity::fatal,
-			   "garbage in macro argument list",
-			   it->get_file_range());
+	code_remark_raw remark(code_remark_raw::severity::fatal,
+			       "garbage in macro argument list",
+			       it->get_file_range());
 	remarks.add(remark);
 	throw pp_except(remark);
       }
     }
     if (it == end) {
-      code_remark remark(code_remark::severity::fatal,
-			 "macro argument list not closed",
-			 end->get_file_range());
+      code_remark_raw remark(code_remark_raw::severity::fatal,
+			     "macro argument list not closed",
+			     end->get_file_range());
       remarks.add(remark);
       throw pp_except(remark);
     }
@@ -556,9 +558,9 @@ macro::parse_macro_definition(const pp_tokens::const_iterator begin,
   }
 
   if (it != end && !it->is_ws()) {
-    code_remark remark(code_remark::severity::warning,
-		       "no whitespace before macro replacement list",
-		       it->get_file_range());
+    code_remark_raw remark(code_remark_raw::severity::warning,
+			   "no whitespace before macro replacement list",
+			   it->get_file_range());
     remarks.add(remark);
   }
 
@@ -606,15 +608,15 @@ pp_tokens macro::_normalize_repl(const pp_tokens::const_iterator begin,
   assert(!begin->is_ws() && !(end-1)->is_ws());
 
   if (begin->is_punctuator("##")) {
-    code_remark remark(code_remark::severity::fatal,
-		       "## at beginning of macro replacement list",
-		       begin->get_file_range());
+    code_remark_raw remark(code_remark_raw::severity::fatal,
+			   "## at beginning of macro replacement list",
+			   begin->get_file_range());
     remarks.add(remark);
     throw pp_except(remark);
   } else if ((end - 1)->is_punctuator("##")) {
-    code_remark remark(code_remark::severity::fatal,
-		       "## at end of macro replacement list",
-		       (end - 1)->get_file_range());
+    code_remark_raw remark(code_remark_raw::severity::fatal,
+			   "## at end of macro replacement list",
+			   (end - 1)->get_file_range());
     remarks.add(remark);
     throw pp_except(remark);
   }
@@ -656,9 +658,9 @@ pp_tokens macro::_normalize_repl(const pp_tokens::const_iterator begin,
       assert(it_arg == end || !it_arg->is_ws());
       if (it_arg == end || !it_arg->is_id() ||
 	  !arg_names.count(it_arg->get_value())) {
-	code_remark remark(code_remark::severity::fatal,
-			   "# in func-like macro not followed by parameter",
-			   (end - 1)->get_file_range());
+	code_remark_raw remark(code_remark_raw::severity::fatal,
+			       "# in func-like macro not followed by parameter",
+			       (end - 1)->get_file_range());
 	remarks.add(remark);
 	throw pp_except(remark);
       }

@@ -2,7 +2,6 @@
 #define PP_TOKENIZER_HH
 
 #include <string>
-#include "code_remark.hh"
 #include "code_remarks.hh"
 #include "pp_token.hh"
 #include "source_reader.hh"

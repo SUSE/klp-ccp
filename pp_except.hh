@@ -3,7 +3,7 @@
 
 #include <exception>
 #include <string>
-#include "code_remark.hh"
+#include "code_remark_raw.hh"
 
 namespace klp
 {
@@ -12,7 +12,7 @@ namespace klp
     class pp_except : std::exception
     {
     public:
-      pp_except(const code_remark &remark);
+      pp_except(const code_remark_raw &remark);
       pp_except(pp_except &&) = default;
 
       virtual ~pp_except() noexcept;
