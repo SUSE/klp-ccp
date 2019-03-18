@@ -344,7 +344,7 @@ void gnuc_parser_driver::end_ignore_td_spec() noexcept
   --_ignore_td_spec;
 }
 
-void gnuc_parser_driver::handle_decl_id(const ast::pp_token_index tok)
+void gnuc_parser_driver::handle_decl_id(const pp_token_index tok)
 {
   assert(!_typedefs_scopes.empty());
   assert(_tokens[tok].is_id());
@@ -356,7 +356,7 @@ void gnuc_parser_driver::handle_decl_id(const ast::pp_token_index tok)
     _typedefs_scopes.top().erase(_tokens[tok].get_value());
 }
 
-void gnuc_parser_driver::handle_enumerator_id(const ast::pp_token_index tok)
+void gnuc_parser_driver::handle_enumerator_id(const pp_token_index tok)
 {
   assert(!_typedefs_scopes.empty());
   assert(_tokens[tok].is_id());
@@ -364,7 +364,7 @@ void gnuc_parser_driver::handle_enumerator_id(const ast::pp_token_index tok)
   _typedefs_scopes.top().erase(_tokens[tok].get_value());
 }
 
-void gnuc_parser_driver::handle_param_id(const ast::pp_token_index tok)
+void gnuc_parser_driver::handle_param_id(const pp_token_index tok)
 {
   assert(!_typedefs_scopes.empty());
   assert(_tokens[tok].is_id());

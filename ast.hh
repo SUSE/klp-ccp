@@ -7,7 +7,6 @@
 #include <functional>
 #include <memory>
 #include <utility>
-#include <limits>
 #include "type_set.hh"
 #include "inclusion_tree.hh"
 #include "pp_tokens.hh"
@@ -15,10 +14,7 @@
 #include "code_remark.hh"
 #include "types.hh"
 #include "builtins.hh"
-
-#ifdef DEBUG_PARSER
-#include <iostream>
-#endif
+#include "pp_tokens_range.hh"
 
 namespace klp
 {
@@ -28,35 +24,6 @@ namespace klp
 
     namespace ast
     {
-      typedef std::size_t pp_token_index;
-      struct pp_tokens_range
-      {
-	pp_tokens_range() noexcept
-	: begin(std::numeric_limits<pp_token_index>::max()),
-	  end(0)
-	{}
-
-	pp_tokens_range(const pp_token_index _begin,
-			const pp_token_index _end) noexcept
-	  : begin(_begin), end(_end)
-	{
-	  assert(begin <= end);
-	}
-
-	bool is_builtin() const noexcept
-	{
-	  return (begin == std::numeric_limits<pp_token_index>::max() &&
-		  end == 0);
-	}
-
-	pp_token_index begin;
-	pp_token_index end;
-      };
-
-#ifdef DEBUG_PARSER
-      std::ostream& operator<<(std::ostream &o, const pp_tokens_range &r);
-#endif
-
       template<typename ret_type>
       class processor;
 

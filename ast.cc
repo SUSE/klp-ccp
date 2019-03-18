@@ -14,15 +14,6 @@ static T* mv_p(T* &&p)
 	return _p;
 }
 
-#ifdef DEBUG_PARSER
-std::ostream&
-klp::ccp::ast::operator<<(std::ostream &o, const pp_tokens_range &r)
-{
-  o << r.begin << '-' << r.end;
-  return o;
-}
-#endif
-
 _ast_entity::_ast_entity(const pp_tokens_range &tr) noexcept
   : _parent(nullptr), _tokens_range(tr)
 {}
@@ -130,10 +121,11 @@ expr::expr(const pp_tokens_range &tr) noexcept
 
 expr::~expr() noexcept = default;
 
-static pp_tokens_range tr_from_aes(const _ast_entity &ae1,
-				   const _ast_entity &ae2) noexcept
+static klp::ccp::pp_tokens_range
+tr_from_aes(const _ast_entity &ae1,
+	    const _ast_entity &ae2) noexcept
 {
-  return pp_tokens_range{
+  return klp::ccp::pp_tokens_range{
     ae1.get_tokens_range().begin,
     ae2.get_tokens_range().end
   };
@@ -2359,7 +2351,7 @@ direct_declarator_id& direct_declarator_id::get_direct_declarator_id() noexcept
   return *this;
 }
 
-pp_token_index direct_declarator_id::get_id_tok() const noexcept
+klp::ccp::pp_token_index direct_declarator_id::get_id_tok() const noexcept
 {
   return _id_tok;
 }
@@ -2685,7 +2677,7 @@ direct_declarator_id& declarator::get_direct_declarator_id() noexcept
   return _dd.get_direct_declarator_id();
 }
 
-pp_token_index declarator::get_id_tok() const noexcept
+klp::ccp::pp_token_index declarator::get_id_tok() const noexcept
 {
   return this->get_direct_declarator_id().get_id_tok();
 }

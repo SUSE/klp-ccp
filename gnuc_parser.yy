@@ -22,7 +22,7 @@ namespace klp {
     {
       // Bison doesn't accept namespace specifications at
       // %define api.location.type. Pull the type in.
-      typedef klp::ccp::ast::pp_tokens_range pp_tokens_range;
+      typedef klp::ccp::pp_tokens_range pp_tokens_range;
 
       class gnuc_parser_driver;
     }
@@ -58,13 +58,13 @@ static T* mv_p(T* &&p)
 #define MV_P(p) mv_p(std::move(p))
 
 template <typename T>
-static void empty(T* &value, pp_tokens_range &loc)
+static void empty(T* &value, klp::ccp::pp_tokens_range &loc)
 {
 	value = nullptr;
 	loc.begin = loc.end;
 }
 
-static void empty(pp_tokens_range &loc)
+static void empty(klp::ccp::pp_tokens_range &loc)
 {
 	loc.begin = loc.end;
 }
@@ -75,7 +75,7 @@ static void empty(pp_tokens_range &loc)
 
 
 %union {
-  klp::ccp::ast::pp_token_index token_index;
+  klp::ccp::pp_token_index token_index;
   klp::ccp::ast::assign_op assign_op;
   klp::ccp::ast::binary_op binary_op;
   klp::ccp::ast::unary_op_pre unary_op_pre;

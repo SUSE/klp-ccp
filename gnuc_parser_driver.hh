@@ -57,9 +57,9 @@ namespace klp
 	void begin_ignore_td_spec() noexcept;
 	void end_ignore_td_spec() noexcept;
 
-	void handle_decl_id(const ast::pp_token_index tok);
-	void handle_enumerator_id(const ast::pp_token_index tok);
-	void handle_param_id(const ast::pp_token_index tok);
+	void handle_decl_id(const pp_token_index tok);
+	void handle_enumerator_id(const pp_token_index tok);
+	void handle_param_id(const pp_token_index tok);
 
 	bool is_typedef_id(const std::string &id) const noexcept;
 

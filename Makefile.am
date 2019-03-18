@@ -37,6 +37,7 @@ noinst_HEADERS =				\
 	pp_expr_parser_driver.hh		\
 	pp_token.hh				\
 	pp_tokens.hh				\
+	pp_tokens_range.hh			\
 	pp_tokenizer.hh			\
 	preprocessor.hh			\
 	ret_type_invoker.hh			\
@@ -79,6 +80,7 @@ libcp_a_SOURCES =				\
 	pp_expr_parser_driver.cc		\
 	pp_token.cc				\
 	pp_tokens.cc				\
+	pp_tokens_range.cc			\
 	pp_tokenizer.cc			\
 	preprocessor.cc			\
 	semantic_except.cc			\

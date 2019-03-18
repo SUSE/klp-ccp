@@ -766,7 +766,7 @@ arch_gcc48_x86_64::create_builtin_va_list_type() const
   static std::unique_ptr<ast::struct_or_union_def> soud;
 
   if (!soud) {
-    soud.reset(new ast::struct_or_union_def(ast::pp_tokens_range{},
+    soud.reset(new ast::struct_or_union_def(pp_tokens_range{},
 					    struct_or_union_kind::souk_struct,
 					    nullptr, nullptr, nullptr));
 
