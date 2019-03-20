@@ -7,6 +7,7 @@
 #include <string>
 #include <map>
 #include "pp_tokens.hh"
+#include "raw_pp_tokens.hh"
 #include "file_range.hh"
 #include "code_remarks.hh"
 
@@ -49,6 +50,7 @@ namespace klp
 	pp_token _handle_stringification();
 
 	void _add_concat_token(const pp_token &tok);
+	void _add_concat_token(const raw_pp_token &raw_tok);
 	pp_token _yield_concat_token();
 
 	const std::shared_ptr<const macro> &_macro;
@@ -59,7 +61,7 @@ namespace klp
 	const file_range _file_range;
 	code_remarks _remarks;
 
-	pp_tokens::const_iterator _it_repl;
+	raw_pp_tokens::const_iterator _it_repl;
 	const pp_tokens *_cur_arg;
 	pp_tokens::const_iterator _cur_arg_it;
 
@@ -71,8 +73,8 @@ namespace klp
       };
 
       static std::shared_ptr<const macro>
-      parse_macro_definition(const pp_tokens::const_iterator begin,
-			     const pp_tokens::const_iterator end,
+      parse_macro_definition(const raw_pp_tokens::const_iterator begin,
+			     raw_pp_tokens::const_iterator end,
 			     std::shared_ptr<const macro_undef> &&macro_undef,
 			     code_remarks &remarks);
 
@@ -101,33 +103,35 @@ namespace klp
 	    const bool func_like,
 	    const bool variadic,
 	    std::vector<std::string> &&arg_names,
-	    pp_tokens &&repl,
+	    raw_pp_tokens &&repl,
 	    const file_range &file_range,
 	    std::shared_ptr<const macro_undef> &&prev_macro_undef);
 
       template<typename... Targs>
       static std::shared_ptr<const macro> create(Targs&&... args);
 
-      static pp_tokens _normalize_repl(const pp_tokens::const_iterator begin,
-				       const pp_tokens::const_iterator end,
-				       const bool func_like,
-				       const std::set<std::string> &arg_names,
-				       code_remarks &remarks);
+      static raw_pp_tokens
+      _normalize_repl(const raw_pp_tokens::const_iterator begin,
+		      const raw_pp_tokens::const_iterator end,
+		      const bool func_like,
+		      const std::set<std::string> &arg_names,
+		      code_remarks &remarks);
 
-      pp_tokens::const_iterator
-      _next_non_ws_repl(const pp_tokens::const_iterator it) const noexcept;
+      raw_pp_tokens::const_iterator
+      _next_non_ws_repl(const raw_pp_tokens::const_iterator it) const noexcept;
 
-      bool _is_stringification(pp_tokens::const_iterator it) const noexcept;
+      bool _is_stringification(raw_pp_tokens::const_iterator it) const noexcept;
 
-      pp_tokens::const_iterator
-      _skip_stringification_or_single(const pp_tokens::const_iterator &it)
+      raw_pp_tokens::const_iterator
+      _skip_stringification_or_single(const raw_pp_tokens::const_iterator &it)
 	const noexcept;
 
-      bool _is_concat_op(const pp_tokens::const_iterator &it) const noexcept;
+      bool _is_concat_op(const raw_pp_tokens::const_iterator &it)
+	const noexcept;
 
       std::string _name;
       std::vector<std::string> _arg_names;
-      pp_tokens _repl;
+      raw_pp_tokens _repl;
       file_range _file_range;
       std::shared_ptr<const macro_undef> _prev_macro_undef;
       std::vector<bool> _do_expand_args;

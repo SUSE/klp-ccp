@@ -20,11 +20,6 @@ pp_token::pp_token(const type type, const std::string &value,
     _used_macro_undefs(umu), _type(type)
 {}
 
-bool pp_token::operator==(const pp_token &rhs) const noexcept
-{
-  return _type == rhs._type && _value == rhs._value;
-}
-
 void pp_token::set_type_and_value(const type type, const std::string &value)
 {
   _type = type;

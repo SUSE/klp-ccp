@@ -3,7 +3,7 @@
 
 #include <string>
 #include "code_remarks.hh"
-#include "pp_token.hh"
+#include "raw_pp_token.hh"
 #include "source_reader.hh"
 
 namespace klp
@@ -22,7 +22,7 @@ namespace klp
 	return _remarks;
       }
 
-      pp_token read_next_token();
+      raw_pp_token read_next_token();
 
       const header_inclusion_node& get_header_inclusion_node() const noexcept
       { return _file; }
@@ -34,14 +34,14 @@ namespace klp
       void _advance_to_next_char();
       void _skip_next_char();
 
-      pp_token _tokenize_string(const char delim,const bool delim_escapable,
-				const pp_token::type tok_type);
-      pp_token _tokenize_punctuator();
-      pp_token _tokenize_pp_number();
-      pp_token _tokenize_id();
+      raw_pp_token _tokenize_string(const char delim,const bool delim_escapable,
+				    const pp_token::type tok_type);
+      raw_pp_token _tokenize_punctuator();
+      raw_pp_token _tokenize_pp_number();
+      raw_pp_token _tokenize_id();
       std::size_t _skip_c_comment(const std::size_t n_trailing_spaces);
       void _skip_cpp_comment();
-      pp_token _tokenize_ws();
+      raw_pp_token _tokenize_ws();
 
       header_inclusion_node &_file;
       std::unique_ptr<source_reader> _sr;

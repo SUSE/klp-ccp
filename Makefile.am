@@ -41,6 +41,8 @@ noinst_HEADERS =				\
 	pp_tokens_range.hh			\
 	pp_tokenizer.hh			\
 	preprocessor.hh			\
+	raw_pp_token.hh			\
+	raw_pp_tokens.hh			\
 	ret_type_invoker.hh			\
 	semantic_except.hh			\
 	source_reader.hh			\
@@ -85,6 +87,7 @@ libcp_a_SOURCES =				\
 	pp_tokens_range.cc			\
 	pp_tokenizer.cc			\
 	preprocessor.cc			\
+	raw_pp_token.cc			\
 	semantic_except.cc			\
 	source_reader.cc			\
 	target_float.cc			\

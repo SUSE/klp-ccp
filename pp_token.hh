@@ -48,8 +48,6 @@ namespace klp
 	       const used_macros &eh, used_macros &&um,
 	       const class used_macro_undefs &umu);
 
-      bool operator==(const pp_token &rhs) const noexcept;
-
       type get_type() const noexcept
       {
 	return _type;

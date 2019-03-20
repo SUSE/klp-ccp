@@ -228,33 +228,34 @@ pp_token preprocessor::_read_next_plain_token()
     return _eof_tok;
   assert(!_tokenizers.empty());
   try {
-    auto tok = _tokenizers.top().read_next_token();
+    auto raw_tok = _tokenizers.top().read_next_token();
     _grab_remarks_from(_tokenizers.top());
 
-    if (tok.is_eof()) {
-      _handle_eof_from_tokenizer(std::move(tok));
+    if (raw_tok.is_eof()) {
+      _handle_eof_from_tokenizer(std::move(raw_tok));
       _maybe_pp_directive = true;
       goto again;
-    } else if (tok.is_newline()) {
+    } else if (raw_tok.is_newline()) {
       _maybe_pp_directive = true;
-    } else if (_maybe_pp_directive && tok.is_punctuator("#")) {
-      _handle_pp_directive(std::move(tok));
+    } else if (_maybe_pp_directive && raw_tok.is_punctuator("#")) {
+      _handle_pp_directive(std::move(raw_tok));
       goto again;
-    } else if (!tok.is_ws()) {
+    } else if (!raw_tok.is_ws()) {
       _maybe_pp_directive = false;
     }
 
     if (_cond_incl_inactive())
       goto again;
 
-    return tok;
+    return pp_token{raw_tok.get_type(), raw_tok.get_value(),
+		    raw_tok.get_file_range()};
   } catch (const pp_except&) {
     _grab_remarks_from(_tokenizers.top());
     throw;
   }
 }
 
-void preprocessor::_handle_eof_from_tokenizer(pp_token &&eof_tok)
+void preprocessor::_handle_eof_from_tokenizer(raw_pp_token &&eof_tok)
 {
   // If the topmost inclusion tree node is an (unfinished) conditional
   // inclusion, that's an error.
@@ -270,7 +271,7 @@ void preprocessor::_handle_eof_from_tokenizer(pp_token &&eof_tok)
 
   if (_tokenizers.empty()) {
     if (++_cur_header_inclusion_root == _header_inclusion_roots.end()) {
-      _eof_tok = std::move(eof_tok);
+      _eof_tok = pp_token{eof_tok.get_type(), eof_tok.get_value(), eof_tok.get_file_range()};
       return;
     }
 
@@ -279,9 +280,9 @@ void preprocessor::_handle_eof_from_tokenizer(pp_token &&eof_tok)
   }
 }
 
-void preprocessor::_handle_pp_directive(pp_token &&sharp_tok)
+void preprocessor::_handle_pp_directive(raw_pp_token &&sharp_tok)
 {
-  pp_tokens directive_toks{1U, std::move(sharp_tok)};
+  raw_pp_tokens directive_toks{1U, std::move(sharp_tok)};
   bool endif_possible = true;
   bool is_endif = false;
   while (true) {
@@ -928,38 +929,39 @@ preprocessor::_create_macro_arg(const std::function<pp_token()> &token_reader,
 		(std::move(arg), std::move(exp_arg), std::move(end_delim));
 }
 
-void preprocessor::_handle_include(pp_tokens &&directive_toks)
+void preprocessor::_handle_include(raw_pp_tokens &&directive_toks)
 {
-  auto it_tok = directive_toks.cbegin();
+  auto it_raw_tok = directive_toks.cbegin();
 
-  assert(it_tok->is_punctuator("#"));
-  ++it_tok;
+  assert(it_raw_tok->is_punctuator("#"));
+  ++it_raw_tok;
 
-  if (it_tok->is_ws())
-    ++it_tok;
+  if (it_raw_tok->is_ws())
+    ++it_raw_tok;
 
-  assert(it_tok->is_id());
-  assert(it_tok->get_value() == "include");
-  ++it_tok;
+  assert(it_raw_tok->is_id());
+  assert(it_raw_tok->get_value() == "include");
+  ++it_raw_tok;
 
-  if (it_tok->is_ws())
-    ++it_tok;
+  if (it_raw_tok->is_ws())
+    ++it_raw_tok;
 
-  assert(it_tok != directive_toks.cend());
+  assert(it_raw_tok != directive_toks.cend());
   std::string unresolved;
   bool is_qstr;
   used_macros um;
   used_macro_undefs umu;
-  if (it_tok->is_type_any_of<pp_token::type::qstr, pp_token::type::hstr>()) {
-    unresolved = it_tok->get_value();
-    is_qstr = it_tok->get_type() == pp_token::type::qstr;
-    ++it_tok;
-    if (it_tok->is_ws())
-      ++it_tok;
+  if (it_raw_tok->is_type_any_of<pp_token::type::qstr,
+				 pp_token::type::hstr>()) {
+    unresolved = it_raw_tok->get_value();
+    is_qstr = it_raw_tok->get_type() == pp_token::type::qstr;
+    ++it_raw_tok;
+    if (it_raw_tok->is_ws())
+      ++it_raw_tok;
 
-    if (!it_tok->is_newline() && !it_tok->is_eof()) {
-      file_range fr (it_tok->get_file_range().get_header_inclusion_node(),
-		     it_tok->get_file_range().get_start_loc());
+    if (!it_raw_tok->is_newline() && !it_raw_tok->is_eof()) {
+      file_range fr (it_raw_tok->get_file_range().get_header_inclusion_node(),
+		     it_raw_tok->get_file_range().get_start_loc());
       code_remark_raw remark(code_remark_raw::severity::fatal,
 			     "garbage after #include", fr);
       _remarks.add(remark);
@@ -967,10 +969,14 @@ void preprocessor::_handle_include(pp_tokens &&directive_toks)
     }
   } else {
     auto read_tok = [&]() {
-      if (it_tok->is_newline() || it_tok->is_eof()) {
+      if (it_raw_tok->is_newline() || it_raw_tok->is_eof()) {
 	return pp_token(pp_token::type::eof, std::string(), file_range());
       }
-      return *it_tok++;
+
+      pp_token tok{it_raw_tok->get_type(), it_raw_tok->get_value(),
+		   it_raw_tok->get_file_range()};
+      ++it_raw_tok;
+      return tok;
     };
 
     pp_tokens expanded;
@@ -995,7 +1001,7 @@ void preprocessor::_handle_include(pp_tokens &&directive_toks)
       return it;
     };
 
-    it_tok = expanded.cbegin();
+    auto it_tok = expanded.cbegin();
     it_tok = skip(it_tok);
 
     if (it_tok == expanded.cend()) {
@@ -1153,7 +1159,7 @@ void preprocessor::_pop_cond_incl(const file_range::loc_type end_loc)
   _cond_incl_states.pop();
 }
 
-bool preprocessor::_eval_conditional_inclusion(pp_tokens &&directive_toks)
+bool preprocessor::_eval_conditional_inclusion(raw_pp_tokens &&directive_toks)
 {
   auto it = directive_toks.begin() + 1;
   if (it->is_ws())
@@ -1167,11 +1173,13 @@ bool preprocessor::_eval_conditional_inclusion(pp_tokens &&directive_toks)
      directive_toks.back().get_file_range().get_end_loc());
 
   auto read_tok =
-    [&]() -> pp_token {
+    [&]() {
       if (it == directive_toks.end())
 	return pp_token(pp_token::type::eof, std::string(), eof_file_range);
 
-      return std::move(*(it++));
+      pp_token tok{it->get_type(), it->get_value(), it->get_file_range()};
+      ++it;
+      return tok;
     };
 
   _expansion_state state;

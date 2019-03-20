@@ -114,6 +114,20 @@ void macro::instance::_add_concat_token(const pp_token &tok)
   }
 }
 
+void macro::instance::_add_concat_token(const raw_pp_token &raw_tok)
+{
+  assert(!raw_tok.is_ws() && !raw_tok.is_newline() && !raw_tok.is_eof());
+
+  if (!_concat_token) {
+    _concat_token.reset(new pp_token(raw_tok.get_type(), raw_tok.get_value(),
+				     raw_tok.get_file_range()));
+  } else {
+    pp_token tok {raw_tok.get_type(), raw_tok.get_value(),
+		  raw_tok.get_file_range()};
+    _concat_token->concat(tok, _remarks);
+  }
+}
+
 pp_token macro::instance::_yield_concat_token()
 {
   assert(_concat_token);
@@ -299,7 +313,8 @@ pp_token macro::instance::read_next_token()
 	  assert(_in_concat);
 	  return _yield_concat_token();
 	} else {
-	  auto tok = *_it_repl;
+	  pp_token tok{_it_repl->get_type(), _it_repl->get_value(),
+		       _it_repl->get_file_range()};
 	  _it_repl += 2;
 	  _in_concat = true;
 	  return tok;
@@ -376,7 +391,7 @@ macro::macro(const std::string &name,
 	     const bool func_like,
 	     const bool variadic,
 	     std::vector<std::string> &&arg_names,
-	     pp_tokens &&repl,
+	     raw_pp_tokens &&repl,
 	     const file_range &file_range,
 	     std::shared_ptr<const macro_undef> &&prev_macro_undef)
   : _name(name), _arg_names(std::move(arg_names)),
@@ -427,8 +442,8 @@ macro::macro(const std::string &name,
 }
 
 std::shared_ptr<const macro>
-macro::parse_macro_definition(const pp_tokens::const_iterator begin,
-			      pp_tokens::const_iterator end,
+macro::parse_macro_definition(const raw_pp_tokens::const_iterator begin,
+			      raw_pp_tokens::const_iterator end,
 			      std::shared_ptr<const macro_undef> &&macro_undef,
 			      code_remarks &remarks)
 {
@@ -596,14 +611,14 @@ bool macro::shall_expand_arg(const size_t pos) const noexcept
   return _do_expand_args[pos];
 }
 
-pp_tokens macro::_normalize_repl(const pp_tokens::const_iterator begin,
-				 const pp_tokens::const_iterator end,
-				 const bool func_like,
-				 const std::set<std::string> &arg_names,
-				 code_remarks &remarks)
+raw_pp_tokens macro::_normalize_repl(const raw_pp_tokens::const_iterator begin,
+				     const raw_pp_tokens::const_iterator end,
+				     const bool func_like,
+				     const std::set<std::string> &arg_names,
+				     code_remarks &remarks)
 {
   if (begin == end)
-    return pp_tokens();
+    return raw_pp_tokens();
 
   assert(!begin->is_ws() && !(end-1)->is_ws());
 
@@ -625,12 +640,12 @@ pp_tokens macro::_normalize_repl(const pp_tokens::const_iterator begin,
   // consecutive whitespace tokens.
   // Remove any whitespace separating either ## or # and their
   // operands. Collapse multiple ## operators into one.
-  auto concat_or_stringify_op_pred = [func_like](const pp_token &tok) {
+  auto concat_or_stringify_op_pred = [func_like](const raw_pp_token &tok) {
     return (tok.is_punctuator("##") ||
 	    (func_like && tok.is_punctuator("#")));
   };
 
-  pp_tokens result;
+  raw_pp_tokens result;
   auto it_seq_begin = begin;
   while (it_seq_begin != end) {
     auto it_seq_end = std::find_if(it_seq_begin, end,
@@ -675,8 +690,8 @@ pp_tokens macro::_normalize_repl(const pp_tokens::const_iterator begin,
   return result;
 }
 
-pp_tokens::const_iterator
-macro::_next_non_ws_repl(const pp_tokens::const_iterator it)
+raw_pp_tokens::const_iterator
+macro::_next_non_ws_repl(const raw_pp_tokens::const_iterator it)
   const noexcept
 {
   if (it == _repl.end() || !it->is_ws()) {
@@ -688,7 +703,7 @@ macro::_next_non_ws_repl(const pp_tokens::const_iterator it)
   return it + 1;
 }
 
-bool macro::_is_stringification(pp_tokens::const_iterator it)
+bool macro::_is_stringification(raw_pp_tokens::const_iterator it)
   const noexcept
 {
   assert(it != _repl.end());
@@ -701,8 +716,8 @@ bool macro::_is_stringification(pp_tokens::const_iterator it)
   return true;
 }
 
-pp_tokens::const_iterator
-macro::_skip_stringification_or_single(const pp_tokens::const_iterator &it)
+raw_pp_tokens::const_iterator
+macro::_skip_stringification_or_single(const raw_pp_tokens::const_iterator &it)
   const noexcept
 {
   assert(it != _repl.end());
@@ -715,7 +730,8 @@ macro::_skip_stringification_or_single(const pp_tokens::const_iterator &it)
   return it + 1;
 }
 
-bool macro::_is_concat_op(const pp_tokens::const_iterator &it) const noexcept
+bool macro::_is_concat_op(const raw_pp_tokens::const_iterator &it)
+  const noexcept
 {
   return (it != _repl.end() && it->is_punctuator("##"));
 }

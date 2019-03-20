@@ -92,9 +92,9 @@ void pp_tokenizer::_skip_next_char()
   _advance_to_next_char();
 }
 
-pp_token pp_tokenizer::_tokenize_string(const char delim,
-					const bool delim_escapable,
-					const pp_token::type tok_type)
+raw_pp_token pp_tokenizer::_tokenize_string(const char delim,
+					    const bool delim_escapable,
+					    const pp_token::type tok_type)
 {
   std::string value;
   bool in_escape = false;
@@ -110,8 +110,8 @@ pp_token pp_tokenizer::_tokenize_string(const char delim,
       _advance_to_next_char();
     } else {
       _advance_to_next_char();
-      return pp_token(tok_type, value,
-		      file_range(_file, _tok_loc, _cur_loc));
+      return raw_pp_token(tok_type, value,
+			  file_range(_file, _tok_loc, _cur_loc));
     }
   }
 
@@ -122,7 +122,7 @@ pp_token pp_tokenizer::_tokenize_string(const char delim,
   throw(remark);
 }
 
-pp_token pp_tokenizer::_tokenize_punctuator()
+raw_pp_token pp_tokenizer::_tokenize_punctuator()
 {
   std::string value;
 
@@ -228,11 +228,11 @@ pp_token pp_tokenizer::_tokenize_punctuator()
     value = _cur;
     _advance_to_next_char();
   }
-  return pp_token(pp_token::type::punctuator, value,
-		  file_range(_file, _tok_loc, _cur_loc));
+  return raw_pp_token(pp_token::type::punctuator, value,
+		      file_range(_file, _tok_loc, _cur_loc));
 }
 
-pp_token pp_tokenizer::_tokenize_pp_number()
+raw_pp_token pp_tokenizer::_tokenize_pp_number()
 {
   std::string value;
   bool done = false;
@@ -273,11 +273,11 @@ pp_token pp_tokenizer::_tokenize_pp_number()
     }
   }
 
-  return pp_token(pp_token::type::pp_number, value,
-		  file_range(_file, _tok_loc, _cur_loc));
+  return raw_pp_token(pp_token::type::pp_number, value,
+		      file_range(_file, _tok_loc, _cur_loc));
 }
 
-pp_token pp_tokenizer::_tokenize_id()
+raw_pp_token pp_tokenizer::_tokenize_id()
 {
   std::string value;
   bool done = false;
@@ -300,7 +300,7 @@ pp_token pp_tokenizer::_tokenize_id()
     }
   }
 
-  return pp_token(pp_token::type::id, value,
+  return raw_pp_token(pp_token::type::id, value,
 		  file_range(_file, _tok_loc, _cur_loc));
 }
 
@@ -344,7 +344,7 @@ void pp_tokenizer::_skip_cpp_comment()
   }
 }
 
-pp_token pp_tokenizer::_tokenize_ws()
+raw_pp_token pp_tokenizer::_tokenize_ws()
 {
   // According to the standard (5.1.1.2(3)):
   // - Each comment is replaced replaced by a single space.
@@ -379,8 +379,8 @@ pp_token pp_tokenizer::_tokenize_ws()
       // Whitespace at end of line, return a single newline.
       _advance_to_next_char();
       _expect_qh_str = expect_qh_str::newline;
-      return pp_token(pp_token::type::newline, "\n",
-		      file_range(_file, _tok_loc, _cur_loc));
+      return raw_pp_token(pp_token::type::newline, "\n",
+			  file_range(_file, _tok_loc, _cur_loc));
 
     case '/':
       if (_next == '*') {
@@ -391,8 +391,8 @@ pp_token pp_tokenizer::_tokenize_ws()
 	assert(!_cur || _cur == '\n');
 	_advance_to_next_char();
 	_expect_qh_str = expect_qh_str::newline;
-	return pp_token(pp_token::type::newline, "\n",
-		      file_range(_file, _tok_loc, _cur_loc));
+	return raw_pp_token(pp_token::type::newline, "\n",
+			    file_range(_file, _tok_loc, _cur_loc));
       } else {
 	done = true;
       }
@@ -411,28 +411,28 @@ pp_token pp_tokenizer::_tokenize_ws()
     }
   }
 
-  return pp_token(pp_token::type::ws,
+  return raw_pp_token(pp_token::type::ws,
 	std::string(_expect_qh_str == expect_qh_str::newline ? n_spaces : 1,
 		    ' '),
 	file_range(_file, _tok_loc, _cur_loc));
 }
 
-pp_token pp_tokenizer::read_next_token()
+raw_pp_token pp_tokenizer::read_next_token()
 {
   _tok_loc = _cur_loc;
   switch (_cur) {
   case 0:
-    return pp_token(pp_token::type::eof, "",
-		    file_range(_file, _cur_loc, _cur_loc));
+    return raw_pp_token(pp_token::type::eof, "",
+			file_range(_file, _cur_loc, _cur_loc));
 
   case '\n':
     {
       const char cur = _cur;
       _expect_qh_str = expect_qh_str::newline;
       _advance_to_next_char();
-      return pp_token(pp_token::type::newline,
-		      std::string(1, cur),
-		      file_range(_file, _tok_loc, _cur_loc));
+      return raw_pp_token(pp_token::type::newline,
+			  std::string(1, cur),
+			  file_range(_file, _tok_loc, _cur_loc));
     }
 
   case ' ':
@@ -517,7 +517,7 @@ pp_token pp_tokenizer::read_next_token()
   case 'M' ... 'T':
   case 'V' ... 'Z':
     {
-      pp_token tok = _tokenize_id();
+      raw_pp_token tok = _tokenize_id();
       if (_expect_qh_str == expect_qh_str::sharp_seen &&
 	  tok.get_value() == "include") {
 	_expect_qh_str = expect_qh_str::expect_qh_str;
@@ -586,9 +586,9 @@ pp_token pp_tokenizer::read_next_token()
       const char cur = _cur;
       _expect_qh_str = expect_qh_str::no;
       _advance_to_next_char();
-      return pp_token(pp_token::type::non_ws_char,
-		      std::string(1, cur),
-		      file_range(_file, _tok_loc, _cur_loc));
+      return raw_pp_token(pp_token::type::non_ws_char,
+			  std::string(1, cur),
+			  file_range(_file, _tok_loc, _cur_loc));
     }
   }
   // unreachable

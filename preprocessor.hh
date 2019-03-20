@@ -8,6 +8,7 @@
 #include <queue>
 #include <functional>
 #include "pp_tokens.hh"
+#include "raw_pp_tokens.hh"
 #include "code_remarks.hh"
 #include "header_resolver.hh"
 #include "macro.hh"
@@ -71,8 +72,8 @@ namespace klp
       void _grab_remarks_from(T &from);
 
       pp_token _read_next_plain_token();
-      void _handle_eof_from_tokenizer(pp_token &&eof_tok);
-      void _handle_pp_directive(pp_token &&sharp_tok);
+      void _handle_eof_from_tokenizer(raw_pp_token &&eof_tok);
+      void _handle_pp_directive(raw_pp_token &&sharp_tok);
 
       pp_token
       _expand(_preprocessor_impl::_expansion_state &state,
@@ -97,7 +98,7 @@ namespace klp
 			used_macros &used_macros_base,
 			used_macro_undefs &used_macro_undefs_base);
 
-      void _handle_include(pp_tokens &&directive_toks);
+      void _handle_include(raw_pp_tokens &&directive_toks);
 
       bool _cond_incl_inactive() const noexcept;
 
@@ -107,7 +108,7 @@ namespace klp
 
       void _pop_cond_incl(const file_range::loc_type end_loc);
 
-      bool _eval_conditional_inclusion(pp_tokens &&directive_toks);
+      bool _eval_conditional_inclusion(raw_pp_tokens &&directive_toks);
 
 
       const header_resolver &_header_resolver;
