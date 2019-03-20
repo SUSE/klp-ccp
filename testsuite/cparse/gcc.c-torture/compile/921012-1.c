@@ -3,4 +3,4 @@ f()
 g(({int x;0;}));
 }
 
-/* cp-out: warning: [^:]*: line 3, columns 0-1: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 3, column 0: identifier "g" not declared */

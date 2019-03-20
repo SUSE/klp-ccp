@@ -15,4 +15,4 @@ f (T *n1, T *n2)
     }
 }
 
-/* cp-out: warning: [^:]*: line 9, columns 6-7: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 9, column 6: identifier "g" not declared */

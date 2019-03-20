@@ -20,4 +20,4 @@ int main()
 
 static void y(int x) { abort (); }
 
-/* cp-out: warning: [^:]*: line 21, columns 23-28: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 21, column 23: identifier "abort" not declared */

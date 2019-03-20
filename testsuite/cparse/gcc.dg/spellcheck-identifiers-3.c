@@ -44,6 +44,6 @@ test_3 (void)
    { dg-end-multiline-output "" } */
 }
 
-/* cp-out: warning: [^:]*: line 11, columns 2-9: identifier "fn1badc" not declared */
-/* cp-out: warning: [^:]*: line 25, columns 2-9: identifier "fn2fehg" not declared */
-/* cp-out: warning: [^:]*: line 39, columns 2-9: identifier "fn3jilk" not declared */
+/* cp-out: warning: [^:]*: line 11, column 2: identifier "fn1badc" not declared */
+/* cp-out: warning: [^:]*: line 25, column 2: identifier "fn2fehg" not declared */
+/* cp-out: warning: [^:]*: line 39, column 2: identifier "fn3jilk" not declared */

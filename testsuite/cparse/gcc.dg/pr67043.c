@@ -31,4 +31,4 @@ __rt_mutex_slowlock (int p1) {
   }
 }
 
-/* cp-out: warning: [^:]*: line 23, columns 8-9: assignment to integer from pointer */
+/* cp-out: warning: [^:]*: line 23, column 8 to line 26, column 6: assignment to integer from pointer */

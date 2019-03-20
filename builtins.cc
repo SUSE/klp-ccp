@@ -71,22 +71,18 @@ evaluate(klp::ccp::ast::ast &a, const architecture &arch,
   const std::size_t n_args = !args ? 0 : args->size();
 
   if (n_args < _exp_arg_facs.size()) {
-    const pp_token &tok =
-      a.get_pp_tokens()[efi.get_tokens_range().begin];
-    code_remark remark
-      (code_remark::severity::warning,
+    code_remark_pp remark
+      (code_remark_pp::severity::warning,
        "too few arguments in builtin function invocation",
-       tok.get_file_range());
+       a.get_pp_tokens(), efi.get_tokens_range());
     a.get_remarks().add(remark);
     throw semantic_except(remark);
 
   } else if (!_variadic && n_args > _exp_arg_facs.size()) {
-    const pp_token &tok =
-      a.get_pp_tokens()[efi.get_tokens_range().begin];
-    code_remark remark
-      (code_remark::severity::fatal,
+    code_remark_pp remark
+      (code_remark_pp::severity::fatal,
        "too many arguments in builtin function invocation",
-       tok.get_file_range());
+       a.get_pp_tokens(), efi.get_tokens_range());
     a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -166,12 +162,10 @@ evaluate(klp::ccp::ast::ast &a, const architecture &arch,
   const std::size_t n_args = !args ? 0 : args->size();
 
   if (n_args <= _pi_arg_index) {
-    const pp_token &tok =
-      a.get_pp_tokens()[efi.get_tokens_range().begin];
-    code_remark remark
-      (code_remark::severity::warning,
+    code_remark_pp remark
+      (code_remark_pp::severity::warning,
        "too few arguments in builtin function invocation",
-       tok.get_file_range());
+       a.get_pp_tokens(), efi.get_tokens_range());
     a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -191,13 +185,10 @@ evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 		    ((wrap_callables<default_action_nop>
 		      ([&](const enum_type &et) {
 			 if (!et.is_complete()) {
-			   const pp_token &tok =
-			     a.get_pp_tokens()[e_pi_arg.get_tokens_range()
-					       .begin];
-			   code_remark remark
-			     (code_remark::severity::fatal,
+			   code_remark_pp remark
+			     (code_remark_pp::severity::fatal,
 			      "incomplete enum type passed to builtin function",
-			      tok.get_file_range());
+			      a.get_pp_tokens(), e_pi_arg.get_tokens_range());
 			   a.get_remarks().add(remark);
 			   throw semantic_except(remark);
 			 }
@@ -212,24 +203,20 @@ evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 		  return arch.get_std_int_width(arch.get_ptrdiff_kind());
 		},
 		[&](const type&) -> mpa::limbs::size_type {
-		  const pp_token &tok =
-		    a.get_pp_tokens()[e_pi_arg.get_tokens_range().begin];
-		  code_remark remark
-		    (code_remark::severity::warning,
+		  code_remark_pp remark
+		    (code_remark_pp::severity::warning,
 		     "expected pointer to int argument to builtin invocation",
-		     tok.get_file_range());
+		     a.get_pp_tokens(), e_pi_arg.get_tokens_range());
 		  a.get_remarks().add(remark);
 		  throw semantic_except(remark);
 		})),
 	      *pt.get_pointed_to_type()));
 	},
 	[&](const type&) -> mpa::limbs::size_type {
-	  const pp_token &tok =
-	    a.get_pp_tokens()[e_pi_arg.get_tokens_range().begin];
-	  code_remark remark
-	    (code_remark::severity::warning,
+	  code_remark_pp remark
+	    (code_remark_pp::severity::warning,
 	     "expected pointer argument to builtin invocation",
-	     tok.get_file_range());
+	     a.get_pp_tokens(), e_pi_arg.get_tokens_range());
 	  a.get_remarks().add(remark);
 	  throw semantic_except(remark);
 	})),
@@ -259,12 +246,10 @@ evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 
   default:
     {
-      const pp_token &tok =
-	a.get_pp_tokens()[e_pi_arg.get_tokens_range().begin];
-      code_remark remark
-	(code_remark::severity::warning,
+      code_remark_pp remark
+	(code_remark_pp::severity::warning,
 	 "can't handle argument's integer width at builtin invocation",
-	 tok.get_file_range());
+	 a.get_pp_tokens(), e_pi_arg.get_tokens_range());
       a.get_remarks().add(remark);
       throw semantic_except(remark);
     }
@@ -301,12 +286,10 @@ builtin_func_choose_expr::evaluate(klp::ccp::ast::ast &a, const architecture&,
   const std::size_t n_args = !args ? 0 : args->size();
 
   if (n_args != 3) {
-    const pp_token &tok =
-      a.get_pp_tokens()[efi.get_tokens_range().begin];
-    code_remark remark
-      (code_remark::severity::warning,
+    code_remark_pp remark
+      (code_remark_pp::severity::warning,
        "wrong number of arguments to __builtin_choose_expr()",
-       tok.get_file_range());
+       a.get_pp_tokens(), efi.get_tokens_range());
     a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -317,12 +300,10 @@ builtin_func_choose_expr::evaluate(klp::ccp::ast::ast &a, const architecture&,
   if (!e_cond.is_constexpr() ||
       !(e_cond.get_constexpr_value().has_constness
 	(constexpr_value::constness::c_integer_constant_expr))) {
-    const pp_token &tok =
-      a.get_pp_tokens()[e_cond.get_tokens_range().begin];
-    code_remark remark
-      (code_remark::severity::warning,
+    code_remark_pp remark
+      (code_remark_pp::severity::warning,
        "first argument to __builtin_choose_expr() is not a constant",
-       tok.get_file_range());
+       a.get_pp_tokens(), e_cond.get_tokens_range());
     a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -375,12 +356,10 @@ builtin_func_constant_p::evaluate(klp::ccp::ast::ast &a, const architecture &arc
   const std::size_t n_args = !args ? 0 : args->size();
 
   if (n_args != 1) {
-    const pp_token &tok =
-      a.get_pp_tokens()[efi.get_tokens_range().begin];
-    code_remark remark
-      (code_remark::severity::warning,
+    code_remark_pp remark
+      (code_remark_pp::severity::warning,
        "wrong number of arguments to __builtin_constant_p()",
-       tok.get_file_range());
+       a.get_pp_tokens(), efi.get_tokens_range());
     a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -498,12 +477,10 @@ builtin_overflow::evaluate(klp::ccp::ast::ast &a, const architecture &arch,
     };
 
   if (!efi.get_args() || efi.get_args()->size() != 3) {
-    const pp_token &tok =
-      a.get_pp_tokens()[efi.get_tokens_range().begin];
-    code_remark remark
-      (code_remark::severity::warning,
+    code_remark_pp remark
+      (code_remark_pp::severity::warning,
        "wrong number of arguments to " + myname(),
-       tok.get_file_range());
+       a.get_pp_tokens(), efi.get_tokens_range());
     a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -524,13 +501,11 @@ builtin_overflow::evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 	       ((wrap_callables<default_action_nop>
 		 ([&](const enum_type &et) {
 		    if (!et.is_complete()) {
-		      const pp_token &tok =
-			a.get_pp_tokens()[args[i].get_tokens_range().begin];
-		      code_remark remark
-			(code_remark::severity::fatal,
+		      code_remark_pp remark
+			(code_remark_pp::severity::fatal,
 			 ("argument to " + myname() +
 			  " has incomplete enum type"),
-			 tok.get_file_range());
+			 a.get_pp_tokens(), args[i].get_tokens_range());
 		      a.get_remarks().add(remark);
 		      throw semantic_except(remark);
 		    }
@@ -543,12 +518,10 @@ builtin_overflow::evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 	   [&](const std::shared_ptr<const type>&) {
 	     types_ok = false;
 
-	     const pp_token &tok =
-	       a.get_pp_tokens()[args[i].get_tokens_range().begin];
-	     code_remark remark
-	       (code_remark::severity::warning,
+	     code_remark_pp remark
+	       (code_remark_pp::severity::warning,
 		"non-integer argument to " + myname(),
-		tok.get_file_range());
+		a.get_pp_tokens(), args[i].get_tokens_range());
 	     a.get_remarks().add(remark);
 	   })),
 	 args[i].get_type());
@@ -564,13 +537,11 @@ builtin_overflow::evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 	       ((wrap_callables<default_action_nop>
 		 ([&](const enum_type &et) {
 		    if (!et.is_complete()) {
-		      const pp_token &tok =
-			a.get_pp_tokens()[args[i].get_tokens_range().begin];
-		      code_remark remark
-			(code_remark::severity::fatal,
+		      code_remark_pp remark
+			(code_remark_pp::severity::fatal,
 			 ("argument to " + myname() +
 			  " has incomplete enum type"),
-			 tok.get_file_range());
+			 a.get_pp_tokens(), args[i].get_tokens_range());
 		      a.get_remarks().add(remark);
 		      throw semantic_except(remark);
 		    }
@@ -583,12 +554,10 @@ builtin_overflow::evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 	   [&](const std::shared_ptr<const type>&) {
 	     types_ok = false;
 
-	     const pp_token &tok =
-	       a.get_pp_tokens()[args[i].get_tokens_range().begin];
-	     code_remark remark
-	       (code_remark::severity::warning,
+	     code_remark_pp remark
+	       (code_remark_pp::severity::warning,
 		"non-arithmetic argument to " + myname(),
-		tok.get_file_range());
+		a.get_pp_tokens(), args[i].get_tokens_range());
 	     a.get_remarks().add(remark);
 	   })),
 	 args[i].get_type());
@@ -608,14 +577,11 @@ builtin_overflow::evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 		    ((wrap_callables<default_action_nop>
 		      ([&](const enum_type &et) {
 			 if (!et.is_complete()) {
-			   const pp_token &tok =
-			     a.get_pp_tokens()[args[2].get_tokens_range()
-					       .begin];
-			   code_remark remark
-			     (code_remark::severity::fatal,
+			   code_remark_pp remark
+			     (code_remark_pp::severity::fatal,
 			      ("argument to " + myname() +
 			       " is of pointer to incomplete enum type"),
-			      tok.get_file_range());
+			      a.get_pp_tokens(), args[2].get_tokens_range());
 			   a.get_remarks().add(remark);
 			   throw semantic_except(remark);
 			 }
@@ -629,13 +595,11 @@ builtin_overflow::evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 		    } else {
 		      types_ok = false;
 
-		      const pp_token &tok =
-			a.get_pp_tokens()[args[2].get_tokens_range().begin];
-		      code_remark remark
-			(code_remark::severity::warning,
+		      code_remark_pp remark
+			(code_remark_pp::severity::warning,
 			 ("third argument to " + myname() +
 			  " has incompatible pointer type"),
-			 tok.get_file_range());
+			 a.get_pp_tokens(), args[2].get_tokens_range());
 		      a.get_remarks().add(remark);
 		    }
 
@@ -646,13 +610,11 @@ builtin_overflow::evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 		[&](const std::shared_ptr<const type>&) {
 		  types_ok = false;
 
-		  const pp_token &tok =
-		    a.get_pp_tokens()[args[2].get_tokens_range().begin];
-		  code_remark remark
-		    (code_remark::severity::warning,
+		  code_remark_pp remark
+		    (code_remark_pp::severity::warning,
 		     ("third argument to " + myname() +
 		      " is not a pointer to integer"),
-		     tok.get_file_range());
+		     a.get_pp_tokens(), args[2].get_tokens_range());
 		  a.get_remarks().add(remark);
 		})),
 	      pt.get_pointed_to_type());
@@ -660,12 +622,10 @@ builtin_overflow::evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 	 [&](const type&) {
 	   types_ok = false;
 
-	   const pp_token &tok =
-	     a.get_pp_tokens()[args[2].get_tokens_range().begin];
-	   code_remark remark
-	     (code_remark::severity::warning,
+	   code_remark_pp remark
+	     (code_remark_pp::severity::warning,
 	      "third argument to " + myname() + " is not a pointer",
-	      tok.get_file_range());
+	      a.get_pp_tokens(), args[2].get_tokens_range());
 	   a.get_remarks().add(remark);
 	   throw semantic_except(remark);
 	 })),

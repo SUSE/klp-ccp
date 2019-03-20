@@ -11,7 +11,6 @@
 #include "inclusion_tree.hh"
 #include "pp_tokens.hh"
 #include "code_remarks.hh"
-#include "code_remark.hh"
 #include "types.hh"
 #include "builtins.hh"
 #include "pp_tokens_range.hh"

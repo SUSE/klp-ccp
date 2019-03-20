@@ -2,6 +2,7 @@
 #define PP_TOKENS_RANGE_HH
 
 #include <limits>
+#include <cassert>
 
 #ifdef DEBUG_PARSER
 #include <iostream>

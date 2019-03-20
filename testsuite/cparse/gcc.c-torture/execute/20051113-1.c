@@ -70,5 +70,5 @@ main() {
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 67, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 69, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 67, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 69, column 4: identifier "abort" not declared */

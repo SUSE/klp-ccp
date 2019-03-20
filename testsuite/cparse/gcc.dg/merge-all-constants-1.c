@@ -7,5 +7,5 @@ const char str3[10] = "0123456789abcdefghijklmnopqrstuvwxyz";
 
 /* { dg-final { scan-assembler-not "\.rodata\.str" } } */
 
-/* cp-out: warning: [^:]*: line 4, columns 22-60: excess characters in array initialization */
-/* cp-out: warning: [^:]*: line 6, columns 22-60: excess characters in array initialization */
+/* cp-out: warning: [^:]*: line 4, column 22: excess characters in array initialization */
+/* cp-out: warning: [^:]*: line 6, column 22: excess characters in array initialization */

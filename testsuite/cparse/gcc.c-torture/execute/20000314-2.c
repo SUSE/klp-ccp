@@ -20,5 +20,5 @@ main()
     exit (0);
 }
 
-/* cp-out: warning: [^:]*: line 19, columns 19-24: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 20, columns 4-8: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 19, column 19: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 20, column 4: identifier "exit" not declared */

@@ -17,5 +17,5 @@ main ()
   printf ("%lf\n", foo.g);
 }
 
-/* cp-out: warning: [^:]*: line 9, columns 2-5: identifier "xxx" not declared */
-/* cp-out: warning: [^:]*: line 17, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 9, column 2: identifier "xxx" not declared */
+/* cp-out: warning: [^:]*: line 17, column 2: identifier "printf" not declared */

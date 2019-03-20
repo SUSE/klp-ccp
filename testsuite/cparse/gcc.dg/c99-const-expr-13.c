@@ -15,4 +15,4 @@ f (void)
   int a1[(int)(-5.0/3.0)];
 }
 
-/* cp-out: error: [^:]*: line 15, columns 9-10: array size expression is negative */
+/* cp-out: error: [^:]*: line 15, columns 9-24: array size expression is negative */

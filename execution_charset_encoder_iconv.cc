@@ -34,10 +34,9 @@ execution_charset_encoder_iconv::~execution_charset_encoder_iconv() noexcept
   iconv_close(_iconv);
 }
 
-std::vector<mpa::limbs>
-execution_charset_encoder_iconv::encode_char(ast::ast &a,
-					     const file_range &file_range,
-					     char32_t ucs4_char)
+std::vector<mpa::limbs> execution_charset_encoder_iconv::
+encode_char(ast::ast &a, const pp_token_index error_reporting_tok_ix,
+	    char32_t ucs4_char)
 {
   char encbuf[MB_LEN_MAX];
   char *outbuf = encbuf;
@@ -50,10 +49,9 @@ execution_charset_encoder_iconv::encode_char(ast::ast &a,
       throw std::logic_error("iconv out buffer unexpectedly too small");
 
     } else if (errno == EILSEQ || errno == EINVAL) {
-      code_remark remark
-	(code_remark::severity::fatal,
-	 "character set conversion failure",
-	 file_range);
+      code_remark_pp remark(code_remark_pp::severity::fatal,
+			    "character set conversion failure",
+			    a.get_pp_tokens(), error_reporting_tok_ix);
       a.get_remarks().add(remark);
       throw semantic_except(remark);
 

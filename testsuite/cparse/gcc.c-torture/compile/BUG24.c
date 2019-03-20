@@ -14,4 +14,4 @@ foo(c)
 {
 }
 
-/* cp-out: warning: [^:]*: line 9, columns 3-6: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 9, column 3: identifier "foo" not declared */

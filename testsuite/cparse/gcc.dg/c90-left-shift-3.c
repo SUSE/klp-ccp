@@ -13,6 +13,6 @@ fn (int i)
   case 1 << INTM1: break;
 }
 
-/* cp-out: warning: [^:]*: line 6, columns 11-12: integer overflow in shift operation */
-/* cp-out: warning: [^:]*: line 7, columns 8-9: integer overflow in shift operation */
-/* cp-out: warning: [^:]*: line 13, columns 7-8: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 6, columns 11-21: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 7, columns 8-18: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 13, columns 7-17: integer overflow in shift operation */

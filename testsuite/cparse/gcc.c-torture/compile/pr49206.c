@@ -26,5 +26,5 @@ main ()
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 14, columns 4-7: identifier "foo" not declared */
-/* cp-out: warning: [^:]*: line 25, columns 2-5: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 14, column 4: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 25, column 2: identifier "foo" not declared */

@@ -24,5 +24,5 @@ pte_t swp_entry_to_pte (swp_entry_t entry)
   return (pte_t) {arch_entry.val};
 }
 
-/* cp-out: warning: [^:]*: line 22, columns 42-52: identifier "swp_offset" not declared */
-/* cp-out: warning: [^:]*: line 23, columns 2-10: identifier "__BUG_ON" not declared */
+/* cp-out: warning: [^:]*: line 22, column 42: identifier "swp_offset" not declared */
+/* cp-out: warning: [^:]*: line 23, column 2: identifier "__BUG_ON" not declared */

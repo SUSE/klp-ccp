@@ -7,4 +7,4 @@ void InsertMultiPoint(int b) {
     print_wkb_byte(a);
 }
 
-/* cp-out: warning: [^:]*: line 2, columns 4-19: identifier "print_wkb_bytes" not declared */
+/* cp-out: warning: [^:]*: line 2, column 4: identifier "print_wkb_bytes" not declared */

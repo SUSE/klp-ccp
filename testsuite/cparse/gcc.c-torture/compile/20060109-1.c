@@ -35,5 +35,5 @@ line
   }
 }
 
-/* cp-out: warning: [^:]*: line 32, columns 8-28: identifier "cpp_interpret_string" not declared */
-/* cp-out: warning: [^:]*: line 24, columns 0-8: incompatible redeclaration */
+/* cp-out: warning: [^:]*: line 32, column 8: identifier "cpp_interpret_string" not declared */
+/* cp-out: warning: [^:]*: line 24, column 0: incompatible redeclaration */

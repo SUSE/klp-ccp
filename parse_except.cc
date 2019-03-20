@@ -3,7 +3,7 @@
 
 using namespace klp::ccp;
 
-parse_except::parse_except(const code_remark &remark)
+parse_except::parse_except(const code_remark_pp &remark)
 {
   std::stringstream ss;
 

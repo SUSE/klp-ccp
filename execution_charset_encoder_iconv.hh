@@ -22,7 +22,7 @@ namespace klp
 
     protected:
       virtual std::vector<mpa::limbs>
-      encode_char(ast::ast &a, const file_range &file_range,
+      encode_char(ast::ast &a, const pp_token_index error_reporting_tok_ix,
 		  char32_t ucs4_char) override;
 
     private:

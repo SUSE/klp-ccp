@@ -14,4 +14,4 @@ sub1 ()
   return c;
 }
 
-/* cp-out: warning: [^:]*: line 11, columns 2-8: identifier "setjmp" not declared */
+/* cp-out: warning: [^:]*: line 11, column 2: identifier "setjmp" not declared */

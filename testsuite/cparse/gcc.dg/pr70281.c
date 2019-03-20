@@ -8,4 +8,4 @@ int bch_stats_show ()
    { dg-end-multiline-output "" } */
 }
 
-/* cp-out: warning: [^:]*: line 4, columns 9-37: assignment to integer from pointer */
+/* cp-out: warning: [^:]*: line 4, columns 9-63: assignment to integer from pointer */

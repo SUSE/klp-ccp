@@ -21,7 +21,7 @@ float inita () { return 3.0; }
 float initc () { return 4.0; }
 f () {}
 
-/* cp-out: warning: [^:]*: line 12, columns 2-3: identifier "f" not declared */
-/* cp-out: warning: [^:]*: line 14, columns 2-3: identifier "f" not declared */
-/* cp-out: warning: [^:]*: line 16, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 17, columns 2-6: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 12, column 2: identifier "f" not declared */
+/* cp-out: warning: [^:]*: line 14, column 2: identifier "f" not declared */
+/* cp-out: warning: [^:]*: line 16, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 17, column 2: identifier "exit" not declared */

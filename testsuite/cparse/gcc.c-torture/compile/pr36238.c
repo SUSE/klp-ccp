@@ -26,4 +26,4 @@ func_5 (int32_t p_6, int32_t p_8, uint16_t p_10)
     g_169 = g_258;
 }
 
-/* cp-out: warning: [^:]*: line 13, columns 6-16: identifier "lshift_s_s" not declared */
+/* cp-out: warning: [^:]*: line 13, column 6: identifier "lshift_s_s" not declared */

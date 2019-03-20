@@ -10,4 +10,4 @@ omit (a, b)
   return x + 1;
 }
 
-/* cp-out: warning: [^:]*: line 9, columns 2-5: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 9, column 2: identifier "foo" not declared */

@@ -16,6 +16,6 @@ main ()
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 5, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 15, columns 16-17: pointers to different integer types in assignment */
-/* cp-out: warning: [^:]*: line 15, columns 20-21: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 5, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 15, columns 16-18: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 15, columns 20-22: pointers to different integer types in assignment */

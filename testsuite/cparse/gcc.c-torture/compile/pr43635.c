@@ -7,4 +7,4 @@ void (*foo (void)) (float)
   return (*x) ();
 }
 
-/* cp-out: warning: [^:]*: line 6, columns 32-33: incompatible pointer types in assignment */
+/* cp-out: warning: [^:]*: line 6, column 32: incompatible pointer types in assignment */

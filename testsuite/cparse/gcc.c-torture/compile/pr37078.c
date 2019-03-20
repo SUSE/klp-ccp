@@ -5,4 +5,4 @@ int foo (int b)
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 3, columns 11-12: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 3, columns 11-26: integer overflow in cast */

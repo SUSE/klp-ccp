@@ -17,4 +17,4 @@ func_24 (int32_t p_25)
     return 1;
 }
 
-/* cp-out: warning: [^:]*: line 16, columns 7-19: identifier "safe_mod_u_u" not declared */
+/* cp-out: warning: [^:]*: line 16, column 7: identifier "safe_mod_u_u" not declared */

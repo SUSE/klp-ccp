@@ -56,6 +56,6 @@ int main(void)
 	return sys_mknod("test",1,0x12345678);
 }
 
-/* cp-out: warning: [^:]*: line 19, columns 2-6: identifier "exit" not declared */
-/* cp-out: warning: [^:]*: line 21, columns 2-7: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 54, columns 3-7: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 19, column 2: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 21, column 2: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 54, column 3: identifier "exit" not declared */

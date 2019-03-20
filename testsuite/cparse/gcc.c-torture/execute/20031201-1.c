@@ -75,7 +75,7 @@ f0 (void)
     abort ();
 }
 
-/* cp-out: warning: [^:]*: line 57, columns 2-7: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 65, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 66, columns 2-6: identifier "exit" not declared */
-/* cp-out: warning: [^:]*: line 75, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 57, column 2: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 65, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 66, column 2: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 75, column 4: identifier "abort" not declared */

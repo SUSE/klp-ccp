@@ -84,22 +84,22 @@ main (void)
 
 /* { dg-message "note: expected '\[^\n'\]*' but argument is of type '\[^\n'\]*'" "note: expected" { target *-*-* } 0 } */
 
-/* cp-out: warning: [^:]*: line 14, columns 12-14: incompatible redeclaration */
-/* cp-out: warning: [^:]*: line 19, columns 12-14: incompatible redeclaration */
-/* cp-out: warning: [^:]*: line 22, columns 12-14: incompatible redeclaration */
-/* cp-out: warning: [^:]*: line 25, columns 12-14: incompatible redeclaration */
-/* cp-out: warning: [^:]*: line 30, columns 12-14: incompatible redeclaration */
-/* cp-out: warning: [^:]*: line 35, columns 12-14: incompatible redeclaration */
-/* cp-out: warning: [^:]*: line 38, columns 12-14: incompatible redeclaration */
-/* cp-out: warning: [^:]*: line 41, columns 12-14: incompatible redeclaration */
-/* cp-out: warning: [^:]*: line 55, columns 6-7: assigning pointers to integer types of different width */
-/* cp-out: warning: [^:]*: line 57, columns 6-7: assigning pointers to integer types of different width */
-/* cp-out: warning: [^:]*: line 59, columns 6-7: assigning pointers to integer types of different width */
-/* cp-out: warning: [^:]*: line 61, columns 6-7: assigning pointers to integer types of different width */
-/* cp-out: warning: [^:]*: line 63, columns 6-7: assigning pointers to integer types of different width */
-/* cp-out: warning: [^:]*: line 65, columns 6-7: assigning pointers to integer types of different width */
-/* cp-out: warning: [^:]*: line 67, columns 6-7: assigning pointers to integer types of different width */
-/* cp-out: warning: [^:]*: line 69, columns 6-7: assigning pointers to integer types of different width */
-/* cp-out: warning: [^:]*: line 71, columns 6-7: assigning pointers to integer types of different width */
-/* cp-out: warning: [^:]*: line 73, columns 6-7: assigning pointers to integer types of different width */
-/* cp-out: error: [^:]*: line 74, columns 7-8: invalid type for assignment target */
+/* cp-out: warning: [^:]*: line 14, column 12: incompatible redeclaration */
+/* cp-out: warning: [^:]*: line 19, column 12: incompatible redeclaration */
+/* cp-out: warning: [^:]*: line 22, column 12: incompatible redeclaration */
+/* cp-out: warning: [^:]*: line 25, column 12: incompatible redeclaration */
+/* cp-out: warning: [^:]*: line 30, column 12: incompatible redeclaration */
+/* cp-out: warning: [^:]*: line 35, column 12: incompatible redeclaration */
+/* cp-out: warning: [^:]*: line 38, column 12: incompatible redeclaration */
+/* cp-out: warning: [^:]*: line 41, column 12: incompatible redeclaration */
+/* cp-out: warning: [^:]*: line 55, columns 6-8: assigning pointers to integer types of different width */
+/* cp-out: warning: [^:]*: line 57, columns 6-8: assigning pointers to integer types of different width */
+/* cp-out: warning: [^:]*: line 59, columns 6-8: assigning pointers to integer types of different width */
+/* cp-out: warning: [^:]*: line 61, columns 6-8: assigning pointers to integer types of different width */
+/* cp-out: warning: [^:]*: line 63, columns 6-8: assigning pointers to integer types of different width */
+/* cp-out: warning: [^:]*: line 65, columns 6-8: assigning pointers to integer types of different width */
+/* cp-out: warning: [^:]*: line 67, columns 6-8: assigning pointers to integer types of different width */
+/* cp-out: warning: [^:]*: line 69, columns 6-8: assigning pointers to integer types of different width */
+/* cp-out: warning: [^:]*: line 71, columns 6-8: assigning pointers to integer types of different width */
+/* cp-out: warning: [^:]*: line 73, columns 6-8: assigning pointers to integer types of different width */
+/* cp-out: error: [^:]*: line 74, columns 7-9: invalid type for assignment target */

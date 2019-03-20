@@ -40,4 +40,4 @@ int main()
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 39, columns 2-6: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 39, column 2: identifier "exit" not declared */

@@ -34,4 +34,4 @@ foo (T x)
   fn2 (0, e, 0);
 }
 
-/* cp-out: warning: [^:]*: line 29, columns 6-9: wrong number of arguments to function invocation */
+/* cp-out: warning: [^:]*: line 29, columns 6-13: wrong number of arguments to function invocation */

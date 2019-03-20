@@ -144,6 +144,6 @@ fn21 (int i)
   return g[i];
 }
 
-/* cp-out: warning: [^:]*: line 51, columns 28-40: excess characters in array initialization */
-/* cp-out: warning: [^:]*: line 97, columns 28-40: excess characters in array initialization */
-/* cp-out: warning: [^:]*: line 143, columns 28-40: excess characters in array initialization */
+/* cp-out: warning: [^:]*: line 51, column 28: excess characters in array initialization */
+/* cp-out: warning: [^:]*: line 97, column 28: excess characters in array initialization */
+/* cp-out: warning: [^:]*: line 143, column 28: excess characters in array initialization */

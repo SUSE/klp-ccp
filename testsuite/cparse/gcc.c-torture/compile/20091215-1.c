@@ -16,4 +16,4 @@ bar (x, y)
   baz (y);
 }
 
-/* cp-out: warning: [^:]*: line 16, columns 2-5: identifier "baz" not declared */
+/* cp-out: warning: [^:]*: line 16, column 2: identifier "baz" not declared */

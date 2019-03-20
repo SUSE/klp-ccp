@@ -10,4 +10,4 @@ void xfs_dir2_grow_inode(void)
   kmem_free(mapp);
 }
 
-/* cp-out: warning: [^:]*: line 10, columns 2-11: identifier "kmem_free" not declared */
+/* cp-out: warning: [^:]*: line 10, column 2: identifier "kmem_free" not declared */

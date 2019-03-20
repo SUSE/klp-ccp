@@ -22,4 +22,4 @@ void S_scan_heredoc(PerlInterpreter *my_perl, char *s, int i)
     S_missingterm(my_perl->Itokenbuf);
 }
 
-/* cp-out: warning: [^:]*: line 10, columns 6-12: identifier "strchr" not declared */
+/* cp-out: warning: [^:]*: line 10, column 6: identifier "strchr" not declared */

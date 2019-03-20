@@ -14,8 +14,8 @@ int main(void)
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 7, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 9, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 11, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 13, columns 4-9: identifier "abort" not declared */
-/* cp-out: error: [^:]*: line 2, columns 33-38: invalid UTF-8 character encoding */
+/* cp-out: warning: [^:]*: line 7, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 9, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 11, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 13, column 4: identifier "abort" not declared */
+/* cp-out: error: [^:]*: line 2, column 33: invalid UTF-8 character encoding */

@@ -1,3 +1,3 @@
 f(i){for(i=1;i<=2;({;}),i++){({;}),g();}}
 
-/* cp-out: warning: [^:]*: line 1, columns 35-36: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 1, column 35: identifier "g" not declared */

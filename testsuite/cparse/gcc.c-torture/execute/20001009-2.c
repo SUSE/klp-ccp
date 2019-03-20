@@ -20,4 +20,4 @@ int main()
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 14, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 14, column 4: identifier "abort" not declared */

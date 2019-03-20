@@ -8,4 +8,4 @@ void foo (void)
   maxblockrem = (maxstringlen) % (2147483647 + 1); /* { dg-warning "overflow" } */
 }
 
-/* cp-out: warning: [^:]*: line 8, columns 34-44: integer overflow in addition */
+/* cp-out: warning: [^:]*: line 8, columns 34-48: integer overflow in addition */

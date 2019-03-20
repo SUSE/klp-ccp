@@ -14,4 +14,4 @@ bar (p, pp)
   return (int) p;
 }
 
-/* cp-out: warning: [^:]*: line 11, columns 2-5: identifier "fee" not declared */
+/* cp-out: warning: [^:]*: line 11, column 2: identifier "fee" not declared */

@@ -9,4 +9,4 @@ foo (long x)
     bar ();
 }
 
-/* cp-out: warning: [^:]*: line 9, columns 4-7: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 9, column 4: identifier "bar" not declared */

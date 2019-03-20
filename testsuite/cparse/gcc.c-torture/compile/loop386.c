@@ -14,5 +14,5 @@ main ()
   printf ("%d\n", foo (3));
 }
 
-/* cp-out: warning: [^:]*: line 5, columns 6-10: identifier "puts" not declared */
-/* cp-out: warning: [^:]*: line 14, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 5, column 6: identifier "puts" not declared */
+/* cp-out: warning: [^:]*: line 14, column 2: identifier "printf" not declared */

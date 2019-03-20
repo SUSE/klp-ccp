@@ -11,4 +11,4 @@ double foo()
         if (d) return 0;
 }
 
-/* cp-out: warning: [^:]*: line 9, columns 8-11: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 9, column 8: identifier "bar" not declared */

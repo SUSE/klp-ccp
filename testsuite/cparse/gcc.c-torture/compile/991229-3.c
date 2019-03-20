@@ -14,4 +14,4 @@ int main(){
 	}
 }
 
-/* cp-out: warning: [^:]*: line 7, columns 9-13: identifier "rand" not declared */
+/* cp-out: warning: [^:]*: line 7, column 9: identifier "rand" not declared */

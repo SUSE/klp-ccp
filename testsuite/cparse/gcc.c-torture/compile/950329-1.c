@@ -19,10 +19,10 @@ f ()
     }
 }
 
-/* cp-out: warning: [^:]*: line 7, columns 10-11: identifier "h" not declared */
-/* cp-out: warning: [^:]*: line 10, columns 5-6: identifier "g" not declared */
-/* cp-out: warning: [^:]*: line 11, columns 3-4: identifier "g" not declared */
-/* cp-out: warning: [^:]*: line 11, columns 6-7: identifier "h" not declared */
-/* cp-out: warning: [^:]*: line 12, columns 3-4: identifier "g" not declared */
-/* cp-out: warning: [^:]*: line 12, columns 6-7: identifier "h" not declared */
-/* cp-out: warning: [^:]*: line 16, columns 3-4: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 7, column 10: identifier "h" not declared */
+/* cp-out: warning: [^:]*: line 10, column 5: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 11, column 3: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 11, column 6: identifier "h" not declared */
+/* cp-out: warning: [^:]*: line 12, column 3: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 12, column 6: identifier "h" not declared */
+/* cp-out: warning: [^:]*: line 16, column 3: identifier "g" not declared */

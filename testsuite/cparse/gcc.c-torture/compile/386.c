@@ -23,4 +23,4 @@ foobar (a, b)
   return a + b;
 }
 
-/* cp-out: warning: [^:]*: line 13, columns 2-8: identifier "foobar" not declared */
+/* cp-out: warning: [^:]*: line 13, column 2: identifier "foobar" not declared */

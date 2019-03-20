@@ -39,4 +39,4 @@ f(dp)
     np[2].a = (int)(py[1])->wa;
 }
 
-/* cp-out: warning: [^:]*: line 34, columns 4-5: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 34, column 4: identifier "g" not declared */

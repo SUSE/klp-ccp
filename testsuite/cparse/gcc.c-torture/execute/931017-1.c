@@ -53,6 +53,6 @@ f ()
   g (&c);
 }
 
-/* cp-out: warning: [^:]*: line 5, columns 2-3: identifier "f" not declared */
-/* cp-out: warning: [^:]*: line 6, columns 2-6: identifier "exit" not declared */
-/* cp-out: warning: [^:]*: line 18, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 5, column 2: identifier "f" not declared */
+/* cp-out: warning: [^:]*: line 6, column 2: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 18, column 4: identifier "abort" not declared */

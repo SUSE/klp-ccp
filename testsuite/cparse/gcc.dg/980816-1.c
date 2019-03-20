@@ -19,4 +19,4 @@ div_and_round_double (lden_orig, hden_orig)
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 13, columns 2-12: identifier "neg_double" not declared */
+/* cp-out: warning: [^:]*: line 13, column 2: identifier "neg_double" not declared */

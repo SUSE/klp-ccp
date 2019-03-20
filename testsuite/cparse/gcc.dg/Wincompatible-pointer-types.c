@@ -20,10 +20,10 @@ fn1 (void)
   return dp;
 }
 
-/* cp-out: warning: [^:]*: line 14, columns 24-27: incompatible pointer types in assignment */
-/* cp-out: warning: [^:]*: line 15, columns 8-11: incompatible pointer types in assignment */
-/* cp-out: warning: [^:]*: line 17, columns 14-15: incompatible pointer types in assignment */
-/* cp-out: warning: [^:]*: line 18, columns 7-9: incompatible pointer types in assignment */
-/* cp-out: warning: [^:]*: line 19, columns 7-9: incompatible pointer types in assignment */
-/* cp-out: warning: [^:]*: line 19, columns 11-13: assigning pointers to integer types of different width */
-/* cp-out: warning: [^:]*: line 20, columns 9-11: incompatible pointer types in assignment */
+/* cp-out: warning: [^:]*: line 14, column 24: incompatible pointer types in assignment */
+/* cp-out: warning: [^:]*: line 15, column 8: incompatible pointer types in assignment */
+/* cp-out: warning: [^:]*: line 17, columns 14-17: incompatible pointer types in assignment */
+/* cp-out: warning: [^:]*: line 18, column 7: incompatible pointer types in assignment */
+/* cp-out: warning: [^:]*: line 19, column 7: incompatible pointer types in assignment */
+/* cp-out: warning: [^:]*: line 19, column 11: assigning pointers to integer types of different width */
+/* cp-out: warning: [^:]*: line 20, column 9: incompatible pointer types in assignment */

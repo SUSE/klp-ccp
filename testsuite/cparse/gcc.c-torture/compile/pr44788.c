@@ -7,4 +7,4 @@ void joint_decode(float* mlt_buffer1, int t) {
     }
 }
 
-/* cp-out: warning: [^:]*: line 4, columns 4-7: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 4, column 4: identifier "foo" not declared */

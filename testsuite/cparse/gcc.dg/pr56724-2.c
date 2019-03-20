@@ -30,8 +30,8 @@ typedef void (*fp)(void);
 typedef void (*nrfp)(void) __attribute__((noreturn));
 void f1 (nrfp); void f2 (fp x) { f1 (x); } extern int e; /* { dg-warning "38:passing argument" } */
 
-/* cp-out: warning: [^:]*: line 22, columns 16-18: pointers to different integer types in assignment */
-/* cp-out: warning: [^:]*: line 23, columns 16-17: incompatible pointer types in assignment */
-/* cp-out: warning: [^:]*: line 24, columns 16-18: assignment to pointer from integer which is not NULL */
-/* cp-out: warning: [^:]*: line 25, columns 10-12: assignment to integer from pointer */
-/* cp-out: warning: [^:]*: line 26, columns 16-19: assignment's source qualifiers are not a subset of target ones */
+/* cp-out: warning: [^:]*: line 22, column 16: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 23, column 16: incompatible pointer types in assignment */
+/* cp-out: warning: [^:]*: line 24, column 16: assignment to pointer from integer which is not NULL */
+/* cp-out: warning: [^:]*: line 25, column 10: assignment to integer from pointer */
+/* cp-out: warning: [^:]*: line 26, column 16: assignment's source qualifiers are not a subset of target ones */

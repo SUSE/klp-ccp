@@ -4,4 +4,4 @@ main()
     printf("true\n");
 }
 
-/* cp-out: warning: [^:]*: line 4, columns 4-10: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 4, column 4: identifier "printf" not declared */

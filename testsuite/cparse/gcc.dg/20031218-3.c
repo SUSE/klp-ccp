@@ -13,4 +13,4 @@ int x (char *s)
   return y (s);
 }
 
-/* cp-out: warning: [^:]*: line 13, columns 9-10: wrong number of arguments to function invocation */
+/* cp-out: warning: [^:]*: line 13, columns 9-14: wrong number of arguments to function invocation */

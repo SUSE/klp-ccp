@@ -15,4 +15,4 @@ int main()
     exit (0);
 }
 
-/* cp-out: warning: [^:]*: line 15, columns 4-8: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 15, column 4: identifier "exit" not declared */

@@ -9,4 +9,4 @@ f (int a)
   return b;
 }
 
-/* cp-out: warning: [^:]*: line 8, columns 22-24: identifier "ff" not declared */
+/* cp-out: warning: [^:]*: line 8, column 22: identifier "ff" not declared */

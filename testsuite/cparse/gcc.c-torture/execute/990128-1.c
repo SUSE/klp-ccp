@@ -49,5 +49,5 @@ int look( struct s *p, struct s **pp )
     return( 1 );
 }
 
-/* cp-out: warning: [^:]*: line 28, columns 6-11: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 30, columns 4-8: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 28, column 6: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 30, column 4: identifier "exit" not declared */

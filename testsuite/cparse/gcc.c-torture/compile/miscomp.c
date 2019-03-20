@@ -14,4 +14,4 @@ foo( unsigned long TheLong)
      return( (unsigned char) (TheLong & 0xff) );
 }
 
-/* cp-out: warning: [^:]*: line 9, columns 4-10: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 9, column 4: identifier "printf" not declared */

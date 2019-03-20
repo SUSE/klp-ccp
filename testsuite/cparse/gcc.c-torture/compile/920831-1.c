@@ -2,4 +2,4 @@
 
 f(x){goto*(char)x;}
 
-/* cp-out: warning: [^:]*: line 3, columns 10-11: dereferencing integer at computed goto */
+/* cp-out: warning: [^:]*: line 3, columns 10-17: dereferencing integer at computed goto */

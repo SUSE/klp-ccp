@@ -32,5 +32,5 @@ main (argc, argv)
   exit (0);
 }
 
-/* cp-out: warning: [^:]*: line 31, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 32, columns 2-6: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 31, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 32, column 2: identifier "exit" not declared */

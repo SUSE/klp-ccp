@@ -115,5 +115,5 @@ meta_window_get_position (MetaWindow * window, int *x, int *y)
     }
 }
 
-/* cp-out: warning: [^:]*: line 93, columns 2-23: identifier "meta_window_constrain" not declared */
-/* cp-out: warning: [^:]*: line 98, columns 1-16: identifier "meta_topic_real" not declared */
+/* cp-out: warning: [^:]*: line 93, column 2: identifier "meta_window_constrain" not declared */
+/* cp-out: warning: [^:]*: line 98, column 1: identifier "meta_topic_real" not declared */

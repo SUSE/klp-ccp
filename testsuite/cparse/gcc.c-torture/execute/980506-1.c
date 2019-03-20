@@ -25,4 +25,4 @@ main()
   exit (0);
 }
 
-/* cp-out: warning: [^:]*: line 25, columns 2-6: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 25, column 2: identifier "exit" not declared */

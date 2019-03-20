@@ -4,5 +4,5 @@ int main(int argc, char *argv[])
   return strlen(argv[0]);
 }
 
-/* cp-out: warning: [^:]*: line 3, columns 2-8: identifier "strcat" not declared */
-/* cp-out: warning: [^:]*: line 4, columns 9-15: identifier "strlen" not declared */
+/* cp-out: warning: [^:]*: line 3, column 2: identifier "strcat" not declared */
+/* cp-out: warning: [^:]*: line 4, column 9: identifier "strlen" not declared */

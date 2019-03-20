@@ -66,5 +66,5 @@ main ()
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 47, columns 6-9: identifier "abs" not declared */
-/* cp-out: warning: [^:]*: line 49, columns 6-9: identifier "abs" not declared */
+/* cp-out: warning: [^:]*: line 47, column 6: identifier "abs" not declared */
+/* cp-out: warning: [^:]*: line 49, column 6: identifier "abs" not declared */

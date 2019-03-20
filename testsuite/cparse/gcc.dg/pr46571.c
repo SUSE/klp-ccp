@@ -121,7 +121,7 @@ gfc_trans_omp_parallel_workshare (gfc_code * code)
   gfc_trans_omp_clauses (&block, code->ext.omp_clauses, code->loc);
 }
 
-/* cp-out: warning: [^:]*: line 87, columns 13-29: identifier "build_omp_clause" not declared */
-/* cp-out: warning: [^:]*: line 89, columns 1-30: identifier "gfc_trans_omp_array_reduction" not declared */
-/* cp-out: warning: [^:]*: line 84, columns 46-54: incompatible pointer types in assignment */
-/* cp-out: warning: [^:]*: line 87, columns 13-29: assignment to pointer from integer which is not NULL */
+/* cp-out: warning: [^:]*: line 87, column 13: identifier "build_omp_clause" not declared */
+/* cp-out: warning: [^:]*: line 89, column 1: identifier "gfc_trans_omp_array_reduction" not declared */
+/* cp-out: warning: [^:]*: line 84, columns 46-60: incompatible pointer types in assignment */
+/* cp-out: warning: [^:]*: line 87, columns 13-50: assignment to pointer from integer which is not NULL */

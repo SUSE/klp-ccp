@@ -15,5 +15,5 @@ preinc_di(p)di*p;{di x;for(;;){x=*++p;if(x)return x;}}
 inc_overlap(p,a)di*p;{do{p=*(di**)p;p=(di*)((int)p+4);}while(*p);}
 di move_di(p,p2)di*p,*p2;{di x=p;p2=((di*)x)[1];return p2[1];}
 
-/* cp-out: warning: [^:]*: line 16, columns 31-32: assignment to integer from pointer */
-/* cp-out: warning: [^:]*: line 16, columns 36-37: assignment to pointer from integer which is not NULL */
+/* cp-out: warning: [^:]*: line 16, column 31: assignment to integer from pointer */
+/* cp-out: warning: [^:]*: line 16, columns 36-47: assignment to pointer from integer which is not NULL */

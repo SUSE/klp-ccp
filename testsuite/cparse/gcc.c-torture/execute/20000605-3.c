@@ -17,4 +17,4 @@ int main()
   abort ();
 }
 
-/* cp-out: warning: [^:]*: line 17, columns 2-7: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 17, column 2: identifier "abort" not declared */

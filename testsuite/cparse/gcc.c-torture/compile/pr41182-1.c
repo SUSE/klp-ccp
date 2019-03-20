@@ -5,6 +5,6 @@ int _lae_process_opts(char *pr, char *pe)
                                      ? (pe-&pr[2]) : (strlen("on")))));
 }
 
-/* cp-out: warning: [^:]*: line 4, columns 10-16: identifier "strlen" not declared */
-/* cp-out: warning: [^:]*: line 4, columns 50-56: identifier "strlen" not declared */
-/* cp-out: warning: [^:]*: line 5, columns 54-60: identifier "strlen" not declared */
+/* cp-out: warning: [^:]*: line 4, column 10: identifier "strlen" not declared */
+/* cp-out: warning: [^:]*: line 4, column 50: identifier "strlen" not declared */
+/* cp-out: warning: [^:]*: line 5, column 54: identifier "strlen" not declared */

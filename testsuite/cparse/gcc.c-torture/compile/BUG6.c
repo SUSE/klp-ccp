@@ -7,4 +7,4 @@ main()
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 6, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 6, column 2: identifier "printf" not declared */

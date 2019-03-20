@@ -41,4 +41,4 @@ __ieee754_sinhf(float x)
         return x*shuge;
 }
 
-/* cp-out: warning: [^:]*: line 31, columns 16-22: identifier "expm1f" not declared */
+/* cp-out: warning: [^:]*: line 31, column 16: identifier "expm1f" not declared */

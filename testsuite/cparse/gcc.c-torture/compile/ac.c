@@ -28,5 +28,5 @@ main ()
   puts ("");
 }
 
-/* cp-out: warning: [^:]*: line 26, columns 6-12: identifier "printf" not declared */
-/* cp-out: warning: [^:]*: line 28, columns 2-6: identifier "puts" not declared */
+/* cp-out: warning: [^:]*: line 26, column 6: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 28, column 2: identifier "puts" not declared */

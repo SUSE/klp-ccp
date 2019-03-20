@@ -73,5 +73,5 @@ cb[148] = tO7;
 return cb;
 }
 
-/* cp-out: warning: [^:]*: line 43, columns 28-29: integer overflow in shift operation */
-/* cp-out: warning: [^:]*: line 45, columns 28-29: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 43, columns 28-40: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 45, columns 28-40: integer overflow in shift operation */

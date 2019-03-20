@@ -18,4 +18,4 @@ g(p)t p;
     }
 }
 
-/* cp-out: warning: [^:]*: line 17, columns 1-3: identifier "ff" not declared */
+/* cp-out: warning: [^:]*: line 17, column 1: identifier "ff" not declared */

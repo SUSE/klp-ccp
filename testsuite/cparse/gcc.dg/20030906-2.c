@@ -10,7 +10,8 @@ extern int bar (void);
 
 int foo (void)
 {
-  if( i ) return; /* { dg-warning "'return' with no value, in function returning non-void" } */
+
+	if( i ) return; /* { dg-warning "'return' with no value, in function returning non-void" } */
   else    return 1;
 }
 
@@ -20,4 +21,4 @@ int bar (void)
   else    return 1;
 }
 
-/* cp-out: warning: [^:]*: line 13, columns 10-16: return without value in function returning non-void */
+/* cp-out: warning: [^:]*: line 14, columns 9-16: return without value in function returning non-void */

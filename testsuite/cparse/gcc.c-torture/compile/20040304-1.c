@@ -18,4 +18,4 @@ cpplib_macroExpand (char * pfile)
   while (token == 20);
 }
 
-/* cp-out: warning: [^:]*: line 15, columns 18-24: identifier "macarg" not declared */
+/* cp-out: warning: [^:]*: line 15, column 18: identifier "macarg" not declared */

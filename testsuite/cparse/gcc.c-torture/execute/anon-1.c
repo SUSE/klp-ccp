@@ -28,4 +28,4 @@ main(int argc, char *argv[])
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 26, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 26, column 4: identifier "abort" not declared */

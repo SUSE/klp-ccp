@@ -46,9 +46,9 @@ static uintptr_t ldd (void *frame) {
   atexit(_do_exit_fini);
 }
 
-/* cp-out: warning: [^:]*: line 27, columns 7-13: identifier "dynvec" not declared */
-/* cp-out: warning: [^:]*: line 29, columns 28-34: identifier "dynvec" not declared */
-/* cp-out: warning: [^:]*: line 30, columns 27-33: identifier "dynvec" not declared */
-/* cp-out: warning: [^:]*: line 31, columns 25-40: identifier "relative_relocp" not declared */
-/* cp-out: warning: [^:]*: line 46, columns 2-8: identifier "atexit" not declared */
-/* cp-out: warning: [^:]*: line 31, columns 25-40: assignment to pointer from integer which is not NULL */
+/* cp-out: warning: [^:]*: line 27, column 7: identifier "dynvec" not declared */
+/* cp-out: warning: [^:]*: line 29, column 28: identifier "dynvec" not declared */
+/* cp-out: warning: [^:]*: line 30, column 27: identifier "dynvec" not declared */
+/* cp-out: warning: [^:]*: line 31, column 25: identifier "relative_relocp" not declared */
+/* cp-out: warning: [^:]*: line 46, column 2: identifier "atexit" not declared */
+/* cp-out: warning: [^:]*: line 31, columns 25-45: assignment to pointer from integer which is not NULL */

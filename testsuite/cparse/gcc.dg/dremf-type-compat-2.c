@@ -17,4 +17,4 @@ dremf (x, y)
   return x + y;
 }
 
-/* cp-out: warning: [^:]*: line 13, columns 0-5: incompatible redeclaration */
+/* cp-out: warning: [^:]*: line 13, column 0: incompatible redeclaration */

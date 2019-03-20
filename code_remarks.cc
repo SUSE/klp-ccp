@@ -3,14 +3,14 @@
 
 using namespace klp::ccp;
 
-void code_remarks::add(const code_remark &r)
+void code_remarks::add(const code_remark_pp &r)
 {
-  _remarks.push_back(r);
+  _remarks_pp.push_back(r);
 }
 
-void code_remarks::add(code_remark &&r)
+void code_remarks::add(code_remark_pp &&r)
 {
-  _remarks.push_back(std::move(r));
+  _remarks_pp.push_back(std::move(r));
 }
 
 void code_remarks::add(const code_remark_raw &r)
@@ -26,12 +26,12 @@ void code_remarks::add(code_remark_raw &&r)
 void code_remarks::clear() noexcept
 {
   _remarks_raw.clear();
-  _remarks.clear();
+  _remarks_pp.clear();
 }
 
 bool code_remarks::empty() const noexcept
 {
-  return _remarks_raw.empty() && _remarks.empty();
+  return _remarks_raw.empty() && _remarks_pp.empty();
 }
 
 bool code_remarks::any_fatal() const noexcept
@@ -41,8 +41,8 @@ bool code_remarks::any_fatal() const noexcept
       return true;
   }
 
-  for(auto &&r : _remarks) {
-    if (r.get_severity() == code_remark::severity::fatal)
+  for(auto &&r : _remarks_pp) {
+    if (r.get_severity() == code_remark_pp::severity::fatal)
       return true;
   }
 
@@ -53,8 +53,8 @@ code_remarks& code_remarks::operator+=(const code_remarks &remarks)
 {
   _remarks_raw.insert(_remarks_raw.end(),
 		      remarks._remarks_raw.begin(), remarks._remarks_raw.end());
-  _remarks.insert(_remarks.end(),
-		  remarks._remarks.begin(), remarks._remarks.end());
+  _remarks_pp.insert(_remarks_pp.end(),
+		     remarks._remarks_pp.begin(), remarks._remarks_pp.end());
   return *this;
 }
 
@@ -63,7 +63,7 @@ std::ostream& klp::ccp::operator<<(std::ostream &o, const code_remarks &rs)
   for(auto &&r : rs._remarks_raw) {
     o << r;
   }
-  for(auto &&r : rs._remarks) {
+  for(auto &&r : rs._remarks_pp) {
     o << r;
   }
   return o;

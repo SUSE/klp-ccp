@@ -9,4 +9,4 @@
    }
  }
 
-/* cp-out: warning: [^:]*: line 8, columns 22-30: identifier "__brelse" not declared */
+/* cp-out: warning: [^:]*: line 8, column 22: identifier "__brelse" not declared */

@@ -21,7 +21,7 @@ main ()
   exit (0);
 }
 
-/* cp-out: warning: [^:]*: line 11, columns 9-15: identifier "strcmp" not declared */
-/* cp-out: warning: [^:]*: line 17, columns 2-8: identifier "strcpy" not declared */
-/* cp-out: warning: [^:]*: line 20, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 21, columns 2-6: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 11, column 9: identifier "strcmp" not declared */
+/* cp-out: warning: [^:]*: line 17, column 2: identifier "strcpy" not declared */
+/* cp-out: warning: [^:]*: line 20, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 21, column 2: identifier "exit" not declared */

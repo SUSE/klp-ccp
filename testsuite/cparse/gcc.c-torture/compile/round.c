@@ -12,4 +12,4 @@ main ()
   foo (-1.6);
 }
 
-/* cp-out: warning: [^:]*: line 4, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 4, column 2: identifier "printf" not declared */

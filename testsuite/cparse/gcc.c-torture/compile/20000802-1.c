@@ -14,4 +14,4 @@ void bar(void)
     bs.a[1] = ((x ? &bs.b : &bs.c) - (char *)&bs) - 2;
 }
 
-/* cp-out: warning: [^:]*: line 13, columns 4-10: identifier "memcpy" not declared */
+/* cp-out: warning: [^:]*: line 13, column 4: identifier "memcpy" not declared */

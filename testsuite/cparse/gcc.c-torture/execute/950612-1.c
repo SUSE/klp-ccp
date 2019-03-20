@@ -47,12 +47,12 @@ main ()
   exit (0);
 }
 
-/* cp-out: warning: [^:]*: line 31, columns 1-6: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 33, columns 1-6: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 35, columns 1-6: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 37, columns 1-6: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 39, columns 1-6: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 41, columns 1-6: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 43, columns 1-6: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 45, columns 1-6: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 47, columns 2-6: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 31, column 1: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 33, column 1: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 35, column 1: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 37, column 1: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 39, column 1: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 41, column 1: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 43, column 1: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 45, column 1: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 47, column 2: identifier "exit" not declared */

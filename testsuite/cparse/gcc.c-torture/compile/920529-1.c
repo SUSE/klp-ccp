@@ -20,4 +20,4 @@ f (a, b, m, n)
   return;
 }
 
-/* cp-out: warning: [^:]*: line 10, columns 2-7: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 10, column 2: identifier "abort" not declared */

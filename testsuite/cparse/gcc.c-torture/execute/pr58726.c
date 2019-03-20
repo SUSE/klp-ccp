@@ -25,4 +25,4 @@ main ()
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 23, columns 11-12: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 23, columns 11-24: integer overflow in cast */

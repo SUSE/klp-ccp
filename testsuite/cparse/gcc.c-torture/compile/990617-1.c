@@ -17,4 +17,4 @@ int main()
     } while (1);
 }
 
-/* cp-out: warning: [^:]*: line 14, columns 12-18: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 14, column 12: identifier "printf" not declared */

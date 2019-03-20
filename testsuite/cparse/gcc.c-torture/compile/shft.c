@@ -14,4 +14,4 @@ main ()
     puts ("y");
 }
 
-/* cp-out: warning: [^:]*: line 14, columns 4-8: identifier "puts" not declared */
+/* cp-out: warning: [^:]*: line 14, column 4: identifier "puts" not declared */

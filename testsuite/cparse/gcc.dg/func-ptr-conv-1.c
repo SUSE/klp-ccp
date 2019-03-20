@@ -55,8 +55,8 @@ g(void)
 void (*fp2)(void) = 0;
 void (*fp3)(void) = (void *)0;
 
-/* cp-out: warning: [^:]*: line 17, columns 11-12: incompatible pointer types in assignment */
-/* cp-out: warning: [^:]*: line 18, columns 11-12: incompatible pointer types in assignment */
-/* cp-out: warning: [^:]*: line 32, columns 7-8: incompatible pointer types in assignment */
-/* cp-out: warning: [^:]*: line 33, columns 7-8: incompatible pointer types in assignment */
-/* cp-out: warning: [^:]*: line 37, columns 7-9: incompatible pointer types in assignment */
+/* cp-out: warning: [^:]*: line 17, column 11: incompatible pointer types in assignment */
+/* cp-out: warning: [^:]*: line 18, columns 11-13: incompatible pointer types in assignment */
+/* cp-out: warning: [^:]*: line 32, column 7: incompatible pointer types in assignment */
+/* cp-out: warning: [^:]*: line 33, columns 7-9: incompatible pointer types in assignment */
+/* cp-out: warning: [^:]*: line 37, column 7: incompatible pointer types in assignment */

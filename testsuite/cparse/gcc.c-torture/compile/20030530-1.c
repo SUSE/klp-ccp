@@ -22,4 +22,4 @@ java_check_regular_methods (tree class_decl)
     }
 }
 
-/* cp-out: warning: [^:]*: line 21, columns 10-13: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 21, column 10: identifier "bar" not declared */

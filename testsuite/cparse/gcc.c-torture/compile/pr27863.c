@@ -30,5 +30,5 @@ SetTermStruc:
  goto *(*esp--);
 }
 
-/* cp-out: warning: [^:]*: line 17, columns 6-7: dereferencing integer at computed goto */
-/* cp-out: warning: [^:]*: line 30, columns 7-8: dereferencing integer at computed goto */
+/* cp-out: warning: [^:]*: line 17, columns 6-14: dereferencing integer at computed goto */
+/* cp-out: warning: [^:]*: line 30, columns 7-15: dereferencing integer at computed goto */

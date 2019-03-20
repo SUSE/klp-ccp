@@ -39,4 +39,4 @@ int hop_sendmsg(int fd) {
     }
 }
 
-/* cp-out: warning: [^:]*: line 29, columns 4-10: identifier "memcpy" not declared */
+/* cp-out: warning: [^:]*: line 29, column 4: identifier "memcpy" not declared */

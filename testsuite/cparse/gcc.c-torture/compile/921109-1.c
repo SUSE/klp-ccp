@@ -27,4 +27,4 @@ e->r = i1, e->s = i1;
 return 3;
 }
 
-/* cp-out: warning: [^:]*: line 10, columns 8-9: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 10, column 8: identifier "g" not declared */

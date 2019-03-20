@@ -14,4 +14,4 @@ main ()
   printf ("%d%d\n", bar (-1), bar(0));
 }
 
-/* cp-out: warning: [^:]*: line 14, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 14, column 2: identifier "printf" not declared */

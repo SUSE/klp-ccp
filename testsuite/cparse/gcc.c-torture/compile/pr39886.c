@@ -10,4 +10,4 @@ void bar (int p)
   func ((foo ((p & g) <= l), 1));
 }
 
-/* cp-out: warning: [^:]*: line 10, columns 2-6: identifier "func" not declared */
+/* cp-out: warning: [^:]*: line 10, column 2: identifier "func" not declared */

@@ -58,5 +58,5 @@ foo (long a, long b, long (* func) (long, long))
   return func (a, b);
 }
 
-/* cp-out: warning: [^:]*: line 44, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 46, columns 2-6: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 44, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 46, column 2: identifier "exit" not declared */

@@ -41,16 +41,16 @@ main()
   exit(0);
 }
 
-/* cp-out: warning: [^:]*: line 18, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 20, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 22, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 24, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 26, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 28, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 30, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 32, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 34, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 36, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 38, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 40, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 41, columns 2-6: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 18, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 20, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 22, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 24, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 26, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 28, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 30, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 32, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 34, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 36, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 38, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 40, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 41, column 2: identifier "exit" not declared */

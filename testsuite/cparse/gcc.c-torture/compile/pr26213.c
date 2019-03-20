@@ -14,4 +14,4 @@ xnanosleep (_Bool overflow)
     }
 }
 
-/* cp-out: warning: [^:]*: line 12, columns 10-13: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 12, column 10: identifier "foo" not declared */

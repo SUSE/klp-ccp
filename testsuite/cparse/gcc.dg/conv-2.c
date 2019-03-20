@@ -25,13 +25,13 @@ int main()
   scp = cp;	/* { dg-warning " pointer targets in assignment from 'char \\*' to 'signed char \\*' differ in signedness" } */
 }
 
-/* cp-out: warning: [^:]*: line 15, columns 8-10: pointers to different integer types in assignment */
-/* cp-out: warning: [^:]*: line 16, columns 7-10: pointers to different integer types in assignment */
-/* cp-out: warning: [^:]*: line 17, columns 5-8: pointers to different integer types in assignment */
-/* cp-out: warning: [^:]*: line 18, columns 5-7: pointers to different integer types in assignment */
-/* cp-out: warning: [^:]*: line 20, columns 7-10: pointers to different integer types in assignment */
-/* cp-out: warning: [^:]*: line 21, columns 7-10: pointers to different integer types in assignment */
-/* cp-out: warning: [^:]*: line 22, columns 8-11: pointers to different integer types in assignment */
-/* cp-out: warning: [^:]*: line 23, columns 8-10: pointers to different integer types in assignment */
-/* cp-out: warning: [^:]*: line 24, columns 8-11: pointers to different integer types in assignment */
-/* cp-out: warning: [^:]*: line 25, columns 8-10: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 15, column 8: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 16, column 7: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 17, column 5: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 18, column 5: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 20, column 7: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 21, column 7: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 22, column 8: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 23, column 8: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 24, column 8: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 25, column 8: pointers to different integer types in assignment */

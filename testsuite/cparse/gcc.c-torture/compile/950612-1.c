@@ -133,6 +133,6 @@ f (pc)
     }
 }
 
-/* cp-out: warning: [^:]*: line 116, columns 2-8: identifier "printf" not declared */
-/* cp-out: warning: [^:]*: line 132, columns 6-12: identifier "printf" not declared */
-/* cp-out: warning: [^:]*: line 31, columns 72-73: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 116, column 2: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 132, column 6: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 31, columns 72-79: integer overflow in shift operation */

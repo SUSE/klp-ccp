@@ -31,8 +31,8 @@ main ()
   exit (0);
 }
 
-/* cp-out: warning: [^:]*: line 4, columns 4-9: identifier "dummy" not declared */
-/* cp-out: warning: [^:]*: line 8, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 15, columns 4-9: identifier "dummy" not declared */
-/* cp-out: warning: [^:]*: line 19, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 31, columns 2-6: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 4, column 4: identifier "dummy" not declared */
+/* cp-out: warning: [^:]*: line 8, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 15, column 4: identifier "dummy" not declared */
+/* cp-out: warning: [^:]*: line 19, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 31, column 2: identifier "exit" not declared */

@@ -46,6 +46,6 @@ main ()
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 32, columns 9-15: identifier "malloc" not declared */
-/* cp-out: warning: [^:]*: line 44, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 32, columns 9-15: assignment to pointer from integer which is not NULL */
+/* cp-out: warning: [^:]*: line 32, column 9: identifier "malloc" not declared */
+/* cp-out: warning: [^:]*: line 44, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 32, columns 9-32: assignment to pointer from integer which is not NULL */

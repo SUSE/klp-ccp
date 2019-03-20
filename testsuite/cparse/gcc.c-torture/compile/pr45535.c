@@ -37,4 +37,4 @@ void clear_page_tables(struct mm_struct *mm, unsigned long first, int nr)
   } while (--nr);
 }
 
-/* cp-out: warning: [^:]*: line 27, columns 45-54: identifier "__pgd_val" not declared */
+/* cp-out: warning: [^:]*: line 27, column 45: identifier "__pgd_val" not declared */

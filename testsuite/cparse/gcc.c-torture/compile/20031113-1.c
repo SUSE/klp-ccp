@@ -19,5 +19,5 @@ simple_cst_equal ()
   return simple_cst_list_equal ();
 }
 
-/* cp-out: warning: [^:]*: line 7, columns 10-26: identifier "simple_cst_equal" not declared */
-/* cp-out: warning: [^:]*: line 12, columns 10-26: identifier "simple_cst_equal" not declared */
+/* cp-out: warning: [^:]*: line 7, column 10: identifier "simple_cst_equal" not declared */
+/* cp-out: warning: [^:]*: line 12, column 10: identifier "simple_cst_equal" not declared */

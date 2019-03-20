@@ -42,5 +42,5 @@ _Jv_strtod_r (struct _Jv_reent *ptr, char **se)
   }
 }
 
-/* cp-out: warning: [^:]*: line 24, columns 16-25: identifier "_Jv_ratio" not declared */
-/* cp-out: warning: [^:]*: line 34, columns 20-27: identifier "_Jv_ulp" not declared */
+/* cp-out: warning: [^:]*: line 24, column 16: identifier "_Jv_ratio" not declared */
+/* cp-out: warning: [^:]*: line 34, column 20: identifier "_Jv_ulp" not declared */

@@ -4,12 +4,12 @@
 #include <vector>
 #include "mp_arithmetic.hh"
 #include "types.hh"
+#include "pp_tokens_range.hh"
 
 namespace klp
 {
   namespace ccp
   {
-    class pp_token;
     class file_range;
 
     namespace ast
@@ -23,7 +23,7 @@ namespace klp
       virtual ~execution_charset_encoder() noexcept = default;
 
       std::vector<mpa::limbs>
-      encode_string(ast::ast &a, const pp_token &tok);
+      encode_string(ast::ast &a, const pp_token_index &tok_ix);
 
       types::std_int_type::kind get_target_char_kind() const noexcept
       { return _target_char_kind; }
@@ -34,7 +34,7 @@ namespace klp
 	noexcept;
 
       virtual std::vector<mpa::limbs>
-      encode_char(ast::ast &a, const file_range &file_range,
+      encode_char(ast::ast &a, const pp_token_index error_reporting_tok_ix,
 		  char32_t ucs4_char) = 0;
 
       mpa::limbs::size_type

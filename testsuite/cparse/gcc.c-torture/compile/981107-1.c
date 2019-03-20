@@ -8,4 +8,4 @@ unsigned long seed(void)
     return u;
 }
 
-/* cp-out: warning: [^:]*: line 5, columns 4-8: identifier "call" not declared */
+/* cp-out: warning: [^:]*: line 5, column 4: identifier "call" not declared */

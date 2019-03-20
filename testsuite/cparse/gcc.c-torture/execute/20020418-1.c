@@ -23,4 +23,4 @@ int main(void)
 	exit (0);
 }
 
-/* cp-out: warning: [^:]*: line 23, columns 1-5: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 23, column 1: identifier "exit" not declared */

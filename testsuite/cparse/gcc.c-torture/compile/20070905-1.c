@@ -33,4 +33,4 @@ foo (int x, int y)
   while ((y = bar (x, &m)) >= 0);
 }
 
-/* cp-out: warning: [^:]*: line 16, columns 9-10: assignment's source qualifiers are not a subset of target ones */
+/* cp-out: warning: [^:]*: line 16, columns 9-16: assignment's source qualifiers are not a subset of target ones */

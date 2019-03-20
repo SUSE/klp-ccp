@@ -40,4 +40,4 @@ test(char *ret, int *counter, void *schema,
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 35, columns 2-16: identifier "__snprintf_chk" not declared */
+/* cp-out: warning: [^:]*: line 35, column 2: identifier "__snprintf_chk" not declared */

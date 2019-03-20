@@ -17,4 +17,4 @@ void zzz (char *s1, char *s2, int len, int *q)
   foo (x, x);
 }
 
-/* cp-out: warning: [^:]*: line 17, columns 2-5: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 17, column 2: identifier "foo" not declared */

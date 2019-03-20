@@ -23,6 +23,6 @@ L2:
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 13, columns 18-24: identifier "printf" not declared */
-/* cp-out: warning: [^:]*: line 15, columns 8-14: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 13, column 18: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 15, column 8: identifier "printf" not declared */
 

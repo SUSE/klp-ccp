@@ -15,4 +15,4 @@ main()
   return j;
 }
 
-/* cp-out: warning: [^:]*: line 6, columns 4-7: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 6, column 4: identifier "bar" not declared */

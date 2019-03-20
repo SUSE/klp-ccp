@@ -26,4 +26,4 @@ static void pe_print_pdata (asection *section)
     }
 }
 
-/* cp-out: warning: [^:]*: line 25, columns 6-7: identifier "f" not declared */
+/* cp-out: warning: [^:]*: line 25, column 6: identifier "f" not declared */

@@ -3,4 +3,4 @@
 
 _Bool f(void) { return __INT_MAX__ + 1; }
 
-/* cp-out: warning: [^:]*: line 4, columns 23-34: integer overflow in addition */
+/* cp-out: warning: [^:]*: line 4, columns 23-38: integer overflow in addition */

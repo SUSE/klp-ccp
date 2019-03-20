@@ -7,4 +7,4 @@ f ()
   val[0] = c < a ? a : c >= 1.0 ? b : c;
 }
 
-/* cp-out: warning: [^:]*: line 6, columns 6-10: identifier "func" not declared */
+/* cp-out: warning: [^:]*: line 6, column 6: identifier "func" not declared */

@@ -37,6 +37,6 @@ void mthca_unmap_fmr(struct list_head *fmr_list)
   mthca_tavor_fmr_unmap(to_mfmr(fmr));
 }
 
-/* cp-out: warning: [^:]*: line 18, columns 5-21: identifier "mthca_is_memfree" not declared */
-/* cp-out: warning: [^:]*: line 27, columns 2-23: identifier "mthca_arbel_fmr_unmap" not declared */
-/* cp-out: warning: [^:]*: line 37, columns 2-23: identifier "mthca_tavor_fmr_unmap" not declared */
+/* cp-out: warning: [^:]*: line 18, column 5: identifier "mthca_is_memfree" not declared */
+/* cp-out: warning: [^:]*: line 27, column 2: identifier "mthca_arbel_fmr_unmap" not declared */
+/* cp-out: warning: [^:]*: line 37, column 2: identifier "mthca_tavor_fmr_unmap" not declared */

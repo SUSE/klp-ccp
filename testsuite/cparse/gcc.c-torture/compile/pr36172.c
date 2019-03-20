@@ -15,4 +15,4 @@ __SIZE_TYPE__ FcCharSetFreeze (int *fcs, int b)
   return (__SIZE_TYPE__) fcs;
 }
 
-/* cp-out: warning: [^:]*: line 13, columns 6-12: return without value in function returning non-void */
+/* cp-out: warning: [^:]*: line 13, columns 6-13: return without value in function returning non-void */

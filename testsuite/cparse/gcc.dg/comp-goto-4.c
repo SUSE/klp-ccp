@@ -8,7 +8,8 @@ void
 f (void)
 {
 L:
-  *&&L;
+
+	*&&L;
 }
 
 void
@@ -20,5 +21,5 @@ L:
    *p; /* { dg-warning "dereferencing 'void \\*' pointer" } */
 }
 
-/* cp-out: warning: [^:]*: line 11, columns 3-5: dereferencing pointer to incomplete type */
-/* cp-out: warning: [^:]*: line 20, columns 4-5: dereferencing pointer to incomplete type */
+/* cp-out: warning: [^:]*: line 12, columns 2-5: dereferencing pointer to incomplete type */
+/* cp-out: warning: [^:]*: line 21, column 4: dereferencing pointer to incomplete type */

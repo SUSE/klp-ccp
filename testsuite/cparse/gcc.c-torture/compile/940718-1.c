@@ -6,4 +6,4 @@ f (double x)
     exp(log(x));
 }
 
-/* cp-out: warning: [^:]*: line 6, columns 4-7: identifier "exp" not declared */
+/* cp-out: warning: [^:]*: line 6, column 4: identifier "exp" not declared */

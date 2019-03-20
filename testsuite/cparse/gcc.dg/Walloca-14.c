@@ -13,4 +13,4 @@ g (int *p)
   f (q);
 }
 
-/* cp-out: warning: [^:]*: line 11, columns 30-31: assignment to integer from pointer */
+/* cp-out: warning: [^:]*: line 11, column 30: assignment to integer from pointer */

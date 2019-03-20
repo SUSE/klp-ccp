@@ -11,9 +11,9 @@ move (a, b)
   gra (s);
 }
 
-/* cp-out: warning: [^:]*: line 7, columns 4-9: identifier "gurka" not declared */
-/* cp-out: warning: [^:]*: line 8, columns 2-5: identifier "foo" not declared */
-/* cp-out: warning: [^:]*: line 9, columns 6-9: identifier "bar" not declared */
-/* cp-out: warning: [^:]*: line 10, columns 6-9: identifier "bar" not declared */
-/* cp-out: warning: [^:]*: line 11, columns 2-5: identifier "gra" not declared */
+/* cp-out: warning: [^:]*: line 7, column 4: identifier "gurka" not declared */
+/* cp-out: warning: [^:]*: line 8, column 2: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 9, column 6: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 10, column 6: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 11, column 2: identifier "gra" not declared */
 

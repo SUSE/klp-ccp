@@ -12,6 +12,7 @@ struct g { int w; int x[0]; };
 
 static struct f f = { 4, { 0, 1, 2, 3 } };
 static int junk1[] = { -1, -1, -1, -1 };
+
 static struct g g = { 4, { 0, 1, 2, 3 } }; /* { dg-warning "(excess elements)|(near initialization)" } */
 static int junk2[] = { -1, -1, -1, -1 };
 
@@ -24,5 +25,5 @@ int main()
   exit(0);
 }
 
-/* cp-out: warning: [^:]*: line 15, columns 27-28: excess elements in intializer */
+/* cp-out: warning: [^:]*: line 16, columns 27-37: excess elements in intializer */
 

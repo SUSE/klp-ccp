@@ -9,4 +9,4 @@ void bar(long* lp) {
   foo(lp); /* { dg-warning "differ in signedness" } */
 }
 
-/* cp-out: warning: [^:]*: line 9, columns 6-8: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 9, column 6: pointers to different integer types in assignment */

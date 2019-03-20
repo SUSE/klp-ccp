@@ -36,4 +36,4 @@ void XtTextUnsetSelection(w)
     }
 }
 
-/* cp-out: warning: [^:]*: line 34, columns 1-4: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 34, column 1: identifier "foo" not declared */

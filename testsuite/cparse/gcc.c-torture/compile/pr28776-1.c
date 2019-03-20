@@ -15,4 +15,4 @@ void output_call_frame_info (void)
     }
 }
 
-/* cp-out: warning: [^:]*: line 14, columns 6-39: identifier "tree_contains_struct_check_failed" not declared */
+/* cp-out: warning: [^:]*: line 14, column 6: identifier "tree_contains_struct_check_failed" not declared */

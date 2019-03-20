@@ -8,5 +8,5 @@ foo (a, b, c)
   }
 }
 
-/* cp-out: warning: [^:]*: line 3, columns 2-5: identifier "bar" not declared */
-/* cp-out: warning: [^:]*: line 7, columns 4-7: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 3, column 2: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 7, column 4: identifier "bar" not declared */

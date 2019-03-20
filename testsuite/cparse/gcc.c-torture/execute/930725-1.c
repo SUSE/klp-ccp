@@ -20,6 +20,6 @@ main ()
   abort();
 }
 
-/* cp-out: warning: [^:]*: line 18, columns 7-13: identifier "strcmp" not declared */
-/* cp-out: warning: [^:]*: line 19, columns 4-8: identifier "exit" not declared */
-/* cp-out: warning: [^:]*: line 20, columns 2-7: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 18, column 7: identifier "strcmp" not declared */
+/* cp-out: warning: [^:]*: line 19, column 4: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 20, column 2: identifier "abort" not declared */

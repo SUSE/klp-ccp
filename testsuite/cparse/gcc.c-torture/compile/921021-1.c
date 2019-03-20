@@ -11,4 +11,4 @@ g();
 }
 }
 
-/* cp-out: warning: [^:]*: line 8, columns 2-3: identifier "h" not declared */
+/* cp-out: warning: [^:]*: line 8, column 2: identifier "h" not declared */

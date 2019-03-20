@@ -174,16 +174,16 @@ _swrast_choose_texture_sample_func (const struct gl_texture_object *t)
 	}
 }
 
-/* cp-out: warning: [^:]*: line 84, columns 16-35: identifier "linear_mipmap_level" not declared */
-/* cp-out: warning: [^:]*: line 85, columns 2-19: identifier "sample_2d_nearest" not declared */
-/* cp-out: warning: [^:]*: line 87, columns 2-19: identifier "sample_2d_nearest" not declared */
-/* cp-out: warning: [^:]*: line 88, columns 2-19: identifier "sample_2d_nearest" not declared */
-/* cp-out: warning: [^:]*: line 100, columns 20-39: identifier "linear_mipmap_level" not declared */
-/* cp-out: warning: [^:]*: line 104, columns 36-42: identifier "ifloor" not declared */
-/* cp-out: warning: [^:]*: line 123, columns 2-24: identifier "compute_min_mag_ranges" not declared */
-/* cp-out: warning: [^:]*: line 134, columns 4-21: identifier "opt_sample_rgb_2d" not declared */
-/* cp-out: warning: [^:]*: line 137, columns 4-22: identifier "opt_sample_rgba_2d" not declared */
-/* cp-out: warning: [^:]*: line 141, columns 7-24: identifier "sample_nearest_2d" not declared */
-/* cp-out: warning: [^:]*: line 158, columns 4-21: identifier "opt_sample_rgb_2d" not declared */
-/* cp-out: warning: [^:]*: line 160, columns 4-22: identifier "opt_sample_rgba_2d" not declared */
-/* cp-out: warning: [^:]*: line 162, columns 18-35: identifier "sample_nearest_2d" not declared */
+/* cp-out: warning: [^:]*: line 84, column 16: identifier "linear_mipmap_level" not declared */
+/* cp-out: warning: [^:]*: line 85, column 2: identifier "sample_2d_nearest" not declared */
+/* cp-out: warning: [^:]*: line 87, column 2: identifier "sample_2d_nearest" not declared */
+/* cp-out: warning: [^:]*: line 88, column 2: identifier "sample_2d_nearest" not declared */
+/* cp-out: warning: [^:]*: line 100, column 20: identifier "linear_mipmap_level" not declared */
+/* cp-out: warning: [^:]*: line 104, column 36: identifier "ifloor" not declared */
+/* cp-out: warning: [^:]*: line 123, column 2: identifier "compute_min_mag_ranges" not declared */
+/* cp-out: warning: [^:]*: line 134, column 4: identifier "opt_sample_rgb_2d" not declared */
+/* cp-out: warning: [^:]*: line 137, column 4: identifier "opt_sample_rgba_2d" not declared */
+/* cp-out: warning: [^:]*: line 141, column 7: identifier "sample_nearest_2d" not declared */
+/* cp-out: warning: [^:]*: line 158, column 4: identifier "opt_sample_rgb_2d" not declared */
+/* cp-out: warning: [^:]*: line 160, column 4: identifier "opt_sample_rgba_2d" not declared */
+/* cp-out: warning: [^:]*: line 162, column 18: identifier "sample_nearest_2d" not declared */

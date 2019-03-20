@@ -10,4 +10,4 @@ int cmd_unaligned(const void *p)
 }
 
 
-/* cp-out: warning: [^:]*: line 9, columns 9-15: identifier "memcmp" not declared */
+/* cp-out: warning: [^:]*: line 9, column 9: identifier "memcmp" not declared */

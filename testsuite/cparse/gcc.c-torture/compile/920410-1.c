@@ -29,4 +29,4 @@ main()
   printf("%g\n",(double)c_float(z));
 }
 
-/* cp-out: warning: [^:]*: line 29, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 29, column 2: identifier "printf" not declared */

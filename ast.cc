@@ -1,7 +1,6 @@
 #include <cassert>
 #include "ast_impl.hh"
 #include "ast_processor.hh"
-#include "code_remark.hh"
 #include "semantic_except.hh"
 
 using namespace klp::ccp::ast;
@@ -4677,11 +4676,10 @@ storage_class declaration_specifiers::get_storage_class(ast &ast) const
     if (sc == storage_class::sc_none) {
       sc = scs.get().get_storage_class();
     } else if (sc != scs.get().get_storage_class()) {
-      const pp_token &scs_tok =
-	ast.get_pp_tokens()[scs.get().get_tokens_range().begin];
-      code_remark remark(code_remark::severity::fatal,
-			 "conflicting storage class specifiers",
-			 scs_tok.get_file_range());
+      code_remark_pp remark(code_remark_pp::severity::fatal,
+			    "conflicting storage class specifiers",
+			    ast.get_pp_tokens(),
+			    scs.get().get_tokens_range());
       ast.get_remarks().add(remark);
       throw semantic_except(remark);
     }

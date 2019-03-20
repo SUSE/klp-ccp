@@ -25,6 +25,6 @@ repeat:
         }
 }
 
-/* cp-out: warning: [^:]*: line 17, columns 28-50: identifier "add_output_space_event" not declared */
-/* cp-out: warning: [^:]*: line 18, columns 32-44: identifier "del_tux_atom" not declared */
-/* cp-out: warning: [^:]*: line 24, columns 24-44: identifier "add_req_to_workqueue" not declared */
+/* cp-out: warning: [^:]*: line 17, column 28: identifier "add_output_space_event" not declared */
+/* cp-out: warning: [^:]*: line 18, column 32: identifier "del_tux_atom" not declared */
+/* cp-out: warning: [^:]*: line 24, column 24: identifier "add_req_to_workqueue" not declared */

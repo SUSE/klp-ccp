@@ -30,4 +30,4 @@ doSignalsSetup (void)
     }
 }
 
-/* cp-out: warning: [^:]*: line 29, columns 6-17: identifier "sigemptyset" not declared */
+/* cp-out: warning: [^:]*: line 29, column 6: identifier "sigemptyset" not declared */

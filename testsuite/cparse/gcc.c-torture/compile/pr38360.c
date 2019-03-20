@@ -9,5 +9,5 @@ main ()
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 7, columns 2-7: identifier "fputs" not declared */
-/* cp-out: warning: [^:]*: line 8, columns 2-16: identifier "fputs_unlocked" not declared */
+/* cp-out: warning: [^:]*: line 7, column 2: identifier "fputs" not declared */
+/* cp-out: warning: [^:]*: line 8, column 2: identifier "fputs_unlocked" not declared */

@@ -13,4 +13,4 @@ f (int *re)
     re[(dat0 >> 2) & 3] = 0;
 }
 
-/* cp-out: warning: [^:]*: line 10, columns 2-3: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 10, column 2: identifier "g" not declared */

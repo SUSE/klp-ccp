@@ -10,4 +10,4 @@ f (void)
   ((void)(sizeof(struct { int i:!!m; }))); /* { dg-warning "not an integer constant expression" } */
 }
 
-/* cp-out: error: [^:]*: line 10, columns 32-33: bit-field width is not a constant expression */
+/* cp-out: error: [^:]*: line 10, columns 32-35: bit-field width is not a constant expression */

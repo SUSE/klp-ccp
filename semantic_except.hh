@@ -3,7 +3,7 @@
 
 #include <exception>
 #include <string>
-#include "code_remark.hh"
+#include "code_remark_pp.hh"
 
 namespace klp
 {
@@ -12,7 +12,7 @@ namespace klp
     class semantic_except : std::exception
     {
     public:
-      semantic_except(const code_remark &remark);
+      semantic_except(const code_remark_pp &remark);
       semantic_except(semantic_except &&) = default;
 
       virtual ~semantic_except() noexcept;

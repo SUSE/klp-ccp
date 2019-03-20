@@ -57,10 +57,10 @@ func_77 (int64_t p_79)
     }
 }
 
-/* cp-out: warning: [^:]*: line 36, columns 6-13: identifier "mod_rhs" not declared */
-/* cp-out: warning: [^:]*: line 42, columns 6-16: identifier "lshift_s_s" not declared */
-/* cp-out: warning: [^:]*: line 42, columns 21-29: identifier "func_112" not declared */
-/* cp-out: warning: [^:]*: line 48, columns 10-17: identifier "func_23" not declared */
-/* cp-out: warning: [^:]*: line 53, columns 19-26: identifier "func_82" not declared */
-/* cp-out: warning: [^:]*: line 54, columns 18-25: identifier "func_82" not declared */
-/* cp-out: warning: [^:]*: line 55, columns 36-44: identifier "func_112" not declared */
+/* cp-out: warning: [^:]*: line 36, column 6: identifier "mod_rhs" not declared */
+/* cp-out: warning: [^:]*: line 42, column 6: identifier "lshift_s_s" not declared */
+/* cp-out: warning: [^:]*: line 42, column 21: identifier "func_112" not declared */
+/* cp-out: warning: [^:]*: line 48, column 10: identifier "func_23" not declared */
+/* cp-out: warning: [^:]*: line 53, column 19: identifier "func_82" not declared */
+/* cp-out: warning: [^:]*: line 54, column 18: identifier "func_82" not declared */
+/* cp-out: warning: [^:]*: line 55, column 36: identifier "func_112" not declared */

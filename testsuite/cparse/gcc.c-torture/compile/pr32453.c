@@ -10,4 +10,4 @@ void ucs2reverse_internal_loop_single (long *irreversible, int foo)
 	((inptr - bytebuf > foo) ? (void) (0) : __assert_fail ());
 }
 
-/* cp-out: warning: [^:]*: line 10, columns 41-54: identifier "__assert_fail" not declared */
+/* cp-out: warning: [^:]*: line 10, column 41: identifier "__assert_fail" not declared */

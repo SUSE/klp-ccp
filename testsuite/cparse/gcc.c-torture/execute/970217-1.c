@@ -9,4 +9,4 @@ main()
   exit (sub (10, array) != 11);
 }
 
-/* cp-out: warning: [^:]*: line 9, columns 2-6: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 9, column 2: identifier "exit" not declared */

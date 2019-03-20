@@ -16,5 +16,5 @@ main()
     }
 }
 
-/* cp-out: warning: [^:]*: line 6, columns 4-8: identifier "exit" not declared */
-/* cp-out: warning: [^:]*: line 8, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 6, column 4: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 8, column 4: identifier "abort" not declared */

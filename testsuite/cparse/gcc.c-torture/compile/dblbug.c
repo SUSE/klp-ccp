@@ -20,4 +20,4 @@ immed_real_const_1 (d)
   foo (&(r->zzzz), &u);
 }
 
-/* cp-out: warning: [^:]*: line 20, columns 2-5: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 20, column 2: identifier "foo" not declared */

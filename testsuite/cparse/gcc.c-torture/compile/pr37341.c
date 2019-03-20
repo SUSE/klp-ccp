@@ -34,4 +34,4 @@ f4 (unsigned int x)
     }
 }
 
-/* cp-out: warning: [^:]*: line 24, columns 9-10: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 24, columns 9-27: integer overflow in cast */

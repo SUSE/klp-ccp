@@ -15,5 +15,5 @@ int main(int argv, char*argc) {
     printf(" divisor  >>: %ld\n", d2);
 }
 
-/* cp-out: warning: [^:]*: line 11, columns 11-12: integer overflow in cast */
-/* cp-out: warning: [^:]*: line 13, columns 11-12: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 11, columns 11-28: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 13, columns 11-28: integer overflow in cast */

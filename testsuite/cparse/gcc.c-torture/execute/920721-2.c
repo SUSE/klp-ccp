@@ -2,4 +2,4 @@
 f(){}
 main(){int n=2;double x[n];f();exit(0);}
 
-/* cp-out: warning: [^:]*: line 3, columns 31-35: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 3, column 31: identifier "exit" not declared */

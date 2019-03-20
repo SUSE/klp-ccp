@@ -7,4 +7,4 @@ x (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, x, y)
   return a+b+c+d+e+f+g+h+i+j+k+l+m+n+o+p+q+r+s+t+u+v+x+y;
 }
 
-/* cp-out: warning: [^:]*: line 6, columns 2-5: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 6, column 2: identifier "foo" not declared */

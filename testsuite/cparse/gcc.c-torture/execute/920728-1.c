@@ -23,6 +23,6 @@ f(unsigned long obj)
 long g(){return 0xff000000L;}
 main (){int x;f(g());exit(0);}
 
-/* cp-out: warning: [^:]*: line 9, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 24, columns 21-25: identifier "exit" not declared */
-/* cp-out: warning: [^:]*: line 11, columns 21-27: return without value in function returning non-void */
+/* cp-out: warning: [^:]*: line 9, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 24, column 21: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 11, columns 21-28: return without value in function returning non-void */

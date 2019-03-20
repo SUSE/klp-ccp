@@ -17,5 +17,5 @@ _mesa_DrawPixels (int width, int height, unsigned format,
     }
 }
 
-/* cp-out: warning: [^:]*: line 8, columns 6-11: identifier "func1" not declared */
-/* cp-out: warning: [^:]*: line 15, columns 6-11: identifier "func2" not declared */
+/* cp-out: warning: [^:]*: line 8, column 6: identifier "func1" not declared */
+/* cp-out: warning: [^:]*: line 15, column 6: identifier "func2" not declared */

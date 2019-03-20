@@ -27,5 +27,5 @@ f()
     smap[l] = l > 0 ? 1 + foo(sin(.1 * l / sx)) : 1 - foo(sin(.1 * l / sm));
 }
 
-/* cp-out: warning: [^:]*: line 27, columns 26-29: identifier "foo" not declared */
-/* cp-out: warning: [^:]*: line 27, columns 54-57: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 27, column 26: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 27, column 54: identifier "foo" not declared */

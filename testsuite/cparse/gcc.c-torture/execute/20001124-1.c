@@ -75,6 +75,6 @@ main(int argc, char **argv)
 	abort ();
 }
 
-/* cp-out: warning: [^:]*: line 21, columns 3-8: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 22, columns 1-5: identifier "exit" not declared */
-/* cp-out: warning: [^:]*: line 75, columns 1-6: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 21, column 3: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 22, column 1: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 75, column 1: identifier "abort" not declared */

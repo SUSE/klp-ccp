@@ -11,4 +11,4 @@ void foo ()
       }
 }
 
-/* cp-out: warning: [^:]*: line 9, columns 1-4: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 9, column 1: identifier "bar" not declared */

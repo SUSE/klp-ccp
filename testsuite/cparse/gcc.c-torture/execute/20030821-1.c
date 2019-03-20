@@ -15,4 +15,4 @@ main ()
   return foo (0x8000fffe);
 }
 
-/* cp-out: warning: [^:]*: line 6, columns 32-33: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 6, columns 32-50: integer overflow in cast */

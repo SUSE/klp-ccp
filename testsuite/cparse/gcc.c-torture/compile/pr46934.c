@@ -16,7 +16,7 @@ int caller (unsigned int reg_type)
     }
 }
 
-/* cp-out: warning: [^:]*: line 6, columns 18-21: identifier "foo" not declared */
-/* cp-out: warning: [^:]*: line 9, columns 19-22: identifier "bar" not declared */
-/* cp-out: warning: [^:]*: line 12, columns 19-22: identifier "baz" not declared */
-/* cp-out: warning: [^:]*: line 15, columns 19-23: identifier "fooz" not declared */
+/* cp-out: warning: [^:]*: line 6, column 18: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 9, column 19: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 12, column 19: identifier "baz" not declared */
+/* cp-out: warning: [^:]*: line 15, column 19: identifier "fooz" not declared */

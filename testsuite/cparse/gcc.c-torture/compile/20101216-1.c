@@ -31,4 +31,4 @@ __kernel_sin();
      }
 }
 
-/* cp-out: warning: [^:]*: line 30, columns 0-12: identifier "__kernel_sin" not declared */
+/* cp-out: warning: [^:]*: line 30, column 0: identifier "__kernel_sin" not declared */

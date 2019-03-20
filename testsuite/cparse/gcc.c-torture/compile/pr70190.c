@@ -12,4 +12,4 @@ fn1 ()
  l2: return 0;
 }
 
-/* cp-out: warning: [^:]*: line 11, columns 11-12: dereferencing integer at computed goto */
+/* cp-out: warning: [^:]*: line 11, columns 11-17: dereferencing integer at computed goto */

@@ -5,4 +5,4 @@ void foo ()
   bar (&x2 - &x1, &x3 - &x2);
 }
 
-/* cp-out: warning: [^:]*: line 5, columns 2-5: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 5, column 2: identifier "bar" not declared */

@@ -54,6 +54,6 @@ void DES_encrypt1 (long *, DES_key_schedule *, int);
      }
  }
 
-/* cp-out: warning: [^:]*: line 25, columns 18-21: pointers to different integer types in assignment */
-/* cp-out: warning: [^:]*: line 26, columns 18-21: pointers to different integer types in assignment */
-/* cp-out: warning: [^:]*: line 38, columns 18-21: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 25, column 18: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 26, column 18: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 38, column 18: pointers to different integer types in assignment */

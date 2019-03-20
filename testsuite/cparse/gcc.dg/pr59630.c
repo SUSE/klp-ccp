@@ -7,4 +7,4 @@ _Bool foo()
   return f(0);
 }
 
-/* cp-out: error: [^:]*: line 6, columns 20-33: invalid type for assignment target */
+/* cp-out: error: [^:]*: line 6, column 20: invalid type for assignment target */

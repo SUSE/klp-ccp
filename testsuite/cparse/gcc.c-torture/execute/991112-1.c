@@ -18,6 +18,6 @@ int main(void)
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 8, columns 9-16: identifier "isprint" not declared */
-/* cp-out: warning: [^:]*: line 15, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 17, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 8, column 9: identifier "isprint" not declared */
+/* cp-out: warning: [^:]*: line 15, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 17, column 4: identifier "abort" not declared */

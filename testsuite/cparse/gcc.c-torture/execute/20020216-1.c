@@ -23,6 +23,6 @@ int main (void)
   exit (0);
 }
 
-/* cp-out: warning: [^:]*: line 8, columns 16-17: integer overflow in cast */
-/* cp-out: warning: [^:]*: line 12, columns 30-31: integer overflow in cast */
-/* cp-out: warning: [^:]*: line 21, columns 16-17: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 8, columns 16-40: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 12, columns 30-54: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 21, columns 16-32: integer overflow in cast */

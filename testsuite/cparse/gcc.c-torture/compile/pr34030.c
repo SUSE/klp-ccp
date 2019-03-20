@@ -7,4 +7,4 @@ int foo(int mynum)
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 5, columns 22-23: pointer comparison against non-NULL integer */
+/* cp-out: warning: [^:]*: line 5, columns 22-50: pointer comparison against non-NULL integer */

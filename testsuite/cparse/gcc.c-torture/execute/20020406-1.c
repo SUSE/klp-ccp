@@ -125,6 +125,6 @@ int main()
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 67, columns 2-8: identifier "printf" not declared */
-/* cp-out: warning: [^:]*: line 69, columns 44-49: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 123, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 67, column 2: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 69, column 44: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 123, column 2: identifier "printf" not declared */

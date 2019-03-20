@@ -10,5 +10,5 @@ main ()
   foo (5);
 }
 
-/* cp-out: warning: [^:]*: line 4, columns 4-7: identifier "bar" not declared */
-/* cp-out: warning: [^:]*: line 5, columns 2-9: identifier "putchar" not declared */
+/* cp-out: warning: [^:]*: line 4, column 4: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 5, column 2: identifier "putchar" not declared */

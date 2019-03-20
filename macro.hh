@@ -8,7 +8,6 @@
 #include <map>
 #include "pp_tokens.hh"
 #include "file_range.hh"
-#include "code_remark.hh"
 #include "code_remarks.hh"
 
 namespace klp

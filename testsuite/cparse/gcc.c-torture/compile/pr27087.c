@@ -22,4 +22,4 @@ void doViews(void) {
     g();
 }
 
-/* cp-out: warning: [^:]*: line 22, columns 4-5: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 22, column 4: identifier "g" not declared */

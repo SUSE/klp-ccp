@@ -20,5 +20,5 @@ void f() {
     z();
 }
 
-/* cp-out: warning: [^:]*: line 17, columns 5-6: comparison between incompatible pointers without cast */
-/* cp-out: warning: [^:]*: line 19, columns 5-6: comparison between incompatible pointers without cast */
+/* cp-out: warning: [^:]*: line 17, columns 5-18: comparison between incompatible pointers without cast */
+/* cp-out: warning: [^:]*: line 19, columns 5-17: comparison between incompatible pointers without cast */

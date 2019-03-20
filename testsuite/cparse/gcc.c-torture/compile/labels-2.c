@@ -11,5 +11,5 @@ L2:abort ();
 L3:;
 }
 
-/* cp-out: warning: [^:]*: line 8, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 10, columns 3-8: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 8, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 10, column 3: identifier "abort" not declared */

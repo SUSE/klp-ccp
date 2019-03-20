@@ -17,4 +17,4 @@ uname(name)
 	}
 }
 
-/* cp-out: warning: [^:]*: line 13, columns 5-11: identifier "sysctl" not declared */
+/* cp-out: warning: [^:]*: line 13, column 5: identifier "sysctl" not declared */

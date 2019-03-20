@@ -12,4 +12,4 @@ main ()
     write (1, audio, 8192);
 }
 
-/* cp-out: warning: [^:]*: line 12, columns 4-9: identifier "write" not declared */
+/* cp-out: warning: [^:]*: line 12, column 4: identifier "write" not declared */

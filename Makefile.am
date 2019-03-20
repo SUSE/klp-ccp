@@ -18,7 +18,7 @@ noinst_HEADERS =				\
 	builtins.hh				\
 	callables_wrapper.hh			\
 	code_remark_raw.hh			\
-	code_remark.hh				\
+	code_remark_pp.hh			\
 	code_remarks.hh			\
 	constexpr_value.hh			\
 	cow_set.hh				\
@@ -61,7 +61,7 @@ libcp_a_SOURCES =				\
 	ast_resolve.cc				\
 	builtins.cc				\
 	code_remark_raw.cc			\
-	code_remark.cc				\
+	code_remark_pp.cc			\
 	code_remarks.cc			\
 	constexpr_value.cc			\
 	execution_charset_encoder.cc		\

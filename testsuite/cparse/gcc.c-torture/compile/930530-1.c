@@ -4,4 +4,4 @@ f ()
   g (x, x, x, x);
 }
 
-/* cp-out: warning: [^:]*: line 4, columns 2-3: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 4, column 2: identifier "g" not declared */

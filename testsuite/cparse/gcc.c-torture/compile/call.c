@@ -8,6 +8,6 @@ main (a, b)
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 7, columns 7-10: wrong number of arguments to function invocation */
-/* cp-out: warning: [^:]*: line 7, columns 19-22: wrong number of arguments to function invocation */
-/* cp-out: warning: [^:]*: line 7, columns 2-5: wrong number of arguments to function invocation */
+/* cp-out: warning: [^:]*: line 7, columns 7-17: wrong number of arguments to function invocation */
+/* cp-out: warning: [^:]*: line 7, columns 19-29: wrong number of arguments to function invocation */
+/* cp-out: warning: [^:]*: line 7, columns 2-30: wrong number of arguments to function invocation */

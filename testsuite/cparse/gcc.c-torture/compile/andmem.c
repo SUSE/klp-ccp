@@ -21,7 +21,7 @@ main ()
   a = 0x12345678;  p4 (&a);  printf ("%x\n", a);
 }
 
-/* cp-out: warning: [^:]*: line 18, columns 29-35: identifier "printf" not declared */
-/* cp-out: warning: [^:]*: line 19, columns 29-35: identifier "printf" not declared */
-/* cp-out: warning: [^:]*: line 20, columns 29-35: identifier "printf" not declared */
-/* cp-out: warning: [^:]*: line 21, columns 29-35: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 18, column 29: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 19, column 29: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 20, column 29: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 21, column 29: identifier "printf" not declared */

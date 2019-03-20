@@ -12,4 +12,4 @@ int foo (void)
 
 /* { dg-final { scan-tree-dump "\\\[-INF, 0\\\]" "vrp1" } } */
 
-/* cp-out: warning: [^:]*: line 7, columns 19-22: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 7, columns 19-46: integer overflow in shift operation */

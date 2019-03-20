@@ -58,8 +58,8 @@ baz (struct B *y)
     }
 }
 
-/* cp-out: warning: [^:]*: line 25, columns 4-6: identifier "f1" not declared */
-/* cp-out: warning: [^:]*: line 47, columns 10-12: identifier "f2" not declared */
-/* cp-out: warning: [^:]*: line 53, columns 12-14: identifier "f2" not declared */
-/* cp-out: warning: [^:]*: line 57, columns 8-10: identifier "f2" not declared */
-/* cp-out: warning: [^:]*: line 46, columns 15-16: incompatible pointer types in assignment */
+/* cp-out: warning: [^:]*: line 25, column 4: identifier "f1" not declared */
+/* cp-out: warning: [^:]*: line 47, column 10: identifier "f2" not declared */
+/* cp-out: warning: [^:]*: line 53, column 12: identifier "f2" not declared */
+/* cp-out: warning: [^:]*: line 57, column 8: identifier "f2" not declared */
+/* cp-out: warning: [^:]*: line 46, columns 15-17: incompatible pointer types in assignment */

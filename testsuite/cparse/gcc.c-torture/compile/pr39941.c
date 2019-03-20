@@ -10,4 +10,4 @@ void bsd_boot (void)
   (*entry_addr) ();
 }
 
-/* cp-out: warning: [^:]*: line 5, columns 2-6: identifier "stop" not declared */
+/* cp-out: warning: [^:]*: line 5, column 2: identifier "stop" not declared */

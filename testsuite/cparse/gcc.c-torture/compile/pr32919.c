@@ -27,6 +27,6 @@ do_form_float:
   while (*f != '\0');
 }
 
-/* cp-out: warning: [^:]*: line 13, columns 5-13: identifier "read_int" not declared */
-/* cp-out: warning: [^:]*: line 15, columns 4-14: identifier "_itoa_word" not declared */
-/* cp-out: warning: [^:]*: line 23, columns 6-15: identifier "__strnlen" not declared */
+/* cp-out: warning: [^:]*: line 13, column 5: identifier "read_int" not declared */
+/* cp-out: warning: [^:]*: line 15, column 4: identifier "_itoa_word" not declared */
+/* cp-out: warning: [^:]*: line 23, column 6: identifier "__strnlen" not declared */

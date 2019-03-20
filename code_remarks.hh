@@ -5,7 +5,7 @@
 #include <ios>
 
 #include "code_remark_raw.hh"
-#include "code_remark.hh"
+#include "code_remark_pp.hh"
 
 namespace klp
 {
@@ -14,8 +14,8 @@ namespace klp
     class code_remarks
     {
     public:
-      void add(const code_remark &r);
-      void add(code_remark &&r);
+      void add(const code_remark_pp &r);
+      void add(code_remark_pp &&r);
       void add(const code_remark_raw &r);
       void add(code_remark_raw &&r);
       void clear() noexcept;
@@ -28,7 +28,7 @@ namespace klp
 
     private:
       std::vector<code_remark_raw> _remarks_raw;
-      std::vector<code_remark> _remarks;
+      std::vector<code_remark_pp> _remarks_pp;
     };
 
     std::ostream& operator<<(std::ostream &o, const code_remarks &rs);

@@ -199,14 +199,14 @@ main (void)
   exit (0);
 }
 
-/* cp-out: warning: [^:]*: line 178, columns 5-10: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 180, columns 5-10: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 182, columns 5-10: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 184, columns 5-10: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 186, columns 5-10: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 188, columns 5-10: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 190, columns 5-10: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 192, columns 5-10: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 194, columns 5-10: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 196, columns 5-10: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 199, columns 2-6: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 178, column 5: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 180, column 5: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 182, column 5: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 184, column 5: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 186, column 5: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 188, column 5: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 190, column 5: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 192, column 5: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 194, column 5: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 196, column 5: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 199, column 2: identifier "exit" not declared */

@@ -25,4 +25,4 @@ int encode_line(void)
     put_symbol(c, p->state[a]);
 }
 
-/* cp-out: warning: [^:]*: line 25, columns 18-19: assigning pointers to integer types of different width */
+/* cp-out: warning: [^:]*: line 25, columns 18-29: assigning pointers to integer types of different width */

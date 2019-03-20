@@ -32,5 +32,5 @@ test_2 (void)
    { dg-end-multiline-output "" } */
 }
 
-/* cp-out: warning: [^:]*: line 12, columns 9-15: identifier "ssacnf" not declared */
-/* cp-out: warning: [^:]*: line 27, columns 9-14: identifier "sacnf" not declared */
+/* cp-out: warning: [^:]*: line 12, column 9: identifier "ssacnf" not declared */
+/* cp-out: warning: [^:]*: line 27, column 9: identifier "sacnf" not declared */

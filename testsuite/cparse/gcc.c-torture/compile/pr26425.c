@@ -8,4 +8,4 @@ void keyring_destroy(struct keyring_list *keyring, unsigned short a)
    key_put(keyring->keys[loop]);
 }
 
-/* cp-out: warning: [^:]*: line 8, columns 3-10: identifier "key_put" not declared */
+/* cp-out: warning: [^:]*: line 8, column 3: identifier "key_put" not declared */

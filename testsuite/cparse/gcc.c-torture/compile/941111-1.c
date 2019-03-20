@@ -7,5 +7,5 @@ main ()
     bar ();
 }
 
-/* cp-out: warning: [^:]*: line 5, columns 2-5: identifier "foo" not declared */
-/* cp-out: warning: [^:]*: line 7, columns 4-7: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 5, column 2: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 7, column 4: identifier "bar" not declared */

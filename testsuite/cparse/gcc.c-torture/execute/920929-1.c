@@ -13,4 +13,4 @@ f(100);
 exit(0);
 }
 
-/* cp-out: warning: [^:]*: line 13, columns 0-4: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 13, column 0: identifier "exit" not declared */

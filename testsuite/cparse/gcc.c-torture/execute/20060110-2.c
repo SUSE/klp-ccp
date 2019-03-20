@@ -18,4 +18,4 @@ main ()
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 11, columns 15-16: integer overflow in shift operation */
+/* cp-out: warning: [^:]*: line 11, columns 15-66: integer overflow in shift operation */

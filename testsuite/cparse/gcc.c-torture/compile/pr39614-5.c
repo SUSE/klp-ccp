@@ -7,5 +7,5 @@ f (void)
   i = (1 / 0, 1 / 0);
 }
 
-/* cp-out: warning: [^:]*: line 7, columns 11-12: division by zero */
-/* cp-out: warning: [^:]*: line 7, columns 18-19: division by zero */
+/* cp-out: warning: [^:]*: line 7, columns 7-12: division by zero */
+/* cp-out: warning: [^:]*: line 7, columns 14-19: division by zero */

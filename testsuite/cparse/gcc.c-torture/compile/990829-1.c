@@ -12,4 +12,4 @@ bar()
   foo(&y);
 }
 
-/* cp-out: warning: [^:]*: line 12, columns 2-5: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 12, column 2: identifier "foo" not declared */

@@ -93,6 +93,6 @@ tryagain:
  return (ret);
 }
 
-/* cp-out: warning: [^:]*: line 74, columns 35-43: identifier "regcurly" not declared */
-/* cp-out: warning: [^:]*: line 79, columns 19-25: identifier "reguni" not declared */
-/* cp-out: warning: [^:]*: line 86, columns 11-17: identifier "reguni" not declared */
+/* cp-out: warning: [^:]*: line 74, column 35: identifier "regcurly" not declared */
+/* cp-out: warning: [^:]*: line 79, column 19: identifier "reguni" not declared */
+/* cp-out: warning: [^:]*: line 86, column 11: identifier "reguni" not declared */

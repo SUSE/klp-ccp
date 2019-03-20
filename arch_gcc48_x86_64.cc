@@ -200,21 +200,19 @@ void arch_gcc48_x86_64::evaluate_enum_type(ast::ast &a, types::enum_content &ec,
       min_prec = std::max(min_prec, v.min_required_width() - v_is_negative);
 
       if (min_prec + is_any_signed > 64) {
-	const pp_token &tok =
-	  a.get_pp_tokens()[m.get_enumerator().get_tokens_range().begin];
-	code_remark remark (code_remark::severity::fatal,
-			    "enumerator value out of bounds",
-			    tok.get_file_range());
+	code_remark_pp remark (code_remark_pp::severity::fatal,
+			       "enumerator value out of bounds",
+			       a.get_pp_tokens(),
+			       m.get_enumerator().get_tokens_range());
 	a.get_remarks().add(remark);
 	throw semantic_except(remark);
 
       } else if (mode != int_mode_kind::imk_none &&
 		 min_prec + is_any_signed > width) {
-	const pp_token &tok =
-	  a.get_pp_tokens()[m.get_enumerator().get_tokens_range().begin];
-	code_remark remark (code_remark::severity::fatal,
-			    "enumerator value exceeds specified integer mode",
-			    tok.get_file_range());
+	code_remark_pp remark(code_remark_pp::severity::fatal,
+			      "enumerator value exceeds specified integer mode",
+			      a.get_pp_tokens(),
+			      m.get_enumerator().get_tokens_range());
 	a.get_remarks().add(remark);
 	throw semantic_except(remark);
 

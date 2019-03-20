@@ -21,4 +21,4 @@ ms (int sw, int cm)
     }
 }
 
-/* cp-out: warning: [^:]*: line 19, columns 14-15: division by zero */
+/* cp-out: warning: [^:]*: line 19, columns 10-15: division by zero */

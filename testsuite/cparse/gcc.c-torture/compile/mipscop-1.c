@@ -11,4 +11,4 @@ main (int argc, char *argv[])
   printf ("%d\n", d);
 }
 
-/* cp-out: warning: [^:]*: line 11, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 11, column 2: identifier "printf" not declared */

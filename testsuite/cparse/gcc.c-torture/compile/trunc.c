@@ -10,4 +10,4 @@ foo (p)
   p[1] = (char)foo;
 }
 
-/* cp-out: warning: [^:]*: line 3, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 3, column 2: identifier "printf" not declared */

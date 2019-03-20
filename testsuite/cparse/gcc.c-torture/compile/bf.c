@@ -30,7 +30,7 @@ main (int argc, char **argv)
   printf ("%x\n", clr (0xffffffff, atoi (argv[2]), atoi (argv[1])));
 }
 
-/* cp-out: warning: [^:]*: line 30, columns 2-8: identifier "printf" not declared */
-/* cp-out: warning: [^:]*: line 30, columns 18-21: identifier "clr" not declared */
-/* cp-out: warning: [^:]*: line 30, columns 35-39: identifier "atoi" not declared */
-/* cp-out: warning: [^:]*: line 30, columns 51-55: identifier "atoi" not declared */
+/* cp-out: warning: [^:]*: line 30, column 2: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 30, column 18: identifier "clr" not declared */
+/* cp-out: warning: [^:]*: line 30, column 35: identifier "atoi" not declared */
+/* cp-out: warning: [^:]*: line 30, column 51: identifier "atoi" not declared */

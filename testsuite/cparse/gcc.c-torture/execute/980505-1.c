@@ -10,5 +10,5 @@ int main()
 }
 static int f(int x) { return x; }
 
-/* cp-out: warning: [^:]*: line 8, columns 5-10: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 9, columns 3-7: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 8, column 5: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 9, column 3: identifier "exit" not declared */

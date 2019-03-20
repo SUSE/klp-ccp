@@ -21,7 +21,7 @@ f ()
     }
 }
 
-/* cp-out: warning: [^:]*: line 13, columns 6-7: identifier "g" not declared */
-/* cp-out: warning: [^:]*: line 17, columns 20-21: identifier "h" not declared */
-/* cp-out: warning: [^:]*: line 19, columns 3-4: identifier "j" not declared */
-/* cp-out: warning: [^:]*: line 19, columns 9-10: identifier "k" not declared */
+/* cp-out: warning: [^:]*: line 13, column 6: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 17, column 20: identifier "h" not declared */
+/* cp-out: warning: [^:]*: line 19, column 3: identifier "j" not declared */
+/* cp-out: warning: [^:]*: line 19, column 9: identifier "k" not declared */

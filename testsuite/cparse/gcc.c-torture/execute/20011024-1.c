@@ -21,5 +21,5 @@ int main (void)
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 13, columns 37-42: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 14, columns 27-32: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 13, column 37: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 14, column 27: identifier "abort" not declared */

@@ -15,5 +15,5 @@ update_arglist_pass (gfc_actual_arglist* lst, int po, unsigned argpos,
     lst = update_arglist_pass (((void *)0), po, argpos - 1, name);
 }
 
-/* cp-out: warning: [^:]*: line 13, columns 37-40: assignment to pointer from integer which is not NULL */
-/* cp-out: warning: [^:]*: line 15, columns 10-29: assignment to pointer from integer which is not NULL */
+/* cp-out: warning: [^:]*: line 13, columns 37-46: assignment to pointer from integer which is not NULL */
+/* cp-out: warning: [^:]*: line 15, columns 10-65: assignment to pointer from integer which is not NULL */

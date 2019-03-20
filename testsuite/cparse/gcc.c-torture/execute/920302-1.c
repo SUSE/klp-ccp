@@ -39,8 +39,8 @@ main ()
   exit (0);
 }
 
-/* cp-out: warning: [^:]*: line 37, columns 6-12: identifier "strcmp" not declared */
-/* cp-out: warning: [^:]*: line 38, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 39, columns 2-6: identifier "exit" not declared */
-/* cp-out: warning: [^:]*: line 16, columns 6-12: return without value in function returning non-void */
-/* cp-out: warning: [^:]*: line 24, columns 4-10: return without value in function returning non-void */
+/* cp-out: warning: [^:]*: line 37, column 6: identifier "strcmp" not declared */
+/* cp-out: warning: [^:]*: line 38, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 39, column 2: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 16, columns 6-13: return without value in function returning non-void */
+/* cp-out: warning: [^:]*: line 24, columns 4-11: return without value in function returning non-void */

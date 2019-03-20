@@ -11,4 +11,4 @@ main ()
     puts ("The largest possible unsigned <= 0 on this machine...");
 }
 
-/* cp-out: warning: [^:]*: line 11, columns 4-8: identifier "puts" not declared */
+/* cp-out: warning: [^:]*: line 11, column 4: identifier "puts" not declared */

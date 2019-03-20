@@ -12,4 +12,4 @@ void f(void)
     }
 }
 
-/* cp-out: warning: [^:]*: line 10, columns 8-10: identifier "ff" not declared */
+/* cp-out: warning: [^:]*: line 10, column 8: identifier "ff" not declared */

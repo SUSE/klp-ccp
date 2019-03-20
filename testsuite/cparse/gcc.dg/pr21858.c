@@ -14,4 +14,4 @@ int dsdblm_CreateBlock(unsigned int address)
    return address;
 }
 
-/* cp-out: warning: [^:]*: line 12, columns 7-14: pointer comparison against non-NULL integer */
+/* cp-out: warning: [^:]*: line 12, column 7: pointer comparison against non-NULL integer */

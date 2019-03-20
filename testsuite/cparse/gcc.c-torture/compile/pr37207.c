@@ -19,5 +19,5 @@ func_18 ( int t )
     }
 }
 
-/* cp-out: warning: [^:]*: line 9, columns 10-17: identifier "func_81" not declared */
-/* cp-out: warning: [^:]*: line 17, columns 6-13: identifier "func_98" not declared */
+/* cp-out: warning: [^:]*: line 9, column 10: identifier "func_81" not declared */
+/* cp-out: warning: [^:]*: line 17, column 6: identifier "func_98" not declared */

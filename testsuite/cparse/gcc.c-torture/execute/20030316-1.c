@@ -11,4 +11,4 @@ main (void)
     return 0;
 }
 
-/* cp-out: warning: [^:]*: line 9, columns 2-7: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 9, column 2: identifier "abort" not declared */

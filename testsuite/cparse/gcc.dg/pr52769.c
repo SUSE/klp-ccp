@@ -23,4 +23,4 @@ main (void)
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 16, columns 9-17: excess characters in array initialization */
+/* cp-out: warning: [^:]*: line 16, column 9: excess characters in array initialization */

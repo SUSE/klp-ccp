@@ -8,5 +8,5 @@ void bar(long* lp) {
   foo(lp);
 }
 
-/* cp-out: warning: [^:]*: line 8, columns 6-8: pointers to different integer types in assignment */
+/* cp-out: warning: [^:]*: line 8, column 6: pointers to different integer types in assignment */
 

@@ -23,4 +23,4 @@ f (void)
   }
 }
 
-/* cp-out: warning: [^:]*: line 22, columns 9-10: incompatible pointer types in assignment */
+/* cp-out: warning: [^:]*: line 22, columns 9-17: incompatible pointer types in assignment */

@@ -21,4 +21,4 @@ f (char *p)
   return 1;
 }
 
-/* cp-out: warning: [^:]*: line 11, columns 10-11: identifier "g" not declared */
+/* cp-out: warning: [^:]*: line 11, column 10: identifier "g" not declared */

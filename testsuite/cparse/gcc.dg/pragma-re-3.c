@@ -16,4 +16,4 @@ int main () {
   g();
 }
 
-/* cp-out: warning: [^:]*: line 11, columns 2-4: identifier "g1" not declared */
+/* cp-out: warning: [^:]*: line 11, column 2: identifier "g1" not declared */

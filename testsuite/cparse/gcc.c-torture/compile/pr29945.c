@@ -7,4 +7,4 @@ parse_real (unsigned char c)
    unget_char ( c);
 }
 
-/* cp-out: warning: [^:]*: line 7, columns 3-13: identifier "unget_char" not declared */
+/* cp-out: warning: [^:]*: line 7, column 3: identifier "unget_char" not declared */

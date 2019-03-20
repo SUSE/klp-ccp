@@ -16,6 +16,6 @@ void *eintr_source (void *arg)
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 6, columns 4-7: identifier "foo" not declared */
-/* cp-out: warning: [^:]*: line 11, columns 1-4: identifier "foo" not declared */
-/* cp-out: warning: [^:]*: line 13, columns 6-10: identifier "foo1" not declared */
+/* cp-out: warning: [^:]*: line 6, column 4: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 11, column 1: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 13, column 6: identifier "foo1" not declared */

@@ -62,10 +62,10 @@ main ()
   exit (0);
 }
 
-/* cp-out: warning: [^:]*: line 58, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 61, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 62, columns 2-6: identifier "exit" not declared */
-/* cp-out: warning: [^:]*: line 57, columns 15-16: invalid types in cast */
-/* cp-out: warning: [^:]*: line 57, columns 38-39: invalid types in cast */
-/* cp-out: warning: [^:]*: line 60, columns 15-16: invalid types in cast */
-/* cp-out: warning: [^:]*: line 60, columns 38-39: invalid types in cast */
+/* cp-out: warning: [^:]*: line 58, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 61, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 62, column 2: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 57, columns 15-36: invalid types in cast */
+/* cp-out: warning: [^:]*: line 57, columns 38-59: invalid types in cast */
+/* cp-out: warning: [^:]*: line 60, columns 15-36: invalid types in cast */
+/* cp-out: warning: [^:]*: line 60, columns 38-59: invalid types in cast */

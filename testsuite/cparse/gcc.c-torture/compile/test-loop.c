@@ -6,4 +6,4 @@ main ()
 
 }
 
-/* cp-out: warning: [^:]*: line 5, columns 4-7: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 5, column 4: identifier "foo" not declared */

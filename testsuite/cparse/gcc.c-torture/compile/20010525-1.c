@@ -5,4 +5,4 @@ static int kind_varread(char *str)
   /* NOTREACHED */
 }
 
-/* cp-out: warning: [^:]*: line 4, columns 11-17: identifier "memcmp" not declared */
+/* cp-out: warning: [^:]*: line 4, column 11: identifier "memcmp" not declared */

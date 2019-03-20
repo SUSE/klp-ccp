@@ -20,4 +20,4 @@ int bar (void)
   else    return 1;
 }		
 
-/* cp-out: warning: [^:]*: line 19, columns 10-16: return without value in function returning non-void */
+/* cp-out: warning: [^:]*: line 19, columns 10-17: return without value in function returning non-void */

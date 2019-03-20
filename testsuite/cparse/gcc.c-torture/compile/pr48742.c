@@ -14,4 +14,4 @@ bar (void)
   baz (1 <= 2 % (3 >> 1 > 5 / 6 == 3));
 }
 
-/* cp-out: warning: [^:]*: line 8, columns 13-14: division by zero */
+/* cp-out: warning: [^:]*: line 8, columns 9-14: division by zero */

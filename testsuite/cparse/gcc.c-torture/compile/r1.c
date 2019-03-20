@@ -28,5 +28,5 @@ main ()
   puts ("Compiler test passed.");
 }
 
-/* cp-out: warning: [^:]*: line 1, columns 29-34: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 28, columns 2-6: identifier "puts" not declared */
+/* cp-out: warning: [^:]*: line 1, column 29: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 28, column 2: identifier "puts" not declared */

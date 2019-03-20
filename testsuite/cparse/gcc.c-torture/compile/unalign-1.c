@@ -14,4 +14,4 @@ int ptplib_send_announce(int sequenceId, int i)
     f(&tx_packet);
 }
 
-/* cp-out: warning: [^:]*: line 14, columns 4-5: identifier "f" not declared */
+/* cp-out: warning: [^:]*: line 14, column 4: identifier "f" not declared */

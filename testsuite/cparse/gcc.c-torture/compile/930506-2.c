@@ -12,11 +12,11 @@ int f2(int j)
   return( { int ___() { foo(j); } bar(___);} );
 }
 
-/* cp-out: warning: [^:]*: line 5, columns 16-19: identifier "foo" not declared */
-/* cp-out: warning: [^:]*: line 5, columns 26-29: identifier "bar" not declared */
-/* cp-out: warning: [^:]*: line 6, columns 24-27: identifier "foo" not declared */
-/* cp-out: warning: [^:]*: line 6, columns 34-37: identifier "bar" not declared */
-/* cp-out: warning: [^:]*: line 11, columns 16-19: identifier "foo" not declared */
-/* cp-out: warning: [^:]*: line 11, columns 26-29: identifier "bar" not declared */
-/* cp-out: warning: [^:]*: line 12, columns 24-27: identifier "foo" not declared */
-/* cp-out: warning: [^:]*: line 12, columns 34-37: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 5, column 16: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 5, column 26: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 6, column 24: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 6, column 34: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 11, column 16: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 11, column 26: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 12, column 24: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 12, column 34: identifier "bar" not declared */

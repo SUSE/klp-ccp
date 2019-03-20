@@ -16,4 +16,4 @@ bar (void)
 {
 }
 
-/* cp-out: warning: [^:]*: line 8, columns 10-13: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 8, column 10: identifier "bar" not declared */

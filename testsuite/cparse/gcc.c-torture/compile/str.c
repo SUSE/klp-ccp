@@ -12,4 +12,4 @@ bar ()
   barfoo (foobar);
 }
 
-/* cp-out: warning: [^:]*: line 12, columns 2-8: identifier "barfoo" not declared */
+/* cp-out: warning: [^:]*: line 12, column 2: identifier "barfoo" not declared */

@@ -16,4 +16,4 @@ bar () {
     do_something ();
 }
 
-/* cp-out: warning: [^:]*: line 16, columns 4-16: identifier "do_something" not declared */
+/* cp-out: warning: [^:]*: line 16, column 4: identifier "do_something" not declared */

@@ -30,5 +30,5 @@ func3 (const int arg)
     }
 }
 
-/* cp-out: warning: [^:]*: line 19, columns 27-30: identifier "foo" not declared */
-/* cp-out: warning: [^:]*: line 27, columns 40-43: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 19, column 27: identifier "foo" not declared */
+/* cp-out: warning: [^:]*: line 27, column 40: identifier "foo" not declared */

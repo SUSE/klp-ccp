@@ -40,7 +40,7 @@ main ()
   exit (0);
 }
 
-/* cp-out: warning: [^:]*: line 36, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 39, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 40, columns 2-6: identifier "exit" not declared */
-/* cp-out: warning: [^:]*: line 19, columns 9-15: assignment to pointer from integer which is not NULL */
+/* cp-out: warning: [^:]*: line 36, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 39, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 40, column 2: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 19, columns 9-24: assignment to pointer from integer which is not NULL */

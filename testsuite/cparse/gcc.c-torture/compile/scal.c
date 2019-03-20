@@ -19,4 +19,4 @@ main ()
   printf ("%d\n", g2);
 }
 
-/* cp-out: warning: [^:]*: line 19, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 19, column 2: identifier "printf" not declared */

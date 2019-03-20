@@ -13,4 +13,4 @@ foo5 (int vec)
   ((union vx) vec).f[5] = 1;
 }
 
-/* cp-out: warning: [^:]*: line 13, columns 3-4: invalid types in cast */
+/* cp-out: warning: [^:]*: line 13, columns 3-17: invalid types in cast */

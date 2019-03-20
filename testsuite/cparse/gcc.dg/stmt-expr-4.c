@@ -21,4 +21,4 @@ char *Foo (union tree_node * num_string)
   return str;
 }
 
-/* cp-out: warning: [^:]*: line 17, columns 15-16: invalid types in cast */
+/* cp-out: warning: [^:]*: line 17, column 15 to line 20, column 24: invalid types in cast */

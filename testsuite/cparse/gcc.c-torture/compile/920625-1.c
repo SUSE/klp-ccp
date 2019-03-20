@@ -278,5 +278,5 @@ synth(insn_t *sequence,
     }
 }
 
-/* cp-out: warning: [^:]*: line 66, columns 6-11: identifier "synth" not declared */
-/* cp-out: warning: [^:]*: line 78, columns 6-19: identifier "test_sequence" not declared */
+/* cp-out: warning: [^:]*: line 66, column 6: identifier "synth" not declared */
+/* cp-out: warning: [^:]*: line 78, column 6: identifier "test_sequence" not declared */

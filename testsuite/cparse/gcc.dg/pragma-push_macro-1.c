@@ -25,6 +25,6 @@ int main()
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 11, columns 4-14: identifier "link_error" not declared */
-/* cp-out: warning: [^:]*: line 18, columns 4-14: identifier "link_error" not declared */
-/* cp-out: warning: [^:]*: line 23, columns 4-14: identifier "link_error" not declared */
+/* cp-out: warning: [^:]*: line 11, column 4: identifier "link_error" not declared */
+/* cp-out: warning: [^:]*: line 18, column 4: identifier "link_error" not declared */
+/* cp-out: warning: [^:]*: line 23, column 4: identifier "link_error" not declared */

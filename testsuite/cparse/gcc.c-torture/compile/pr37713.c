@@ -9,4 +9,4 @@ void add_opush(void)
     sdp_seq_alloc(dtds);
 }
 
-/* cp-out: warning: [^:]*: line 9, columns 4-17: identifier "sdp_seq_alloc" not declared */
+/* cp-out: warning: [^:]*: line 9, column 4: identifier "sdp_seq_alloc" not declared */

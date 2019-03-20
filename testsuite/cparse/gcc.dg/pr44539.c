@@ -28,4 +28,4 @@ void foo (int i)
   i ? noret1 () : noret2 ();
 }
 
-/* cp-out: warning: [^:]*: line 22, columns 4-10: wrong number of arguments to function invocation */
+/* cp-out: warning: [^:]*: line 22, columns 4-14: wrong number of arguments to function invocation */

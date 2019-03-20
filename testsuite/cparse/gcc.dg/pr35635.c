@@ -88,4 +88,4 @@ void func4()
   signed_bit.x = bar != 0 ? 2 : 0; /* { dg-warning "conversion" } */
 }
 
-/* cp-out: warning: [^:]*: line 49, columns 23-24: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 49, columns 23-41: integer overflow in cast */

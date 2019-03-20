@@ -28,5 +28,5 @@ seqgt2 (unsigned long a, unsigned short win, unsigned long b)
 unsigned long aa[] = { (1UL << (sizeof (long) * 8 - 1)) - 0xfff };
 unsigned long bb[] = { (1UL << (sizeof (long) * 8 - 1)) - 0xfff };
 
-/* cp-out: warning: [^:]*: line 10, columns 4-9: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 12, columns 2-6: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 10, column 4: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 12, column 2: identifier "exit" not declared */

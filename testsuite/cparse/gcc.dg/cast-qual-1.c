@@ -29,4 +29,4 @@ bad_assign(const void *bar)
   const char **foo = bar; /* { dg-warning "initialization discards" "discarding `const' warning" } */
 }
 
-/* cp-out: warning: [^:]*: line 29, columns 21-24: assignment's source qualifiers are not a subset of target ones */
+/* cp-out: warning: [^:]*: line 29, column 21: assignment's source qualifiers are not a subset of target ones */

@@ -29,5 +29,5 @@ main ()
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 12, columns 6-12: identifier "memcpy" not declared */
-/* cp-out: warning: [^:]*: line 27, columns 4-9: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 12, column 6: identifier "memcpy" not declared */
+/* cp-out: warning: [^:]*: line 27, column 4: identifier "abort" not declared */

@@ -49,4 +49,4 @@ newpassencrypt (char *old, char *new, char *out)
     }
 }
 
-/* cp-out: warning: [^:]*: line 48, columns 6-12: identifier "memcpy" not declared */
+/* cp-out: warning: [^:]*: line 48, column 6: identifier "memcpy" not declared */

@@ -16,4 +16,4 @@ foo (struct S *x)
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 14, columns 6-7: pointer comparison against non-NULL integer */
+/* cp-out: warning: [^:]*: line 14, column 6: pointer comparison against non-NULL integer */

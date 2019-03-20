@@ -12,4 +12,4 @@ main ()
   printf ("%08x\n", foo (-1));
 }
 
-/* cp-out: warning: [^:]*: line 12, columns 2-8: identifier "printf" not declared */
+/* cp-out: warning: [^:]*: line 12, column 2: identifier "printf" not declared */

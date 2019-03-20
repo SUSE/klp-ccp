@@ -36,4 +36,4 @@ int main()
   return 0;
 }
 
-/* cp-out: error: [^:]*: line 34, columns 9-10: invalid type for assignment target */
+/* cp-out: error: [^:]*: line 34, columns 9-16: invalid type for assignment target */

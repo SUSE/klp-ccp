@@ -13,4 +13,4 @@ foo (float f)
   qux (42, f); /* { dg-warning "12:implicit conversion" } */
 }
 
-/* cp-out: warning: [^:]*: line 11, columns 2-5: identifier "bar" not declared */
+/* cp-out: warning: [^:]*: line 11, column 2: identifier "bar" not declared */

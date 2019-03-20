@@ -4,4 +4,4 @@
 void g(void *);
 void f(void) { int b[1/0]; g(b); }
 
-/* cp-out: warning: [^:]*: line 5, columns 23-24: division by zero */
+/* cp-out: warning: [^:]*: line 5, columns 21-24: division by zero */

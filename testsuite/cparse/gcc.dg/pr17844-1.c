@@ -19,5 +19,5 @@ __typeof__(B) *tep = &i;
 
 int x[((sizeof(A) == sizeof(int)) ? 1 : -1)];
 
-/* cp-out: warning: [^:]*: line 12, columns 13-14: assigning pointers to integer types of different width */
-/* cp-out: warning: [^:]*: line 13, columns 20-21: assigning pointers to integer types of different width */
+/* cp-out: warning: [^:]*: line 12, columns 13-16: assigning pointers to integer types of different width */
+/* cp-out: warning: [^:]*: line 13, columns 20-23: assigning pointers to integer types of different width */

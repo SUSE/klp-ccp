@@ -37,4 +37,4 @@ void decode_bgr_bitstream(HYuvContext *s, int count){
     }
 }
 
-/* cp-out: warning: [^:]*: line 19, columns 22-30: identifier "bswap_32" not declared */
+/* cp-out: warning: [^:]*: line 19, column 22: identifier "bswap_32" not declared */

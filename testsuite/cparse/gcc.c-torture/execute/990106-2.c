@@ -19,5 +19,5 @@ int main(int argc, char *argv[])
       exit (0);
 }
 
-/* cp-out: warning: [^:]*: line 18, columns 1-6: identifier "abort" not declared */
-/* cp-out: warning: [^:]*: line 19, columns 6-10: identifier "exit" not declared */
+/* cp-out: warning: [^:]*: line 18, column 1: identifier "abort" not declared */
+/* cp-out: warning: [^:]*: line 19, column 6: identifier "exit" not declared */

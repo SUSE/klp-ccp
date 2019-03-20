@@ -289,8 +289,8 @@ gnuc_parser_driver::lex(gnuc_parser::semantic_type *value,
 void gnuc_parser_driver::error(const gnuc_parser::location_type& loc,
 			       const std::string& msg)
 {
-  code_remark remark(code_remark::severity::fatal, msg,
-		     _tokens[loc.begin].get_file_range());
+  code_remark_pp remark(code_remark_pp::severity::fatal, msg,
+			_tokens, loc.begin);
   _remarks.add(remark);
   throw parse_except(remark);
 }
