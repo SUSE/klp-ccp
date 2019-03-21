@@ -6,7 +6,6 @@
 #include <vector>
 #include <string>
 #include <map>
-#include "pp_tokens.hh"
 #include "raw_pp_tokens.hh"
 #include "file_range.hh"
 #include "code_remarks.hh"
@@ -18,60 +17,6 @@ namespace klp
     class macro
     {
     public:
-      class instance
-      {
-      public:
-	instance(const std::shared_ptr<const macro> &macro,
-		 used_macros &&used_macros_base,
-		 used_macro_undefs &&used_macro_undefs_base,
-		 std::vector<pp_tokens> &&args,
-		 std::vector<pp_tokens> &&exp_args,
-		 const file_range &file_range);
-
-	pp_token read_next_token();
-
-	const macro& get_macro() const noexcept
-	{ return *_macro; }
-
-	code_remarks& get_remarks() noexcept
-	{ return _remarks; }
-
-      private:
-	const pp_tokens*
-	_resolve_arg(const std::string &name, const bool expanded)
-	  const noexcept;
-
-	used_macros _tok_expansion_history_init() const;
-
-	used_macros _tok_used_macros_init() const;
-
-	used_macro_undefs _tok_used_macro_undefs_init() const;
-
-	pp_token _handle_stringification();
-
-	void _add_concat_token(const pp_token &tok);
-	void _add_concat_token(const raw_pp_token &raw_tok);
-	pp_token _yield_concat_token();
-
-	const std::shared_ptr<const macro> &_macro;
-	const used_macros _used_macros_base;
-	const used_macro_undefs _used_macro_undefs_base;
-	std::map<std::string,
-		 std::pair<pp_tokens, pp_tokens> > _args;
-	const file_range _file_range;
-	code_remarks _remarks;
-
-	raw_pp_tokens::const_iterator _it_repl;
-	const pp_tokens *_cur_arg;
-	pp_tokens::const_iterator _cur_arg_it;
-
-
-	std::unique_ptr<pp_token> _concat_token;
-	bool _in_concat;
-
-	bool _anything_emitted;
-      };
-
       static std::shared_ptr<const macro>
       parse_macro_definition(const raw_pp_tokens::const_iterator begin,
 			     raw_pp_tokens::const_iterator end,
@@ -89,6 +34,7 @@ namespace klp
       bool is_variadic() const noexcept
       { return _variadic; }
 
+      const std::vector<std::string>& get_arg_names() const noexcept;
       size_t non_va_arg_count() const noexcept;
       bool shall_expand_arg(const size_t pos) const noexcept;
 
@@ -97,6 +43,9 @@ namespace klp
 
       const file_range& get_file_range() const noexcept
       { return _file_range; }
+
+      const raw_pp_tokens& get_repl() const noexcept
+      { return _repl; }
 
     private:
       macro(const std::string &name,
@@ -119,8 +68,6 @@ namespace klp
 
       raw_pp_tokens::const_iterator
       _next_non_ws_repl(const raw_pp_tokens::const_iterator it) const noexcept;
-
-      bool _is_stringification(raw_pp_tokens::const_iterator it) const noexcept;
 
       raw_pp_tokens::const_iterator
       _skip_stringification_or_single(const raw_pp_tokens::const_iterator &it)
