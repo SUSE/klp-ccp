@@ -56,8 +56,6 @@ namespace klp
 		   const header_resolver &header_resolver,
 		   const architecture &arch);
 
-      preprocessor(std::vector<header_inclusion_root*> &&roots);
-
       pp_token read_next_token();
 
       code_remarks& get_remarks() noexcept
