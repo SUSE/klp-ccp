@@ -24,28 +24,6 @@ namespace klp
     class conditional_inclusion_node;
     class architecture;
 
-    namespace _preprocessor_impl
-    {
-      struct _cond_incl_state
-      {
-	_cond_incl_state(const file_range::loc_type _start_loc);
-
-	file_range::loc_type start_loc;
-	used_macros um;
-	used_macro_undefs umu;
-	conditional_inclusion_node *incl_node;
-	bool branch_active;
-      };
-
-      struct _expansion_state
-      {
-	_expansion_state();
-
-	std::vector<macro::instance> macro_instances;
-	std::queue<pp_token> pending_tokens;
-      };
-    }
-
     class preprocessor
     {
     public:
@@ -66,6 +44,25 @@ namespace klp
       { return std::move(_header_inclusion_roots); }
 
     private:
+      struct _cond_incl_state
+      {
+	_cond_incl_state(const file_range::loc_type _start_loc);
+
+	file_range::loc_type start_loc;
+	used_macros um;
+	used_macro_undefs umu;
+	conditional_inclusion_node *incl_node;
+	bool branch_active;
+      };
+
+      struct _expansion_state
+      {
+	_expansion_state();
+
+	std::vector<macro::instance> macro_instances;
+	std::queue<pp_token> pending_tokens;
+      };
+
       template<typename T>
       void _grab_remarks_from(T &from);
 
@@ -74,7 +71,7 @@ namespace klp
       void _handle_pp_directive(raw_pp_token &&sharp_tok);
 
       pp_token
-      _expand(_preprocessor_impl::_expansion_state &state,
+      _expand(_expansion_state &state,
 	      const std::function<pp_token()> &token_reader,
 	      const bool from_cond_incl_cond = false);
 
@@ -115,11 +112,11 @@ namespace klp
       header_inclusion_roots_type &_header_inclusion_roots;
       header_inclusion_roots_type::iterator _cur_header_inclusion_root;
       std::stack<std::reference_wrapper<inclusion_node> > _inclusions;
-      std::stack<_preprocessor_impl::_cond_incl_state> _cond_incl_states;
+      std::stack<_cond_incl_state> _cond_incl_states;
       std::size_t _cond_incl_nesting;
 
       std::stack<pp_tokenizer> _tokenizers;
-      _preprocessor_impl::_expansion_state _root_expansion_state;
+      _expansion_state _root_expansion_state;
       std::map<std::string, std::shared_ptr<const macro> > _macros;
       std::map<std::string, std::shared_ptr<const macro_undef> > _macro_undefs;
 

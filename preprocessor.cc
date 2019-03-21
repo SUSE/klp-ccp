@@ -11,7 +11,6 @@
 #include "pp_expr_parser_driver.hh"
 
 using namespace klp::ccp;
-using namespace klp::ccp::_preprocessor_impl;
 
 preprocessor::preprocessor(header_inclusion_roots_type &header_inclusion_roots,
 			   const header_resolver &header_resolver,
@@ -536,7 +535,7 @@ void preprocessor::_handle_pp_directive(raw_pp_token &&sharp_tok)
 }
 
 pp_token
-preprocessor::_expand(_preprocessor_impl::_expansion_state &state,
+preprocessor::_expand(_expansion_state &state,
 		      const std::function<pp_token()> &token_reader,
 		      const bool from_cond_incl_cond)
 {
@@ -1122,8 +1121,7 @@ bool preprocessor::_cur_incl_node_is_cond() const noexcept
 
 void preprocessor::_enter_cond_incl()
 {
-  _preprocessor_impl::_cond_incl_state &cond_incl_state =
-    _cond_incl_states.top();
+  _cond_incl_state &cond_incl_state = _cond_incl_states.top();
   assert(!cond_incl_state.incl_node);
 
   conditional_inclusion_node &new_conditional_inclusion_node =
@@ -1138,8 +1136,7 @@ void preprocessor::_enter_cond_incl()
 
 void preprocessor::_pop_cond_incl(const file_range::loc_type end_loc)
 {
-  _preprocessor_impl::_cond_incl_state &cond_incl_state =
-    _cond_incl_states.top();
+  _cond_incl_state &cond_incl_state = _cond_incl_states.top();
 
   if (!cond_incl_state.incl_node) {
     // None of the branches had been taken. Insert the conditional inclusion
@@ -1225,10 +1222,10 @@ bool preprocessor::_eval_conditional_inclusion(raw_pp_tokens &&directive_toks)
 }
 
 
-_cond_incl_state::_cond_incl_state(const file_range::loc_type _start_loc)
+preprocessor::_cond_incl_state::
+_cond_incl_state(const file_range::loc_type _start_loc)
   : start_loc(_start_loc), incl_node(nullptr), branch_active(false)
 {}
 
 
-_expansion_state::_expansion_state()
-{}
+preprocessor::_expansion_state::_expansion_state() = default;
