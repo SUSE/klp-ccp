@@ -45,7 +45,7 @@ namespace klp
 
       pp_token(const type type, const std::string &value,
 	       const file_range &file_range,
-	       const used_macros &eh, used_macros &&um,
+	       used_macros &&um,
 	       const class used_macro_undefs &umu);
 
       type get_type() const noexcept
@@ -59,16 +59,6 @@ namespace klp
       }
 
       void set_type_and_value(const type type, const std::string &value);
-
-      const class used_macros& expansion_history() const noexcept
-      {
-	return _expansion_history;
-      }
-
-      class used_macros& expansion_history() noexcept
-      {
-	return _expansion_history;
-      }
 
       const class used_macros& used_macros() const noexcept
       {
@@ -100,18 +90,8 @@ namespace klp
 	return _type != type::eof;
       }
 
-      template <typename T>
-      bool is_punctuator(T &&s) const noexcept
-      {
-	return (_type == type::punctuator &&
-		_value == std::forward<T>(s));
-      }
-
       template <type... types>
       bool is_type_any_of() const noexcept;
-
-      template <type... types>
-      static bool is_type_any_of_predicate(const pp_token &tok) noexcept;
 
       bool is_id() const noexcept
       {
@@ -138,15 +118,10 @@ namespace klp
 	return is_type_any_of<type::empty>();
       }
 
-      static bool is_ws_predicate(const pp_token &tok)
-      {
-	return is_type_any_of_predicate<type::ws>(tok);
-      }
+
+      static std::string stringify(const type type, const std::string &value);
 
       std::string stringify() const;
-
-      void
-      concat(const pp_token &tok, code_remarks &remarks);
 
     private:
       template <type... types>
@@ -169,7 +144,6 @@ namespace klp
 
       std::string _value;
       file_range _file_range;
-      class used_macros _expansion_history;
       class used_macros _used_macros;
       class used_macro_undefs _used_macro_undefs;
       type _type;
@@ -179,12 +153,6 @@ namespace klp
     bool pp_token::is_type_any_of() const noexcept
     {
       return __is_type_any_of<types...>()(*this);
-    }
-
-    template <pp_token::type... types>
-    bool pp_token::is_type_any_of_predicate(const pp_token &tok) noexcept
-    {
-      return tok.is_type_any_of<types...>();
     }
   }
 }

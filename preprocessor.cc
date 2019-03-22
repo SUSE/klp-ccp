@@ -29,6 +29,14 @@ preprocessor::preprocessor(header_inclusion_roots_type &header_inclusion_roots,
 
 pp_token preprocessor::read_next_token()
 {
+  auto &&_pp_token_to_pp_token =
+    [](_pp_token &&tok) {
+      return pp_token{tok.get_type(), tok.get_value(),
+		      tok.get_file_range(),
+		      std::move(tok.used_macros()),
+		      std::move(tok.used_macro_undefs())};
+    };
+
   // Basically, this is just a wrapper around _expand()
   // which removes or adds whitespace as needed:
   // - Whitespace at the end of lines gets removed.
@@ -59,10 +67,10 @@ pp_token preprocessor::read_next_token()
       assert(_pending_tokens.empty());
       if (!_line_empty) {
 	_line_empty = true;
-	return tok;
+	return _pp_token_to_pp_token(std::move(tok));
       }
     } else {
-      return tok;
+      return _pp_token_to_pp_token(std::move(tok));
     }
   }
 
@@ -78,7 +86,7 @@ pp_token preprocessor::read_next_token()
       _pending_tokens.push(std::move(next_tok));
       next_tok = std::move(_pending_tokens.front());
       _pending_tokens.pop();
-      return next_tok;
+      return _pp_token_to_pp_token(std::move(next_tok));
 
     } else if (next_tok.is_empty()) {
       _pending_tokens.push(std::move(next_tok));
@@ -99,7 +107,7 @@ pp_token preprocessor::read_next_token()
     _pending_tokens.push(std::move(next_tok));
     next_tok = std::move(_pending_tokens.front());
     _pending_tokens.pop();
-    return next_tok;
+    return _pp_token_to_pp_token(std::move(next_tok));
 
   }
 
@@ -119,7 +127,7 @@ pp_token preprocessor::read_next_token()
   // % {=, >, :},  %: %:, : >,
   // : :, . ., # # if any of these is coming from macro expansion
   //                or they're separated by any empties
-  pp_token prev_tok(pp_token::type::eof, std::string(), file_range());
+  _pp_token prev_tok(pp_token::type::eof, std::string(), file_range());
   if (_pending_tokens.empty()) {
     if (next_tok.is_ws()) {
       _pending_tokens.push(std::move(next_tok));
@@ -128,9 +136,9 @@ pp_token preprocessor::read_next_token()
       if (_line_empty)
 	goto read_next;
       _line_empty = true;
-      return next_tok;
+      return _pp_token_to_pp_token(std::move(next_tok));
     } else if (next_tok.is_empty() || next_tok.is_eof()) {
-      return next_tok;
+      return _pp_token_to_pp_token(std::move(next_tok));
     } else {
       prev_tok = std::move(next_tok);
       next_tok = _expand(_root_expansion_state,
@@ -153,7 +161,7 @@ pp_token preprocessor::read_next_token()
 
   if (next_tok.is_ws() || next_tok.is_newline() || next_tok.is_eof()) {
     _pending_tokens.push(std::move(next_tok));
-    return prev_tok;
+    return _pp_token_to_pp_token(std::move(prev_tok));
   }
 
   if ((prev_tok.is_type_any_of<pp_token::type::pp_number>() &&
@@ -209,7 +217,7 @@ pp_token preprocessor::read_next_token()
   }
 
   _pending_tokens.push(std::move(next_tok));
-  return prev_tok;
+  return _pp_token_to_pp_token(std::move(prev_tok));
 }
 
 template<typename T>
@@ -219,7 +227,7 @@ void preprocessor::_grab_remarks_from(T &from)
   from.get_remarks().clear();
 }
 
-pp_token preprocessor::_read_next_plain_token()
+preprocessor::_pp_token preprocessor::_read_next_plain_token()
 {
  again:
   // Has the final eof token been seen?
@@ -246,8 +254,8 @@ pp_token preprocessor::_read_next_plain_token()
     if (_cond_incl_inactive())
       goto again;
 
-    return pp_token{raw_tok.get_type(), raw_tok.get_value(),
-		    raw_tok.get_file_range()};
+    return _pp_token{raw_tok.get_type(), raw_tok.get_value(),
+		     raw_tok.get_file_range()};
   } catch (const pp_except&) {
     _grab_remarks_from(_tokenizers.top());
     throw;
@@ -270,7 +278,8 @@ void preprocessor::_handle_eof_from_tokenizer(raw_pp_token &&eof_tok)
 
   if (_tokenizers.empty()) {
     if (++_cur_header_inclusion_root == _header_inclusion_roots.end()) {
-      _eof_tok = pp_token{eof_tok.get_type(), eof_tok.get_value(), eof_tok.get_file_range()};
+      _eof_tok = _pp_token{eof_tok.get_type(), eof_tok.get_value(),
+			   eof_tok.get_file_range()};
       return;
     }
 
@@ -534,9 +543,9 @@ void preprocessor::_handle_pp_directive(raw_pp_token &&sharp_tok)
   }
 }
 
-pp_token
+preprocessor::_pp_token
 preprocessor::_expand(_expansion_state &state,
-		      const std::function<pp_token()> &token_reader,
+		      const std::function<_pp_token()> &token_reader,
 		      const bool from_cond_incl_cond)
 {
   auto read_tok = [&]() {
@@ -559,9 +568,9 @@ preprocessor::_expand(_expansion_state &state,
   };
 
  read_next:
-  pp_token tok = (state.pending_tokens.empty()
-		  ? read_tok()
-		  : std::move(state.pending_tokens.front()));
+  _pp_token tok = (state.pending_tokens.empty()
+		   ? read_tok()
+		   : std::move(state.pending_tokens.front()));
   if (!state.pending_tokens.empty())
     state.pending_tokens.pop();
 
@@ -572,22 +581,22 @@ preprocessor::_expand(_expansion_state &state,
   if (tok.is_id()) {
     // Check for the predefined macros first.
     if (tok.get_value() == "__FILE__") {
-      return pp_token(pp_token::type::str,
+      return _pp_token(pp_token::type::str,
 		tok.get_file_range().get_header_inclusion_node().get_filename(),
 		tok.get_file_range(), used_macros(),
 		std::move(tok.used_macros()), tok.used_macro_undefs());
     } else if (tok.get_value() == "__LINE__") {
       auto line = tok.get_file_range().get_start_line();
-      return pp_token(pp_token::type::pp_number, std::to_string(line),
+      return _pp_token(pp_token::type::pp_number, std::to_string(line),
 		      tok.get_file_range(), used_macros(),
 		      std::move(tok.used_macros()), tok.used_macro_undefs());
     } else if (tok.get_value() == "__INCLUDE_LEVEL__") {
-      return pp_token(pp_token::type::pp_number,
+      return _pp_token(pp_token::type::pp_number,
 		      std::to_string(_tokenizers.size() - 1),
 		      tok.get_file_range(), used_macros(),
 		      std::move(tok.used_macros()), tok.used_macro_undefs());
     } else if (tok.get_value() == "__COUNTER__") {
-      return pp_token(pp_token::type::pp_number, std::to_string(__counter__++),
+      return _pp_token(pp_token::type::pp_number, std::to_string(__counter__++),
 		      tok.get_file_range(), used_macros(),
 		      std::move(tok.used_macros()), tok.used_macro_undefs());
     }
@@ -599,7 +608,7 @@ preprocessor::_expand(_expansion_state &state,
 		_handle_object_macro_invocation(m->second, std::move(tok)));
 	goto read_next;
       } else {
-	pp_token next_tok = read_tok();
+	_pp_token next_tok = read_tok();
 	while (next_tok.is_ws() || next_tok.is_newline() ||
 	       next_tok.is_empty()) {
 	  state.pending_tokens.push(std::move(next_tok));
@@ -655,7 +664,7 @@ preprocessor::_expand(_expansion_state &state,
 	throw pp_except(remark);
       }
 
-      std::tuple<pp_tokens, pp_tokens, pp_token> arg
+      std::tuple<_pp_tokens, _pp_tokens, _pp_token> arg
 	= _create_macro_arg(read_tok, false, false, um, umu);
       const char arg_delim = std::get<2>(arg).get_value()[0];
       if (arg_delim == ',') {
@@ -688,25 +697,154 @@ preprocessor::_expand(_expansion_state &state,
 	  umu += it_m_undef->second;
       }
 
-      return pp_token(pp_token::type::pp_number,
-		      is_defined ? "1" : "0",
-		      file_range(invocation_range,
-				 std::get<2>(arg).get_file_range()),
-		      used_macros{}, std::move(um), std::move(umu));
+      return _pp_token(pp_token::type::pp_number,
+		       is_defined ? "1" : "0",
+		       file_range(invocation_range,
+				  std::get<2>(arg).get_file_range()),
+		       used_macros{}, std::move(um), std::move(umu));
     }
   }
 
   return tok;
 }
 
+
+preprocessor::_pp_token::_pp_token(const pp_token::type type,
+				   const std::string &value,
+				   const file_range &file_range,
+				   const class used_macros &eh,
+				   class used_macros &&um,
+				   const class used_macro_undefs &umu)
+  : _value(value), _file_range(file_range),
+    _expansion_history(std::move(eh)), _used_macros(std::move(um)),
+    _used_macro_undefs(umu), _type(type)
+{}
+
+preprocessor::_pp_token::_pp_token(const pp_token::type type,
+				   const std::string &value,
+				   const file_range &file_range)
+  : _value(value), _file_range(file_range), _type(type)
+{}
+
+void preprocessor::_pp_token::set_type_and_value(const pp_token::type type,
+						 const std::string &value)
+{
+  _type = type;
+  _value = value;
+}
+
+std::string preprocessor::_pp_token::stringify() const
+{
+  return pp_token::stringify(_type, _value);
+}
+
+void preprocessor::_pp_token::concat(const _pp_token &tok,
+				     code_remarks &remarks)
+{
+  assert(_used_macros.empty());
+  assert(_used_macro_undefs.empty());
+  assert(tok._used_macros.empty());
+  assert(tok._used_macro_undefs.empty());
+
+  assert(_type != pp_token::type::ws);
+  assert(tok._type != pp_token::type::ws);
+  assert(_type != pp_token::type::newline);
+  assert(tok._type != pp_token::type::newline);
+  assert(_type != pp_token::type::eof);
+  assert(tok._type != pp_token::type::eof);
+  assert(_type != pp_token::type::qstr);
+  assert(tok._type != pp_token::type::qstr);
+  assert(_type != pp_token::type::hstr);
+  assert(tok._type != pp_token::type::hstr);
+
+  _expansion_history += tok._expansion_history;
+  if (_type == pp_token::type::empty) {
+    _type = tok._type;
+    _value = tok._value;
+    return;
+  } else if (tok._type == pp_token::type::empty) {
+    return;
+  }
+
+  if (_type == pp_token::type::id && tok._type == pp_token::type::pp_number) {
+    if (!std::all_of(tok._value.cbegin(), tok._value.cend(),
+		     [](const char c) {
+		       return (c == '_' || ('a' <= c && c <= 'z') ||
+			       ('A' <= c && c <= 'Z') ||
+			       ('0' <= c && c <= '9'));
+		     })) {
+      code_remark_raw remark
+	(code_remark_raw::severity::fatal,
+	 "can't concatenate " + _value + " and " + tok._value,
+	 tok.get_file_range());
+      remarks.add(remark);
+      throw pp_except(remark);
+    }
+
+    _value += tok._value;
+    return;
+  } else if (_type == pp_token::type::pp_number &&
+	     tok._type == pp_token::type::id) {
+    _value += tok._value;
+    return;
+  } else if (_type == pp_token::type::pp_number &&
+	     tok._type == pp_token::type::punctuator &&
+     (tok._value == "-" || tok._value == "+")) {
+    _value += tok._value;
+    return;
+  }
+
+  if (_type != tok._type) {
+    code_remark_raw remark(code_remark_raw::severity::fatal,
+			   "can't concatenate tokens of different type",
+			   tok.get_file_range());
+    remarks.add(remark);
+    throw pp_except(remark);
+  } else if(_type == pp_token::type::chr || _type == pp_token::type::wchr) {
+    code_remark_raw remark(code_remark_raw::severity::fatal,
+			   "can't concatenate character constants",
+			   tok.get_file_range());
+    remarks.add(remark);
+    throw pp_except(remark);
+  } else if (_type == pp_token::type::non_ws_char) {
+    code_remark_raw remark(code_remark_raw::severity::fatal,
+			   "can't concatenate " + _value + " and " + tok._value,
+			   tok.get_file_range());
+    remarks.add(remark);
+    throw pp_except(remark);
+  }
+
+  _value += tok._value;
+
+  if (_type == pp_token::type::punctuator) {
+    if (_value != "->" && _value != "++" && _value != "--" && _value != "<<" &&
+	_value != ">>" && _value != "<=" && _value != ">=" && _value != "==" &&
+	_value != "!=" && _value != "&&" && _value != "||" && _value != "*=" &&
+	_value != "/=" && _value != "%=" && _value != "+=" && _value != "-=" &&
+	_value != "<<=" && _value != ">>=" && _value != "&=" &&
+	_value != "^=" && _value != "|=" && _value != "##" && _value != "<:" &&
+	_value != ":>" && _value != "<%" && _value != "%>" && _value != "%:" &&
+	_value != "%:%:") {
+      code_remark_raw remark
+	(code_remark_raw::severity::fatal,
+	 "can't concatenate " + _value + " and " + tok._value,
+	 tok.get_file_range());
+      remarks.add(remark);
+      throw pp_except(remark);
+    }
+    return;
+  }
+}
+
+
 preprocessor::_macro_instance
 preprocessor::_handle_object_macro_invocation(
 				const std::shared_ptr<const macro> &macro,
-				pp_token &&id_tok)
+				_pp_token &&id_tok)
 {
   return _macro_instance(macro, std::move(id_tok.used_macros()),
 			 std::move(id_tok.used_macro_undefs()),
-			 std::vector<pp_tokens>(), std::vector<pp_tokens>(),
+			 std::vector<_pp_tokens>(), std::vector<_pp_tokens>(),
 			 id_tok.get_file_range());
 }
 
@@ -716,10 +854,10 @@ preprocessor::_handle_func_macro_invocation(
 	used_macros &&used_macros_base,
 	used_macro_undefs &&used_macro_undefs_base,
 	const file_range &id_tok_file_range,
-	const std::function<pp_token()> &token_reader)
+	const std::function<_pp_token()> &token_reader)
 {
-  std::vector<pp_tokens> args;
-  std::vector<pp_tokens> exp_args;
+  std::vector<_pp_tokens> args;
+  std::vector<_pp_tokens> exp_args;
   file_range invocation_range;
 
   if (macro->non_va_arg_count() || macro->is_variadic()) {
@@ -728,7 +866,7 @@ preprocessor::_handle_func_macro_invocation(
     args.reserve(n_args);
     exp_args.reserve(n_args);
     while (i_arg < n_args) {
-      std::tuple<pp_tokens, pp_tokens, pp_token> cur_arg
+      std::tuple<_pp_tokens, _pp_tokens, _pp_token> cur_arg
 	= _create_macro_arg(token_reader, macro->shall_expand_arg(i_arg),
 			    i_arg == macro->non_va_arg_count(),
 			    used_macros_base, used_macro_undefs_base);
@@ -776,7 +914,7 @@ preprocessor::_handle_func_macro_invocation(
     }
   } else {
     // Slurp in the tokens between the () and make sure they're all empties.
-    std::tuple<pp_tokens, pp_tokens, pp_token> dummy_arg
+    std::tuple<_pp_tokens, _pp_tokens, _pp_token> dummy_arg
       = _create_macro_arg(token_reader, false, false,
 			  used_macros_base, used_macro_undefs_base);
     assert(std::get<2>(dummy_arg).get_type() == pp_token::type::punctuator);
@@ -804,27 +942,28 @@ preprocessor::_handle_func_macro_invocation(
 			 invocation_range);
 }
 
-std::tuple<pp_tokens, pp_tokens, pp_token>
-preprocessor::_create_macro_arg(const std::function<pp_token()> &token_reader,
+std::tuple<preprocessor::_pp_tokens, preprocessor::_pp_tokens,
+	   preprocessor::_pp_token>
+preprocessor::_create_macro_arg(const std::function<_pp_token()> &token_reader,
 				const bool expand, const bool variadic,
 				used_macros &used_macros_base,
 				used_macro_undefs &used_macro_undefs_base)
 {
-  pp_tokens arg;
-  pp_tokens exp_arg;
+  _pp_tokens arg;
+  _pp_tokens exp_arg;
   std::size_t lparens = 0;
-  pp_token end_delim(pp_token::type::eof, std::string(), file_range());
+  _pp_token end_delim(pp_token::type::eof, std::string(), file_range());
 
-  pp_token pending_tok(pp_token::type::eof, std::string(), file_range());
+  _pp_token pending_tok(pp_token::type::eof, std::string(), file_range());
   bool pending_tok_valid = false;
 
   bool leading_ws = true; // Strip leading whitespace.
   auto read_arg_tok = [&]() {
-    pp_token tok =
+    _pp_token tok =
       [&]() {
 	if (!pending_tok_valid || pending_tok.is_ws()) {
 	  while (true) {
-	    pp_token tok = token_reader();
+	    _pp_token tok = token_reader();
 
 	    used_macros_base += tok.used_macros();
 	    tok.used_macros().clear();
@@ -873,8 +1012,8 @@ preprocessor::_create_macro_arg(const std::function<pp_token()> &token_reader,
 	      // End of macro argument. Skip queued whitespace.
 	      pending_tok_valid = false;
 	      end_delim = std::move(tok);
-	      return pp_token(pp_token::type::eof, std::string(),
-			      end_delim.get_file_range());
+	      return _pp_token(pp_token::type::eof, std::string(),
+			       end_delim.get_file_range());
 
 	    } else if (pending_tok_valid) {
 	      // Return queued whitespace and queue next non-whitespace
@@ -894,7 +1033,7 @@ preprocessor::_create_macro_arg(const std::function<pp_token()> &token_reader,
 	} else {
 	  // Return queued non-whitespace token.
 	  leading_ws = false;
-	  pp_token tok = std::move(pending_tok);
+	  _pp_token tok = std::move(pending_tok);
 	  assert(!tok.is_ws() || tok.is_eof());
 	  pending_tok_valid = false;
 	  return tok;
@@ -924,8 +1063,31 @@ preprocessor::_create_macro_arg(const std::function<pp_token()> &token_reader,
     }
   }
 
-  return std::tuple<pp_tokens, pp_tokens, pp_token>
+  return std::tuple<_pp_tokens, _pp_tokens, _pp_token>
 		(std::move(arg), std::move(exp_arg), std::move(end_delim));
+}
+
+used_macros preprocessor::_collect_used_macros(const _pp_tokens &toks)
+{
+  used_macros result;
+
+  for (auto tok : toks) {
+    result += tok.used_macros();
+  }
+
+  return result;
+}
+
+used_macro_undefs
+preprocessor::_collect_used_macro_undefs(const _pp_tokens &toks)
+{
+  used_macro_undefs result;
+
+  for (auto tok : toks) {
+    result += tok.used_macro_undefs();
+  }
+
+  return result;
 }
 
 void preprocessor::_handle_include(raw_pp_tokens &&directive_toks)
@@ -969,16 +1131,16 @@ void preprocessor::_handle_include(raw_pp_tokens &&directive_toks)
   } else {
     auto read_tok = [&]() {
       if (it_raw_tok->is_newline() || it_raw_tok->is_eof()) {
-	return pp_token(pp_token::type::eof, std::string(), file_range());
+	return _pp_token(pp_token::type::eof, std::string(), file_range());
       }
 
-      pp_token tok{it_raw_tok->get_type(), it_raw_tok->get_value(),
+     _pp_token tok{it_raw_tok->get_type(), it_raw_tok->get_value(),
 		   it_raw_tok->get_file_range()};
       ++it_raw_tok;
       return tok;
     };
 
-    pp_tokens expanded;
+    _pp_tokens expanded;
     _expansion_state state;
     while (true) {
       auto tok = _expand(state, read_tok);
@@ -987,10 +1149,10 @@ void preprocessor::_handle_include(raw_pp_tokens &&directive_toks)
       expanded.push_back(std::move(tok));
     }
 
-    um = expanded.get_used_macros();
-    umu = expanded.get_used_macro_undefs();
+    um = _collect_used_macros(expanded);
+    umu = _collect_used_macro_undefs(expanded);
 
-    auto skip = [&expanded] (pp_tokens::const_iterator it){
+    auto skip = [&expanded] (_pp_tokens::const_iterator it){
       while(it != expanded.cend() &&
 	    it->is_type_any_of<pp_token::type::ws,
 			       pp_token::type::empty>()) {
@@ -1172,9 +1334,9 @@ bool preprocessor::_eval_conditional_inclusion(raw_pp_tokens &&directive_toks)
   auto read_tok =
     [&]() {
       if (it == directive_toks.end())
-	return pp_token(pp_token::type::eof, std::string(), eof_file_range);
+	return _pp_token(pp_token::type::eof, std::string(), eof_file_range);
 
-      pp_token tok{it->get_type(), it->get_value(), it->get_file_range()};
+      _pp_token tok{it->get_type(), it->get_value(), it->get_file_range()};
       ++it;
       return tok;
     };
@@ -1184,13 +1346,8 @@ bool preprocessor::_eval_conditional_inclusion(raw_pp_tokens &&directive_toks)
     [&]() -> pp_token {
       auto tok = _expand(state, read_tok, true);
 
-      tok.expansion_history().clear();
-      _cond_incl_states.top().um += tok.used_macros();
-      tok.used_macros().clear();
-      _cond_incl_states.top().umu += tok.used_macro_undefs();
-      tok.used_macro_undefs().clear();
-
-      return tok;
+      return pp_token{tok.get_type(), tok.get_value(), tok.get_file_range(),
+		      std::move(tok.used_macros()), tok.used_macro_undefs()};
     };
 
   yy::pp_expr_parser_driver pd(exp_read_tok);
@@ -1226,8 +1383,8 @@ preprocessor::_macro_instance::
 _macro_instance(const std::shared_ptr<const macro> &macro,
 		used_macros &&used_macros_base,
 		used_macro_undefs &&used_macro_undefs_base,
-		std::vector<pp_tokens> &&args,
-		std::vector<pp_tokens> &&exp_args,
+		std::vector<_pp_tokens> &&args,
+		std::vector<_pp_tokens> &&exp_args,
 		const file_range &file_range)
   : _macro(macro),
     _used_macros_base(std::move(used_macros_base)),
@@ -1252,7 +1409,7 @@ _macro_instance(const std::shared_ptr<const macro> &macro,
   exp_args.clear();
 }
 
-const pp_tokens* preprocessor::_macro_instance::
+const preprocessor::_pp_tokens* preprocessor::_macro_instance::
 _resolve_arg(const std::string &name, const bool expanded) const noexcept
 {
   if (!_macro->is_func_like())
@@ -1262,7 +1419,7 @@ _resolve_arg(const std::string &name, const bool expanded) const noexcept
   if (arg == _args.end())
     return nullptr;
 
-  const pp_tokens *resolved
+  const _pp_tokens *resolved
     = expanded ? &arg->second.second : &arg->second.first;
   return resolved;
 }
@@ -1326,7 +1483,7 @@ _is_concat_op(const raw_pp_tokens::const_iterator &it) const noexcept
   return (it != _macro->get_repl().end() && it->is_punctuator("##"));
 }
 
-pp_token preprocessor::_macro_instance::_handle_stringification()
+preprocessor::_pp_token preprocessor::_macro_instance::_handle_stringification()
 {
   assert(_it_repl != _macro->get_repl().end());
   assert(_it_repl->is_punctuator("#"));
@@ -1335,16 +1492,34 @@ pp_token preprocessor::_macro_instance::_handle_stringification()
 
   auto arg = _resolve_arg((_it_repl + 1)->get_value(), false);
   assert(arg);
-  assert(arg->get_used_macros().empty());
-  assert(arg->get_used_macro_undefs().empty());
+  assert(_collect_used_macros(*arg).empty());
+  assert(_collect_used_macro_undefs(*arg).empty());
 
   _it_repl += 2;
-  return pp_token(pp_token::type::str, arg->stringify(true),
-		  _file_range, used_macros(), _tok_used_macros_init(),
-		  _tok_used_macro_undefs_init());
+
+
+  // Concatenate the stringified argument tokens
+  std::string s;
+  for (auto &&it_tok = (*arg).begin(); it_tok != (*arg).end(); ++it_tok) {
+    s += it_tok->stringify();
+  }
+
+  // And escape '\' and '"' characters
+  for (auto &&it = s.begin(); it != s.end();) {
+    if (*it == '"' || *it == '\\') {
+      it = s.insert(it, '\\');
+      it += 2;
+    } else {
+      ++it;
+    }
+  }
+
+  return _pp_token(pp_token::type::str, std::move(s),
+		   _file_range, used_macros(), _tok_used_macros_init(),
+		   _tok_used_macro_undefs_init());
 }
 
-void preprocessor::_macro_instance::_add_concat_token(const pp_token &tok)
+void preprocessor::_macro_instance::_add_concat_token(const _pp_token &tok)
 {
   assert(!tok.is_ws() && !tok.is_newline() && !tok.is_eof());
 
@@ -1352,9 +1527,10 @@ void preprocessor::_macro_instance::_add_concat_token(const pp_token &tok)
   assert(tok.used_macro_undefs().empty());
 
   if (!_concat_token) {
-    _concat_token.reset(new pp_token(tok.get_type(), tok.get_value(),
-				     _file_range, _tok_expansion_history_init(),
-				     used_macros(), used_macro_undefs()));
+    _concat_token.reset(new _pp_token(tok.get_type(), tok.get_value(),
+				      _file_range,
+				      _tok_expansion_history_init(),
+				      used_macros(), used_macro_undefs()));
     _concat_token->expansion_history() += tok.expansion_history();
   } else {
     _concat_token->concat(tok, _remarks);
@@ -1367,21 +1543,21 @@ _add_concat_token(const raw_pp_token &raw_tok)
   assert(!raw_tok.is_ws() && !raw_tok.is_newline() && !raw_tok.is_eof());
 
   if (!_concat_token) {
-    _concat_token.reset(new pp_token(raw_tok.get_type(), raw_tok.get_value(),
-				     raw_tok.get_file_range()));
+    _concat_token.reset(new _pp_token(raw_tok.get_type(), raw_tok.get_value(),
+				      raw_tok.get_file_range()));
   } else {
-    pp_token tok {raw_tok.get_type(), raw_tok.get_value(),
-		  raw_tok.get_file_range()};
+    _pp_token tok {raw_tok.get_type(), raw_tok.get_value(),
+		   raw_tok.get_file_range()};
     _concat_token->concat(tok, _remarks);
   }
 }
 
-pp_token preprocessor::_macro_instance::_yield_concat_token()
+preprocessor::_pp_token preprocessor::_macro_instance::_yield_concat_token()
 {
   assert(_concat_token);
   _anything_emitted = true;
 
-  pp_token tok = std::move(*_concat_token);
+  _pp_token tok = std::move(*_concat_token);
   assert(_concat_token->used_macros().empty());
   _concat_token->used_macros() = _tok_used_macros_init();
   assert(_concat_token->used_macro_undefs().empty());
@@ -1390,7 +1566,7 @@ pp_token preprocessor::_macro_instance::_yield_concat_token()
   return tok;
 }
 
-pp_token preprocessor::_macro_instance::read_next_token()
+preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
 {
   // This is the core of macro expansion.
   //
@@ -1406,7 +1582,7 @@ pp_token preprocessor::_macro_instance::read_next_token()
   // a final pp_token::type::eof marker is returned.
   //
   // For the non-expanded argument values, which are used in
-  // concatenations and stringifications, the associated pp_tokens
+  // concatenations and stringifications, the associated _pp_tokens
   // sequence must not contain any
   // - empty token,
   // - multiple consecutive whitespace tokens or
@@ -1501,10 +1677,10 @@ pp_token preprocessor::_macro_instance::read_next_token()
       assert(!_in_concat);
       assert(_cur_arg_it != _cur_arg->end());
 
-      auto tok = pp_token(_cur_arg_it->get_type(), _cur_arg_it->get_value(),
-			  _file_range, _tok_expansion_history_init(),
-			  _tok_used_macros_init(),
-			  _tok_used_macro_undefs_init());
+      auto tok = _pp_token(_cur_arg_it->get_type(), _cur_arg_it->get_value(),
+			   _file_range, _tok_expansion_history_init(),
+			   _tok_used_macros_init(),
+			   _tok_used_macro_undefs_init());
       tok.expansion_history() += _cur_arg_it->expansion_history();
       tok.used_macros() += _cur_arg_it->used_macros();
       tok.used_macro_undefs() += _cur_arg_it->used_macro_undefs();
@@ -1561,8 +1737,8 @@ pp_token preprocessor::_macro_instance::read_next_token()
 	  assert(_in_concat);
 	  return _yield_concat_token();
 	} else {
-	  pp_token tok{_it_repl->get_type(), _it_repl->get_value(),
-		       _it_repl->get_file_range()};
+	  _pp_token tok{_it_repl->get_type(), _it_repl->get_value(),
+			_it_repl->get_file_range()};
 	  _it_repl += 2;
 	  _in_concat = true;
 	  return tok;
@@ -1589,13 +1765,13 @@ pp_token preprocessor::_macro_instance::read_next_token()
     if (!_anything_emitted) {
       // Emit an empty token in order to report usage of this macro.
       _anything_emitted = true;
-      return pp_token(pp_token::type::empty, std::string(),
-		      _file_range, _tok_expansion_history_init(),
-		      _tok_used_macros_init(),
-		      _tok_used_macro_undefs_init());
+      return _pp_token(pp_token::type::empty, std::string(),
+		       _file_range, _tok_expansion_history_init(),
+		       _tok_used_macros_init(),
+		       _tok_used_macro_undefs_init());
     }
 
-    return pp_token(pp_token::type::eof, std::string(), file_range());
+    return _pp_token(pp_token::type::eof, std::string(), file_range());
   }
 
   if (_it_repl->is_id()) {
@@ -1625,10 +1801,10 @@ pp_token preprocessor::_macro_instance::read_next_token()
     return _handle_stringification();
   }
 
-  auto tok = pp_token(_it_repl->get_type(), _it_repl->get_value(),
-		      _file_range,
-		      _tok_expansion_history_init(), _tok_used_macros_init(),
-		      _tok_used_macro_undefs_init());
+  auto tok = _pp_token(_it_repl->get_type(), _it_repl->get_value(),
+		       _file_range,
+		       _tok_expansion_history_init(), _tok_used_macros_init(),
+		       _tok_used_macro_undefs_init());
   ++_it_repl;
 
   return tok;

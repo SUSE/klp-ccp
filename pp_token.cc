@@ -13,10 +13,8 @@ pp_token::pp_token(const type type, const std::string &value,
 
 pp_token::pp_token(const type type, const std::string &value,
 		   const file_range &file_range,
-		   const class used_macros &eh, class used_macros &&um,
-		   const class used_macro_undefs &umu)
-  : _value(value), _file_range(file_range),
-    _expansion_history(std::move(eh)), _used_macros(std::move(um)),
+		   class used_macros &&um, const class used_macro_undefs &umu)
+  : _value(value), _file_range(file_range), _used_macros(std::move(um)),
     _used_macro_undefs(umu), _type(type)
 {}
 
@@ -26,158 +24,67 @@ void pp_token::set_type_and_value(const type type, const std::string &value)
   _value = value;
 }
 
-std::string pp_token::stringify() const
+std::string pp_token::stringify(const type type, const std::string &value)
 {
-  switch (_type) {
-  case type::ws:
-    return _value;
+  switch (type) {
+  case pp_token::type::ws:
+    return value;
 
-  case type::newline:
-    return _value;
+  case pp_token::type::newline:
+    return value;
 
-  case type::id:
-    return _value;
+  case pp_token::type::id:
+    return value;
 
-  case type::pp_number:
-    return _value;
+  case pp_token::type::pp_number:
+    return value;
 
-  case type::chr:
-    return '\'' + _value + '\'';
+  case pp_token::type::chr:
+    return '\'' + value + '\'';
 
-  case type::wchr:
-    return "L'" + _value + '\'';
+  case pp_token::type::wchr:
+    return "L'" + value + '\'';
 
-  case type::uchr16:
-    return "u'" + _value + '\'';
+  case pp_token::type::uchr16:
+    return "u'" + value + '\'';
 
-  case type::uchr32:
-    return "U'" + _value + '\'';
+  case pp_token::type::uchr32:
+    return "U'" + value + '\'';
 
-  case type::str:
-  case type::qstr:
-    return '"' + _value + '"';
+  case pp_token::type::str:
+  case pp_token::type::qstr:
+    return '"' + value + '"';
 
-  case type::wstr:
-    return "L\"" + _value + '"';
+  case pp_token::type::wstr:
+    return "L\"" + value + '"';
 
-  case type::ustr8:
-    return "u\"" + _value + '"';
+  case pp_token::type::ustr8:
+    return "u\"" + value + '"';
 
-  case type::ustr16:
-    return "u\"" + _value + '"';
+  case pp_token::type::ustr16:
+    return "u\"" + value + '"';
 
-  case type::ustr32:
-    return "U\"" + _value + '"';
+  case pp_token::type::ustr32:
+    return "U\"" + value + '"';
 
-  case type::hstr:
-    return '<' + _value + '>';
+  case pp_token::type::hstr:
+    return '<' + value + '>';
 
-  case type::punctuator:
-    return _value;
+  case pp_token::type::punctuator:
+    return value;
 
-  case type::non_ws_char:
-    return _value;
+  case pp_token::type::non_ws_char:
+    return value;
 
-  case type::eof:
-  case type::empty:
+  case pp_token::type::eof:
+  case pp_token::type::empty:
    return "";
   }
 
   __builtin_unreachable();
 }
 
-void
-pp_token::concat(const pp_token &tok, code_remarks &remarks)
+std::string pp_token::stringify() const
 {
-  assert(_used_macros.empty());
-  assert(_used_macro_undefs.empty());
-  assert(tok._used_macros.empty());
-  assert(tok._used_macro_undefs.empty());
-
-  assert(_type != type::ws);
-  assert(tok._type != type::ws);
-  assert(_type != type::newline);
-  assert(tok._type != type::newline);
-  assert(_type != type::eof);
-  assert(tok._type != type::eof);
-  assert(_type != type::qstr);
-  assert(tok._type != type::qstr);
-  assert(_type != type::hstr);
-  assert(tok._type != type::hstr);
-
-  _expansion_history += tok._expansion_history;
-  if (_type == type::empty) {
-    _type = tok._type;
-    _value = tok._value;
-    return;
-  } else if (tok._type == type::empty) {
-    return;
-  }
-
-  if (_type == type::id && tok._type == type::pp_number) {
-    if (!std::all_of(tok._value.cbegin(), tok._value.cend(),
-		     [](const char c) {
-		       return (c == '_' || ('a' <= c && c <= 'z') ||
-			       ('A' <= c && c <= 'Z') ||
-			       ('0' <= c && c <= '9'));
-		     })) {
-      code_remark_raw remark
-	(code_remark_raw::severity::fatal,
-	 "can't concatenate " + _value + " and " + tok._value,
-	 tok.get_file_range());
-      remarks.add(remark);
-      throw pp_except(remark);
-    }
-
-    _value += tok._value;
-    return;
-  } else if (_type == type::pp_number && tok._type == type::id) {
-    _value += tok._value;
-    return;
-  } else if (_type == type::pp_number && tok._type == type::punctuator &&
-     (tok._value == "-" || tok._value == "+")) {
-    _value += tok._value;
-    return;
-  }
-
-  if (_type != tok._type) {
-    code_remark_raw remark(code_remark_raw::severity::fatal,
-			   "can't concatenate tokens of different type",
-			   tok.get_file_range());
-    remarks.add(remark);
-    throw pp_except(remark);
-  } else if(_type == type::chr || _type == type::wchr) {
-    code_remark_raw remark(code_remark_raw::severity::fatal,
-			   "can't concatenate character constants",
-			   tok.get_file_range());
-    remarks.add(remark);
-    throw pp_except(remark);
-  } else if (_type == type::non_ws_char) {
-    code_remark_raw remark(code_remark_raw::severity::fatal,
-			   "can't concatenate " + _value + " and " + tok._value,
-			   tok.get_file_range());
-    remarks.add(remark);
-    throw pp_except(remark);
-  }
-
-  _value += tok._value;
-
-  if (_type == type::punctuator) {
-    if (_value != "->" && _value != "++" && _value != "--" && _value != "<<" &&
-	_value != ">>" && _value != "<=" && _value != ">=" && _value != "==" &&
-	_value != "!=" && _value != "&&" && _value != "||" && _value != "*=" &&
-	_value != "/=" && _value != "%=" && _value != "+=" && _value != "-=" &&
-	_value != "<<=" && _value != ">>=" && _value != "&=" &&
-	_value != "^=" && _value != "|=" && _value != "##" && _value != "<:" &&
-	_value != ":>" && _value != "<%" && _value != "%>" && _value != "%:" &&
-	_value != "%:%:") {
-      code_remark_raw remark
-	(code_remark_raw::severity::fatal,
-	 "can't concatenate " + _value + " and " + tok._value,
-	 tok.get_file_range());
-      remarks.add(remark);
-      throw pp_except(remark);
-    }
-    return;
-  }
+  return stringify(_type, _value);
 }
