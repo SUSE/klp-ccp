@@ -71,11 +71,11 @@ namespace klp
 	_typedefs_scopes_type _typedefs_scopes;
 	_typedefs_type _stashed_typedef_scope;
 
-	pp_tokens _tokens;
-	ast::translation_unit *_result;
-
 	preprocessor _pp;
 	gnuc_parser _parser;
+
+	pp_tokens _tokens;
+	ast::translation_unit *_result;
 
 	code_remarks _remarks;
 

@@ -142,7 +142,8 @@ static _val_tok_map_type _initialize_val_tok_map(const _val_tok_map_entry *e)
 
 gnuc_parser_driver::gnuc_parser_driver(preprocessor &&pp)
   : _result(nullptr), _pp(std::move(pp)),
-    _parser(*this), _ignore_td_spec(0), _in_typedef(false)
+    _parser(*this), _tokens(_pp.get_tracking()),
+    _ignore_td_spec(0), _in_typedef(false)
 {
   _typedefs_scopes.emplace();
   _typedefs_scopes.top().insert("__builtin_va_list");

@@ -1358,7 +1358,7 @@ bool preprocessor::_eval_conditional_inclusion(raw_pp_tokens &&directive_toks)
 		      std::move(tok.used_macros()), tok.used_macro_undefs()};
     };
 
-  yy::pp_expr_parser_driver pd(exp_read_tok);
+  yy::pp_expr_parser_driver pd(exp_read_tok, *_tracking);
   try {
     pd.parse();
   } catch (const pp_except&) {

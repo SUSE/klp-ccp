@@ -5,13 +5,13 @@
 #include <string>
 #include <algorithm>
 #include "pp_token.hh"
-#include "used_macros.hh"
-#include "used_macro_undefs.hh"
 
 namespace klp
 {
   namespace ccp
   {
+    class pp_tracking;
+
     class pp_tokens
     {
     private:
@@ -19,8 +19,8 @@ namespace klp
 
     public:
       template<typename... Targs>
-      pp_tokens(Targs&&... args)
-	: _tokens(std::forward<Targs>(args)...)
+      pp_tokens(const pp_tracking &pp_tracking, Targs&&... args)
+	: _pp_tracking(pp_tracking), _tokens(std::forward<Targs>(args)...)
       {}
 
       pp_tokens(const pp_tokens&) = delete;
@@ -100,6 +100,7 @@ namespace klp
       std::string stringify(const bool as_string) const;
 
     private:
+      const pp_tracking &_pp_tracking;
       _pp_tokens_type _tokens;
     };
   }

@@ -43,6 +43,9 @@ namespace klp
       std::unique_ptr<const pp_tracking> grab_tracking() noexcept
       { return std::move(_tracking); }
 
+      const pp_tracking& get_tracking() const noexcept
+      { return *_tracking; }
+
       header_inclusion_roots_type
       grab_header_inclusion_roots()
       { return std::move(_header_inclusion_roots); }

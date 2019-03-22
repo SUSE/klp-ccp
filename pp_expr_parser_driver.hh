@@ -15,7 +15,8 @@ namespace klp
       class pp_expr_parser_driver
       {
       public:
-	pp_expr_parser_driver(const std::function<pp_token()> &token_reader);
+	pp_expr_parser_driver(const std::function<pp_token()> &token_reader,
+			      const pp_tracking &pp_tracking);
 
 	~pp_expr_parser_driver() noexcept;
 

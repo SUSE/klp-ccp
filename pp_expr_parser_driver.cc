@@ -75,8 +75,10 @@ static _val_tok_map_type _initialize_val_tok_map(const _val_tok_map_entry *e)
 
 
 pp_expr_parser_driver::
-pp_expr_parser_driver(const std::function<pp_token()> &token_reader)
-  : _token_reader(token_reader), _result(nullptr), _parser(*this)
+pp_expr_parser_driver(const std::function<pp_token()> &token_reader,
+		      const pp_tracking &pp_tracking)
+  : _token_reader(token_reader), _tokens(pp_tracking), _result(nullptr),
+    _parser(*this)
 {}
 
 pp_expr_parser_driver::~pp_expr_parser_driver() noexcept
