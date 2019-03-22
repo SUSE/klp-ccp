@@ -14,6 +14,7 @@
 #include "types.hh"
 #include "builtins.hh"
 #include "pp_tokens_range.hh"
+#include "pp_tracking.hh"
 
 namespace klp
 {
@@ -4514,7 +4515,8 @@ namespace klp
 	typedef std::vector<std::unique_ptr<header_inclusion_root> >
 	header_inclusion_roots_type;
 
-	ast_translation_unit(header_inclusion_roots_type &&hirs,
+	ast_translation_unit(std::unique_ptr<const pp_tracking> &&pp_tracking,
+			     header_inclusion_roots_type &&hirs,
 			     pp_tokens &&tokens,
 			     std::unique_ptr<translation_unit> &&tu);
 
@@ -4544,6 +4546,7 @@ namespace klp
 
 	void _resolve_ids();
 
+	std::unique_ptr<const pp_tracking> _pp_tracking;
 	header_inclusion_roots_type _hirs;
 	std::unique_ptr<translation_unit> _tu;
       };

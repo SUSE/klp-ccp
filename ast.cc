@@ -7707,10 +7707,11 @@ ast::~ast() noexcept = default;
 
 
 ast_translation_unit::
-ast_translation_unit(header_inclusion_roots_type &&hirs, pp_tokens &&tokens,
+ast_translation_unit(std::unique_ptr<const pp_tracking> &&pp_tracking,
+		     header_inclusion_roots_type &&hirs, pp_tokens &&tokens,
 		     std::unique_ptr<translation_unit> &&tu)
   : ast(std::move(tokens), false), _hirs(std::move(hirs)),
-    _tu(std::move(tu))
+    _pp_tracking(std::move(pp_tracking)), _tu(std::move(tu))
 {}
 
 ast_translation_unit::ast_translation_unit(ast_translation_unit &&a)
