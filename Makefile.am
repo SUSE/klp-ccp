@@ -40,6 +40,7 @@ noinst_HEADERS =				\
 	pp_tokens.hh				\
 	pp_tokens_range.hh			\
 	pp_tokenizer.hh			\
+	pp_tracking.hh				\
 	preprocessor.hh			\
 	raw_pp_token.hh			\
 	raw_pp_tokens.hh			\
@@ -86,6 +87,7 @@ libcp_a_SOURCES =				\
 	pp_tokens.cc				\
 	pp_tokens_range.cc			\
 	pp_tokenizer.cc			\
+	pp_tracking.cc				\
 	preprocessor.cc			\
 	raw_pp_token.cc			\
 	semantic_except.cc			\

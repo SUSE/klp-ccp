@@ -13,6 +13,7 @@
 #include "header_resolver.hh"
 #include "macro.hh"
 #include "pp_tokenizer.hh"
+#include "pp_tracking.hh"
 
 namespace klp
 {
@@ -318,6 +319,7 @@ namespace klp
       const header_resolver &_header_resolver;
       const architecture &_arch;
 
+      std::unique_ptr<pp_tracking> _tracking;
       header_inclusion_roots_type &_header_inclusion_roots;
       header_inclusion_roots_type::iterator _cur_header_inclusion_root;
       std::stack<std::reference_wrapper<inclusion_node> > _inclusions;

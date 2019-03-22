@@ -16,6 +16,7 @@ preprocessor::preprocessor(header_inclusion_roots_type &header_inclusion_roots,
 			   const header_resolver &header_resolver,
 			   const architecture &arch)
   : _header_resolver(header_resolver), _arch(arch),
+    _tracking(new pp_tracking()),
     _header_inclusion_roots(header_inclusion_roots),
     _cur_header_inclusion_root(_header_inclusion_roots.begin()),
     _cond_incl_nesting(0), _root_expansion_state(), __counter__(0),
@@ -242,7 +243,11 @@ preprocessor::_pp_token preprocessor::_read_next_plain_token()
       _handle_eof_from_tokenizer(std::move(raw_tok));
       _maybe_pp_directive = true;
       goto again;
-    } else if (raw_tok.is_newline()) {
+    }
+
+    _tracking->_append_token(raw_tok);
+
+    if (raw_tok.is_newline()) {
       _maybe_pp_directive = true;
     } else if (_maybe_pp_directive && raw_tok.is_punctuator("#")) {
       _handle_pp_directive(std::move(raw_tok));
@@ -302,8 +307,11 @@ void preprocessor::_handle_pp_directive(raw_pp_token &&sharp_tok)
       directive_toks.push_back(tok);
       _handle_eof_from_tokenizer(std::move(tok));
       break;
+    }
 
-    } else if (tok.is_newline()) {
+    _tracking->_append_token(tok);
+
+    if (tok.is_newline()) {
       directive_toks.push_back(tok);
       break;
 
