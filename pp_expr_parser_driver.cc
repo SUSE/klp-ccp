@@ -159,9 +159,12 @@ pp_expr_parser_driver::lex(pp_expr_parser::semantic_type *value,
   case pp_token::type::punctuator:
     it_tok_type = punct_map.find(tok.get_value());
     if (it_tok_type == punct_map.cend()) {
+      const raw_pp_token_index tok_index = tok.get_token_source().begin;
+      const raw_pp_token &raw_tok =
+	_tokens.get_pp_tracking().get_raw_tokens()[tok_index];
       code_remark_raw remark(code_remark_raw::severity::fatal,
 			     "unrecognized preprocessor token (punctuator)",
-			     tok.get_file_range());
+			     raw_tok.get_file_range());
       _remarks.add(remark);
       throw pp_except(remark);
     }
@@ -187,9 +190,12 @@ pp_expr_parser_driver::lex(pp_expr_parser::semantic_type *value,
 
   case pp_token::type::non_ws_char:
     {
+      const raw_pp_token_index tok_index = tok.get_token_source().begin;
+      const raw_pp_token &raw_tok =
+	_tokens.get_pp_tracking().get_raw_tokens()[tok_index];
       code_remark_raw remark(code_remark_raw::severity::fatal,
 			     "unrecognized preprocessor token (non-ws char)",
-			     tok.get_file_range());
+			     raw_tok.get_file_range());
       _remarks.add(remark);
       throw pp_except(remark);
     }

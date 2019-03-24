@@ -8,6 +8,7 @@
 #include "offset_to_line_col_map.hh"
 #include "used_macros.hh"
 #include "used_macro_undefs.hh"
+#include "pp_tracking.hh"
 
 namespace klp
 {
@@ -32,12 +33,12 @@ namespace klp
 
       header_inclusion_child&
       add_header_inclusion(const std::string &filename,
-			   file_range &&file_range,
+			   const raw_pp_tokens_range &directive_range,
 			   used_macros &&used_macros,
 			   used_macro_undefs &&used_macro_undefs);
 
       conditional_inclusion_node&
-      add_conditional_inclusion(const file_range::loc_type start_loc,
+      add_conditional_inclusion(const raw_pp_token_index range_start,
 				used_macros &&used_macros,
 				used_macro_undefs &&used_macro_undefs);
 
@@ -107,11 +108,11 @@ namespace klp
 
       header_inclusion_child(const inclusion_node &parent,
 			     const std::string &filename,
-			     file_range &&file_range,
+			     const raw_pp_tokens_range &directive_range,
 			     used_macros &&used_macros,
 			     used_macro_undefs &&used_macro_undefs);
 
-      file_range _file_range;
+      raw_pp_tokens_range _directive_range;
       used_macros _used_macros;
       used_macro_undefs _used_macro_undefs;
     };
@@ -120,7 +121,7 @@ namespace klp
     {
     public:
       conditional_inclusion_node(const inclusion_node &parent,
-				 const file_range::loc_type start_loc,
+				 const raw_pp_token_index range_begin,
 				 used_macros &&used_macros,
 				 used_macro_undefs &&used_macro_undefs);
 
@@ -129,11 +130,10 @@ namespace klp
       virtual const header_inclusion_node&
       get_containing_header() const noexcept override;
 
-      void set_end_loc(const file_range::loc_type end_loc) noexcept;
+      void set_range_end(const raw_pp_token_index range_end) noexcept;
 
     private:
-      const file_range::loc_type _start_loc;
-      file_range::loc_type _end_loc;
+      raw_pp_tokens_range _range;
       used_macros _used_macros;
       used_macro_undefs _used_macro_undefs;
     };

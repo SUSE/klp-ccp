@@ -59,12 +59,12 @@ namespace klp
 
       public:
 	_pp_token(const pp_token::type type, const std::string &value,
-		  const file_range &file_range,
+		  const raw_pp_tokens_range &token_source,
 		  const used_macros &eh, used_macros &&um,
 		  const class used_macro_undefs &umu);
 
 	_pp_token(const pp_token::type type, const std::string &value,
-		  const file_range &file_range);
+		  const raw_pp_tokens_range &token_source);
 
 	pp_token::type get_type() const noexcept
 	{
@@ -109,9 +109,9 @@ namespace klp
 	  return _used_macro_undefs;
 	}
 
-	const file_range& get_file_range() const noexcept
+	const raw_pp_tokens_range& get_token_source() const noexcept
 	{
-	  return _file_range;
+	  return _token_source;
 	}
 
 	operator bool() const noexcept
@@ -157,8 +157,8 @@ namespace klp
 
 	std::string stringify() const;
 
-	void
-	concat(const _pp_token &tok, code_remarks &remarks);
+	void concat(const _pp_token &tok, const preprocessor &p,
+		    code_remarks &remarks);
 
       private:
 	template <pp_token::type... types>
@@ -181,7 +181,7 @@ namespace klp
 
 	pp_token::type _type;
 	std::string _value;
-	file_range _file_range;
+	raw_pp_tokens_range _token_source;
 
 	class used_macros _used_macros;
 	class used_macro_undefs _used_macro_undefs;
@@ -195,12 +195,13 @@ namespace klp
       class _macro_instance
       {
       public:
-	_macro_instance(const std::shared_ptr<const macro> &macro,
+	_macro_instance(const preprocessor &preprocessor,
+			const std::shared_ptr<const macro> &macro,
 			used_macros &&used_macros_base,
 			used_macro_undefs &&used_macro_undefs_base,
 			std::vector<_pp_tokens> &&args,
 			std::vector<_pp_tokens> &&exp_args,
-			const file_range &file_range);
+			const raw_pp_tokens_range &invocation_range);
 
 	_pp_token read_next_token();
 
@@ -237,12 +238,13 @@ namespace klp
 	void _add_concat_token(const raw_pp_token &raw_tok);
 	_pp_token _yield_concat_token();
 
+	const preprocessor &_preprocessor;
 	const std::shared_ptr<const macro> &_macro;
 	const used_macros _used_macros_base;
 	const used_macro_undefs _used_macro_undefs_base;
 	std::map<std::string,
 		 std::pair<_pp_tokens, _pp_tokens> > _args;
-	const file_range _file_range;
+	const raw_pp_tokens_range _invocation_range;
 	code_remarks _remarks;
 
 	raw_pp_tokens::const_iterator _it_repl;
@@ -258,9 +260,9 @@ namespace klp
 
       struct _cond_incl_state
       {
-	_cond_incl_state(const file_range::loc_type _start_loc);
+	_cond_incl_state(const pp_token_index _range_begin);
 
-	file_range::loc_type start_loc;
+	pp_token_index range_begin;
 	used_macros um;
 	used_macro_undefs umu;
 	conditional_inclusion_node *incl_node;
@@ -279,8 +281,15 @@ namespace klp
       void _grab_remarks_from(T &from);
 
       _pp_token _read_next_plain_token();
+
       void _handle_eof_from_tokenizer(raw_pp_token &&eof_tok);
-      void _handle_pp_directive(raw_pp_token &&sharp_tok);
+
+      file_range _pp_token_to_file_range(const _pp_token &tok) const;
+
+      file_range
+      _raw_pp_tokens_range_to_file_range(const raw_pp_tokens_range &r) const;
+
+      void _handle_pp_directive();
 
       _pp_token
       _expand(_expansion_state &state,
@@ -296,7 +305,7 @@ namespace klp
 			const std::shared_ptr<const macro> &macro,
 			used_macros &&used_macros_base,
 			used_macro_undefs &&used_macro_undefs_base,
-			const file_range &id_tok_file_range,
+			const raw_pp_token_index invocation_begin,
 			const std::function<_pp_token()> &token_reader);
 
       std::tuple<_pp_tokens, _pp_tokens, _pp_token>
@@ -308,8 +317,7 @@ namespace klp
       static used_macros _collect_used_macros(const _pp_tokens &toks);
       static used_macro_undefs
       _collect_used_macro_undefs(const _pp_tokens &toks);
-
-      void _handle_include(raw_pp_tokens &&directive_toks);
+      void _handle_include(const raw_pp_tokens_range &directive_range);
 
       bool _cond_incl_inactive() const noexcept;
 
@@ -317,9 +325,20 @@ namespace klp
 
       void _enter_cond_incl();
 
-      void _pop_cond_incl(const file_range::loc_type end_loc);
+      void _pop_cond_incl(const pp_token_index range_end);
 
-      bool _eval_conditional_inclusion(raw_pp_tokens &&directive_toks);
+      bool
+      _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range);
+
+      std::shared_ptr<const macro>
+      _handle_macro_definition(const raw_pp_tokens_range &directive_range,
+			std::shared_ptr<const macro_undef> &&macro_undef);
+
+      raw_pp_tokens
+      _normalize_macro_repl(const raw_pp_tokens::const_iterator begin,
+			    const raw_pp_tokens::const_iterator end,
+			    const bool func_like,
+			    const std::set<std::string> &arg_names);
 
 
       const header_resolver &_header_resolver;

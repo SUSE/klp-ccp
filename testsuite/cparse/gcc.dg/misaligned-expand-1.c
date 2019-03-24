@@ -40,5 +40,5 @@ main (int argc, char **argv)
   return 0;
 }
 
-/* cp-out: warning: [^:]*: line 34, columns 15-18: integer overflow in cast */
-/* cp-out: warning: [^:]*: line 37, columns 15-18: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 34, column 15: integer overflow in cast */
+/* cp-out: warning: [^:]*: line 37, column 15: integer overflow in cast */

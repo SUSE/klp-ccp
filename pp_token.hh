@@ -3,7 +3,7 @@
 
 #include <string>
 #include <memory>
-#include "file_range.hh"
+#include "raw_pp_tokens_range.hh"
 #include "used_macros.hh"
 #include "used_macro_undefs.hh"
 
@@ -41,10 +41,10 @@ namespace klp
       };
 
       pp_token(const type type, const std::string &value,
-	       const file_range &file_range);
+	       const raw_pp_tokens_range &token_source);
 
       pp_token(const type type, const std::string &value,
-	       const file_range &file_range,
+	       const raw_pp_tokens_range &token_source,
 	       used_macros &&um,
 	       const class used_macro_undefs &umu);
 
@@ -80,10 +80,8 @@ namespace klp
 	return _used_macro_undefs;
       }
 
-      const file_range& get_file_range() const noexcept
-      {
-	return _file_range;
-      }
+      const raw_pp_tokens_range& get_token_source() const noexcept
+      { return _token_source; }
 
       operator bool() const noexcept
       {
@@ -143,7 +141,7 @@ namespace klp
       };
 
       std::string _value;
-      file_range _file_range;
+      raw_pp_tokens_range _token_source;
       class used_macros _used_macros;
       class used_macro_undefs _used_macro_undefs;
       type _type;

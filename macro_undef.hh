@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <utility>
-#include "file_range.hh"
+#include "raw_pp_tokens_range.hh"
 
 namespace klp
 {
@@ -21,15 +21,12 @@ namespace klp
       get_macro() const noexcept
       { return _macro; }
 
-      const file_range& get_file_range() const noexcept
-      { return _file_range; }
-
     private:
       macro_undef(std::shared_ptr<const macro> &&macro,
-		  const file_range &file_range);
+		  const raw_pp_tokens_range &directive_range);
 
       std::shared_ptr<const macro> &_macro;
-      file_range _file_range;
+      raw_pp_tokens_range _directive_range;
     };
 
     template<typename... Targs>

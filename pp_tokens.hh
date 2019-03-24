@@ -99,6 +99,9 @@ namespace klp
 
       std::string stringify(const bool as_string) const;
 
+      const pp_tracking& get_pp_tracking() const noexcept
+      { return _pp_tracking; }
+
     private:
       const pp_tracking &_pp_tracking;
       _pp_tokens_type _tokens;
