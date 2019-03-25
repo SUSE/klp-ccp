@@ -46,7 +46,7 @@ code_remark_pp::code_remark_pp(const severity sev, const std::string &msg,
       _fr = file_range{first_tok_fr.get_inclusion_node(),
 		       first_tok_fr.get_start_loc()};
       _fr_end = file_range{last_tok_fr.get_inclusion_node(),
-			   last_tok_fr.get_start_loc()};
+			   last_tok_fr.get_end_loc()};
     }
   }
 }
