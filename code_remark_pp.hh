@@ -6,6 +6,7 @@
 #include <memory>
 #include <functional>
 #include "pp_tokens_range.hh"
+#include "file_range.hh"
 
 namespace klp
 {
@@ -44,8 +45,9 @@ namespace klp
 
     private:
       std::string _msg;
-      std::reference_wrapper<const pp_tokens> _tokens;
-      pp_tokens_range _range;
+      file_range _fr;
+      file_range _fr_end;
+      bool _fr_end_valid;
       severity _sev;
     };
 
