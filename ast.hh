@@ -4553,7 +4553,7 @@ namespace klp
       class ast_pp_expr final : public ast
       {
       public:
-	ast_pp_expr(pp_tokens &&tokens, std::unique_ptr<expr> &&e);
+	ast_pp_expr(const pp_tracking &pp_tracking, std::unique_ptr<expr> &&e);
 
 	ast_pp_expr(ast_pp_expr &&a);
 
@@ -4564,7 +4564,7 @@ namespace klp
 	bool evaluate(const architecture &arch);
 
       private:
-	pp_tokens _tokens;
+	const pp_tracking &_pp_tracking;
 	std::unique_ptr<expr> _e;
       };
     }

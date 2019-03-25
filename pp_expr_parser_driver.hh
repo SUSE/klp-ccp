@@ -15,8 +15,9 @@ namespace klp
       class pp_expr_parser_driver
       {
       public:
-	pp_expr_parser_driver(const std::function<pp_token()> &token_reader,
-			      const pp_tracking &pp_tracking);
+	pp_expr_parser_driver
+			(const std::function<pp_token_index()> &token_reader,
+			 pp_tracking &pp_tracking);
 
 	~pp_expr_parser_driver() noexcept;
 
@@ -35,8 +36,8 @@ namespace klp
 	void error(const pp_expr_parser::location_type& loc,
 		   const std::string& msg);
 
-	std::function<pp_token()> _token_reader;
-	pp_tokens _tokens;
+	std::function<pp_token_index()> _token_reader;
+	pp_tracking &_pp_tracking;
 	ast::expr *_result;
 
 	pp_expr_parser _parser;

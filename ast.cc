@@ -7726,17 +7726,18 @@ const klp::ccp::pp_tokens& ast_translation_unit::get_pp_tokens() const noexcept
 }
 
 
-ast_pp_expr::ast_pp_expr(pp_tokens &&tokens, std::unique_ptr<expr> &&e)
-  : ast(true), _tokens(std::move(tokens)), _e(std::move(e))
+ast_pp_expr::ast_pp_expr(const pp_tracking &pp_tracking,
+			 std::unique_ptr<expr> &&e)
+  : ast(true), _pp_tracking(pp_tracking), _e(std::move(e))
 {}
 
 ast_pp_expr::ast_pp_expr(ast_pp_expr &&a)
-  : ast(std::move(a)), _tokens(std::move(a._tokens)), _e(std::move(a._e))
+  : ast(std::move(a)), _pp_tracking(a._pp_tracking), _e(std::move(a._e))
 {}
 
 ast_pp_expr::~ast_pp_expr() noexcept = default;
 
 const klp::ccp::pp_tokens& ast_pp_expr::get_pp_tokens() const noexcept
 {
-  return _tokens;
+  return _pp_tracking.get_pp_tokens();
 }

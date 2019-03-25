@@ -345,6 +345,7 @@ namespace klp
       const architecture &_arch;
 
       std::unique_ptr<pp_tracking> _tracking;
+      const pp_tracking *_cur_tracking;
       header_inclusion_roots_type &_header_inclusion_roots;
       header_inclusion_roots_type::iterator _cur_header_inclusion_root;
       std::stack<std::reference_wrapper<inclusion_node> > _inclusions;

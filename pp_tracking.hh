@@ -18,6 +18,9 @@ namespace klp
       const pp_tokens &get_pp_tokens() const noexcept
       { return _pp_tokens; }
 
+      pp_tokens &get_pp_tokens() noexcept
+      { return _pp_tokens; }
+
     private:
       friend class preprocessor;
 

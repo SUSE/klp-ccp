@@ -16,7 +16,7 @@ preprocessor::preprocessor(header_inclusion_roots_type &header_inclusion_roots,
 			   const header_resolver &header_resolver,
 			   const architecture &arch)
   : _header_resolver(header_resolver), _arch(arch),
-    _tracking(new pp_tracking()),
+    _tracking(new pp_tracking()), _cur_tracking(_tracking.get()),
     _header_inclusion_roots(header_inclusion_roots),
     _cur_header_inclusion_root(_header_inclusion_roots.begin()),
     _cond_incl_nesting(0), _root_expansion_state(), __counter__(0),
@@ -307,7 +307,7 @@ _raw_pp_tokens_range_to_file_range(const raw_pp_tokens_range &r) const
 {
   if (r.begin == r.end + 1) {
     // A single token, emit "point" file range for its start.
-    const raw_pp_token &tok = _tracking->get_raw_tokens()[r.begin];
+    const raw_pp_token &tok = _cur_tracking->get_raw_tokens()[r.begin];
     const file_range &tok_fr = tok.get_file_range();
     return file_range{tok_fr.get_header_inclusion_node(),
 		      tok_fr.get_start_loc()};
@@ -316,16 +316,16 @@ _raw_pp_tokens_range_to_file_range(const raw_pp_tokens_range &r) const
     // An empty range, used for EOFs. Emit a "point" file range
     // for the preceeding token's end.
     assert(r.begin > 0);
-    assert(r.begin <= _tracking->get_raw_tokens().size());
-    const raw_pp_token &tok = _tracking->get_raw_tokens()[r.begin - 1];
+    assert(r.begin <= _cur_tracking->get_raw_tokens().size());
+    const raw_pp_token &tok = _cur_tracking->get_raw_tokens()[r.begin - 1];
     const file_range &tok_fr = tok.get_file_range();
     return file_range{tok_fr.get_header_inclusion_node(),
 		      tok_fr.get_end_loc()};
   } else {
     // A real range. It must come from a single header.
-    assert(r.end <= _tracking->get_raw_tokens().size());
-    const raw_pp_token &first_tok = _tracking->get_raw_tokens()[r.begin];
-    const raw_pp_token &last_tok = _tracking->get_raw_tokens()[r.end - 1];
+    assert(r.end <= _cur_tracking->get_raw_tokens().size());
+    const raw_pp_token &first_tok = _cur_tracking->get_raw_tokens()[r.begin];
+    const raw_pp_token &last_tok = _cur_tracking->get_raw_tokens()[r.end - 1];
     const file_range &first_tok_fr = first_tok.get_file_range();
     const file_range &last_tok_fr = last_tok.get_file_range();
     assert(&first_tok_fr.get_header_inclusion_node() ==
@@ -1377,32 +1377,42 @@ _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range)
 	  it_raw_tok->get_value() == "elif"));
   ++it_raw_tok;
 
+  // Create a dummy pp_tracking instance covering only the subrange
+  // occupied by the preprocessor expression to make the AST
+  // evaluation code happy.
+  pp_tracking tracking;
   auto read_tok =
     [&]() {
-      const raw_pp_token_index tok_index = it_raw_tok - raw_begin;
       if (it_raw_tok->is_newline() || it_raw_tok->is_eof()) {
+	const raw_pp_token_index eof_index = tracking.get_raw_tokens().size();
 	return _pp_token(pp_token::type::eof, std::string(),
-			 raw_pp_tokens_range{tok_index, tok_index});
+			 raw_pp_tokens_range{eof_index, eof_index});
       }
 
+      tracking._append_token(*it_raw_tok);
+
       _pp_token tok{it_raw_tok->get_type(), it_raw_tok->get_value(),
-		    raw_pp_tokens_range{tok_index}};
+		    raw_pp_tokens_range{tracking._get_last_raw_index()}};
       ++it_raw_tok;
       return tok;
     };
 
   _expansion_state state;
   auto exp_read_tok =
-    [&]() -> pp_token {
+    [&]() -> pp_token_index {
       _pp_token tok = _expand(state, read_tok, true);
-      return pp_token{tok.get_type(), tok.get_value(),
-		      tok.get_token_source(),
-		      std::move(tok.used_macros()), tok.used_macro_undefs()};
+      tracking._append_token
+	(pp_token{tok.get_type(), tok.get_value(),
+		  tok.get_token_source(),
+		  std::move(tok.used_macros()), tok.used_macro_undefs()});
+      return tracking._get_last_pp_index();
     };
 
-  yy::pp_expr_parser_driver pd(exp_read_tok, *_tracking);
+  _cur_tracking = &tracking;
+  yy::pp_expr_parser_driver pd(exp_read_tok, tracking);
   try {
     pd.parse();
+    _cur_tracking = _tracking.get();
   } catch (const pp_except&) {
     _remarks += pd.get_remarks();
     pd.get_remarks().clear();

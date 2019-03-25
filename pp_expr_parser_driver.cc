@@ -75,9 +75,9 @@ static _val_tok_map_type _initialize_val_tok_map(const _val_tok_map_entry *e)
 
 
 pp_expr_parser_driver::
-pp_expr_parser_driver(const std::function<pp_token()> &token_reader,
-		      const pp_tracking &pp_tracking)
-  : _token_reader(token_reader), _tokens(pp_tracking), _result(nullptr),
+pp_expr_parser_driver(const std::function<pp_token_index()> &token_reader,
+		      pp_tracking &pp_tracking)
+  : _token_reader(token_reader), _pp_tracking(pp_tracking), _result(nullptr),
     _parser(*this)
 {}
 
@@ -96,29 +96,31 @@ ast_pp_expr pp_expr_parser_driver::grab_result()
   std::unique_ptr<expr> e(_result);
   _result = nullptr;
 
-  return ast_pp_expr(std::move(_tokens), std::move(e));
+  return ast_pp_expr(_pp_tracking, std::move(e));
 }
 
 klp::ccp::yy::pp_expr_parser::token_type
 pp_expr_parser_driver::lex(pp_expr_parser::semantic_type *value,
 			   pp_expr_parser::location_type *loc)
 {
+  pp_tokens &tokens = _pp_tracking.get_pp_tokens();
+  pp_token_index last_index;
   do {
     try {
-      _tokens.push_back(_token_reader());
+      last_index = _token_reader();
     } catch (const pp_except&) {
       throw;
     }
-  } while (_tokens.back().is_ws() ||
-	   _tokens.back().is_newline() ||
-	   _tokens.back().is_empty() ||
-	   (_tokens.back().is_id() &&
-	    _tokens.back().get_value() == "__extension__"));
+  } while (tokens.back().is_ws() ||
+	   tokens.back().is_newline() ||
+	   tokens.back().is_empty() ||
+	   (tokens.back().is_id() &&
+	    tokens.back().get_value() == "__extension__"));
 
-  loc->end = _tokens.size();
-  loc->begin = loc->end - 1;
+  loc->end = last_index + 1;
+  loc->begin = last_index;
 
-  pp_token &tok = _tokens.back();
+  pp_token &tok = tokens.back();
   if (tok.is_eof()) {
     return static_cast<pp_expr_parser::token_type>(0);
   }
@@ -160,8 +162,7 @@ pp_expr_parser_driver::lex(pp_expr_parser::semantic_type *value,
     it_tok_type = punct_map.find(tok.get_value());
     if (it_tok_type == punct_map.cend()) {
       const raw_pp_token_index tok_index = tok.get_token_source().begin;
-      const raw_pp_token &raw_tok =
-	_tokens.get_pp_tracking().get_raw_tokens()[tok_index];
+      const raw_pp_token &raw_tok = _pp_tracking.get_raw_tokens()[tok_index];
       code_remark_raw remark(code_remark_raw::severity::fatal,
 			     "unrecognized preprocessor token (punctuator)",
 			     raw_tok.get_file_range());
@@ -191,8 +192,7 @@ pp_expr_parser_driver::lex(pp_expr_parser::semantic_type *value,
   case pp_token::type::non_ws_char:
     {
       const raw_pp_token_index tok_index = tok.get_token_source().begin;
-      const raw_pp_token &raw_tok =
-	_tokens.get_pp_tracking().get_raw_tokens()[tok_index];
+      const raw_pp_token &raw_tok = _pp_tracking.get_raw_tokens()[tok_index];
       code_remark_raw remark(code_remark_raw::severity::fatal,
 			     "unrecognized preprocessor token (non-ws char)",
 			     raw_tok.get_file_range());
@@ -208,7 +208,7 @@ void pp_expr_parser_driver::error(const pp_expr_parser::location_type& loc,
 				  const std::string& msg)
 {
   code_remark_pp remark(code_remark_pp::severity::fatal, msg,
-			_tokens, loc.begin);
+			_pp_tracking.get_pp_tokens(), loc.begin);
   _remarks.add(remark);
   throw parse_except(remark);
 }
