@@ -7695,12 +7695,12 @@ bool translation_unit::_process(const_processor<bool> &p) const
 }
 
 
-ast::ast(pp_tokens &&tokens, const bool is_pp_expr)
-  : _tokens(std::move(tokens)), _is_pp_expr(is_pp_expr)
+ast::ast(const bool is_pp_expr)
+  : _is_pp_expr(is_pp_expr)
 {}
 
 ast::ast(ast &&a)
-  : _tokens(std::move(a._tokens)), _is_pp_expr(a._is_pp_expr)
+  : _is_pp_expr(a._is_pp_expr)
 {}
 
 ast::~ast() noexcept = default;
@@ -7708,9 +7708,9 @@ ast::~ast() noexcept = default;
 
 ast_translation_unit::
 ast_translation_unit(std::unique_ptr<const pp_tracking> &&pp_tracking,
-		     header_inclusion_roots_type &&hirs, pp_tokens &&tokens,
+		     header_inclusion_roots_type &&hirs,
 		     std::unique_ptr<translation_unit> &&tu)
-  : ast(std::move(tokens), false), _hirs(std::move(hirs)),
+  : ast(false), _hirs(std::move(hirs)),
     _pp_tracking(std::move(pp_tracking)), _tu(std::move(tu))
 {}
 
@@ -7720,13 +7720,23 @@ ast_translation_unit::ast_translation_unit(ast_translation_unit &&a)
 
 ast_translation_unit::~ast_translation_unit() noexcept = default;
 
+const klp::ccp::pp_tokens& ast_translation_unit::get_pp_tokens() const noexcept
+{
+  return _pp_tracking->get_pp_tokens();
+}
+
 
 ast_pp_expr::ast_pp_expr(pp_tokens &&tokens, std::unique_ptr<expr> &&e)
-  : ast(std::move(tokens), true), _e(std::move(e))
+  : ast(true), _tokens(std::move(tokens)), _e(std::move(e))
 {}
 
 ast_pp_expr::ast_pp_expr(ast_pp_expr &&a)
-  : ast(std::move(a)), _e(std::move(a._e))
+  : ast(std::move(a)), _tokens(std::move(a._tokens)), _e(std::move(a._e))
 {}
 
 ast_pp_expr::~ast_pp_expr() noexcept = default;
+
+const klp::ccp::pp_tokens& ast_pp_expr::get_pp_tokens() const noexcept
+{
+  return _tokens;
+}

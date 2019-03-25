@@ -142,8 +142,7 @@ static _val_tok_map_type _initialize_val_tok_map(const _val_tok_map_entry *e)
 
 gnuc_parser_driver::gnuc_parser_driver(preprocessor &&pp)
   : _result(nullptr), _pp(std::move(pp)),
-    _parser(*this), _tokens(_pp.get_tracking()),
-    _ignore_td_spec(0), _in_typedef(false)
+    _parser(*this), _ignore_td_spec(0), _in_typedef(false)
 {
   _typedefs_scopes.emplace();
   _typedefs_scopes.top().insert("__builtin_va_list");
@@ -173,32 +172,33 @@ ast_translation_unit gnuc_parser_driver::grab_result()
   _result = nullptr;
 
   return ast_translation_unit(_pp.grab_tracking(),
-			      _pp.grab_header_inclusion_roots(),
-			      std::move(_tokens), std::move(tu));
+			      _pp.grab_header_inclusion_roots(), std::move(tu));
 }
 
 gnuc_parser::token_type
 gnuc_parser_driver::lex(gnuc_parser::semantic_type *value,
 			gnuc_parser::location_type *loc)
 {
+  const pp_tokens &tokens = _pp.get_tracking().get_pp_tokens();
+  pp_token_index last_index;
   do {
     try {
-      _tokens.push_back(_pp.read_next_token());
+      last_index = _pp.read_next_token();
     } catch (const pp_except&) {
       _grab_pp_remarks();
       throw;
     }
-  } while (_tokens.back().is_ws() ||
-	   _tokens.back().is_newline() ||
-	   _tokens.back().is_empty() ||
-	   (_tokens.back().is_id() &&
-	    _tokens.back().get_value() == "__extension__"));
+  } while (tokens.back().is_ws() ||
+	   tokens.back().is_newline() ||
+	   tokens.back().is_empty() ||
+	   (tokens.back().is_id() &&
+	    tokens.back().get_value() == "__extension__"));
   _grab_pp_remarks();
 
-  loc->end = _tokens.size();
-  loc->begin = loc->end - 1;
+  loc->end = last_index + 1;
+  loc->begin = last_index;
 
-  const pp_token &tok = _tokens.back();
+  const pp_token &tok = tokens.back();
   if (tok.is_eof()) {
     leave_td_scope();
     return static_cast<gnuc_parser::token_type>(0);
@@ -298,7 +298,7 @@ void gnuc_parser_driver::error(const gnuc_parser::location_type& loc,
 			       const std::string& msg)
 {
   code_remark_pp remark(code_remark_pp::severity::fatal, msg,
-			_tokens, loc.begin);
+			_pp.get_tracking().get_pp_tokens(), loc.begin);
   _remarks.add(remark);
   throw parse_except(remark);
 }
@@ -352,32 +352,35 @@ void gnuc_parser_driver::end_ignore_td_spec() noexcept
   --_ignore_td_spec;
 }
 
-void gnuc_parser_driver::handle_decl_id(const pp_token_index tok)
+void gnuc_parser_driver::handle_decl_id(const pp_token_index tok_index)
 {
+  const pp_token &tok = _pp.get_tracking().get_pp_tokens()[tok_index];
   assert(!_typedefs_scopes.empty());
-  assert(_tokens[tok].is_id());
+  assert(tok.is_id());
   assert(!_ignore_td_spec);
 
   if(_in_typedef)
-    _typedefs_scopes.top().insert(_tokens[tok].get_value());
+    _typedefs_scopes.top().insert(tok.get_value());
   else
-    _typedefs_scopes.top().erase(_tokens[tok].get_value());
+    _typedefs_scopes.top().erase(tok.get_value());
 }
 
-void gnuc_parser_driver::handle_enumerator_id(const pp_token_index tok)
+void gnuc_parser_driver::handle_enumerator_id(const pp_token_index tok_index)
 {
+  const pp_token &tok = _pp.get_tracking().get_pp_tokens()[tok_index];
   assert(!_typedefs_scopes.empty());
-  assert(_tokens[tok].is_id());
+  assert(tok.is_id());
 
-  _typedefs_scopes.top().erase(_tokens[tok].get_value());
+  _typedefs_scopes.top().erase(tok.get_value());
 }
 
-void gnuc_parser_driver::handle_param_id(const pp_token_index tok)
+void gnuc_parser_driver::handle_param_id(const pp_token_index tok_index)
 {
+  const pp_token &tok = _pp.get_tracking().get_pp_tokens()[tok_index];
   assert(!_typedefs_scopes.empty());
-  assert(_tokens[tok].is_id());
+  assert(tok.is_id());
   assert(_ignore_td_spec);
-  _typedefs_scopes.top().erase(_tokens[tok].get_value());
+  _typedefs_scopes.top().erase(tok.get_value());
 }
 
 

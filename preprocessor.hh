@@ -35,7 +35,7 @@ namespace klp
 		   const header_resolver &header_resolver,
 		   const architecture &arch);
 
-      pp_token read_next_token();
+      pp_token_index read_next_token();
 
       code_remarks& get_remarks() noexcept
       { return _remarks; }

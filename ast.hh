@@ -4488,14 +4488,13 @@ namespace klp
       class ast
       {
       public:
-	ast(pp_tokens &&tokens, const bool is_pp_expr);
+	ast(const bool is_pp_expr);
 
 	ast(ast &&a);
 
 	virtual ~ast() noexcept = 0;
 
-	const pp_tokens& get_pp_tokens() const noexcept
-	{ return _tokens; }
+	virtual const pp_tokens& get_pp_tokens() const noexcept = 0;
 
 	code_remarks& get_remarks() noexcept
 	{ return _remarks; }
@@ -4504,7 +4503,6 @@ namespace klp
 	{ return _is_pp_expr; }
 
       private:
-	pp_tokens _tokens;
 	code_remarks _remarks;
 	bool _is_pp_expr;
       };
@@ -4517,12 +4515,13 @@ namespace klp
 
 	ast_translation_unit(std::unique_ptr<const pp_tracking> &&pp_tracking,
 			     header_inclusion_roots_type &&hirs,
-			     pp_tokens &&tokens,
 			     std::unique_ptr<translation_unit> &&tu);
 
 	ast_translation_unit(ast_translation_unit &&a);
 
 	virtual ~ast_translation_unit() noexcept override;
+
+	virtual const pp_tokens& get_pp_tokens() const noexcept override;
 
 	template <typename handled_types, typename callables_wrapper_type>
 	void for_each_dfs_po(callables_wrapper_type &&c);
@@ -4560,9 +4559,12 @@ namespace klp
 
 	virtual ~ast_pp_expr() noexcept override;
 
+	virtual const pp_tokens& get_pp_tokens() const noexcept override;
+
 	bool evaluate(const architecture &arch);
 
       private:
+	pp_tokens _tokens;
 	std::unique_ptr<expr> _e;
       };
     }

@@ -22,10 +22,11 @@ int main(int argc, char* argv[])
   header_resolver hr;
   arch_gcc48_x86_64 arch;
   preprocessor p(hirs, hr, arch);
+  const pp_tokens &tokens = p.get_tracking().get_pp_tokens();
 
   while(true) {
     try {
-      auto tok = p.read_next_token();
+      auto &tok = tokens[p.read_next_token()];
       if (!p.get_remarks().empty()) {
 	std::cerr << p.get_remarks();
 	p.get_remarks().clear();

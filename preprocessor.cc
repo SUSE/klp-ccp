@@ -28,14 +28,16 @@ preprocessor::preprocessor(header_inclusion_roots_type &header_inclusion_roots,
   _inclusions.emplace(std::ref(**_cur_header_inclusion_root));
 }
 
-pp_token preprocessor::read_next_token()
+pp_token_index preprocessor::read_next_token()
 {
-  auto &&_pp_token_to_pp_token =
-    [](_pp_token &&tok) {
-      return pp_token{tok.get_type(), tok.get_value(),
-		      tok.get_token_source(),
-		      std::move(tok.used_macros()),
-		      std::move(tok.used_macro_undefs())};
+  auto &&emit_pp_token =
+    [&](_pp_token &&tok) -> pp_token_index {
+      _tracking->_append_token
+	(pp_token{tok.get_type(), tok.get_value(),
+		  tok.get_token_source(),
+		  std::move(tok.used_macros()),
+		  std::move(tok.used_macro_undefs())});
+      return _tracking->_get_last_pp_index();
     };
 
   // Basically, this is just a wrapper around _expand()
@@ -68,10 +70,10 @@ pp_token preprocessor::read_next_token()
       assert(_pending_tokens.empty());
       if (!_line_empty) {
 	_line_empty = true;
-	return _pp_token_to_pp_token(std::move(tok));
+	return emit_pp_token(std::move(tok));
       }
     } else {
-      return _pp_token_to_pp_token(std::move(tok));
+      return emit_pp_token(std::move(tok));
     }
   }
 
@@ -87,7 +89,7 @@ pp_token preprocessor::read_next_token()
       _pending_tokens.push(std::move(next_tok));
       next_tok = std::move(_pending_tokens.front());
       _pending_tokens.pop();
-      return _pp_token_to_pp_token(std::move(next_tok));
+      return emit_pp_token(std::move(next_tok));
 
     } else if (next_tok.is_empty()) {
       _pending_tokens.push(std::move(next_tok));
@@ -108,7 +110,7 @@ pp_token preprocessor::read_next_token()
     _pending_tokens.push(std::move(next_tok));
     next_tok = std::move(_pending_tokens.front());
     _pending_tokens.pop();
-    return _pp_token_to_pp_token(std::move(next_tok));
+    return emit_pp_token(std::move(next_tok));
 
   }
 
@@ -137,9 +139,9 @@ pp_token preprocessor::read_next_token()
       if (_line_empty)
 	goto read_next;
       _line_empty = true;
-      return _pp_token_to_pp_token(std::move(next_tok));
+      return emit_pp_token(std::move(next_tok));
     } else if (next_tok.is_empty() || next_tok.is_eof()) {
-      return _pp_token_to_pp_token(std::move(next_tok));
+      return emit_pp_token(std::move(next_tok));
     } else {
       prev_tok = std::move(next_tok);
       next_tok = _expand(_root_expansion_state,
@@ -162,7 +164,7 @@ pp_token preprocessor::read_next_token()
 
   if (next_tok.is_ws() || next_tok.is_newline() || next_tok.is_eof()) {
     _pending_tokens.push(std::move(next_tok));
-    return _pp_token_to_pp_token(std::move(prev_tok));
+    return emit_pp_token(std::move(prev_tok));
   }
 
   if ((prev_tok.is_type_any_of<pp_token::type::pp_number>() &&
@@ -219,7 +221,7 @@ pp_token preprocessor::read_next_token()
   }
 
   _pending_tokens.push(std::move(next_tok));
-  return _pp_token_to_pp_token(std::move(prev_tok));
+  return emit_pp_token(std::move(prev_tok));
 }
 
 template<typename T>
@@ -261,7 +263,7 @@ preprocessor::_pp_token preprocessor::_read_next_plain_token()
       goto again;
 
     return _pp_token{raw_tok.get_type(), raw_tok.get_value(),
-		     raw_pp_tokens_range{_tracking->_get_last_index()}};
+		     raw_pp_tokens_range{_tracking->_get_last_raw_index()}};
   } catch (const pp_except&) {
     _grab_remarks_from(_tokenizers.top());
     throw;
@@ -336,7 +338,7 @@ _raw_pp_tokens_range_to_file_range(const raw_pp_tokens_range &r) const
 
 void preprocessor::_handle_pp_directive()
 {
-  const raw_pp_token_index raw_begin = _tracking->_get_last_index();
+  const raw_pp_token_index raw_begin = _tracking->_get_last_raw_index();
   raw_pp_token_index raw_end = raw_begin + 1;
   assert(_tracking->get_raw_tokens()[raw_begin].is_punctuator("#"));
   bool endif_possible = true;
@@ -352,7 +354,7 @@ void preprocessor::_handle_pp_directive()
     }
 
     _tracking->_append_token(tok);
-    raw_end = _tracking->_get_last_index() + 1;
+    raw_end = _tracking->_get_last_raw_index() + 1;
 
     if (tok.is_newline()) {
       break;
