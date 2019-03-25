@@ -1,7 +1,7 @@
 #include <ostream>
 #include "code_remark_pp.hh"
 #include "pp_tokens.hh"
-#include "pp_tracking.hh"
+#include "pp_result.hh"
 
 using namespace klp::ccp;
 
@@ -20,7 +20,7 @@ code_remark_pp::code_remark_pp(const severity sev, const std::string &msg,
 	tokens[range.begin].get_token_source().begin,
 	tokens[range.end - 1].get_token_source().end,
   };
-  const raw_pp_tokens &raw_tokens = tokens.get_pp_tracking().get_raw_tokens();
+  const raw_pp_tokens &raw_tokens = tokens.get_pp_result().get_raw_tokens();
   if (raw_range.end == raw_range.begin + 1) {
     // Single token, print only its start location.
     const raw_pp_token &tok = raw_tokens[raw_range.begin];

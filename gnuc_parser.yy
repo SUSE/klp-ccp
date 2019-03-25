@@ -1887,7 +1887,7 @@ iteration_statement:
 	     * a typedef identifier.
 	     */
 	    if (yychar == token::TOK_IDENTIFIER) {
-		if (pd.is_typedef_id(pd._pp.get_tracking().get_pp_tokens()[yylval.token_index].get_value()))
+		if (pd.is_typedef_id(pd._pp.get_result().get_pp_tokens()[yylval.token_index].get_value()))
 			yychar = token::TOK_TYPEDEF_IDENTIFIER;
 	    }
 	    $$ = new stmt_for_init_decl(@$, std::move($3), std::move($4),

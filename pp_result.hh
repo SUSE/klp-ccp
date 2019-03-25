@@ -1,5 +1,5 @@
-#ifndef PP_TRACKING_HH
-#define PP_TRACKING_HH
+#ifndef PP_RESULT_HH
+#define PP_RESULT_HH
 
 #include "raw_pp_tokens.hh"
 #include "raw_pp_tokens_range.hh"
@@ -9,7 +9,7 @@ namespace klp
 {
   namespace ccp
   {
-    class pp_tracking
+    class pp_result
     {
     public:
       const raw_pp_tokens& get_raw_tokens() const noexcept
@@ -24,7 +24,7 @@ namespace klp
     private:
       friend class preprocessor;
 
-      pp_tracking();
+      pp_result();
 
       void _append_token(const raw_pp_token &tok);
       void _append_token(raw_pp_token &&tok);

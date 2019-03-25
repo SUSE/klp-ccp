@@ -36,11 +36,11 @@ noinst_HEADERS =				\
 	path.hh				\
 	pp_except.hh				\
 	pp_expr_parser_driver.hh		\
+	pp_result.hh				\
 	pp_token.hh				\
 	pp_tokens.hh				\
 	pp_tokens_range.hh			\
 	pp_tokenizer.hh			\
-	pp_tracking.hh				\
 	preprocessor.hh			\
 	raw_pp_token.hh			\
 	raw_pp_tokens.hh			\
@@ -83,11 +83,11 @@ libcp_a_SOURCES =				\
 	pp_except.cc				\
 	pp_expr_parser.yy			\
 	pp_expr_parser_driver.cc		\
+	pp_result.cc				\
 	pp_token.cc				\
 	pp_tokens.cc				\
 	pp_tokens_range.cc			\
 	pp_tokenizer.cc			\
-	pp_tracking.cc				\
 	preprocessor.cc			\
 	raw_pp_token.cc			\
 	semantic_except.cc			\

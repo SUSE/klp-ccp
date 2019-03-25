@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
   header_resolver hr;
   arch_gcc48_x86_64 arch;
   preprocessor p(hirs, hr, arch);
-  const pp_tokens &tokens = p.get_tracking().get_pp_tokens();
+  const pp_tokens &tokens = p.get_result().get_pp_tokens();
 
   while(true) {
     try {

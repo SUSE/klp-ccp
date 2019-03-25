@@ -16,7 +16,7 @@ preprocessor::preprocessor(header_inclusion_roots_type &header_inclusion_roots,
 			   const header_resolver &header_resolver,
 			   const architecture &arch)
   : _header_resolver(header_resolver), _arch(arch),
-    _tracking(new pp_tracking()), _cur_tracking(_tracking.get()),
+    _pp_result(new pp_result()), _cur_pp_result(_pp_result.get()),
     _header_inclusion_roots(header_inclusion_roots),
     _cur_header_inclusion_root(_header_inclusion_roots.begin()),
     _cond_incl_nesting(0), _root_expansion_state(), __counter__(0),
@@ -32,12 +32,12 @@ pp_token_index preprocessor::read_next_token()
 {
   auto &&emit_pp_token =
     [&](_pp_token &&tok) -> pp_token_index {
-      _tracking->_append_token
+      _pp_result->_append_token
 	(pp_token{tok.get_type(), tok.get_value(),
 		  tok.get_token_source(),
 		  std::move(tok.used_macros()),
 		  std::move(tok.used_macro_undefs())});
-      return _tracking->_get_last_pp_index();
+      return _pp_result->_get_last_pp_index();
     };
 
   // Basically, this is just a wrapper around _expand()
@@ -248,7 +248,7 @@ preprocessor::_pp_token preprocessor::_read_next_plain_token()
       goto again;
     }
 
-    _tracking->_append_token(raw_tok);
+    _pp_result->_append_token(raw_tok);
 
     if (raw_tok.is_newline()) {
       _maybe_pp_directive = true;
@@ -263,7 +263,7 @@ preprocessor::_pp_token preprocessor::_read_next_plain_token()
       goto again;
 
     return _pp_token{raw_tok.get_type(), raw_tok.get_value(),
-		     raw_pp_tokens_range{_tracking->_get_last_raw_index()}};
+		     raw_pp_tokens_range{_pp_result->_get_last_raw_index()}};
   } catch (const pp_except&) {
     _grab_remarks_from(_tokenizers.top());
     throw;
@@ -286,7 +286,7 @@ void preprocessor::_handle_eof_from_tokenizer(raw_pp_token &&eof_tok)
 
   if (_tokenizers.empty()) {
     if (++_cur_header_inclusion_root == _header_inclusion_roots.end()) {
-      const raw_pp_token_index eof_index = _tracking->get_raw_tokens().size();
+      const raw_pp_token_index eof_index = _pp_result->get_raw_tokens().size();
       _eof_tok = _pp_token{eof_tok.get_type(), eof_tok.get_value(),
 			   raw_pp_tokens_range{eof_index, eof_index}};
       return;
@@ -307,7 +307,7 @@ _raw_pp_tokens_range_to_file_range(const raw_pp_tokens_range &r) const
 {
   if (r.begin == r.end + 1) {
     // A single token, emit "point" file range for its start.
-    const raw_pp_token &tok = _cur_tracking->get_raw_tokens()[r.begin];
+    const raw_pp_token &tok = _cur_pp_result->get_raw_tokens()[r.begin];
     const file_range &tok_fr = tok.get_file_range();
     return file_range{tok_fr.get_header_inclusion_node(),
 		      tok_fr.get_start_loc()};
@@ -316,16 +316,16 @@ _raw_pp_tokens_range_to_file_range(const raw_pp_tokens_range &r) const
     // An empty range, used for EOFs. Emit a "point" file range
     // for the preceeding token's end.
     assert(r.begin > 0);
-    assert(r.begin <= _cur_tracking->get_raw_tokens().size());
-    const raw_pp_token &tok = _cur_tracking->get_raw_tokens()[r.begin - 1];
+    assert(r.begin <= _cur_pp_result->get_raw_tokens().size());
+    const raw_pp_token &tok = _cur_pp_result->get_raw_tokens()[r.begin - 1];
     const file_range &tok_fr = tok.get_file_range();
     return file_range{tok_fr.get_header_inclusion_node(),
 		      tok_fr.get_end_loc()};
   } else {
     // A real range. It must come from a single header.
-    assert(r.end <= _cur_tracking->get_raw_tokens().size());
-    const raw_pp_token &first_tok = _cur_tracking->get_raw_tokens()[r.begin];
-    const raw_pp_token &last_tok = _cur_tracking->get_raw_tokens()[r.end - 1];
+    assert(r.end <= _cur_pp_result->get_raw_tokens().size());
+    const raw_pp_token &first_tok = _cur_pp_result->get_raw_tokens()[r.begin];
+    const raw_pp_token &last_tok = _cur_pp_result->get_raw_tokens()[r.end - 1];
     const file_range &first_tok_fr = first_tok.get_file_range();
     const file_range &last_tok_fr = last_tok.get_file_range();
     assert(&first_tok_fr.get_header_inclusion_node() ==
@@ -338,9 +338,9 @@ _raw_pp_tokens_range_to_file_range(const raw_pp_tokens_range &r) const
 
 void preprocessor::_handle_pp_directive()
 {
-  const raw_pp_token_index raw_begin = _tracking->_get_last_raw_index();
+  const raw_pp_token_index raw_begin = _pp_result->_get_last_raw_index();
   raw_pp_token_index raw_end = raw_begin + 1;
-  assert(_tracking->get_raw_tokens()[raw_begin].is_punctuator("#"));
+  assert(_pp_result->get_raw_tokens()[raw_begin].is_punctuator("#"));
   bool endif_possible = true;
   bool is_endif = false;
   while (true) {
@@ -353,8 +353,8 @@ void preprocessor::_handle_pp_directive()
       break;
     }
 
-    _tracking->_append_token(tok);
-    raw_end = _tracking->_get_last_raw_index() + 1;
+    _pp_result->_append_token(tok);
+    raw_end = _pp_result->_get_last_raw_index() + 1;
 
     if (tok.is_newline()) {
       break;
@@ -394,9 +394,9 @@ void preprocessor::_handle_pp_directive()
   if (is_endif)
     return;
 
-  auto it_tok = _tracking->get_raw_tokens().begin() + raw_begin + 1;
+  auto it_tok = _pp_result->get_raw_tokens().begin() + raw_begin + 1;
 
-  if (it_tok == _tracking->get_raw_tokens().begin() + raw_end) {
+  if (it_tok == _pp_result->get_raw_tokens().begin() + raw_end) {
     // Null directive terminated by EOF.
     return;
   }
@@ -405,7 +405,7 @@ void preprocessor::_handle_pp_directive()
     ++it_tok;
 
   if (it_tok->is_newline() ||
-      it_tok == _tracking->get_raw_tokens().begin() + raw_end) {
+      it_tok == _pp_result->get_raw_tokens().begin() + raw_end) {
     // Null directive
     return;
   }
@@ -1140,9 +1140,9 @@ preprocessor::_collect_used_macro_undefs(const _pp_tokens &toks)
 void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
 {
   const raw_pp_tokens::const_iterator raw_begin =
-    _tracking->get_raw_tokens().begin() + directive_range.begin;
+    _pp_result->get_raw_tokens().begin() + directive_range.begin;
   const raw_pp_tokens::const_iterator raw_end =
-    _tracking->get_raw_tokens().begin() + directive_range.end;
+    _pp_result->get_raw_tokens().begin() + directive_range.end;
   auto it_raw_tok = raw_begin;
 
   assert(it_raw_tok->is_punctuator("#"));
@@ -1368,7 +1368,7 @@ bool preprocessor::
 _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range)
 {
   const raw_pp_tokens::const_iterator raw_begin =
-    _tracking->get_raw_tokens().begin() + directive_range.begin;
+    _pp_result->get_raw_tokens().begin() + directive_range.begin;
   auto it_raw_tok = raw_begin + 1;
   if (it_raw_tok->is_ws())
     ++it_raw_tok;
@@ -1377,22 +1377,23 @@ _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range)
 	  it_raw_tok->get_value() == "elif"));
   ++it_raw_tok;
 
-  // Create a dummy pp_tracking instance covering only the subrange
+  // Create a dummy pp_result instance covering only the subrange
   // occupied by the preprocessor expression to make the AST
   // evaluation code happy.
-  pp_tracking tracking;
+  pp_result dummy_pp_result;
   auto read_tok =
     [&]() {
       if (it_raw_tok->is_newline() || it_raw_tok->is_eof()) {
-	const raw_pp_token_index eof_index = tracking.get_raw_tokens().size();
+	const raw_pp_token_index eof_index =
+	  dummy_pp_result.get_raw_tokens().size();
 	return _pp_token(pp_token::type::eof, std::string(),
 			 raw_pp_tokens_range{eof_index, eof_index});
       }
 
-      tracking._append_token(*it_raw_tok);
+      dummy_pp_result._append_token(*it_raw_tok);
 
       _pp_token tok{it_raw_tok->get_type(), it_raw_tok->get_value(),
-		    raw_pp_tokens_range{tracking._get_last_raw_index()}};
+		    raw_pp_tokens_range{dummy_pp_result._get_last_raw_index()}};
       ++it_raw_tok;
       return tok;
     };
@@ -1401,18 +1402,18 @@ _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range)
   auto exp_read_tok =
     [&]() -> pp_token_index {
       _pp_token tok = _expand(state, read_tok, true);
-      tracking._append_token
+      dummy_pp_result._append_token
 	(pp_token{tok.get_type(), tok.get_value(),
 		  tok.get_token_source(),
 		  std::move(tok.used_macros()), tok.used_macro_undefs()});
-      return tracking._get_last_pp_index();
+      return dummy_pp_result._get_last_pp_index();
     };
 
-  _cur_tracking = &tracking;
-  yy::pp_expr_parser_driver pd(exp_read_tok, tracking);
+  _cur_pp_result = &dummy_pp_result;
+  yy::pp_expr_parser_driver pd(exp_read_tok, dummy_pp_result);
   try {
     pd.parse();
-    _cur_tracking = _tracking.get();
+    _cur_pp_result = _pp_result.get();
   } catch (const pp_except&) {
     _remarks += pd.get_remarks();
     pd.get_remarks().clear();
@@ -1443,9 +1444,9 @@ _handle_macro_definition(const raw_pp_tokens_range &directive_range,
 			 std::shared_ptr<const macro_undef> &&macro_undef)
 {
   const raw_pp_tokens::const_iterator begin =
-    _tracking->get_raw_tokens().begin() + directive_range.begin;
+    _pp_result->get_raw_tokens().begin() + directive_range.begin;
   raw_pp_tokens::const_iterator end =
-    _tracking->get_raw_tokens().begin() + directive_range.end;
+    _pp_result->get_raw_tokens().begin() + directive_range.end;
   assert (begin != end);
   assert(begin->is_punctuator("#"));
 

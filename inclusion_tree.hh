@@ -8,7 +8,6 @@
 #include "offset_to_line_col_map.hh"
 #include "used_macros.hh"
 #include "used_macro_undefs.hh"
-#include "pp_tracking.hh"
 
 namespace klp
 {

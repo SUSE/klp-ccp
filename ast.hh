@@ -14,7 +14,7 @@
 #include "types.hh"
 #include "builtins.hh"
 #include "pp_tokens_range.hh"
-#include "pp_tracking.hh"
+#include "pp_result.hh"
 
 namespace klp
 {
@@ -4488,7 +4488,7 @@ namespace klp
       class ast
       {
       public:
-	ast(const pp_tracking &pp_tracking, const bool is_pp_expr);
+	ast(const pp_result &pp_result, const bool is_pp_expr);
 
 	ast(ast &&a);
 
@@ -4503,7 +4503,7 @@ namespace klp
 	{ return _is_pp_expr; }
 
       private:
-	const pp_tracking &_pp_tracking;
+	const pp_result &_pp_result;
 	code_remarks _remarks;
 	bool _is_pp_expr;
       };
@@ -4514,7 +4514,7 @@ namespace klp
 	typedef std::vector<std::unique_ptr<header_inclusion_root> >
 	header_inclusion_roots_type;
 
-	ast_translation_unit(std::unique_ptr<const pp_tracking> &&pp_tracking,
+	ast_translation_unit(std::unique_ptr<const pp_result> &&pp_result,
 			     header_inclusion_roots_type &&hirs,
 			     std::unique_ptr<translation_unit> &&tu);
 
@@ -4544,7 +4544,7 @@ namespace klp
 
 	void _resolve_ids();
 
-	std::unique_ptr<const pp_tracking> _pp_tracking;
+	std::unique_ptr<const pp_result> _pp_result;
 	header_inclusion_roots_type _hirs;
 	std::unique_ptr<translation_unit> _tu;
       };
@@ -4552,7 +4552,7 @@ namespace klp
       class ast_pp_expr final : public ast
       {
       public:
-	ast_pp_expr(const pp_tracking &pp_tracking, std::unique_ptr<expr> &&e);
+	ast_pp_expr(const pp_result &pp_result, std::unique_ptr<expr> &&e);
 
 	ast_pp_expr(ast_pp_expr &&a);
 

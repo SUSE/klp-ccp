@@ -171,7 +171,7 @@ ast_translation_unit gnuc_parser_driver::grab_result()
   std::unique_ptr<translation_unit> tu(_result);
   _result = nullptr;
 
-  return ast_translation_unit(_pp.grab_tracking(),
+  return ast_translation_unit(_pp.grab_result(),
 			      _pp.grab_header_inclusion_roots(), std::move(tu));
 }
 
@@ -179,7 +179,7 @@ gnuc_parser::token_type
 gnuc_parser_driver::lex(gnuc_parser::semantic_type *value,
 			gnuc_parser::location_type *loc)
 {
-  const pp_tokens &tokens = _pp.get_tracking().get_pp_tokens();
+  const pp_tokens &tokens = _pp.get_result().get_pp_tokens();
   pp_token_index last_index;
   do {
     try {
@@ -251,7 +251,7 @@ gnuc_parser_driver::lex(gnuc_parser::semantic_type *value,
     if (it_tok_type == punct_map.cend()) {
       const raw_pp_token_index tok_index = tok.get_token_source().begin;
       const raw_pp_token &raw_tok =
-	_pp.get_tracking().get_raw_tokens()[tok_index];
+	_pp.get_result().get_raw_tokens()[tok_index];
       code_remark_raw remark(code_remark_raw::severity::fatal,
 			     "unrecognized preprocessor token (punctuator)",
 			     raw_tok.get_file_range());
@@ -282,7 +282,7 @@ gnuc_parser_driver::lex(gnuc_parser::semantic_type *value,
     {
       const raw_pp_token_index tok_index = tok.get_token_source().begin;
       const raw_pp_token &raw_tok =
-	_pp.get_tracking().get_raw_tokens()[tok_index];
+	_pp.get_result().get_raw_tokens()[tok_index];
       code_remark_raw remark(code_remark_raw::severity::fatal,
 			     "unrecognized preprocessor token (non-ws char)",
 			     raw_tok.get_file_range());
@@ -298,7 +298,7 @@ void gnuc_parser_driver::error(const gnuc_parser::location_type& loc,
 			       const std::string& msg)
 {
   code_remark_pp remark(code_remark_pp::severity::fatal, msg,
-			_pp.get_tracking().get_pp_tokens(), loc.begin);
+			_pp.get_result().get_pp_tokens(), loc.begin);
   _remarks.add(remark);
   throw parse_except(remark);
 }
@@ -354,7 +354,7 @@ void gnuc_parser_driver::end_ignore_td_spec() noexcept
 
 void gnuc_parser_driver::handle_decl_id(const pp_token_index tok_index)
 {
-  const pp_token &tok = _pp.get_tracking().get_pp_tokens()[tok_index];
+  const pp_token &tok = _pp.get_result().get_pp_tokens()[tok_index];
   assert(!_typedefs_scopes.empty());
   assert(tok.is_id());
   assert(!_ignore_td_spec);
@@ -367,7 +367,7 @@ void gnuc_parser_driver::handle_decl_id(const pp_token_index tok_index)
 
 void gnuc_parser_driver::handle_enumerator_id(const pp_token_index tok_index)
 {
-  const pp_token &tok = _pp.get_tracking().get_pp_tokens()[tok_index];
+  const pp_token &tok = _pp.get_result().get_pp_tokens()[tok_index];
   assert(!_typedefs_scopes.empty());
   assert(tok.is_id());
 
@@ -376,7 +376,7 @@ void gnuc_parser_driver::handle_enumerator_id(const pp_token_index tok_index)
 
 void gnuc_parser_driver::handle_param_id(const pp_token_index tok_index)
 {
-  const pp_token &tok = _pp.get_tracking().get_pp_tokens()[tok_index];
+  const pp_token &tok = _pp.get_result().get_pp_tokens()[tok_index];
   assert(!_typedefs_scopes.empty());
   assert(tok.is_id());
   assert(_ignore_td_spec);

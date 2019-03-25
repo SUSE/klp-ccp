@@ -10,7 +10,7 @@ namespace klp
 {
   namespace ccp
   {
-    class pp_tracking;
+    class pp_result;
 
     class pp_tokens
     {
@@ -19,8 +19,8 @@ namespace klp
 
     public:
       template<typename... Targs>
-      pp_tokens(const pp_tracking &pp_tracking, Targs&&... args)
-	: _pp_tracking(pp_tracking), _tokens(std::forward<Targs>(args)...)
+      pp_tokens(const pp_result &pp_result, Targs&&... args)
+	: _pp_result(pp_result), _tokens(std::forward<Targs>(args)...)
       {}
 
       pp_tokens(const pp_tokens&) = delete;
@@ -99,11 +99,11 @@ namespace klp
 
       std::string stringify(const bool as_string) const;
 
-      const pp_tracking& get_pp_tracking() const noexcept
-      { return _pp_tracking; }
+      const pp_result& get_pp_result() const noexcept
+      { return _pp_result; }
 
     private:
-      const pp_tracking &_pp_tracking;
+      const pp_result &_pp_result;
       _pp_tokens_type _tokens;
     };
   }
