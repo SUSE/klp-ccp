@@ -298,7 +298,7 @@ void gnuc_parser_driver::error(const gnuc_parser::location_type& loc,
 			       const std::string& msg)
 {
   code_remark_pp remark(code_remark_pp::severity::fatal, msg,
-			_pp.get_result().get_pp_tokens(), loc.begin);
+			_pp.get_result(), loc.begin);
   _remarks.add(remark);
   throw parse_except(remark);
 }

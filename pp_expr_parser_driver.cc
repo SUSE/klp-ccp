@@ -210,7 +210,7 @@ void pp_expr_parser_driver::error(const pp_expr_parser::location_type& loc,
 				  const std::string& msg)
 {
   code_remark_pp remark(code_remark_pp::severity::fatal, msg,
-			_dummy_pp_result.get_pp_tokens(), loc.begin);
+			_dummy_pp_result, loc.begin);
   _remarks.add(remark);
   throw parse_except(remark);
 }

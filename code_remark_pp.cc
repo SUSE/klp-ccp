@@ -7,10 +7,12 @@ using namespace klp::ccp;
 
 
 code_remark_pp::code_remark_pp(const severity sev, const std::string &msg,
-			       const pp_tokens &tokens,
+			       const pp_result &pp_result,
 			       const pp_tokens_range &range)
   : _msg(msg), _fr_end_valid(false), _sev(sev)
 {
+  const pp_tokens &tokens = pp_result.get_pp_tokens();
+
   // Initialize _fr and _fr_end to be used from operator<<().  How to
   // set them depends on whether the range spans more than one token
   // and whether these tokens are coming from source multiple files or
@@ -20,7 +22,7 @@ code_remark_pp::code_remark_pp(const severity sev, const std::string &msg,
 	tokens[range.begin].get_token_source().begin,
 	tokens[range.end - 1].get_token_source().end,
   };
-  const raw_pp_tokens &raw_tokens = tokens.get_pp_result().get_raw_tokens();
+  const raw_pp_tokens &raw_tokens = pp_result.get_raw_tokens();
   if (raw_range.end == raw_range.begin + 1) {
     // Single token, print only its start location.
     const raw_pp_token &tok = raw_tokens[raw_range.begin];
@@ -52,16 +54,16 @@ code_remark_pp::code_remark_pp(const severity sev, const std::string &msg,
 }
 
 code_remark_pp::code_remark_pp(const severity sev, const std::string &msg,
-			       const pp_tokens &tokens,
+			       const pp_result &pp_result,
 			       const pp_token_index first,
 			       const pp_token_index last)
-  : code_remark_pp(sev, msg, tokens, pp_tokens_range{first, last + 1})
+  : code_remark_pp(sev, msg, pp_result, pp_tokens_range{first, last + 1})
 {}
 
 code_remark_pp::code_remark_pp(const severity sev, const std::string &msg,
-			       const pp_tokens &tokens,
+			       const pp_result &pp_result,
 			       const pp_token_index tok_index)
-  : code_remark_pp(sev, msg, tokens, tok_index, tok_index)
+  : code_remark_pp(sev, msg, pp_result, tok_index, tok_index)
 {}
 
 std::ostream& klp::ccp::operator<<(std::ostream &o,

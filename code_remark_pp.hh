@@ -12,7 +12,7 @@ namespace klp
 {
   namespace ccp
   {
-    class pp_tokens;
+    class pp_result;
 
     class code_remark_pp
     {
@@ -24,15 +24,15 @@ namespace klp
 	};
 
       code_remark_pp(const severity sev, const std::string &msg,
-		     const pp_tokens &tokens, const pp_tokens_range &range);
+		     const pp_result &pp_result, const pp_tokens_range &range);
 
       code_remark_pp(const severity sev, const std::string &msg,
-		     const pp_tokens &tokens,
+		     const pp_result &pp_result,
 		     const pp_token_index first,
 		     const pp_token_index last);
 
       code_remark_pp(const severity sev, const std::string &msg,
-		     const pp_tokens &tokens,
+		     const pp_result &pp_result,
 		     const pp_token_index tok_index);
 
       severity get_severity() const noexcept

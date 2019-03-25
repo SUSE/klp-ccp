@@ -4494,6 +4494,9 @@ namespace klp
 
 	virtual ~ast() noexcept = 0;
 
+	const pp_result& get_pp_result() const noexcept
+	{ return _pp_result; }
+
 	const pp_tokens& get_pp_tokens() const noexcept;
 
 	code_remarks& get_remarks() noexcept

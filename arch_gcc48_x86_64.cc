@@ -202,7 +202,7 @@ void arch_gcc48_x86_64::evaluate_enum_type(ast::ast &a, types::enum_content &ec,
       if (min_prec + is_any_signed > 64) {
 	code_remark_pp remark (code_remark_pp::severity::fatal,
 			       "enumerator value out of bounds",
-			       a.get_pp_tokens(),
+			       a.get_pp_result(),
 			       m.get_enumerator().get_tokens_range());
 	a.get_remarks().add(remark);
 	throw semantic_except(remark);
@@ -211,7 +211,7 @@ void arch_gcc48_x86_64::evaluate_enum_type(ast::ast &a, types::enum_content &ec,
 		 min_prec + is_any_signed > width) {
 	code_remark_pp remark(code_remark_pp::severity::fatal,
 			      "enumerator value exceeds specified integer mode",
-			      a.get_pp_tokens(),
+			      a.get_pp_result(),
 			      m.get_enumerator().get_tokens_range());
 	a.get_remarks().add(remark);
 	throw semantic_except(remark);
