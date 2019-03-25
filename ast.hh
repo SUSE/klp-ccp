@@ -4488,13 +4488,13 @@ namespace klp
       class ast
       {
       public:
-	ast(const bool is_pp_expr);
+	ast(const pp_tracking &pp_tracking, const bool is_pp_expr);
 
 	ast(ast &&a);
 
 	virtual ~ast() noexcept = 0;
 
-	virtual const pp_tokens& get_pp_tokens() const noexcept = 0;
+	const pp_tokens& get_pp_tokens() const noexcept;
 
 	code_remarks& get_remarks() noexcept
 	{ return _remarks; }
@@ -4503,6 +4503,7 @@ namespace klp
 	{ return _is_pp_expr; }
 
       private:
+	const pp_tracking &_pp_tracking;
 	code_remarks _remarks;
 	bool _is_pp_expr;
       };
@@ -4520,8 +4521,6 @@ namespace klp
 	ast_translation_unit(ast_translation_unit &&a);
 
 	virtual ~ast_translation_unit() noexcept override;
-
-	virtual const pp_tokens& get_pp_tokens() const noexcept override;
 
 	template <typename handled_types, typename callables_wrapper_type>
 	void for_each_dfs_po(callables_wrapper_type &&c);
@@ -4559,12 +4558,9 @@ namespace klp
 
 	virtual ~ast_pp_expr() noexcept override;
 
-	virtual const pp_tokens& get_pp_tokens() const noexcept override;
-
 	bool evaluate(const architecture &arch);
 
       private:
-	const pp_tracking &_pp_tracking;
 	std::unique_ptr<expr> _e;
       };
     }
