@@ -306,7 +306,8 @@ namespace klp
 			used_macros &&used_macros_base,
 			used_macro_undefs &&used_macro_undefs_base,
 			const raw_pp_token_index invocation_begin,
-			const std::function<_pp_token()> &token_reader);
+			const std::function<_pp_token()> &token_reader,
+			const bool *update_cur_macro_invocation_range);
 
       std::tuple<_pp_tokens, _pp_tokens, _pp_token>
       _create_macro_arg(const std::function<_pp_token()> &token_reader,
@@ -345,7 +346,7 @@ namespace klp
       const architecture &_arch;
 
       std::unique_ptr<pp_result> _pp_result;
-      const pp_result *_cur_pp_result;
+      pp_result *_cur_pp_result;
       header_inclusion_roots_type &_header_inclusion_roots;
       header_inclusion_roots_type::iterator _cur_header_inclusion_root;
       std::stack<std::reference_wrapper<inclusion_node> > _inclusions;
@@ -356,6 +357,8 @@ namespace klp
       _expansion_state _root_expansion_state;
       std::map<std::string, std::shared_ptr<const macro> > _macros;
       std::map<std::string, std::shared_ptr<const macro_undef> > _macro_undefs;
+
+      pp_result::macro_invocation *_cur_macro_invocation;
 
       code_remarks _remarks;
 
