@@ -33,11 +33,19 @@ pp_token_index preprocessor::read_next_token()
 {
   auto &&emit_pp_token =
     [&](_pp_token &&tok) -> pp_token_index {
-      _pp_result->_append_token
-	(pp_token{tok.get_type(), tok.get_value(),
-		  tok.get_token_source(),
-		  std::move(tok.used_macros()),
-		  std::move(tok.used_macro_undefs())});
+      if (!tok.get_macro_invocation()) {
+	_pp_result->_append_token
+	  (pp_token{tok.get_type(), tok.get_value(),
+		    tok.get_token_source(),
+		    std::move(tok.used_macros()),
+		    std::move(tok.used_macro_undefs())});
+      } else {
+	_pp_result->_append_token
+	  (pp_token{tok.get_type(), tok.get_value(),
+		    *tok.get_macro_invocation(),
+		    std::move(tok.used_macros()),
+		    std::move(tok.used_macro_undefs())});
+      }
       return _pp_result->_get_last_pp_index();
     };
 
@@ -215,10 +223,15 @@ pp_token_index preprocessor::read_next_token()
 	  (prev_tok.is_punctuator("#") && next_tok.is_punctuator("#"))) &&
 	 (!prev_tok.used_macros().empty() || !next_tok.used_macros().empty() ||
 	  !_pending_tokens.empty()))))) {
-    _pending_tokens.emplace(pp_token::type::ws, " ",
-			    raw_pp_tokens_range{
-			      next_tok.get_token_source().begin,
-			      next_tok.get_token_source().begin});
+    _pp_token extra_ws_tok{
+		pp_token::type::ws, " ",
+		raw_pp_tokens_range{
+			next_tok.get_token_source().begin,
+			next_tok.get_token_source().begin}};
+    if (prev_tok.get_macro_invocation() == next_tok.get_macro_invocation()) {
+      extra_ws_tok.set_macro_invocation(next_tok.get_macro_invocation());
+    }
+    _pending_tokens.push(std::move(extra_ws_tok));
   }
 
   _pending_tokens.push(std::move(next_tok));
@@ -606,6 +619,7 @@ preprocessor::_expand(_expansion_state &state,
 	auto tok = state.macro_instances.back().read_next_token();
 	_grab_remarks_from(state.macro_instances.back());
 	if (!tok.is_eof()) {
+	  tok.set_macro_invocation(_cur_macro_invocation);
 	  return tok;
 	} else {
 	  assert(_cur_macro_invocation);
@@ -814,7 +828,7 @@ _pp_token(const pp_token::type type, const std::string &value,
 	  const raw_pp_tokens_range &token_source,
 	  const class used_macros &eh,
 	  class used_macros &&um, const class used_macro_undefs &umu)
-  : _value(value), _token_source(token_source),
+  : _value(value), _token_source(token_source), _macro_invocation(nullptr),
     _expansion_history(std::move(eh)), _used_macros(std::move(um)),
     _used_macro_undefs(umu), _type(type)
 {}
@@ -822,7 +836,8 @@ _pp_token(const pp_token::type type, const std::string &value,
 preprocessor::_pp_token::
 _pp_token(const pp_token::type type, const std::string &value,
 	  const raw_pp_tokens_range &token_source)
-  : _value(value), _token_source(token_source), _type(type)
+  : _value(value), _token_source(token_source), _macro_invocation(nullptr),
+    _type(type)
 {}
 
 void preprocessor::_pp_token::set_type_and_value(const pp_token::type type,
@@ -830,6 +845,19 @@ void preprocessor::_pp_token::set_type_and_value(const pp_token::type type,
 {
   _type = type;
   _value = value;
+}
+
+void preprocessor::_pp_token::
+set_macro_invocation(const pp_result::macro_invocation *mi) noexcept
+{
+  assert(!_macro_invocation);
+  _macro_invocation = mi;
+}
+
+const pp_result::macro_invocation *
+preprocessor::_pp_token::get_macro_invocation() const noexcept
+{
+  return _macro_invocation;
 }
 
 std::string preprocessor::_pp_token::stringify() const
@@ -1472,10 +1500,18 @@ _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range)
   auto exp_read_tok =
     [&]() -> pp_token_index {
       _pp_token tok = _expand(_root_expansion_state, read_tok, true);
-      dummy_pp_result._append_token
-	(pp_token{tok.get_type(), tok.get_value(),
-		  tok.get_token_source(),
-		  std::move(tok.used_macros()), tok.used_macro_undefs()});
+      if (!tok.get_macro_invocation()) {
+	dummy_pp_result._append_token
+	  (pp_token{tok.get_type(), tok.get_value(),
+		    tok.get_token_source(),
+		    std::move(tok.used_macros()), tok.used_macro_undefs()});
+      } else {
+	_pp_result->_append_token
+	  (pp_token{tok.get_type(), tok.get_value(),
+		    *tok.get_macro_invocation(),
+		    std::move(tok.used_macros()),
+		    std::move(tok.used_macro_undefs())});
+      }
       return dummy_pp_result._get_last_pp_index();
     };
 

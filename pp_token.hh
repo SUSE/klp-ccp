@@ -4,6 +4,7 @@
 #include <string>
 #include <memory>
 #include "raw_pp_tokens_range.hh"
+#include "pp_result.hh"
 #include "used_macros.hh"
 #include "used_macro_undefs.hh"
 
@@ -48,6 +49,11 @@ namespace klp
 	       used_macros &&um,
 	       const class used_macro_undefs &umu);
 
+      pp_token(const type type, const std::string &value,
+	       const pp_result::macro_invocation &macro_invocation,
+	       used_macros &&um,
+	       const class used_macro_undefs &umu);
+
       type get_type() const noexcept
       {
 	return _type;
@@ -80,8 +86,7 @@ namespace klp
 	return _used_macro_undefs;
       }
 
-      const raw_pp_tokens_range& get_token_source() const noexcept
-      { return _token_source; }
+      const raw_pp_tokens_range& get_token_source() const noexcept;
 
       operator bool() const noexcept
       {
@@ -142,6 +147,7 @@ namespace klp
 
       std::string _value;
       raw_pp_tokens_range _token_source;
+      const pp_result::macro_invocation * const _macro_invocation;
       class used_macros _used_macros;
       class used_macro_undefs _used_macro_undefs;
       type _type;

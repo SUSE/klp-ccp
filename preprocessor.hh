@@ -114,6 +114,12 @@ namespace klp
 	  return _token_source;
 	}
 
+	void set_macro_invocation(const pp_result::macro_invocation *mi)
+	  noexcept;
+
+	const pp_result::macro_invocation * get_macro_invocation()
+	  const noexcept;
+
 	operator bool() const noexcept
 	{
 	  return _type != pp_token::type::eof;
@@ -182,6 +188,7 @@ namespace klp
 	pp_token::type _type;
 	std::string _value;
 	raw_pp_tokens_range _token_source;
+	const pp_result::macro_invocation * _macro_invocation;
 
 	class used_macros _used_macros;
 	class used_macro_undefs _used_macro_undefs;
