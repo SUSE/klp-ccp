@@ -2,6 +2,7 @@
 #include "pp_expr_parser_driver.hh"
 #include "pp_except.hh"
 #include "parse_except.hh"
+#include "raw_pp_token.hh"
 
 using namespace klp::ccp::yy;
 using namespace klp::ccp::ast;

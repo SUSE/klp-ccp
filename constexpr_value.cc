@@ -1,6 +1,7 @@
 #include "constexpr_value.hh"
 #include "ast.hh"
 #include "types.hh"
+#include "pp_token.hh"
 #include <cassert>
 
 using namespace klp::ccp;

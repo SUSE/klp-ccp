@@ -1,5 +1,6 @@
 #include <cassert>
 #include "pp_result.hh"
+#include "raw_pp_token.hh"
 #include <limits>
 
 using namespace klp::ccp;

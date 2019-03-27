@@ -1,5 +1,7 @@
 #include <ostream>
 #include "code_remark_pp.hh"
+#include "pp_token.hh"
+#include "raw_pp_token.hh"
 #include "pp_tokens.hh"
 #include "pp_result.hh"
 

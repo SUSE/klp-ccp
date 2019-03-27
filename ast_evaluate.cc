@@ -11,6 +11,7 @@
 #include "target_float.hh"
 #include "execution_charset_encoder.hh"
 #include "ast_evaluate.hh"
+#include "pp_token.hh"
 
 using namespace klp::ccp;
 using namespace klp::ccp::ast;

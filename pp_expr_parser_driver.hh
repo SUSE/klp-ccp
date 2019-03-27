@@ -3,6 +3,7 @@
 
 #include <functional>
 #include "pp_expr_parser.hh"
+#include "pp_token.hh"
 #include "pp_tokens.hh"
 #include "code_remarks.hh"
 

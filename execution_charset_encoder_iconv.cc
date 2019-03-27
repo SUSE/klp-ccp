@@ -5,6 +5,7 @@
 #include <limits>
 #include "semantic_except.hh"
 #include "ast.hh"
+#include "pp_token.hh"
 #include "execution_charset_encoder_iconv.hh"
 
 using namespace klp::ccp;

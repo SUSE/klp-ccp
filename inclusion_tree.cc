@@ -1,5 +1,6 @@
 #include "inclusion_tree.hh"
 #include "source_reader.hh"
+#include "pp_token.hh"
 
 using namespace klp::ccp;
 

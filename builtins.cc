@@ -5,6 +5,7 @@
 #include "ast_evaluate.hh"
 #include "architecture.hh"
 #include "semantic_except.hh"
+#include "pp_token.hh"
 #include <map>
 #include <functional>
 #include <initializer_list>

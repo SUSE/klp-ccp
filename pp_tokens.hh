@@ -4,13 +4,13 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include "pp_token.hh"
 
 namespace klp
 {
   namespace ccp
   {
     class pp_result;
+    class pp_token;
 
     class pp_tokens
     {

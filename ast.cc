@@ -2,6 +2,8 @@
 #include "ast_impl.hh"
 #include "ast_processor.hh"
 #include "semantic_except.hh"
+#include "pp_token.hh"
+#include "raw_pp_token.hh"
 
 using namespace klp::ccp::ast;
 

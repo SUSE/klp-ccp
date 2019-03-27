@@ -5,6 +5,7 @@
 #include <algorithm>
 #include "macro.hh"
 #include "pp_token.hh"
+#include "raw_pp_token.hh"
 #include "pp_except.hh"
 
 using namespace klp::ccp;

@@ -1,5 +1,6 @@
 #include <ostream>
 #include <cassert>
+#include "pp_token.hh"
 #include "file_range.hh"
 #include "inclusion_tree.hh"
 

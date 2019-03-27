@@ -3,6 +3,7 @@
 #include "ast.hh"
 #include "semantic_except.hh"
 #include "architecture.hh"
+#include "pp_token.hh"
 
 using namespace klp::ccp;
 

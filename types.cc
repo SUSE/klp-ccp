@@ -4,6 +4,7 @@
 #include "ast.hh"
 #include "callables_wrapper.hh"
 #include "constexpr_value.hh"
+#include "pp_token.hh"
 
 using namespace klp::ccp;
 using namespace klp::ccp::types;

@@ -5,6 +5,7 @@
 #include <memory>
 #include <utility>
 #include "pp_tokens.hh"
+#include "raw_pp_tokens_range.hh"
 #include "offset_to_line_col_map.hh"
 #include "used_macros.hh"
 #include "used_macro_undefs.hh"

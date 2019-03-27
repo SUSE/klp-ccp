@@ -3,6 +3,7 @@
 #include "ast.hh"
 #include "semantic_except.hh"
 #include "arch_gcc48_x86_64.hh"
+#include "pp_token.hh"
 
 using namespace klp::ccp;
 using namespace klp::ccp::types;

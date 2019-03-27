@@ -9,6 +9,7 @@
 #include "raw_pp_tokens.hh"
 #include "raw_pp_tokens_range.hh"
 #include "code_remarks.hh"
+#include "macro_undef.hh"
 
 namespace klp
 {
