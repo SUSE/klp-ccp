@@ -1,12 +1,20 @@
 #include "used_macros.hh"
-#include <iterator>
-#include <algorithm>
 
 using namespace klp::ccp;
 
 used_macros::used_macros(_used_macros_type &&um)
   : _used_macros(std::move(um))
 {}
+
+void used_macros::clear() noexcept
+{
+  _used_macros.clear();
+}
+
+std::size_t used_macros::count(const macro &m) const noexcept
+{
+  return _used_macros.count(std::ref(m));
+}
 
 used_macros& used_macros::operator+=(const used_macros &rhs)
 {
@@ -15,25 +23,15 @@ used_macros& used_macros::operator+=(const used_macros &rhs)
   return *this;
 }
 
-used_macros used_macros::operator+(const used_macros &rhs) const
+used_macros& used_macros::operator+=(const macro &rhs)
 {
-  _used_macros_type result;
-
-  std::set_union(this->cbegin(), this->cend(),
-		 rhs.cbegin(), rhs.cend(),
-		 std::inserter(result, result.cend()));
-  return used_macros(std::move(result));
-}
-
-used_macros& used_macros::operator+=(const value_type &rhs)
-{
-  _used_macros.insert(rhs);
+  _used_macros.insert(std::ref(rhs));
   return *this;
 }
 
-used_macros used_macros::operator+(const value_type &rhs) const
+bool used_macros::_compare::
+operator()(const std::reference_wrapper<const macro> a,
+	   const std::reference_wrapper<const macro> b) const noexcept
 {
-  used_macros result(*this);
-  result += rhs;
-  return result;
+  return &a.get() < &b.get();
 }

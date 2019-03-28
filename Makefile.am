@@ -21,7 +21,6 @@ noinst_HEADERS =				\
 	code_remark_pp.hh			\
 	code_remarks.hh			\
 	constexpr_value.hh			\
-	cow_set.hh				\
 	execution_charset_encoder.hh		\
 	execution_charset_encoder_iconv.hh	\
 	file_range.hh				\

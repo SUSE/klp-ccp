@@ -1,8 +1,8 @@
 #ifndef USED_MACROS_HH
 #define USED_MACROS_HH
 
-#include <memory>
-#include "cow_set.hh"
+#include <functional>
+#include <set>
 
 namespace klp
 {
@@ -13,43 +13,33 @@ namespace klp
     class used_macros
     {
     private:
-      typedef cow_set<std::shared_ptr<const macro> > _used_macros_type;
+      struct _compare
+      {
+	bool operator()(const std::reference_wrapper<const macro> a,
+			const std::reference_wrapper<const macro> b)
+	  const noexcept;
+      };
 
-      used_macros(_used_macros_type &&um);
+      typedef
+      std::set<std::reference_wrapper<const macro>, _compare> _used_macros_type;
 
     public:
-      typedef _used_macros_type::const_iterator const_iterator;
-      typedef _used_macros_type::iterator iterator;
-      typedef _used_macros_type::size_type size_type;
-      typedef _used_macros_type::value_type value_type;
-
       used_macros() = default;
 
       bool empty() const noexcept
       { return _used_macros.empty(); }
 
-      const_iterator cbegin() const noexcept
-      { return _used_macros.cbegin(); }
+      void clear() noexcept;
 
-      const_iterator cend() const noexcept
-      { return _used_macros.cend(); }
-
-      template<typename... Targs>
-      size_type count(Targs&&... args)
-      {
-	return _used_macros.count(std::forward<Targs>(args)...);
-      }
-
-      void clear() noexcept
-      { _used_macros.clear(); }
+      std::size_t count(const macro &m) const noexcept;
 
       used_macros& operator+=(const used_macros &rhs);
-      used_macros operator+(const used_macros &rhs) const;
 
-      used_macros& operator+=(const value_type &rhs);
-      used_macros operator+(const value_type &rhs) const;
+      used_macros& operator+=(const macro &rhs);
 
     private:
+       used_macros(_used_macros_type &&um);
+
       _used_macros_type _used_macros;
     };
   }

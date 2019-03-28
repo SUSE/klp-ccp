@@ -60,11 +60,11 @@ namespace klp
       public:
 	_pp_token(const pp_token::type type, const std::string &value,
 		  const raw_pp_tokens_range &token_source,
-		  const used_macros &eh, used_macros &&um,
-		  const class used_macro_undefs &umu);
+		  const used_macros &eh);
 
 	_pp_token(const pp_token::type type, const std::string &value,
-		  const raw_pp_tokens_range &token_source);
+		  const raw_pp_tokens_range &token_source,
+		  const macro_undef *used_macro_undef = nullptr);
 
 	pp_token::type get_type() const noexcept
 	{
@@ -89,36 +89,22 @@ namespace klp
 	  return _expansion_history;
 	}
 
-	const class used_macros& used_macros() const noexcept
-	{
-	  return _used_macros;
-	}
-
-	class used_macros& used_macros() noexcept
-	{
-	  return _used_macros;
-	}
-
-	const class used_macro_undefs& used_macro_undefs() const noexcept
-	{
-	  return _used_macro_undefs;
-	}
-
-	class used_macro_undefs& used_macro_undefs() noexcept
-	{
-	  return _used_macro_undefs;
-	}
-
 	const raw_pp_tokens_range& get_token_source() const noexcept
 	{
 	  return _token_source;
 	}
 
-	void set_macro_invocation(const pp_result::macro_invocation *mi)
+	void set_macro_invocation(pp_result::macro_invocation *mi)
 	  noexcept;
 
-	const pp_result::macro_invocation * get_macro_invocation()
+	pp_result::macro_invocation * get_macro_invocation()
 	  const noexcept;
+
+	void set_used_macro_undef(const macro_undef *used_macro_undef)
+	  noexcept;
+
+	const macro_undef *get_used_macro_undef() const noexcept;
+
 
 	operator bool() const noexcept
 	{
@@ -188,10 +174,8 @@ namespace klp
 	pp_token::type _type;
 	std::string _value;
 	raw_pp_tokens_range _token_source;
-	const pp_result::macro_invocation * _macro_invocation;
-
-	class used_macros _used_macros;
-	class used_macro_undefs _used_macro_undefs;
+	pp_result::macro_invocation * _macro_invocation;
+	const macro_undef * _used_macro_undef;
 
 	// Used for avoiding macro recursion as appropriate.
 	class used_macros _expansion_history;
@@ -203,9 +187,7 @@ namespace klp
       {
       public:
 	_macro_instance(const preprocessor &preprocessor,
-			const std::shared_ptr<const macro> &macro,
-			used_macros &&used_macros_base,
-			used_macro_undefs &&used_macro_undefs_base,
+			const macro &macro,
 			std::vector<_pp_tokens> &&args,
 			std::vector<_pp_tokens> &&exp_args,
 			const raw_pp_tokens_range &invocation_range);
@@ -213,7 +195,7 @@ namespace klp
 	_pp_token read_next_token();
 
 	const macro& get_macro() const noexcept
-	{ return *_macro; }
+	{ return _macro; }
 
 	code_remarks& get_remarks() noexcept
 	{ return _remarks; }
@@ -224,10 +206,6 @@ namespace klp
 	  const noexcept;
 
 	used_macros _tok_expansion_history_init() const;
-
-	used_macros _tok_used_macros_init() const;
-
-	used_macro_undefs _tok_used_macro_undefs_init() const;
 
 	bool _is_stringification(raw_pp_tokens::const_iterator it)
 	  const noexcept;
@@ -246,9 +224,7 @@ namespace klp
 	_pp_token _yield_concat_token();
 
 	const preprocessor &_preprocessor;
-	const std::shared_ptr<const macro> &_macro;
-	const used_macros _used_macros_base;
-	const used_macro_undefs _used_macro_undefs_base;
+	const macro &_macro;
 	std::map<std::string,
 		 std::pair<_pp_tokens, _pp_tokens> > _args;
 	const raw_pp_tokens_range _invocation_range;
@@ -287,6 +263,8 @@ namespace klp
       template<typename T>
       void _grab_remarks_from(T &from);
 
+      static pp_token_index _emit_pp_token(pp_result &r, _pp_token &&tok);
+
       _pp_token _read_next_plain_token();
 
       void _handle_eof_from_tokenizer(raw_pp_token &&eof_tok);
@@ -296,6 +274,7 @@ namespace klp
       file_range
       _raw_pp_tokens_range_to_file_range(const raw_pp_tokens_range &r) const;
 
+
       void _handle_pp_directive();
 
       _pp_token
@@ -304,27 +283,25 @@ namespace klp
 	      const bool from_cond_incl_cond = false);
 
       _macro_instance
-      _handle_object_macro_invocation(const std::shared_ptr<const macro> &macro,
+      _handle_object_macro_invocation(const macro &macro,
 				      _pp_token &&id_tok);
 
       _macro_instance
       _handle_func_macro_invocation(
-			const std::shared_ptr<const macro> &macro,
-			used_macros &&used_macros_base,
-			used_macro_undefs &&used_macro_undefs_base,
+			const macro &macro,
 			const raw_pp_token_index invocation_begin,
 			const std::function<_pp_token()> &token_reader,
 			const bool *update_cur_macro_invocation_range);
 
       std::tuple<_pp_tokens, _pp_tokens, _pp_token>
       _create_macro_arg(const std::function<_pp_token()> &token_reader,
-			const bool expand, const bool variadic,
-			used_macros &used_macros_base,
-			used_macro_undefs &used_macro_undefs_base);
+			const bool expand, const bool variadic);
 
-      static used_macros _collect_used_macros(const _pp_tokens &toks);
+      static used_macros _collect_used_macros(const pp_result &pp_result);
       static used_macro_undefs
-      _collect_used_macro_undefs(const _pp_tokens &toks);
+      _collect_used_macro_undefs(const pp_result &pp_result);
+      static used_macro_undefs
+      _collect_used_macro_undefs(const pp_tokens &toks);
       void _handle_include(const raw_pp_tokens_range &directive_range);
 
       bool _cond_incl_inactive() const noexcept;
@@ -338,9 +315,9 @@ namespace klp
       bool
       _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range);
 
-      std::shared_ptr<const macro>
+      const macro&
       _handle_macro_definition(const raw_pp_tokens_range &directive_range,
-			std::shared_ptr<const macro_undef> &&macro_undef);
+			       const macro_undef *macro_undef);
 
       raw_pp_tokens
       _normalize_macro_repl(const raw_pp_tokens::const_iterator begin,
@@ -362,8 +339,8 @@ namespace klp
 
       std::stack<pp_tokenizer> _tokenizers;
       _expansion_state _root_expansion_state;
-      std::map<std::string, std::shared_ptr<const macro> > _macros;
-      std::map<std::string, std::shared_ptr<const macro_undef> > _macro_undefs;
+      std::map<std::string, std::reference_wrapper<const macro> > _macros;
+      std::map<std::string, std::reference_wrapper<const macro_undef> > _macro_undefs;
 
       pp_result::macro_invocation *_cur_macro_invocation;
 

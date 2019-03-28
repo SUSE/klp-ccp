@@ -1,6 +1,8 @@
 #include <cassert>
 #include "pp_result.hh"
 #include "raw_pp_token.hh"
+#include "macro.hh"
+#include "macro_undef.hh"
 #include <limits>
 
 using namespace klp::ccp;
@@ -37,10 +39,12 @@ pp_tokens::size_type pp_result::_get_last_pp_index() const noexcept
 }
 
 pp_result::macro_invocation& pp_result::
-_add_macro_invocation(const raw_pp_tokens_range &invocation_range)
+_add_macro_invocation(const macro &m,
+		      const raw_pp_tokens_range &invocation_range)
 {
   _macro_invocations.push_back
-    (std::unique_ptr<macro_invocation>{new macro_invocation{invocation_range}});
+    (std::unique_ptr<macro_invocation>
+	{new macro_invocation{m, invocation_range}});
   return *_macro_invocations.back();
 }
 
@@ -52,8 +56,35 @@ _extend_macro_invocation_range(macro_invocation &invocation,
   invocation._invocation_range.end = new_end;
 }
 
+const macro& pp_result::
+_add_macro(const std::string &name,
+	   const bool func_like,
+	   const bool variadic,
+	   std::vector<std::string> &&arg_names,
+	   raw_pp_tokens &&repl,
+	   const raw_pp_tokens_range &directive_range,
+	   const macro_undef *prev_macro_undef)
+{
+  _macros.push_back(std::unique_ptr<const macro>{
+			new macro{name, func_like, variadic,
+				  std::move(arg_names), std::move(repl),
+				  directive_range, prev_macro_undef}});
+  return *_macros.back();
+}
+
+const macro_undef& pp_result::
+_add_macro_undef(const macro &m, const raw_pp_tokens_range &directive_range)
+{
+  _macro_undefs.push_back(std::unique_ptr<const macro_undef>{
+				new macro_undef{m, directive_range}});
+  return *_macro_undefs.back();
+}
+
 
 pp_result::macro_invocation::
-macro_invocation(const raw_pp_tokens_range &invocation_range)
+macro_invocation(const macro &m,
+		 const raw_pp_tokens_range &invocation_range)
   : _invocation_range{invocation_range}
-{}
+{
+  _used_macros += m;
+}

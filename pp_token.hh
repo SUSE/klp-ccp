@@ -5,14 +5,13 @@
 #include <memory>
 #include "raw_pp_tokens_range.hh"
 #include "pp_result.hh"
-#include "used_macros.hh"
-#include "used_macro_undefs.hh"
 
 namespace klp
 {
   namespace ccp
   {
     class code_remarks;
+    class macro_undef;
 
     class pp_token
     {
@@ -42,17 +41,11 @@ namespace klp
       };
 
       pp_token(const type type, const std::string &value,
-	       const raw_pp_tokens_range &token_source);
-
-      pp_token(const type type, const std::string &value,
 	       const raw_pp_tokens_range &token_source,
-	       used_macros &&um,
-	       const class used_macro_undefs &umu);
+	       const macro_undef *used_macro_undef = nullptr);
 
       pp_token(const type type, const std::string &value,
-	       const pp_result::macro_invocation &macro_invocation,
-	       used_macros &&um,
-	       const class used_macro_undefs &umu);
+	       const pp_result::macro_invocation &macro_invocation);
 
       type get_type() const noexcept
       {
@@ -66,31 +59,21 @@ namespace klp
 
       void set_type_and_value(const type type, const std::string &value);
 
-      const class used_macros& used_macros() const noexcept
-      {
-	return _used_macros;
-      }
-
-      class used_macros& used_macros() noexcept
-      {
-	return _used_macros;
-      }
-
-      const class used_macro_undefs& used_macro_undefs() const noexcept
-      {
-	return _used_macro_undefs;
-      }
-
-      class used_macro_undefs& used_macro_undefs() noexcept
-      {
-	return _used_macro_undefs;
-      }
-
       const raw_pp_tokens_range& get_token_source() const noexcept;
+
+      const macro_undef *get_used_macro_undef() const noexcept
+      { return _used_macro_undef; }
 
       operator bool() const noexcept
       {
 	return _type != type::eof;
+      }
+
+      template <typename T>
+      bool is_punctuator(T &&s) const noexcept
+      {
+	return (_type == pp_token::type::punctuator &&
+		_value == std::forward<T>(s));
       }
 
       template <type... types>
@@ -148,8 +131,7 @@ namespace klp
       std::string _value;
       raw_pp_tokens_range _token_source;
       const pp_result::macro_invocation * const _macro_invocation;
-      class used_macros _used_macros;
-      class used_macro_undefs _used_macro_undefs;
+      const macro_undef * const _used_macro_undef;
       type _type;
     };
 

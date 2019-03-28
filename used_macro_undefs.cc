@@ -1,6 +1,4 @@
 #include "used_macro_undefs.hh"
-#include <iterator>
-#include <algorithm>
 
 using namespace klp::ccp;
 
@@ -11,30 +9,19 @@ used_macro_undefs::used_macro_undefs(_used_macro_undefs_type &&um)
 used_macro_undefs& used_macro_undefs::operator+=(const used_macro_undefs &rhs)
 {
   _used_macro_undefs.insert(rhs._used_macro_undefs.cbegin(),
-		      rhs._used_macro_undefs.cend());
+			    rhs._used_macro_undefs.cend());
   return *this;
 }
 
-used_macro_undefs used_macro_undefs::operator+(const used_macro_undefs &rhs)
-  const
+used_macro_undefs& used_macro_undefs::operator+=(const macro_undef &rhs)
 {
-  _used_macro_undefs_type result;
-
-  std::set_union(this->cbegin(), this->cend(),
-		 rhs.cbegin(), rhs.cend(),
-		 std::inserter(result, result.cend()));
-  return used_macro_undefs(std::move(result));
-}
-
-used_macro_undefs& used_macro_undefs::operator+=(const value_type &rhs)
-{
-  _used_macro_undefs.insert(rhs);
+  _used_macro_undefs.insert(std::ref(rhs));
   return *this;
 }
 
-used_macro_undefs used_macro_undefs::operator+(const value_type &rhs) const
+bool used_macro_undefs::_compare::
+operator()(const std::reference_wrapper<const macro_undef> a,
+	   const std::reference_wrapper<const macro_undef> b) const noexcept
 {
-  used_macro_undefs result(*this);
-  result += rhs;
-  return result;
+  return &a.get() < &b.get();
 }

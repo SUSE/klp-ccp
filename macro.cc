@@ -16,7 +16,7 @@ macro::macro(const std::string &name,
 	     std::vector<std::string> &&arg_names,
 	     raw_pp_tokens &&repl,
 	     const raw_pp_tokens_range &directive_range,
-	     std::shared_ptr<const macro_undef> &&prev_macro_undef)
+	     const macro_undef *prev_macro_undef)
   : _name(name), _arg_names(std::move(arg_names)),
     _repl(std::move(repl)),
     _directive_range(directive_range),
