@@ -99,12 +99,6 @@ namespace klp
 	return is_type_any_of<type::eof>();
       }
 
-      bool is_empty() const noexcept
-      {
-	return is_type_any_of<type::empty>();
-      }
-
-
       static std::string stringify(const type type, const std::string &value);
 
       std::string stringify() const;

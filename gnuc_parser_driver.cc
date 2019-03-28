@@ -190,7 +190,6 @@ gnuc_parser_driver::lex(gnuc_parser::semantic_type *value,
     }
   } while (tokens.back().is_ws() ||
 	   tokens.back().is_newline() ||
-	   tokens.back().is_empty() ||
 	   (tokens.back().is_id() &&
 	    tokens.back().get_value() == "__extension__"));
   _grab_pp_remarks();

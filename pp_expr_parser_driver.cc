@@ -114,7 +114,6 @@ pp_expr_parser_driver::lex(pp_expr_parser::semantic_type *value,
     }
   } while (tokens.back().is_ws() ||
 	   tokens.back().is_newline() ||
-	   tokens.back().is_empty() ||
 	   (tokens.back().is_id() &&
 	    tokens.back().get_value() == "__extension__"));
 
