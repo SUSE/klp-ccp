@@ -236,7 +236,6 @@ namespace klp
 
 
 	std::unique_ptr<_pp_token> _concat_token;
-	bool _in_concat;
 
 	bool _anything_emitted;
       };

@@ -1841,7 +1841,7 @@ _macro_instance(const preprocessor &preprocessor,
   : _preprocessor(preprocessor), _macro(macro),
     _invocation_range(invocation_range),
     _it_repl(_macro.get_repl().cbegin()), _cur_arg(nullptr),
-    _in_concat(false), _anything_emitted(false)
+    _anything_emitted(false)
 {
   assert(args.size() == exp_args.size());
 
@@ -2019,16 +2019,9 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
   // The sequence of tokens emitted by the macro expansion will
   // conform to the rules for the expanded argument values above.
   //
-  if (_concat_token) {
-    // The previous run assembled a concatenated token, detected that
-    // it was non-empty and thus had to emit a pending space. Now it's
-    // time to emit that concat_token.
-    assert(!_in_concat);
-    assert(!_concat_token->is_empty());
-    return _yield_concat_token();
-  }
-
   // Continue processing the currently "active" parameter, if any.
+
+  bool in_concat = false;
   if (_cur_arg) {
   handle_arg:
     assert(_cur_arg);
@@ -2036,14 +2029,13 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
       _cur_arg = nullptr;
       ++_it_repl;
       if (_is_concat_op(_it_repl)) {
-	_in_concat = true;
+	in_concat = true;
 	++_it_repl;
-      } else if (_in_concat) {
-	_in_concat = false;
-	if (_concat_token)
-	  return _yield_concat_token();
+      } else if (in_concat) {
+	in_concat = false;
+	return _yield_concat_token();
       }
-    } else if (_cur_arg_it == _cur_arg->begin() && _in_concat) {
+    } else if (_cur_arg_it == _cur_arg->begin() && in_concat) {
       // We're at the beginning of a parameter's replacement list and
       // that parameter has been preceeded by a ## concatenation
       // operator in the macro replacement list.
@@ -2068,7 +2060,7 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
       // concatenating and return the result.
       if (_cur_arg || !_is_concat_op(_it_repl)) {
 	assert(_concat_token);
-	_in_concat = false;
+	in_concat = false;
 	return _yield_concat_token();
       }
       // The else case, i.e. the current argument's replacement list
@@ -2090,8 +2082,8 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
 
       // The in_concat == true case would have been handled by the
       // branch above.
-      assert(!_in_concat);
-      _in_concat = true;
+      assert(!in_concat);
+      in_concat = true;
 
       _add_concat_token(*_cur_arg_it++);
 
@@ -2100,7 +2092,7 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
       _it_repl += 2;
     } else {
       // Normal parameter substitution
-      assert(!_in_concat);
+      assert(!in_concat);
       assert(_cur_arg_it != _cur_arg->end());
 
       auto tok = _pp_token(_cur_arg_it->get_type(), _cur_arg_it->get_value(),
@@ -2156,13 +2148,13 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
 	if (_concat_token) {
 	  _add_concat_token(*_it_repl);
 	  _it_repl += 2;
-	  assert(_in_concat);
+	  assert(in_concat);
 	  return _yield_concat_token();
 	} else {
 	  _pp_token tok{_it_repl->get_type(), _it_repl->get_value(),
 			_invocation_range};
 	  _it_repl += 2;
-	  _in_concat = true;
+	  in_concat = true;
 	  return tok;
 	}
       }
@@ -2177,13 +2169,13 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
     assert(_it_repl->is_punctuator("##"));
     ++_it_repl;
     assert(!_it_repl->is_ws());
-    _in_concat = true;
+    in_concat = true;
   }
 
   // At this point there's either no ## concatenation in progress
   // or the current token is the very last operand.
   if (_it_repl == _macro.get_repl().end()) {
-    assert(!_in_concat);
+    assert(!in_concat);
     if (!_anything_emitted) {
       // Emit an empty token in order to report usage of this macro.
       _anything_emitted = true;
@@ -2197,14 +2189,14 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
   }
 
   if (_it_repl->is_id()) {
-    _cur_arg = _resolve_arg(_it_repl->get_value(), !_in_concat);
+    _cur_arg = _resolve_arg(_it_repl->get_value(), !in_concat);
     if (_cur_arg != nullptr) {
       _cur_arg_it = _cur_arg->begin();
       goto handle_arg;
     }
   }
 
-  if (_in_concat) {
+  if (in_concat) {
     assert(!_it_repl->is_ws());
     if (_is_stringification(_it_repl))
       _add_concat_token(_handle_stringification());
@@ -2212,7 +2204,7 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
       _add_concat_token(*_it_repl++);
 
     assert(_concat_token);
-    _in_concat = false;
+    in_concat = false;
     return _yield_concat_token();
   }
 
