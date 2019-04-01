@@ -47,10 +47,19 @@ macro::macro(const std::string &name,
 	it = _next_non_ws_repl(it + 1);
       }
     } else {
+      // Take care of the special
+      //  , ## __VA_ARGS__
+      // construct.
+      const bool is_comma = it->is_punctuator(",");
       it = _skip_stringification_or_single(it);
       if (_is_concat_op(it)) {
 	in_concat = true;
-	++it;
+	it = _next_non_ws_repl(it);
+
+	if (_variadic && is_comma && it->is_id() &&
+	    it->get_value() == _arg_names.back()) {
+	  in_concat = false;
+	}
       } else {
 	in_concat = false;
       }

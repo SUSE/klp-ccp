@@ -2145,16 +2145,15 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
 	// the comma has again been preceeded by a ## or not.
 	// In either case, the comma is not concatenated to the __VA_ARGS__,
 	// but each are treated separately.
-	if (_concat_token) {
+	if (in_concat) {
 	  _add_concat_token(*_it_repl);
 	  _it_repl += 2;
-	  assert(in_concat);
+	  in_concat = false;
 	  return _yield_concat_token();
 	} else {
 	  _pp_token tok{_it_repl->get_type(), _it_repl->get_value(),
 			_invocation_range};
 	  _it_repl += 2;
-	  in_concat = true;
 	  return tok;
 	}
       }
