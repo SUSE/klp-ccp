@@ -215,8 +215,7 @@ pp_token_index preprocessor::read_next_token()
 	  next_tok.is_punctuator(":"))) ||
 	(prev_tok.is_punctuator("%:") && next_tok.is_punctuator("%:")) ||
 	(prev_tok.is_punctuator(":") && next_tok.is_punctuator(">")) ||
-	((empty_seen || prev_tok.get_macro_invocation() ||
-	  next_tok.get_macro_invocation()) &&
+	(empty_seen &&
 	 ((prev_tok.is_punctuator(":") && next_tok.is_punctuator(":")) ||
 	  (prev_tok.is_punctuator(".") && next_tok.is_punctuator(".")) ||
 	  (prev_tok.is_punctuator("#") && next_tok.is_punctuator("#"))))))) {
@@ -1841,7 +1840,7 @@ _macro_instance(const preprocessor &preprocessor,
   : _preprocessor(preprocessor), _macro(macro),
     _invocation_range(invocation_range),
     _it_repl(_macro.get_repl().cbegin()), _cur_arg(nullptr),
-    _anything_emitted(false)
+    _emit_empty_tok(true), _last_tok_was_empty_or_ws(false)
 {
   assert(args.size() == exp_args.size());
 
@@ -1980,12 +1979,22 @@ _add_concat_token(const raw_pp_token &raw_tok)
 preprocessor::_pp_token preprocessor::_macro_instance::_yield_concat_token()
 {
   assert(_concat_token);
-  _anything_emitted = true;
-
   _pp_token tok = std::move(*_concat_token);
   _concat_token.reset();
+  assert(!tok.is_ws() && !tok.is_empty());
+  _last_tok_was_empty_or_ws = false;
   return tok;
 }
+
+preprocessor::_pp_token preprocessor::_macro_instance::_yield_empty_token()
+{
+  assert(!_last_tok_was_empty_or_ws);
+  _last_tok_was_empty_or_ws = true;
+  _emit_empty_tok = false;
+  return _pp_token{pp_token::type::empty, std::string{},
+		   raw_pp_tokens_range{}};
+}
+
 
 preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
 {
@@ -1995,11 +2004,19 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
   // based on the current _macro_instance's state information and
   // returned.
   //
-  // In case the macro expands to nothing, a dummy
-  // pp_token::type::empty token is emitted in order to allow for
-  // tracing of this macro invocation at later stages: the addition of
-  // whitespace between punctuators in read_next_token() in
-  // particular.
+  // The macro expansion will insert empty dummy tokens at various
+  // locations to allow the higher levels,
+  // preprocessor::read_next_token() in particular, to separate
+  // certain productions from surrounding context. These locations are
+  // - before and after the whole macro expansion
+  // - before and after a concatentation chain
+  // - before and after the emission of an expanded macro parameter.
+  // This is needed such that
+  //    #define __concat(a,b) :a ## b:
+  //    :__concat(::a,b::):
+  // can evaluate to
+  //    : ::ab:: :
+  // and so on.
   //
   // Finally, after the list of replacement tokens has been exhausted,
   // a final pp_token::type::eof marker is returned.
@@ -2010,17 +2027,14 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
   // - empty token,
   // - multiple consecutive whitespace tokens or
   // - leading or trailing whitespace.
-  // For the expanded argument value, there must not be
-  // - any multiple consecutive whitespace tokens or
-  // - any leading and trailing whitespace tokens.
-  // Note that the following is allowed though: <empty><ws><empty>
-  // or even repetitions thereof.
   //
-  // The sequence of tokens emitted by the macro expansion will
-  // conform to the rules for the expanded argument values above.
-  //
-  // Continue processing the currently "active" parameter, if any.
+  if (_emit_empty_tok) {
+    _emit_empty_tok = false;
+    if (!_last_tok_was_empty_or_ws)
+      return _yield_empty_token();
+  }
 
+  // Continue processing the currently "active" parameter, if any.
   bool in_concat = false;
   if (_cur_arg) {
   handle_arg:
@@ -2032,8 +2046,17 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
 	in_concat = true;
 	++_it_repl;
       } else if (in_concat) {
+	// Last parameter in a sequence of concatenations.
+	// Emit an empty token afterwards.
 	in_concat = false;
-	return _yield_concat_token();
+	if (_concat_token) {
+	  _emit_empty_tok = true;
+	  return _yield_concat_token();
+	}
+      } else {
+	// "Normal" parameter expansion, empty has already been emitted
+	// before it started.
+	assert(_last_tok_was_empty_or_ws);
       }
     } else if (_cur_arg_it == _cur_arg->begin() && in_concat) {
       // We're at the beginning of a parameter's replacement list and
@@ -2061,6 +2084,11 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
       if (_cur_arg || !_is_concat_op(_it_repl)) {
 	assert(_concat_token);
 	in_concat = false;
+	if (!_cur_arg) {
+	  // Last parameter in a sequence of concatenations.
+	  // Emit an empty token afterwards.
+	  _emit_empty_tok = true;
+	}
 	return _yield_concat_token();
       }
       // The else case, i.e. the current argument's replacement list
@@ -2099,14 +2127,13 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
 			   _invocation_range, _tok_expansion_history_init());
       tok.expansion_history() += _cur_arg_it->expansion_history();
       ++_cur_arg_it;
-
+      _last_tok_was_empty_or_ws = (tok.is_empty() || tok.is_ws());
       if (_cur_arg_it == _cur_arg->cend()) {
+	if (!_last_tok_was_empty_or_ws)
+	  _emit_empty_tok = true;
 	_cur_arg = nullptr;
 	++_it_repl;
       }
-
-      assert(!tok.is_ws() || _anything_emitted);
-      _anything_emitted = true;
       return tok;
     }
   }
@@ -2125,6 +2152,12 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
       _cur_arg = _resolve_arg(_it_repl->get_value(), false);
       if (_cur_arg != nullptr) {
 	_cur_arg_it = _cur_arg->begin();
+	if (!_last_tok_was_empty_or_ws) {
+	  // The start of a concatenation sequence.  Emit an empty
+	  // token to separate the result from the tokens preceeding
+	  // it.
+	  return _yield_empty_token();
+	}
 	goto handle_arg;
       }
       // Remaining case of non-parameter identifier is handled below.
@@ -2149,11 +2182,13 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
 	  _add_concat_token(*_it_repl);
 	  _it_repl += 2;
 	  in_concat = false;
+	  _last_tok_was_empty_or_ws = false;
 	  return _yield_concat_token();
 	} else {
 	  _pp_token tok{_it_repl->get_type(), _it_repl->get_value(),
 			_invocation_range};
 	  _it_repl += 2;
+	  _last_tok_was_empty_or_ws = false;
 	  return tok;
 	}
       }
@@ -2175,13 +2210,11 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
   // or the current token is the very last operand.
   if (_it_repl == _macro.get_repl().end()) {
     assert(!in_concat);
-    if (!_anything_emitted) {
-      // Emit an empty token in order to report usage of this macro.
-      _anything_emitted = true;
-      return _pp_token(pp_token::type::empty, std::string(),
-		       _invocation_range, _tok_expansion_history_init());
+    if (!_last_tok_was_empty_or_ws) {
+      // Terminate the macro expansion with an empty in order to
+      // separate it from subsequent tokens.
+      return _yield_empty_token();
     }
-
     return _pp_token(pp_token::type::eof, std::string(),
 		     raw_pp_tokens_range{_invocation_range.end,
 					 _invocation_range.end});
@@ -2191,6 +2224,11 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
     _cur_arg = _resolve_arg(_it_repl->get_value(), !in_concat);
     if (_cur_arg != nullptr) {
       _cur_arg_it = _cur_arg->begin();
+      if (!in_concat && !_last_tok_was_empty_or_ws) {
+	// Start of a "normal" parameter substitution. Emit an empty
+	// token in order to separate it from the preceeding one.
+	return _yield_empty_token();
+      }
       goto handle_arg;
     }
   }
@@ -2204,13 +2242,12 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
 
     assert(_concat_token);
     in_concat = false;
+    _last_tok_was_empty_or_ws = false;
     return _yield_concat_token();
   }
 
-  // All the cases below will emit something.
-  _anything_emitted = true;
-
   if (_is_stringification(_it_repl)) {
+    _last_tok_was_empty_or_ws = false;
     return _handle_stringification();
   }
 
@@ -2219,6 +2256,7 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
 		       _tok_expansion_history_init());
   ++_it_repl;
 
+  _last_tok_was_empty_or_ws = (tok.is_empty() || tok.is_ws());
   return tok;
 }
 

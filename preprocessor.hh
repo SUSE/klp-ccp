@@ -222,6 +222,7 @@ namespace klp
 	void _add_concat_token(const _pp_token &tok);
 	void _add_concat_token(const raw_pp_token &raw_tok);
 	_pp_token _yield_concat_token();
+	_pp_token _yield_empty_token();
 
 	const preprocessor &_preprocessor;
 	const macro &_macro;
@@ -237,7 +238,8 @@ namespace klp
 
 	std::unique_ptr<_pp_token> _concat_token;
 
-	bool _anything_emitted;
+	bool _emit_empty_tok;
+	bool _last_tok_was_empty_or_ws;
       };
 
       struct _cond_incl_state
