@@ -15,6 +15,7 @@ namespace klp
   namespace ccp
   {
     class macro_undef;
+    class header_inclusion_root;
 
     class pp_result
     {
@@ -37,6 +38,110 @@ namespace klp
 	used_macro_undefs _used_macro_undefs;
       };
 
+      class header_inclusion_roots
+      {
+      private:
+	typedef std::vector<std::unique_ptr<header_inclusion_root> >
+		_container_type;
+
+      public:
+	class iterator : public std::iterator<std::forward_iterator_tag,
+					      header_inclusion_root>
+	{
+	public:
+	  bool operator==(const iterator &rhs) const noexcept
+	  { return this->_it == rhs._it; }
+
+	  bool operator!=(const iterator &rhs)
+	  { return !(*this == rhs); }
+
+	  reference operator*() const noexcept
+	  { return **_it; }
+
+	  pointer operator->() const noexcept
+	  { return (*_it).get(); }
+
+	  iterator& operator++()
+	  { ++_it; return *this; }
+
+	  const iterator operator++(int)
+	  { return iterator{_it++}; }
+
+	private:
+	  friend class header_inclusion_roots;
+
+	  iterator(const _container_type::iterator &it) noexcept
+	    : _it(it)
+	  {}
+
+	  _container_type::iterator _it;
+	};
+
+	class const_iterator : public std::iterator<std::forward_iterator_tag,
+						    const header_inclusion_root>
+	{
+	public:
+	  bool operator==(const const_iterator &rhs) const noexcept
+	  { return this->_it == rhs._it; }
+
+	  bool operator!=(const const_iterator &rhs)
+	  { return !(*this == rhs); }
+
+	  reference operator*() const noexcept
+	  { return **_it; }
+
+	  pointer operator->() const noexcept
+	  { return (*_it).get(); }
+
+	  const_iterator& operator++()
+	  { ++_it; return *this; }
+
+	  const const_iterator operator++(int)
+	  { return const_iterator{_it++}; }
+
+	private:
+	  friend class header_inclusion_roots;
+
+	  const_iterator(const _container_type::const_iterator &it) noexcept
+	    : _it(it)
+	  {}
+
+	  _container_type::const_iterator _it;
+	};
+
+	header_inclusion_roots();
+
+	header_inclusion_roots(_container_type &&roots);
+
+	header_inclusion_roots(header_inclusion_roots &&hirs);
+
+	~header_inclusion_roots() noexcept;
+
+	iterator begin() noexcept
+	{ return iterator{_roots.begin()}; }
+
+	iterator end() noexcept
+	{ return iterator{_roots.end()}; }
+
+	const_iterator begin() const noexcept
+	{ return const_iterator{_roots.begin()}; }
+
+	const_iterator end() const noexcept
+	{ return const_iterator{_roots.end()}; }
+
+	bool empty() const noexcept
+	{ return _roots.empty(); }
+
+      private:
+	_container_type _roots;
+      };
+
+      const header_inclusion_roots& get_header_inclusion_roots() const noexcept
+      { return _header_inclusion_roots; }
+
+      header_inclusion_roots& get_header_inclusion_roots() noexcept
+      { return _header_inclusion_roots; }
+
       const raw_pp_tokens& get_raw_tokens() const noexcept
       { return _raw_tokens; }
 
@@ -46,10 +151,12 @@ namespace klp
       pp_tokens &get_pp_tokens() noexcept
       { return _pp_tokens; }
 
+
     private:
       friend class preprocessor;
 
       pp_result();
+      pp_result(header_inclusion_roots &&header_inclusion_roots);
 
       void _append_token(const raw_pp_token &tok);
       void _append_token(raw_pp_token &&tok);
@@ -77,6 +184,7 @@ namespace klp
       _add_macro_undef(const macro &m,
 		       const raw_pp_tokens_range &directive_range);
 
+      header_inclusion_roots _header_inclusion_roots;
       raw_pp_tokens _raw_tokens;
       pp_tokens _pp_tokens;
 

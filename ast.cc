@@ -7786,14 +7786,14 @@ const klp::ccp::pp_tokens& ast::get_pp_tokens() const noexcept
 
 ast_translation_unit::
 ast_translation_unit(std::unique_ptr<const pp_result> &&pp_result,
-		     header_inclusion_roots_type &&hirs,
 		     std::unique_ptr<translation_unit> &&tu)
-  : ast(*pp_result, false), _hirs(std::move(hirs)),
-    _pp_result(std::move(pp_result)), _tu(std::move(tu))
+  : ast(*pp_result, false), _pp_result(std::move(pp_result)),
+    _tu(std::move(tu))
 {}
 
 ast_translation_unit::ast_translation_unit(ast_translation_unit &&a)
-  : ast(std::move(a)), _hirs(std::move(a._hirs)), _tu(std::move(a._tu))
+  : ast(std::move(a)), _pp_result(std::move(a._pp_result)),
+    _tu(std::move(a._tu))
 {}
 
 ast_translation_unit::~ast_translation_unit() noexcept = default;

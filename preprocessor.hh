@@ -20,7 +20,6 @@ namespace klp
   namespace ccp
   {
     class pp_tokenizer;
-    class header_inclusion_root;
     class inclusion_node;
     class conditional_inclusion_node;
     class architecture;
@@ -28,10 +27,7 @@ namespace klp
     class preprocessor
     {
     public:
-      typedef std::vector<std::unique_ptr<header_inclusion_root> >
-	header_inclusion_roots_type;
-
-      preprocessor(header_inclusion_roots_type &header_inclusion_roots,
+      preprocessor(pp_result::header_inclusion_roots &&header_inclusion_roots,
 		   const header_resolver &header_resolver,
 		   const architecture &arch);
 
@@ -45,10 +41,6 @@ namespace klp
 
       const pp_result& get_result() const noexcept
       { return *_pp_result; }
-
-      header_inclusion_roots_type
-      grab_header_inclusion_roots()
-      { return std::move(_header_inclusion_roots); }
 
     private:
       class _pp_token
@@ -332,8 +324,7 @@ namespace klp
 
       std::unique_ptr<pp_result> _pp_result;
       pp_result *_cur_pp_result;
-      header_inclusion_roots_type &_header_inclusion_roots;
-      header_inclusion_roots_type::iterator _cur_header_inclusion_root;
+      pp_result::header_inclusion_roots::iterator _cur_header_inclusion_root;
       std::stack<std::reference_wrapper<inclusion_node> > _inclusions;
       std::stack<_cond_incl_state> _cond_incl_states;
       std::size_t _cond_incl_nesting;

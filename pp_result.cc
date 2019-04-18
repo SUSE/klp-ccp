@@ -3,12 +3,34 @@
 #include "raw_pp_token.hh"
 #include "macro.hh"
 #include "macro_undef.hh"
+#include "inclusion_tree.hh"
 #include <limits>
 
 using namespace klp::ccp;
 
+
+pp_result::header_inclusion_roots::header_inclusion_roots() = default;
+
+pp_result::header_inclusion_roots::
+header_inclusion_roots(_container_type &&roots)
+  : _roots(std::move(roots))
+{}
+
+pp_result::header_inclusion_roots::
+header_inclusion_roots(header_inclusion_roots &&hirs)
+  : _roots(std::move(hirs._roots))
+{}
+
+pp_result::header_inclusion_roots::~header_inclusion_roots() noexcept = default;
+
+
 pp_result::pp_result()
   : _pp_tokens(*this)
+{}
+
+pp_result::pp_result(header_inclusion_roots &&header_inclusion_roots)
+  : _header_inclusion_roots(std::move(header_inclusion_roots)),
+    _pp_tokens(*this)
 {}
 
 void pp_result::_append_token(const raw_pp_token &tok)

@@ -8,7 +8,6 @@
 #include <memory>
 #include <utility>
 #include "type_set.hh"
-#include "inclusion_tree.hh"
 #include "pp_tokens.hh"
 #include "code_remarks.hh"
 #include "types.hh"
@@ -4602,11 +4601,7 @@ namespace klp
       class ast_translation_unit final : public ast
       {
       public:
-	typedef std::vector<std::unique_ptr<header_inclusion_root> >
-	header_inclusion_roots_type;
-
 	ast_translation_unit(std::unique_ptr<const pp_result> &&pp_result,
-			     header_inclusion_roots_type &&hirs,
 			     std::unique_ptr<translation_unit> &&tu);
 
 	ast_translation_unit(ast_translation_unit &&a);
@@ -4644,7 +4639,6 @@ namespace klp
 	void _resolve_ids();
 
 	std::unique_ptr<const pp_result> _pp_result;
-	header_inclusion_roots_type _hirs;
 	std::unique_ptr<translation_unit> _tu;
       };
 

@@ -171,8 +171,7 @@ ast_translation_unit gnuc_parser_driver::grab_result()
   std::unique_ptr<translation_unit> tu(_result);
   _result = nullptr;
 
-  return ast_translation_unit(_pp.grab_result(),
-			      _pp.grab_header_inclusion_roots(), std::move(tu));
+  return ast_translation_unit(_pp.grab_result(), std::move(tu));
 }
 
 gnuc_parser::token_type

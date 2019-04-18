@@ -12,21 +12,23 @@
 
 using namespace klp::ccp;
 
-preprocessor::preprocessor(header_inclusion_roots_type &header_inclusion_roots,
-			   const header_resolver &header_resolver,
-			   const architecture &arch)
+preprocessor::
+preprocessor(pp_result::header_inclusion_roots &&header_inclusion_roots,
+	     const header_resolver &header_resolver,
+	     const architecture &arch)
   : _header_resolver(header_resolver), _arch(arch),
-    _pp_result(new pp_result()), _cur_pp_result(_pp_result.get()),
-    _header_inclusion_roots(header_inclusion_roots),
-    _cur_header_inclusion_root(_header_inclusion_roots.begin()),
+    _pp_result(new pp_result{std::move(header_inclusion_roots)}),
+    _cur_pp_result(_pp_result.get()),
+    _cur_header_inclusion_root(_pp_result->get_header_inclusion_roots()
+			       .begin()),
     _cond_incl_nesting(0), _root_expansion_state(),
     _cur_macro_invocation(nullptr), __counter__(0),
     _eof_tok(pp_token::type::empty, "", raw_pp_tokens_range()),
     _maybe_pp_directive(true), _line_empty(true)
 {
-  assert(!header_inclusion_roots.empty());
-  _tokenizers.emplace(**_cur_header_inclusion_root);
-  _inclusions.emplace(std::ref(**_cur_header_inclusion_root));
+  assert(!_pp_result->get_header_inclusion_roots().empty());
+  _tokenizers.emplace(*_cur_header_inclusion_root);
+  _inclusions.emplace(std::ref(*_cur_header_inclusion_root));
 }
 
 pp_token_index preprocessor::read_next_token()
@@ -308,15 +310,16 @@ void preprocessor::_handle_eof_from_tokenizer(raw_pp_token &&eof_tok)
   _inclusions.pop();
 
   if (_tokenizers.empty()) {
-    if (++_cur_header_inclusion_root == _header_inclusion_roots.end()) {
+    if (++_cur_header_inclusion_root ==
+	_pp_result->get_header_inclusion_roots().end()) {
       const raw_pp_token_index eof_index = _pp_result->get_raw_tokens().size();
       _eof_tok = _pp_token{eof_tok.get_type(), eof_tok.get_value(),
 			   raw_pp_tokens_range{eof_index, eof_index}};
       return;
     }
 
-    _tokenizers.emplace(**_cur_header_inclusion_root);
-    _inclusions.emplace(std::ref(**_cur_header_inclusion_root));
+    _tokenizers.emplace(*_cur_header_inclusion_root);
+    _inclusions.emplace(std::ref(*_cur_header_inclusion_root));
   }
 }
 

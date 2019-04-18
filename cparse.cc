@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 {
   int r = 0;
   header_resolver hr;
-  preprocessor::header_inclusion_roots_type hirs;
+  std::vector<std::unique_ptr<header_inclusion_root> >hirs;
 
   while(true) {
     const int o = getopt_long(argc, argv, optstring, options, NULL);
@@ -74,7 +74,10 @@ int main(int argc, char* argv[])
     new header_inclusion_root(argv[optind], false)};
   hirs.emplace_back(std::move(hir));
   arch_gcc48_x86_64 arch;
-  yy::gnuc_parser_driver pd(preprocessor{hirs, hr, arch});
+  yy::gnuc_parser_driver pd{
+		preprocessor{pp_result::header_inclusion_roots{std::move(hirs)},
+			     hr, arch}
+  };
 
   try {
 #ifdef DEBUG_PARSER
