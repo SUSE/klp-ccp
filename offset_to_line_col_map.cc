@@ -93,20 +93,20 @@ unsigned int fls(T val)
   return r + 1;
 }
 
-void offset_to_line_col_map::add_line(const file_range::loc_type length)
+void offset_to_line_col_map::add_line(const std::streamoff length)
 {
   const _enc_map_type::const_iterator enc_it = _append_encoded_offset(length);
-  const file_range::loc_type next_offset = _last_offset + length;
+  const std::streamoff next_offset = _last_offset + length;
 
   // Add one index entry for each multiple of _offset_range_per_index
   // in the range [_last_offset, next_offset).
-  const file_range::loc_type lo_rounded_up =
+  const std::streamoff lo_rounded_up =
     ((_last_offset + _offset_range_per_index - 1)
      / _offset_range_per_index * _offset_range_per_index);
-  const file_range::loc_type no_rounded_up =
+  const std::streamoff no_rounded_up =
     ((next_offset + _offset_range_per_index - 1)
      / _offset_range_per_index * _offset_range_per_index);
-  for (file_range::loc_type o = lo_rounded_up; o < no_rounded_up;
+  for (std::streamoff o = lo_rounded_up; o < no_rounded_up;
        o += _offset_range_per_index) {
     assert(_last_offset <= _index.size() * _offset_range_per_index);
     _index.emplace_back(enc_it - _enc_map.cbegin(), _last_offset, _cur_line);
@@ -116,12 +116,12 @@ void offset_to_line_col_map::add_line(const file_range::loc_type length)
   ++_cur_line;
 }
 
-std::pair<file_range::loc_type, file_range::loc_type>
-offset_to_line_col_map::offset_to_line_col(file_range::loc_type off)
+std::pair<std::streamoff, std::streamoff>
+offset_to_line_col_map::offset_to_line_col(std::streamoff off)
   const noexcept
 {
   _enc_map_type::const_iterator enc_it = _enc_map.cbegin();
-  file_range::loc_type line = 1;
+  std::streamoff line = 1;
 
   if (!_index.empty()) {
     _index_type::size_type i = off / _offset_range_per_index;
@@ -134,7 +134,7 @@ offset_to_line_col_map::offset_to_line_col(file_range::loc_type off)
   }
 
   while (enc_it != _enc_map.cend()) {
-    const file_range::loc_type line_length = _read_encoded_offset(enc_it);
+    const std::streamoff line_length = _read_encoded_offset(enc_it);
 
     if (off < line_length)
       break;
@@ -146,7 +146,7 @@ offset_to_line_col_map::offset_to_line_col(file_range::loc_type off)
 }
 
 offset_to_line_col_map::_enc_map_type::const_iterator
-offset_to_line_col_map::_append_encoded_offset(const file_range::loc_type off)
+offset_to_line_col_map::_append_encoded_offset(const std::streamoff off)
 {
   static_assert(std::numeric_limits<unsigned char>::digits >= sizeof(off),
 		"too few bits in char -- multibyte headers not implemented");
@@ -205,7 +205,7 @@ offset_to_line_col_map::_append_encoded_offset(const file_range::loc_type off)
   return _enc_map.cend() - 1 - needed_payload_bytes;
 }
 
-file_range::loc_type
+std::streamoff
 offset_to_line_col_map::_read_encoded_offset(_enc_map_type::const_iterator &it)
   const noexcept
 {
@@ -217,7 +217,7 @@ offset_to_line_col_map::_read_encoded_offset(_enc_map_type::const_iterator &it)
     std::numeric_limits<unsigned char>::digits - payload_bytes;
   payload_bits_in_header -= payload_bits_in_header ? 1 : 0;
 
-  file_range::loc_type r = header & ((1 << payload_bits_in_header) - 1);
+  std::streamoff r = header & ((1 << payload_bits_in_header) - 1);
   for (; payload_bytes > 0; --payload_bytes) {
     r <<= std::numeric_limits<unsigned char>::digits;
     r |= *it++;
