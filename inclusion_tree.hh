@@ -66,10 +66,10 @@ namespace klp
 	return _filename;
       }
 
-      void add_line(const file_range::loc_type length);
+      void add_line(const std::streamoff length);
 
-      std::pair<file_range::loc_type, file_range::loc_type>
-      offset_to_line_col(const file_range::loc_type off) const noexcept;
+      std::pair<std::streamoff, std::streamoff>
+      offset_to_line_col(const std::streamoff off) const noexcept;
 
       std::unique_ptr<source_reader> create_source_reader() const;
 
