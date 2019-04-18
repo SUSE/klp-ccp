@@ -24,13 +24,10 @@ header_inclusion_roots(header_inclusion_roots &&hirs)
 pp_result::header_inclusion_roots::~header_inclusion_roots() noexcept = default;
 
 
-pp_result::pp_result()
-  : _pp_tokens(*this)
-{}
+pp_result::pp_result() = default;
 
 pp_result::pp_result(header_inclusion_roots &&header_inclusion_roots)
-  : _header_inclusion_roots(std::move(header_inclusion_roots)),
-    _pp_tokens(*this)
+  : _header_inclusion_roots(std::move(header_inclusion_roots))
 {}
 
 void pp_result::_append_token(const raw_pp_token &tok)
