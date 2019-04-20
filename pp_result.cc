@@ -29,10 +29,10 @@ pp_result::inclusion_node::inclusion_node(const inclusion_node * const parent)
 pp_result::inclusion_node::~inclusion_node() noexcept = default;
 
 pp_result::header_inclusion_child& pp_result::inclusion_node::
-add_header_inclusion(const std::string &filename,
-		     const raw_pp_tokens_range &directive_range,
-		     used_macros &&used_macros,
-		     used_macro_undefs &&used_macro_undefs)
+_add_header_inclusion(const std::string &filename,
+		      const raw_pp_tokens_range &directive_range,
+		      used_macros &&used_macros,
+		      used_macro_undefs &&used_macro_undefs)
 {
   std::unique_ptr<header_inclusion_child> new_child
      (new header_inclusion_child(*this, filename,
@@ -45,9 +45,9 @@ add_header_inclusion(const std::string &filename,
 }
 
 pp_result::conditional_inclusion_node& pp_result::inclusion_node::
-add_conditional_inclusion(const raw_pp_token_index range_begin,
-			  used_macros &&used_macros,
-			  used_macro_undefs &&used_macro_undefs)
+_add_conditional_inclusion(const raw_pp_token_index range_begin,
+			   used_macros &&used_macros,
+			   used_macro_undefs &&used_macro_undefs)
 {
   std::unique_ptr<conditional_inclusion_node> new_child
      (new conditional_inclusion_node(*this, range_begin,
@@ -138,7 +138,7 @@ pp_result::conditional_inclusion_node::get_containing_header() const noexcept
 }
 
 void pp_result::conditional_inclusion_node::
-set_range_end(const raw_pp_token_index range_end) noexcept
+_set_range_end(const raw_pp_token_index range_end) noexcept
 {
   _range.end = range_end;
 }

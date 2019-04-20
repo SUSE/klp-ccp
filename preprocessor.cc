@@ -1470,10 +1470,10 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
   }
 
   pp_result::header_inclusion_child &new_header_inclusion_node
-    = _inclusions.top().get().add_header_inclusion(resolved,
-						   directive_range,
-						   std::move(um),
-						   std::move(umu));
+    = _inclusions.top().get()._add_header_inclusion(resolved,
+						    directive_range,
+						    std::move(um),
+						    std::move(umu));
   _tokenizers.emplace(new_header_inclusion_node);
   _inclusions.emplace(std::ref(new_header_inclusion_node));
 }
@@ -1502,7 +1502,7 @@ void preprocessor::_enter_cond_incl()
   assert(!cond_incl_state.incl_node);
 
   pp_result::conditional_inclusion_node &new_conditional_inclusion_node =
-    (_inclusions.top().get().add_conditional_inclusion
+    (_inclusions.top().get()._add_conditional_inclusion
      (cond_incl_state.range_begin, std::move(cond_incl_state.um),
       std::move(cond_incl_state.umu)));
 
@@ -1519,13 +1519,13 @@ void preprocessor::_pop_cond_incl(const pp_token_index range_end)
     // None of the branches had been taken. Insert the conditional inclusion
     // into the inclusion tree now.
     pp_result::conditional_inclusion_node &node
-      = (_inclusions.top().get().add_conditional_inclusion
+      = (_inclusions.top().get()._add_conditional_inclusion
 	 (cond_incl_state.range_begin, std::move(cond_incl_state.um),
 	  std::move(cond_incl_state.umu)));
-    node.set_range_end(range_end);
+    node._set_range_end(range_end);
 
   } else {
-    cond_incl_state.incl_node->set_range_end(range_end);
+    cond_incl_state.incl_node->_set_range_end(range_end);
     assert(cond_incl_state.incl_node == &_inclusions.top().get());
     _inclusions.pop();
   }

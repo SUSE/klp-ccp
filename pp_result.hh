@@ -55,17 +55,6 @@ namespace klp
 	virtual const header_inclusion_node&
 	get_containing_header() const noexcept = 0;
 
-	header_inclusion_child&
-	add_header_inclusion(const std::string &filename,
-			     const raw_pp_tokens_range &directive_range,
-			     used_macros &&used_macros,
-			     used_macro_undefs &&used_macro_undefs);
-
-	conditional_inclusion_node&
-	add_conditional_inclusion(const raw_pp_token_index range_start,
-				  used_macros &&used_macros,
-				  used_macro_undefs &&used_macro_undefs);
-
       protected:
 	inclusion_node();
 	inclusion_node(const inclusion_node * const parent);
@@ -73,6 +62,19 @@ namespace klp
 	const inclusion_node * const _parent;
 
       private:
+	friend class preprocessor;
+
+	header_inclusion_child&
+	_add_header_inclusion(const std::string &filename,
+			      const raw_pp_tokens_range &directive_range,
+			      used_macros &&used_macros,
+			      used_macro_undefs &&used_macro_undefs);
+
+	conditional_inclusion_node&
+	_add_conditional_inclusion(const raw_pp_token_index range_start,
+				   used_macros &&used_macros,
+				   used_macro_undefs &&used_macro_undefs);
+
 	std::vector<std::unique_ptr<inclusion_node> > _children;
       };
 
@@ -144,19 +146,22 @@ namespace klp
       class conditional_inclusion_node final : public inclusion_node
       {
       public:
-	conditional_inclusion_node(const inclusion_node &parent,
-				   const raw_pp_token_index range_begin,
-				   used_macros &&used_macros,
-				   used_macro_undefs &&used_macro_undefs);
-
 	virtual ~conditional_inclusion_node();
 
 	virtual const header_inclusion_node&
 	get_containing_header() const noexcept override;
 
-	void set_range_end(const raw_pp_token_index range_end) noexcept;
-
       private:
+	friend class inclusion_node;
+	friend class preprocessor;
+
+	conditional_inclusion_node(const inclusion_node &parent,
+				   const raw_pp_token_index range_begin,
+				   used_macros &&used_macros,
+				   used_macro_undefs &&used_macro_undefs);
+
+	void _set_range_end(const raw_pp_token_index range_end) noexcept;
+
 	raw_pp_tokens_range _range;
 	used_macros _used_macros;
 	used_macro_undefs _used_macro_undefs;
