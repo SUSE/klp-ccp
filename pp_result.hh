@@ -46,7 +46,110 @@ namespace klp
 
       class inclusion_node
       {
+      private:
+	struct _child
+	{
+	  _child(std::unique_ptr<header_inclusion_child> &&_h) noexcept;
+	  _child(std::unique_ptr<conditional_inclusion_node> &&_c) noexcept;
+	  _child(_child &&chld) noexcept;
+	  ~_child() noexcept;
+
+	  enum class kind
+	  {
+	    header,
+	    conditional,
+	  };
+
+	  kind k;
+
+	  union
+	  {
+	    std::unique_ptr<header_inclusion_child> h;
+	    std::unique_ptr<conditional_inclusion_node> c;
+	  };
+	};
+
+	typedef std::vector<_child> _children_container_type;
+
+	class _recursive_child_iterator :
+	  public std::iterator<std::forward_iterator_tag, const _child>
+	{
+	public:
+	  _recursive_child_iterator();
+	  _recursive_child_iterator(const inclusion_node &n);
+
+	  bool operator==(const _recursive_child_iterator &rhs) const noexcept
+	  { return this->_walk_stack == rhs._walk_stack; }
+
+	  bool operator!=(const _recursive_child_iterator &rhs) const noexcept
+	  {
+	    return !(*this == rhs);
+	  }
+
+	  reference operator*() const noexcept
+	  {
+	    return *_walk_stack.back().first;
+	  }
+
+	  pointer operator->() const noexcept
+	  {
+	    return &*_walk_stack.back().first;
+	  }
+
+	  _recursive_child_iterator& operator++();
+
+	  const _recursive_child_iterator operator++(int);
+
+	  bool is_end() noexcept
+	  { return _walk_stack.empty(); }
+
+	private:
+	  std::vector<std::pair<_children_container_type::const_iterator,
+				_children_container_type::const_iterator> >
+	  _walk_stack;
+	};
+
       public:
+	class recursive_header_inclusion_iterator :
+	  public std::iterator<std::forward_iterator_tag,
+			       const header_inclusion_child>
+	{
+	public:
+	  recursive_header_inclusion_iterator();
+
+	  bool operator==(const recursive_header_inclusion_iterator &rhs)
+	    const noexcept
+	  { return this->_it == rhs._it; }
+
+	  bool operator!=(const recursive_header_inclusion_iterator &rhs)
+	    const noexcept
+	  {
+	    return !(*this == rhs);
+	  }
+
+	  reference operator*() const noexcept
+	  {
+	    return *_it->h;
+	  }
+
+	  pointer operator->() const noexcept
+	  {
+	    return _it->h.get();;
+	  }
+
+	  recursive_header_inclusion_iterator& operator++();
+
+	  const recursive_header_inclusion_iterator operator++(int);
+
+	private:
+	  friend class inclusion_node;
+	  recursive_header_inclusion_iterator(_recursive_child_iterator &&it);
+
+	  void _skip_non_headers();
+
+	  _recursive_child_iterator _it;
+	};
+
 	inclusion_node(const inclusion_node&) = delete;
 	inclusion_node(inclusion_node&&) = delete;
 
@@ -58,6 +161,12 @@ namespace klp
       protected:
 	inclusion_node();
 	inclusion_node(const inclusion_node * const parent);
+
+	recursive_header_inclusion_iterator
+	header_inclusions_recursive_begin() const;
+
+	recursive_header_inclusion_iterator
+	header_inclusions_recursive_end() const;
 
 	const inclusion_node * const _parent;
 
@@ -75,9 +184,8 @@ namespace klp
 				   used_macros &&used_macros,
 				   used_macro_undefs &&used_macro_undefs);
 
-	std::vector<std::unique_ptr<inclusion_node> > _children;
+	_children_container_type _children;
       };
-
 
       class header_inclusion_node : public inclusion_node
       {
