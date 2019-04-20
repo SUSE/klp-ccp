@@ -3,10 +3,145 @@
 #include "raw_pp_token.hh"
 #include "macro.hh"
 #include "macro_undef.hh"
-#include "inclusion_tree.hh"
+#include "source_reader.hh"
 #include <limits>
 
 using namespace klp::ccp;
+
+
+pp_result::macro_invocation::
+macro_invocation(const macro &m,
+		 const raw_pp_tokens_range &invocation_range)
+  : _invocation_range{invocation_range}
+{
+  _used_macros += m;
+}
+
+
+pp_result::inclusion_node::inclusion_node()
+  : _parent(nullptr)
+{}
+
+pp_result::inclusion_node::inclusion_node(const inclusion_node * const parent)
+  : _parent(parent)
+{}
+
+pp_result::inclusion_node::~inclusion_node() noexcept = default;
+
+pp_result::header_inclusion_child& pp_result::inclusion_node::
+add_header_inclusion(const std::string &filename,
+		     const raw_pp_tokens_range &directive_range,
+		     used_macros &&used_macros,
+		     used_macro_undefs &&used_macro_undefs)
+{
+  std::unique_ptr<header_inclusion_child> new_child
+     (new header_inclusion_child(*this, filename,
+				 directive_range,
+				 std::move(used_macros),
+				 std::move(used_macro_undefs)));
+  header_inclusion_child &_new_child = *new_child;
+  _children.push_back(std::move(new_child));
+  return _new_child;
+}
+
+pp_result::conditional_inclusion_node& pp_result::inclusion_node::
+add_conditional_inclusion(const raw_pp_token_index range_begin,
+			  used_macros &&used_macros,
+			  used_macro_undefs &&used_macro_undefs)
+{
+  std::unique_ptr<conditional_inclusion_node> new_child
+     (new conditional_inclusion_node(*this, range_begin,
+				     std::move(used_macros),
+				     std::move(used_macro_undefs)));
+  conditional_inclusion_node &_new_child = *new_child;
+  _children.push_back(std::move(new_child));
+  return _new_child;
+}
+
+
+pp_result::header_inclusion_node::
+header_inclusion_node(const std::string &filename)
+  : _filename(filename)
+{}
+
+pp_result::header_inclusion_node::
+header_inclusion_node(const inclusion_node &parent, const std::string &filename)
+  : inclusion_node(&parent), _filename(filename)
+{}
+
+pp_result::header_inclusion_node::~header_inclusion_node() noexcept = default;
+
+const pp_result::header_inclusion_node&
+pp_result::header_inclusion_node::get_containing_header() const noexcept
+{
+  return *this;
+}
+
+void pp_result::header_inclusion_node::add_line(const std::streamoff length)
+{
+  _offset_to_line_col_map.add_line(length);
+}
+
+std::pair<std::streamoff, std::streamoff>
+pp_result::header_inclusion_node::offset_to_line_col(const std::streamoff off)
+  const noexcept
+{
+  return _offset_to_line_col_map.offset_to_line_col(off);
+}
+
+std::unique_ptr<source_reader>
+pp_result::header_inclusion_node::create_source_reader() const
+{
+  return std::unique_ptr<source_reader>(new file_source_reader(_filename));
+}
+
+
+pp_result::header_inclusion_root::
+header_inclusion_root(const std::string &filename, const bool is_preinclude)
+  : header_inclusion_node(filename), _is_preinclude(is_preinclude)
+{}
+
+pp_result::header_inclusion_root::~header_inclusion_root() noexcept = default;
+
+
+pp_result::header_inclusion_child::
+header_inclusion_child(const inclusion_node &parent,
+		       const std::string &filename,
+		       const raw_pp_tokens_range &directive_range,
+		       used_macros &&used_macros,
+		       used_macro_undefs &&used_macro_undefs)
+  : header_inclusion_node(parent, filename),
+    _directive_range(directive_range),
+    _used_macros(std::move(used_macros)),
+    _used_macro_undefs(std::move(used_macro_undefs))
+{}
+
+pp_result::header_inclusion_child::~header_inclusion_child() noexcept = default;
+
+
+pp_result::conditional_inclusion_node::
+conditional_inclusion_node(const inclusion_node &parent,
+			   const raw_pp_token_index range_begin,
+			   used_macros &&used_macros,
+			   used_macro_undefs &&used_macro_undefs)
+  : inclusion_node(&parent), _range(range_begin),
+    _used_macros(std::move(used_macros)),
+    _used_macro_undefs(std::move(used_macro_undefs))
+{}
+
+pp_result::conditional_inclusion_node::~conditional_inclusion_node() = default;
+
+const pp_result::header_inclusion_node&
+pp_result::conditional_inclusion_node::get_containing_header() const noexcept
+{
+  return _parent->get_containing_header();
+}
+
+void pp_result::conditional_inclusion_node::
+set_range_end(const raw_pp_token_index range_end) noexcept
+{
+  _range.end = range_end;
+}
 
 
 pp_result::header_inclusion_roots::header_inclusion_roots() = default;
@@ -97,13 +232,4 @@ _add_macro_undef(const macro &m, const raw_pp_tokens_range &directive_range)
   _macro_undefs.push_back(std::unique_ptr<const macro_undef>{
 				new macro_undef{m, directive_range}});
   return *_macro_undefs.back();
-}
-
-
-pp_result::macro_invocation::
-macro_invocation(const macro &m,
-		 const raw_pp_tokens_range &invocation_range)
-  : _invocation_range{invocation_range}
-{
-  _used_macros += m;
 }

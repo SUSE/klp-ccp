@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 {
   int r = 0;
   header_resolver hr;
-  std::vector<std::unique_ptr<header_inclusion_root> >hirs;
+  std::vector<std::unique_ptr<pp_result::header_inclusion_root> >hirs;
 
   while(true) {
     const int o = getopt_long(argc, argv, optstring, options, NULL);
@@ -58,8 +58,8 @@ int main(int argc, char* argv[])
 	  return 1;
 	}
 
-	std::unique_ptr<header_inclusion_root> hir{
-	  new header_inclusion_root(resolved, true)};
+	std::unique_ptr<pp_result::header_inclusion_root> hir{
+	  new pp_result::header_inclusion_root(resolved, true)};
 	hirs.emplace_back(std::move(hir));
       };
     }
@@ -70,8 +70,8 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  std::unique_ptr<header_inclusion_root> hir{
-    new header_inclusion_root(argv[optind], false)};
+  std::unique_ptr<pp_result::header_inclusion_root> hir{
+    new pp_result::header_inclusion_root(argv[optind], false)};
   hirs.emplace_back(std::move(hir));
   arch_gcc48_x86_64 arch;
   yy::gnuc_parser_driver pd{

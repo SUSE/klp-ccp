@@ -6,7 +6,6 @@
 #include "parse_except.hh"
 #include "semantic_except.hh"
 #include "macro_undef.hh"
-#include "inclusion_tree.hh"
 #include "path.hh"
 #include "pp_expr_parser_driver.hh"
 
@@ -1470,7 +1469,7 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
     throw pp_except(remark);
   }
 
-  header_inclusion_child &new_header_inclusion_node
+  pp_result::header_inclusion_child &new_header_inclusion_node
     = _inclusions.top().get().add_header_inclusion(resolved,
 						   directive_range,
 						   std::move(um),
@@ -1502,7 +1501,7 @@ void preprocessor::_enter_cond_incl()
   _cond_incl_state &cond_incl_state = _cond_incl_states.top();
   assert(!cond_incl_state.incl_node);
 
-  conditional_inclusion_node &new_conditional_inclusion_node =
+  pp_result::conditional_inclusion_node &new_conditional_inclusion_node =
     (_inclusions.top().get().add_conditional_inclusion
      (cond_incl_state.range_begin, std::move(cond_incl_state.um),
       std::move(cond_incl_state.umu)));
@@ -1519,7 +1518,7 @@ void preprocessor::_pop_cond_incl(const pp_token_index range_end)
   if (!cond_incl_state.incl_node) {
     // None of the branches had been taken. Insert the conditional inclusion
     // into the inclusion tree now.
-    conditional_inclusion_node &node
+    pp_result::conditional_inclusion_node &node
       = (_inclusions.top().get().add_conditional_inclusion
 	 (cond_incl_state.range_begin, std::move(cond_incl_state.um),
 	  std::move(cond_incl_state.umu)));

@@ -5,6 +5,7 @@
 #include "code_remarks.hh"
 #include "raw_pp_token.hh"
 #include "source_reader.hh"
+#include "pp_result.hh"
 
 namespace klp
 {
@@ -15,7 +16,7 @@ namespace klp
     class pp_tokenizer
     {
     public:
-      pp_tokenizer(header_inclusion_node &file);
+      pp_tokenizer(pp_result::header_inclusion_node &file);
 
       code_remarks& get_remarks() noexcept
       {
@@ -24,7 +25,7 @@ namespace klp
 
       raw_pp_token read_next_token();
 
-      const header_inclusion_node& get_header_inclusion_node() const noexcept
+      const pp_result::header_inclusion_node& get_header_inclusion_node() const noexcept
       { return _file; }
 
     private:
@@ -43,7 +44,7 @@ namespace klp
       void _skip_cpp_comment();
       raw_pp_token _tokenize_ws();
 
-      header_inclusion_node &_file;
+      pp_result::header_inclusion_node &_file;
       std::unique_ptr<source_reader> _sr;
       source_reader::buffer_type _buf;
       source_reader::buffer_type::const_iterator _buf_it;

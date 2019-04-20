@@ -3,24 +3,23 @@
 
 #include <string>
 #include <ios>
+#include "pp_result.hh"
+#include "pp_token.hh"
 
 namespace klp
 {
 namespace ccp
   {
-    class inclusion_node;
-    class header_inclusion_node;
-
     class file_range
     {
     public:
       typedef std::streamoff loc_type;
 
       file_range() = default;
-      file_range(const inclusion_node &inclusion_node,
+      file_range(const pp_result::inclusion_node &inclusion_node,
 		 const loc_type &start_loc,
 		 const loc_type &end_loc);
-      file_range(const inclusion_node &inclusion_node,
+      file_range(const pp_result::inclusion_node &inclusion_node,
 		 const loc_type &loc);
 
       file_range(const file_range &start,
@@ -28,10 +27,11 @@ namespace ccp
 
       bool operator==(const file_range &rhs) const noexcept;
 
-      const inclusion_node& get_inclusion_node() const noexcept
+      const pp_result::inclusion_node& get_inclusion_node() const noexcept
       { return *_inclusion_node; }
 
-      const header_inclusion_node& get_header_inclusion_node() const noexcept;
+      const pp_result::header_inclusion_node&
+      get_header_inclusion_node() const noexcept;
 
       loc_type get_start_loc() const noexcept
       { return _start_loc; }
@@ -44,7 +44,7 @@ namespace ccp
       friend std::ostream& operator<<(std::ostream &o, const file_range &r);
 
     private:
-      const inclusion_node *_inclusion_node;
+      const pp_result::inclusion_node *_inclusion_node;
       loc_type _start_loc;
       loc_type _end_loc;
     };

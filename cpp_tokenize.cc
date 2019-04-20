@@ -1,7 +1,6 @@
 #include <fstream>
 #include <iostream>
 #include "pp_tokenizer.hh"
-#include "inclusion_tree.hh"
 
 using namespace klp::ccp;
 
@@ -43,7 +42,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  header_inclusion_root hir (argv[1], false);
+  pp_result::header_inclusion_root hir (argv[1], false);
   pp_tokenizer tokker(hir);
   while (true)
     {

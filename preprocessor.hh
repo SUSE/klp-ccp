@@ -20,8 +20,6 @@ namespace klp
   namespace ccp
   {
     class pp_tokenizer;
-    class inclusion_node;
-    class conditional_inclusion_node;
     class architecture;
 
     class preprocessor
@@ -241,7 +239,7 @@ namespace klp
 	pp_token_index range_begin;
 	used_macros um;
 	used_macro_undefs umu;
-	conditional_inclusion_node *incl_node;
+	pp_result::conditional_inclusion_node *incl_node;
 	bool branch_active;
       };
 
@@ -325,7 +323,7 @@ namespace klp
       std::unique_ptr<pp_result> _pp_result;
       pp_result *_cur_pp_result;
       pp_result::header_inclusion_roots::iterator _cur_header_inclusion_root;
-      std::stack<std::reference_wrapper<inclusion_node> > _inclusions;
+      std::stack<std::reference_wrapper<pp_result::inclusion_node>> _inclusions;
       std::stack<_cond_incl_state> _cond_incl_states;
       std::size_t _cond_incl_nesting;
 

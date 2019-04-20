@@ -3,11 +3,10 @@
 #include <system_error>
 #include "pp_tokenizer.hh"
 #include "pp_except.hh"
-#include "inclusion_tree.hh"
 
 using namespace klp::ccp;
 
-pp_tokenizer::pp_tokenizer(header_inclusion_node &file)
+pp_tokenizer::pp_tokenizer(pp_result::header_inclusion_node &file)
   : _file(file), _sr(_file.create_source_reader()),
     _buf(), _buf_it(_buf.cbegin()),
     _line_length(0), _cur_loc(0), _next_loc(0),

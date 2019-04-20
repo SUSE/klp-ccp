@@ -2,17 +2,16 @@
 #include <cassert>
 #include "pp_token.hh"
 #include "file_range.hh"
-#include "inclusion_tree.hh"
 
 using namespace klp::ccp;
 
-file_range::file_range(const inclusion_node &inclusion_node,
+file_range::file_range(const pp_result::inclusion_node &inclusion_node,
 		       const loc_type &start_loc,
 		       const loc_type &end_loc)
   : _inclusion_node(&inclusion_node), _start_loc(start_loc), _end_loc(end_loc)
 {}
 
-file_range::file_range(const inclusion_node &inclusion_node,
+file_range::file_range(const pp_result::inclusion_node &inclusion_node,
 		       const loc_type &loc)
   : _inclusion_node(&inclusion_node), _start_loc(loc), _end_loc(loc)
 {}
@@ -33,7 +32,7 @@ bool file_range::operator==(const file_range &rhs) const noexcept
 	  this->_end_loc == rhs._end_loc);
 }
 
-const header_inclusion_node& file_range::get_header_inclusion_node()
+const pp_result::header_inclusion_node& file_range::get_header_inclusion_node()
   const noexcept
 {
   return _inclusion_node->get_containing_header();
@@ -46,7 +45,7 @@ file_range::loc_type file_range::get_start_line() const noexcept
 
 std::ostream& klp::ccp::operator<<(std::ostream &o, const file_range &r)
 {
-  const header_inclusion_node &file = r.get_header_inclusion_node();
+  const pp_result::header_inclusion_node &file = r.get_header_inclusion_node();
   typedef file_range::loc_type loc_type;
   const std::pair<loc_type, loc_type> start
     = file.offset_to_line_col(r._start_loc);

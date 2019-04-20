@@ -1,5 +1,4 @@
 #include <iostream>
-#include "inclusion_tree.hh"
 #include "preprocessor.hh"
 #include "pp_except.hh"
 #include "parse_except.hh"
@@ -15,9 +14,9 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  std::unique_ptr<header_inclusion_root> hir{
-    new header_inclusion_root(argv[1], false) };
-  std::vector<std::unique_ptr<header_inclusion_root>> hirs;
+  std::unique_ptr<pp_result::header_inclusion_root> hir{
+    new pp_result::header_inclusion_root(argv[1], false) };
+  std::vector<std::unique_ptr<pp_result::header_inclusion_root>> hirs;
   hirs.emplace_back(std::move(hir));
   header_resolver hr;
   arch_gcc48_x86_64 arch;
