@@ -303,6 +303,20 @@ pp_result::pp_result(header_inclusion_roots &&header_inclusion_roots)
   : _header_inclusion_roots(std::move(header_inclusion_roots))
 {}
 
+std::pair<pp_result::const_macro_invocation_iterator,
+	  pp_result::const_macro_invocation_iterator>
+pp_result::find_overlapping_macro_invocations(const raw_pp_tokens_range &r)
+  const
+{
+  const const_macro_invocation_iterator range_begin
+    = std::lower_bound(macro_invocations_begin(), macro_invocations_end(), r);
+  const const_macro_invocation_iterator range_end
+    = std::upper_bound(range_begin, macro_invocations_end(), r);
+
+  return std::make_pair(range_begin, range_end);
+}
+
+
 void pp_result::_append_token(const raw_pp_token &tok)
 {
   _raw_tokens.push_back(tok);
@@ -370,4 +384,32 @@ _add_macro_undef(const macro &m, const raw_pp_tokens_range &directive_range)
   _macro_undefs.push_back(std::unique_ptr<const macro_undef>{
 				new macro_undef{m, directive_range}});
   return *_macro_undefs.back();
+}
+
+void pp_result::_drop_pp_tokens_tail(const pp_tokens::size_type new_end)
+{
+  if (new_end == _pp_tokens.size())
+    return;
+  assert(new_end < _pp_tokens.size());
+
+  // The preprocessor temporarily pushed some pp_token instances when
+  // doing macro expansion for #include directives or evaluating
+  // conditional #if expressions. Purge these alongside with any
+  // associated macro_invocations.
+  const raw_pp_token_index tail_begin_raw =
+    _pp_tokens[new_end].get_token_source().begin;
+  auto it_macro_invocations_begin
+    = std::lower_bound(_macro_invocations.begin(),
+		       _macro_invocations.end(),
+		       tail_begin_raw,
+		       [](const std::unique_ptr<macro_invocation> &i,
+			  const raw_pp_token_index e)
+		       { return i->get_source_range().end <= e; });
+  assert(it_macro_invocations_begin == _macro_invocations.end() ||
+	 (it_macro_invocations_begin->get()->get_source_range().begin >=
+	  tail_begin_raw));
+  _macro_invocations.erase(it_macro_invocations_begin,
+			   _macro_invocations.end());
+
+  _pp_tokens.shrink(new_end);
 }

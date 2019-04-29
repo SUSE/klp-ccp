@@ -293,6 +293,10 @@ namespace klp
       _collect_used_macro_undefs(const pp_result &pp_result);
       static used_macro_undefs
       _collect_used_macro_undefs(const pp_tokens &toks);
+
+      std::pair<used_macros, used_macro_undefs>
+      _drop_pp_tokens_tail(const pp_tokens::size_type new_end);
+
       void _handle_include(const raw_pp_tokens_range &directive_range);
 
       bool _cond_incl_inactive() const noexcept;
@@ -321,7 +325,6 @@ namespace klp
       const architecture &_arch;
 
       std::unique_ptr<pp_result> _pp_result;
-      pp_result *_cur_pp_result;
       pp_result::header_inclusion_roots::iterator _cur_header_inclusion_root;
       std::stack<std::reference_wrapper<pp_result::inclusion_node>> _inclusions;
       std::stack<_cond_incl_state> _cond_incl_states;

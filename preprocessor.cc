@@ -17,7 +17,6 @@ preprocessor(pp_result::header_inclusion_roots &&header_inclusion_roots,
 	     const architecture &arch)
   : _header_resolver(header_resolver), _arch(arch),
     _pp_result(new pp_result{std::move(header_inclusion_roots)}),
-    _cur_pp_result(_pp_result.get()),
     _cur_header_inclusion_root(_pp_result->get_header_inclusion_roots()
 			       .begin()),
     _cond_incl_nesting(0), _root_expansion_state(),
@@ -339,7 +338,7 @@ _raw_pp_tokens_range_to_file_range(const raw_pp_tokens_range &r) const
 {
   if (r.begin == r.end + 1) {
     // A single token, emit "point" file range for its start.
-    const raw_pp_token &tok = _cur_pp_result->get_raw_tokens()[r.begin];
+    const raw_pp_token &tok = _pp_result->get_raw_tokens()[r.begin];
     const file_range &tok_fr = tok.get_file_range();
     return file_range{tok_fr.get_header_inclusion_node(),
 		      tok_fr.get_start_loc()};
@@ -348,16 +347,16 @@ _raw_pp_tokens_range_to_file_range(const raw_pp_tokens_range &r) const
     // An empty range, used for EOFs. Emit a "point" file range
     // for the preceeding token's end.
     assert(r.begin > 0);
-    assert(r.begin <= _cur_pp_result->get_raw_tokens().size());
-    const raw_pp_token &tok = _cur_pp_result->get_raw_tokens()[r.begin - 1];
+    assert(r.begin <= _pp_result->get_raw_tokens().size());
+    const raw_pp_token &tok = _pp_result->get_raw_tokens()[r.begin - 1];
     const file_range &tok_fr = tok.get_file_range();
     return file_range{tok_fr.get_header_inclusion_node(),
 		      tok_fr.get_end_loc()};
   } else {
     // A real range. It must come from a single header.
-    assert(r.end <= _cur_pp_result->get_raw_tokens().size());
-    const raw_pp_token &first_tok = _cur_pp_result->get_raw_tokens()[r.begin];
-    const raw_pp_token &last_tok = _cur_pp_result->get_raw_tokens()[r.end - 1];
+    assert(r.end <= _pp_result->get_raw_tokens().size());
+    const raw_pp_token &first_tok = _pp_result->get_raw_tokens()[r.begin];
+    const raw_pp_token &last_tok = _pp_result->get_raw_tokens()[r.end - 1];
     const file_range &first_tok_fr = first_tok.get_file_range();
     const file_range &last_tok_fr = last_tok.get_file_range();
     assert(&first_tok_fr.get_header_inclusion_node() ==
@@ -608,7 +607,6 @@ void preprocessor::_handle_pp_directive()
 
     auto it_m = _macros.find(it_tok_id->get_value());
     if (it_m != _macros.end()) {
-      assert(_cur_pp_result == _pp_result.get());
       const macro_undef &mu =
 	_pp_result->_add_macro_undef(it_m->second,
 				     raw_pp_tokens_range{raw_begin, raw_end});
@@ -704,7 +702,7 @@ preprocessor::_expand(_expansion_state &state,
 	  assert(state_is_root);
 	  assert(tok_range.begin + 1 == tok_range.end);
 	  _cur_macro_invocation =
-	    &_cur_pp_result->_add_macro_invocation(m->second, tok_range);
+	    &_pp_result->_add_macro_invocation(m->second, tok_range);
 	} else {
 	  _cur_macro_invocation->_used_macros += m->second;
 	}
@@ -749,7 +747,7 @@ preprocessor::_expand(_expansion_state &state,
 	  const raw_pp_tokens_range &tok_range = tok.get_token_source();
 	  assert(tok_range.begin + 1 == tok_range.end);
 	  _cur_macro_invocation =
-	    &_cur_pp_result->_add_macro_invocation(m->second, tok_range);
+	    &_pp_result->_add_macro_invocation(m->second, tok_range);
 	} else {
 	  _cur_macro_invocation->_used_macros += m->second;
 	}
@@ -824,7 +822,7 @@ preprocessor::_expand(_expansion_state &state,
 	// Extend the macro expansion the "defined" token came from,
 	// if necessary.
 	if (!delim_tok.get_macro_invocation()) {
-	  _cur_pp_result->_extend_macro_invocation_range
+	  _pp_result->_extend_macro_invocation_range
 	    (*mi, delim_tok.get_token_source().end);
 	} else {
 	  assert(delim_tok.get_macro_invocation() == mi);
@@ -838,7 +836,7 @@ preprocessor::_expand(_expansion_state &state,
 	if (!mi) {
 	  // Add a macro invocation to record this macro usage against,
 	  // if any.
-	  mi = &_cur_pp_result->_add_macro_invocation
+	  mi = &_pp_result->_add_macro_invocation
 		(it_m->second,
 		 raw_pp_tokens_range{defined_tok.get_token_source().begin,
 				     delim_tok.get_token_source().end});
@@ -1105,8 +1103,8 @@ preprocessor::_handle_func_macro_invocation(
 
 	if (*update_cur_macro_invocation_range) {
 	  assert(delim_range.begin + 1 == delim_range.end);
-	  _cur_pp_result->_extend_macro_invocation_range(*_cur_macro_invocation,
-							 delim_range.end);
+	  _pp_result->_extend_macro_invocation_range(*_cur_macro_invocation,
+						     delim_range.end);
 	}
       }
     }
@@ -1135,8 +1133,8 @@ preprocessor::_handle_func_macro_invocation(
     invocation_end = delim_range.end;
     if (*update_cur_macro_invocation_range) {
       assert(delim_range.begin + 1 == delim_range.end);
-      _cur_pp_result->_extend_macro_invocation_range(*_cur_macro_invocation,
-						     delim_range.end);
+      _pp_result->_extend_macro_invocation_range(*_cur_macro_invocation,
+						 delim_range.end);
     }
   }
 
@@ -1263,6 +1261,44 @@ preprocessor::_create_macro_arg(const std::function<_pp_token()> &token_reader,
 		(std::move(arg), std::move(exp_arg), std::move(end_delim));
 }
 
+std::pair<used_macros, used_macro_undefs>
+preprocessor::_drop_pp_tokens_tail(const pp_tokens::size_type new_end)
+{
+  used_macros um;
+  used_macro_undefs umu;
+
+  // First collect the used_macros and used_macro_undefs from all
+  // macro_invocations overlapping with the to be dropped tail.
+  const pp_tokens::const_iterator tail_begin
+    = _pp_result->get_pp_tokens().cbegin() + new_end;
+
+  if (tail_begin == _pp_result->get_pp_tokens().end())
+    return std::make_pair(um, umu);
+
+  const auto tail_macro_invocations
+    = (_pp_result->find_overlapping_macro_invocations
+       (raw_pp_tokens_range{tail_begin->get_token_source().begin,
+			    _pp_result->get_raw_tokens().size()}));
+  for (auto it_mi = tail_macro_invocations.first;
+       it_mi != tail_macro_invocations.second; ++it_mi) {
+    um += it_mi->get_used_macros();
+    umu += it_mi->get_used_macro_undefs();
+  }
+
+  // Collect used_macro_undefs from the pp_tokens themselves.
+  for(auto it_tok = tail_begin; it_tok != _pp_result->get_pp_tokens().end();
+      ++it_tok) {
+    if (it_tok->get_used_macro_undef())
+      umu += *it_tok->get_used_macro_undef();
+  }
+
+  // And finally drop the tail.
+  _pp_result->_drop_pp_tokens_tail(new_end);
+
+  return std::make_pair(std::move(um), std::move(umu));
+}
+
+
 used_macros preprocessor::_collect_used_macros(const pp_result &pp_result)
 {
   used_macros result;
@@ -1342,22 +1378,20 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
       throw pp_except(remark);
     }
   } else {
-    // For the purpose of macro expansion tracing, create a dummy
-    // pp_result instance covering only the subrange occupied by the
-    // token sequence specifying the header name.
-    pp_result dummy_pp_result;
+    // Run a macro expansion. Temporarily append the expanded pp_token
+    // instances to _pp_result and drop them afterwards again.
     auto read_tok = [&]() {
       if (it_raw_tok->is_newline() || it_raw_tok->is_eof()) {
 	const raw_pp_token_index eof_index =
-	  dummy_pp_result.get_raw_tokens().size();
+	  _pp_result->get_raw_tokens().size();
 	return _pp_token(pp_token::type::eof, std::string(),
 			 raw_pp_tokens_range{eof_index, eof_index});
       }
 
-      dummy_pp_result._append_token(*it_raw_tok);
-
+      const raw_pp_token_index tok_index =
+	it_raw_tok - _pp_result->get_raw_tokens().cbegin();
       _pp_token tok{it_raw_tok->get_type(), it_raw_tok->get_value(),
-		    raw_pp_tokens_range{dummy_pp_result._get_last_raw_index()}};
+		    raw_pp_tokens_range{tok_index}};
       ++it_raw_tok;
       return tok;
     };
@@ -1366,36 +1400,31 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
     assert(_root_expansion_state.pending_tokens.empty());
     auto exp_read_tok =
       [&]() -> pp_token_index {
-	_pp_token tok = _expand(_root_expansion_state, read_tok, true);
-	return _emit_pp_token(dummy_pp_result, std::move(tok));
+	_pp_token tok = _expand(_root_expansion_state, read_tok, false);
+	return _emit_pp_token(*_pp_result, std::move(tok));
       };
 
-    _cur_pp_result = &dummy_pp_result;
+    const pp_tokens::size_type temp_tokens_tail_begin
+      = _pp_result->get_pp_tokens().size();
     while (true) {
-      auto tok = _expand(_root_expansion_state, read_tok);
-      if (tok.is_eof())
+      auto tok = exp_read_tok();
+      if (_pp_result->get_pp_tokens()[tok].is_eof())
 	break;
     }
-    _cur_pp_result = _pp_result.get();
-    const pp_tokens &expanded = dummy_pp_result.get_pp_tokens();
-    um = _collect_used_macros(dummy_pp_result);
-    umu = _collect_used_macro_undefs(dummy_pp_result);
-    umu += _collect_used_macro_undefs(expanded);
 
-    auto skip = [&expanded] (pp_tokens::const_iterator it){
-      while(it != expanded.cend() &&
-	    it->is_type_any_of<pp_token::type::ws,
-			       pp_token::type::empty>()) {
+    auto skip = [&] (pp_tokens::const_iterator it) {
+	while(it->is_type_any_of<pp_token::type::ws,
+				 pp_token::type::empty>()) {
 	assert(!it->is_newline());
 	++it;
       }
       return it;
     };
 
-    auto it_tok = expanded.cbegin();
+    auto it_tok = _pp_result->get_pp_tokens().cbegin() + temp_tokens_tail_begin;
     it_tok = skip(it_tok);
 
-    if (it_tok == expanded.cend()) {
+    if (it_tok->is_eof()) {
       file_range fr (raw_begin->get_file_range().get_header_inclusion_node(),
 		     raw_begin->get_file_range().get_start_loc());
       code_remark_raw remark(code_remark_raw::severity::fatal,
@@ -1409,12 +1438,12 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
       is_qstr = false;
 
       ++it_tok;
-      for (auto it_next = skip(it_tok + 1); it_next != expanded.cend();
+      for (auto it_next = skip(it_tok + 1); !it_next->is_eof();
 	   it_tok = it_next, it_next = skip(it_next + 1)) {
 	unresolved += it_tok->stringify();
       }
 
-      assert(it_tok != expanded.cend());
+      assert(!it_tok->is_eof());
       if (!it_tok->is_punctuator(">")) {
 	file_range fr (raw_begin->get_file_range().get_header_inclusion_node(),
 		       raw_begin->get_file_range().get_start_loc());
@@ -1438,7 +1467,7 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
       unresolved = it_tok->get_value();
 
       it_tok = skip(it_tok + 1);
-      if (it_tok != expanded.cend()) {
+      if (!it_tok->is_eof()) {
 	file_range fr (raw_begin->get_file_range().get_header_inclusion_node(),
 		       raw_begin->get_file_range().get_start_loc());
 	code_remark_raw remark
@@ -1457,6 +1486,8 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
       _remarks.add(remark);
       throw pp_except(remark);
     }
+
+    std::tie(um, umu) = _drop_pp_tokens_tail(temp_tokens_tail_begin);
   }
 
   std::string resolved
@@ -1553,23 +1584,22 @@ _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range)
 	  it_raw_tok->get_value() == "elif"));
   ++it_raw_tok;
 
-  // Create a dummy pp_result instance covering only the subrange
-  // occupied by the preprocessor expression to make the AST
-  // evaluation code happy.
-  pp_result dummy_pp_result;
+  // Temporarily append the expanded pp_token instances from the
+  // condition to _pp_result. They'll get purged again when we're done
+  // with them.
   auto read_tok =
     [&]() {
       if (it_raw_tok->is_newline() || it_raw_tok->is_eof()) {
 	const raw_pp_token_index eof_index =
-	  dummy_pp_result.get_raw_tokens().size();
+	  _pp_result->get_raw_tokens().size();
 	return _pp_token(pp_token::type::eof, std::string(),
 			 raw_pp_tokens_range{eof_index, eof_index});
       }
 
-      dummy_pp_result._append_token(*it_raw_tok);
-
+      const raw_pp_token_index tok_index =
+	it_raw_tok - _pp_result->get_raw_tokens().cbegin();
       _pp_token tok{it_raw_tok->get_type(), it_raw_tok->get_value(),
-		    raw_pp_tokens_range{dummy_pp_result._get_last_raw_index()}};
+		    raw_pp_tokens_range{tok_index}};
       ++it_raw_tok;
       return tok;
     };
@@ -1579,14 +1609,14 @@ _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range)
   auto exp_read_tok =
     [&]() -> pp_token_index {
       _pp_token tok = _expand(_root_expansion_state, read_tok, true);
-      return _emit_pp_token(dummy_pp_result, std::move(tok));
+      return _emit_pp_token(*_pp_result, std::move(tok));
     };
 
-  _cur_pp_result = &dummy_pp_result;
-  yy::pp_expr_parser_driver pd(exp_read_tok, dummy_pp_result);
+  const pp_tokens::size_type temp_tokens_tail_begin
+    = _pp_result->get_pp_tokens().size();
+  yy::pp_expr_parser_driver pd(exp_read_tok, *_pp_result);
   try {
     pd.parse();
-    _cur_pp_result = _pp_result.get();
   } catch (const pp_except&) {
     _remarks += pd.get_remarks();
     pd.get_remarks().clear();
@@ -1596,10 +1626,6 @@ _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range)
     pd.get_remarks().clear();
     throw;
   }
-  _cond_incl_states.top().um += _collect_used_macros(dummy_pp_result);
-  _cond_incl_states.top().umu += _collect_used_macro_undefs(dummy_pp_result);
-  _cond_incl_states.top().umu +=
-    _collect_used_macro_undefs(dummy_pp_result.get_pp_tokens());
 
   ast::ast_pp_expr a = pd.grab_result();
   bool result;
@@ -1612,6 +1638,10 @@ _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range)
   }
   _remarks += a.get_remarks();
   a.get_remarks().clear();
+
+  auto um_umu = _drop_pp_tokens_tail(temp_tokens_tail_begin);
+  _cond_incl_states.top().um += std::move(um_umu.first);
+  _cond_incl_states.top().umu += std::move(um_umu.second);
 
   return result;
 }

@@ -30,6 +30,12 @@ namespace klp
 	bool operator<(const raw_pp_tokens_range &r) const noexcept
 	{ return _invocation_range < r; }
 
+	const used_macros& get_used_macros() const noexcept
+	{ return _used_macros; }
+
+	const used_macro_undefs& get_used_macro_undefs() const noexcept
+	{ return _used_macro_undefs; }
+
       private:
 	friend class pp_result;
 	friend class preprocessor;
@@ -519,6 +525,8 @@ namespace klp
       const macro_undef&
       _add_macro_undef(const macro &m,
 		       const raw_pp_tokens_range &directive_range);
+
+      void _drop_pp_tokens_tail(const pp_tokens::size_type new_end);
 
       header_inclusion_roots _header_inclusion_roots;
       raw_pp_tokens _raw_tokens;

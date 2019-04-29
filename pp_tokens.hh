@@ -98,6 +98,8 @@ namespace klp
 
       std::string stringify(const bool as_string) const;
 
+      void shrink(const size_type new_size);
+
     private:
       _pp_tokens_type _tokens;
     };

@@ -31,3 +31,10 @@ std::string pp_tokens::stringify(const bool as_string) const
 
   return s;
 }
+
+void pp_tokens::shrink(const size_type new_size)
+{
+  assert(new_size <= _tokens.size());
+  for (size_type n = _tokens.size() - new_size; n; --n)
+    _tokens.pop_back();
+}

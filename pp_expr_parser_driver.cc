@@ -77,8 +77,8 @@ static _val_tok_map_type _initialize_val_tok_map(const _val_tok_map_entry *e)
 
 pp_expr_parser_driver::
 pp_expr_parser_driver(const std::function<pp_token_index()> &token_reader,
-		      pp_result &dummy_pp_result)
-  : _token_reader(token_reader), _dummy_pp_result(dummy_pp_result),
+		      pp_result &pp_result)
+  : _token_reader(token_reader), _pp_result(pp_result),
     _result(nullptr), _parser(*this)
 {}
 
@@ -97,14 +97,14 @@ ast_pp_expr pp_expr_parser_driver::grab_result()
   std::unique_ptr<expr> e(_result);
   _result = nullptr;
 
-  return ast_pp_expr(_dummy_pp_result, std::move(e));
+  return ast_pp_expr(_pp_result, std::move(e));
 }
 
 klp::ccp::yy::pp_expr_parser::token_type
 pp_expr_parser_driver::lex(pp_expr_parser::semantic_type *value,
 			   pp_expr_parser::location_type *loc)
 {
-  pp_tokens &tokens = _dummy_pp_result.get_pp_tokens();
+  pp_tokens &tokens = _pp_result.get_pp_tokens();
   pp_token_index last_index;
   do {
     try {
@@ -112,8 +112,9 @@ pp_expr_parser_driver::lex(pp_expr_parser::semantic_type *value,
     } catch (const pp_except&) {
       throw;
     }
-  } while (tokens.back().is_ws() ||
-	   tokens.back().is_newline() ||
+  } while (tokens.back().is_type_any_of<pp_token::type::ws,
+					pp_token::type::empty,
+					pp_token::type::newline>() ||
 	   (tokens.back().is_id() &&
 	    tokens.back().get_value() == "__extension__"));
 
@@ -163,7 +164,7 @@ pp_expr_parser_driver::lex(pp_expr_parser::semantic_type *value,
     if (it_tok_type == punct_map.cend()) {
       const raw_pp_token_index tok_index = tok.get_token_source().begin;
       const raw_pp_token &raw_tok =
-	_dummy_pp_result.get_raw_tokens()[tok_index];
+	_pp_result.get_raw_tokens()[tok_index];
       code_remark_raw remark(code_remark_raw::severity::fatal,
 			     "unrecognized preprocessor token (punctuator)",
 			     raw_tok.get_file_range());
@@ -194,7 +195,7 @@ pp_expr_parser_driver::lex(pp_expr_parser::semantic_type *value,
     {
       const raw_pp_token_index tok_index = tok.get_token_source().begin;
       const raw_pp_token &raw_tok =
-	_dummy_pp_result.get_raw_tokens()[tok_index];
+	_pp_result.get_raw_tokens()[tok_index];
       code_remark_raw remark(code_remark_raw::severity::fatal,
 			     "unrecognized preprocessor token (non-ws char)",
 			     raw_tok.get_file_range());
@@ -210,7 +211,7 @@ void pp_expr_parser_driver::error(const pp_expr_parser::location_type& loc,
 				  const std::string& msg)
 {
   code_remark_pp remark(code_remark_pp::severity::fatal, msg,
-			_dummy_pp_result, loc.begin);
+			_pp_result, loc.begin);
   _remarks.add(remark);
   throw parse_except(remark);
 }

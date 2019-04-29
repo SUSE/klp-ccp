@@ -18,7 +18,7 @@ namespace klp
       public:
 	pp_expr_parser_driver
 			(const std::function<pp_token_index()> &token_reader,
-			 pp_result &dummy_pp_result);
+			 pp_result &pp_result);
 
 	~pp_expr_parser_driver() noexcept;
 
@@ -38,7 +38,7 @@ namespace klp
 		   const std::string& msg);
 
 	std::function<pp_token_index()> _token_reader;
-	pp_result &_dummy_pp_result;
+	pp_result &_pp_result;
 	ast::expr *_result;
 
 	pp_expr_parser _parser;
