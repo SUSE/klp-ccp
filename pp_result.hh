@@ -42,6 +42,99 @@ namespace klp
 	used_macro_undefs _used_macro_undefs;
       };
 
+    private:
+      typedef std::vector<std::unique_ptr<macro_invocation>>
+	_macro_invocations_container_type;
+
+    public:
+      class const_macro_invocation_iterator
+	: public std::iterator<std::random_access_iterator_tag,
+			       const macro_invocation>
+      {
+      public:
+	bool operator==(const const_macro_invocation_iterator &rhs)
+	  const noexcept
+	{ return this->_it == rhs._it; }
+
+	bool operator!=(const const_macro_invocation_iterator &rhs)
+	{ return !(*this == rhs); }
+
+	reference operator*() const noexcept
+	{ return **_it; }
+
+	pointer operator->() const noexcept
+	{ return (*_it).get(); }
+
+	const_macro_invocation_iterator& operator++()
+	{ ++_it; return *this; }
+
+	const const_macro_invocation_iterator operator++(int)
+	{ return const_macro_invocation_iterator{_it++}; }
+
+	const_macro_invocation_iterator& operator--()
+	{ --_it; return *this; }
+
+	const const_macro_invocation_iterator operator--(int)
+	{ return const_macro_invocation_iterator{_it--}; }
+
+	const_macro_invocation_iterator&
+	operator+=(const difference_type n)
+	{ _it += n; return *this; }
+
+	const_macro_invocation_iterator&
+	operator-=(const difference_type n)
+	{ _it -= n; return *this; }
+
+	const const_macro_invocation_iterator
+	operator+(const difference_type n) const
+	{ return const_macro_invocation_iterator(_it + n); }
+
+	const const_macro_invocation_iterator
+	operator-(const difference_type n) const
+	{ return const_macro_invocation_iterator(_it - n); }
+
+	const difference_type
+	operator-(const const_macro_invocation_iterator &op) const
+	{ return this->_it - op._it; }
+
+	reference operator[](const difference_type n) const
+	{ return *(*this + n); }
+
+	bool operator<(const const_macro_invocation_iterator &op) const
+	{ return this->_it < op._it; }
+
+	bool operator>(const const_macro_invocation_iterator &op) const
+	{ return this->_it > op._it; }
+
+	bool operator<=(const const_macro_invocation_iterator &op) const
+	{ return this->_it <= op._it; }
+
+	bool operator>=(const const_macro_invocation_iterator &op) const
+	{ return this->_it >= op._it; }
+
+      private:
+	friend class pp_result;
+
+	const_macro_invocation_iterator
+		(const _macro_invocations_container_type::const_iterator &it)
+	  : _it(it)
+	{}
+
+	_macro_invocations_container_type::const_iterator _it;
+      };
+
+      const const_macro_invocation_iterator
+      macro_invocations_begin() const
+      { return const_macro_invocation_iterator(_macro_invocations.cbegin()); }
+
+      const const_macro_invocation_iterator
+      macro_invocations_end() const
+      { return const_macro_invocation_iterator(_macro_invocations.cend()); }
+
+      std::pair<const_macro_invocation_iterator,
+		const_macro_invocation_iterator>
+      find_overlapping_macro_invocations(const raw_pp_tokens_range &r) const;
+
 
       class header_inclusion_node;
       class header_inclusion_child;
@@ -440,6 +533,12 @@ namespace klp
     static inline bool operator<(const raw_pp_tokens_range &r,
 				 const pp_result::macro_invocation &mi) noexcept
     { return r < mi.get_source_range(); }
+
+    static inline const pp_result::const_macro_invocation_iterator
+    operator+(const pp_result::const_macro_invocation_iterator
+			::difference_type n,
+	      const pp_result::const_macro_invocation_iterator &it)
+    { return it + n; }
   }
 }
 
