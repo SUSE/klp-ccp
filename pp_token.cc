@@ -9,28 +9,14 @@ using namespace klp::ccp;
 pp_token::pp_token(const type type, const std::string &value,
 		   const raw_pp_tokens_range &token_source,
 		   const macro_undef *used_macro_undef)
-  : _value(value), _token_source(token_source), _macro_invocation(nullptr),
+  : _value(value), _token_source(token_source),
     _used_macro_undef(used_macro_undef), _type(type)
-{}
-
-pp_token::pp_token(const type type, const std::string &value,
-		   const pp_result::macro_invocation &macro_invocation)
-  : _value(value), _token_source(), _macro_invocation(&macro_invocation),
-    _used_macro_undef(nullptr), _type(type)
 {}
 
 void pp_token::set_type_and_value(const type type, const std::string &value)
 {
   _type = type;
   _value = value;
-}
-
-const raw_pp_tokens_range& pp_token::get_token_source() const noexcept
-{
-  if(_macro_invocation)
-    return _macro_invocation->get_source_range();
-  else
-    return _token_source;
 }
 
 std::string pp_token::stringify(const type type, const std::string &value)

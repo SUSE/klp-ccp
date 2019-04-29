@@ -250,7 +250,7 @@ pp_token_index preprocessor::_emit_pp_token(pp_result &r, _pp_token &&tok)
   } else {
     r._append_token
       (pp_token{tok.get_type(), tok.get_value(),
-		*tok.get_macro_invocation()});
+		tok.get_macro_invocation()->get_source_range()});
   }
   return r._get_last_pp_index();
 }

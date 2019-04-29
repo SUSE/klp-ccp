@@ -44,9 +44,6 @@ namespace klp
 	       const raw_pp_tokens_range &token_source,
 	       const macro_undef *used_macro_undef = nullptr);
 
-      pp_token(const type type, const std::string &value,
-	       const pp_result::macro_invocation &macro_invocation);
-
       type get_type() const noexcept
       {
 	return _type;
@@ -59,7 +56,8 @@ namespace klp
 
       void set_type_and_value(const type type, const std::string &value);
 
-      const raw_pp_tokens_range& get_token_source() const noexcept;
+      const raw_pp_tokens_range& get_token_source() const noexcept
+      { return _token_source; }
 
       const macro_undef *get_used_macro_undef() const noexcept
       { return _used_macro_undef; }
@@ -124,7 +122,6 @@ namespace klp
 
       std::string _value;
       raw_pp_tokens_range _token_source;
-      const pp_result::macro_invocation * const _macro_invocation;
       const macro_undef * const _used_macro_undef;
       type _type;
     };
