@@ -22,8 +22,9 @@ pp_result::inclusion_node::inclusion_node()
   : _parent(nullptr)
 {}
 
-pp_result::inclusion_node::inclusion_node(const inclusion_node * const parent)
-  : _parent(parent)
+pp_result::inclusion_node::inclusion_node(const inclusion_node * const parent,
+					  const raw_pp_token_index range_begin)
+  : _parent(parent), _range(range_begin, range_begin)
 {}
 
 pp_result::inclusion_node::~inclusion_node() noexcept = default;
@@ -71,6 +72,17 @@ _add_conditional_inclusion(const raw_pp_token_index range_begin,
   return _new_child;
 }
 
+void pp_result::inclusion_node::
+_set_range_begin(const raw_pp_token_index range_begin) noexcept
+{
+  _range.begin = range_begin;
+}
+
+void pp_result::inclusion_node::
+_set_range_end(const raw_pp_token_index range_end) noexcept
+{
+  _range.end = range_end;
+}
 
 pp_result::inclusion_node::_child::
 _child(std::unique_ptr<header_inclusion_child> &&_h) noexcept
@@ -195,8 +207,10 @@ header_inclusion_node(const std::string &filename)
 {}
 
 pp_result::header_inclusion_node::
-header_inclusion_node(const inclusion_node &parent, const std::string &filename)
-  : inclusion_node(&parent), _filename(filename)
+header_inclusion_node(const inclusion_node &parent,
+		      const raw_pp_token_index range_begin,
+		      const std::string &filename)
+  : inclusion_node(&parent, range_begin), _filename(filename)
 {}
 
 pp_result::header_inclusion_node::~header_inclusion_node() noexcept = default;
@@ -240,7 +254,7 @@ header_inclusion_child(const inclusion_node &parent,
 		       const raw_pp_tokens_range &directive_range,
 		       used_macros &&used_macros,
 		       used_macro_undefs &&used_macro_undefs)
-  : header_inclusion_node(parent, filename),
+  : header_inclusion_node(parent, directive_range.end, filename),
     _directive_range(directive_range),
     _used_macros(std::move(used_macros)),
     _used_macro_undefs(std::move(used_macro_undefs))
@@ -254,7 +268,7 @@ conditional_inclusion_node(const inclusion_node &parent,
 			   const raw_pp_token_index range_begin,
 			   used_macros &&used_macros,
 			   used_macro_undefs &&used_macro_undefs)
-  : inclusion_node(&parent), _range(range_begin),
+  : inclusion_node(&parent, range_begin),
     _used_macros(std::move(used_macros)),
     _used_macro_undefs(std::move(used_macro_undefs))
 {}
@@ -265,12 +279,6 @@ const pp_result::header_inclusion_node&
 pp_result::conditional_inclusion_node::get_containing_header() const noexcept
 {
   return _parent->get_containing_header();
-}
-
-void pp_result::conditional_inclusion_node::
-_set_range_end(const raw_pp_token_index range_end) noexcept
-{
-  _range.end = range_end;
 }
 
 

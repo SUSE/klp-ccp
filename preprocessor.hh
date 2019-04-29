@@ -301,7 +301,7 @@ namespace klp
 
       void _enter_cond_incl();
 
-      void _pop_cond_incl(const pp_token_index range_end);
+      void _pop_cond_incl(const raw_pp_token_index range_end);
 
       bool
       _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range);

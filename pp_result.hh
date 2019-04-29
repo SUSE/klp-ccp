@@ -160,7 +160,8 @@ namespace klp
 
       protected:
 	inclusion_node();
-	inclusion_node(const inclusion_node * const parent);
+	inclusion_node(const inclusion_node * const parent,
+		       const raw_pp_token_index range_begin);
 
 	recursive_header_inclusion_iterator
 	header_inclusions_recursive_begin() const;
@@ -180,11 +181,15 @@ namespace klp
 			      used_macro_undefs &&used_macro_undefs);
 
 	conditional_inclusion_node&
-	_add_conditional_inclusion(const raw_pp_token_index range_start,
+	_add_conditional_inclusion(const raw_pp_token_index range_begin,
 				   used_macros &&used_macros,
 				   used_macro_undefs &&used_macro_undefs);
 
+	void _set_range_begin(const raw_pp_token_index range_begin) noexcept;
+	void _set_range_end(const raw_pp_token_index range_end) noexcept;
+
 	_children_container_type _children;
+	raw_pp_tokens_range _range;
       };
 
       class header_inclusion_node : public inclusion_node
@@ -211,6 +216,7 @@ namespace klp
 	header_inclusion_node(const std::string &filename);
 
 	header_inclusion_node(const inclusion_node &parent,
+			      const raw_pp_token_index range_begin,
 			      const std::string &filename);
 
       private:
@@ -268,9 +274,6 @@ namespace klp
 				   used_macros &&used_macros,
 				   used_macro_undefs &&used_macro_undefs);
 
-	void _set_range_end(const raw_pp_token_index range_end) noexcept;
-
-	raw_pp_tokens_range _range;
 	used_macros _used_macros;
 	used_macro_undefs _used_macro_undefs;
       };

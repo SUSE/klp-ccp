@@ -26,6 +26,7 @@ preprocessor(pp_result::header_inclusion_roots &&header_inclusion_roots,
     _maybe_pp_directive(true), _line_empty(true)
 {
   assert(!_pp_result->get_header_inclusion_roots().empty());
+  _cur_header_inclusion_root->_set_range_begin(0);
   _tokenizers.emplace(*_cur_header_inclusion_root);
   _inclusions.emplace(std::ref(*_cur_header_inclusion_root));
 }
@@ -306,6 +307,11 @@ void preprocessor::_handle_eof_from_tokenizer(raw_pp_token &&eof_tok)
     throw pp_except(remark);
   }
   _tokenizers.pop();
+  const raw_pp_token_index cur_raw_pos =
+    (!_pp_result->get_raw_tokens().empty() ?
+     _pp_result->_get_last_raw_index() + 1 :
+     0);
+  _inclusions.top().get()._set_range_end(cur_raw_pos);
   _inclusions.pop();
 
   if (_tokenizers.empty()) {
@@ -317,6 +323,7 @@ void preprocessor::_handle_eof_from_tokenizer(raw_pp_token &&eof_tok)
       return;
     }
 
+    _cur_header_inclusion_root->_set_range_begin(cur_raw_pos);
     _tokenizers.emplace(*_cur_header_inclusion_root);
     _inclusions.emplace(std::ref(*_cur_header_inclusion_root));
   }
@@ -1511,7 +1518,7 @@ void preprocessor::_enter_cond_incl()
   _inclusions.emplace(std::ref(new_conditional_inclusion_node));
 }
 
-void preprocessor::_pop_cond_incl(const pp_token_index range_end)
+void preprocessor::_pop_cond_incl(const raw_pp_token_index range_end)
 {
   _cond_incl_state &cond_incl_state = _cond_incl_states.top();
 
