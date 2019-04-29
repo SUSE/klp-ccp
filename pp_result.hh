@@ -27,6 +27,9 @@ namespace klp
 	const raw_pp_tokens_range& get_source_range() const noexcept
 	{ return _invocation_range; }
 
+	bool operator<(const raw_pp_tokens_range &r) const noexcept
+	{ return _invocation_range < r; }
+
       private:
 	friend class pp_result;
 	friend class preprocessor;
@@ -432,6 +435,11 @@ namespace klp
       std::vector<std::unique_ptr<const macro>> _macros;
       std::vector<std::unique_ptr<const macro_undef>> _macro_undefs;
     };
+
+
+    static inline bool operator<(const raw_pp_tokens_range &r,
+				 const pp_result::macro_invocation &mi) noexcept
+    { return r < mi.get_source_range(); }
   }
 }
 
