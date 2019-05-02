@@ -35,6 +35,12 @@ namespace klp
 		end == 0);
       }
 
+      bool operator==(const raw_pp_tokens_range &op) const noexcept
+      { return (this->begin == op.begin && this->end == op.end); }
+
+      bool operator!=(const raw_pp_tokens_range &op) const noexcept
+      { return !(*this == op); }
+
       bool operator<(const raw_pp_tokens_range &op) const noexcept
       { return this->end <= op.begin; }
 
