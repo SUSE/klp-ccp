@@ -6,6 +6,7 @@
 #include <utility>
 #include "raw_pp_tokens.hh"
 #include "raw_pp_tokens_range.hh"
+#include "pp_token.hh"
 #include "pp_tokens.hh"
 #include "used_macros.hh"
 #include "used_macro_undefs.hh"
@@ -656,6 +657,9 @@ namespace klp
 
       const_intersecting_source_iterator
       intersecting_sources_end(const raw_pp_tokens_range &range) const;
+
+      const header_inclusion_node&
+      get_raw_token_source(const raw_pp_token_index tok_index) const;
 
       const raw_pp_tokens& get_raw_tokens() const noexcept
       { return _raw_tokens; }

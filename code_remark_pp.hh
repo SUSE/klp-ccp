@@ -6,7 +6,8 @@
 #include <memory>
 #include <functional>
 #include "pp_tokens_range.hh"
-#include "file_range.hh"
+#include "pp_result.hh"
+#include "range_in_file.hh"
 
 namespace klp
 {
@@ -44,10 +45,11 @@ namespace klp
 				      const code_remark_pp &remark);
 
     private:
+      const pp_result::header_inclusion_node *_first_file;
+      const pp_result::header_inclusion_node *_last_file;
+      range_in_file::loc_type _begin_loc;
+      range_in_file::loc_type _end_loc;
       std::string _msg;
-      file_range _fr;
-      file_range _fr_end;
-      bool _fr_end_valid;
       severity _sev;
     };
 

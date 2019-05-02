@@ -31,7 +31,7 @@ namespace klp
     private:
       char _read_next_char_raw();
 
-      char _read_next_char(file_range::loc_type &loc);
+      char _read_next_char(range_in_file::loc_type &loc);
       void _advance_to_next_char();
       void _skip_next_char();
 
@@ -49,11 +49,11 @@ namespace klp
       source_reader::buffer_type _buf;
       source_reader::buffer_type::const_iterator _buf_it;
 
-      file_range::loc_type _line_length;
-      file_range::loc_type _cur_loc;
-      file_range::loc_type _next_loc;
-      file_range::loc_type _next_next_loc;
-      file_range::loc_type _tok_loc;
+      range_in_file::loc_type _line_length;
+      range_in_file::loc_type _cur_loc;
+      range_in_file::loc_type _next_loc;
+      range_in_file::loc_type _next_next_loc;
+      range_in_file::loc_type _tok_loc;
       enum class expect_qh_str
       {
 	no,

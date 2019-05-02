@@ -4,7 +4,8 @@
 #include <string>
 #include <ios>
 #include <memory>
-#include "file_range.hh"
+#include "range_in_file.hh"
+#include "pp_result.hh"
 
 namespace klp
 {
@@ -20,7 +21,8 @@ namespace klp
 	};
 
       code_remark_raw(const severity sev, const std::string &msg,
-		      const file_range &file_range);
+		      const pp_result::header_inclusion_node &file,
+		      const range_in_file &range_in_file);
 
       severity get_severity() const noexcept
       {
@@ -32,7 +34,8 @@ namespace klp
 
     private:
       std::string _msg;
-      file_range _file_range;
+      const pp_result::header_inclusion_node *_file;
+      range_in_file _range_in_file;
       severity _sev;
     };
 

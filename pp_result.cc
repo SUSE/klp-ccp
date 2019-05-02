@@ -619,6 +619,15 @@ pp_result::intersecting_sources_end(const raw_pp_tokens_range &range) const
 	   const_intersecting_source_iterator::init_end_iterator_tag{}});
 }
 
+const pp_result::header_inclusion_node&
+pp_result::get_raw_token_source(const raw_pp_token_index tok_index) const
+{
+  const auto it =
+    this->intersecting_sources_begin(raw_pp_tokens_range{tok_index});
+  assert(it != this->intersecting_sources_end(raw_pp_tokens_range{tok_index}));
+  return *it;
+}
+
 void pp_result::_append_token(const raw_pp_token &tok)
 {
   _raw_tokens.push_back(tok);

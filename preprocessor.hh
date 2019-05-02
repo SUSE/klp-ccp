@@ -31,6 +31,9 @@ namespace klp
 
       pp_token_index read_next_token();
 
+      const pp_result::header_inclusion_node&
+      get_pending_token_source(const raw_pp_token_index tok);
+
       code_remarks& get_remarks() noexcept
       { return _remarks; }
 
@@ -139,7 +142,7 @@ namespace klp
 
 	std::string stringify() const;
 
-	void concat(const _pp_token &tok, const preprocessor &p,
+	void concat(const _pp_token &tok, preprocessor &p,
 		    code_remarks &remarks);
 
       private:
@@ -176,7 +179,7 @@ namespace klp
       class _macro_instance
       {
       public:
-	_macro_instance(const preprocessor &preprocessor,
+	_macro_instance(preprocessor &preprocessor,
 			const macro &macro,
 			std::vector<_pp_tokens> &&args,
 			std::vector<_pp_tokens> &&exp_args,
@@ -214,7 +217,7 @@ namespace klp
 	_pp_token _yield_concat_token();
 	_pp_token _yield_empty_token();
 
-	const preprocessor &_preprocessor;
+	preprocessor &_preprocessor;
 	const macro &_macro;
 	std::map<std::string,
 		 std::pair<_pp_tokens, _pp_tokens> > _args;
@@ -262,11 +265,21 @@ namespace klp
 
       void _fixup_inclusion_node_ranges() noexcept;
 
-      file_range _pp_token_to_file_range(const _pp_token &tok) const;
+      const pp_result::header_inclusion_node&
+      _raw_tok_it_to_source(const raw_pp_tokens::const_iterator &it);
 
-      file_range
-      _raw_pp_tokens_range_to_file_range(const raw_pp_tokens_range &r) const;
+      const pp_result::header_inclusion_node&
+      _raw_pp_tokens_range_to_source(const raw_pp_tokens_range &r);
 
+      range_in_file
+      _raw_pp_tokens_range_to_range_in_file(const raw_pp_tokens_range &r)
+	const noexcept;
+
+      const pp_result::header_inclusion_node&
+      _pp_token_to_source(const _pp_token &tok);
+
+      range_in_file _pp_token_to_range_in_file(const _pp_token &tok)
+	const noexcept;
 
       void _handle_pp_directive();
 

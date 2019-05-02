@@ -10,8 +10,6 @@ namespace klp
 {
   namespace ccp
   {
-    class file_range;
-
     namespace ast
     {
       class ast;

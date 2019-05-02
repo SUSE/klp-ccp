@@ -1,5 +1,6 @@
 #include <ostream>
 #include "code_remarks.hh"
+#include "pp_token.hh"
 
 using namespace klp::ccp;
 

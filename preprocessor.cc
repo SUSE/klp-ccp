@@ -299,12 +299,19 @@ void preprocessor::_handle_eof_from_tokenizer(raw_pp_token &&eof_tok)
   // If the topmost inclusion tree node is an (unfinished) conditional
   // inclusion, that's an error.
   if (_cur_incl_node_is_cond()) {
+    _fixup_inclusion_node_ranges();
+    const raw_pp_token_index eof_index = _pp_result->get_raw_tokens().size();
+    const raw_pp_tokens_range eof_range{eof_index, eof_index};
+    const auto it_src
+      =  _pp_result->intersecting_sources_begin(eof_range);
+    assert(it_src != _pp_result->intersecting_sources_end(eof_range));
     code_remark_raw remark(code_remark_raw::severity::fatal,
 			   "missing #endif at end of file",
-			   eof_tok.get_file_range());
+			   *it_src, eof_tok.get_range_in_file());
     _remarks.add(remark);
     throw pp_except(remark);
   }
+
   _tokenizers.pop();
   const raw_pp_token_index cur_raw_pos =
     (!_pp_result->get_raw_tokens().empty() ?
@@ -346,44 +353,60 @@ void preprocessor::_fixup_inclusion_node_ranges() noexcept
   }
 }
 
-
-file_range preprocessor::_pp_token_to_file_range(const _pp_token &tok) const
+const pp_result::header_inclusion_node& preprocessor::
+_raw_tok_it_to_source(const raw_pp_tokens::const_iterator &it)
 {
-  return _raw_pp_tokens_range_to_file_range(tok.get_token_source());
+  const raw_pp_token_index index = it - _pp_result->get_raw_tokens().begin();
+  return get_pending_token_source(index);
 }
 
-file_range preprocessor::
-_raw_pp_tokens_range_to_file_range(const raw_pp_tokens_range &r) const
+const pp_result::header_inclusion_node&
+preprocessor::_raw_pp_tokens_range_to_source(const raw_pp_tokens_range &r)
 {
-  if (r.begin == r.end + 1) {
-    // A single token, emit "point" file range for its start.
-    const raw_pp_token &tok = _pp_result->get_raw_tokens()[r.begin];
-    const file_range &tok_fr = tok.get_file_range();
-    return file_range{tok_fr.get_header_inclusion_node(),
-		      tok_fr.get_start_loc()};
+  const pp_result::header_inclusion_node &s
+    = get_pending_token_source(r.begin);
+  assert(r.begin == r.end || &s == &get_pending_token_source(r.end - 1));
+  return s;
+}
 
+range_in_file preprocessor::
+_raw_pp_tokens_range_to_range_in_file(const raw_pp_tokens_range &r)
+  const noexcept
+{
+    if (r.begin == r.end + 1) {
+    // A single token, emit "point" range for its start.
+    const raw_pp_token &tok = _pp_result->get_raw_tokens()[r.begin];
+    const range_in_file &tok_rif = tok.get_range_in_file();
+    return range_in_file{tok_rif.begin};
   } else if (r.begin == r.end) {
-    // An empty range, used for EOFs. Emit a "point" file range
-    // for the preceeding token's end.
+    // An empty range, used for EOFs. Emit a "point" range for the
+    // preceeding token's end.
     assert(r.begin > 0);
     assert(r.begin <= _pp_result->get_raw_tokens().size());
     const raw_pp_token &tok = _pp_result->get_raw_tokens()[r.begin - 1];
-    const file_range &tok_fr = tok.get_file_range();
-    return file_range{tok_fr.get_header_inclusion_node(),
-		      tok_fr.get_end_loc()};
+    const range_in_file &tok_rif = tok.get_range_in_file();
+    return range_in_file{tok_rif.end};
   } else {
     // A real range. It must come from a single header.
     assert(r.end <= _pp_result->get_raw_tokens().size());
     const raw_pp_token &first_tok = _pp_result->get_raw_tokens()[r.begin];
     const raw_pp_token &last_tok = _pp_result->get_raw_tokens()[r.end - 1];
-    const file_range &first_tok_fr = first_tok.get_file_range();
-    const file_range &last_tok_fr = last_tok.get_file_range();
-    assert(&first_tok_fr.get_header_inclusion_node() ==
-	   &last_tok_fr.get_header_inclusion_node());
-    return file_range{first_tok_fr.get_header_inclusion_node(),
-		      first_tok_fr.get_start_loc(),
-		      last_tok_fr.get_end_loc()};
+    const range_in_file &first_tok_rif = first_tok.get_range_in_file();
+    const range_in_file &last_tok_rif = last_tok.get_range_in_file();
+    return range_in_file{first_tok_rif.begin, last_tok_rif.end};
   }
+}
+
+const pp_result::header_inclusion_node&
+preprocessor::_pp_token_to_source(const _pp_token &tok)
+{
+  return _raw_pp_tokens_range_to_source(tok.get_token_source());
+}
+
+range_in_file preprocessor::_pp_token_to_range_in_file(const _pp_token &tok)
+  const noexcept
+{
+  return _raw_pp_tokens_range_to_range_in_file(tok.get_token_source());
 }
 
 void preprocessor::_handle_pp_directive()
@@ -419,9 +442,11 @@ void preprocessor::_handle_pp_directive()
       endif_possible = false;
 
       if (!_cur_incl_node_is_cond()) {
-	code_remark_raw remark(code_remark_raw::severity::fatal,
-			       "#endif without #if",
-			       tok.get_file_range());
+	code_remark_raw remark
+	  (code_remark_raw::severity::fatal,
+	   "#endif without #if",
+	   get_pending_token_source(_pp_result->_get_last_raw_index()),
+	   tok.get_range_in_file());
 	_remarks.add(remark);
 	throw pp_except(remark);
       }
@@ -433,9 +458,11 @@ void preprocessor::_handle_pp_directive()
     } else if (!tok.is_ws()) {
       endif_possible = false;
       if (is_endif) {
-	code_remark_raw remark(code_remark_raw::severity::warning,
-			       "garbage after #endif",
-			       tok.get_file_range());
+	code_remark_raw remark
+	  (code_remark_raw::severity::warning,
+	   "garbage after #endif",
+	   get_pending_token_source(_pp_result->_get_last_raw_index()),
+	   tok.get_range_in_file());
 	_remarks.add(remark);
       }
     }
@@ -445,7 +472,6 @@ void preprocessor::_handle_pp_directive()
     return;
 
   auto it_tok = _pp_result->get_raw_tokens().begin() + raw_begin + 1;
-
   if (it_tok == _pp_result->get_raw_tokens().begin() + raw_end) {
     // Null directive terminated by EOF.
     return;
@@ -464,7 +490,8 @@ void preprocessor::_handle_pp_directive()
   if (!it_tok->is_id()) {
     code_remark_raw remark(code_remark_raw::severity::fatal,
 			   "identifier expected in preprocessor directive",
-			   it_tok->get_file_range());
+			   _raw_tok_it_to_source(it_tok),
+			   it_tok->get_range_in_file());
     _remarks.add(remark);
     throw pp_except(remark);
   }
@@ -495,7 +522,8 @@ void preprocessor::_handle_pp_directive()
     if (!it_tok->is_id()) {
       code_remark_raw remark(code_remark_raw::severity::fatal,
 			     "identifier expected after #ifdef",
-			     it_tok->get_file_range());
+			     _raw_tok_it_to_source(it_tok),
+			     it_tok->get_range_in_file());
       _remarks.add(remark);
       throw pp_except(remark);
     }
@@ -524,7 +552,8 @@ void preprocessor::_handle_pp_directive()
     if (!it_tok->is_id()) {
       code_remark_raw remark(code_remark_raw::severity::fatal,
 			     "identifier expected after #ifndef",
-			     it_tok->get_file_range());
+			     _raw_tok_it_to_source(it_tok),
+			     it_tok->get_range_in_file());
       _remarks.add(remark);
       throw pp_except(remark);
     }
@@ -545,7 +574,8 @@ void preprocessor::_handle_pp_directive()
     if (!_cur_incl_node_is_cond()) {
       code_remark_raw remark(code_remark_raw::severity::fatal,
 			     "#elif without #if",
-			     it_tok->get_file_range());
+			     _raw_tok_it_to_source(it_tok),
+			     it_tok->get_range_in_file());
       _remarks.add(remark);
       throw pp_except(remark);
     }
@@ -575,7 +605,8 @@ void preprocessor::_handle_pp_directive()
     if (!it_tok->is_id()) {
       code_remark_raw remark(code_remark_raw::severity::fatal,
 			     "identifier expected after #define",
-			     it_tok->get_file_range());
+			     _raw_tok_it_to_source(it_tok),
+			     it_tok->get_range_in_file());
       _remarks.add(remark);
       throw pp_except(remark);
     }
@@ -595,7 +626,8 @@ void preprocessor::_handle_pp_directive()
     if (it_existing != _macros.end() && it_existing->second.get() != m) {
       code_remark_raw remark(code_remark_raw::severity::fatal,
 		"macro redefined in an incompatible way",
-		_raw_pp_tokens_range_to_file_range(m.get_directive_range()));
+		_raw_pp_tokens_range_to_source(m.get_directive_range()),
+		_raw_pp_tokens_range_to_range_in_file(m.get_directive_range()));
       _remarks.add(remark);
       throw pp_except(remark);
     }
@@ -609,7 +641,8 @@ void preprocessor::_handle_pp_directive()
     if (!it_tok->is_id()) {
       code_remark_raw remark(code_remark_raw::severity::fatal,
 			     "identifier expected after #undef",
-			     it_tok->get_file_range());
+			     _raw_tok_it_to_source(it_tok),
+			     it_tok->get_range_in_file());
       _remarks.add(remark);
       throw pp_except(remark);
     }
@@ -619,7 +652,8 @@ void preprocessor::_handle_pp_directive()
     if (!it_tok->is_newline() && !it_tok->is_eof()) {
       code_remark_raw remark(code_remark_raw::severity::fatal,
 			     "garbage after #undef",
-			     it_tok->get_file_range());
+			     _raw_tok_it_to_source(it_tok),
+			     it_tok->get_range_in_file());
       _remarks.add(remark);
       throw pp_except(remark);
     }
@@ -695,11 +729,11 @@ preprocessor::_expand(_expansion_state &state,
     // Check for the predefined macros first.
     if (tok.get_value() == "__FILE__") {
       tok.set_type_and_value(pp_token::type::str,
-			     (_pp_token_to_file_range(tok)
-			      .get_header_inclusion_node().get_filename()));
+			     (_pp_token_to_source(tok).get_filename()));
       return tok;
     } else if (tok.get_value() == "__LINE__") {
-      auto line = _pp_token_to_file_range(tok).get_start_line();
+      auto line = (_pp_token_to_source(tok).offset_to_line_col
+		   (_pp_token_to_range_in_file(tok).begin)).first;
       tok.set_type_and_value(pp_token::type::pp_number, std::to_string(line));
       return tok;
     } else if (tok.get_value() == "__INCLUDE_LEVEL__") {
@@ -809,7 +843,8 @@ preprocessor::_expand(_expansion_state &state,
       if (!tok.is_punctuator("(")) {
 	code_remark_raw remark(code_remark_raw::severity::fatal,
 			       "operator \"defined\" without arguments",
-			       _pp_token_to_file_range(tok));
+			       _pp_token_to_source(tok),
+			       _pp_token_to_range_in_file(tok));
 	_remarks.add(remark);
 	throw pp_except(remark);
       }
@@ -821,7 +856,8 @@ preprocessor::_expand(_expansion_state &state,
       if (arg_delim == ',') {
 	code_remark_raw remark(code_remark_raw::severity::fatal,
 			       "too many arguments to \"defined\" operator",
-			       _pp_token_to_file_range(std::get<2>(arg)));
+			       _pp_token_to_source(std::get<2>(arg)),
+			       _pp_token_to_range_in_file(std::get<2>(arg)));
 	_remarks.add(remark);
 	throw pp_except(remark);
       }
@@ -831,7 +867,8 @@ preprocessor::_expand(_expansion_state &state,
 	  std::get<0>(arg)[0].get_type() != pp_token::type::id) {
 	code_remark_raw remark(code_remark_raw::severity::fatal,
 			       "invalid argument to \"defined\" operator",
-			       _pp_token_to_file_range(std::get<0>(arg)[0]));
+			       _pp_token_to_source(std::get<0>(arg)[0]),
+			       _pp_token_to_range_in_file(std::get<0>(arg)[0]));
 	_remarks.add(remark);
 	throw pp_except(remark);
       }
@@ -955,7 +992,7 @@ std::string preprocessor::_pp_token::stringify() const
 }
 
 void preprocessor::_pp_token::concat(const _pp_token &tok,
-				     const preprocessor &p,
+				     preprocessor &p,
 				     code_remarks &remarks)
 {
   assert(_type != pp_token::type::ws);
@@ -988,7 +1025,7 @@ void preprocessor::_pp_token::concat(const _pp_token &tok,
       code_remark_raw remark
 	(code_remark_raw::severity::fatal,
 	 "can't concatenate " + _value + " and " + tok._value,
-	 p._pp_token_to_file_range(tok));
+	 p._pp_token_to_source(tok), p._pp_token_to_range_in_file(tok));
       remarks.add(remark);
       throw pp_except(remark);
     }
@@ -1009,19 +1046,22 @@ void preprocessor::_pp_token::concat(const _pp_token &tok,
   if (_type != tok._type) {
     code_remark_raw remark(code_remark_raw::severity::fatal,
 			   "can't concatenate tokens of different type",
-			   p._pp_token_to_file_range(tok));
+			   p._pp_token_to_source(tok),
+			   p._pp_token_to_range_in_file(tok));
     remarks.add(remark);
     throw pp_except(remark);
   } else if(_type == pp_token::type::chr || _type == pp_token::type::wchr) {
     code_remark_raw remark(code_remark_raw::severity::fatal,
 			   "can't concatenate character constants",
-			   p._pp_token_to_file_range(tok));
+			   p._pp_token_to_source(tok),
+			   p._pp_token_to_range_in_file(tok));
     remarks.add(remark);
     throw pp_except(remark);
   } else if (_type == pp_token::type::non_ws_char) {
     code_remark_raw remark(code_remark_raw::severity::fatal,
 			   "can't concatenate " + _value + " and " + tok._value,
-			   p._pp_token_to_file_range(tok));
+			   p._pp_token_to_source(tok),
+			   p._pp_token_to_range_in_file(tok));
     remarks.add(remark);
     throw pp_except(remark);
   }
@@ -1040,7 +1080,7 @@ void preprocessor::_pp_token::concat(const _pp_token &tok,
       code_remark_raw remark
 	(code_remark_raw::severity::fatal,
 	 "can't concatenate " + _value + " and " + tok._value,
-	 p._pp_token_to_file_range(tok));
+	 p._pp_token_to_source(tok), p._pp_token_to_range_in_file(tok));
       remarks.add(remark);
       throw pp_except(remark);
     }
@@ -1088,9 +1128,11 @@ preprocessor::_handle_func_macro_invocation(
       if (i_arg < (!macro.is_variadic() ? n_args : n_args - 1)) {
 	if (arg_delim != ',') {
 	  assert(arg_delim == ')');
-	  code_remark_raw remark(code_remark_raw::severity::fatal,
-				 "too few parameters in macro invocation",
-				 _pp_token_to_file_range(std::get<2>(cur_arg)));
+	  code_remark_raw remark
+	    (code_remark_raw::severity::fatal,
+	     "too few parameters in macro invocation",
+	     _pp_token_to_source(std::get<2>(cur_arg)),
+	     _pp_token_to_range_in_file(std::get<2>(cur_arg)));
 	  _remarks.add(remark);
 	  throw pp_except(remark);
 	}
@@ -1106,9 +1148,11 @@ preprocessor::_handle_func_macro_invocation(
       } else if (i_arg == n_args) {
 	if (arg_delim != ')') {
 	  assert(arg_delim == ',');
-	  code_remark_raw remark(code_remark_raw::severity::fatal,
-				 "too many parameters in macro invocation",
-				 _pp_token_to_file_range(std::get<2>(cur_arg)));
+	  code_remark_raw remark
+	    (code_remark_raw::severity::fatal,
+	     "too many parameters in macro invocation",
+	     _pp_token_to_source(std::get<2>(cur_arg)),
+	     _pp_token_to_range_in_file(std::get<2>(cur_arg)));
 	  _remarks.add(remark);
 	  throw pp_except(remark);
 	}
@@ -1140,9 +1184,11 @@ preprocessor::_handle_func_macro_invocation(
       }
     }
     if (non_empty_found || std::get<2>(dummy_arg).get_value() != ")") {
-      code_remark_raw remark(code_remark_raw::severity::fatal,
-			     "too many parameters in macro invocation",
-			     _pp_token_to_file_range(std::get<2>(dummy_arg)));
+      code_remark_raw remark
+	(code_remark_raw::severity::fatal,
+	 "too many parameters in macro invocation",
+	 _pp_token_to_source(std::get<2>(dummy_arg)),
+	 _pp_token_to_range_in_file(std::get<2>(dummy_arg)));
       _remarks.add(remark);
       throw pp_except(remark);
     }
@@ -1190,7 +1236,7 @@ preprocessor::_create_macro_arg(const std::function<_pp_token()> &token_reader,
 	      code_remark_raw remark
 		(code_remark_raw::severity::fatal,
 		 "no closing right parenthesis in macro invocation",
-		 _pp_token_to_file_range(tok));
+		 _pp_token_to_source(tok), _pp_token_to_range_in_file(tok));
 	      _remarks.add(remark);
 	      throw pp_except(remark);
 	    }
@@ -1376,6 +1422,12 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
     ++it_raw_tok;
 
   assert(it_raw_tok != raw_end);
+
+  auto &&raw_it_to_range_in_file =
+    [&](const raw_pp_tokens::const_iterator &it_raw) {
+      // Shrink range to start location
+      return range_in_file{it_raw->get_range_in_file().begin};
+    };
   std::string unresolved;
   bool is_qstr;
   used_macros um;
@@ -1389,10 +1441,10 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
       ++it_raw_tok;
 
     if (!it_raw_tok->is_newline() && !it_raw_tok->is_eof()) {
-      file_range fr (it_raw_tok->get_file_range().get_header_inclusion_node(),
-		     it_raw_tok->get_file_range().get_start_loc());
       code_remark_raw remark(code_remark_raw::severity::fatal,
-			     "garbage after #include", fr);
+			     "garbage after #include",
+			     _raw_tok_it_to_source(it_raw_tok),
+			     raw_it_to_range_in_file(it_raw_tok));
       _remarks.add(remark);
       throw pp_except(remark);
     }
@@ -1444,11 +1496,10 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
     it_tok = skip(it_tok);
 
     if (it_tok->is_eof()) {
-      file_range fr (raw_begin->get_file_range().get_header_inclusion_node(),
-		     raw_begin->get_file_range().get_start_loc());
       code_remark_raw remark(code_remark_raw::severity::fatal,
 			     "macro expansion at #include evaluated to nothing",
-			     fr);
+			     _raw_tok_it_to_source(raw_begin),
+			     raw_it_to_range_in_file(raw_begin));
       _remarks.add(remark);
       throw pp_except(remark);
     }
@@ -1464,20 +1515,18 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
 
       assert(!it_tok->is_eof());
       if (!it_tok->is_punctuator(">")) {
-	file_range fr (raw_begin->get_file_range().get_header_inclusion_node(),
-		       raw_begin->get_file_range().get_start_loc());
 	code_remark_raw remark
 	  (code_remark_raw::severity::fatal,
 	   "macro expansion at #include does not end with '>'",
-	   fr);
+	   _raw_tok_it_to_source(raw_begin),
+	   raw_it_to_range_in_file(raw_begin));
 	_remarks.add(remark);
 	throw pp_except(remark);
       } else if (unresolved.empty()) {
-	file_range fr (raw_begin->get_file_range().get_header_inclusion_node(),
-		       raw_begin->get_file_range().get_start_loc());
 	code_remark_raw remark(code_remark_raw::severity::fatal,
 			       "macro expansion at #include gives \"<>\"",
-			       fr);
+			       _raw_tok_it_to_source(raw_begin),
+			       raw_it_to_range_in_file(raw_begin));
 	_remarks.add(remark);
 	throw pp_except(remark);
       }
@@ -1487,21 +1536,19 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
 
       it_tok = skip(it_tok + 1);
       if (!it_tok->is_eof()) {
-	file_range fr (raw_begin->get_file_range().get_header_inclusion_node(),
-		       raw_begin->get_file_range().get_start_loc());
 	code_remark_raw remark
 	  (code_remark_raw::severity::fatal,
 	   "macro expansion at #include yields garbage at end",
-	   fr);
+	   _raw_tok_it_to_source(raw_begin),
+	   raw_it_to_range_in_file(raw_begin));
 	_remarks.add(remark);
 	throw pp_except(remark);
       }
     } else {
-      file_range fr (raw_begin->get_file_range().get_header_inclusion_node(),
-		     raw_begin->get_file_range().get_start_loc());
       code_remark_raw remark(code_remark_raw::severity::fatal,
 			     "macro expansion at #include doesn't conform",
-			     fr);
+			     _raw_tok_it_to_source(raw_begin),
+			     raw_it_to_range_in_file(raw_begin));
       _remarks.add(remark);
       throw pp_except(remark);
     }
@@ -1517,11 +1564,10 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
        _header_resolver.resolve(unresolved));
 
   if (resolved.empty()) {
-    file_range fr (raw_begin->get_file_range().get_header_inclusion_node(),
-		   raw_begin->get_file_range().get_start_loc());
     code_remark_raw remark(code_remark_raw::severity::fatal,
 			   "could not find header from #include",
-			   fr);
+			   _raw_tok_it_to_source(raw_begin),
+			   raw_it_to_range_in_file(raw_begin));
     _remarks.add(remark);
     throw pp_except(remark);
   }
@@ -1700,7 +1746,8 @@ _handle_macro_definition(const raw_pp_tokens_range &directive_range,
   if (!it->is_id()) {
     code_remark_raw remark(code_remark_raw::severity::fatal,
 			   "no identifier following #define",
-			   it->get_file_range());
+			   _raw_tok_it_to_source(it),
+			   it->get_range_in_file());
     _remarks.add(remark);
     throw pp_except(remark);
   }
@@ -1720,7 +1767,8 @@ _handle_macro_definition(const raw_pp_tokens_range &directive_range,
       if (variadic) {
 	code_remark_raw remark(code_remark_raw::severity::fatal,
 			       "garbage in macro argument list after ...",
-			       it->get_file_range());
+			       _raw_tok_it_to_source(it),
+			       it->get_range_in_file());
 	_remarks.add(remark);
 	throw pp_except(remark);
       }
@@ -1728,14 +1776,16 @@ _handle_macro_definition(const raw_pp_tokens_range &directive_range,
       if (!arg_names.empty() && !it->is_punctuator(",")) {
 	code_remark_raw remark(code_remark_raw::severity::fatal,
 			       "comma expected in macro argument list",
-			       it->get_file_range());
+			       _raw_tok_it_to_source(it),
+			       it->get_range_in_file());
 	_remarks.add(remark);
 	throw pp_except(remark);
       } else if (it->is_punctuator(",")) {
 	if (arg_names.empty()) {
 	  code_remark_raw remark(code_remark_raw::severity::fatal,
 				 "leading comma in macro argument list",
-				 it->get_file_range());
+				 _raw_tok_it_to_source(it),
+				 it->get_range_in_file());
 	  _remarks.add(remark);
 	  throw pp_except(remark);
 	}
@@ -1743,7 +1793,8 @@ _handle_macro_definition(const raw_pp_tokens_range &directive_range,
 	if (it == end || it->is_punctuator(")")) {
 	  code_remark_raw remark(code_remark_raw::severity::fatal,
 				 "trailing comma in macro argument list",
-				 it->get_file_range());
+				 _raw_tok_it_to_source(it),
+				 it->get_range_in_file());
 	  _remarks.add(remark);
 	  throw pp_except(remark);
 	}
@@ -1759,13 +1810,14 @@ _handle_macro_definition(const raw_pp_tokens_range &directive_range,
 	  code_remark_raw remark
 	    (code_remark_raw::severity::fatal,
 	     "__VA_ARGS__ not allowed as a macro argument name",
-	     it->get_file_range());
+	     _raw_tok_it_to_source(it), it->get_range_in_file());
 	  _remarks.add(remark);
 	  throw pp_except(remark);
 	} else if (!unique_arg_names.insert(it->get_value()).second) {
 	  code_remark_raw remark(code_remark_raw::severity::fatal,
 				 "duplicate macro argument name",
-				 it->get_file_range());
+				 _raw_tok_it_to_source(it),
+				 it->get_range_in_file());
 	  _remarks.add(remark);
 	  throw pp_except(remark);
 	}
@@ -1779,7 +1831,8 @@ _handle_macro_definition(const raw_pp_tokens_range &directive_range,
       } else {
 	code_remark_raw remark(code_remark_raw::severity::fatal,
 			       "garbage in macro argument list",
-			       it->get_file_range());
+			       _raw_tok_it_to_source(it),
+			       it->get_range_in_file());
 	_remarks.add(remark);
 	throw pp_except(remark);
       }
@@ -1787,7 +1840,8 @@ _handle_macro_definition(const raw_pp_tokens_range &directive_range,
     if (it == end) {
       code_remark_raw remark(code_remark_raw::severity::fatal,
 			     "macro argument list not closed",
-			     end->get_file_range());
+			     _raw_tok_it_to_source(it),
+			     end->get_range_in_file());
       _remarks.add(remark);
       throw pp_except(remark);
     }
@@ -1799,7 +1853,8 @@ _handle_macro_definition(const raw_pp_tokens_range &directive_range,
   if (it != end && !it->is_ws()) {
     code_remark_raw remark(code_remark_raw::severity::warning,
 			   "no whitespace before macro replacement list",
-			   it->get_file_range());
+			   _raw_tok_it_to_source(it),
+			   it->get_range_in_file());
     _remarks.add(remark);
   }
 
@@ -1825,13 +1880,15 @@ _normalize_macro_repl(const raw_pp_tokens::const_iterator begin,
   if (begin->is_punctuator("##")) {
     code_remark_raw remark(code_remark_raw::severity::fatal,
 			   "## at beginning of macro replacement list",
-			   begin->get_file_range());
+			   _raw_tok_it_to_source(begin),
+			   begin->get_range_in_file());
     _remarks.add(remark);
     throw pp_except(remark);
   } else if ((end - 1)->is_punctuator("##")) {
     code_remark_raw remark(code_remark_raw::severity::fatal,
 			   "## at end of macro replacement list",
-			   (end - 1)->get_file_range());
+			   _raw_tok_it_to_source(end - 1),
+			   (end - 1)->get_range_in_file());
     _remarks.add(remark);
     throw pp_except(remark);
   }
@@ -1875,7 +1932,8 @@ _normalize_macro_repl(const raw_pp_tokens::const_iterator begin,
 	  !arg_names.count(it_arg->get_value())) {
 	code_remark_raw remark(code_remark_raw::severity::fatal,
 			       "# in func-like macro not followed by parameter",
-			       (end - 1)->get_file_range());
+			       _raw_tok_it_to_source(end - 1),
+			       (end - 1)->get_range_in_file());
 	_remarks.add(remark);
 	throw pp_except(remark);
       }
@@ -1891,7 +1949,7 @@ _normalize_macro_repl(const raw_pp_tokens::const_iterator begin,
 }
 
 preprocessor::_macro_instance::
-_macro_instance(const preprocessor &preprocessor,
+_macro_instance(preprocessor &preprocessor,
 		const macro &macro,
 		std::vector<_pp_tokens> &&args,
 		std::vector<_pp_tokens> &&exp_args,
@@ -2319,6 +2377,12 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
   return tok;
 }
 
+const pp_result::header_inclusion_node&
+preprocessor::get_pending_token_source(const raw_pp_token_index tok)
+{
+  _fixup_inclusion_node_ranges();
+  return _pp_result->get_raw_token_source(tok);
+}
 
 preprocessor::_cond_incl_state::
 _cond_incl_state(const pp_token_index _range_begin)

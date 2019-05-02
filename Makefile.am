@@ -23,7 +23,6 @@ noinst_HEADERS =				\
 	constexpr_value.hh			\
 	execution_charset_encoder.hh		\
 	execution_charset_encoder_iconv.hh	\
-	file_range.hh				\
 	gnuc_parser_driver.hh			\
 	header_resolver.hh			\
 	macro.hh				\
@@ -40,6 +39,7 @@ noinst_HEADERS =				\
 	pp_tokens_range.hh			\
 	pp_tokenizer.hh			\
 	preprocessor.hh			\
+	range_in_file.hh			\
 	raw_pp_token.hh			\
 	raw_pp_tokens.hh			\
 	ret_type_invoker.hh			\
@@ -67,7 +67,6 @@ libcp_a_SOURCES =				\
 	constexpr_value.cc			\
 	execution_charset_encoder.cc		\
 	execution_charset_encoder_iconv.cc	\
-	file_range.cc				\
 	gnuc_parser.yy				\
 	gnuc_parser_driver.cc			\
 	header_resolver.cc			\

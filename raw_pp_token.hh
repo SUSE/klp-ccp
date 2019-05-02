@@ -3,7 +3,7 @@
 
 #include <string>
 #include "pp_token.hh"
-#include "file_range.hh"
+#include "range_in_file.hh"
 
 namespace klp
 {
@@ -13,7 +13,7 @@ namespace klp
     {
     public:
       raw_pp_token(const pp_token::type type, const std::string &value,
-		   const file_range &file_range);
+		   const range_in_file &range_in_file);
 
       bool operator==(const raw_pp_token &rhs) const noexcept;
 
@@ -27,9 +27,9 @@ namespace klp
 	return _value;
       }
 
-      const file_range& get_file_range() const noexcept
+      const range_in_file& get_range_in_file() const noexcept
       {
-	return _file_range;
+	return _range_in_file;
       }
 
       template <typename T>
@@ -83,7 +83,7 @@ namespace klp
 
 
       std::string _value;
-      file_range _file_range;
+      range_in_file _range_in_file;
       pp_token::type _type;
     };
 

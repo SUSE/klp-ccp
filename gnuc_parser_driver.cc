@@ -259,7 +259,8 @@ gnuc_parser_driver::lex(gnuc_parser::semantic_type *value,
 	_pp.get_result().get_raw_tokens()[tok_index];
       code_remark_raw remark(code_remark_raw::severity::fatal,
 			     "unrecognized preprocessor token (punctuator)",
-			     raw_tok.get_file_range());
+			     _pp.get_pending_token_source(tok_index),
+			     raw_tok.get_range_in_file());
       _remarks.add(remark);
       throw pp_except(remark);
     }
@@ -290,7 +291,8 @@ gnuc_parser_driver::lex(gnuc_parser::semantic_type *value,
 	_pp.get_result().get_raw_tokens()[tok_index];
       code_remark_raw remark(code_remark_raw::severity::fatal,
 			     "unrecognized preprocessor token (non-ws char)",
-			     raw_tok.get_file_range());
+			     _pp.get_pending_token_source(tok_index),
+			     raw_tok.get_range_in_file());
       _remarks.add(remark);
       throw pp_except(remark);
     }
