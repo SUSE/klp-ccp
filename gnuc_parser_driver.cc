@@ -3,6 +3,7 @@
 #include "gnuc_parser_driver.hh"
 #include "pp_except.hh"
 #include "parse_except.hh"
+#include "semantic_except.hh"
 
 
 using namespace klp::ccp::yy;
@@ -184,6 +185,12 @@ gnuc_parser_driver::lex(gnuc_parser::semantic_type *value,
     try {
       last_index = _pp.read_next_token();
     } catch (const pp_except&) {
+      _grab_pp_remarks();
+      throw;
+    } catch (const parse_except&) {
+      _grab_pp_remarks();
+      throw;
+    } catch (const semantic_except&) {
       _grab_pp_remarks();
       throw;
     }
