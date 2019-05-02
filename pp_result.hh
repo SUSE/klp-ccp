@@ -63,6 +63,7 @@ namespace klp
 	{ return this->_it == rhs._it; }
 
 	bool operator!=(const const_macro_invocation_iterator &rhs)
+	  const noexcept
 	{ return !(*this == rhs); }
 
 	reference operator*() const noexcept
@@ -380,6 +381,7 @@ namespace klp
 	used_macro_undefs _used_macro_undefs;
       };
 
+
       class header_inclusion_roots
       {
       private:
@@ -394,7 +396,7 @@ namespace klp
 	  bool operator==(const iterator &rhs) const noexcept
 	  { return this->_it == rhs._it; }
 
-	  bool operator!=(const iterator &rhs)
+	  bool operator!=(const iterator &rhs) const noexcept
 	  { return !(*this == rhs); }
 
 	  reference operator*() const noexcept
@@ -471,7 +473,7 @@ namespace klp
 	  bool operator==(const const_iterator &rhs) const noexcept
 	  { return this->_it == rhs._it; }
 
-	  bool operator!=(const const_iterator &rhs)
+	  bool operator!=(const const_iterator &rhs) const noexcept
 	  { return !(*this == rhs); }
 
 	  reference operator*() const noexcept
