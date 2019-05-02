@@ -328,6 +328,25 @@ void preprocessor::_handle_eof_from_tokenizer(raw_pp_token &&eof_tok)
   }
 }
 
+void preprocessor::_fixup_inclusion_node_ranges() noexcept
+{
+  // Fixup the all pending inclusion nodes' range information such
+  // that those intersecting a given query range can be found.
+  const raw_pp_token_index cur_raw_end = _pp_result->_raw_tokens.size();
+  for (auto it_root = _cur_header_inclusion_root + 1;
+       it_root != _pp_result->get_header_inclusion_roots().end();
+       ++it_root) {
+    it_root->_range.begin = cur_raw_end;
+    it_root->_range.end = cur_raw_end;
+  }
+
+  for (pp_result::inclusion_node *n = &_inclusions.top().get(); n;
+       n = n->_parent) {
+    n->_range.end = cur_raw_end;
+  }
+}
+
+
 file_range preprocessor::_pp_token_to_file_range(const _pp_token &tok) const
 {
   return _raw_pp_tokens_range_to_file_range(tok.get_token_source());
@@ -1587,6 +1606,7 @@ _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range)
   // Temporarily append the expanded pp_token instances from the
   // condition to _pp_result. They'll get purged again when we're done
   // with them.
+  _fixup_inclusion_node_ranges();
   auto read_tok =
     [&]() {
       if (it_raw_tok->is_newline() || it_raw_tok->is_eof()) {

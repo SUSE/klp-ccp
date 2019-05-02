@@ -260,6 +260,8 @@ namespace klp
 
       void _handle_eof_from_tokenizer(raw_pp_token &&eof_tok);
 
+      void _fixup_inclusion_node_ranges() noexcept;
+
       file_range _pp_token_to_file_range(const _pp_token &tok) const;
 
       file_range
