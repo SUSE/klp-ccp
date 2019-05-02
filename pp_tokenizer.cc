@@ -333,13 +333,15 @@ void pp_tokenizer::_skip_cpp_comment()
 {
   assert(_cur == '/' && _next == '/');
   _skip_next_char();
-  while(_cur != '\n')
-      _advance_to_next_char();
+  while(_cur != '\n') {
+    _advance_to_next_char();
 
-  if (!_cur) {
-    _remarks.add(code_remark(code_remark::severity::warning,
-			     "EOF within C++-style comment",
-			     _file, range_in_file(_cur_loc)));
+    if (!_cur) {
+      _remarks.add(code_remark(code_remark::severity::warning,
+			       "EOF within C++-style comment",
+			       _file, range_in_file(_cur_loc)));
+      return;
+    }
   }
 }
 
