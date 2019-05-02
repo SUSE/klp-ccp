@@ -22,7 +22,7 @@ pp_result::inclusion_node::inclusion_node()
   : _parent(nullptr)
 {}
 
-pp_result::inclusion_node::inclusion_node(const inclusion_node * const parent,
+pp_result::inclusion_node::inclusion_node(inclusion_node * const parent,
 					  const raw_pp_token_index range_begin)
   : _parent(parent), _range(range_begin, range_begin)
 {}
@@ -494,7 +494,7 @@ header_inclusion_node(const std::string &filename)
 {}
 
 pp_result::header_inclusion_node::
-header_inclusion_node(const inclusion_node &parent,
+header_inclusion_node(inclusion_node &parent,
 		      const raw_pp_token_index range_begin,
 		      const std::string &filename)
   : inclusion_node(&parent, range_begin), _filename(filename)
@@ -536,7 +536,7 @@ pp_result::header_inclusion_root::~header_inclusion_root() noexcept = default;
 
 
 pp_result::header_inclusion_child::
-header_inclusion_child(const inclusion_node &parent,
+header_inclusion_child(inclusion_node &parent,
 		       const std::string &filename,
 		       const raw_pp_tokens_range &directive_range,
 		       used_macros &&used_macros,
@@ -551,7 +551,7 @@ pp_result::header_inclusion_child::~header_inclusion_child() noexcept = default;
 
 
 pp_result::conditional_inclusion_node::
-conditional_inclusion_node(const inclusion_node &parent,
+conditional_inclusion_node(inclusion_node &parent,
 			   const raw_pp_token_index range_begin,
 			   used_macros &&used_macros,
 			   used_macro_undefs &&used_macro_undefs)

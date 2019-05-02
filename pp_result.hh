@@ -271,7 +271,7 @@ namespace klp
 
       protected:
 	inclusion_node();
-	inclusion_node(const inclusion_node * const parent,
+	inclusion_node(inclusion_node * const parent,
 		       const raw_pp_token_index range_begin);
 
 	recursive_header_inclusion_iterator
@@ -280,7 +280,7 @@ namespace klp
 	recursive_header_inclusion_iterator
 	header_inclusions_recursive_end() const;
 
-	const inclusion_node * const _parent;
+	inclusion_node * const _parent;
 
       private:
 	friend class preprocessor;
@@ -326,7 +326,7 @@ namespace klp
       protected:
 	header_inclusion_node(const std::string &filename);
 
-	header_inclusion_node(const inclusion_node &parent,
+	header_inclusion_node(inclusion_node &parent,
 			      const raw_pp_token_index range_begin,
 			      const std::string &filename);
 
@@ -357,7 +357,7 @@ namespace klp
       private:
 	friend class inclusion_node;
 
-	header_inclusion_child(const inclusion_node &parent,
+	header_inclusion_child(inclusion_node &parent,
 			       const std::string &filename,
 			       const raw_pp_tokens_range &directive_range,
 			       used_macros &&used_macros,
@@ -380,7 +380,7 @@ namespace klp
 	friend class inclusion_node;
 	friend class preprocessor;
 
-	conditional_inclusion_node(const inclusion_node &parent,
+	conditional_inclusion_node(inclusion_node &parent,
 				   const raw_pp_token_index range_begin,
 				   used_macros &&used_macros,
 				   used_macro_undefs &&used_macro_undefs);
