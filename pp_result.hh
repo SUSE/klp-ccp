@@ -387,7 +387,7 @@ namespace klp
 		_container_type;
 
       public:
-	class iterator : public std::iterator<std::forward_iterator_tag,
+	class iterator : public std::iterator<std::random_access_iterator_tag,
 					      header_inclusion_root>
 	{
 	public:
@@ -409,6 +409,47 @@ namespace klp
 	  const iterator operator++(int)
 	  { return iterator{_it++}; }
 
+	  iterator& operator--()
+	  { --_it; return *this; }
+
+	  const iterator operator--(int)
+	  { return iterator{_it--}; }
+
+	  const iterator&
+	  operator+=(const difference_type n)
+	  { _it += n; return *this; }
+
+	  const iterator&
+	  operator-=(const difference_type n)
+	  { _it -= n; return *this; }
+
+	  const iterator
+	  operator+(const difference_type n) const
+	  { return iterator(_it + n); }
+
+	  const iterator
+	  operator-(const difference_type n) const
+	  { return iterator(_it - n); }
+
+	  const difference_type
+	  operator-(const iterator &op) const
+	  { return this->_it - op._it; }
+
+	  reference operator[](const difference_type n) const
+	  { return *(*this + n); }
+
+	  bool operator<(const iterator &op) const
+	  { return this->_it < op._it; }
+
+	  bool operator>(const iterator &op) const
+	  { return this->_it > op._it; }
+
+	  bool operator<=(const iterator &op) const
+	  { return this->_it <= op._it; }
+
+	  bool operator>=(const iterator &op) const
+	  { return this->_it >= op._it; }
+
 	private:
 	  friend class header_inclusion_roots;
 
@@ -419,10 +460,14 @@ namespace klp
 	  _container_type::iterator _it;
 	};
 
-	class const_iterator : public std::iterator<std::forward_iterator_tag,
-						    const header_inclusion_root>
+	class const_iterator
+	  : public std::iterator<std::random_access_iterator_tag,
+				 const header_inclusion_root>
 	{
 	public:
+	  const_iterator()
+	  {};
+
 	  bool operator==(const const_iterator &rhs) const noexcept
 	  { return this->_it == rhs._it; }
 
@@ -440,6 +485,47 @@ namespace klp
 
 	  const const_iterator operator++(int)
 	  { return const_iterator{_it++}; }
+
+	  const_iterator& operator--()
+	  { --_it; return *this; }
+
+	  const const_iterator operator--(int)
+	  { return const_iterator{_it--}; }
+
+	  const const_iterator&
+	  operator+=(const difference_type n)
+	  { _it += n; return *this; }
+
+	  const const_iterator&
+	  operator-=(const difference_type n)
+	  { _it -= n; return *this; }
+
+	  const const_iterator
+	  operator+(const difference_type n) const
+	  { return const_iterator(_it + n); }
+
+	  const const_iterator
+	  operator-(const difference_type n) const
+	  { return const_iterator(_it - n); }
+
+	  const difference_type
+	  operator-(const const_iterator &op) const
+	  { return this->_it - op._it; }
+
+	  reference operator[](const difference_type n) const
+	  { return *(*this + n); }
+
+	  bool operator<(const const_iterator &op) const
+	  { return this->_it < op._it; }
+
+	  bool operator>(const const_iterator &op) const
+	  { return this->_it > op._it; }
+
+	  bool operator<=(const const_iterator &op) const
+	  { return this->_it <= op._it; }
+
+	  bool operator>=(const const_iterator &op) const
+	  { return this->_it >= op._it; }
 
 	private:
 	  friend class header_inclusion_roots;
