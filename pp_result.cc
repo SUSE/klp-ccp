@@ -46,13 +46,15 @@ pp_result::header_inclusion_child& pp_result::inclusion_node::
 _add_header_inclusion(const std::string &filename,
 		      const raw_pp_tokens_range &directive_range,
 		      used_macros &&used_macros,
-		      used_macro_undefs &&used_macro_undefs)
+		      used_macro_undefs &&used_macro_undefs,
+		      pp_result &container)
 {
   std::unique_ptr<header_inclusion_child> new_child
      (new header_inclusion_child(*this, filename,
 				 directive_range,
 				 std::move(used_macros),
-				 std::move(used_macro_undefs)));
+				 std::move(used_macro_undefs),
+				 container._next_header_node_id++));
   header_inclusion_child &_new_child = *new_child;
   _children.emplace_back(std::move(new_child));
   return _new_child;
@@ -490,14 +492,15 @@ void pp_result::const_intersecting_source_iterator::_fwd_walk_to_header_dfs_po()
 
 pp_result::header_inclusion_node::
 header_inclusion_node(const std::string &filename)
-  : _filename(filename)
+  : _filename(filename), _id(std::numeric_limits<unsigned long>::max())
 {}
 
 pp_result::header_inclusion_node::
 header_inclusion_node(inclusion_node &parent,
 		      const raw_pp_token_index range_begin,
-		      const std::string &filename)
-  : inclusion_node(&parent, range_begin), _filename(filename)
+		      const std::string &filename,
+		      const unsigned long id)
+  : inclusion_node(&parent, range_begin), _filename(filename), _id(id)
 {}
 
 pp_result::header_inclusion_node::~header_inclusion_node() noexcept = default;
@@ -526,6 +529,18 @@ pp_result::header_inclusion_node::create_source_reader() const
   return std::unique_ptr<source_reader>(new file_source_reader(_filename));
 }
 
+unsigned long pp_result::header_inclusion_node::get_id() const noexcept
+{
+  assert(_id != std::numeric_limits<unsigned long>::max());
+  return _id;
+}
+
+void pp_result::header_inclusion_node::_set_id(const unsigned long id) noexcept
+{
+  assert(_id == std::numeric_limits<unsigned long>::max());
+  _id = id;
+}
+
 
 pp_result::header_inclusion_root::
 header_inclusion_root(const std::string &filename, const bool is_preinclude)
@@ -540,8 +555,9 @@ header_inclusion_child(inclusion_node &parent,
 		       const std::string &filename,
 		       const raw_pp_tokens_range &directive_range,
 		       used_macros &&used_macros,
-		       used_macro_undefs &&used_macro_undefs)
-  : header_inclusion_node(parent, directive_range.end, filename),
+		       used_macro_undefs &&used_macro_undefs,
+		       const unsigned long id)
+  : header_inclusion_node(parent, directive_range.end, filename, id),
     _directive_range(directive_range),
     _used_macros(std::move(used_macros)),
     _used_macro_undefs(std::move(used_macro_undefs))
@@ -584,11 +600,17 @@ header_inclusion_roots(header_inclusion_roots &&hirs)
 pp_result::header_inclusion_roots::~header_inclusion_roots() noexcept = default;
 
 
-pp_result::pp_result() = default;
+pp_result::pp_result()
+  : _next_header_node_id(0)
+{}
 
 pp_result::pp_result(header_inclusion_roots &&header_inclusion_roots)
-  : _header_inclusion_roots(std::move(header_inclusion_roots))
-{}
+  : _header_inclusion_roots(std::move(header_inclusion_roots)),
+    _next_header_node_id(0)
+{
+  for (auto &hr : _header_inclusion_roots)
+    hr._set_id(_next_header_node_id++);
+}
 
 std::pair<pp_result::const_macro_invocation_iterator,
 	  pp_result::const_macro_invocation_iterator>

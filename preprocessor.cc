@@ -1576,7 +1576,8 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
     = _inclusions.top().get()._add_header_inclusion(resolved,
 						    directive_range,
 						    std::move(um),
-						    std::move(umu));
+						    std::move(umu),
+						    *_pp_result);
   _tokenizers.emplace(new_header_inclusion_node);
   _inclusions.emplace(std::ref(new_header_inclusion_node));
 }

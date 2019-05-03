@@ -290,7 +290,8 @@ namespace klp
 	_add_header_inclusion(const std::string &filename,
 			      const raw_pp_tokens_range &directive_range,
 			      used_macros &&used_macros,
-			      used_macro_undefs &&used_macro_undefs);
+			      used_macro_undefs &&used_macro_undefs,
+			      pp_result &container);
 
 	conditional_inclusion_node&
 	_add_conditional_inclusion(const raw_pp_token_index range_begin,
@@ -324,17 +325,23 @@ namespace klp
 
 	std::unique_ptr<source_reader> create_source_reader() const;
 
+	unsigned long get_id() const noexcept;
+
       protected:
 	header_inclusion_node(const std::string &filename);
 
 	header_inclusion_node(inclusion_node &parent,
 			      const raw_pp_token_index range_begin,
-			      const std::string &filename);
+			      const std::string &filename,
+			      const unsigned long id);
 
       private:
-	const std::string _filename;
+	friend class pp_result;
+	void _set_id(const unsigned long id) noexcept;
 
+	const std::string _filename;
 	offset_to_line_col_map _offset_to_line_col_map;
+	unsigned long _id;
       };
 
 
@@ -362,7 +369,8 @@ namespace klp
 			       const std::string &filename,
 			       const raw_pp_tokens_range &directive_range,
 			       used_macros &&used_macros,
-			       used_macro_undefs &&used_macro_undefs);
+			       used_macro_undefs &&used_macro_undefs,
+			       const unsigned long id);
 
 	raw_pp_tokens_range _directive_range;
 	used_macros _used_macros;
@@ -670,6 +678,9 @@ namespace klp
       pp_tokens &get_pp_tokens() noexcept
       { return _pp_tokens; }
 
+      unsigned long get_header_ids_end() const noexcept
+      { return _next_header_node_id; }
+
 
     private:
       friend class preprocessor;
@@ -712,6 +723,8 @@ namespace klp
       std::vector<std::unique_ptr<macro_invocation>> _macro_invocations;
       std::vector<std::unique_ptr<const macro>> _macros;
       std::vector<std::unique_ptr<const macro_undef>> _macro_undefs;
+
+      unsigned long _next_header_node_id;
     };
 
 
