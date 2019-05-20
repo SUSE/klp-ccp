@@ -847,6 +847,9 @@ namespace klp
 			      const bool is_preinclude);
 	virtual ~header_inclusion_root() noexcept;
 
+	bool is_preinclude() const noexcept
+	{ return _is_preinclude; }
+
       private:
 	bool _is_preinclude;
       };
