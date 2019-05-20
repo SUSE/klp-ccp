@@ -46,7 +46,7 @@ namespace klp
 
 	virtual ~_ast_entity() noexcept;
 
-	const pp_tokens_range get_tokens_range() const noexcept
+	const pp_tokens_range& get_tokens_range() const noexcept
 	{ return _tokens_range; }
 
 	_ast_entity* get_parent() noexcept
