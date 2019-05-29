@@ -2410,6 +2410,8 @@ namespace klp
 	bool is_first() const noexcept
 	{ return _first_in_list; }
 
+	bool is_visible_from(const sou_decl_list_node &from) const noexcept;
+
       private:
 	template <typename target_type>
 	void __link_to(target_type &target) noexcept;
@@ -2738,6 +2740,8 @@ namespace klp
 
 	bool is_first() const noexcept
 	{ return _first_in_list; }
+
+	bool is_visible_from(const enum_decl_list_node &from) const noexcept;
 
       private:
 	template <typename target_type>

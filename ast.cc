@@ -3560,6 +3560,22 @@ struct_or_union_def* sou_decl_list_node::find_definition() const noexcept
   return nullptr;
 }
 
+bool sou_decl_list_node::is_visible_from(const sou_decl_list_node &from)
+  const noexcept
+{
+  assert(&from._find_decl_node() == &from);
+  for (const sou_decl_list_node *cur = &from;
+       cur;
+       cur = (!cur->is_first() ?
+	      &cur->get_next().get_target_decl_list_node() :
+	      nullptr)) {
+    if (cur == this)
+      return true;
+  }
+
+  return false;
+}
+
 const sou_decl_list_node &sou_decl_list_node::_find_decl_node()
   const noexcept
 {
@@ -4043,6 +4059,22 @@ enum_def* enum_decl_list_node::find_definition() const noexcept
   } while (cur != &start);
 
   return nullptr;
+}
+
+bool enum_decl_list_node::is_visible_from(const enum_decl_list_node &from)
+  const noexcept
+{
+  assert(&from._find_decl_node() == &from);
+  for (const enum_decl_list_node *cur = &from;
+       cur;
+       cur = (!cur->is_first() ?
+	      &cur->get_next().get_target_decl_list_node() :
+	      nullptr)) {
+    if (cur == this)
+      return true;
+  }
+
+  return false;
 }
 
 const enum_decl_list_node& enum_decl_list_node::_find_decl_node()
