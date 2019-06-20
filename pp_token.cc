@@ -7,10 +7,8 @@
 using namespace klp::ccp;
 
 pp_token::pp_token(const type type, const std::string &value,
-		   const raw_pp_tokens_range &token_source,
-		   const macro_undef *used_macro_undef)
-  : _value(value), _token_source(token_source),
-    _used_macro_undef(used_macro_undef), _type(type)
+		   const raw_pp_tokens_range &token_source)
+  : _value(value), _token_source(token_source), _type(type)
 {}
 
 void pp_token::set_type_and_value(const type type, const std::string &value)

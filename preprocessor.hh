@@ -56,8 +56,7 @@ namespace klp
 		  const used_macros &eh);
 
 	_pp_token(const pp_token::type type, const std::string &value,
-		  const raw_pp_tokens_range &token_source,
-		  const macro_undef *used_macro_undef = nullptr);
+		  const raw_pp_tokens_range &token_source);
 
 	pp_token::type get_type() const noexcept
 	{
@@ -92,12 +91,6 @@ namespace klp
 
 	pp_result::macro_invocation * get_macro_invocation()
 	  const noexcept;
-
-	void set_used_macro_undef(const macro_undef *used_macro_undef)
-	  noexcept;
-
-	const macro_undef *get_used_macro_undef() const noexcept;
-
 
 	operator bool() const noexcept
 	{
@@ -168,7 +161,6 @@ namespace klp
 	std::string _value;
 	raw_pp_tokens_range _token_source;
 	pp_result::macro_invocation * _macro_invocation;
-	const macro_undef * _used_macro_undef;
 
 	// Used for avoiding macro recursion as appropriate.
 	class used_macros _expansion_history;
@@ -304,10 +296,6 @@ namespace klp
 			const bool expand, const bool variadic);
 
       static used_macros _collect_used_macros(const pp_result &pp_result);
-      static used_macro_undefs
-      _collect_used_macro_undefs(const pp_result &pp_result);
-      static used_macro_undefs
-      _collect_used_macro_undefs(const pp_tokens &toks);
 
       std::pair<used_macros, used_macro_undefs>
       _drop_pp_tokens_tail(const pp_tokens::size_type new_end);

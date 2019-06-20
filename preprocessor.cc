@@ -244,9 +244,7 @@ pp_token_index preprocessor::_emit_pp_token(pp_result &r, _pp_token &&tok)
 {
   if (!tok.get_macro_invocation()) {
     r._append_token
-      (pp_token{tok.get_type(), tok.get_value(),
-		tok.get_token_source(),
-		tok.get_used_macro_undef()});
+      (pp_token{tok.get_type(), tok.get_value(), tok.get_token_source()});
   } else {
     r._append_token
       (pp_token{tok.get_type(), tok.get_value(),
@@ -825,8 +823,6 @@ preprocessor::_expand(_expansion_state &state,
 	}
 	if (mi) {
 	  mi->_used_macro_undefs += it_m_undef->second;
-	} else {
-	  tok.set_used_macro_undef(&it_m_undef->second.get());
 	}
       }
     }
@@ -886,7 +882,6 @@ preprocessor::_expand(_expansion_state &state,
       }
       const std::string &id = std::get<0>(arg)[0].get_value();
       bool is_defined = false;
-      const macro_undef *used_macro_undef = nullptr;
       auto it_m = _macros.find(id);
       if (it_m != _macros.end()) {
 	if (!mi) {
@@ -908,8 +903,6 @@ preprocessor::_expand(_expansion_state &state,
 	    // Add this macro undef to the macro_invocation the
 	    // "defined" token came from.
 	    mi->_used_macro_undefs += it_m_undef->second;
-	  } else {
-	    used_macro_undef = &it_m_undef->second.get();
 	  }
 	}
       }
@@ -926,8 +919,7 @@ preprocessor::_expand(_expansion_state &state,
       } else {
 	return _pp_token(pp_token::type::pp_number,
 			 is_defined ? "1" : "0",
-			 raw_pp_tokens_range{invocation_begin, invocation_end},
-			 used_macro_undef);
+			 raw_pp_tokens_range{invocation_begin, invocation_end});
       }
     }
   }
@@ -941,16 +933,14 @@ _pp_token(const pp_token::type type, const std::string &value,
 	  const raw_pp_tokens_range &token_source,
 	  const class used_macros &eh)
   : _value(value), _token_source(token_source), _macro_invocation(nullptr),
-    _used_macro_undef(nullptr), _expansion_history(std::move(eh)),
-    _type(type)
+    _expansion_history(std::move(eh)), _type(type)
 {}
 
 preprocessor::_pp_token::
 _pp_token(const pp_token::type type, const std::string &value,
-	  const raw_pp_tokens_range &token_source,
-	  const macro_undef *used_macro_undef)
+	  const raw_pp_tokens_range &token_source)
   : _value(value), _token_source(token_source), _macro_invocation(nullptr),
-    _used_macro_undef(used_macro_undef), _type(type)
+    _type(type)
 {}
 
 void preprocessor::_pp_token::set_type_and_value(const pp_token::type type,
@@ -963,7 +953,7 @@ void preprocessor::_pp_token::set_type_and_value(const pp_token::type type,
 void preprocessor::_pp_token::
 set_macro_invocation(pp_result::macro_invocation *mi) noexcept
 {
-  assert(!_macro_invocation && !_used_macro_undef);
+  assert(!_macro_invocation);
   _macro_invocation = mi;
 }
 
@@ -971,19 +961,6 @@ pp_result::macro_invocation *
 preprocessor::_pp_token::get_macro_invocation() const noexcept
 {
   return _macro_invocation;
-}
-
-void preprocessor::_pp_token::
-set_used_macro_undef(const macro_undef *used_macro_undef) noexcept
-{
-  assert(!_macro_invocation && !_used_macro_undef);
-  _used_macro_undef = used_macro_undef;
-}
-
-const macro_undef* preprocessor::_pp_token::
-get_used_macro_undef() const noexcept
-{
-  return _used_macro_undef;
 }
 
 std::string preprocessor::_pp_token::stringify() const
@@ -1350,13 +1327,6 @@ preprocessor::_drop_pp_tokens_tail(const pp_tokens::size_type new_end)
     umu += it_mi->get_used_macro_undefs();
   }
 
-  // Collect used_macro_undefs from the pp_tokens themselves.
-  for(auto it_tok = tail_begin; it_tok != _pp_result->get_pp_tokens().end();
-      ++it_tok) {
-    if (it_tok->get_used_macro_undef())
-      umu += *it_tok->get_used_macro_undef();
-  }
-
   // And finally drop the tail.
   _pp_result->_drop_pp_tokens_tail(new_end);
 
@@ -1370,31 +1340,6 @@ used_macros preprocessor::_collect_used_macros(const pp_result &pp_result)
 
   for (auto &mi : pp_result._macro_invocations) {
     result += mi->_used_macros;
-  }
-
-  return result;
-}
-
-used_macro_undefs
-preprocessor::_collect_used_macro_undefs(const pp_result &pp_result)
-{
-  used_macro_undefs result;
-
-  for (auto &mi : pp_result._macro_invocations) {
-    result += mi->_used_macro_undefs;
-  }
-
-  return result;
-}
-
-used_macro_undefs
-preprocessor::_collect_used_macro_undefs(const pp_tokens &toks)
-{
-  used_macro_undefs result;
-
-  for (auto tok : toks) {
-    if (tok.get_used_macro_undef())
-      result += *tok.get_used_macro_undef();
   }
 
   return result;
