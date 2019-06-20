@@ -295,8 +295,6 @@ namespace klp
       _create_macro_arg(const std::function<_pp_token()> &token_reader,
 			const bool expand, const bool variadic);
 
-      static used_macros _collect_used_macros(const pp_result &pp_result);
-
       std::pair<used_macros, used_macro_undefs>
       _drop_pp_tokens_tail(const pp_tokens::size_type new_end);
 

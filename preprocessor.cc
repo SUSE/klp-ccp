@@ -1334,17 +1334,6 @@ preprocessor::_drop_pp_tokens_tail(const pp_tokens::size_type new_end)
 }
 
 
-used_macros preprocessor::_collect_used_macros(const pp_result &pp_result)
-{
-  used_macros result;
-
-  for (auto &mi : pp_result._macro_invocations) {
-    result += mi->_used_macros;
-  }
-
-  return result;
-}
-
 void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
 {
   const raw_pp_tokens::const_iterator raw_begin =
