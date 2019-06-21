@@ -15,12 +15,10 @@ macro::macro(const std::string &name,
 	     const bool variadic,
 	     std::vector<std::string> &&arg_names,
 	     raw_pp_tokens &&repl,
-	     const raw_pp_tokens_range &directive_range,
-	     const macro_undef *prev_macro_undef)
+	     const raw_pp_tokens_range &directive_range)
   : _name(name), _arg_names(std::move(arg_names)),
     _repl(std::move(repl)),
     _directive_range(directive_range),
-    _prev_macro_undef(prev_macro_undef),
     _func_like(func_like),
     _variadic(variadic)
 {

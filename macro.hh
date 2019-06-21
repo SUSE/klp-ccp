@@ -48,8 +48,7 @@ namespace klp
 	    const bool variadic,
 	    std::vector<std::string> &&arg_names,
 	    raw_pp_tokens &&repl,
-	    const raw_pp_tokens_range &directive_range,
-	    const macro_undef *prev_macro_undef);
+	    const raw_pp_tokens_range &directive_range);
 
       raw_pp_tokens::const_iterator
       _next_non_ws_repl(const raw_pp_tokens::const_iterator it) const noexcept;
@@ -65,7 +64,6 @@ namespace klp
       std::vector<std::string> _arg_names;
       raw_pp_tokens _repl;
       raw_pp_tokens_range _directive_range;
-      const macro_undef *_prev_macro_undef;
       std::vector<bool> _do_expand_args;
       bool _func_like;
       bool _variadic;

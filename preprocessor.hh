@@ -309,8 +309,7 @@ namespace klp
       _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range);
 
       const macro&
-      _handle_macro_definition(const raw_pp_tokens_range &directive_range,
-			       const macro_undef *macro_undef);
+      _handle_macro_definition(const raw_pp_tokens_range &directive_range);
 
       raw_pp_tokens
       _normalize_macro_repl(const raw_pp_tokens::const_iterator begin,

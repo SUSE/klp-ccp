@@ -710,13 +710,12 @@ _add_macro(const std::string &name,
 	   const bool variadic,
 	   std::vector<std::string> &&arg_names,
 	   raw_pp_tokens &&repl,
-	   const raw_pp_tokens_range &directive_range,
-	   const macro_undef *prev_macro_undef)
+	   const raw_pp_tokens_range &directive_range)
 {
   _macros.push_back(std::unique_ptr<const macro>{
 			new macro{name, func_like, variadic,
 				  std::move(arg_names), std::move(repl),
-				  directive_range, prev_macro_undef}});
+				  directive_range}});
   return *_macros.back();
 }
 

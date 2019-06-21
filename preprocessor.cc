@@ -608,15 +608,12 @@ void preprocessor::_handle_pp_directive()
     }
 
     auto it_m_undef = _macro_undefs.find(it_tok->get_value());
-    const macro_undef *m_undef = nullptr;
     if (it_m_undef != _macro_undefs.end()) {
-      m_undef = &it_m_undef->second.get();
       _macro_undefs.erase(it_m_undef);
     }
 
     const macro &m =
-      _handle_macro_definition(raw_pp_tokens_range{raw_begin, raw_end},
-			       m_undef);
+      _handle_macro_definition(raw_pp_tokens_range{raw_begin, raw_end});
 
     auto it_existing = _macros.find(m.get_name());
     if (it_existing != _macros.end() && it_existing->second.get() != m) {
@@ -1644,8 +1641,7 @@ _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range)
 }
 
 const macro& preprocessor::
-_handle_macro_definition(const raw_pp_tokens_range &directive_range,
-			 const macro_undef *macro_undef)
+_handle_macro_definition(const raw_pp_tokens_range &directive_range)
 {
   const raw_pp_tokens::const_iterator begin =
     _pp_result->get_raw_tokens().begin() + directive_range.begin;
@@ -1794,7 +1790,7 @@ _handle_macro_definition(const raw_pp_tokens_range &directive_range,
   return (_pp_result->_add_macro
 	  (name, func_like, variadic, std::move(arg_names),
 	   _normalize_macro_repl(it, end, func_like, unique_arg_names),
-	   directive_range, macro_undef));
+	   directive_range));
 }
 
 raw_pp_tokens preprocessor::
