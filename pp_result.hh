@@ -11,7 +11,6 @@
 #include "pp_tokens_range.hh"
 #include "macro_nondef_constraints.hh"
 #include "offset_to_line_col_map.hh"
-#include "macro_undef.hh"
 
 namespace klp
 {
@@ -77,6 +76,18 @@ namespace klp
 	std::vector<bool> _do_expand_args;
 	bool _func_like;
 	bool _variadic;
+      };
+
+      class macro_undef
+      {
+      private:
+	friend class pp_result;
+
+	macro_undef(const std::string &name,
+		    const raw_pp_tokens_range &directive_range);
+
+	std::string _name;
+	raw_pp_tokens_range _directive_range;
       };
 
       class used_macros

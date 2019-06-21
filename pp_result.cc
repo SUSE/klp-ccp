@@ -132,6 +132,12 @@ bool pp_result::macro::_is_concat_op(const raw_pp_tokens::const_iterator &it)
 }
 
 
+pp_result::macro_undef::macro_undef(const std::string &name,
+				    const raw_pp_tokens_range &directive_range)
+  : _name(name), _directive_range(directive_range)
+{}
+
+
 pp_result::used_macros::used_macros(_used_macros_type &&um)
   : _used_macros(std::move(um))
 {}
@@ -879,7 +885,7 @@ _add_macro(const std::string &name,
   return *_macros.back();
 }
 
-const macro_undef& pp_result::
+const pp_result::macro_undef& pp_result::
 _add_macro_undef(const std::string &name,
 		 const raw_pp_tokens_range &directive_range)
 {

@@ -25,7 +25,6 @@ noinst_HEADERS =				\
 	gnuc_parser_driver.hh			\
 	header_resolver.hh			\
 	macro_nondef_constraints.hh		\
-	macro_undef.hh				\
 	mp_arithmetic.hh			\
 	offset_to_line_col_map.hh		\
 	parse_except.hh			\
@@ -67,7 +66,6 @@ libcp_a_SOURCES =				\
 	gnuc_parser_driver.cc			\
 	header_resolver.cc			\
 	macro_nondef_constraints.cc		\
-	macro_undef.cc				\
 	mp_arithmetic.cc			\
 	offset_to_line_col_map.cc		\
 	parse_except.cc			\
