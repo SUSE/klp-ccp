@@ -465,6 +465,8 @@ void preprocessor::_handle_pp_directive()
     }
   }
 
+  _pp_result->_add_directive(raw_pp_tokens_range{raw_begin, raw_end});
+
   if (is_endif)
     return;
 

@@ -7,6 +7,12 @@
 using namespace klp::ccp;
 
 
+pp_result::directive::directive(const raw_pp_tokens_range &directive_range)
+  noexcept
+  : _directive_range(directive_range)
+{}
+
+
 pp_result::macro::macro(const std::string &name,
 			const bool func_like,
 			const bool variadic,
@@ -945,6 +951,11 @@ _add_macro_undef(const std::string &name,
   _macro_undefs.push_back(std::unique_ptr<const macro_undef>{
 				new macro_undef{name, directive_range}});
   return *_macro_undefs.back();
+}
+
+void pp_result::_add_directive(const raw_pp_tokens_range &directive_range)
+{
+  _directives.emplace_back(directive_range);
 }
 
 std::pair<pp_result::used_macros, pp_result::macro_nondef_constraints>

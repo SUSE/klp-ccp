@@ -21,6 +21,18 @@ namespace klp
     class pp_result
     {
     public:
+      class directive
+      {
+      public:
+	directive(const raw_pp_tokens_range &directive_range) noexcept;
+
+	const raw_pp_tokens_range& get_source_range() const noexcept
+	{ return _directive_range; }
+
+      private:
+	raw_pp_tokens_range _directive_range;
+      };
+
       class macro
       {
       public:
@@ -863,6 +875,8 @@ namespace klp
       _add_macro_undef(const std::string &name,
 		       const raw_pp_tokens_range &directive_range);
 
+      void _add_directive(const raw_pp_tokens_range &directive_range);
+
       std::pair<used_macros, macro_nondef_constraints>
       _drop_pp_tokens_tail(const pp_tokens::size_type new_end);
 
@@ -871,6 +885,7 @@ namespace klp
       pp_tokens _pp_tokens;
 
       std::vector<std::unique_ptr<macro_invocation>> _macro_invocations;
+      std::vector<directive> _directives;
       std::vector<std::unique_ptr<const macro>> _macros;
       std::vector<std::unique_ptr<const macro_undef>> _macro_undefs;
 
