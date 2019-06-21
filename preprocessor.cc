@@ -1386,15 +1386,13 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
     // Run a macro expansion. Temporarily append the expanded pp_token
     // instances to _pp_result and drop them afterwards again.
     auto read_tok = [&]() {
-      if (it_raw_tok->is_newline() || it_raw_tok->is_eof()) {
-	const raw_pp_token_index eof_index =
-	  _pp_result->get_raw_tokens().size();
-	return _pp_token(pp_token::type::eof, std::string(),
-			 raw_pp_tokens_range{eof_index, eof_index});
-      }
-
       const raw_pp_token_index tok_index =
 	it_raw_tok - _pp_result->get_raw_tokens().cbegin();
+      if (it_raw_tok->is_newline() || it_raw_tok->is_eof()) {
+	return _pp_token(pp_token::type::eof, std::string(),
+			 raw_pp_tokens_range{tok_index, tok_index});
+      }
+
       _pp_token tok{it_raw_tok->get_type(), it_raw_tok->get_value(),
 		    raw_pp_tokens_range{tok_index}};
       ++it_raw_tok;
@@ -1590,15 +1588,13 @@ _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range)
   _fixup_inclusion_node_ranges();
   auto read_tok =
     [&]() {
-      if (it_raw_tok->is_newline() || it_raw_tok->is_eof()) {
-	const raw_pp_token_index eof_index =
-	  _pp_result->get_raw_tokens().size();
-	return _pp_token(pp_token::type::eof, std::string(),
-			 raw_pp_tokens_range{eof_index, eof_index});
-      }
-
       const raw_pp_token_index tok_index =
 	it_raw_tok - _pp_result->get_raw_tokens().cbegin();
+      if (it_raw_tok->is_newline() || it_raw_tok->is_eof()) {
+	return _pp_token(pp_token::type::eof, std::string(),
+			 raw_pp_tokens_range{tok_index, tok_index});
+      }
+
       _pp_token tok{it_raw_tok->get_type(), it_raw_tok->get_value(),
 		    raw_pp_tokens_range{tok_index}};
       ++it_raw_tok;
