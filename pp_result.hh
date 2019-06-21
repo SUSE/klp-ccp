@@ -718,7 +718,7 @@ namespace klp
 			      const raw_pp_tokens_range &directive_range);
 
       const macro_undef&
-      _add_macro_undef(const macro &m,
+      _add_macro_undef(const std::string &name,
 		       const raw_pp_tokens_range &directive_range);
 
       std::pair<used_macros, macro_nondef_constraints>

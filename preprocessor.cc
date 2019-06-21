@@ -648,9 +648,8 @@ void preprocessor::_handle_pp_directive()
 
     auto it_m = _macros.find(it_tok_id->get_value());
     if (it_m != _macros.end()) {
-      const macro_undef &mu =
-	_pp_result->_add_macro_undef(it_m->second,
-				     raw_pp_tokens_range{raw_begin, raw_end});
+      _pp_result->_add_macro_undef(it_tok->get_value(),
+				   raw_pp_tokens_range{raw_begin, raw_end});
       _macros.erase(it_m);
     }
 

@@ -1,6 +1,7 @@
 #ifndef MACRO_UNDEF_HH
 #define MACRO_UNDEF_HH
 
+#include <string>
 #include "raw_pp_tokens_range.hh"
 
 namespace klp
@@ -14,10 +15,10 @@ namespace klp
     private:
       friend class pp_result;
 
-      macro_undef(const macro &macro,
+      macro_undef(const std::string &name,
 		  const raw_pp_tokens_range &directive_range);
 
-      const macro &_macro;
+      std::string _name;
       raw_pp_tokens_range _directive_range;
     };
   }

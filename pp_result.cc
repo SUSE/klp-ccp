@@ -720,10 +720,11 @@ _add_macro(const std::string &name,
 }
 
 const macro_undef& pp_result::
-_add_macro_undef(const macro &m, const raw_pp_tokens_range &directive_range)
+_add_macro_undef(const std::string &name,
+		 const raw_pp_tokens_range &directive_range)
 {
   _macro_undefs.push_back(std::unique_ptr<const macro_undef>{
-				new macro_undef{m, directive_range}});
+				new macro_undef{name, directive_range}});
   return *_macro_undefs.back();
 }
 
