@@ -330,7 +330,6 @@ namespace klp
       std::stack<pp_tokenizer> _tokenizers;
       _expansion_state _root_expansion_state;
       std::map<std::string, std::reference_wrapper<const macro> > _macros;
-      std::map<std::string, std::reference_wrapper<const macro_undef> > _macro_undefs;
 
       pp_result::macro_invocation *_cur_macro_invocation;
 

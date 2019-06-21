@@ -607,11 +607,6 @@ void preprocessor::_handle_pp_directive()
       throw pp_except(remark);
     }
 
-    auto it_m_undef = _macro_undefs.find(it_tok->get_value());
-    if (it_m_undef != _macro_undefs.end()) {
-      _macro_undefs.erase(it_m_undef);
-    }
-
     const macro &m =
       _handle_macro_definition(raw_pp_tokens_range{raw_begin, raw_end});
 
@@ -656,8 +651,6 @@ void preprocessor::_handle_pp_directive()
       const macro_undef &mu =
 	_pp_result->_add_macro_undef(it_m->second,
 				     raw_pp_tokens_range{raw_begin, raw_end});
-      _macro_undefs.insert(std::make_pair(it_tok_id->get_value(),
-					  std::ref(mu)));
       _macros.erase(it_m);
     }
 
