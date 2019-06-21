@@ -837,6 +837,13 @@ pp_result::pp_result(header_inclusion_roots &&header_inclusion_roots)
     hr._set_id(_next_header_node_id++);
 }
 
+std::pair<pp_result::const_directive_iterator,
+	  pp_result::const_directive_iterator>
+pp_result::find_overlapping_directives(const raw_pp_tokens_range &r) const
+{
+  return std::equal_range(directives_begin(), directives_end(), r);
+}
+
 std::pair<pp_result::const_macro_invocation_iterator,
 	  pp_result::const_macro_invocation_iterator>
 pp_result::find_overlapping_macro_invocations(const raw_pp_tokens_range &r)

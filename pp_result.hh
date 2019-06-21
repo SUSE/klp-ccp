@@ -26,12 +26,32 @@ namespace klp
       public:
 	directive(const raw_pp_tokens_range &directive_range) noexcept;
 
+	bool operator<(const raw_pp_tokens_range &r) const noexcept
+	{ return _directive_range < r; }
+
 	const raw_pp_tokens_range& get_source_range() const noexcept
 	{ return _directive_range; }
 
       private:
 	raw_pp_tokens_range _directive_range;
       };
+
+    private:
+      typedef std::vector<directive> _directives_container_type;
+
+    public:
+      typedef _directives_container_type::const_iterator
+	const_directive_iterator;
+
+      const_directive_iterator directives_begin() const
+      { return _directives.begin(); }
+
+      const_directive_iterator directives_end() const
+      { return _directives.end(); }
+
+      std::pair<const_directive_iterator, const_directive_iterator>
+      find_overlapping_directives(const raw_pp_tokens_range &r) const;
+
 
       class macro
       {
@@ -883,13 +903,16 @@ namespace klp
       pp_tokens _pp_tokens;
 
       std::vector<std::unique_ptr<macro_invocation>> _macro_invocations;
-      std::vector<directive> _directives;
+      _directives_container_type _directives;
       std::vector<std::unique_ptr<const macro>> _macros;
       std::vector<macro_undef> _macro_undefs;
 
       unsigned long _next_header_node_id;
     };
 
+    static inline bool operator<(const raw_pp_tokens_range &r,
+				 const pp_result::directive &d) noexcept
+    { return r < d.get_source_range(); }
 
     static inline bool operator<(const raw_pp_tokens_range &r,
 				 const pp_result::macro_invocation &mi) noexcept
