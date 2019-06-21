@@ -533,9 +533,8 @@ void preprocessor::_handle_pp_directive()
       _cond_incl_states.top().um += it_m->second;
       _enter_cond_incl();
     } else {
-      auto it_m_undef = _macro_undefs.find(it_tok->get_value());
-      if (it_m_undef != _macro_undefs.end())
-	_cond_incl_states.top().umu += it_m_undef->second;
+      _cond_incl_states.top().mnc +=
+	macro_nondef_constraint{it_tok->get_value()};
     }
 
   } else if (it_tok->get_value() == "ifndef") {
@@ -562,9 +561,8 @@ void preprocessor::_handle_pp_directive()
     if (it_m != _macros.end()) {
       _cond_incl_states.top().um += it_m->second;
     } else {
-      auto it_m_undef = _macro_undefs.find(it_tok->get_value());
-      if (it_m_undef != _macro_undefs.end())
-	_cond_incl_states.top().umu += it_m_undef->second;
+      _cond_incl_states.top().mnc +=
+	macro_nondef_constraint{it_tok->get_value()};
       _enter_cond_incl();
     }
 
@@ -777,54 +775,70 @@ preprocessor::_expand(_expansion_state &state,
 	  next_tok = read_tok();
 	}
 
-	// Not a macro invocation?
-	if (!next_tok.is_punctuator("(")) {
-	  state.pending_tokens.push(std::move(next_tok));
-	  return tok;
-	}
+	if (next_tok.is_punctuator("(")) {
+	  while (!state.pending_tokens.empty())
+	    state.pending_tokens.pop();
 
-	while (!state.pending_tokens.empty())
-	  state.pending_tokens.pop();
+	  assert(raw_tokens_read || _cur_macro_invocation);
+	  _cur_macro_invocation = saved_cur_macro_invocation;
 
-	assert(raw_tokens_read || _cur_macro_invocation);
-	_cur_macro_invocation = saved_cur_macro_invocation;
+	  if (!_cur_macro_invocation) {
+	    assert(raw_tokens_read);
+	    // We'll need an active _cur_macro_invocation for the macro
+	    // argument expansion. Create one now and let
+	    // _handle_func_macro_invocation() called below set its
+	    // invocation range's end once it is known.
+	    const raw_pp_tokens_range &tok_range = tok.get_token_source();
+	    assert(tok_range.begin + 1 == tok_range.end);
+	    _cur_macro_invocation =
+	      &_pp_result->_add_macro_invocation(m->second, tok_range);
+	  } else {
+	    _cur_macro_invocation->_used_macros += m->second;
+	  }
 
-	if (!_cur_macro_invocation) {
-	  assert(raw_tokens_read);
-	  // We'll need an active _cur_macro_invocation for the macro
-	  // argument expansion. Create one now and let
-	  // _handle_func_macro_invocation() called below set its
-	  // invocation range's end once it is known.
-	  const raw_pp_tokens_range &tok_range = tok.get_token_source();
-	  assert(tok_range.begin + 1 == tok_range.end);
-	  _cur_macro_invocation =
-	    &_pp_result->_add_macro_invocation(m->second, tok_range);
-	} else {
-	  _cur_macro_invocation->_used_macros += m->second;
-	}
-
-	keep_cur_macro_invocation = true;
-	state.macro_instances.push_back(_handle_func_macro_invocation(
+	  keep_cur_macro_invocation = true;
+	  state.macro_instances.push_back(_handle_func_macro_invocation(
 						m->second,
 						tok.get_token_source().begin,
 						read_tok,
 						&raw_tokens_read));
-	keep_cur_macro_invocation = false;
-      }
-      goto read_next;
-    } else if (m == _macros.end()) {
-      auto it_m_undef = _macro_undefs.find(tok.get_value());
-      if (it_m_undef != _macro_undefs.end()) {
-	pp_result::macro_invocation *mi = _cur_macro_invocation;
-	if (!mi) {
-	  // tok could still come from _root_expansion_state's pending
-	  // tokens and thus, some macro expansion.
-	  mi = tok.get_macro_invocation();
+	  keep_cur_macro_invocation = false;
+	  goto read_next;
 	}
-	if (mi) {
-	  mi->_used_macro_undefs += it_m_undef->second;
+
+	// Identifier token not followed by an opening parenthesis ->
+	// not a macro invocation.
+	if (saved_cur_macro_invocation) {
+	  // This macro is defined as a function style macro, but
+	  // won't get expanded, because it isn't followed by an
+	  // opening '('. Register a macro_nondef_constraint for
+	  // object style macros only.
+	  saved_cur_macro_invocation->_macro_nondef_constraints +=
+	    macro_nondef_constraint{tok.get_value(), true};
 	}
+	state.pending_tokens.push(std::move(next_tok));
       }
+
+    } else if (m == _macros.end() && _cur_macro_invocation) {
+      // The current token came from some macro expansion, but doesn't
+      // resolve to a macro definition itself. Register a
+      // macro_nondef_constraint instance for the
+      // _cur_macro_invocation. Look ahead to check whether the
+      // identifier token is not followed by an opening parenthesis
+      // and thus, a function style definition, even if present, would
+      // not alter the result.
+      pp_result::macro_invocation * const saved_cur_macro_invocation
+	= _cur_macro_invocation;
+      _pp_token next_tok = read_tok();
+      while (next_tok.is_ws() || next_tok.is_newline() ||
+	     next_tok.is_empty()) {
+	state.pending_tokens.push(std::move(next_tok));
+	next_tok = read_tok();
+      }
+      state.pending_tokens.push(std::move(next_tok));
+
+      saved_cur_macro_invocation->_macro_nondef_constraints +=
+	macro_nondef_constraint{tok.get_value(), !next_tok.is_punctuator("(")};
     }
 
     if (from_cond_incl_cond && tok.get_value() == "defined") {
@@ -832,8 +846,14 @@ preprocessor::_expand(_expansion_state &state,
       const _pp_token defined_tok = tok;
       const raw_pp_token_index invocation_begin = tok.get_token_source().begin;
       do {
-	tok = read_tok();
+	if (!state.pending_tokens.empty()) {
+	  tok = std::move(state.pending_tokens.front());
+	  state.pending_tokens.pop();
+	} else {
+	  tok = read_tok();
+	}
       } while (tok.is_ws() || tok.is_newline() || tok.is_empty());
+      assert(state.pending_tokens.empty());
 
       // No opening parenthesis?
       if (!tok.is_punctuator("(")) {
@@ -879,7 +899,16 @@ preprocessor::_expand(_expansion_state &state,
 	} else {
 	  assert(delim_tok.get_macro_invocation() == mi);
 	}
+      } else {
+	// After the expansion, the whole defined(...) sequence will
+	// be replaced by either zero or one and there won't be any
+	// trace of the "defined" identifier token left. In
+	// particular, it will be to impossible to derive a
+	// macro_nondef_constraint from the resulting pp_tokens
+	// sequence. Add it here.
+	_cond_incl_states.top().mnc += macro_nondef_constraint{"defined"};
       }
+
       const std::string &id = std::get<0>(arg)[0].get_value();
       bool is_defined = false;
       auto it_m = _macros.find(id);
@@ -897,13 +926,13 @@ preprocessor::_expand(_expansion_state &state,
 
 	is_defined = true;
       } else {
-	auto it_m_undef = _macro_undefs.find(id);
-	if (it_m_undef != _macro_undefs.end()) {
-	  if (mi) {
-	    // Add this macro undef to the macro_invocation the
-	    // "defined" token came from.
-	    mi->_used_macro_undefs += it_m_undef->second;
-	  }
+	if (mi) {
+	  // Add this macro undef to the macro_invocation the
+	  // "defined" token came from.
+	  mi->_macro_nondef_constraints += macro_nondef_constraint{id};
+	} else {
+	  assert(!_cond_incl_states.empty());
+	  _cond_incl_states.top().mnc += macro_nondef_constraint{id};
 	}
       }
 
@@ -915,6 +944,7 @@ preprocessor::_expand(_expansion_state &state,
 			     raw_pp_tokens_range{invocation_begin,
 						 invocation_end}};
 	result_tok.set_macro_invocation(mi);
+	return result_tok;
 
       } else {
 	return _pp_token(pp_token::type::pp_number,
@@ -1303,37 +1333,6 @@ preprocessor::_create_macro_arg(const std::function<_pp_token()> &token_reader,
 		(std::move(arg), std::move(exp_arg), std::move(end_delim));
 }
 
-std::pair<used_macros, used_macro_undefs>
-preprocessor::_drop_pp_tokens_tail(const pp_tokens::size_type new_end)
-{
-  used_macros um;
-  used_macro_undefs umu;
-
-  // First collect the used_macros and used_macro_undefs from all
-  // macro_invocations overlapping with the to be dropped tail.
-  const pp_tokens::const_iterator tail_begin
-    = _pp_result->get_pp_tokens().cbegin() + new_end;
-
-  if (tail_begin == _pp_result->get_pp_tokens().end())
-    return std::make_pair(um, umu);
-
-  const auto tail_macro_invocations
-    = (_pp_result->find_overlapping_macro_invocations
-       (raw_pp_tokens_range{tail_begin->get_token_source().begin,
-			    _pp_result->get_raw_tokens().size()}));
-  for (auto it_mi = tail_macro_invocations.first;
-       it_mi != tail_macro_invocations.second; ++it_mi) {
-    um += it_mi->get_used_macros();
-    umu += it_mi->get_used_macro_undefs();
-  }
-
-  // And finally drop the tail.
-  _pp_result->_drop_pp_tokens_tail(new_end);
-
-  return std::make_pair(std::move(um), std::move(umu));
-}
-
-
 void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
 {
   const raw_pp_tokens::const_iterator raw_begin =
@@ -1365,7 +1364,7 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
   std::string unresolved;
   bool is_qstr;
   used_macros um;
-  used_macro_undefs umu;
+  macro_nondef_constraints mnc;
   if (it_raw_tok->is_type_any_of<pp_token::type::qstr,
 				 pp_token::type::hstr>()) {
     unresolved = it_raw_tok->get_value();
@@ -1485,7 +1484,8 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
       throw pp_except(remark);
     }
 
-    std::tie(um, umu) = _drop_pp_tokens_tail(temp_tokens_tail_begin);
+    std::tie(um, mnc) =
+      _pp_result->_drop_pp_tokens_tail(temp_tokens_tail_begin);
   }
 
   std::string resolved
@@ -1508,7 +1508,7 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
     = _inclusions.top().get()._add_header_inclusion(resolved,
 						    directive_range,
 						    std::move(um),
-						    std::move(umu),
+						    std::move(mnc),
 						    *_pp_result);
   _tokenizers.emplace(new_header_inclusion_node);
   _inclusions.emplace(std::ref(new_header_inclusion_node));
@@ -1540,7 +1540,7 @@ void preprocessor::_enter_cond_incl()
   pp_result::conditional_inclusion_node &new_conditional_inclusion_node =
     (_inclusions.top().get()._add_conditional_inclusion
      (cond_incl_state.range_begin, std::move(cond_incl_state.um),
-      std::move(cond_incl_state.umu)));
+      std::move(cond_incl_state.mnc)));
 
   cond_incl_state.incl_node = &new_conditional_inclusion_node;
   cond_incl_state.branch_active = true;
@@ -1557,7 +1557,7 @@ void preprocessor::_pop_cond_incl(const raw_pp_token_index range_end)
     pp_result::conditional_inclusion_node &node
       = (_inclusions.top().get()._add_conditional_inclusion
 	 (cond_incl_state.range_begin, std::move(cond_incl_state.um),
-	  std::move(cond_incl_state.umu)));
+	  std::move(cond_incl_state.mnc)));
     node._set_range_end(range_end);
 
   } else {
@@ -1636,9 +1636,9 @@ _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range)
   _remarks += a.get_remarks();
   a.get_remarks().clear();
 
-  auto um_umu = _drop_pp_tokens_tail(temp_tokens_tail_begin);
-  _cond_incl_states.top().um += std::move(um_umu.first);
-  _cond_incl_states.top().umu += std::move(um_umu.second);
+  auto um_mnc = _pp_result->_drop_pp_tokens_tail(temp_tokens_tail_begin);
+  _cond_incl_states.top().um += std::move(um_mnc.first);
+  _cond_incl_states.top().mnc += std::move(um_mnc.second);
 
   return result;
 }

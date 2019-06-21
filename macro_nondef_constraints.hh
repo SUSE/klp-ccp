@@ -1,42 +1,51 @@
-#ifndef USED_MACRO_UNDEFS_HH
-#define USED_MACRO_UNDEFS_HH
+#ifndef MACRO_NONDEF_CONSTRAINTS_HH
+#define MACRO_NONDEF_CONSTRAINTS_HH
 
-#include <functional>
 #include <set>
+#include <string>
 
 namespace klp
 {
   namespace ccp
   {
-    class macro_undef;
+    class macro_nondef_constraint
+    {
+    public:
+      macro_nondef_constraint(const std::string &id,
+			      bool func_like_allowed = false);
 
-    class used_macro_undefs
+      bool operator<(const macro_nondef_constraint &rhs) const;
+
+      const std::string& get_id() const noexcept
+      { return _id; }
+
+      bool is_func_like_allowed() const noexcept
+      { return _func_like_allowed; }
+
+
+    private:
+      std::string _id;
+      bool _func_like_allowed;
+    };
+
+    class macro_nondef_constraints
     {
     private:
-      struct _compare
-      {
-	bool operator()(const std::reference_wrapper<const macro_undef> a,
-			const std::reference_wrapper<const macro_undef> b)
-	  const noexcept;
-      };
-
-      typedef std::set<std::reference_wrapper<const macro_undef>, _compare>
-	_used_macro_undefs_type;
+      typedef std::set<macro_nondef_constraint> _macro_nondef_constraints_type;
 
     public:
-      used_macro_undefs() = default;
+      macro_nondef_constraints() = default;
 
-      bool empty() const noexcept
-      { return _used_macro_undefs.empty(); }
+      macro_nondef_constraints(macro_nondef_constraints &&mnc);
 
-      used_macro_undefs& operator+=(const used_macro_undefs &rhs);
+      macro_nondef_constraints& operator=(macro_nondef_constraints &&rhs);
 
-      used_macro_undefs& operator+=(const macro_undef &rhs);
+      macro_nondef_constraints& operator+=(const macro_nondef_constraints &rhs);
+
+      macro_nondef_constraints& operator+=(const macro_nondef_constraint &rhs);
 
     private:
-       used_macro_undefs(_used_macro_undefs_type &&um);
-
-      _used_macro_undefs_type _used_macro_undefs;
+      _macro_nondef_constraints_type _macro_nondef_constraints;
     };
   }
 }

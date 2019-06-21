@@ -10,7 +10,7 @@
 #include "pp_tokens.hh"
 #include "pp_tokens_range.hh"
 #include "used_macros.hh"
-#include "used_macro_undefs.hh"
+#include "macro_nondef_constraints.hh"
 #include "offset_to_line_col_map.hh"
 
 namespace klp
@@ -35,8 +35,9 @@ namespace klp
 	const used_macros& get_used_macros() const noexcept
 	{ return _used_macros; }
 
-	const used_macro_undefs& get_used_macro_undefs() const noexcept
-	{ return _used_macro_undefs; }
+	const macro_nondef_constraints& get_macro_nondef_constraints()
+	  const noexcept
+	{ return _macro_nondef_constraints; }
 
       private:
 	friend class pp_result;
@@ -47,7 +48,7 @@ namespace klp
 
 	raw_pp_tokens_range _invocation_range;
 	used_macros _used_macros;
-	used_macro_undefs _used_macro_undefs;
+	macro_nondef_constraints _macro_nondef_constraints;
       };
 
     private:
@@ -293,15 +294,15 @@ namespace klp
 
 	header_inclusion_child&
 	_add_header_inclusion(const std::string &filename,
-			      const raw_pp_tokens_range &directive_range,
-			      used_macros &&used_macros,
-			      used_macro_undefs &&used_macro_undefs,
-			      pp_result &container);
+			const raw_pp_tokens_range &directive_range,
+			used_macros &&used_macros,
+			macro_nondef_constraints &&macro_nondef_constraints,
+			pp_result &container);
 
 	conditional_inclusion_node&
 	_add_conditional_inclusion(const raw_pp_token_index range_begin,
-				   used_macros &&used_macros,
-				   used_macro_undefs &&used_macro_undefs);
+			used_macros &&used_macros,
+			macro_nondef_constraints &&macro_nondef_constraints);
 
 	void _set_range_begin(const raw_pp_token_index range_begin) noexcept;
 	void _set_range_end(const raw_pp_token_index range_end) noexcept;
@@ -371,15 +372,15 @@ namespace klp
 	friend class inclusion_node;
 
 	header_inclusion_child(inclusion_node &parent,
-			       const std::string &filename,
-			       const raw_pp_tokens_range &directive_range,
-			       used_macros &&used_macros,
-			       used_macro_undefs &&used_macro_undefs,
-			       const unsigned long id);
+			const std::string &filename,
+			const raw_pp_tokens_range &directive_range,
+			used_macros &&used_macros,
+			macro_nondef_constraints &&macro_nondef_constraints,
+			const unsigned long id);
 
 	raw_pp_tokens_range _directive_range;
 	used_macros _used_macros;
-	used_macro_undefs _used_macro_undefs;
+	macro_nondef_constraints _macro_nondef_constraints;
       };
 
       class conditional_inclusion_node final : public inclusion_node
@@ -395,12 +396,12 @@ namespace klp
 	friend class preprocessor;
 
 	conditional_inclusion_node(inclusion_node &parent,
-				   const raw_pp_token_index range_begin,
-				   used_macros &&used_macros,
-				   used_macro_undefs &&used_macro_undefs);
+			const raw_pp_token_index range_begin,
+			used_macros &&used_macros,
+			macro_nondef_constraints &&macro_nondef_constraints);
 
 	used_macros _used_macros;
-	used_macro_undefs _used_macro_undefs;
+	macro_nondef_constraints _macro_nondef_constraints;
       };
 
 
@@ -689,7 +690,6 @@ namespace klp
       const raw_pp_tokens_range
       pp_tokens_range_to_raw(const pp_tokens_range &r) const noexcept;
 
-
     private:
       friend class preprocessor;
 
@@ -722,7 +722,8 @@ namespace klp
       _add_macro_undef(const macro &m,
 		       const raw_pp_tokens_range &directive_range);
 
-      void _drop_pp_tokens_tail(const pp_tokens::size_type new_end);
+      std::pair<used_macros, macro_nondef_constraints>
+      _drop_pp_tokens_tail(const pp_tokens::size_type new_end);
 
       header_inclusion_roots _header_inclusion_roots;
       raw_pp_tokens _raw_tokens;

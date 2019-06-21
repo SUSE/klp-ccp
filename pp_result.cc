@@ -46,14 +46,14 @@ pp_result::header_inclusion_child& pp_result::inclusion_node::
 _add_header_inclusion(const std::string &filename,
 		      const raw_pp_tokens_range &directive_range,
 		      used_macros &&used_macros,
-		      used_macro_undefs &&used_macro_undefs,
+		      macro_nondef_constraints &&macro_nondef_constraints,
 		      pp_result &container)
 {
   std::unique_ptr<header_inclusion_child> new_child
      (new header_inclusion_child(*this, filename,
 				 directive_range,
 				 std::move(used_macros),
-				 std::move(used_macro_undefs),
+				 std::move(macro_nondef_constraints),
 				 container._next_header_node_id++));
   header_inclusion_child &_new_child = *new_child;
   _children.emplace_back(std::move(new_child));
@@ -63,12 +63,12 @@ _add_header_inclusion(const std::string &filename,
 pp_result::conditional_inclusion_node& pp_result::inclusion_node::
 _add_conditional_inclusion(const raw_pp_token_index range_begin,
 			   used_macros &&used_macros,
-			   used_macro_undefs &&used_macro_undefs)
+			   macro_nondef_constraints &&macro_nondef_constraints)
 {
   std::unique_ptr<conditional_inclusion_node> new_child
      (new conditional_inclusion_node(*this, range_begin,
 				     std::move(used_macros),
-				     std::move(used_macro_undefs)));
+				     std::move(macro_nondef_constraints)));
   conditional_inclusion_node &_new_child = *new_child;
   _children.emplace_back(std::move(new_child));
   return _new_child;
@@ -555,12 +555,12 @@ header_inclusion_child(inclusion_node &parent,
 		       const std::string &filename,
 		       const raw_pp_tokens_range &directive_range,
 		       used_macros &&used_macros,
-		       used_macro_undefs &&used_macro_undefs,
+		       macro_nondef_constraints &&macro_nondef_constraints,
 		       const unsigned long id)
   : header_inclusion_node(parent, directive_range.end, filename, id),
     _directive_range(directive_range),
     _used_macros(std::move(used_macros)),
-    _used_macro_undefs(std::move(used_macro_undefs))
+    _macro_nondef_constraints(std::move(macro_nondef_constraints))
 {}
 
 pp_result::header_inclusion_child::~header_inclusion_child() noexcept = default;
@@ -570,10 +570,10 @@ pp_result::conditional_inclusion_node::
 conditional_inclusion_node(inclusion_node &parent,
 			   const raw_pp_token_index range_begin,
 			   used_macros &&used_macros,
-			   used_macro_undefs &&used_macro_undefs)
+			   macro_nondef_constraints &&macro_nondef_constraints)
   : inclusion_node(&parent, range_begin),
     _used_macros(std::move(used_macros)),
-    _used_macro_undefs(std::move(used_macro_undefs))
+    _macro_nondef_constraints(std::move(macro_nondef_constraints))
 {}
 
 pp_result::conditional_inclusion_node::~conditional_inclusion_node() = default;
@@ -659,7 +659,6 @@ pp_result::pp_tokens_range_to_raw(const pp_tokens_range &r) const noexcept
 	 };
 }
 
-
 void pp_result::_append_token(const raw_pp_token &tok)
 {
   _raw_tokens.push_back(tok);
@@ -729,30 +728,89 @@ _add_macro_undef(const macro &m, const raw_pp_tokens_range &directive_range)
   return *_macro_undefs.back();
 }
 
-void pp_result::_drop_pp_tokens_tail(const pp_tokens::size_type new_end)
+std::pair<used_macros, macro_nondef_constraints>
+pp_result::_drop_pp_tokens_tail(const pp_tokens::size_type new_end)
 {
-  if (new_end == _pp_tokens.size())
-    return;
-  assert(new_end < _pp_tokens.size());
-
   // The preprocessor temporarily pushed some pp_token instances when
   // doing macro expansion for #include directives or evaluating
   // conditional #if expressions. Purge these alongside with any
   // associated macro_invocations.
-  const raw_pp_token_index tail_begin_raw =
-    _pp_tokens[new_end].get_token_source().begin;
-  auto it_macro_invocations_begin
-    = std::lower_bound(_macro_invocations.begin(),
-		       _macro_invocations.end(),
-		       tail_begin_raw,
-		       [](const std::unique_ptr<macro_invocation> &i,
-			  const raw_pp_token_index e)
-		       { return i->get_source_range().end <= e; });
-  assert(it_macro_invocations_begin == _macro_invocations.end() ||
-	 (it_macro_invocations_begin->get()->get_source_range().begin >=
-	  tail_begin_raw));
-  _macro_invocations.erase(it_macro_invocations_begin,
-			   _macro_invocations.end());
+  // Collect any used_macros and macro_nondef_constraints of this
+  // tail sequence and return it.
+  used_macros um;
+  macro_nondef_constraints mnc;
 
+  assert(new_end <= _pp_tokens.size());
+
+  const auto tok_begin = _pp_tokens.begin() + new_end;
+  const auto tok_end = _pp_tokens.end();
+  if (tok_begin == tok_end)
+    return std::make_pair(std::move(um), std::move(mnc));
+
+  // Each pp_token is either the result of a macro_invocation or not.
+  // If yes, then all used_macros and macro_nondef_constraints can be
+  // found at this macro_invocation. Otherwise, the
+  // macro_nondef_constraints for identifier tokens can be derived
+  // from the pp_token_value itself.
+  const auto mis_range
+    = (this->find_overlapping_macro_invocations
+       (raw_pp_tokens_range{tok_begin->get_token_source().begin,
+			    (tok_end - 1)->get_token_source().end}));
+  auto it_mi = mis_range.first;
+  auto it_tok = tok_begin;
+  while (it_tok != tok_end) {
+    if (it_mi != mis_range.second &&
+	!(it_tok->get_token_source() < it_mi->get_source_range())) {
+      um += it_mi->get_used_macros();
+      mnc += it_mi->get_macro_nondef_constraints();
+
+      // Advance the current token iterator past the tokens from the
+      // macro_invocation just processed.
+      while (it_tok != tok_end &&
+	     !(it_mi->get_source_range() < it_tok->get_token_source())) {
+	++it_tok;
+      }
+      ++it_mi;
+
+    } else if (it_tok->is_id()) {
+      // Look ahead to check whether the identifier token is not
+      // followed by an opening parenthesis and thus, a function style
+      // definition, even if present, would not alter the result. If
+      // the next token is a parenthesis, but it itself or any
+      // whitespace before it is the result of some macro invocation,
+      // then it can be safely ignored.
+      auto it_next_tok = it_tok + 1;
+      while (it_next_tok != tok_end &&
+	     it_next_tok->is_type_any_of<pp_token::type::ws,
+					 pp_token::type::empty,
+					 pp_token::type::newline>()) {
+	++it_next_tok;
+      }
+
+      bool func_like_allowed = false;
+      if (it_next_tok == tok_end ||
+	  !it_next_tok->is_punctuator("(") ||
+	  (it_mi != mis_range.second &&
+	   !(it_next_tok->get_token_source() < it_mi->get_source_range()))) {
+	func_like_allowed = true;
+      }
+
+      mnc += macro_nondef_constraint{it_tok->get_value(), func_like_allowed};
+      ++it_tok;
+
+    } else {
+      ++it_tok;
+
+    }
+  }
+
+  _macro_invocations.erase((_macro_invocations.begin() +
+			    (mis_range.first._it -
+			     _macro_invocations.cbegin())),
+			   (_macro_invocations.begin() +
+			    (mis_range.second._it -
+			     _macro_invocations.cbegin())));
   _pp_tokens.shrink(new_end);
+
+  return std::make_pair(std::move(um), std::move(mnc));
 }

@@ -233,7 +233,7 @@ namespace klp
 
 	pp_token_index range_begin;
 	used_macros um;
-	used_macro_undefs umu;
+	macro_nondef_constraints mnc;
 	pp_result::conditional_inclusion_node *incl_node;
 	bool branch_active;
       };
@@ -294,9 +294,6 @@ namespace klp
       std::tuple<_pp_tokens, _pp_tokens, _pp_token>
       _create_macro_arg(const std::function<_pp_token()> &token_reader,
 			const bool expand, const bool variadic);
-
-      std::pair<used_macros, used_macro_undefs>
-      _drop_pp_tokens_tail(const pp_tokens::size_type new_end);
 
       void _handle_include(const raw_pp_tokens_range &directive_range);
 

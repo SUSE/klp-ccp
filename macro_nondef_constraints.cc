@@ -1,27 +1,54 @@
-#include "used_macro_undefs.hh"
+#include "macro_nondef_constraints.hh"
 
 using namespace klp::ccp;
 
-used_macro_undefs::used_macro_undefs(_used_macro_undefs_type &&um)
-  : _used_macro_undefs(std::move(um))
+macro_nondef_constraint::macro_nondef_constraint(const std::string &id,
+						 bool func_like_allowed)
+  : _id(id), _func_like_allowed(func_like_allowed)
 {}
 
-used_macro_undefs& used_macro_undefs::operator+=(const used_macro_undefs &rhs)
+macro_nondef_constraints::
+macro_nondef_constraints(macro_nondef_constraints &&mnc)
+  : _macro_nondef_constraints(std::move(mnc._macro_nondef_constraints))
+{}
+
+bool macro_nondef_constraint::operator<(const macro_nondef_constraint &rhs)
+  const
 {
-  _used_macro_undefs.insert(rhs._used_macro_undefs.cbegin(),
-			    rhs._used_macro_undefs.cend());
+  return this->_id < rhs._id;
+}
+
+macro_nondef_constraints&
+macro_nondef_constraints::operator=(macro_nondef_constraints &&rhs)
+{
+  if (this == &rhs)
+    return *this;
+
+  this->_macro_nondef_constraints = std::move(rhs._macro_nondef_constraints);
   return *this;
 }
 
-used_macro_undefs& used_macro_undefs::operator+=(const macro_undef &rhs)
+macro_nondef_constraints&
+macro_nondef_constraints::operator+=(const macro_nondef_constraints &rhs)
 {
-  _used_macro_undefs.insert(std::ref(rhs));
+  for (auto &mnc : rhs._macro_nondef_constraints)
+    *this += mnc;
   return *this;
 }
 
-bool used_macro_undefs::_compare::
-operator()(const std::reference_wrapper<const macro_undef> a,
-	   const std::reference_wrapper<const macro_undef> b) const noexcept
+macro_nondef_constraints&
+macro_nondef_constraints::operator+=(const macro_nondef_constraint &rhs)
 {
-  return &a.get() < &b.get();
+  auto it = _macro_nondef_constraints.find(rhs);
+
+  if (it != _macro_nondef_constraints.end()) {
+    if (it->is_func_like_allowed() && !rhs.is_func_like_allowed()) {
+      it = _macro_nondef_constraints.erase(it);
+      _macro_nondef_constraints.insert(it, rhs);
+    }
+  } else {
+      _macro_nondef_constraints.insert(rhs);
+  }
+
+  return *this;
 }

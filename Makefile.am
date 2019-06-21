@@ -25,6 +25,7 @@ noinst_HEADERS =				\
 	gnuc_parser_driver.hh			\
 	header_resolver.hh			\
 	macro.hh				\
+	macro_nondef_constraints.hh		\
 	macro_undef.hh				\
 	mp_arithmetic.hh			\
 	offset_to_line_col_map.hh		\
@@ -49,8 +50,7 @@ noinst_HEADERS =				\
 	type_set.hh				\
 	types.hh				\
 	types_impl.hh				\
-	used_macros.hh				\
-	used_macro_undefs.hh
+	used_macros.hh
 
 noinst_LIBRARIES = libcp.a
 libcp_a_SOURCES =				\
@@ -69,6 +69,7 @@ libcp_a_SOURCES =				\
 	gnuc_parser_driver.cc			\
 	header_resolver.cc			\
 	macro.cc				\
+	macro_nondef_constraints.cc		\
 	macro_undef.cc				\
 	mp_arithmetic.cc			\
 	offset_to_line_col_map.cc		\
@@ -89,8 +90,7 @@ libcp_a_SOURCES =				\
 	target_float.cc			\
 	target_int.cc				\
 	types.cc				\
-	used_macros.cc				\
-	used_macro_undefs.cc
+	used_macros.cc
 
 check_PROGRAMS = cpp_tokenize normalize_path dirname cpp cparse \
 	test_mp_arithmetic test_target_int test_target_float
