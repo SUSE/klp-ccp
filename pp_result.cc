@@ -944,13 +944,11 @@ _add_macro(const std::string &name,
   return *_macros.back();
 }
 
-const pp_result::macro_undef& pp_result::
+void pp_result::
 _add_macro_undef(const std::string &name,
 		 const raw_pp_tokens_range &directive_range)
 {
-  _macro_undefs.push_back(std::unique_ptr<const macro_undef>{
-				new macro_undef{name, directive_range}});
-  return *_macro_undefs.back();
+  _macro_undefs.emplace_back(name, directive_range);
 }
 
 void pp_result::_add_directive(const raw_pp_tokens_range &directive_range)

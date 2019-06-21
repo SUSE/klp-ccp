@@ -92,12 +92,11 @@ namespace klp
 
       class macro_undef
       {
-      private:
-	friend class pp_result;
-
+      public:
 	macro_undef(const std::string &name,
 		    const raw_pp_tokens_range &directive_range);
 
+      private:
 	std::string _name;
 	raw_pp_tokens_range _directive_range;
       };
@@ -871,9 +870,8 @@ namespace klp
 			      raw_pp_tokens &&repl,
 			      const raw_pp_tokens_range &directive_range);
 
-      const macro_undef&
-      _add_macro_undef(const std::string &name,
-		       const raw_pp_tokens_range &directive_range);
+      void _add_macro_undef(const std::string &name,
+			    const raw_pp_tokens_range &directive_range);
 
       void _add_directive(const raw_pp_tokens_range &directive_range);
 
@@ -887,7 +885,7 @@ namespace klp
       std::vector<std::unique_ptr<macro_invocation>> _macro_invocations;
       std::vector<directive> _directives;
       std::vector<std::unique_ptr<const macro>> _macros;
-      std::vector<std::unique_ptr<const macro_undef>> _macro_undefs;
+      std::vector<macro_undef> _macro_undefs;
 
       unsigned long _next_header_node_id;
     };
