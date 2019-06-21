@@ -61,6 +61,9 @@ namespace klp
 	bool operator!=(const macro &rhs) const noexcept
 	{ return !(*this == rhs); }
 
+	bool operator<(const raw_pp_tokens_range &r) const noexcept
+	{ return _directive_range < r; }
+
 	bool is_func_like() const noexcept
 	{ return _func_like; }
 
@@ -109,6 +112,97 @@ namespace klp
 	bool _func_like;
 	bool _variadic;
       };
+
+    private:
+      typedef std::vector<std::unique_ptr<const macro>>
+	_macros_container_type;
+
+    public:
+      class const_macro_iterator
+	: public std::iterator<std::random_access_iterator_tag,
+			       const macro>
+      {
+      public:
+	bool operator==(const const_macro_iterator &rhs)
+	  const noexcept
+	{ return this->_it == rhs._it; }
+
+	bool operator!=(const const_macro_iterator &rhs)
+	  const noexcept
+	{ return !(*this == rhs); }
+
+	reference operator*() const noexcept
+	{ return **_it; }
+
+	pointer operator->() const noexcept
+	{ return (*_it).get(); }
+
+	const_macro_iterator& operator++()
+	{ ++_it; return *this; }
+
+	const const_macro_iterator operator++(int)
+	{ return const_macro_iterator{_it++}; }
+
+	const_macro_iterator& operator--()
+	{ --_it; return *this; }
+
+	const const_macro_iterator operator--(int)
+	{ return const_macro_iterator{_it--}; }
+
+	const_macro_iterator&
+	operator+=(const difference_type n)
+	{ _it += n; return *this; }
+
+	const_macro_iterator&
+	operator-=(const difference_type n)
+	{ _it -= n; return *this; }
+
+	const const_macro_iterator
+	operator+(const difference_type n) const
+	{ return const_macro_iterator(_it + n); }
+
+	const const_macro_iterator
+	operator-(const difference_type n) const
+	{ return const_macro_iterator(_it - n); }
+
+	const difference_type
+	operator-(const const_macro_iterator &op) const
+	{ return this->_it - op._it; }
+
+	reference operator[](const difference_type n) const
+	{ return *(*this + n); }
+
+	bool operator<(const const_macro_iterator &op) const
+	{ return this->_it < op._it; }
+
+	bool operator>(const const_macro_iterator &op) const
+	{ return this->_it > op._it; }
+
+	bool operator<=(const const_macro_iterator &op) const
+	{ return this->_it <= op._it; }
+
+	bool operator>=(const const_macro_iterator &op) const
+	{ return this->_it >= op._it; }
+
+      private:
+	friend class pp_result;
+
+	const_macro_iterator(const _macros_container_type::const_iterator &it)
+	  : _it(it)
+	{}
+
+	_macros_container_type::const_iterator _it;
+      };
+
+      const_macro_iterator macros_begin() const
+      { return const_macro_iterator{_macros.begin()}; }
+
+      const_macro_iterator macros_end() const
+      { return const_macro_iterator{_macros.end()}; }
+
+      std::pair<const_macro_iterator, const_macro_iterator>
+      find_overlapping_macros(const raw_pp_tokens_range &r) const;
+
 
       class macro_undef
       {
@@ -904,7 +998,7 @@ namespace klp
 
       std::vector<std::unique_ptr<macro_invocation>> _macro_invocations;
       _directives_container_type _directives;
-      std::vector<std::unique_ptr<const macro>> _macros;
+      _macros_container_type _macros;
       std::vector<macro_undef> _macro_undefs;
 
       unsigned long _next_header_node_id;
@@ -913,6 +1007,10 @@ namespace klp
     static inline bool operator<(const raw_pp_tokens_range &r,
 				 const pp_result::directive &d) noexcept
     { return r < d.get_source_range(); }
+
+    static inline bool operator<(const raw_pp_tokens_range &r,
+				 const pp_result::macro &m) noexcept
+    { return r < m.get_directive_range(); }
 
     static inline bool operator<(const raw_pp_tokens_range &r,
 				 const pp_result::macro_invocation &mi) noexcept
