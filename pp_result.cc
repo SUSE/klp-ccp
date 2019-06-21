@@ -842,12 +842,8 @@ std::pair<pp_result::const_macro_invocation_iterator,
 pp_result::find_overlapping_macro_invocations(const raw_pp_tokens_range &r)
   const
 {
-  const const_macro_invocation_iterator range_begin
-    = std::lower_bound(macro_invocations_begin(), macro_invocations_end(), r);
-  const const_macro_invocation_iterator range_end
-    = std::upper_bound(range_begin, macro_invocations_end(), r);
-
-  return std::make_pair(range_begin, range_end);
+  return std::equal_range(macro_invocations_begin(), macro_invocations_end(),
+			  r);
 }
 
 pp_result::const_intersecting_source_iterator
