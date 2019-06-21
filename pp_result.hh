@@ -993,12 +993,7 @@ namespace klp
       raw_pp_tokens::size_type _get_last_raw_index() const noexcept;
       pp_tokens::size_type _get_last_pp_index() const noexcept;
 
-      macro_invocation&
-      _add_macro_invocation(const macro &m,
-			    const raw_pp_tokens_range &invocation_range);
-
-      void _extend_macro_invocation_range(macro_invocation &invocation,
-					  const raw_pp_token_index new_end);
+      void _add_directive(const raw_pp_tokens_range &directive_range);
 
       const macro& _add_macro(const std::string &name,
 			      const bool func_like,
@@ -1010,7 +1005,12 @@ namespace klp
       void _add_macro_undef(const std::string &name,
 			    const raw_pp_tokens_range &directive_range);
 
-      void _add_directive(const raw_pp_tokens_range &directive_range);
+      macro_invocation&
+      _add_macro_invocation(const macro &m,
+			    const raw_pp_tokens_range &invocation_range);
+
+      void _extend_macro_invocation_range(macro_invocation &invocation,
+					  const raw_pp_token_index new_end);
 
       std::pair<used_macros, macro_nondef_constraints>
       _drop_pp_tokens_tail(const pp_tokens::size_type new_end);
@@ -1019,10 +1019,10 @@ namespace klp
       raw_pp_tokens _raw_tokens;
       pp_tokens _pp_tokens;
 
-      std::vector<std::unique_ptr<macro_invocation>> _macro_invocations;
       _directives_container_type _directives;
       _macros_container_type _macros;
       _macro_undefs_container_type _macro_undefs;
+      _macro_invocations_container_type _macro_invocations;
 
       unsigned long _next_header_node_id;
     };

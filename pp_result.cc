@@ -928,22 +928,9 @@ pp_tokens::size_type pp_result::_get_last_pp_index() const noexcept
   return _pp_tokens.size() - 1;
 }
 
-pp_result::macro_invocation& pp_result::
-_add_macro_invocation(const macro &m,
-		      const raw_pp_tokens_range &invocation_range)
+void pp_result::_add_directive(const raw_pp_tokens_range &directive_range)
 {
-  _macro_invocations.push_back
-    (std::unique_ptr<macro_invocation>
-	{new macro_invocation{m, invocation_range}});
-  return *_macro_invocations.back();
-}
-
-void pp_result::
-_extend_macro_invocation_range(macro_invocation &invocation,
-			       const raw_pp_token_index new_end)
-{
-  assert(new_end >= invocation._invocation_range.end);
-  invocation._invocation_range.end = new_end;
+  _directives.emplace_back(directive_range);
 }
 
 const pp_result::macro& pp_result::
@@ -968,9 +955,22 @@ _add_macro_undef(const std::string &name,
   _macro_undefs.emplace_back(name, directive_range);
 }
 
-void pp_result::_add_directive(const raw_pp_tokens_range &directive_range)
+pp_result::macro_invocation& pp_result::
+_add_macro_invocation(const macro &m,
+		      const raw_pp_tokens_range &invocation_range)
 {
-  _directives.emplace_back(directive_range);
+  _macro_invocations.push_back
+    (std::unique_ptr<macro_invocation>
+	{new macro_invocation{m, invocation_range}});
+  return *_macro_invocations.back();
+}
+
+void pp_result::
+_extend_macro_invocation_range(macro_invocation &invocation,
+			       const raw_pp_token_index new_end)
+{
+  assert(new_end >= invocation._invocation_range.end);
+  invocation._invocation_range.end = new_end;
 }
 
 std::pair<pp_result::used_macros, pp_result::macro_nondef_constraints>
