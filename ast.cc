@@ -4,8 +4,6 @@
 #include "semantic_except.hh"
 #include "pp_token.hh"
 #include "raw_pp_token.hh"
-#include "macro.hh"
-#include "macro_undef.hh"
 
 using namespace klp::ccp::ast;
 

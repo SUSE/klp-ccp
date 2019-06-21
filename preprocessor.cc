@@ -5,7 +5,6 @@
 #include "pp_except.hh"
 #include "parse_except.hh"
 #include "semantic_except.hh"
-#include "macro_undef.hh"
 #include "path.hh"
 #include "pp_expr_parser_driver.hh"
 
@@ -607,7 +606,7 @@ void preprocessor::_handle_pp_directive()
       throw pp_except(remark);
     }
 
-    const macro &m =
+    const pp_result::macro &m =
       _handle_macro_definition(raw_pp_tokens_range{raw_begin, raw_end});
 
     auto it_existing = _macros.find(m.get_name());
@@ -951,7 +950,7 @@ preprocessor::_expand(_expansion_state &state,
 preprocessor::_pp_token::
 _pp_token(const pp_token::type type, const std::string &value,
 	  const raw_pp_tokens_range &token_source,
-	  const class used_macros &eh)
+	  const pp_result::used_macros &eh)
   : _value(value), _token_source(token_source), _macro_invocation(nullptr),
     _expansion_history(std::move(eh)), _type(type)
 {}
@@ -1087,7 +1086,7 @@ void preprocessor::_pp_token::concat(const _pp_token &tok,
 
 
 preprocessor::_macro_instance
-preprocessor::_handle_object_macro_invocation(const macro &macro,
+preprocessor::_handle_object_macro_invocation(const pp_result::macro &macro,
 					      _pp_token &&id_tok)
 {
   return _macro_instance(*this, macro,
@@ -1097,7 +1096,7 @@ preprocessor::_handle_object_macro_invocation(const macro &macro,
 
 preprocessor::_macro_instance
 preprocessor::_handle_func_macro_invocation(
-	const macro &macro,
+	const pp_result::macro &macro,
 	const raw_pp_token_index invocation_begin,
 	const std::function<_pp_token()> &token_reader,
 	const bool *update_cur_macro_invocation_range)
@@ -1353,7 +1352,7 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
     };
   std::string unresolved;
   bool is_qstr;
-  used_macros um;
+  pp_result::used_macros um;
   macro_nondef_constraints mnc;
   if (it_raw_tok->is_type_any_of<pp_token::type::qstr,
 				 pp_token::type::hstr>()) {
@@ -1633,7 +1632,7 @@ _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range)
   return result;
 }
 
-const macro& preprocessor::
+const pp_result::macro& preprocessor::
 _handle_macro_definition(const raw_pp_tokens_range &directive_range)
 {
   const raw_pp_tokens::const_iterator begin =
@@ -1870,7 +1869,7 @@ _normalize_macro_repl(const raw_pp_tokens::const_iterator begin,
 
 preprocessor::_macro_instance::
 _macro_instance(preprocessor &preprocessor,
-		const macro &macro,
+		const pp_result::macro &macro,
 		std::vector<_pp_tokens> &&args,
 		std::vector<_pp_tokens> &&exp_args,
 		const raw_pp_tokens_range &invocation_range)
@@ -1910,9 +1909,10 @@ _resolve_arg(const std::string &name, const bool expanded) const noexcept
   return resolved;
 }
 
-used_macros preprocessor::_macro_instance::_tok_expansion_history_init() const
+pp_result::used_macros
+preprocessor::_macro_instance::_tok_expansion_history_init() const
 {
-  used_macros eh;
+  pp_result::used_macros eh;
   eh += _macro;
   return eh;
 }

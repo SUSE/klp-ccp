@@ -1,12 +1,172 @@
 #include <cassert>
 #include "pp_result.hh"
 #include "raw_pp_token.hh"
-#include "macro.hh"
-#include "macro_undef.hh"
 #include "source_reader.hh"
 #include <limits>
 
 using namespace klp::ccp;
+
+
+pp_result::macro::macro(const std::string &name,
+			const bool func_like,
+			const bool variadic,
+			std::vector<std::string> &&arg_names,
+			raw_pp_tokens &&repl,
+			const raw_pp_tokens_range &directive_range)
+  : _name(name), _arg_names(std::move(arg_names)),
+    _repl(std::move(repl)),
+    _directive_range(directive_range),
+    _func_like(func_like),
+    _variadic(variadic)
+{
+  // Due to the restriction that a ## concatenated token must again
+  // yield a valid preprocessing token, macro evaluation can fail and
+  // thus yield an error. Hence macro arguments must not get macro
+  // expanded if not needed. An argument needs to get expanded if it
+  // appears in the replacement list, ignoring operands of ## and
+  // #. Determine those.
+  std::set<std::string> do_expand;
+  bool in_concat = false;
+  for (auto it = _repl.cbegin(); it != _repl.cend();) {
+    if (it->is_id() &&
+	(std::find(_arg_names.cbegin(), _arg_names.cend(), it->get_value())
+	 != _arg_names.cend())) {
+      if (_is_concat_op(it + 1)) {
+	in_concat = true;
+	it += 2;
+      } else if (in_concat) {
+	in_concat = false;
+	it = _next_non_ws_repl(it + 1);
+      } else {
+	do_expand.insert(it->get_value());
+	it = _next_non_ws_repl(it + 1);
+      }
+    } else {
+      // Take care of the special
+      //  , ## __VA_ARGS__
+      // construct.
+      const bool is_comma = it->is_punctuator(",");
+      it = _skip_stringification_or_single(it);
+      if (_is_concat_op(it)) {
+	in_concat = true;
+	it = _next_non_ws_repl(it);
+
+	if (_variadic && is_comma && it->is_id() &&
+	    it->get_value() == _arg_names.back()) {
+	  in_concat = false;
+	}
+      } else {
+	in_concat = false;
+      }
+    }
+  }
+
+  _do_expand_args.resize(_arg_names.size(), false);
+  for (size_t i = 0; i < _arg_names.size(); ++i) {
+    if (do_expand.count(_arg_names[i]))
+      _do_expand_args[i] = true;
+  }
+}
+
+bool pp_result::macro::operator==(const macro &rhs) const noexcept
+{
+  return (_name == rhs._name &&
+	  _func_like == rhs._func_like &&
+	  _arg_names == rhs._arg_names &&
+	  _variadic == rhs._variadic &&
+	  _repl == rhs._repl);
+}
+
+const std::vector<std::string>& pp_result::macro::get_arg_names() const noexcept
+{
+  return _arg_names;
+}
+
+size_t pp_result::macro::non_va_arg_count() const noexcept
+{
+  assert(_func_like);
+  if (_variadic)
+    return _do_expand_args.size() - 1;
+
+  return _do_expand_args.size();
+}
+
+bool pp_result::macro::shall_expand_arg(const size_t pos) const noexcept
+{
+  assert(_func_like);
+  assert(pos <= _do_expand_args.size());
+  return _do_expand_args[pos];
+}
+
+raw_pp_tokens::const_iterator
+pp_result::macro::_next_non_ws_repl(const raw_pp_tokens::const_iterator it)
+  const noexcept
+{
+  if (it == _repl.end() || !it->is_ws()) {
+    return it;
+  }
+  // No need to loop here: we won't have more than one
+  // consecutive whitespace in a macro replacement list
+  assert(it + 1 == _repl.end() || !(it + 1)->is_ws());
+  return it + 1;
+}
+
+raw_pp_tokens::const_iterator pp_result::macro::
+_skip_stringification_or_single(const raw_pp_tokens::const_iterator &it)
+  const noexcept
+{
+  assert(it != _repl.end());
+
+  if (_func_like && it->is_punctuator("#")) {
+    assert(it + 1 != _repl.end());
+    assert((it + 1)->is_id());
+    return it + 2;
+  }
+  return it + 1;
+}
+
+bool pp_result::macro::_is_concat_op(const raw_pp_tokens::const_iterator &it)
+  const noexcept
+{
+  return (it != _repl.end() && it->is_punctuator("##"));
+}
+
+
+pp_result::used_macros::used_macros(_used_macros_type &&um)
+  : _used_macros(std::move(um))
+{}
+
+void pp_result::used_macros::clear() noexcept
+{
+  _used_macros.clear();
+}
+
+std::size_t pp_result::used_macros::count(const macro &m) const noexcept
+{
+  return _used_macros.count(std::ref(m));
+}
+
+pp_result::used_macros&
+pp_result::used_macros::operator+=(const used_macros &rhs)
+{
+  _used_macros.insert(rhs._used_macros.cbegin(),
+		      rhs._used_macros.cend());
+  return *this;
+}
+
+pp_result::used_macros&
+pp_result::used_macros::operator+=(const macro &rhs)
+{
+  _used_macros.insert(std::ref(rhs));
+  return *this;
+}
+
+bool pp_result::used_macros::_compare::
+operator()(const std::reference_wrapper<const macro> a,
+	   const std::reference_wrapper<const macro> b) const noexcept
+{
+  return &a.get() < &b.get();
+}
 
 
 pp_result::macro_invocation::
@@ -704,7 +864,7 @@ _extend_macro_invocation_range(macro_invocation &invocation,
   invocation._invocation_range.end = new_end;
 }
 
-const macro& pp_result::
+const pp_result::macro& pp_result::
 _add_macro(const std::string &name,
 	   const bool func_like,
 	   const bool variadic,
@@ -728,7 +888,7 @@ _add_macro_undef(const std::string &name,
   return *_macro_undefs.back();
 }
 
-std::pair<used_macros, macro_nondef_constraints>
+std::pair<pp_result::used_macros, macro_nondef_constraints>
 pp_result::_drop_pp_tokens_tail(const pp_tokens::size_type new_end)
 {
   // The preprocessor temporarily pushed some pp_token instances when

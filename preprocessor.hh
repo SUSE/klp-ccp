@@ -11,7 +11,6 @@
 #include "raw_pp_tokens.hh"
 #include "code_remarks.hh"
 #include "header_resolver.hh"
-#include "macro.hh"
 #include "pp_tokenizer.hh"
 #include "pp_result.hh"
 
@@ -53,7 +52,7 @@ namespace klp
       public:
 	_pp_token(const pp_token::type type, const std::string &value,
 		  const raw_pp_tokens_range &token_source,
-		  const used_macros &eh);
+		  const pp_result::used_macros &eh);
 
 	_pp_token(const pp_token::type type, const std::string &value,
 		  const raw_pp_tokens_range &token_source);
@@ -71,12 +70,12 @@ namespace klp
 	void set_type_and_value(const pp_token::type type,
 				const std::string &value);
 
-	const class used_macros& expansion_history() const noexcept
+	const class pp_result::used_macros& expansion_history() const noexcept
 	{
 	  return _expansion_history;
 	}
 
-	class used_macros& expansion_history() noexcept
+	class pp_result::used_macros& expansion_history() noexcept
 	{
 	  return _expansion_history;
 	}
@@ -163,7 +162,7 @@ namespace klp
 	pp_result::macro_invocation * _macro_invocation;
 
 	// Used for avoiding macro recursion as appropriate.
-	class used_macros _expansion_history;
+	pp_result::used_macros _expansion_history;
       };
 
       typedef std::vector<_pp_token> _pp_tokens;
@@ -172,14 +171,14 @@ namespace klp
       {
       public:
 	_macro_instance(preprocessor &preprocessor,
-			const macro &macro,
+			const pp_result::macro &macro,
 			std::vector<_pp_tokens> &&args,
 			std::vector<_pp_tokens> &&exp_args,
 			const raw_pp_tokens_range &invocation_range);
 
 	_pp_token read_next_token();
 
-	const macro& get_macro() const noexcept
+	const pp_result::macro& get_macro() const noexcept
 	{ return _macro; }
 
 	code_remarks& get_remarks() noexcept
@@ -190,7 +189,7 @@ namespace klp
 	_resolve_arg(const std::string &name, const bool expanded)
 	  const noexcept;
 
-	used_macros _tok_expansion_history_init() const;
+	pp_result::used_macros _tok_expansion_history_init() const;
 
 	bool _is_stringification(raw_pp_tokens::const_iterator it)
 	  const noexcept;
@@ -210,7 +209,7 @@ namespace klp
 	_pp_token _yield_empty_token();
 
 	preprocessor &_preprocessor;
-	const macro &_macro;
+	const pp_result::macro &_macro;
 	std::map<std::string,
 		 std::pair<_pp_tokens, _pp_tokens> > _args;
 	const raw_pp_tokens_range _invocation_range;
@@ -232,7 +231,7 @@ namespace klp
 	_cond_incl_state(const pp_token_index _range_begin);
 
 	pp_token_index range_begin;
-	used_macros um;
+	pp_result::used_macros um;
 	macro_nondef_constraints mnc;
 	pp_result::conditional_inclusion_node *incl_node;
 	bool branch_active;
@@ -281,12 +280,12 @@ namespace klp
 	      const bool from_cond_incl_cond = false);
 
       _macro_instance
-      _handle_object_macro_invocation(const macro &macro,
+      _handle_object_macro_invocation(const pp_result::macro &macro,
 				      _pp_token &&id_tok);
 
       _macro_instance
       _handle_func_macro_invocation(
-			const macro &macro,
+			const pp_result::macro &macro,
 			const raw_pp_token_index invocation_begin,
 			const std::function<_pp_token()> &token_reader,
 			const bool *update_cur_macro_invocation_range);
@@ -308,7 +307,7 @@ namespace klp
       bool
       _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range);
 
-      const macro&
+      const pp_result::macro&
       _handle_macro_definition(const raw_pp_tokens_range &directive_range);
 
       raw_pp_tokens
@@ -329,7 +328,8 @@ namespace klp
 
       std::stack<pp_tokenizer> _tokenizers;
       _expansion_state _root_expansion_state;
-      std::map<std::string, std::reference_wrapper<const macro> > _macros;
+      std::map<std::string,
+	       std::reference_wrapper<const pp_result::macro> > _macros;
 
       pp_result::macro_invocation *_cur_macro_invocation;
 
