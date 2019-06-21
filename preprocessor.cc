@@ -533,7 +533,7 @@ void preprocessor::_handle_pp_directive()
       _enter_cond_incl();
     } else {
       _cond_incl_states.top().mnc +=
-	macro_nondef_constraint{it_tok->get_value()};
+	pp_result::macro_nondef_constraint{it_tok->get_value()};
     }
 
   } else if (it_tok->get_value() == "ifndef") {
@@ -561,7 +561,7 @@ void preprocessor::_handle_pp_directive()
       _cond_incl_states.top().um += it_m->second;
     } else {
       _cond_incl_states.top().mnc +=
-	macro_nondef_constraint{it_tok->get_value()};
+	pp_result::macro_nondef_constraint{it_tok->get_value()};
       _enter_cond_incl();
     }
 
@@ -803,7 +803,7 @@ preprocessor::_expand(_expansion_state &state,
 	  // opening '('. Register a macro_nondef_constraint for
 	  // object style macros only.
 	  saved_cur_macro_invocation->_macro_nondef_constraints +=
-	    macro_nondef_constraint{tok.get_value(), true};
+	    pp_result::macro_nondef_constraint{tok.get_value(), true};
 	}
 	state.pending_tokens.push(std::move(next_tok));
       }
@@ -827,7 +827,8 @@ preprocessor::_expand(_expansion_state &state,
       state.pending_tokens.push(std::move(next_tok));
 
       saved_cur_macro_invocation->_macro_nondef_constraints +=
-	macro_nondef_constraint{tok.get_value(), !next_tok.is_punctuator("(")};
+	pp_result::macro_nondef_constraint{tok.get_value(),
+					   !next_tok.is_punctuator("(")};
     }
 
     if (from_cond_incl_cond && tok.get_value() == "defined") {
@@ -895,7 +896,8 @@ preprocessor::_expand(_expansion_state &state,
 	// particular, it will be to impossible to derive a
 	// macro_nondef_constraint from the resulting pp_tokens
 	// sequence. Add it here.
-	_cond_incl_states.top().mnc += macro_nondef_constraint{"defined"};
+	_cond_incl_states.top().mnc +=
+	  pp_result::macro_nondef_constraint{"defined"};
       }
 
       const std::string &id = std::get<0>(arg)[0].get_value();
@@ -918,10 +920,11 @@ preprocessor::_expand(_expansion_state &state,
 	if (mi) {
 	  // Add this macro undef to the macro_invocation the
 	  // "defined" token came from.
-	  mi->_macro_nondef_constraints += macro_nondef_constraint{id};
+	  mi->_macro_nondef_constraints +=
+	    pp_result::macro_nondef_constraint{id};
 	} else {
 	  assert(!_cond_incl_states.empty());
-	  _cond_incl_states.top().mnc += macro_nondef_constraint{id};
+	  _cond_incl_states.top().mnc += pp_result::macro_nondef_constraint{id};
 	}
       }
 
@@ -1353,7 +1356,7 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
   std::string unresolved;
   bool is_qstr;
   pp_result::used_macros um;
-  macro_nondef_constraints mnc;
+  pp_result::macro_nondef_constraints mnc;
   if (it_raw_tok->is_type_any_of<pp_token::type::qstr,
 				 pp_token::type::hstr>()) {
     unresolved = it_raw_tok->get_value();

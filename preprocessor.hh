@@ -232,7 +232,7 @@ namespace klp
 
 	pp_token_index range_begin;
 	pp_result::used_macros um;
-	macro_nondef_constraints mnc;
+	pp_result::macro_nondef_constraints mnc;
 	pp_result::conditional_inclusion_node *incl_node;
 	bool branch_active;
       };

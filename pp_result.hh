@@ -4,12 +4,12 @@
 #include <vector>
 #include <memory>
 #include <utility>
+#include <set>
 #include "raw_pp_tokens.hh"
 #include "raw_pp_tokens_range.hh"
 #include "pp_token.hh"
 #include "pp_tokens.hh"
 #include "pp_tokens_range.hh"
-#include "macro_nondef_constraints.hh"
 #include "offset_to_line_col_map.hh"
 
 namespace klp
@@ -121,6 +121,48 @@ namespace klp
 	used_macros(_used_macros_type &&um);
 
 	_used_macros_type _used_macros;
+      };
+
+      class macro_nondef_constraint
+      {
+      public:
+	macro_nondef_constraint(const std::string &id,
+				bool func_like_allowed = false);
+
+	bool operator<(const macro_nondef_constraint &rhs) const;
+
+	const std::string& get_id() const noexcept
+	{ return _id; }
+
+	bool is_func_like_allowed() const noexcept
+	{ return _func_like_allowed; }
+
+      private:
+	std::string _id;
+	bool _func_like_allowed;
+      };
+
+      class macro_nondef_constraints
+      {
+      private:
+	typedef std::set<macro_nondef_constraint>
+	  _macro_nondef_constraints_type;
+
+      public:
+	macro_nondef_constraints() = default;
+
+	macro_nondef_constraints(macro_nondef_constraints &&mnc);
+
+	macro_nondef_constraints& operator=(macro_nondef_constraints &&rhs);
+
+	macro_nondef_constraints&
+	operator+=(const macro_nondef_constraints &rhs);
+
+	macro_nondef_constraints&
+	operator+=(const macro_nondef_constraint &rhs);
+
+      private:
+	_macro_nondef_constraints_type _macro_nondef_constraints;
       };
 
       class macro_invocation
