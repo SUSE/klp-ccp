@@ -322,7 +322,7 @@ namespace klp
 
 	bool operator<(const macro_nondef_constraint &rhs) const;
 
-	const std::string& get_id() const noexcept
+	const std::string& get_name() const noexcept
 	{ return _id; }
 
 	bool is_func_like_allowed() const noexcept
