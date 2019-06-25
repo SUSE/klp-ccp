@@ -1090,6 +1090,10 @@ namespace klp
       const raw_pp_tokens_range
       pp_tokens_range_to_raw(const pp_tokens_range &r) const noexcept;
 
+      const pp_tokens_range
+      raw_pp_tokens_range_to_nonraw(const raw_pp_tokens_range &r)
+	const noexcept;
+
     private:
       friend class preprocessor;
 

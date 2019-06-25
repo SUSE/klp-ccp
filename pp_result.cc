@@ -909,6 +909,31 @@ pp_result::pp_tokens_range_to_raw(const pp_tokens_range &r) const noexcept
 	 };
 }
 
+const pp_tokens_range
+pp_result::raw_pp_tokens_range_to_nonraw(const raw_pp_tokens_range &r)
+  const noexcept
+{
+  struct comp
+  {
+    bool operator()(const pp_token &tok, const raw_pp_tokens_range &r) noexcept
+    {
+      return tok.get_token_source() < r;
+    }
+    bool operator()(const raw_pp_tokens_range &r, const pp_token &tok) noexcept
+    {
+      return r < tok.get_token_source();
+    }
+  };
+
+  const auto toks_range =
+    std::equal_range(_pp_tokens.begin(), _pp_tokens.end(), r, comp{});
+
+  return pp_tokens_range {
+    static_cast<pp_token_index>(toks_range.first - _pp_tokens.begin()),
+    static_cast<pp_token_index>(toks_range.second - _pp_tokens.begin())
+   };
+}
+
 void pp_result::_append_token(const raw_pp_token &tok)
 {
   _raw_tokens.push_back(tok);
