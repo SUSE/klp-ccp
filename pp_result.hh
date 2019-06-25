@@ -213,6 +213,9 @@ namespace klp
 	bool operator<(const raw_pp_tokens_range &r) const noexcept
 	{ return _directive_range < r; }
 
+	const std::string& get_name() const noexcept
+	{ return _name; }
+
 	const raw_pp_tokens_range& get_directive_range() const noexcept
 	{ return _directive_range; }
 
