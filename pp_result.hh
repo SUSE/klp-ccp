@@ -595,6 +595,9 @@ namespace klp
 	};
 
       public:
+	template<typename callable_type>
+	void for_each_descendant_inclusion_node(callable_type &&c) const;
+
 	class recursive_header_inclusion_iterator :
 	  public std::iterator<std::forward_iterator_tag,
 			       const header_inclusion_child>
@@ -1110,6 +1113,25 @@ namespace klp
 
       unsigned long _next_header_node_id;
     };
+
+    template<typename callable_type>
+    void pp_result::inclusion_node::
+    for_each_descendant_inclusion_node(callable_type &&c) const
+    {
+      _recursive_child_iterator it{*this};
+      while(!it.is_end()) {
+	switch (it->k) {
+	case _child::kind::header:
+	  c(const_cast<const header_inclusion_child&>(*it->h));
+	  break;
+
+	case _child::kind::conditional:
+	  c(const_cast<const conditional_inclusion_node&>(*it->c));
+	  break;
+	}
+	++it;
+      }
+    }
 
     static inline bool operator<(const raw_pp_tokens_range &r,
 				 const pp_result::directive &d) noexcept
