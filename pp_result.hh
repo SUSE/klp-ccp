@@ -774,6 +774,9 @@ namespace klp
 	virtual const header_inclusion_node&
 	get_containing_header() const noexcept override;
 
+	const raw_pp_token_index get_directive_begin() const noexcept
+	{ return this->get_range().begin; }
+
       private:
 	friend class inclusion_node;
 	friend class preprocessor;
