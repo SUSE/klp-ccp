@@ -252,6 +252,40 @@ namespace klp
 		_used_macros_type;
 
       public:
+	class const_iterator :
+	  public std::iterator<std::forward_iterator_tag, const macro>
+	{
+	public:
+	  bool operator==(const const_iterator &rhs) const noexcept
+	  { return this->_it == rhs._it; }
+
+	  bool operator!=(const const_iterator &rhs) const noexcept
+	  {
+	    return !(*this == rhs);
+	  }
+
+	  reference operator*() const noexcept
+	  { return _it->get(); }
+
+	  pointer operator->() const noexcept
+	  { return &_it->get(); }
+
+	  const_iterator& operator++()
+	  { ++_it; return *this; }
+
+	  const const_iterator operator++(int)
+	  { return const_iterator{_it++}; }
+
+	private:
+	  friend class used_macros;
+
+	  const_iterator(const _used_macros_type::const_iterator &it)
+	    : _it(it)
+	  {}
+
+	  _used_macros_type::const_iterator _it;
+	};
+
 	used_macros() = default;
 
 	bool empty() const noexcept
@@ -264,6 +298,12 @@ namespace klp
 	used_macros& operator+=(const used_macros &rhs);
 
 	used_macros& operator+=(const pp_result::macro &rhs);
+
+	const_iterator begin() const
+	{ return const_iterator{_used_macros.begin()}; }
+
+	const_iterator end() const
+	{ return const_iterator{_used_macros.end()}; }
 
       private:
 	used_macros(_used_macros_type &&um);
