@@ -751,6 +751,13 @@ namespace klp
 	const raw_pp_tokens_range& get_directive_range() const noexcept
 	{ return _directive_range; }
 
+	const used_macros& get_used_macros() const noexcept
+	{ return _used_macros; }
+
+	const macro_nondef_constraints& get_macro_nondef_constraints()
+	  const noexcept
+	{ return _macro_nondef_constraints; }
+
       private:
 	friend class inclusion_node;
 
