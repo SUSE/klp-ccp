@@ -748,6 +748,9 @@ namespace klp
       public:
 	virtual ~header_inclusion_child() noexcept;
 
+	const raw_pp_tokens_range& get_directive_range() const noexcept
+	{ return _directive_range; }
+
       private:
 	friend class inclusion_node;
 
