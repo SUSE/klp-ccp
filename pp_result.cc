@@ -233,6 +233,14 @@ operator+=(const macro_nondef_constraint &rhs)
   return *this;
 }
 
+pp_result::macro_nondef_constraints::const_iterator
+pp_result::macro_nondef_constraints::find(const std::string &id) const
+{
+  return const_iterator{
+    _macro_nondef_constraints.find(id)
+  };
+}
+
 
 pp_result::macro_invocation::
 macro_invocation(const macro &m,

@@ -337,6 +337,42 @@ namespace klp
 	  _macro_nondef_constraints_type;
 
       public:
+	class const_iterator :
+	  public std::iterator<std::forward_iterator_tag,
+			       const macro_nondef_constraint>
+	{
+	public:
+	  bool operator==(const const_iterator &rhs) const noexcept
+	  { return this->_it == rhs._it; }
+
+	  bool operator!=(const const_iterator &rhs) const noexcept
+	  {
+	    return !(*this == rhs);
+	  }
+
+	  reference operator*() const noexcept
+	  { return *_it; }
+
+	  pointer operator->() const noexcept
+	  { return &*_it; }
+
+	  const_iterator& operator++()
+	  { ++_it; return *this; }
+
+	  const const_iterator operator++(int)
+	  { return const_iterator{_it++}; }
+
+	private:
+	  friend class macro_nondef_constraints;
+
+	  const_iterator
+		(const _macro_nondef_constraints_type::const_iterator &it)
+	    : _it(it)
+	  {}
+
+	  _macro_nondef_constraints_type::const_iterator _it;
+	};
+
 	macro_nondef_constraints() = default;
 
 	macro_nondef_constraints(macro_nondef_constraints &&mnc);
@@ -348,6 +384,14 @@ namespace klp
 
 	macro_nondef_constraints&
 	operator+=(const macro_nondef_constraint &rhs);
+
+	const_iterator begin() const
+	{ return const_iterator{_macro_nondef_constraints.begin()}; }
+
+	const_iterator end() const
+	{ return const_iterator{_macro_nondef_constraints.end()}; }
+
+	const_iterator find(const std::string &id) const;
 
       private:
 	_macro_nondef_constraints_type _macro_nondef_constraints;
