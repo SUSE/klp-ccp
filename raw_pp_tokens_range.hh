@@ -2,6 +2,7 @@
 #define RAW_PP_TOKENS_RANGE_HH
 
 #include <limits>
+#include <algorithm>
 #include <cassert>
 
 namespace klp
@@ -43,6 +44,19 @@ namespace klp
 
       bool operator<(const raw_pp_tokens_range &op) const noexcept
       { return this->end <= op.begin; }
+
+      bool is_contained_in(const raw_pp_tokens_range &r) const noexcept
+      { return this->begin >= r.begin && this->end <= r.end; }
+
+      raw_pp_tokens_range crop(const raw_pp_tokens_range &to) const noexcept
+      {
+	raw_pp_tokens_range cropped {
+		std::max(this->begin, to.begin),
+		std::min(this->end, to.end)
+	};
+	assert(cropped.begin <= cropped.end);
+	return cropped;
+      }
 
       raw_pp_token_index begin;
       raw_pp_token_index end;
