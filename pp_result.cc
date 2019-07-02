@@ -907,10 +907,33 @@ pp_result::get_raw_token_source(const raw_pp_token_index tok_index) const
 const raw_pp_tokens_range
 pp_result::pp_tokens_range_to_raw(const pp_tokens_range &r) const noexcept
 {
-  return raw_pp_tokens_range {
+  if (r.begin != r.end) {
+    return raw_pp_tokens_range {
 		_pp_tokens[r.begin].get_token_source().begin,
+		_pp_tokens[r.end - 1].get_token_source().end
+	   };
+  } else if (r.end && r.end != _pp_tokens.size()) {
+    return raw_pp_tokens_range {
 		_pp_tokens[r.end - 1].get_token_source().end,
-	 };
+		_pp_tokens[r.end].get_token_source().begin
+	   };
+  } else if (r.end) {
+    assert(r.end == _pp_tokens.size() && !_pp_tokens.empty());
+    return raw_pp_tokens_range {
+		_pp_tokens.back().get_token_source().end,
+		_pp_tokens.back().get_token_source().end
+	   };
+  } else if (!_pp_tokens.empty()) {
+    return raw_pp_tokens_range {
+		_pp_tokens.front().get_token_source().begin,
+		_pp_tokens.front().get_token_source().begin
+	   };
+  } else {
+    return raw_pp_tokens_range {
+		_raw_tokens.size(),
+		_raw_tokens.size()
+	   };
+  }
 }
 
 const pp_tokens_range
