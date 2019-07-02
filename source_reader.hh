@@ -28,8 +28,12 @@ namespace klp
       virtual buffer_type read() override;
 
     private:
+      void _fill_buffer();
+
       const std::string _filename;
       int _fd;
+      buffer_type _buf;
+      std::streamoff _buf_pos;
     };
 
     class buf_source_reader final : public source_reader

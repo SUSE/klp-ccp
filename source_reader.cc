@@ -12,7 +12,7 @@ source_reader::~source_reader() noexcept = default;
 
 
 file_source_reader::file_source_reader(const std::string &filename)
-  : _filename(filename)
+  : _filename(filename), _buf_pos(0)
 {
   _fd = open(_filename.c_str(), O_RDONLY);
   if (_fd < 0)
@@ -26,15 +26,20 @@ file_source_reader::~file_source_reader() noexcept
 
 source_reader::buffer_type file_source_reader::read()
 {
-  buffer_type buf;
-  buf.resize(4096);
+  _fill_buffer();
+  _buf_pos += _buf.size();
+  return std::move(_buf);
+}
 
-  const ssize_t r = ::read(_fd, &buf[0], buf.size());
+void file_source_reader::_fill_buffer()
+{
+  _buf.resize(4096);
+
+  const ssize_t r = ::read(_fd, &_buf[0], _buf.size());
   if (r < 0)
     throw std::system_error(errno, std::system_category(), _filename);
 
-  buf.resize(static_cast<buffer_type::size_type>(r));
-  return buf;
+  _buf.resize(static_cast<buffer_type::size_type>(r));
 }
 
 
