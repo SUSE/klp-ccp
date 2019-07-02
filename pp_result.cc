@@ -234,7 +234,7 @@ operator+=(const macro_nondef_constraint &rhs)
 }
 
 pp_result::macro_nondef_constraints::const_iterator
-pp_result::macro_nondef_constraints::find(const std::string &id) const
+pp_result::macro_nondef_constraints::find(const std::string &id) const noexcept
 {
   return const_iterator{
     _macro_nondef_constraints.find(id)
@@ -621,6 +621,7 @@ std::pair<pp_result::header_inclusion_roots::const_iterator,
 pp_result::const_intersecting_source_iterator::_intersecting_roots_subrange
 			(const header_inclusion_roots::const_iterator &b,
 			 const header_inclusion_roots::const_iterator &e)
+  noexcept
 {
   const auto srb =
     std::lower_bound(b, e, _range,
@@ -643,6 +644,7 @@ std::pair<pp_result::inclusion_node::_children_container_type::const_iterator,
 pp_result::const_intersecting_source_iterator::_intersecting_chlds_subrange
 	(const inclusion_node::_children_container_type::const_iterator &b,
 	 const inclusion_node::_children_container_type::const_iterator &e)
+  noexcept
 {
   const auto srb =
     std::lower_bound(b, e, _range,
@@ -847,20 +849,22 @@ pp_result::pp_result(header_inclusion_roots &&header_inclusion_roots)
 
 std::pair<pp_result::const_directive_iterator,
 	  pp_result::const_directive_iterator>
-pp_result::find_overlapping_directives(const raw_pp_tokens_range &r) const
+pp_result::find_overlapping_directives(const raw_pp_tokens_range &r)
+  const noexcept
 {
   return std::equal_range(directives_begin(), directives_end(), r);
 }
 
 std::pair<pp_result::const_macro_iterator, pp_result::const_macro_iterator>
-pp_result::find_overlapping_macros(const raw_pp_tokens_range &r) const
+pp_result::find_overlapping_macros(const raw_pp_tokens_range &r) const noexcept
 {
   return std::equal_range(macros_begin(), macros_end(), r);
 }
 
 std::pair<pp_result::const_macro_undef_iterator,
 	  pp_result::const_macro_undef_iterator>
-pp_result::find_overlapping_macro_undefs(const raw_pp_tokens_range &r) const
+pp_result::find_overlapping_macro_undefs(const raw_pp_tokens_range &r)
+  const noexcept
 {
   return std::equal_range(macro_undefs_begin(), macro_undefs_end(), r);
 }
@@ -869,7 +873,7 @@ pp_result::find_overlapping_macro_undefs(const raw_pp_tokens_range &r) const
 std::pair<pp_result::const_macro_invocation_iterator,
 	  pp_result::const_macro_invocation_iterator>
 pp_result::find_overlapping_macro_invocations(const raw_pp_tokens_range &r)
-  const
+  const noexcept
 {
   return std::equal_range(macro_invocations_begin(), macro_invocations_end(),
 			  r);

@@ -43,14 +43,14 @@ namespace klp
       typedef _directives_container_type::const_iterator
 	const_directive_iterator;
 
-      const_directive_iterator directives_begin() const
+      const_directive_iterator directives_begin() const noexcept
       { return _directives.begin(); }
 
-      const_directive_iterator directives_end() const
+      const_directive_iterator directives_end() const noexcept
       { return _directives.end(); }
 
       std::pair<const_directive_iterator, const_directive_iterator>
-      find_overlapping_directives(const raw_pp_tokens_range &r) const;
+      find_overlapping_directives(const raw_pp_tokens_range &r) const noexcept;
 
 
       class macro
@@ -137,71 +137,72 @@ namespace klp
 	pointer operator->() const noexcept
 	{ return (*_it).get(); }
 
-	const_macro_iterator& operator++()
+	const_macro_iterator& operator++() noexcept
 	{ ++_it; return *this; }
 
-	const const_macro_iterator operator++(int)
+	const const_macro_iterator operator++(int) noexcept
 	{ return const_macro_iterator{_it++}; }
 
-	const_macro_iterator& operator--()
+	const_macro_iterator& operator--() noexcept
 	{ --_it; return *this; }
 
-	const const_macro_iterator operator--(int)
+	const const_macro_iterator operator--(int) noexcept
 	{ return const_macro_iterator{_it--}; }
 
 	const_macro_iterator&
-	operator+=(const difference_type n)
+	operator+=(const difference_type n) noexcept
 	{ _it += n; return *this; }
 
 	const_macro_iterator&
-	operator-=(const difference_type n)
+	operator-=(const difference_type n) noexcept
 	{ _it -= n; return *this; }
 
 	const const_macro_iterator
-	operator+(const difference_type n) const
+	operator+(const difference_type n) const noexcept
 	{ return const_macro_iterator(_it + n); }
 
 	const const_macro_iterator
-	operator-(const difference_type n) const
+	operator-(const difference_type n) const noexcept
 	{ return const_macro_iterator(_it - n); }
 
 	const difference_type
-	operator-(const const_macro_iterator &op) const
+	operator-(const const_macro_iterator &op) const noexcept
 	{ return this->_it - op._it; }
 
-	reference operator[](const difference_type n) const
+	reference operator[](const difference_type n) const noexcept
 	{ return *(*this + n); }
 
-	bool operator<(const const_macro_iterator &op) const
+	bool operator<(const const_macro_iterator &op) const noexcept
 	{ return this->_it < op._it; }
 
-	bool operator>(const const_macro_iterator &op) const
+	bool operator>(const const_macro_iterator &op) const noexcept
 	{ return this->_it > op._it; }
 
-	bool operator<=(const const_macro_iterator &op) const
+	bool operator<=(const const_macro_iterator &op) const noexcept
 	{ return this->_it <= op._it; }
 
-	bool operator>=(const const_macro_iterator &op) const
+	bool operator>=(const const_macro_iterator &op) const noexcept
 	{ return this->_it >= op._it; }
 
       private:
 	friend class pp_result;
 
 	const_macro_iterator(const _macros_container_type::const_iterator &it)
+	  noexcept
 	  : _it(it)
 	{}
 
 	_macros_container_type::const_iterator _it;
       };
 
-      const_macro_iterator macros_begin() const
+      const_macro_iterator macros_begin() const noexcept
       { return const_macro_iterator{_macros.begin()}; }
 
-      const_macro_iterator macros_end() const
+      const_macro_iterator macros_end() const noexcept
       { return const_macro_iterator{_macros.end()}; }
 
       std::pair<const_macro_iterator, const_macro_iterator>
-      find_overlapping_macros(const raw_pp_tokens_range &r) const;
+      find_overlapping_macros(const raw_pp_tokens_range &r) const noexcept;
 
 
       class macro_undef
@@ -231,14 +232,15 @@ namespace klp
       typedef _macro_undefs_container_type::const_iterator
 	const_macro_undef_iterator;
 
-      const_macro_undef_iterator macro_undefs_begin() const
+      const_macro_undef_iterator macro_undefs_begin() const noexcept
       { return _macro_undefs.begin(); }
 
-      const_macro_undef_iterator macro_undefs_end() const
+      const_macro_undef_iterator macro_undefs_end() const noexcept
       { return _macro_undefs.end(); }
 
       std::pair<const_macro_undef_iterator, const_macro_undef_iterator>
-      find_overlapping_macro_undefs(const raw_pp_tokens_range &r) const;
+      find_overlapping_macro_undefs(const raw_pp_tokens_range &r)
+	const noexcept;
 
 
       class used_macros
@@ -273,16 +275,16 @@ namespace klp
 	  pointer operator->() const noexcept
 	  { return &_it->get(); }
 
-	  const_iterator& operator++()
+	  const_iterator& operator++() noexcept
 	  { ++_it; return *this; }
 
-	  const const_iterator operator++(int)
+	  const const_iterator operator++(int) noexcept
 	  { return const_iterator{_it++}; }
 
 	private:
 	  friend class used_macros;
 
-	  const_iterator(const _used_macros_type::const_iterator &it)
+	  const_iterator(const _used_macros_type::const_iterator &it) noexcept
 	    : _it(it)
 	  {}
 
@@ -302,10 +304,10 @@ namespace klp
 
 	used_macros& operator+=(const pp_result::macro &rhs);
 
-	const_iterator begin() const
+	const_iterator begin() const noexcept
 	{ return const_iterator{_used_macros.begin()}; }
 
-	const_iterator end() const
+	const_iterator end() const noexcept
 	{ return const_iterator{_used_macros.end()}; }
 
       private:
@@ -359,10 +361,10 @@ namespace klp
 	  pointer operator->() const noexcept
 	  { return &*_it; }
 
-	  const_iterator& operator++()
+	  const_iterator& operator++() noexcept
 	  { ++_it; return *this; }
 
-	  const const_iterator operator++(int)
+	  const const_iterator operator++(int) noexcept
 	  { return const_iterator{_it++}; }
 
 	private:
@@ -370,6 +372,7 @@ namespace klp
 
 	  const_iterator
 		(const _macro_nondef_constraints_type::const_iterator &it)
+		  noexcept
 	    : _it(it)
 	  {}
 
@@ -388,13 +391,13 @@ namespace klp
 	macro_nondef_constraints&
 	operator+=(const macro_nondef_constraint &rhs);
 
-	const_iterator begin() const
+	const_iterator begin() const noexcept
 	{ return const_iterator{_macro_nondef_constraints.begin()}; }
 
-	const_iterator end() const
+	const_iterator end() const noexcept
 	{ return const_iterator{_macro_nondef_constraints.end()}; }
 
-	const_iterator find(const std::string &id) const;
+	const_iterator find(const std::string &id) const noexcept;
 
       private:
 	_macro_nondef_constraints_type _macro_nondef_constraints;
@@ -452,51 +455,53 @@ namespace klp
 	pointer operator->() const noexcept
 	{ return (*_it).get(); }
 
-	const_macro_invocation_iterator& operator++()
+	const_macro_invocation_iterator& operator++() noexcept
 	{ ++_it; return *this; }
 
-	const const_macro_invocation_iterator operator++(int)
+	const const_macro_invocation_iterator operator++(int) noexcept
 	{ return const_macro_invocation_iterator{_it++}; }
 
-	const_macro_invocation_iterator& operator--()
+	const_macro_invocation_iterator& operator--() noexcept
 	{ --_it; return *this; }
 
-	const const_macro_invocation_iterator operator--(int)
+	const const_macro_invocation_iterator operator--(int) noexcept
 	{ return const_macro_invocation_iterator{_it--}; }
 
 	const_macro_invocation_iterator&
-	operator+=(const difference_type n)
+	operator+=(const difference_type n) noexcept
 	{ _it += n; return *this; }
 
 	const_macro_invocation_iterator&
-	operator-=(const difference_type n)
+	operator-=(const difference_type n) noexcept
 	{ _it -= n; return *this; }
 
 	const const_macro_invocation_iterator
-	operator+(const difference_type n) const
+	operator+(const difference_type n) const noexcept
 	{ return const_macro_invocation_iterator(_it + n); }
 
 	const const_macro_invocation_iterator
-	operator-(const difference_type n) const
+	operator-(const difference_type n) const noexcept
 	{ return const_macro_invocation_iterator(_it - n); }
 
 	const difference_type
-	operator-(const const_macro_invocation_iterator &op) const
+	operator-(const const_macro_invocation_iterator &op) const noexcept
 	{ return this->_it - op._it; }
 
-	reference operator[](const difference_type n) const
+	reference operator[](const difference_type n) const noexcept
 	{ return *(*this + n); }
 
-	bool operator<(const const_macro_invocation_iterator &op) const
+	bool operator<(const const_macro_invocation_iterator &op) const noexcept
 	{ return this->_it < op._it; }
 
-	bool operator>(const const_macro_invocation_iterator &op) const
+	bool operator>(const const_macro_invocation_iterator &op) const noexcept
 	{ return this->_it > op._it; }
 
-	bool operator<=(const const_macro_invocation_iterator &op) const
+	bool operator<=(const const_macro_invocation_iterator &op)
+	  const noexcept
 	{ return this->_it <= op._it; }
 
-	bool operator>=(const const_macro_invocation_iterator &op) const
+	bool operator>=(const const_macro_invocation_iterator &op)
+	  const noexcept
 	{ return this->_it >= op._it; }
 
       private:
@@ -504,6 +509,7 @@ namespace klp
 
 	const_macro_invocation_iterator
 		(const _macro_invocations_container_type::const_iterator &it)
+		  noexcept
 	  : _it(it)
 	{}
 
@@ -511,16 +517,17 @@ namespace klp
       };
 
       const const_macro_invocation_iterator
-      macro_invocations_begin() const
+      macro_invocations_begin() const noexcept
       { return const_macro_invocation_iterator(_macro_invocations.cbegin()); }
 
       const const_macro_invocation_iterator
-      macro_invocations_end() const
+      macro_invocations_end() const noexcept
       { return const_macro_invocation_iterator(_macro_invocations.cend()); }
 
       std::pair<const_macro_invocation_iterator,
 		const_macro_invocation_iterator>
-      find_overlapping_macro_invocations(const raw_pp_tokens_range &r) const;
+      find_overlapping_macro_invocations(const raw_pp_tokens_range &r)
+	const noexcept;
 
 
       class header_inclusion_node;
@@ -828,51 +835,51 @@ namespace klp
 	  pointer operator->() const noexcept
 	  { return (*_it).get(); }
 
-	  iterator& operator++()
+	  iterator& operator++() noexcept
 	  { ++_it; return *this; }
 
-	  const iterator operator++(int)
+	  const iterator operator++(int) noexcept
 	  { return iterator{_it++}; }
 
-	  iterator& operator--()
+	  iterator& operator--() noexcept
 	  { --_it; return *this; }
 
-	  const iterator operator--(int)
+	  const iterator operator--(int) noexcept
 	  { return iterator{_it--}; }
 
 	  const iterator&
-	  operator+=(const difference_type n)
+	  operator+=(const difference_type n) noexcept
 	  { _it += n; return *this; }
 
 	  const iterator&
-	  operator-=(const difference_type n)
+	  operator-=(const difference_type n) noexcept
 	  { _it -= n; return *this; }
 
 	  const iterator
-	  operator+(const difference_type n) const
+	  operator+(const difference_type n) const noexcept
 	  { return iterator(_it + n); }
 
 	  const iterator
-	  operator-(const difference_type n) const
+	  operator-(const difference_type n) const noexcept
 	  { return iterator(_it - n); }
 
 	  const difference_type
-	  operator-(const iterator &op) const
+	  operator-(const iterator &op) const noexcept
 	  { return this->_it - op._it; }
 
 	  reference operator[](const difference_type n) const
 	  { return *(*this + n); }
 
-	  bool operator<(const iterator &op) const
+	  bool operator<(const iterator &op) const noexcept
 	  { return this->_it < op._it; }
 
-	  bool operator>(const iterator &op) const
+	  bool operator>(const iterator &op) const noexcept
 	  { return this->_it > op._it; }
 
-	  bool operator<=(const iterator &op) const
+	  bool operator<=(const iterator &op) const noexcept
 	  { return this->_it <= op._it; }
 
-	  bool operator>=(const iterator &op) const
+	  bool operator>=(const iterator &op) const noexcept
 	  { return this->_it >= op._it; }
 
 	private:
@@ -905,51 +912,51 @@ namespace klp
 	  pointer operator->() const noexcept
 	  { return (*_it).get(); }
 
-	  const_iterator& operator++()
+	  const_iterator& operator++() noexcept
 	  { ++_it; return *this; }
 
-	  const const_iterator operator++(int)
+	  const const_iterator operator++(int) noexcept
 	  { return const_iterator{_it++}; }
 
-	  const_iterator& operator--()
+	  const_iterator& operator--() noexcept
 	  { --_it; return *this; }
 
-	  const const_iterator operator--(int)
+	  const const_iterator operator--(int) noexcept
 	  { return const_iterator{_it--}; }
 
 	  const const_iterator&
-	  operator+=(const difference_type n)
+	  operator+=(const difference_type n) noexcept
 	  { _it += n; return *this; }
 
 	  const const_iterator&
-	  operator-=(const difference_type n)
+	  operator-=(const difference_type n) noexcept
 	  { _it -= n; return *this; }
 
 	  const const_iterator
-	  operator+(const difference_type n) const
+	  operator+(const difference_type n) const noexcept
 	  { return const_iterator(_it + n); }
 
 	  const const_iterator
-	  operator-(const difference_type n) const
+	  operator-(const difference_type n) const noexcept
 	  { return const_iterator(_it - n); }
 
 	  const difference_type
-	  operator-(const const_iterator &op) const
+	  operator-(const const_iterator &op) const noexcept
 	  { return this->_it - op._it; }
 
-	  reference operator[](const difference_type n) const
+	  reference operator[](const difference_type n) const noexcept
 	  { return *(*this + n); }
 
-	  bool operator<(const const_iterator &op) const
+	  bool operator<(const const_iterator &op) const noexcept
 	  { return this->_it < op._it; }
 
-	  bool operator>(const const_iterator &op) const
+	  bool operator>(const const_iterator &op) const noexcept
 	  { return this->_it > op._it; }
 
-	  bool operator<=(const const_iterator &op) const
+	  bool operator<=(const const_iterator &op) const noexcept
 	  { return this->_it <= op._it; }
 
-	  bool operator>=(const const_iterator &op) const
+	  bool operator>=(const const_iterator &op) const noexcept
 	  { return this->_it >= op._it; }
 
 	private:
@@ -1034,13 +1041,14 @@ namespace klp
 		  header_inclusion_roots::const_iterator>
 	_intersecting_roots_subrange
 		(const header_inclusion_roots::const_iterator &b,
-		 const header_inclusion_roots::const_iterator &e);
+		 const header_inclusion_roots::const_iterator &e) noexcept;
 
 	std::pair<inclusion_node::_children_container_type::const_iterator,
 		  inclusion_node::_children_container_type::const_iterator>
 	_intersecting_chlds_subrange
 	(const inclusion_node::_children_container_type::const_iterator &b,
-	 const inclusion_node::_children_container_type::const_iterator &e);
+	 const inclusion_node::_children_container_type::const_iterator &e)
+	  noexcept;
 
 	void _enter_root();
 
