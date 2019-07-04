@@ -24,7 +24,7 @@ preprocessor(pp_result::header_inclusion_roots &&header_inclusion_roots,
     _maybe_pp_directive(true), _line_empty(true)
 {
   assert(!_pp_result->get_header_inclusion_roots().empty());
-  _cur_header_inclusion_root->_set_range_begin(0);
+  _pp_result->_enter_root(*_cur_header_inclusion_root, 0);
   _tokenizers.emplace(*_cur_header_inclusion_root);
   _inclusions.emplace(std::ref(*_cur_header_inclusion_root));
 }
@@ -326,7 +326,7 @@ void preprocessor::_handle_eof_from_tokenizer(raw_pp_token &&eof_tok)
       return;
     }
 
-    _cur_header_inclusion_root->_set_range_begin(cur_raw_pos);
+    _pp_result->_enter_root(*_cur_header_inclusion_root, cur_raw_pos);
     _tokenizers.emplace(*_cur_header_inclusion_root);
     _inclusions.emplace(std::ref(*_cur_header_inclusion_root));
   }

@@ -677,6 +677,7 @@ namespace klp
 	inclusion_node * const _parent;
 
       private:
+	friend class pp_result;
 	friend class preprocessor;
 
 	header_inclusion_child&
@@ -730,6 +731,7 @@ namespace klp
 
       private:
 	friend class pp_result;
+
 	void _set_id(const unsigned long id) noexcept;
 
 	const std::string _filename;
@@ -1107,6 +1109,9 @@ namespace klp
 
       pp_result();
       pp_result(header_inclusion_roots &&header_inclusion_roots);
+
+      void _enter_root(header_inclusion_root &hir,
+		       const raw_pp_token_index range_begin) noexcept;
 
       void _append_token(const raw_pp_token &tok);
       void _append_token(raw_pp_token &&tok);

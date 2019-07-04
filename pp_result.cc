@@ -842,10 +842,7 @@ pp_result::pp_result()
 pp_result::pp_result(header_inclusion_roots &&header_inclusion_roots)
   : _header_inclusion_roots(std::move(header_inclusion_roots)),
     _next_header_node_id(0)
-{
-  for (auto &hr : _header_inclusion_roots)
-    hr._set_id(_next_header_node_id++);
-}
+{}
 
 std::pair<pp_result::const_directive_iterator,
 	  pp_result::const_directive_iterator>
@@ -959,6 +956,13 @@ pp_result::raw_pp_tokens_range_to_nonraw(const raw_pp_tokens_range &r)
     static_cast<pp_token_index>(toks_range.first - _pp_tokens.begin()),
     static_cast<pp_token_index>(toks_range.second - _pp_tokens.begin())
    };
+}
+
+void pp_result::_enter_root(header_inclusion_root &hir,
+			    const raw_pp_token_index range_begin) noexcept
+{
+  hir._set_range_begin(range_begin);
+  hir._set_id(_next_header_node_id++);
 }
 
 void pp_result::_append_token(const raw_pp_token &tok)
