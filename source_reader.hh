@@ -8,6 +8,8 @@ namespace klp
 {
   namespace ccp
   {
+    class range_in_file;
+
     class source_reader
     {
     public:
@@ -16,6 +18,9 @@ namespace klp
       virtual ~source_reader() noexcept;
 
       virtual buffer_type read() = 0;
+
+      virtual void read(buffer_type &to_buffer,
+			const range_in_file &from_range) = 0;
     };
 
     class file_source_reader final : public source_reader
@@ -26,6 +31,9 @@ namespace klp
       virtual ~file_source_reader() noexcept override;
 
       virtual buffer_type read() override;
+
+      virtual void read(buffer_type &to_buffer,
+			const range_in_file &from_range) override;
 
     private:
       void _fill_buffer();
