@@ -35,19 +35,6 @@ namespace klp
       buffer_type _buf;
       std::streamoff _buf_pos;
     };
-
-    class buf_source_reader final : public source_reader
-    {
-    public:
-      buf_source_reader(const std::string &buf);
-
-      virtual ~buf_source_reader() noexcept override;
-
-      virtual buffer_type read() override;
-
-    private:
-      buffer_type _buf;
-    };
   }
 }
 

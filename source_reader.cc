@@ -41,15 +41,3 @@ void file_source_reader::_fill_buffer()
 
   _buf.resize(static_cast<buffer_type::size_type>(r));
 }
-
-
-buf_source_reader::buf_source_reader(const std::string &buf)
-  : _buf(buf.begin(), buf.end())
-{}
-
-buf_source_reader::~buf_source_reader() noexcept = default;
-
-source_reader::buffer_type buf_source_reader::read()
-{
-  return std::move(_buf);
-}
