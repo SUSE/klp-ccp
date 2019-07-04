@@ -42,6 +42,7 @@ noinst_HEADERS =				\
 	ret_type_invoker.hh			\
 	semantic_except.hh			\
 	source_reader.hh			\
+	source_writer.hh			\
 	target_float.hh			\
 	target_int.hh				\
 	type_set.hh				\
@@ -80,6 +81,7 @@ libcp_a_SOURCES =				\
 	raw_pp_token.cc			\
 	semantic_except.cc			\
 	source_reader.cc			\
+	source_writer.cc			\
 	target_float.cc			\
 	target_int.cc				\
 	types.cc
