@@ -30,12 +30,6 @@ namespace klp
 	assert(begin <= end);
       }
 
-      bool is_builtin() const noexcept
-      {
-	return (begin == std::numeric_limits<raw_pp_token_index>::max() &&
-		end == 0);
-      }
-
       bool operator==(const raw_pp_tokens_range &op) const noexcept
       { return (this->begin == op.begin && this->end == op.end); }
 
