@@ -55,7 +55,18 @@ namespace klp
 
       class macro
       {
+      private:
+	enum class _origin
+	{
+	  o_builtin,
+	  o_builtin_special,
+	  o_predefined_user,
+	  o_source,
+	};
+
       public:
+	struct builtin_special_tag {};
+
 	bool operator==(const macro &rhs) const noexcept;
 
 	bool operator!=(const macro &rhs) const noexcept
@@ -77,8 +88,36 @@ namespace klp
 	const std::string& get_name() const noexcept
 	{ return _name; }
 
+
+	bool is_predefined() const noexcept
+	{
+	  return (_o == _origin::o_builtin ||
+		  _o == _origin::o_builtin_special ||
+		  _o == _origin::o_predefined_user);
+	}
+
+	bool is_builtin() const noexcept
+	{
+	  return (_o == _origin::o_builtin ||
+		  _o == _origin::o_builtin_special);
+	}
+
+	bool is_builtin_special() const noexcept
+	{
+	  return _o == _origin::o_builtin_special;
+	}
+
 	const raw_pp_tokens_range& get_directive_range() const noexcept
-	{ return _directive_range; }
+	{
+	  assert(!is_predefined());
+	  return _directive_range;
+	}
+
+	unsigned long get_predefinition_pos() const noexcept
+	{
+	  assert(is_predefined());
+	  return _predefinition_pos;
+	}
 
 	const raw_pp_tokens& get_repl() const noexcept
 	{ return _repl; }
@@ -92,6 +131,10 @@ namespace klp
 	      std::vector<std::string> &&arg_names,
 	      raw_pp_tokens &&repl,
 	      const raw_pp_tokens_range &directive_range);
+
+	macro(const std::string &name,
+	      const unsigned long predefinition_pos,
+	      const builtin_special_tag&);
 
 	raw_pp_tokens::const_iterator
 	_next_non_ws_repl(const raw_pp_tokens::const_iterator it)
@@ -107,7 +150,12 @@ namespace klp
 	std::string _name;
 	std::vector<std::string> _arg_names;
 	raw_pp_tokens _repl;
-	raw_pp_tokens_range _directive_range;
+	_origin _o;
+	union
+	{
+	  raw_pp_tokens_range _directive_range;
+	  unsigned long _predefinition_pos;
+	};
 	std::vector<bool> _do_expand_args;
 	bool _func_like;
 	bool _variadic;
@@ -207,6 +255,13 @@ namespace klp
 
       class macro_undef
       {
+      private:
+	enum class _origin
+	{
+	  o_predefined_user,
+	  o_source,
+	};
+
       public:
 	macro_undef(const std::string &name,
 		    const raw_pp_tokens_range &directive_range);
@@ -217,12 +272,29 @@ namespace klp
 	const std::string& get_name() const noexcept
 	{ return _name; }
 
+	bool is_predefined() const noexcept
+	{ return _o == _origin::o_predefined_user; }
+
 	const raw_pp_tokens_range& get_directive_range() const noexcept
-	{ return _directive_range; }
+	{
+	  assert(!is_predefined());
+	  return _directive_range;
+	}
+
+	unsigned long get_predefinition_pos() const noexcept
+	{
+	  assert(is_predefined());
+	  return _predefinition_pos;
+	}
 
       private:
 	std::string _name;
-	raw_pp_tokens_range _directive_range;
+	_origin _o;
+	union
+	{
+	  raw_pp_tokens_range _directive_range;
+	  unsigned long _predefinition_pos;
+	};
       };
 
     private:
@@ -1129,6 +1201,9 @@ namespace klp
 			      raw_pp_tokens &&repl,
 			      const raw_pp_tokens_range &directive_range);
 
+      const macro& _add_macro(const std::string &name,
+			      const macro::builtin_special_tag &tag);
+
       void _add_macro_undef(const std::string &name,
 			    const raw_pp_tokens_range &directive_range);
 
@@ -1152,6 +1227,7 @@ namespace klp
       _macro_invocations_container_type _macro_invocations;
 
       unsigned long _next_header_node_id;
+      unsigned long _next_predefinition_pos;
     };
 
     template<typename callable_type>

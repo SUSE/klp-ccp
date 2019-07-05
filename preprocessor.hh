@@ -43,6 +43,8 @@ namespace klp
       { return *_pp_result; }
 
     private:
+      friend class _macro_instance;
+
       class _pp_token
       {
       private:
@@ -224,6 +226,7 @@ namespace klp
 
 	bool _emit_empty_tok;
 	bool _last_tok_was_empty_or_ws;
+	bool _is_builtin_special;
       };
 
       struct _cond_incl_state

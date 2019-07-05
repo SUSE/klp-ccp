@@ -24,6 +24,17 @@ preprocessor(pp_result::header_inclusion_roots &&header_inclusion_roots,
     _maybe_pp_directive(true), _line_empty(true)
 {
   assert(!_pp_result->get_header_inclusion_roots().empty());
+
+  // Populate the special builtin macros.
+  for (const auto &name : { "__FILE__",
+			    "__LINE__",
+			    "__INCLUDE_LEVEL__",
+			    "__COUNTER__" }) {
+    const pp_result::macro &m =
+      _pp_result->_add_macro(name, pp_result::macro::builtin_special_tag{});
+    _macros.insert(std::make_pair(m.get_name(), std::ref(m)));
+  }
+
   _pp_result->_enter_root(*_cur_header_inclusion_root, 0);
   _tokenizers.emplace(*_cur_header_inclusion_root);
   _inclusions.emplace(std::ref(*_cur_header_inclusion_root));
@@ -713,26 +724,6 @@ preprocessor::_expand(_expansion_state &state,
 
   // Deal with possible macro invocation
   if (tok.is_id()) {
-    // Check for the predefined macros first.
-    if (tok.get_value() == "__FILE__") {
-      tok.set_type_and_value(pp_token::type::str,
-			     (_pp_token_to_source(tok).get_filename()));
-      return tok;
-    } else if (tok.get_value() == "__LINE__") {
-      auto line = (_pp_token_to_source(tok).offset_to_line_col
-		   (_pp_token_to_range_in_file(tok).begin)).first;
-      tok.set_type_and_value(pp_token::type::pp_number, std::to_string(line));
-      return tok;
-    } else if (tok.get_value() == "__INCLUDE_LEVEL__") {
-      tok.set_type_and_value(pp_token::type::pp_number,
-			     std::to_string(_tokenizers.size() - 1));
-      return tok;
-    } else if (tok.get_value() == "__COUNTER__") {
-      tok.set_type_and_value(pp_token::type::pp_number,
-			     std::to_string(__counter__++));
-      return tok;
-    }
-
     auto m = _macros.find(tok.get_value());
     if (m != _macros.end() && !tok.expansion_history().count(m->second)) {
       if (!m->second.get().is_func_like()) {
@@ -1881,7 +1872,8 @@ _macro_instance(preprocessor &preprocessor,
   : _preprocessor(preprocessor), _macro(macro),
     _invocation_range(invocation_range),
     _it_repl(_macro.get_repl().cbegin()), _cur_arg(nullptr),
-    _emit_empty_tok(true), _last_tok_was_empty_or_ws(false)
+    _emit_empty_tok(true), _last_tok_was_empty_or_ws(false),
+    _is_builtin_special(macro.is_builtin_special())
 {
   assert(args.size() == exp_args.size());
 
@@ -2185,6 +2177,57 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
 
   assert(_it_repl == _macro.get_repl().end() ||
 	 !_it_repl->is_punctuator("##"));
+
+  if (_is_builtin_special) {
+    // Unset _is_builtin_special. After yielding the actual content
+    // token just below, this macro will be handled like a normal
+    // object macro whose expansion list has been exhausted.
+    _is_builtin_special = false;
+
+    if (_macro.get_name() == "__FILE__") {
+      const auto &source =
+	_preprocessor._raw_pp_tokens_range_to_source(_invocation_range);
+      return _pp_token{
+		pp_token::type::str,
+		source.get_filename(),
+		_invocation_range,
+		_tok_expansion_history_init()
+	     };
+
+    } else if (_macro.get_name() == "__LINE__") {
+      const auto &source =
+	_preprocessor._raw_pp_tokens_range_to_source(_invocation_range);
+      const auto &range_in_file =
+	_preprocessor._raw_pp_tokens_range_to_range_in_file(_invocation_range);
+      const auto line = source.offset_to_line_col(range_in_file.begin).first;
+      return _pp_token{
+		pp_token::type::pp_number,
+		std::to_string(line),
+		_invocation_range,
+		_tok_expansion_history_init()
+	     };
+
+    } else if (_macro.get_name() == "__INCLUDE_LEVEL__") {
+      return _pp_token{
+		pp_token::type::pp_number,
+		std::to_string(_preprocessor._tokenizers.size() - 1),
+		_invocation_range,
+		_tok_expansion_history_init()
+	     };
+
+    } else if (_macro.get_name() == "__COUNTER__") {
+      return _pp_token{
+		pp_token::type::pp_number,
+		std::to_string(_preprocessor.__counter__++),
+		_invocation_range,
+		_tok_expansion_history_init()
+	     };
+
+    } else {
+      assert(0);
+      __builtin_unreachable();
+    }
+  }
 
   // Process all but the last operands of a ## concatenation.
   while(_it_repl != _macro.get_repl().end() &&

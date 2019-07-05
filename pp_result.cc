@@ -21,6 +21,7 @@ pp_result::macro::macro(const std::string &name,
 			const raw_pp_tokens_range &directive_range)
   : _name(name), _arg_names(std::move(arg_names)),
     _repl(std::move(repl)),
+    _o(_origin::o_source),
     _directive_range(directive_range),
     _func_like(func_like),
     _variadic(variadic)
@@ -74,13 +75,28 @@ pp_result::macro::macro(const std::string &name,
   }
 }
 
+pp_result::macro::macro(const std::string &name,
+			const unsigned long predefinition_pos,
+			const builtin_special_tag&)
+  : _name(name),
+    _o(_origin::o_builtin_special),
+    _predefinition_pos(predefinition_pos),
+    _func_like(false),
+    _variadic(false)
+{}
+
 bool pp_result::macro::operator==(const macro &rhs) const noexcept
 {
-  return (_name == rhs._name &&
-	  _func_like == rhs._func_like &&
-	  _arg_names == rhs._arg_names &&
-	  _variadic == rhs._variadic &&
-	  _repl == rhs._repl);
+  if (!this->is_builtin_special() && !rhs.is_builtin_special()) {
+    return (_name == rhs._name &&
+	    _func_like == rhs._func_like &&
+	    _arg_names == rhs._arg_names &&
+	    _variadic == rhs._variadic &&
+	    _repl == rhs._repl);
+  } else {
+    return (this->is_builtin_special() && rhs.is_builtin_special() &&
+	    _name == rhs._name);
+  }
 }
 
 const std::vector<std::string>& pp_result::macro::get_arg_names() const noexcept
@@ -140,7 +156,7 @@ bool pp_result::macro::_is_concat_op(const raw_pp_tokens::const_iterator &it)
 
 pp_result::macro_undef::macro_undef(const std::string &name,
 				    const raw_pp_tokens_range &directive_range)
-  : _name(name), _directive_range(directive_range)
+  : _name(name), _o(_origin::o_source), _directive_range(directive_range)
 {}
 
 
@@ -836,12 +852,12 @@ pp_result::header_inclusion_roots::~header_inclusion_roots() noexcept = default;
 
 
 pp_result::pp_result()
-  : _next_header_node_id(0)
+  : _next_header_node_id(0), _next_predefinition_pos(0)
 {}
 
 pp_result::pp_result(header_inclusion_roots &&header_inclusion_roots)
   : _header_inclusion_roots(std::move(header_inclusion_roots)),
-    _next_header_node_id(0)
+    _next_header_node_id(0), _next_predefinition_pos(0)
 {}
 
 std::pair<pp_result::const_directive_iterator,
@@ -1011,6 +1027,15 @@ _add_macro(const std::string &name,
 				  directive_range}});
   return *_macros.back();
 }
+
+const pp_result::macro& pp_result::
+_add_macro(const std::string &name, const macro::builtin_special_tag &tag)
+{
+  _macros.push_back(std::unique_ptr<const macro>{
+			new macro{name, _next_predefinition_pos++, tag}});
+  return *_macros.back();
+}
+
 
 void pp_result::
 _add_macro_undef(const std::string &name,

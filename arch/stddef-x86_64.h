@@ -67,7 +67,6 @@ typedef unsigned __int128 __uint128_t;
 #define __func__ ""
 #define __FUNCTION__ ""
 #define __PRETTY_FUNCTION__ ""
-#define __FILE__ ""
 #define __BASE_FILE__ ""
 
 #define __GCC_ATOMIC_TEST_AND_SET_TRUEVAL 1
