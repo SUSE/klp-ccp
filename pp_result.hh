@@ -66,6 +66,8 @@ namespace klp
 
       public:
 	struct builtin_special_tag {};
+	struct builtin_tag {};
+	struct predefined_user_tag {};
 
 	bool operator==(const macro &rhs) const noexcept;
 
@@ -135,6 +137,32 @@ namespace klp
 	macro(const std::string &name,
 	      const unsigned long predefinition_pos,
 	      const builtin_special_tag&);
+
+	macro(const std::string &name,
+	      const bool func_like,
+	      const bool variadic,
+	      std::vector<std::string> &&arg_names,
+	      raw_pp_tokens &&repl,
+	      const unsigned long predefinition_pos,
+	      const builtin_tag&);
+
+	macro(const std::string &name,
+	      const bool func_like,
+	      const bool variadic,
+	      std::vector<std::string> &&arg_names,
+	      raw_pp_tokens &&repl,
+	      const unsigned long predefinition_pos,
+	      const predefined_user_tag&);
+
+	macro(const std::string &name,
+	      const bool func_like,
+	      const bool variadic,
+	      std::vector<std::string> &&arg_names,
+	      raw_pp_tokens &&repl,
+	      const unsigned long predefinition_pos,
+	      const _origin o);
+
+	void _init_do_expand_args();
 
 	raw_pp_tokens::const_iterator
 	_next_non_ws_repl(const raw_pp_tokens::const_iterator it)
@@ -1203,6 +1231,20 @@ namespace klp
 
       const macro& _add_macro(const std::string &name,
 			      const macro::builtin_special_tag &tag);
+
+      const macro& _add_macro(const std::string &name,
+			      const bool func_like,
+			      const bool variadic,
+			      std::vector<std::string> &&arg_names,
+			      raw_pp_tokens &&repl,
+			      const macro::builtin_tag &tag);
+
+      const macro& _add_macro(const std::string &name,
+			      const bool func_like,
+			      const bool variadic,
+			      std::vector<std::string> &&arg_names,
+			      raw_pp_tokens &&repl,
+			      const macro::predefined_user_tag &tag);
 
       void _add_macro_undef(const std::string &name,
 			    const raw_pp_tokens_range &directive_range);

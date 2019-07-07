@@ -26,6 +26,93 @@ pp_result::macro::macro(const std::string &name,
     _func_like(func_like),
     _variadic(variadic)
 {
+  _init_do_expand_args();
+}
+
+pp_result::macro::macro(const std::string &name,
+			const unsigned long predefinition_pos,
+			const builtin_special_tag&)
+  : _name(name),
+    _o(_origin::o_builtin_special),
+    _predefinition_pos(predefinition_pos),
+    _func_like(false),
+    _variadic(false)
+{}
+
+pp_result::macro::macro(const std::string &name,
+			const bool func_like,
+			const bool variadic,
+			std::vector<std::string> &&arg_names,
+			raw_pp_tokens &&repl,
+			const unsigned long predefinition_pos,
+			const builtin_tag&)
+  : macro(name, func_like, variadic, std::move(arg_names), std::move(repl),
+	  predefinition_pos, _origin::o_builtin)
+{}
+
+pp_result::macro::macro(const std::string &name,
+	      const bool func_like,
+	      const bool variadic,
+	      std::vector<std::string> &&arg_names,
+	      raw_pp_tokens &&repl,
+	      const unsigned long predefinition_pos,
+	      const predefined_user_tag&)
+  : macro(name, func_like, variadic, std::move(arg_names), std::move(repl),
+	  predefinition_pos, _origin::o_predefined_user)
+{}
+
+pp_result::macro::macro(const std::string &name,
+			const bool func_like,
+			const bool variadic,
+			std::vector<std::string> &&arg_names,
+			raw_pp_tokens &&repl,
+			const unsigned long predefinition_pos,
+			const _origin o)
+  : _name(name), _arg_names(std::move(arg_names)), _repl(std::move(repl)),
+    _o(o), _predefinition_pos(predefinition_pos),
+    _func_like(func_like), _variadic(variadic)
+{
+  assert(this->is_predefined());
+  _init_do_expand_args();
+}
+
+bool pp_result::macro::operator==(const macro &rhs) const noexcept
+{
+  if (!this->is_builtin_special() && !rhs.is_builtin_special()) {
+    return (_name == rhs._name &&
+	    _func_like == rhs._func_like &&
+	    _arg_names == rhs._arg_names &&
+	    _variadic == rhs._variadic &&
+	    _repl == rhs._repl);
+  } else {
+    return (this->is_builtin_special() && rhs.is_builtin_special() &&
+	    _name == rhs._name);
+  }
+}
+
+const std::vector<std::string>& pp_result::macro::get_arg_names() const noexcept
+{
+  return _arg_names;
+}
+
+size_t pp_result::macro::non_va_arg_count() const noexcept
+{
+  assert(_func_like);
+  if (_variadic)
+    return _do_expand_args.size() - 1;
+
+  return _do_expand_args.size();
+}
+
+bool pp_result::macro::shall_expand_arg(const size_t pos) const noexcept
+{
+  assert(_func_like);
+  assert(pos <= _do_expand_args.size());
+  return _do_expand_args[pos];
+}
+
+void pp_result::macro::_init_do_expand_args()
+{
   // Due to the restriction that a ## concatenated token must again
   // yield a valid preprocessing token, macro evaluation can fail and
   // thus yield an error. Hence macro arguments must not get macro
@@ -73,51 +160,6 @@ pp_result::macro::macro(const std::string &name,
     if (do_expand.count(_arg_names[i]))
       _do_expand_args[i] = true;
   }
-}
-
-pp_result::macro::macro(const std::string &name,
-			const unsigned long predefinition_pos,
-			const builtin_special_tag&)
-  : _name(name),
-    _o(_origin::o_builtin_special),
-    _predefinition_pos(predefinition_pos),
-    _func_like(false),
-    _variadic(false)
-{}
-
-bool pp_result::macro::operator==(const macro &rhs) const noexcept
-{
-  if (!this->is_builtin_special() && !rhs.is_builtin_special()) {
-    return (_name == rhs._name &&
-	    _func_like == rhs._func_like &&
-	    _arg_names == rhs._arg_names &&
-	    _variadic == rhs._variadic &&
-	    _repl == rhs._repl);
-  } else {
-    return (this->is_builtin_special() && rhs.is_builtin_special() &&
-	    _name == rhs._name);
-  }
-}
-
-const std::vector<std::string>& pp_result::macro::get_arg_names() const noexcept
-{
-  return _arg_names;
-}
-
-size_t pp_result::macro::non_va_arg_count() const noexcept
-{
-  assert(_func_like);
-  if (_variadic)
-    return _do_expand_args.size() - 1;
-
-  return _do_expand_args.size();
-}
-
-bool pp_result::macro::shall_expand_arg(const size_t pos) const noexcept
-{
-  assert(_func_like);
-  assert(pos <= _do_expand_args.size());
-  return _do_expand_args[pos];
 }
 
 raw_pp_tokens::const_iterator
@@ -1036,6 +1078,35 @@ _add_macro(const std::string &name, const macro::builtin_special_tag &tag)
   return *_macros.back();
 }
 
+const pp_result::macro&
+pp_result::_add_macro(const std::string &name,
+		      const bool func_like,
+		      const bool variadic,
+		      std::vector<std::string> &&arg_names,
+		      raw_pp_tokens &&repl,
+		      const macro::builtin_tag &tag)
+{
+  _macros.push_back(std::unique_ptr<const macro>{
+			new macro{name, func_like, variadic,
+				  std::move(arg_names), std::move(repl),
+				  _next_predefinition_pos++, tag}});
+  return *_macros.back();
+}
+
+const pp_result::macro&
+pp_result::_add_macro(const std::string &name,
+		      const bool func_like,
+		      const bool variadic,
+		      std::vector<std::string> &&arg_names,
+		      raw_pp_tokens &&repl,
+		      const macro::predefined_user_tag &tag)
+{
+  _macros.push_back(std::unique_ptr<const macro>{
+			new macro{name, func_like, variadic,
+				  std::move(arg_names), std::move(repl),
+				  _next_predefinition_pos++, tag}});
+  return *_macros.back();
+}
 
 void pp_result::
 _add_macro_undef(const std::string &name,
