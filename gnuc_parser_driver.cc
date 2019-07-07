@@ -174,6 +174,14 @@ ast_translation_unit gnuc_parser_driver::grab_result()
   std::unique_ptr<translation_unit> tu(_result);
   _result = nullptr;
 
+  if (!tu) {
+    tu.reset(new translation_unit{
+			pp_tokens_range{
+			  _pp.get_result().get_pp_tokens().size(),
+			  _pp.get_result().get_pp_tokens().size()
+			}
+		 });
+  }
   return ast_translation_unit(_pp.grab_result(), std::move(tu));
 }
 
