@@ -3,6 +3,8 @@
 
 #include <utility>
 #include <memory>
+#include <functional>
+#include <vector>
 
 namespace klp
 {
@@ -16,11 +18,13 @@ namespace klp
       class ast;
       class expr_func_invocation;
       class expr_id;
+      class type_specifier_tdid;
     }
 
     namespace types
     {
       class type;
+      class addressable_type;
     }
 
     class builtin_func
@@ -69,6 +73,29 @@ namespace klp
     };
 
     std::unique_ptr<builtin_var> builtin_var__func__create();
+
+
+    class builtin_typedef
+    {
+    public:
+      struct factory
+      {
+	typedef std::function<std::unique_ptr<builtin_typedef>()> create_type;
+
+	factory(const std::string &_name, const create_type &_create);
+
+	std::string name;
+	create_type create;
+      };
+
+      typedef std::vector<factory> factories;
+
+      virtual ~builtin_typedef() noexcept;
+
+      virtual std::shared_ptr<const types::addressable_type>
+      evaluate(ast::ast &a, const architecture &arch,
+	       const ast::type_specifier_tdid &ts_tdid) const = 0;
+    };
   }
 }
 

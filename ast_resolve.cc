@@ -1,30 +1,14 @@
 #include <cassert>
-#include <set>
 #include <string>
 #include "ast_impl.hh"
 #include "semantic_except.hh"
 #include "pp_token.hh"
+#include "architecture.hh"
 
 using namespace klp::ccp;
 using namespace klp::ccp::ast;
 
 using resolved_kind = expr_id::resolved::resolved_kind;
-
-static const char * const _builtin_tdids[] = {
-	"__builtin_va_list",
-	nullptr
-};
-
-static std::set<std::string>
-_init_builtin_ids_set(const char * const builtin_ids[])
-{
-  std::set<std::string> s;
-
-  for (const char * const *b = builtin_ids; *b; ++b)
-    s.insert(*b);
-
-  return s;
-}
 
 void stmt_compound::register_label(stmt_labeled &label)
 {
@@ -141,7 +125,7 @@ namespace
   class _id_resolver
   {
   public:
-    _id_resolver(ast_translation_unit &ast);
+    _id_resolver(ast_translation_unit &ast, const architecture &arch);
 
     void operator()();
 
@@ -193,6 +177,7 @@ namespace
     void _resolve_id(expr_label_addr &ela);
     void _resolve_id(type_specifier_tdid &ts_tdid);
 
+    const architecture &_arch;
     ast_translation_unit &_ast;
 
     struct _scope
@@ -210,8 +195,9 @@ namespace
   };
 }
 
-_id_resolver::_id_resolver(ast_translation_unit &ast)
-  : _ast(ast)
+_id_resolver::_id_resolver(ast_translation_unit &ast,
+			   const architecture &arch)
+  : _ast(ast), _arch(arch)
 {
   _enter_scope();
 }
@@ -1520,7 +1506,7 @@ void _id_resolver::_resolve_id(type_specifier_tdid &ts_tdid)
 	  id.get_declarator().get_direct_declarator_id();
 	if (id_tok.get_value() ==
 	    _ast.get_pp_tokens()[ddid.get_id_tok()].get_value()) {
-	  ts_tdid.set_resolved(ddid);
+	  ts_tdid.set_resolved(type_specifier_tdid::resolved{id});
 	  return;
 	}
       }
@@ -1529,11 +1515,11 @@ void _id_resolver::_resolve_id(type_specifier_tdid &ts_tdid)
 
   // Typedef id not found. Check whether the identifier refers to a
   // builtin and if so, silently accept it.
-  static std::set<std::string> builtin_tdids =
-    _init_builtin_ids_set(_builtin_tdids);
-  if (builtin_tdids.count(id_tok.get_value())) {
-    ts_tdid.set_builtin();
-    return;
+  for (const auto &btd : _arch.get_builtin_typedefs()) {
+    if (btd.name == id_tok.get_value()) {
+      ts_tdid.set_resolved(type_specifier_tdid::resolved{btd});
+      return;
+    }
   }
 
   code_remark remark(code_remark::severity::fatal,
@@ -1545,14 +1531,14 @@ void _id_resolver::_resolve_id(type_specifier_tdid &ts_tdid)
 
 
 
-void ast_translation_unit::_resolve_ids()
+void ast_translation_unit::_resolve_ids(const architecture &arch)
 {
-  _id_resolver ir(*this);
+  _id_resolver ir(*this, arch);
   ir();
 }
 
-void ast_translation_unit::resolve()
+void ast_translation_unit::resolve(const architecture &arch)
 {
   _register_labels();
-  _resolve_ids();
+  _resolve_ids(arch);
 }

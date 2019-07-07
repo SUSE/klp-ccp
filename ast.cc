@@ -2983,33 +2983,52 @@ bool type_specifier_pod::_process(const_processor<bool> &p) const
 }
 
 
+type_specifier_tdid::resolved::resolved() noexcept
+  : _kind(resolved_kind::none)
+{}
+
+type_specifier_tdid::resolved::
+resolved(const builtin_typedef::factory &fac) noexcept
+  : _kind(resolved_kind::builtin_typedef), _builtin_typedef_fac(&fac)
+{}
+
+type_specifier_tdid::resolved::
+resolved(const init_declarator &id) noexcept
+  : _kind(resolved_kind::init_declarator), _id(&id)
+{}
+
+const klp::ccp::builtin_typedef::factory& type_specifier_tdid::resolved::
+get_builtin_typedef_factory() const noexcept
+{
+  assert(_kind == resolved_kind::builtin_typedef);
+  return *_builtin_typedef_fac;
+}
+
+const init_declarator& type_specifier_tdid::resolved::
+get_init_declarator() const noexcept
+{
+  assert(_kind == resolved_kind::init_declarator);
+  return *_id;
+}
+
 type_specifier_tdid::type_specifier_tdid(const pp_token_index tdid_tok) noexcept
   : type_specifier(pp_tokens_range{tdid_tok, tdid_tok + 1}),
-    _tdid_tok(tdid_tok), _resolved(nullptr), _is_builtin(false)
+    _tdid_tok(tdid_tok)
 {}
 
 type_specifier_tdid::~type_specifier_tdid() noexcept = default;
 
-void type_specifier_tdid::set_resolved(const direct_declarator_id &ddid)
-  noexcept
+void type_specifier_tdid::set_resolved(const resolved &r) noexcept
 {
-  assert(!_resolved);
-  assert(!_is_builtin);
-  _resolved = &ddid;
+  assert(_resolved.get_kind() == resolved::resolved_kind::none);
+  _resolved = r;
 }
 
-const direct_declarator_id& type_specifier_tdid::get_resolved() const noexcept
+const type_specifier_tdid::resolved& type_specifier_tdid::get_resolved()
+  const noexcept
 {
-  assert(!_is_builtin);
-  assert(_resolved);
-  return *_resolved;
-}
-
-void type_specifier_tdid::set_builtin() noexcept
-{
-  assert(!_resolved);
-  assert(!_is_builtin);
-  _is_builtin = true;
+  assert(_resolved.get_kind() != resolved::resolved_kind::none);
+  return _resolved;
 }
 
 _ast_entity* type_specifier_tdid::_get_child(const size_t) const noexcept

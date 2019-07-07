@@ -1574,14 +1574,23 @@ evaluate_type(ast &a, const architecture &arch)
        return;
       },
       [&](const type_specifier_tdid &ts_tdid) {
-	if (!ts_tdid.is_builtin()) {
-	  result = ts_tdid.get_resolved().get_type()->amend_qualifiers(qs);
+	const type_specifier_tdid::resolved &r = ts_tdid.get_resolved();
+	switch (r.get_kind()) {
+	case type_specifier_tdid::resolved::resolved_kind::builtin_typedef:
+	  result = (r.get_builtin_typedef_factory().create()
+		    ->evaluate(a, arch, ts_tdid)->amend_qualifiers(qs));
+	  break;
 
-	} else {
-	  assert(a.get_pp_tokens()[ts_tdid.get_id_tok()].get_value()
-		 == "__builtin_va_list");
-	  result = arch.create_builtin_va_list_type()->amend_qualifiers(qs);
-	}
+	case type_specifier_tdid::resolved::resolved_kind::init_declarator:
+	  result = (r.get_init_declarator().get_declarator()
+		    .get_direct_declarator_id()
+		    .get_type()->amend_qualifiers(qs));
+	  break;
+
+	case type_specifier_tdid::resolved::resolved_kind::none:
+	  assert(0);
+	  __builtin_unreachable();
+	};
       },
       [&](struct_or_union_def &soud) {
 	soud.layout_content(a, arch);

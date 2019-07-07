@@ -9,6 +9,42 @@
 using namespace klp::ccp;
 using namespace klp::ccp::types;
 
+namespace
+{
+  class _builtin_typedef_va_list final : public builtin_typedef
+  {
+  public:
+    virtual ~_builtin_typedef_va_list() noexcept override;
+
+    virtual std::shared_ptr<const types::addressable_type>
+    evaluate(ast::ast&, const architecture &arch,
+	     const ast::type_specifier_tdid&) const override;
+
+    static std::unique_ptr<_builtin_typedef_va_list> create();
+  };
+}
+
+_builtin_typedef_va_list::~_builtin_typedef_va_list() noexcept = default;
+
+std::shared_ptr<const types::addressable_type> _builtin_typedef_va_list::
+evaluate(ast::ast&, const architecture &arch,
+	 const ast::type_specifier_tdid&) const
+{
+  return arch.create_builtin_va_list_type();
+}
+
+std::unique_ptr<_builtin_typedef_va_list> _builtin_typedef_va_list::create()
+{
+  return
+    std::unique_ptr<_builtin_typedef_va_list>{new _builtin_typedef_va_list()};
+}
+
+arch_gcc48_x86_64::arch_gcc48_x86_64()
+{
+  _builtin_typedefs.emplace_back("__builtin_va_list",
+				 _builtin_typedef_va_list::create);
+}
+
 void arch_gcc48_x86_64::register_builtin_macros(preprocessor &pp) const
 {
   const std::initializer_list<std::pair<const char *, const char*>>
@@ -85,6 +121,12 @@ void arch_gcc48_x86_64::register_builtin_macros(preprocessor &pp) const
 
   for (const auto &bom : builtin_object_macros)
     pp.register_builtin_macro(bom.first, bom.second);
+}
+
+const builtin_typedef::factories& arch_gcc48_x86_64::get_builtin_typedefs()
+  const noexcept
+{
+  return _builtin_typedefs;
 }
 
 bool arch_gcc48_x86_64::is_char_signed() const noexcept

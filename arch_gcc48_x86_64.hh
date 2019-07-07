@@ -10,10 +10,14 @@ namespace klp
     class arch_gcc48_x86_64 final : public architecture
     {
     public:
-      arch_gcc48_x86_64() noexcept = default;
+      arch_gcc48_x86_64();
+
       virtual ~arch_gcc48_x86_64() noexcept override = default;
 
       virtual void register_builtin_macros(preprocessor &pp) const override;
+
+      virtual const builtin_typedef::factories&
+      get_builtin_typedefs() const noexcept override;
 
       virtual bool is_char_signed() const noexcept override;
       virtual bool is_wchar_signed() const noexcept override;
@@ -101,6 +105,8 @@ namespace klp
     private:
       static types::std_int_type::kind
       _width_to_int_kind(const mpa::limbs::size_type w) noexcept;
+
+      builtin_typedef::factories _builtin_typedefs;
     };
   }
 }

@@ -2273,3 +2273,11 @@ builtin_var::factory builtin_var::lookup(const std::string &id)
 
   return it->second;
 }
+
+
+builtin_typedef::factory::factory(const std::string &_name,
+				  const create_type &_create)
+  : name(_name), create(_create)
+{}
+
+builtin_typedef::~builtin_typedef() noexcept = default;

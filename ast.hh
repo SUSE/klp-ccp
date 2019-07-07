@@ -2076,6 +2076,36 @@ namespace klp
       class type_specifier_tdid final : public type_specifier
       {
       public:
+	class resolved
+	{
+	public:
+	  resolved() noexcept;
+	  resolved(const builtin_typedef::factory &fac) noexcept;
+	  resolved(const init_declarator &id) noexcept;
+
+	  enum class resolved_kind
+	  {
+	    none,
+	    builtin_typedef,
+	    init_declarator,
+	  };
+
+	  resolved_kind get_kind() const noexcept
+	  { return _kind; }
+
+	  const builtin_typedef::factory& get_builtin_typedef_factory()
+	    const noexcept;
+	  const init_declarator& get_init_declarator() const noexcept;
+
+	private:
+	  resolved_kind _kind;
+	  union
+	  {
+	    const builtin_typedef::factory *_builtin_typedef_fac;
+	    const init_declarator *_id;
+	  };
+	};
+
 	type_specifier_tdid(const pp_token_index tdid_tok) noexcept;
 
 	virtual ~type_specifier_tdid() noexcept override;
@@ -2083,14 +2113,9 @@ namespace klp
 	pp_token_index get_id_tok() const noexcept
 	{ return _tdid_tok; }
 
-	void set_resolved(const direct_declarator_id &ddid) noexcept;
+	void set_resolved(const resolved &r) noexcept;
 
-	const direct_declarator_id& get_resolved() const noexcept;
-
-	void set_builtin() noexcept;
-
-	bool is_builtin() const noexcept
-	{ return _is_builtin; }
+	const resolved& get_resolved() const noexcept;
 
       private:
 	virtual _ast_entity* _get_child(const size_t) const noexcept override;
@@ -2101,8 +2126,7 @@ namespace klp
 	virtual bool _process(const_processor<bool> &p) const override;
 
 	pp_token_index _tdid_tok;
-	const direct_declarator_id *_resolved;
-	bool _is_builtin;
+	resolved _resolved;
       };
 
       class struct_declaration : public ast_entity<struct_declaration>
@@ -4630,7 +4654,7 @@ namespace klp
 				     callables_wrapper_type_post &&c_post)
 	  const;
 
-	void resolve();
+	void resolve(const architecture &arch);
 
 	void evaluate(const architecture &arch);
 
@@ -4640,7 +4664,7 @@ namespace klp
       private:
 	void _register_labels();
 
-	void _resolve_ids();
+	void _resolve_ids(const architecture &arch);
 
 	std::unique_ptr<const pp_result> _pp_result;
 	std::unique_ptr<translation_unit> _tu;

@@ -3,6 +3,7 @@
 
 #include "types.hh"
 #include "mp_arithmetic.hh"
+#include "builtins.hh"
 
 namespace klp
 {
@@ -42,6 +43,9 @@ namespace klp
       virtual ~architecture() noexcept;
 
       virtual void register_builtin_macros(preprocessor &pp) const = 0;
+
+      virtual const builtin_typedef::factories&
+      get_builtin_typedefs() const noexcept = 0;
 
       virtual bool is_char_signed() const noexcept = 0;
       virtual bool is_wchar_signed() const noexcept = 0;
