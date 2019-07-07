@@ -4577,6 +4577,8 @@ namespace klp
       public:
 	typedef type_set<> parent_types;
 
+	translation_unit(const pp_tokens_range &r);
+
 	translation_unit(external_declaration* &&ed);
 
 	virtual ~translation_unit() noexcept override;

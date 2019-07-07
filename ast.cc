@@ -7731,6 +7731,10 @@ bool external_declaration_asm::_process(const_processor<bool> &p) const
 }
 
 
+translation_unit::translation_unit(const pp_tokens_range &r)
+  : ast_entity(r)
+{}
+
 translation_unit::translation_unit(external_declaration* &&ed)
   : ast_entity(ed->get_tokens_range())
 {
