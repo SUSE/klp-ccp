@@ -6238,7 +6238,7 @@ void expr_statement::evaluate_type(ast&, const architecture&)
 }
 
 
-void expr_id::evaluate_type(ast &a, const architecture&)
+void expr_id::evaluate_type(ast &a, const architecture &arch)
 {
   switch(_resolved.get_kind()) {
   case resolved::resolved_kind::none:
@@ -6261,6 +6261,16 @@ void expr_id::evaluate_type(ast &a, const architecture&)
 
   case resolved::resolved_kind::builtin_func:
     _set_type(builtin_func_type::create(_resolved.get_builtin_func_factory()));
+    break;
+
+  case resolved::resolved_kind::builtin_var:
+    {
+      builtin_var::evaluation_result_type er
+	= _resolved.get_builtin_var_factory()()->evaluate(a, arch, *this);
+      _set_type(std::move(er.type));
+      _set_lvalue(er.is_lvalue);
+      _convert_type_for_expr_context();
+    }
     break;
 
   case resolved::resolved_kind::init_declarator:

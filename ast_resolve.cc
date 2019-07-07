@@ -489,6 +489,8 @@ const expr_id::resolved* _id_resolver::_lookup_id(const pp_token_index id_tok,
 	/* fall through */
       case resolved_kind::builtin_func:
 	/* fall through */
+      case resolved_kind::builtin_var:
+	/* fall through */
       case resolved_kind::stmt_labeled:
 	// These are never elements of _declared_ids
 	assert(0);
@@ -767,6 +769,8 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
 	  case resolved_kind::none:
 	    /* fall through */
 	  case resolved_kind::builtin_func:
+	    /* fall through */
+	  case resolved_kind::builtin_var:
 	    /* fall through */
 	  case resolved_kind::stmt_labeled:
 	    /* fall through */
@@ -1279,6 +1283,8 @@ _id_resolver::_get_linkage_kind(const expr_id::resolved &resolved) noexcept
     /* fall through */
   case resolved_kind::builtin_func:
     /* fall through */
+  case resolved_kind::builtin_var:
+    /* fall through */
   case resolved_kind::stmt_labeled:
     assert(0);
   __builtin_unreachable();
@@ -1310,6 +1316,8 @@ void _id_resolver::_link_to(source_type &source,
   case resolved_kind::none:
     /* fall through */
   case resolved_kind::builtin_func:
+    /* fall through */
+  case resolved_kind::builtin_var:
     /* fall through */
   case resolved_kind::parameter_declaration_declarator:
     /* fall through */
@@ -1442,6 +1450,13 @@ void _id_resolver::_resolve_id(expr_id &ei)
     builtin_func::lookup(id_tok.get_value());
   if (builtin_func_fac) {
     ei.set_resolved(expr_id::resolved(builtin_func_fac));
+    return;
+  }
+
+  const builtin_var::factory builtin_var_fac =
+    builtin_var::lookup(id_tok.get_value());
+  if (builtin_var_fac) {
+    ei.set_resolved(expr_id::resolved(builtin_var_fac));
     return;
   }
 

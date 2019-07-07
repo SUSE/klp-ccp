@@ -73,7 +73,7 @@ evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 
   if (n_args < _exp_arg_facs.size()) {
     code_remark remark
-      (code_remark::severity::warning,
+      (code_remark::severity::fatal,
        "too few arguments in builtin function invocation",
        a.get_pp_result(), efi.get_tokens_range());
     a.get_remarks().add(remark);
@@ -2187,6 +2187,84 @@ builtin_func::factory builtin_func::lookup(const std::string &id)
     { "__atomic_is_lock_free", bfspf_b_sz_pcvv::create },
     { "__atomic_thread_fence", bfspf_v_i::create },
     { "__atomic_signal_fence", bfspf_v_i::create },
+  };
+
+  auto it = m.find(id);
+  if (it == m.end())
+    return nullptr;
+
+  return it->second;
+}
+
+
+namespace
+{
+  class builtin_var__func__ final : public builtin_var
+  {
+  public:
+    virtual ~builtin_var__func__() noexcept override;
+
+    virtual evaluation_result_type
+    evaluate(klp::ccp::ast::ast &a, const architecture &arch,
+	     const expr_id &eid) const override;
+
+    static std::unique_ptr<builtin_var> create();
+  };
+}
+
+builtin_var__func__::~builtin_var__func__() noexcept = default;
+
+builtin_var::evaluation_result_type
+builtin_var__func__::evaluate(klp::ccp::ast::ast &a, const architecture &arch,
+			      const expr_id &eid) const
+{
+  const function_definition *fd = nullptr;
+  for (const _ast_entity *p = eid.get_parent(); p && !fd; p = p->get_parent()) {
+    p->process<void, type_set<function_definition>>
+      (wrap_callables<default_action_nop>
+       ([&](const function_definition &_fd) {
+	  fd = &_fd;
+	}));
+  }
+
+  if (!fd) {
+    code_remark remark(code_remark::severity::fatal,
+		       ("usage of \"" +
+			a.get_pp_tokens()[eid.get_id_tok()].get_value() +
+			"\" outside of function body"),
+		       a.get_pp_result(), eid.get_tokens_range());
+    a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  const direct_declarator_id &ddid =
+    fd->get_declarator().get_direct_declarator_id();
+
+  const std::string &name = a.get_pp_tokens()[ddid.get_id_tok()].get_value();
+  return evaluation_result_type{
+		(plain_char_type::create(qualifiers{qualifier::q_const})
+		 ->derive_array(mpa::limbs::from_size_type(name.size() + 1))),
+		true
+	 };
+}
+
+std::unique_ptr<builtin_var> klp::ccp::builtin_var__func__create()
+{
+  return std::unique_ptr<builtin_var>{new builtin_var__func__{}};
+}
+
+
+constexpr builtin_var::builtin_var() noexcept = default;
+
+builtin_var::~builtin_var() noexcept = default;
+
+builtin_var::factory builtin_var::lookup(const std::string &id)
+{
+  static std::map<const std::string,
+		  const builtin_var::factory > m = {
+    { "__func__", builtin_var__func__create },
+    { "__FUNCTION__", builtin_var__func__create },
+    { "__PRETTY_FUNCTION__", builtin_var__func__create },
   };
 
   auto it = m.find(id);

@@ -1322,6 +1322,11 @@ expr_id::resolved::resolved(const builtin_func::factory builtin_func_fac)
   : _kind(resolved_kind::builtin_func), _builtin_func_fac(builtin_func_fac)
 {}
 
+expr_id::resolved::resolved(const builtin_var::factory builtin_var_fac)
+  noexcept
+  : _kind(resolved_kind::builtin_var), _builtin_var_fac(builtin_var_fac)
+{}
+
 expr_id::resolved::resolved(init_declarator &id) noexcept
   : _kind(resolved_kind::init_declarator), _id(&id)
 {}
@@ -1351,6 +1356,13 @@ klp::ccp::builtin_func::factory expr_id::resolved::get_builtin_func_factory()
 {
   assert(_kind == resolved_kind::builtin_func);
   return _builtin_func_fac;
+}
+
+klp::ccp::builtin_var::factory expr_id::resolved::get_builtin_var_factory()
+  const noexcept
+{
+  assert(_kind == resolved_kind::builtin_var);
+  return _builtin_var_fac;
 }
 
 init_declarator& expr_id::resolved::get_init_declarator() const noexcept

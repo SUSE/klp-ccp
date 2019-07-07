@@ -1178,6 +1178,7 @@ namespace klp
 	public:
 	  resolved() noexcept;
 	  resolved(const builtin_func::factory builtin_func_fac) noexcept;
+	  resolved(const builtin_var::factory builtin_var_fac) noexcept;
 	  resolved(init_declarator &id) noexcept;
 	  resolved(parameter_declaration_declarator &pdd) noexcept;
 	  resolved(function_definition &fd) noexcept;
@@ -1189,6 +1190,7 @@ namespace klp
 	  {
 	    none,
 	    builtin_func,
+	    builtin_var,
 	    init_declarator,
 	    parameter_declaration_declarator,
 	    function_definition,
@@ -1201,6 +1203,7 @@ namespace klp
 	  { return _kind; }
 
 	  builtin_func::factory get_builtin_func_factory() const noexcept;
+	  builtin_var::factory get_builtin_var_factory() const noexcept;
 	  init_declarator& get_init_declarator() const noexcept;
 	  parameter_declaration_declarator&
 	  get_parameter_declaration_declarator() const noexcept;
@@ -1215,6 +1218,7 @@ namespace klp
 	  union
 	  {
 	    builtin_func::factory _builtin_func_fac;
+	    builtin_var::factory _builtin_var_fac;
 	    init_declarator *_id;
 	    parameter_declaration_declarator *_pdd;
 	    function_definition *_fd;
@@ -1235,7 +1239,7 @@ namespace klp
 
 	const resolved& get_resolved() const noexcept;
 
-	virtual void evaluate_type(ast &a, const architecture&) override;
+	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t) const noexcept override;

@@ -7,3 +7,5 @@
 const char *a = __func__; /* { dg-warning "17:'__func__' is not defined outside of function scope" "undef" } */
 const char *b = __FUNCTION__;
 const char *c = __PRETTY_FUNCTION__;
+
+/* cp-out: error: [^:]*: line 7, column 16: usage of "__func__" outside of function body */
