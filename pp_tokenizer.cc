@@ -630,3 +630,66 @@ pp_except pp_tokenizer::report_fatal(const std::string &msg,
   _remarks.add(remark);
   return pp_except{remark};
 }
+
+
+pp_string_tokenizer::
+pp_string_tokenizer(const std::string &s,
+		    const report_warning_type &report_warning,
+		    const report_fatal_type &report_fatal)
+  : _buf(s.begin(), s.end()),
+    _report_warning(report_warning), _report_fatal(report_fatal)
+{
+  init_state();
+}
+
+pp_string_tokenizer::~pp_string_tokenizer() noexcept = default;
+
+raw_pp_token pp_string_tokenizer::read_next_token()
+{
+  return impl::_pp_tokenizer::read_next_token();
+}
+
+raw_pp_tokens pp_string_tokenizer::tokenize_builtin(const std::string &s)
+{
+  pp_string_tokenizer tokenizer{s,
+				[](const std::string&) {
+				  assert(0);
+				  __builtin_unreachable();
+				},
+				[](const std::string&) -> pp_except {
+				  assert(0);
+				  __builtin_unreachable();
+				}};
+
+  raw_pp_tokens result;
+  while (true) {
+    raw_pp_token tok = tokenizer.read_next_token();
+    if (tok.is_eof())
+      break;
+
+    result.push_back(std::move(tok));
+  }
+
+  return result;
+}
+
+_pp_tokenizer::buffer_type pp_string_tokenizer::read_raw()
+{
+  return std::move(_buf);
+}
+
+void pp_string_tokenizer::add_line(const std::streamoff)
+{}
+
+void pp_string_tokenizer::report_warning(const std::string &msg,
+					 const range_in_file::loc_type)
+{
+  _report_warning(msg);
+}
+
+pp_except pp_string_tokenizer::report_fatal(const std::string &msg,
+					    const range_in_file::loc_type)
+{
+  return _report_fatal(msg);
+}
+

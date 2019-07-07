@@ -112,6 +112,39 @@ namespace klp
       std::unique_ptr<source_reader> _sr;
       code_remarks _remarks;
     };
+
+
+    class pp_string_tokenizer final : public impl::_pp_tokenizer
+    {
+    public:
+      typedef std::function<void(const std::string&)> report_warning_type;
+      typedef std::function<pp_except(const std::string&)> report_fatal_type;
+
+      pp_string_tokenizer(const std::string &s,
+			  const report_warning_type &report_warning,
+			  const report_fatal_type &report_fatal);
+
+      virtual ~pp_string_tokenizer() noexcept override;
+
+      raw_pp_token read_next_token();
+
+      static raw_pp_tokens tokenize_builtin(const std::string &s);
+
+    private:
+      virtual buffer_type read_raw() override;
+
+      virtual void add_line(const std::streamoff) override;
+
+      virtual void report_warning(const std::string &msg,
+				  const range_in_file::loc_type) override;
+      virtual pp_except report_fatal(const std::string &msg,
+				     const range_in_file::loc_type)
+	override;
+
+      buffer_type _buf;
+      report_warning_type _report_warning;
+      report_fatal_type _report_fatal;
+    };
   }
 }
 
