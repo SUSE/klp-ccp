@@ -39,10 +39,78 @@ std::unique_ptr<_builtin_typedef_va_list> _builtin_typedef_va_list::create()
     std::unique_ptr<_builtin_typedef_va_list>{new _builtin_typedef_va_list()};
 }
 
+
+namespace
+{
+  class _builtin_typedef__int128 final : public builtin_typedef
+  {
+  public:
+    _builtin_typedef__int128(const bool is_signed) noexcept;
+
+    virtual ~_builtin_typedef__int128() noexcept override;
+
+    virtual std::shared_ptr<const types::addressable_type>
+    evaluate(ast::ast&, const architecture&,
+	     const ast::type_specifier_tdid&) const override;
+
+    static std::unique_ptr<_builtin_typedef__int128>
+    create_signed();
+
+    static std::unique_ptr<_builtin_typedef__int128>
+    create_unsigned();
+
+  private:
+    static std::unique_ptr<_builtin_typedef__int128>
+    _create(const bool is_signed);
+
+    bool _is_signed;
+  };
+}
+
+_builtin_typedef__int128::_builtin_typedef__int128(const bool is_signed)
+  noexcept
+  : _is_signed(is_signed)
+{}
+
+_builtin_typedef__int128::~_builtin_typedef__int128() noexcept = default;
+
+std::shared_ptr<const types::addressable_type>
+_builtin_typedef__int128::evaluate(ast::ast&, const architecture&,
+				   const ast::type_specifier_tdid&) const
+{
+  return std_int_type::create(std_int_type::kind::k_int128,
+			      _is_signed);
+}
+
+std::unique_ptr<_builtin_typedef__int128>
+_builtin_typedef__int128::create_signed()
+{
+  return _create(true);
+}
+
+std::unique_ptr<_builtin_typedef__int128>
+_builtin_typedef__int128::create_unsigned()
+{
+  return _create(false);
+}
+
+std::unique_ptr<_builtin_typedef__int128>
+_builtin_typedef__int128::_create(const bool is_signed)
+{
+  return std::unique_ptr<_builtin_typedef__int128>{
+		new _builtin_typedef__int128{is_signed}
+	 };
+}
+
+
 arch_gcc48_x86_64::arch_gcc48_x86_64()
 {
   _builtin_typedefs.emplace_back("__builtin_va_list",
 				 _builtin_typedef_va_list::create);
+  _builtin_typedefs.emplace_back("__int128_t",
+				 _builtin_typedef__int128::create_signed);
+  _builtin_typedefs.emplace_back("__uint128_t",
+				 _builtin_typedef__int128::create_unsigned);
 }
 
 void arch_gcc48_x86_64::register_builtin_macros(preprocessor &pp) const
