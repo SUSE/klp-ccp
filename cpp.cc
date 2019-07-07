@@ -20,7 +20,8 @@ int main(int argc, char* argv[])
   hirs.emplace_back(std::move(hir));
   header_resolver hr;
   arch_gcc48_x86_64 arch;
-  preprocessor p{pp_result::header_inclusion_roots{std::move(hirs)}, hr, arch};
+  preprocessor p{pp_result::header_inclusion_roots{std::move(hirs)},
+		 argv[1], hr, arch};
   const pp_tokens &tokens = p.get_result().get_pp_tokens();
 
   while(true) {

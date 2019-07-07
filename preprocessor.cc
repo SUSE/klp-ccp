@@ -12,9 +12,10 @@ using namespace klp::ccp;
 
 preprocessor::
 preprocessor(pp_result::header_inclusion_roots &&header_inclusion_roots,
+	     const std::string &base_file,
 	     const header_resolver &header_resolver,
 	     const architecture &arch)
-  : _header_resolver(header_resolver), _arch(arch),
+  : _base_file(base_file), _header_resolver(header_resolver), _arch(arch),
     _pp_result(new pp_result{std::move(header_inclusion_roots)}),
     _cur_header_inclusion_root(_pp_result->get_header_inclusion_roots()
 			       .begin()),
@@ -27,6 +28,7 @@ preprocessor(pp_result::header_inclusion_roots &&header_inclusion_roots,
 
   // Populate the special builtin macros.
   for (const auto &name : { "__FILE__",
+			    "__BASE_FILE__",
 			    "__LINE__",
 			    "__INCLUDE_LEVEL__",
 			    "__COUNTER__" }) {
@@ -2225,6 +2227,14 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
       return _pp_token{
 		pp_token::type::str,
 		source.get_filename(),
+		_invocation_range,
+		_tok_expansion_history_init()
+	     };
+
+    } else if (_macro.get_name() == "__BASE_FILE__") {
+      return _pp_token{
+		pp_token::type::str,
+		_preprocessor._base_file,
 		_invocation_range,
 		_tok_expansion_history_init()
 	     };

@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
   arch_gcc48_x86_64 arch;
   yy::gnuc_parser_driver pd{
 		preprocessor{pp_result::header_inclusion_roots{std::move(hirs)},
-			     hr, arch}
+			     argv[optind], hr, arch}
   };
 
   try {
