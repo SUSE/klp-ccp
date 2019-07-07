@@ -313,12 +313,27 @@ namespace klp
       const pp_result::macro&
       _handle_macro_definition(const raw_pp_tokens_range &directive_range);
 
-      raw_pp_tokens
+
+      typedef std::function<pp_except(const std::string&,
+				      const raw_pp_tokens::const_iterator&)>
+	_report_fatal_at_raw_tok_type;
+
+      static std::tuple<raw_pp_tokens::const_iterator,
+			std::string,
+			bool,
+			std::vector<std::string>,
+			bool>
+      _parse_macro_signature
+			(const raw_pp_tokens::const_iterator begin,
+			 const raw_pp_tokens::const_iterator end,
+			 const _report_fatal_at_raw_tok_type &report_fatal);
+
+      static raw_pp_tokens
       _normalize_macro_repl(const raw_pp_tokens::const_iterator begin,
 			    const raw_pp_tokens::const_iterator end,
 			    const bool func_like,
-			    const std::set<std::string> &arg_names);
-
+			    const std::vector<std::string> &arg_names,
+			    const _report_fatal_at_raw_tok_type &report_fatal);
 
       const header_resolver &_header_resolver;
       const architecture &_arch;

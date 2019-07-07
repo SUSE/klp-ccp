@@ -1633,15 +1633,12 @@ _handle_macro_definition(const raw_pp_tokens_range &directive_range)
 {
   const raw_pp_tokens::const_iterator begin =
     _pp_result->get_raw_tokens().begin() + directive_range.begin;
-  raw_pp_tokens::const_iterator end =
-    _pp_result->get_raw_tokens().begin() + directive_range.end;
+  const raw_pp_tokens::const_iterator end =
+    _pp_result->get_raw_tokens().begin() + directive_range.end - 1;
   assert (begin != end);
+  assert(end != _pp_result->get_raw_tokens().end());
   assert(begin->is_punctuator("#"));
-
-  assert((end - 1)->is_newline() || (end - 1)->is_eof());
-  // end is decremented by one such that we can dereference
-  // it even for it == end from now on.
-  --end;
+  assert(end->is_newline() || end->is_eof());
 
   auto skip_ws = [&end](const decltype(end) it) {
     if (it == end || !it->is_ws()) {
@@ -1658,112 +1655,21 @@ _handle_macro_definition(const raw_pp_tokens_range &directive_range)
   assert(it->is_id() && it->get_value() == "define");
   it = skip_ws(it + 1);
 
-  if (!it->is_id()) {
-    code_remark remark(code_remark::severity::fatal,
-		       "no identifier following #define",
-		       _raw_tok_it_to_source(it),
-		       it->get_range_in_file());
-    _remarks.add(remark);
-    throw pp_except(remark);
-  }
-
-  const std::string &name = it->get_value();
-  ++it;
-
-  bool func_like = false;
-  bool variadic = false;
-  std::vector<std::string> arg_names;
-  std::set<std::string> unique_arg_names;
-  if (it->is_punctuator("(")) {
-    func_like = true;
-
-    it = skip_ws(it + 1);
-    while (it != end && !it->is_punctuator(")")) {
-      if (variadic) {
-	code_remark remark(code_remark::severity::fatal,
-			   "garbage in macro argument list after ...",
-			   _raw_tok_it_to_source(it),
-			   it->get_range_in_file());
-	_remarks.add(remark);
-	throw pp_except(remark);
-      }
-
-      if (!arg_names.empty() && !it->is_punctuator(",")) {
-	code_remark remark(code_remark::severity::fatal,
-			   "comma expected in macro argument list",
-			   _raw_tok_it_to_source(it),
-			   it->get_range_in_file());
-	_remarks.add(remark);
-	throw pp_except(remark);
-      } else if (it->is_punctuator(",")) {
-	if (arg_names.empty()) {
-	  code_remark remark(code_remark::severity::fatal,
-			     "leading comma in macro argument list",
-			     _raw_tok_it_to_source(it),
-			     it->get_range_in_file());
-	  _remarks.add(remark);
-	  throw pp_except(remark);
-	}
-	it = skip_ws(it + 1);
-	if (it == end || it->is_punctuator(")")) {
-	  code_remark remark(code_remark::severity::fatal,
-			     "trailing comma in macro argument list",
-			     _raw_tok_it_to_source(it),
-			     it->get_range_in_file());
-	  _remarks.add(remark);
-	  throw pp_except(remark);
-	}
-      }
-
-      if (it->is_punctuator("...")) {
-	variadic = true;
-	arg_names.push_back("__VA_ARGS__");
-	unique_arg_names.insert("__VA_ARGS__");
-	it = skip_ws(it + 1);
-      } else if (it->is_id()) {
-	if (it->get_value() == "__VA_ARGS__") {
-	  code_remark remark
-	    (code_remark::severity::fatal,
-	     "__VA_ARGS__ not allowed as a macro argument name",
-	     _raw_tok_it_to_source(it), it->get_range_in_file());
-	  _remarks.add(remark);
-	  throw pp_except(remark);
-	} else if (!unique_arg_names.insert(it->get_value()).second) {
-	  code_remark remark(code_remark::severity::fatal,
-			     "duplicate macro argument name",
-			     _raw_tok_it_to_source(it),
-			     it->get_range_in_file());
-	  _remarks.add(remark);
-	  throw pp_except(remark);
-	}
-
-	arg_names.push_back(it->get_value());
-	it = skip_ws(it + 1);
-	if (it->is_punctuator("...")) {
-	  variadic = true;
-	  it = skip_ws(it + 1);
-	}
-      } else {
-	code_remark remark(code_remark::severity::fatal,
-			   "garbage in macro argument list",
-			   _raw_tok_it_to_source(it),
-			   it->get_range_in_file());
-	_remarks.add(remark);
-	throw pp_except(remark);
-      }
-    }
-    if (it == end) {
-      code_remark remark(code_remark::severity::fatal,
-			 "macro argument list not closed",
-			 _raw_tok_it_to_source(it),
-			 end->get_range_in_file());
+  auto report_fatal =
+    [&](const std::string &msg, const raw_pp_tokens::const_iterator &tok) {
+      code_remark remark(code_remark::severity::fatal, msg,
+			 _raw_tok_it_to_source(tok),
+			 tok->get_range_in_file());
       _remarks.add(remark);
-      throw pp_except(remark);
-    }
+      return pp_except{remark};
+    };
 
-    assert(it->is_punctuator(")"));
-    ++it;
-  }
+  std::string name;
+  bool func_like;
+  std::vector<std::string> arg_names;
+  bool variadic;
+  std::tie(it, name, func_like, arg_names, variadic)
+    = _parse_macro_signature(it, end, report_fatal);
 
   if (it != end && !it->is_ws()) {
     code_remark remark(code_remark::severity::warning,
@@ -1777,15 +1683,100 @@ _handle_macro_definition(const raw_pp_tokens_range &directive_range)
 
   return (_pp_result->_add_macro
 	  (name, func_like, variadic, std::move(arg_names),
-	   _normalize_macro_repl(it, end, func_like, unique_arg_names),
+	   _normalize_macro_repl(it, end, func_like, arg_names, report_fatal),
 	   directive_range));
+}
+
+std::tuple<raw_pp_tokens::const_iterator,
+	   std::string,
+	   bool,
+	   std::vector<std::string>,
+	   bool>
+preprocessor::_parse_macro_signature
+			(const raw_pp_tokens::const_iterator begin,
+			 const raw_pp_tokens::const_iterator end,
+			 const _report_fatal_at_raw_tok_type &report_fatal)
+{
+  auto skip_ws = [&end](const decltype(end) it) {
+    if (it == end || !it->is_ws()) {
+      return it;
+    }
+    // No need to loop here:
+    // Macro definitions come in a single line and pp_tokenizer
+    // won't emit more than one consecutive whitespace.
+    assert(it + 1 == end || !(it + 1)->is_ws());
+    return it + 1;
+  };
+
+  auto it = skip_ws(begin);
+  if (it == end || !it->is_id()) {
+    throw report_fatal("no identifier in macro definition", begin);
+  }
+
+  const std::string &name = it->get_value();
+  ++it;
+
+  bool func_like = false;
+  bool variadic = false;
+  std::vector<std::string> arg_names;
+  if (it != end && it->is_punctuator("(")) {
+    it = skip_ws(it + 1);
+    func_like = true;
+
+    while (it != end && !it->is_punctuator(")")) {
+      if (variadic)
+	throw report_fatal("garbage in macro argument list after ...", it);
+
+      if (!arg_names.empty() && !it->is_punctuator(",")) {
+	throw report_fatal("comma expected in macro argument list", it);
+      } else if (it->is_punctuator(",")) {
+	if (arg_names.empty())
+	  throw report_fatal("leading comma in macro argument list", it);
+	it = skip_ws(it + 1);
+	if (it == end || it->is_punctuator(")"))
+	  throw report_fatal("trailing comma in macro argument list", it);
+      }
+
+      if (it->is_punctuator("...")) {
+	variadic = true;
+	arg_names.push_back("__VA_ARGS__");
+	it = skip_ws(it + 1);
+      } else if (it->is_id()) {
+	if (it->get_value() == "__VA_ARGS__") {
+	  throw report_fatal("__VA_ARGS__ not allowed as a macro argument name",
+			     it);
+	} else if (std::find(arg_names.cbegin(), arg_names.cend(),
+			     it->get_value())
+		   != arg_names.cend()) {
+	  throw report_fatal("duplicate macro argument name", it);
+	}
+
+	arg_names.push_back(it->get_value());
+	it = skip_ws(it + 1);
+	if (it != end && it->is_punctuator("...")) {
+	  variadic = true;
+	  it = skip_ws(it + 1);
+	}
+      } else {
+	throw report_fatal("garbage in macro argument list", it);
+      }
+    }
+    if (it == end)
+      throw report_fatal("macro argument list not closed", it - 1);
+
+    assert(it->is_punctuator(")"));
+    ++it;
+  }
+
+  return std::make_tuple(it, name, func_like, std::move(arg_names), variadic);
 }
 
 raw_pp_tokens preprocessor::
 _normalize_macro_repl(const raw_pp_tokens::const_iterator begin,
 		      const raw_pp_tokens::const_iterator end,
 		      const bool func_like,
-		      const std::set<std::string> &arg_names)
+		      const std::vector<std::string> &arg_names,
+		      const _report_fatal_at_raw_tok_type &report_fatal)
 {
   if (begin == end)
     return raw_pp_tokens();
@@ -1793,19 +1784,9 @@ _normalize_macro_repl(const raw_pp_tokens::const_iterator begin,
   assert(!begin->is_ws() && !(end-1)->is_ws());
 
   if (begin->is_punctuator("##")) {
-    code_remark remark(code_remark::severity::fatal,
-		       "## at beginning of macro replacement list",
-		       _raw_tok_it_to_source(begin),
-		       begin->get_range_in_file());
-    _remarks.add(remark);
-    throw pp_except(remark);
+    throw report_fatal("## at beginning of macro replacement list", begin);
   } else if ((end - 1)->is_punctuator("##")) {
-    code_remark remark(code_remark::severity::fatal,
-		       "## at end of macro replacement list",
-		       _raw_tok_it_to_source(end - 1),
-		       (end - 1)->get_range_in_file());
-    _remarks.add(remark);
-    throw pp_except(remark);
+    throw report_fatal("## at end of macro replacement list", end - 1);
   }
 
   // Thanks to pp_tokenizer, we're already free of multiple
@@ -1844,13 +1825,10 @@ _normalize_macro_repl(const raw_pp_tokens::const_iterator begin,
 	++it_arg;
       assert(it_arg == end || !it_arg->is_ws());
       if (it_arg == end || !it_arg->is_id() ||
-	  !arg_names.count(it_arg->get_value())) {
-	code_remark remark(code_remark::severity::fatal,
-			   "# in func-like macro not followed by parameter",
-			   _raw_tok_it_to_source(end - 1),
-			   (end - 1)->get_range_in_file());
-	_remarks.add(remark);
-	throw pp_except(remark);
+	  (std::find(arg_names.cbegin(), arg_names.cend(), it_arg->get_value())
+	   == arg_names.cend())) {
+	throw report_fatal("# in func-like macro not followed by parameter",
+			   it_arg != end ? it_arg : end - 1);
       }
 
       result.insert(result.end(), it_seq_begin, it_seq_end + 1);
