@@ -35,6 +35,8 @@ preprocessor(pp_result::header_inclusion_roots &&header_inclusion_roots,
     _macros.insert(std::make_pair(m.get_name(), std::ref(m)));
   }
 
+  _arch.register_builtin_macros(*this);
+
   _pp_result->_enter_root(*_cur_header_inclusion_root, 0);
   _tokenizers.emplace(*_cur_header_inclusion_root);
   _inclusions.emplace(std::ref(*_cur_header_inclusion_root));
@@ -243,12 +245,67 @@ pp_token_index preprocessor::read_next_token()
   return _emit_pp_token(*_pp_result, std::move(prev_tok));
 }
 
+void preprocessor::register_builtin_macro(const std::string &name,
+					  const std::string &repl)
+{
+  const raw_pp_tokens tokenized_repl =
+    pp_string_tokenizer::tokenize_builtin(repl);
+  raw_pp_tokens normalized_repl =
+    _normalize_macro_repl(tokenized_repl.begin(), tokenized_repl.end(),
+			  false, std::vector<std::string>{},
+			  [](const std::string&,
+			     const raw_pp_tokens::const_iterator&)
+				-> pp_except {
+			    assert(0);
+			    __builtin_unreachable();
+			  });
+
+  const pp_result::macro &m =
+    _pp_result->_add_macro(name, false, false, std::vector<std::string>{},
+			   pp_string_tokenizer::tokenize_builtin(repl),
+			   pp_result::macro::builtin_tag{});
+  if (!_macros.insert(std::make_pair(m.get_name(), std::ref(m))).second)
+    assert(0);
+}
+
+void preprocessor::
+register_builtin_macro(const std::string &name,
+		       const std::initializer_list<const char *> &arg_list,
+		       const bool variadic,
+		       const std::string &repl)
+{
+  std::vector<std::string> _arg_list;
+  _arg_list.reserve(arg_list.size());
+  for (const auto a : arg_list)
+    _arg_list.emplace_back(a);
+
+  const raw_pp_tokens tokenized_repl =
+    pp_string_tokenizer::tokenize_builtin(repl);
+  raw_pp_tokens normalized_repl =
+    _normalize_macro_repl(tokenized_repl.begin(), tokenized_repl.end(),
+			  true, _arg_list,
+			  [](const std::string&,
+			     const raw_pp_tokens::const_iterator&)
+				-> pp_except {
+			    assert(0);
+			    __builtin_unreachable();
+			  });
+
+  const pp_result::macro &m =
+    _pp_result->_add_macro(name, true, variadic, std::move(_arg_list),
+			   std::move(normalized_repl),
+			   pp_result::macro::builtin_tag{});
+  if (!_macros.insert(std::make_pair(m.get_name(), std::ref(m))).second)
+    assert(0);
+}
+
 template<typename T>
 void preprocessor::_grab_remarks_from(T &from)
 {
   _remarks += from.get_remarks();
   from.get_remarks().clear();
 }
+
 
 pp_token_index preprocessor::_emit_pp_token(pp_result &r, _pp_token &&tok)
 {

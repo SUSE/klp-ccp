@@ -4,9 +4,88 @@
 #include "semantic_except.hh"
 #include "arch_gcc48_x86_64.hh"
 #include "pp_token.hh"
+#include "preprocessor.hh"
 
 using namespace klp::ccp;
 using namespace klp::ccp::types;
+
+void arch_gcc48_x86_64::register_builtin_macros(preprocessor &pp) const
+{
+  const std::initializer_list<std::pair<const char *, const char*>>
+    builtin_object_macros = {
+	{ "__SIZE_TYPE__", "unsigned long" },
+	{ "__PTRDIFF_TYPE__", "long" },
+	{ "__INTPTR_TYPE__", "long" },
+	{ "__UINTPTR_TYPE__", "unsigned long" },
+	{ "__INT8_TYPE__", "char" },
+	{ "__UINT8_TYPE__", "unsigned char" },
+	{ "__INT_LEAST8_TYPE__", "char" },
+	{ "__UINT_LEAST8_TYPE__", "unsigned char" },
+	{ "__INT16_TYPE__", "short" },
+	{ "__UINT16_TYPE__", "unsigned short" },
+	{ "__INT_LEAST16_TYPE__", "short" },
+	{ "__UINT_LEAST16_TYPE__", "unsigned short" },
+	{ "__INT32_TYPE__", "int" },
+	{ "__UINT32_TYPE__", "unsigned int" },
+	{ "__INT_LEAST32_TYPE__", "int" },
+	{ "__UINT_LEAST32_TYPE__", "unsigned int" },
+	{ "__INT64_TYPE__", "long" },
+	{ "__UINT64_TYPE__", "unsigned long" },
+	{ "__INT_LEAST64_TYPE__", "long" },
+	{ "__UINT_LEAST64_TYPE__", "unsigned long" },
+	{ "__CHAR16_TYPE__", "unsigned short" },
+	{ "__CHAR32_TYPE__", "unsigned int" },
+	{ "__WCHAR_TYPE__", "int" },
+	{ "__WINT_TYPE__", "unsigned int" },
+
+	{ "__CHAR_BIT__", "8" },
+	{ "__SIZE_MAX__", "0xffffffffffffffffUL" },
+	{ "__PTRDIFF_MAX__", "__LONG_MAX__" },
+	{ "__SCHAR_MAX__", "0x7f" },
+	{ "__INT_MAX__", "0x7fffffff" },
+	{ "__LONG_MAX__", "0x7fffffffffffffffL" },
+	{ "__LLONG_MAX__", "__LONG_MAX__" },
+	{ "__LONG_LONG_MAX__", "__LONG_MAX__" },
+	{ "__SHRT_MAX__", "0x7fff" },
+	{ "__WCHAR_MAX__", "__INT_MAX__" },
+
+	{ "__FLT_MIN__", "1.17549435082228750797e-38F" },
+	{ "__FLT_MAX__", "3.40282346638528859812e+38F" },
+	{ "__DBL_MIN__", "((double)2.22507385850720138309e-308L)" },
+	{ "__DBL_MAX__", "((double)1.79769313486231570815e+308L)" },
+	{ "__LDBL_MIN__", "3.36210314311209350626e-4932L" },
+	{ "__LDBL_MAX__", "1.18973149535723176502e+4932L" },
+
+	{ "__FLT_MANT_DIG__", "24" },
+	{ "__DBL_MANT_DIG__", "53" },
+
+	{ "__SIZEOF_POINTER__", "sizeof(void*)" },
+	{ "__SIZEOF_SIZE_T__", "sizeof(unsigned long)" },
+	{ "__SIZEOF_PTRDIFF_T__", "sizeof(long)" },
+	{ "__SIZEOF_SHORT__", "sizeof(short)" },
+	{ "__SIZEOF_INT__", "sizeof(int)" },
+	{ "__SIZEOF_LONG__", "sizeof(long)" },
+	{ "__SIZEOF_LONG_LONG__", "sizeof(long long)" },
+	{ "__SIZEOF_WCHAR_T__", "sizeof(int)" },
+	{ "__SIZEOF_WINT_T__", "sizeof(unsigned int)" },
+	{ "__SIZEOF_FLOAT__", "sizeof(float)" },
+	{ "__SIZEOF_DOUBLE__", "sizeof(double)" },
+	{ "__SIZEOF_LONG_DOUBLE__", "sizeof(long double)" },
+
+	{ "__BIGGEST_ALIGNMENT__", "16" },
+
+	{ "__GCC_ATOMIC_TEST_AND_SET_TRUEVAL", "1" },
+	{ "__ATOMIC_RELAXED", "0" },
+	{ "__ATOMIC_CONSUME", "1" },
+	{ "__ATOMIC_ACQUIRE", "2" },
+	{ "__ATOMIC_RELEASE", "3" },
+	{ "__ATOMIC_ACQ_REL", "4" },
+	{ "__ATOMIC_SEQ_CST", "5" },
+  };
+
+  for (const auto &bom : builtin_object_macros)
+    pp.register_builtin_macro(bom.first, bom.second);
+}
 
 bool arch_gcc48_x86_64::is_char_signed() const noexcept
 {

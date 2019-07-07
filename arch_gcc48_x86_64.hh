@@ -13,6 +13,8 @@ namespace klp
       arch_gcc48_x86_64() noexcept = default;
       virtual ~arch_gcc48_x86_64() noexcept override = default;
 
+      virtual void register_builtin_macros(preprocessor &pp) const override;
+
       virtual bool is_char_signed() const noexcept override;
       virtual bool is_wchar_signed() const noexcept override;
 

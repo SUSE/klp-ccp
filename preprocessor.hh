@@ -42,6 +42,14 @@ namespace klp
       const pp_result& get_result() const noexcept
       { return *_pp_result; }
 
+      void register_builtin_macro(const std::string &name,
+				  const std::string &repl);
+      void register_builtin_macro
+		(const std::string &name,
+		 const std::initializer_list<const char *> &arg_list,
+		 const bool variadic,
+		 const std::string &repl);
+
     private:
       friend class _macro_instance;
 

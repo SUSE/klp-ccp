@@ -13,6 +13,7 @@ namespace klp
       class ast;
     }
 
+    class preprocessor;
     class execution_charset_encoder;
 
     enum class int_mode_kind
@@ -39,6 +40,8 @@ namespace klp
     {
     public:
       virtual ~architecture() noexcept;
+
+      virtual void register_builtin_macros(preprocessor &pp) const = 0;
 
       virtual bool is_char_signed() const noexcept = 0;
       virtual bool is_wchar_signed() const noexcept = 0;
