@@ -306,8 +306,14 @@ gnuc_parser_driver::lex(gnuc_parser::semantic_type *value,
 void gnuc_parser_driver::error(const gnuc_parser::location_type& loc,
 			       const std::string& msg)
 {
+  assert(loc.end);
+
+  const pp_token &tok = _pp.get_result().get_pp_tokens()[loc.begin];
+  const raw_pp_token_index tok_index = tok.get_token_source().begin;
+  const raw_pp_token &raw_tok = _pp.get_result().get_raw_tokens()[tok_index];
   code_remark remark(code_remark::severity::fatal, msg,
-		     _pp.get_result(), loc.begin);
+		     _pp.get_pending_token_source(tok_index),
+		     raw_tok.get_range_in_file());
   _remarks.add(remark);
   throw parse_except(remark);
 }
