@@ -25,6 +25,9 @@ namespace klp
       void append(const std::string &s);
       void append(const newline_tag&);
 
+      std::streamoff get_cur_line() const noexcept
+      { return _cur_line; }
+
     private:
       typedef std::vector<char> _buffer_type;
 
@@ -33,6 +36,7 @@ namespace klp
       const std::string _filename;
       int _fd;
       _buffer_type _buf;
+      std::streamoff _cur_line;
     };
   }
 }

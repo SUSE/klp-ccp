@@ -12,7 +12,7 @@
 using namespace klp::ccp;
 
 source_writer::source_writer(const std::string &filename)
-  : _filename(filename)
+  : _filename(filename), _cur_line(1)
 {
   _fd = open(_filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
   if (_fd < 0)
@@ -62,6 +62,7 @@ void source_writer::append(source_reader &from_file, const range_in_file &r)
 		     pos,
 		     static_cast<range_in_file::loc_type>(pos + n)
 		   });
+    _cur_line += std::count(_buf.cend() - n, _buf.cend(), '\n');
     pos += n;
   }
 }
@@ -83,6 +84,7 @@ void source_writer::append(const std::string &s)
     std::copy(it_s, it_s + n, std::back_inserter(_buf));
     it_s += n;
   }
+  _cur_line += std::count(s.cbegin(), s.cend(), '\n');
 }
 
 void source_writer::append(const newline_tag&)
@@ -90,6 +92,7 @@ void source_writer::append(const newline_tag&)
   if (!_buffer_capacity())
     flush();
   _buf.push_back('\n');
+  ++_cur_line;
 }
 
 source_writer::_buffer_type::size_type source_writer::_buffer_capacity()
