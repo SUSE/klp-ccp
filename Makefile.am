@@ -26,6 +26,8 @@ noinst_HEADERS =				\
 	header_resolver.hh			\
 	mp_arithmetic.hh			\
 	offset_to_line_col_map.hh		\
+	output_remark.hh			\
+	output_remarks.hh			\
 	parse_except.hh			\
 	path.hh				\
 	pp_except.hh				\
@@ -67,6 +69,8 @@ libcp_a_SOURCES =				\
 	header_resolver.cc			\
 	mp_arithmetic.cc			\
 	offset_to_line_col_map.cc		\
+	output_remark.cc			\
+	output_remarks.cc			\
 	parse_except.cc			\
 	path.cc				\
 	pp_except.cc				\
