@@ -218,6 +218,7 @@ namespace klp
 
       void append(transformed_input_chunk &&tic);
       void append(const pp_result::header_inclusion_child &include);
+      void append(const pp_result::header_inclusion_root &hir);
 
       void operator()(const std::string &outfile);
 
@@ -267,7 +268,13 @@ namespace klp
 	  _new_macro_defines_type::const_iterator _it;
 	};
 
-	_header_inclusion_chunk(const pp_result::header_inclusion_child &_node);
+	_header_inclusion_chunk
+			(const pp_result::header_inclusion_child &child_node);
+	_header_inclusion_chunk
+			(const pp_result::header_inclusion_root &root_node);
+
+	const pp_result::header_inclusion_node& get_inclusion_node()
+	  const noexcept;
 
 	void find_macro_constraints(const pp_result &pp_result,
 				    const raw_pp_tokens_range &header_range_raw,
@@ -297,9 +304,21 @@ namespace klp
 		   _source_reader_cache &source_reader_cache,
 		   output_remarks &remarks) const;
 
-	const pp_result::header_inclusion_child &node;
-
       private:
+	enum class _kind
+	{
+	  k_child,
+	  k_root,
+	};
+
+	_kind _k;
+
+	union
+	{
+	  const pp_result::header_inclusion_child *_child_node;
+	  const pp_result::header_inclusion_root *_root_node;
+	};
+
 	pp_result::macro_nondef_constraints _macro_nondef_constraints;
 	std::map<std::string, std::reference_wrapper<const pp_result::macro>>
 	  _macro_defines_wo_prior_undef;

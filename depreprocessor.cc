@@ -1348,9 +1348,26 @@ operator<(const _macro_define_to_emit_in_chunk &rhs) const noexcept
 
 
 depreprocessor::_header_inclusion_chunk::
-_header_inclusion_chunk(const pp_result::header_inclusion_child &_node)
-  : node(_node)
+_header_inclusion_chunk(const pp_result::header_inclusion_child &child_node)
+  : _k(_kind::k_child), _child_node(&child_node)
 {}
+
+depreprocessor::_header_inclusion_chunk::
+_header_inclusion_chunk(const pp_result::header_inclusion_root &root_node)
+  : _k(_kind::k_root), _root_node(&root_node)
+{}
+
+const pp_result::header_inclusion_node&
+depreprocessor::_header_inclusion_chunk::get_inclusion_node()const noexcept
+{
+  switch (_k) {
+  case _kind::k_child:
+    return *_child_node;
+
+  case _kind::k_root:
+    return *_root_node;
+  }
+}
 
 void depreprocessor::_header_inclusion_chunk::
 find_macro_constraints(const pp_result &pp_result,
@@ -1467,16 +1484,18 @@ find_macro_constraints(const pp_result &pp_result,
     };
 
   // First handle the requirements of contained preprocessor directives.
-  add_ums(node.get_used_macros());
-  add_mncs(node.get_macro_nondef_constraints(),
-	   node.get_directive_range().begin);
+  if (_k == _kind::k_child) {
+    add_ums(_child_node->get_used_macros());
+    add_mncs(_child_node->get_macro_nondef_constraints(),
+	     _child_node->get_directive_range().begin);
+  }
 
-  node.for_each_descendant_inclusion_node
+  this->get_inclusion_node().for_each_descendant_inclusion_node
     (wrap_callables<no_default_action>
      ([&](const pp_result::header_inclusion_child &h) {
 	add_ums(h.get_used_macros());
 	add_mncs(h.get_macro_nondef_constraints(),
-		 node.get_directive_range().begin);
+		 h.get_directive_range().begin);
       },
       [&](const pp_result::conditional_inclusion_node &c) {
 	add_ums(c.get_used_macros());
@@ -1669,8 +1688,17 @@ write(source_writer &writer, const pp_result &pp_result,
   }
 
   // Finally, write the #include directive.
-  _write_directive(writer, this->node.get_directive_range(), pp_result,
-		   source_reader_cache);
+  switch (_k) {
+  case _kind::k_child:
+    _write_directive(writer, this->_child_node->get_directive_range(),
+		     pp_result, source_reader_cache);
+    break;
+
+  case _kind::k_root:
+    writer.append("#include \"" + _root_node->get_filename() + "\"");
+    writer.append(source_writer::newline_tag{});
+    break;
+  }
 }
 
 
@@ -1817,6 +1845,11 @@ void depreprocessor::append(transformed_input_chunk &&tic)
 void depreprocessor::append(const pp_result::header_inclusion_child &include)
 {
   _chunks.emplace_back(_header_inclusion_chunk{include});
+}
+
+void depreprocessor::append(const pp_result::header_inclusion_root &hir)
+{
+  _chunks.emplace_back(_header_inclusion_chunk{hir});
 }
 
 void depreprocessor::operator()(const std::string &outfile)
@@ -2047,7 +2080,7 @@ void depreprocessor::_compute_needed_macro_defs_and_undefs()
       break;
 
     case _chunk::kind::header_inclusion:
-      rit_chunk->range_raw = rit_chunk->hic.node.get_range();
+      rit_chunk->range_raw = rit_chunk->hic.get_inclusion_node().get_range();
       rit_chunk->range =
 	_pp_result.raw_pp_tokens_range_to_nonraw(rit_chunk->range_raw);
       check_chunk_in_order(rit_chunk.base() - 1);
