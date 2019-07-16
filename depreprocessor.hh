@@ -64,8 +64,9 @@ namespace klp
 			   const bool add_pointer_deref);
 	void insert_token(const pp_token_index &pos, pp_token &&new_tok,
 			  const bool need_whitespace_before,
-			  const bool need_whitespace_after,
-			  const bool before_all_at_point);
+			  const bool need_whitespace_after);
+
+	transformed_input_chunk split_head_off(const pp_tokens_range &r);
 
       private:
 	friend class depreprocessor;
@@ -202,7 +203,7 @@ namespace klp
 		    _source_reader_cache &source_reader_cache,
 		    output_remarks &remarks) const;
 
-	const pp_tokens_range _r;
+	pp_tokens_range _r;
 	_ops_type _ops;
 
 	_used_macros_in_chunk_type _used_macros_in_chunk;

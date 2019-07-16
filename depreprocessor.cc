@@ -240,22 +240,14 @@ replace_token(const pp_token_index &index, pp_token &&repl_tok,
 void depreprocessor::transformed_input_chunk::
 insert_token(const pp_token_index &pos, pp_token &&new_tok,
 	     const bool need_whitespace_before,
-	     const bool need_whitespace_after,
-	     const bool before_all_at_point)
+	     const bool need_whitespace_after)
 {
   auto it = _prepare_insert(pp_tokens_range{pos, pos});
-
-  if (before_all_at_point) {
-    // _prepare_insert() returned an iterator pointing
-    // past the last insert or insert_ws operation at pos.
-    while (it != _ops.begin() && (it - 1)->r.begin == pos)
-      --it;
-  }
 
   if (need_whitespace_before &&
       !(it != _ops.begin() && (it - 1)->a == _op::action::insert_ws &&
 	(it - 1)->r.end == pos)) {
-    it = _ops.emplace(it, pos);
+    it = _ops.emplace(it, pos) + 1;
   }
 
   it = _ops.emplace(it, pos, std::move(new_tok));
@@ -265,9 +257,24 @@ insert_token(const pp_token_index &pos, pp_token &&new_tok,
   // an iterator pointing past the last such op being located before
   // or at this point. In particular, there can't be an insert_ws op
   // with ->r.begin == pos after the element just inserted.
-  if (need_whitespace_after) {
+  if (need_whitespace_after)
     _ops.emplace(it + 1, pos);
-  }
+}
+
+depreprocessor::transformed_input_chunk
+depreprocessor::transformed_input_chunk::
+split_head_off(const pp_tokens_range &r)
+{
+  assert(r.is_contained_in(_r));
+
+  auto ops_tail_begin = _prepare_insert(r);
+  transformed_input_chunk head_tic{pp_tokens_range{_r.begin, r.begin}};
+  head_tic._ops.insert(head_tic._ops.begin(),
+		       std::make_move_iterator(_ops.begin()),
+		       std::make_move_iterator(ops_tail_begin));
+  _r.begin = r.end;
+  _ops.erase(_ops.begin(), ops_tail_begin);
+  return head_tic;
 }
 
 depreprocessor::transformed_input_chunk::_pos_in_chunk
@@ -1839,6 +1846,8 @@ depreprocessor::depreprocessor(const pp_result &pp_result,
 void depreprocessor::append(transformed_input_chunk &&tic)
 {
   tic._trim();
+  if (tic._ops.empty())
+    return;
   _chunks.emplace_back(std::move(tic));
 }
 
