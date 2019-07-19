@@ -3,7 +3,7 @@
 #include "pp_except.hh"
 #include "parse_except.hh"
 #include "semantic_except.hh"
-#include "arch_gcc48_x86_64.hh"
+#include "arch_x86_64_gcc.hh"
 
 using namespace klp::ccp;
 
@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
   std::vector<std::unique_ptr<pp_result::header_inclusion_root>> hirs;
   hirs.emplace_back(std::move(hir));
   header_resolver hr;
-  arch_gcc48_x86_64 arch;
+  arch_x86_64_gcc arch;
   preprocessor p{pp_result::header_inclusion_roots{std::move(hirs)},
 		 argv[1], hr, arch};
   const pp_tokens &tokens = p.get_result().get_pp_tokens();

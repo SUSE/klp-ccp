@@ -8,8 +8,8 @@ stack.hh: gnuc_parser.hh pp_expr_parser.hh
 
 
 noinst_HEADERS =				\
-	arch_gcc48_x86_64.hh			\
 	architecture.hh			\
+	arch_x86_64_gcc.hh			\
 	ast.hh					\
 	ast_evaluate.hh			\
 	ast_impl.hh				\
@@ -57,8 +57,8 @@ noinst_HEADERS =				\
 
 noinst_LIBRARIES = libcp.a
 libcp_a_SOURCES =				\
-	arch_gcc48_x86_64.cc			\
 	architecture.cc			\
+	arch_x86_64_gcc.cc			\
 	ast.cc					\
 	ast_evaluate.cc			\
 	ast_resolve.cc				\

@@ -2,7 +2,7 @@
 #include "types_impl.hh"
 #include "ast.hh"
 #include "semantic_except.hh"
-#include "arch_gcc48_x86_64.hh"
+#include "arch_x86_64_gcc.hh"
 #include "pp_token.hh"
 #include "preprocessor.hh"
 
@@ -103,7 +103,7 @@ _builtin_typedef__int128::_create(const bool is_signed)
 }
 
 
-arch_gcc48_x86_64::arch_gcc48_x86_64()
+arch_x86_64_gcc::arch_x86_64_gcc()
 {
   _builtin_typedefs.emplace_back("__builtin_va_list",
 				 _builtin_typedef_va_list::create);
@@ -113,7 +113,7 @@ arch_gcc48_x86_64::arch_gcc48_x86_64()
 				 _builtin_typedef__int128::create_unsigned);
 }
 
-void arch_gcc48_x86_64::register_builtin_macros(preprocessor &pp) const
+void arch_x86_64_gcc::register_builtin_macros(preprocessor &pp) const
 {
   const std::initializer_list<std::pair<const char *, const char*>>
     builtin_object_macros = {
@@ -191,29 +191,29 @@ void arch_gcc48_x86_64::register_builtin_macros(preprocessor &pp) const
     pp.register_builtin_macro(bom.first, bom.second);
 }
 
-const builtin_typedef::factories& arch_gcc48_x86_64::get_builtin_typedefs()
+const builtin_typedef::factories& arch_x86_64_gcc::get_builtin_typedefs()
   const noexcept
 {
   return _builtin_typedefs;
 }
 
-bool arch_gcc48_x86_64::is_char_signed() const noexcept
+bool arch_x86_64_gcc::is_char_signed() const noexcept
 {
   return true;
 }
 
-bool arch_gcc48_x86_64::is_wchar_signed() const noexcept
+bool arch_x86_64_gcc::is_wchar_signed() const noexcept
 {
   return true;
 }
 
-bool arch_gcc48_x86_64::is_bitfield_default_signed() const noexcept
+bool arch_x86_64_gcc::is_bitfield_default_signed() const noexcept
 {
   return true;
 }
 
 mpa::limbs::size_type
-arch_gcc48_x86_64::get_std_int_width(const types::std_int_type::kind k)
+arch_x86_64_gcc::get_std_int_width(const types::std_int_type::kind k)
   const noexcept
 {
   switch (k) {
@@ -238,7 +238,7 @@ arch_gcc48_x86_64::get_std_int_width(const types::std_int_type::kind k)
 }
 
 types::std_int_type::kind
-arch_gcc48_x86_64::int_mode_to_std_int_kind(const int_mode_kind m)
+arch_x86_64_gcc::int_mode_to_std_int_kind(const int_mode_kind m)
   const noexcept
 {
   switch (m) {
@@ -264,7 +264,7 @@ arch_gcc48_x86_64::int_mode_to_std_int_kind(const int_mode_kind m)
 }
 
 
-mpa::limbs::size_type arch_gcc48_x86_64::
+mpa::limbs::size_type arch_x86_64_gcc::
 get_float_significand_width(const types::float_type::kind k)
   const noexcept
 {
@@ -280,7 +280,7 @@ get_float_significand_width(const types::float_type::kind k)
   };
 }
 
-mpa::limbs::size_type arch_gcc48_x86_64::
+mpa::limbs::size_type arch_x86_64_gcc::
 get_float_exponent_width(const types::float_type::kind k)
   const noexcept
 {
@@ -296,7 +296,7 @@ get_float_exponent_width(const types::float_type::kind k)
   };
 }
 
-types::float_type::kind  arch_gcc48_x86_64::
+types::float_type::kind  arch_x86_64_gcc::
 float_mode_to_float_kind(const float_mode_kind m) const noexcept
 {
   switch (m) {
@@ -312,23 +312,23 @@ float_mode_to_float_kind(const float_mode_kind m) const noexcept
   }
 }
 
-int_mode_kind arch_gcc48_x86_64::get_pointer_mode() const noexcept
+int_mode_kind arch_x86_64_gcc::get_pointer_mode() const noexcept
 {
   return int_mode_kind::imk_DI;
 }
 
-int_mode_kind arch_gcc48_x86_64::get_word_mode() const noexcept
+int_mode_kind arch_x86_64_gcc::get_word_mode() const noexcept
 {
   return int_mode_kind::imk_DI;
 }
 
-mpa::limbs::size_type arch_gcc48_x86_64::get_biggest_alignment_log2()
+mpa::limbs::size_type arch_x86_64_gcc::get_biggest_alignment_log2()
   const noexcept
 {
   return 4;
 }
 
-std::unique_ptr<execution_charset_encoder> arch_gcc48_x86_64::
+std::unique_ptr<execution_charset_encoder> arch_x86_64_gcc::
 get_execution_charset_encoder(const execution_charset_encoding e) const
 {
   types::std_int_type::kind target_char_kind;
@@ -368,10 +368,10 @@ get_execution_charset_encoder(const execution_charset_encoding e) const
 					       false)));
 }
 
-void arch_gcc48_x86_64::evaluate_enum_type(ast::ast &a, types::enum_content &ec,
-					   const bool packed,
-					   const int_mode_kind mode,
-					   types::alignment &&user_align) const
+void arch_x86_64_gcc::evaluate_enum_type(ast::ast &a, types::enum_content &ec,
+					 const bool packed,
+					 const int_mode_kind mode,
+					 types::alignment &&user_align) const
 {
   // Inspect each enumerator and find the maximum required width
   // and signedness.
@@ -488,19 +488,19 @@ void arch_gcc48_x86_64::evaluate_enum_type(ast::ast &a, types::enum_content &ec,
      });
 }
 
-mpa::limbs arch_gcc48_x86_64::
+mpa::limbs arch_x86_64_gcc::
 get_std_int_size(const types::std_int_type::kind k) const
 {
   return mpa::limbs::from_size_type(get_std_int_width(k) / 8);
 }
 
-mpa::limbs::size_type arch_gcc48_x86_64::
+mpa::limbs::size_type arch_x86_64_gcc::
 get_std_int_alignment(const types::std_int_type::kind k) const
 {
   return get_std_int_size(k).ffs() - 1;
 }
 
-mpa::limbs arch_gcc48_x86_64::
+mpa::limbs arch_x86_64_gcc::
 get_float_size(const types::float_type::kind k,
 	       const bool is_complex) const
 {
@@ -526,28 +526,28 @@ get_float_size(const types::float_type::kind k,
   return size;
 }
 
-mpa::limbs::size_type arch_gcc48_x86_64::
+mpa::limbs::size_type arch_x86_64_gcc::
 get_float_alignment(const types::float_type::kind k, const bool) const
 {
   return get_float_size(k, false).ffs() - 1;
 }
 
-mpa::limbs arch_gcc48_x86_64::get_pointer_size() const
+mpa::limbs arch_x86_64_gcc::get_pointer_size() const
 {
   return mpa::limbs::from_size_type(8);
 }
 
-mpa::limbs::size_type arch_gcc48_x86_64::get_pointer_alignment() const
+mpa::limbs::size_type arch_x86_64_gcc::get_pointer_alignment() const
 {
   return 3;
 }
 
-mpa::limbs arch_gcc48_x86_64::get_va_list_size() const
+mpa::limbs arch_x86_64_gcc::get_va_list_size() const
 {
   return mpa::limbs::from_size_type(24);
 }
 
-mpa::limbs::size_type arch_gcc48_x86_64::get_va_list_alignment() const
+mpa::limbs::size_type arch_x86_64_gcc::get_va_list_alignment() const
 {
   return 3;
 }
@@ -583,7 +583,7 @@ namespace
   class record_layout_info
   {
   public:
-    record_layout_info(const arch_gcc48_x86_64 &arch,
+    record_layout_info(const arch_x86_64_gcc &arch,
 		       const mpa::limbs::size_type user_align_ffs);
 
     void place_struct_field(struct_or_union_content::member &m);
@@ -614,7 +614,7 @@ namespace
 
     void _align_to_byte();
 
-    const arch_gcc48_x86_64 &_arch;
+    const arch_x86_64_gcc &_arch;
     mpa::limbs _offset;
     mpa::limbs _bitpos;
     mpa::limbs::size_type _record_align_ffs;
@@ -623,7 +623,7 @@ namespace
 }
 
 record_layout_info::
-record_layout_info(const arch_gcc48_x86_64 &arch,
+record_layout_info(const arch_x86_64_gcc &arch,
 		   const mpa::limbs::size_type user_align_ffs)
   : _arch(arch), _offset(0), _bitpos(),
     _record_align_ffs(std::max(static_cast<mpa::limbs::size_type>(4),
@@ -883,7 +883,7 @@ void record_layout_info::finish_record_layout(struct_or_union_content &sc)
   }
 }
 
-void arch_gcc48_x86_64::
+void arch_x86_64_gcc::
 layout_struct(types::struct_or_union_content &sc,
 	      const types::alignment &user_align) const
 {
@@ -900,7 +900,7 @@ layout_struct(types::struct_or_union_content &sc,
   rli.finish_record_layout(sc);
 }
 
-void arch_gcc48_x86_64::
+void arch_x86_64_gcc::
 layout_union(types::struct_or_union_content &sc,
 	     const types::alignment &user_align) const
 {
@@ -920,7 +920,7 @@ layout_union(types::struct_or_union_content &sc,
 
 
 types::std_int_type::kind
-arch_gcc48_x86_64::_width_to_int_kind(const mpa::limbs::size_type w) noexcept
+arch_x86_64_gcc::_width_to_int_kind(const mpa::limbs::size_type w) noexcept
 {
   switch (w) {
   case 8:
@@ -946,7 +946,7 @@ arch_gcc48_x86_64::_width_to_int_kind(const mpa::limbs::size_type w) noexcept
 
 
 std::shared_ptr<const types::object_type>
-arch_gcc48_x86_64::create_builtin_va_list_type() const
+arch_x86_64_gcc::create_builtin_va_list_type() const
 {
   // Use a common dummy struct_or_union_def node such that all
   // struct_or_union_type instances created here refer to the same
@@ -985,27 +985,27 @@ arch_gcc48_x86_64::create_builtin_va_list_type() const
 }
 
 types::std_int_type::kind
-arch_gcc48_x86_64::get_wint_kind() const noexcept
+arch_x86_64_gcc::get_wint_kind() const noexcept
 {
   return std_int_type::kind::k_int;
 }
 
-bool arch_gcc48_x86_64::is_wint_signed() const noexcept
+bool arch_x86_64_gcc::is_wint_signed() const noexcept
 {
   return true;
 }
 
-types::std_int_type::kind arch_gcc48_x86_64::get_int_max_kind() const noexcept
+types::std_int_type::kind arch_x86_64_gcc::get_int_max_kind() const noexcept
 {
   return std_int_type::kind::k_long;
 }
 
-types::std_int_type::kind arch_gcc48_x86_64::get_pid_t_kind() const noexcept
+types::std_int_type::kind arch_x86_64_gcc::get_pid_t_kind() const noexcept
 {
   return std_int_type::kind::k_int;
 }
 
-bool arch_gcc48_x86_64::is_pid_t_signed() const noexcept
+bool arch_x86_64_gcc::is_pid_t_signed() const noexcept
 {
   return true;
 }

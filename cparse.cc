@@ -5,7 +5,7 @@
 #include "pp_except.hh"
 #include "parse_except.hh"
 #include "semantic_except.hh"
-#include "arch_gcc48_x86_64.hh"
+#include "arch_x86_64_gcc.hh"
 
 using namespace klp::ccp;
 
@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
   std::unique_ptr<pp_result::header_inclusion_root> hir{
     new pp_result::header_inclusion_root(argv[optind], false)};
   hirs.emplace_back(std::move(hir));
-  arch_gcc48_x86_64 arch;
+  arch_x86_64_gcc arch;
   yy::gnuc_parser_driver pd{
 		preprocessor{pp_result::header_inclusion_roots{std::move(hirs)},
 			     argv[optind], hr, arch},

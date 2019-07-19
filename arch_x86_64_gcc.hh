@@ -1,5 +1,5 @@
-#ifndef ARCH_GCC48_X86_64_HH
-#define ARCH_GCC48_X86_64_HH
+#ifndef ARCH_X86_64_GCC_HH
+#define ARCH_X86_64_GCC_HH
 
 #include "architecture.hh"
 
@@ -7,12 +7,12 @@ namespace klp
 {
   namespace ccp
   {
-    class arch_gcc48_x86_64 final : public architecture
+    class arch_x86_64_gcc final : public architecture
     {
     public:
-      arch_gcc48_x86_64();
+      arch_x86_64_gcc();
 
-      virtual ~arch_gcc48_x86_64() noexcept override = default;
+      virtual ~arch_x86_64_gcc() noexcept override = default;
 
       virtual void register_builtin_macros(preprocessor &pp) const override;
 
@@ -112,4 +112,3 @@ namespace klp
 }
 
 #endif
-
