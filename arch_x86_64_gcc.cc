@@ -1,3 +1,4 @@
+#include <cstring>
 #include "execution_charset_encoder_iconv.hh"
 #include "types_impl.hh"
 #include "ast.hh"
@@ -5,6 +6,7 @@
 #include "arch_x86_64_gcc.hh"
 #include "pp_token.hh"
 #include "preprocessor.hh"
+#include "cmdline_except.hh"
 
 using namespace klp::ccp;
 using namespace klp::ccp::types;
@@ -103,8 +105,11 @@ _builtin_typedef__int128::_create(const bool is_signed)
 }
 
 
-arch_x86_64_gcc::arch_x86_64_gcc()
+arch_x86_64_gcc::arch_x86_64_gcc(const char * const version)
 {
+  std::tie(_gcc_ver_major, _gcc_ver_minor, _gcc_ver_patchlevel) =
+    _parse_version(version);
+
   _builtin_typedefs.emplace_back("__builtin_va_list",
 				 _builtin_typedef_va_list::create);
   _builtin_typedefs.emplace_back("__int128_t",
@@ -917,34 +922,6 @@ layout_union(types::struct_or_union_content &sc,
   rli.finish_record_layout(sc);
 }
 
-
-
-types::std_int_type::kind
-arch_x86_64_gcc::_width_to_int_kind(const mpa::limbs::size_type w) noexcept
-{
-  switch (w) {
-  case 8:
-    return types::std_int_type::kind::k_char;
-
-  case 16:
-    return types::std_int_type::kind::k_short;
-
-  case 32:
-    return types::std_int_type::kind::k_int;
-
-  case 64:
-    return types::std_int_type::kind::k_long;
-
-  case 128:
-    return types::std_int_type::kind::k_int128;
-
-  default:
-    assert(0);
-    __builtin_unreachable();
-  };
-}
-
-
 std::shared_ptr<const types::object_type>
 arch_x86_64_gcc::create_builtin_va_list_type() const
 {
@@ -1008,4 +985,94 @@ types::std_int_type::kind arch_x86_64_gcc::get_pid_t_kind() const noexcept
 bool arch_x86_64_gcc::is_pid_t_signed() const noexcept
 {
   return true;
+}
+
+types::std_int_type::kind
+arch_x86_64_gcc::_width_to_int_kind(const mpa::limbs::size_type w) noexcept
+{
+  switch (w) {
+  case 8:
+    return types::std_int_type::kind::k_char;
+
+  case 16:
+    return types::std_int_type::kind::k_short;
+
+  case 32:
+    return types::std_int_type::kind::k_int;
+
+  case 64:
+    return types::std_int_type::kind::k_long;
+
+  case 128:
+    return types::std_int_type::kind::k_int128;
+
+  default:
+    assert(0);
+    __builtin_unreachable();
+  };
+}
+
+
+std::tuple<unsigned int, unsigned int, unsigned int>
+arch_x86_64_gcc::_parse_version(const char * const version)
+{
+  const char * const pmajor = version;
+  const char *pminor = std::strchr(pmajor, '.');
+  const char *ppatchlevel = nullptr;
+
+  if (pminor) {
+    ++pminor;
+    ppatchlevel = std::strchr(pminor, '.');
+    if (ppatchlevel)
+      ++ppatchlevel;
+  }
+
+  if (!ppatchlevel ||
+      (pminor == pmajor + 1) ||
+      (ppatchlevel == pminor + 1) ||
+      (*ppatchlevel == '\0')) {
+    throw cmdline_except {
+		(std::string{"compiler version specifier \'"}
+		 + version + "\' has invalid format")
+	  };
+  }
+
+  std::size_t endpos;
+  int major = std::stoi(std::string{pmajor, pminor - 1}, &endpos);
+  if (*(pmajor + endpos) != '.')
+    major = -1;
+
+  int minor = std::stoi(std::string{pminor, ppatchlevel - 1}, &endpos);
+  if (*(pminor + endpos) != '.')
+    minor = -1;
+
+  int patchlevel = std::stoi(std::string{ppatchlevel}, &endpos);
+  if (*(ppatchlevel + endpos) != '\0')
+    patchlevel = -1;
+
+  if (major < 0 || minor < 0 || patchlevel < 0) {
+    throw cmdline_except {
+		(std::string{"compiler version specifier \'"}
+		 + version + "\' has invalid format")
+	  };
+  }
+
+  bool is_known = false;
+  if (major == 4) {
+    if (minor == 8) {
+      if (patchlevel <= 5)
+	is_known = true;
+    }
+  }
+
+  if (!is_known) {
+    throw cmdline_except {
+		(std::string{"unrecognized compiler version \'"}
+		 + version + "\'")
+	  };
+  }
+
+  return std::make_tuple(static_cast<unsigned int>(major),
+			 static_cast<unsigned int>(minor),
+			 static_cast<unsigned int>(patchlevel));
 }

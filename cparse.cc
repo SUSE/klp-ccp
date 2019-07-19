@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
   std::unique_ptr<pp_result::header_inclusion_root> hir{
     new pp_result::header_inclusion_root(argv[optind], false)};
   hirs.emplace_back(std::move(hir));
-  arch_x86_64_gcc arch;
+  arch_x86_64_gcc arch{"4.8.5"};
   yy::gnuc_parser_driver pd{
 		preprocessor{pp_result::header_inclusion_roots{std::move(hirs)},
 			     argv[optind], hr, arch},

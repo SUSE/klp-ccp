@@ -10,7 +10,7 @@ namespace klp
     class arch_x86_64_gcc final : public architecture
     {
     public:
-      arch_x86_64_gcc();
+      arch_x86_64_gcc(const char * const version);
 
       virtual ~arch_x86_64_gcc() noexcept override = default;
 
@@ -103,8 +103,15 @@ namespace klp
       virtual bool is_pid_t_signed() const noexcept override;
 
     private:
+      static std::tuple<unsigned int, unsigned int, unsigned int>
+      _parse_version(const char * const version);
+
       static types::std_int_type::kind
       _width_to_int_kind(const mpa::limbs::size_type w) noexcept;
+
+      unsigned int _gcc_ver_major;
+      unsigned int _gcc_ver_minor;
+      unsigned int _gcc_ver_patchlevel;
 
       builtin_typedef::factories _builtin_typedefs;
     };
