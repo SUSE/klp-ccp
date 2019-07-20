@@ -32,7 +32,8 @@ int main(int argc, char* argv[])
 {
   int r = 0;
   header_resolver hr;
-  std::vector<std::unique_ptr<pp_result::header_inclusion_root> >hirs;
+  arch_x86_64_gcc arch{"4.8.5"};
+  preprocessor p{hr, arch};
 
   while(true) {
     const int o = getopt_long(argc, argv, optstring, options, NULL);
@@ -58,9 +59,7 @@ int main(int argc, char* argv[])
 	  return 1;
 	}
 
-	std::unique_ptr<pp_result::header_inclusion_root> hir{
-	  new pp_result::header_inclusion_root(resolved, true)};
-	hirs.emplace_back(std::move(hir));
+	p.add_root_source(resolved, true);
       };
     }
   }
@@ -70,15 +69,9 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  std::unique_ptr<pp_result::header_inclusion_root> hir{
-    new pp_result::header_inclusion_root(argv[optind], false)};
-  hirs.emplace_back(std::move(hir));
-  arch_x86_64_gcc arch{"4.8.5"};
-  yy::gnuc_parser_driver pd{
-		preprocessor{pp_result::header_inclusion_roots{std::move(hirs)},
-			     argv[optind], hr, arch},
-		arch
-  };
+  p.add_root_source(argv[optind], false);
+  p.set_base_file(argv[optind]);
+  yy::gnuc_parser_driver pd{std::move(p), arch};
 
   try {
 #ifdef DEBUG_PARSER

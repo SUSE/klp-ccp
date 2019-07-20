@@ -10,13 +10,10 @@
 
 using namespace klp::ccp;
 
-preprocessor::
-preprocessor(pp_result::header_inclusion_roots &&header_inclusion_roots,
-	     const std::string &base_file,
-	     const header_resolver &header_resolver,
-	     const architecture &arch)
-  : _base_file(base_file), _header_resolver(header_resolver), _arch(arch),
-    _pp_result(new pp_result{std::move(header_inclusion_roots)}),
+preprocessor::preprocessor(const header_resolver &header_resolver,
+			   const architecture &arch)
+  : _header_resolver(header_resolver), _arch(arch),
+    _pp_result(new pp_result{}),
     _cur_header_inclusion_root(_pp_result->get_header_inclusion_roots()
 			       .begin()),
     _cond_incl_nesting(0), _root_expansion_state(),
@@ -24,8 +21,6 @@ preprocessor(pp_result::header_inclusion_roots &&header_inclusion_roots,
     _eof_tok(pp_token::type::empty, "", raw_pp_tokens_range()),
     _maybe_pp_directive(true), _line_empty(true)
 {
-  assert(!_pp_result->get_header_inclusion_roots().empty());
-
   // Populate the special builtin macros.
   for (const auto &name : { "__FILE__",
 			    "__BASE_FILE__",
@@ -38,10 +33,23 @@ preprocessor(pp_result::header_inclusion_roots &&header_inclusion_roots,
   }
 
   _arch.register_builtin_macros(*this);
+}
 
-  _pp_result->_enter_root(*_cur_header_inclusion_root, 0);
-  _tokenizers.emplace(*_cur_header_inclusion_root);
-  _inclusions.emplace(std::ref(*_cur_header_inclusion_root));
+void preprocessor::add_root_source(const std::string &filename,
+				   const bool is_preinclude)
+{
+  pp_result::header_inclusion_roots &roots =
+    _pp_result->get_header_inclusion_roots();
+  assert(_cur_header_inclusion_root == roots.begin());
+  _pp_result->get_header_inclusion_roots().add(filename, is_preinclude);
+  _cur_header_inclusion_root = roots.begin();
+}
+
+void preprocessor::set_base_file(const std::string &filename)
+{
+  assert(_base_file.empty());
+  assert(_tokenizers.empty());
+  _base_file = filename;
 }
 
 pp_token_index preprocessor::read_next_token()
@@ -328,7 +336,18 @@ preprocessor::_pp_token preprocessor::_read_next_plain_token()
   // Has the final eof token been seen?
   if (_eof_tok.get_type() != pp_token::type::empty)
     return _eof_tok;
-  assert(!_tokenizers.empty());
+
+  if (_tokenizers.empty()) {
+    // First time _read_next_plain_token() gets called.
+    // Setup the tokenizer for the first root file.
+    assert(_cur_header_inclusion_root ==
+	   _pp_result->get_header_inclusion_roots().begin());
+    assert(!_pp_result->get_header_inclusion_roots().empty());
+    _pp_result->_enter_root(*_cur_header_inclusion_root, 0);
+    _tokenizers.emplace(*_cur_header_inclusion_root);
+    _inclusions.emplace(std::ref(*_cur_header_inclusion_root));
+  }
+
   try {
     auto raw_tok = _tokenizers.top().read_next_token();
     _grab_remarks_from(_tokenizers.top());

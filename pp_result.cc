@@ -881,16 +881,24 @@ pp_result::conditional_inclusion_node::get_containing_header() const noexcept
 pp_result::header_inclusion_roots::header_inclusion_roots() = default;
 
 pp_result::header_inclusion_roots::
-header_inclusion_roots(_container_type &&roots)
-  : _roots(std::move(roots))
-{}
-
-pp_result::header_inclusion_roots::
 header_inclusion_roots(header_inclusion_roots &&hirs)
   : _roots(std::move(hirs._roots))
 {}
 
 pp_result::header_inclusion_roots::~header_inclusion_roots() noexcept = default;
+
+pp_result::header_inclusion_root&
+pp_result::header_inclusion_roots::add(const std::string &filename,
+				       const bool is_preinclude)
+{
+  std::unique_ptr<header_inclusion_root> n{
+    new header_inclusion_root{filename, is_preinclude}
+  };
+
+  _roots.emplace_back(std::move(n));
+  return *_roots.back();
+}
+
 
 
 pp_result::pp_result()

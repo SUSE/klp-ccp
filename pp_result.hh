@@ -845,6 +845,7 @@ namespace klp
       public:
 	header_inclusion_root(const std::string &filename,
 			      const bool is_preinclude);
+
 	virtual ~header_inclusion_root() noexcept;
 
 	bool is_preinclude() const noexcept
@@ -1076,11 +1077,12 @@ namespace klp
 
 	header_inclusion_roots();
 
-	header_inclusion_roots(_container_type &&roots);
-
 	header_inclusion_roots(header_inclusion_roots &&hirs);
 
 	~header_inclusion_roots() noexcept;
+
+	header_inclusion_root& add(const std::string &filename,
+				   const bool is_preinclude);
 
 	iterator begin() noexcept
 	{ return iterator{_roots.begin()}; }

@@ -14,16 +14,13 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  std::unique_ptr<pp_result::header_inclusion_root> hir{
-    new pp_result::header_inclusion_root(argv[1], false) };
-  std::vector<std::unique_ptr<pp_result::header_inclusion_root>> hirs;
-  hirs.emplace_back(std::move(hir));
   header_resolver hr;
   arch_x86_64_gcc arch{"4.8.5"};
-  preprocessor p{pp_result::header_inclusion_roots{std::move(hirs)},
-		 argv[1], hr, arch};
-  const pp_tokens &tokens = p.get_result().get_pp_tokens();
+  preprocessor p{hr, arch};
+  p.add_root_source(argv[1], false);
+  p.set_base_file(argv[1]);
 
+  const pp_tokens &tokens = p.get_result().get_pp_tokens();
   while(true) {
     try {
       auto &tok = tokens[p.read_next_token()];

@@ -24,10 +24,13 @@ namespace klp
     class preprocessor
     {
     public:
-      preprocessor(pp_result::header_inclusion_roots &&header_inclusion_roots,
-		   const std::string &base_file,
-		   const header_resolver &header_resolver,
+      preprocessor(const header_resolver &header_resolver,
 		   const architecture &arch);
+
+      void add_root_source(const std::string &filename,
+			   const bool is_preinclude);
+
+      void set_base_file(const std::string &filename);
 
       pp_token_index read_next_token();
 
@@ -344,7 +347,7 @@ namespace klp
 			    const std::vector<std::string> &arg_names,
 			    const _report_fatal_at_raw_tok_type &report_fatal);
 
-      const std::string _base_file;
+      std::string _base_file;
       const header_resolver &_header_resolver;
       const architecture &_arch;
 
