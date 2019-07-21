@@ -65,6 +65,8 @@ std::string klp::ccp::dirname(const std::string &p)
   auto end_pos = _p.rfind('/', _p.find_last_not_of('/'));
   if (!end_pos) {
     end_pos = 1;
+  } else if (end_pos == std::string::npos) {
+    return std::string{};
   }
 
   return std::string(std::move(_p), 0, end_pos);
