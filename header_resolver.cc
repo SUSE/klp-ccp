@@ -21,7 +21,12 @@ std::string header_resolver::resolve(const std::string &header,
 				     const std::string &referring_file)
   const
 {
-  std::string p{normalize_path(dirname(referring_file) + '/' + header)};
+  const std::string dir = dirname(referring_file);
+  std::string p;
+  if (!dir.empty())
+    p = normalize_path(dirname(referring_file) + '/' + header);
+  else
+    p = header;
 
   if (file_readable(p))
     return p;
