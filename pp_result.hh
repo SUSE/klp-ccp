@@ -291,8 +291,14 @@ namespace klp
 	};
 
       public:
+	struct predefined_user_tag{};
+
 	macro_undef(const std::string &name,
 		    const raw_pp_tokens_range &directive_range);
+
+	macro_undef(const std::string &name,
+		    const unsigned long predefinition_pos,
+		    const predefined_user_tag&);
 
 	bool operator<(const raw_pp_tokens_range &r) const noexcept
 	{ return _directive_range < r; }
@@ -1253,6 +1259,9 @@ namespace klp
 
       void _add_macro_undef(const std::string &name,
 			    const raw_pp_tokens_range &directive_range);
+
+      void _add_macro_undef(const std::string &name,
+			    const macro_undef::predefined_user_tag &tag);
 
       macro_invocation&
       _add_macro_invocation(const macro &m,

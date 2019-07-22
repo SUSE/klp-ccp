@@ -201,6 +201,12 @@ pp_result::macro_undef::macro_undef(const std::string &name,
   : _name(name), _o(_origin::o_source), _directive_range(directive_range)
 {}
 
+pp_result::macro_undef::macro_undef(const std::string &name,
+				    const unsigned long predefinition_pos,
+				    const predefined_user_tag&)
+  : _name(name), _o(_origin::o_predefined_user),
+    _predefinition_pos(predefinition_pos)
+{}
 
 pp_result::used_macros::used_macros(_used_macros_type &&um)
   : _used_macros(std::move(um))
@@ -1121,6 +1127,12 @@ _add_macro_undef(const std::string &name,
 		 const raw_pp_tokens_range &directive_range)
 {
   _macro_undefs.emplace_back(name, directive_range);
+}
+
+void pp_result::_add_macro_undef(const std::string &name,
+				 const macro_undef::predefined_user_tag &tag)
+{
+  _macro_undefs.emplace_back(name, _next_predefinition_pos++, tag);
 }
 
 pp_result::macro_invocation& pp_result::
