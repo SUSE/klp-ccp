@@ -54,6 +54,15 @@ namespace klp
 		 const bool variadic,
 		 const std::string &repl);
 
+      void register_predefined_macro
+	(const std::string &signature,
+	 const std::string &repl,
+	 const std::function<void(const std::string)> &report_warning);
+
+      void register_predefined_macro_undef
+	(const std::string &name,
+	 const std::function<void(const std::string)> &report_warning);
+
     private:
       friend class _macro_instance;
 

@@ -309,6 +309,137 @@ register_builtin_macro(const std::string &name,
     assert(0);
 }
 
+void preprocessor::register_predefined_macro
+	(const std::string &signature,
+	 const std::string &repl,
+	 const std::function<void(const std::string)> &report_warning)
+{
+  const auto &report_fatal =
+    [](const std::string &s) {
+      return pp_except{s};
+    };
+
+  pp_string_tokenizer signature_tokenizer{
+	signature, report_warning, report_fatal
+  };
+  raw_pp_tokens signature_toks;
+  while (true) {
+    raw_pp_token tok = signature_tokenizer.read_next_token();
+    if (tok.is_eof())
+      break;
+
+    signature_toks.push_back(std::move(tok));
+  }
+
+  pp_string_tokenizer repl_tokenizer{
+	repl, report_warning, report_fatal
+  };
+  raw_pp_tokens repl_toks;
+  while (true) {
+    raw_pp_token tok = repl_tokenizer.read_next_token();
+    if (tok.is_eof())
+      break;
+
+    repl_toks.push_back(std::move(tok));
+  }
+
+  const auto &skip_ws
+    = [](const raw_pp_tokens::const_iterator &it,
+	 const raw_pp_tokens::const_iterator &end) {
+	if (it == end || !it->is_ws()) {
+	  return it;
+	}
+	// No need to loop here: pp_tokenizer won't emit more than one
+	// consecutive whitespace.
+	assert(it + 1 == end || !(it + 1)->is_ws());
+	return it + 1;
+      };
+
+  raw_pp_tokens::const_iterator signature_end;
+  std::string name;
+  bool func_like;
+  std::vector<std::string> arg_names;
+  bool variadic;
+  std::tie(signature_end, name, func_like, arg_names, variadic)
+    = _parse_macro_signature(skip_ws(signature_toks.cbegin(),
+				     signature_toks.cend()),
+			     signature_toks.cend(),
+			     [&](const std::string &msg,
+				 const raw_pp_tokens::const_iterator&) {
+			       return report_fatal(msg);
+			     });
+  if (skip_ws(signature_end, signature_toks.cend()) !=
+      signature_toks.cend()) {
+    throw report_fatal("garbage after macro signature");
+  }
+
+  raw_pp_tokens normalized_repl =
+    _normalize_macro_repl(skip_ws(repl_toks.cbegin(), repl_toks.cend()),
+			  repl_toks.cend(),
+			  func_like, arg_names,
+			  [&](const std::string &msg,
+			     const raw_pp_tokens::const_iterator&) {
+			    return report_fatal(msg);
+			  });
+
+  const pp_result::macro &m =
+    _pp_result->_add_macro(name, func_like, variadic, std::move(arg_names),
+			   std::move(normalized_repl),
+			   pp_result::macro::predefined_user_tag{});
+
+  const auto it_existing = _macros.find(name);
+  if (it_existing != _macros.end() && it_existing->second.get() != m) {
+    throw report_fatal("macro redefined in an incompatible way");
+  }
+
+  _macros.insert(std::make_pair(m.get_name(), std::ref(m)));
+}
+
+void preprocessor::register_predefined_macro_undef
+	(const std::string &name,
+	 const std::function<void(const std::string)> &report_warning)
+{
+  const auto &report_fatal =
+    [](const std::string &s) {
+      return pp_except{s};
+    };
+
+  pp_string_tokenizer name_tokenizer{
+	name, report_warning, report_fatal
+  };
+  raw_pp_tokens name_toks;
+  while (true) {
+    raw_pp_token tok = name_tokenizer.read_next_token();
+    if (tok.is_eof())
+      break;
+
+    name_toks.push_back(std::move(tok));
+  }
+
+  const auto &skip_ws
+    = [](const raw_pp_tokens::const_iterator &it,
+	 const raw_pp_tokens::const_iterator &end) {
+	if (it == end || !it->is_ws()) {
+	  return it;
+	}
+	// No need to loop here: pp_tokenizer won't emit more than one
+	// consecutive whitespace.
+	assert(it + 1 == end || !(it + 1)->is_ws());
+	return it + 1;
+      };
+
+  const auto it_name = skip_ws(name_toks.cbegin(), name_toks.cend());
+  if (it_name == name_toks.cend() ||
+      !it_name->is_id() ||
+      skip_ws(it_name + 1, name_toks.cend()) != name_toks.end()) {
+    throw report_fatal("invalid macro name");
+  }
+
+  _pp_result->_add_macro_undef(it_name->get_value(),
+			       pp_result::macro_undef::predefined_user_tag{});
+  _macros.erase(it_name->get_value());
+}
+
 template<typename T>
 void preprocessor::_grab_remarks_from(T &from)
 {
