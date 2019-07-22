@@ -9,6 +9,12 @@ const struct header_resolver::cwd_tag header_resolver::cwd;
 std::string header_resolver::resolve(const std::string &header)
   const
 {
+  if (path_is_absolute(header)) {
+    if (!file_readable(header))
+      return std::string{};
+    return header;
+  }
+
   return _resolve(header, _search_dirs);
 }
 
@@ -16,6 +22,12 @@ std::string header_resolver::resolve(const std::string &header,
 				     const std::string &referring_file)
   const
 {
+  if (path_is_absolute(header)) {
+    if (!file_readable(header))
+      return std::string{};
+    return header;
+  }
+
   const std::string dir = dirname(referring_file);
   std::string p;
   if (!dir.empty())
@@ -38,6 +50,12 @@ std::string header_resolver::resolve(const std::string &header,
 				     const cwd_tag&)
   const
 {
+  if (path_is_absolute(header)) {
+    if (!file_readable(header))
+      return std::string{};
+    return header;
+  }
+
   std::string p{normalize_path(getcwd() + '/' + header)};
 
   if (file_readable(p))
