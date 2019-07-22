@@ -34,6 +34,7 @@ int main(int argc, char* argv[])
   header_resolver hr;
   arch_x86_64_gcc arch{"4.8.5"};
   preprocessor p{hr, arch};
+  std::vector<const char*> pre_includes;
 
   while(true) {
     const int o = getopt_long(argc, argv, optstring, options, NULL);
@@ -51,16 +52,8 @@ int main(int argc, char* argv[])
       return 0;
 
     case 'i':
-      {
-	const std::string resolved = hr.resolve(optarg,
-						header_resolver::cwd);
-	if (resolved.empty()) {
-	  std::cerr << "error: " << optarg << " not found";
-	  return 1;
-	}
-
-	p.add_root_source(resolved, true);
-      };
+      pre_includes.push_back(optarg);
+      break;
     }
   }
 
@@ -69,8 +62,21 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  p.add_root_source(argv[optind], false);
-  p.set_base_file(argv[optind]);
+  const std::string base_file{argv[optind]};
+
+  for (const auto i : pre_includes) {
+    const std::string resolved = hr.resolve(i, base_file,
+					    header_resolver::cwd);
+    if (resolved.empty()) {
+      std::cerr << "error: " << i << " not found";
+      return 1;
+    }
+
+    p.add_root_source(resolved, true);
+  }
+
+  p.add_root_source(base_file, false);
+  p.set_base_file(base_file);
   yy::gnuc_parser_driver pd{std::move(p), arch};
 
   try {

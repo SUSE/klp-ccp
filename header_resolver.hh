@@ -39,7 +39,10 @@ namespace klp
       {
 	cwd_tag() noexcept {}
       } cwd;
-      std::string resolve(const std::string &header, const cwd_tag&) const;
+
+      std::string resolve(const std::string &header,
+			  const std::string &referring_file,
+			  const cwd_tag&) const;
 
     private:
       typedef std::vector<std::string> _search_dirs_type;

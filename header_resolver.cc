@@ -33,7 +33,9 @@ std::string header_resolver::resolve(const std::string &header,
 }
 
 struct cwd_tag {};
-std::string header_resolver::resolve(const std::string &header, const cwd_tag&)
+std::string header_resolver::resolve(const std::string &header,
+				     const std::string &referring_file,
+				     const cwd_tag&)
   const
 {
   std::string p{normalize_path(getcwd() + '/' + header)};
@@ -41,7 +43,7 @@ std::string header_resolver::resolve(const std::string &header, const cwd_tag&)
   if (file_readable(p))
     return p;
 
-  return resolve(header);
+  return resolve(header, referring_file);
 }
 
 std::string header_resolver::_resolve(const std::string &header,
