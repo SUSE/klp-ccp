@@ -57,6 +57,11 @@ std::string klp::ccp::normalize_path(std::string &&p)
   return std::move(p);
 }
 
+bool klp::ccp::path_is_absolute(const std::string &p)
+{
+  return !p.empty() && p[0] == '/';
+}
+
 std::string klp::ccp::dirname(const std::string &p)
 {
   std::string _p{p};
