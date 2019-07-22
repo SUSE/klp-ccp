@@ -25,6 +25,12 @@ namespace klp
 	_search_dirs.push_back(std::forward<T>(dir));
       }
 
+      template <typename T>
+      void append_search_dir_quoted(T &&dir)
+      {
+	_search_dirs_quoted.push_back(std::forward<T>(dir));
+      }
+
       std::string resolve(const std::string &header) const;
       std::string resolve(const std::string &header,
 			  const std::string &referring_file) const;
@@ -36,7 +42,13 @@ namespace klp
       std::string resolve(const std::string &header, const cwd_tag&) const;
 
     private:
-      std::vector<std::string> _search_dirs;
+      typedef std::vector<std::string> _search_dirs_type;
+
+      std::string _resolve(const std::string &header,
+			   const _search_dirs_type &search_dirs) const;
+
+      _search_dirs_type _search_dirs_quoted;
+      _search_dirs_type _search_dirs;
     };
   }
 }
