@@ -25,6 +25,7 @@ noinst_HEADERS =				\
 	depreprocessor.hh			\
 	execution_charset_encoder.hh		\
 	execution_charset_encoder_iconv.hh	\
+	gcc_cmdline_parser.hh			\
 	gnuc_parser_driver.hh			\
 	header_resolver.hh			\
 	lp_creation_policy.hh			\
@@ -74,6 +75,7 @@ libcp_a_SOURCES =				\
 	depreprocessor.cc			\
 	execution_charset_encoder.cc		\
 	execution_charset_encoder_iconv.cc	\
+	gcc_cmdline_parser.cc			\
 	gnuc_parser.yy				\
 	gnuc_parser_driver.cc			\
 	header_resolver.cc			\
