@@ -109,6 +109,11 @@ libcp_a_SOURCES =				\
 	types.cc				\
 	user_policy_command.cc
 
+bin_PROGRAMS=klp-ccp
+
+klp_ccp_SOURCES = klp_ccp.cc
+klp_ccp_LDADD = libcp.a
+
 check_PROGRAMS = cpp_tokenize normalize_path dirname cpp cparse \
 	test_mp_arithmetic test_target_int test_target_float
 
