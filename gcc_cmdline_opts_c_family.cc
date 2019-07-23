@@ -5,6 +5,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "Wall" },
 },
 {
@@ -14,6 +15,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "ansi" },
 },
 {
@@ -23,6 +25,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_separate,
+  .reject_negative = false,
   .alias = { "A" },
 },
 {
@@ -32,6 +35,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = false,
   .alias = { "A" },
 },
 {
@@ -41,6 +45,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "C" },
 },
 {
@@ -50,6 +55,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "CC" },
 },
 {
@@ -59,6 +65,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_separate,
+  .reject_negative = false,
   .alias = { "D" },
 },
 {
@@ -68,6 +75,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = false,
   .alias = { "D" },
 },
 {
@@ -77,6 +85,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "M" },
 },
 {
@@ -86,6 +95,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_separate,
+  .reject_negative = false,
   .alias = { "d" },
 },
 {
@@ -95,6 +105,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = false,
   .alias = { "d" },
 },
 {
@@ -104,6 +115,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_separate,
+  .reject_negative = false,
   .alias = { "imacros" },
 },
 {
@@ -113,6 +125,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = false,
   .alias = { "imacros" },
 },
 {
@@ -122,6 +135,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_separate,
+  .reject_negative = false,
   .alias = { "include" },
 },
 {
@@ -131,6 +145,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "I", "-" },
 },
 {
@@ -140,6 +155,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_separate,
+  .reject_negative = false,
   .alias = { "I" },
 },
 {
@@ -149,6 +165,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_separate,
+  .reject_negative = false,
   .alias = { "idirafter" },
 },
 {
@@ -158,6 +175,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = false,
   .alias = { "idirafter" },
 },
 {
@@ -167,6 +185,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = false,
   .alias = { "I" },
 },
 {
@@ -176,6 +195,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_separate,
+  .reject_negative = false,
   .alias = { "iprefix" },
 },
 {
@@ -185,6 +205,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined_or_missing,
+  .reject_negative = false,
   .alias = { "iprefix" },
 },
 {
@@ -194,6 +215,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_separate,
+  .reject_negative = false,
   .alias = { "iwithprefix" },
 },
 {
@@ -203,6 +225,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_separate,
+  .reject_negative = false,
   .alias = { "iwithprefix" },
 },
 {
@@ -212,6 +235,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined_or_missing,
+  .reject_negative = false,
   .alias = { "iwithprefix" },
 },
 {
@@ -221,6 +245,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_separate,
+  .reject_negative = false,
   .alias = { "iwithprefixbefore" },
 },
 {
@@ -230,6 +255,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined_or_missing,
+  .reject_negative = false,
   .alias = { "iwithprefixbefore" },
 },
 {
@@ -239,6 +265,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined_or_missing,
+  .reject_negative = false,
   .alias = { "iwithprefix" },
 },
 {
@@ -248,12 +275,14 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = false,
   .alias = { "include" },
 },
 {
   "-no-integrated-cpp",
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "no-integrated-cpp" },
 },
 {
@@ -263,6 +292,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "P" },
 },
 {
@@ -272,6 +302,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "nostdinc" },
 },
 {
@@ -281,6 +312,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "w" },
 },
 {
@@ -290,6 +322,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_separate,
+  .reject_negative = false,
   .alias = { "o" },
 },
 {
@@ -308,6 +341,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = false,
   .alias = { "o" },
 },
 {
@@ -317,6 +351,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "pedantic" },
 },
 {
@@ -326,6 +361,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "E" },
 },
 {
@@ -335,6 +371,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "MG" },
 },
 {
@@ -344,12 +381,14 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "H" },
 },
 {
   "-traditional",
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "traditional" },
 },
 {
@@ -359,6 +398,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "traditional-cpp" },
 },
 {
@@ -368,6 +408,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "trigraphs" },
 },
 {
@@ -377,6 +418,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_separate,
+  .reject_negative = false,
   .alias = { "U" },
 },
 {
@@ -386,6 +428,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = false,
   .alias = { "U" },
 },
 {
@@ -395,6 +438,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "MM" },
 },
 {
@@ -405,6 +449,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "v" },
 },
 {
@@ -414,6 +459,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_separate,
+  .reject_negative = false,
   .alias = { "MD" },
 },
 {
@@ -423,6 +469,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_separate,
+  .reject_negative = false,
   .alias = { "MMD" },
 },
 {
@@ -661,6 +708,7 @@
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "Wc++0x-compat" },
 },
 {
@@ -702,6 +750,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "Wcomment" },
 },
 {
@@ -821,6 +870,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "Wformat=", "1", "0" },
 },
 {
@@ -1023,6 +1073,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "Wsuggest-attribute=format" },
 },
 {
@@ -1834,7 +1885,8 @@
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
-  .alias = { "fexceptions)}" },
+  .reject_negative = false,
+  .alias = { "fexceptions" },
 },
 {
   "fhonor-std",
@@ -2457,6 +2509,7 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "Wpedantic" },
 },
 {
@@ -2478,6 +2531,7 @@
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "std=c++98" },
 },
 {
@@ -2485,6 +2539,7 @@
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "std=c++11" },
 },
 {
@@ -2516,6 +2571,7 @@
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "std=c11" },
 },
 {
@@ -2523,6 +2579,7 @@
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "std=c90" },
 },
 {
@@ -2542,6 +2599,7 @@
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "std=c99" },
 },
 {
@@ -2549,6 +2607,7 @@
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "std=gnu++98" },
 },
 {
@@ -2556,6 +2615,7 @@
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "std=gnu++11" },
 },
 {
@@ -2587,6 +2647,7 @@
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "std=gnu11" },
 },
 {
@@ -2594,6 +2655,7 @@
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "std=gnu90" },
 },
 {
@@ -2613,6 +2675,7 @@
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "std=gnu99" },
 },
 {
@@ -2620,6 +2683,7 @@
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "std=c90" },
 },
 {
@@ -2633,6 +2697,7 @@
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "std=c99" },
 },
 {
@@ -2640,6 +2705,7 @@
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "std=c99" },
 },
 {
@@ -2647,6 +2713,7 @@
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "std=c11" },
 },
 {

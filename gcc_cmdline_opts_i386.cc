@@ -273,6 +273,7 @@
   "mintel-syntax",
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "masm=", "intel", "att" },
 },
 {
@@ -500,6 +501,7 @@
   "msse5",
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
   .alias = { "mavx" },
 },
 {
