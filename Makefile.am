@@ -26,6 +26,9 @@ noinst_HEADERS =				\
 	execution_charset_encoder.hh		\
 	execution_charset_encoder_iconv.hh	\
 	gcc_cmdline_parser.hh			\
+	gcc_cmdline_opts_common.cc		\
+	gcc_cmdline_opts_c_family.cc		\
+	gcc_cmdline_opts_i386.cc		\
 	gnuc_parser_driver.hh			\
 	header_resolver.hh			\
 	lp_creation_policy.hh			\

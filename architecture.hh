@@ -1,6 +1,7 @@
 #ifndef ARCHITECTURE_HH
 #define ARCHITECTURE_HH
 
+#include <functional>
 #include "types.hh"
 #include "mp_arithmetic.hh"
 #include "builtins.hh"
@@ -14,6 +15,7 @@ namespace klp
       class ast;
     }
 
+    class header_resolver;
     class preprocessor;
     class execution_charset_encoder;
 
@@ -42,7 +44,12 @@ namespace klp
     public:
       virtual ~architecture() noexcept;
 
-      virtual void register_builtin_macros(preprocessor &pp) const = 0;
+      virtual void parse_command_line
+		(int argc, const char *argv[],
+		 header_resolver &hr,
+		 preprocessor &pp,
+		 const std::function<void(const std::string&)> &report_warning)
+      = 0;
 
       virtual const builtin_typedef::factories&
       get_builtin_typedefs() const noexcept = 0;

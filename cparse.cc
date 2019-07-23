@@ -34,6 +34,11 @@ int main(int argc, char* argv[])
   header_resolver hr;
   arch_x86_64_gcc arch{"4.8.5"};
   preprocessor p{hr, arch};
+  arch.parse_command_line(0, nullptr, hr, p,
+			  [](const std::string&) {
+			    assert(0);
+			    __builtin_unreachable();
+			  });
   std::vector<const char*> pre_includes;
 
   while(true) {

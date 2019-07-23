@@ -7,9 +7,27 @@
 #include "pp_token.hh"
 #include "preprocessor.hh"
 #include "cmdline_except.hh"
+#include "gcc_cmdline_parser.hh"
+#include "pp_except.hh"
 
 using namespace klp::ccp;
 using namespace klp::ccp::types;
+
+static gcc_cmdline_parser::option gcc_opts_common[] = {
+	#include "gcc_cmdline_opts_common.cc"
+	{ nullptr }
+};
+
+static gcc_cmdline_parser::option gcc_opts_c_family[] = {
+	#include "gcc_cmdline_opts_c_family.cc"
+	{ nullptr }
+};
+
+static gcc_cmdline_parser::option gcc_opts_i386[] = {
+	#include "gcc_cmdline_opts_i386.cc"
+	{ nullptr }
+};
+
 
 namespace
 {
@@ -118,10 +136,214 @@ arch_x86_64_gcc::arch_x86_64_gcc(const char * const version)
 				 _builtin_typedef__int128::create_unsigned);
 }
 
-void arch_x86_64_gcc::register_builtin_macros(preprocessor &pp) const
+
+void arch_x86_64_gcc::parse_command_line
+		(int argc, const char *argv[],
+		 header_resolver &hr,
+		 preprocessor &pp,
+		 const std::function<void(const std::string&)> &report_warning)
+{
+  if (!argv) {
+    // This only happens for the testsuite programs. Provide a
+    // default set of #defines.
+    pp.register_builtin_macro("__STDC__", "1");
+    pp.register_builtin_macro("__STDC_HOSTED__", "1");
+    pp.register_builtin_macro("__STDC_VERSION__", "199901L");
+    _register_builtin_macros(pp);
+    return;
+  }
+
+  gcc_cmdline_parser p;
+  p.register_table(gcc_opts_common);
+  p.register_table(gcc_opts_c_family);
+  p.register_table(gcc_opts_i386);
+
+  const char *_base_file = nullptr;
+  std::vector<const char *> pre_includes;
+
+  std::vector<const char *> include_dirs;
+  std::vector<const char *> include_dirs_quoted;
+  std::vector<const char *> include_dirs_after;
+
+  bool undef = false;
+
+  struct macro_def_or_undef
+  {
+    bool undef;
+    const char *arg;
+  };
+  std::vector<macro_def_or_undef> macro_defs_and_undefs;
+
+  bool optimize = false;
+
+  auto &&handle_opt =
+    [&](const char *name, const char *val, const bool negative) {
+      if (!name) {
+	if (_base_file) {
+	  throw cmdline_except{
+		  std::string{"more than one input file: '"} + _base_file +
+		  "' and '" + val + "'"
+		};
+	}
+
+	_base_file = val;
+	return;
+      }
+
+      if (!std::strcmp(name, "include")) {
+	pre_includes.push_back(val);
+	return;
+      }
+
+      if (!std::strcmp(name, "I")) {
+	if (!std::strcmp(val, "-")) {
+	  include_dirs_quoted.insert
+	    (include_dirs_quoted.end(),
+	     std::make_move_iterator(include_dirs.begin()),
+	     std::make_move_iterator(include_dirs.end()));
+	  include_dirs.clear();
+	  include_dirs.shrink_to_fit();
+	} else {
+	  include_dirs.push_back(val);
+	}
+	return;
+      }
+
+      if (!std::strcmp(name, "iquote")) {
+	include_dirs_quoted.push_back(val);
+	return;
+      }
+
+      if (!std::strcmp(name, "idirafter")) {
+	include_dirs_after.push_back(val);
+	return;
+      }
+
+      if (!std::strcmp(name, "undef")) {
+	undef = true;
+	return;
+      }
+
+      if (!std::strcmp(name, "D")) {
+	macro_defs_and_undefs.emplace_back(macro_def_or_undef{false, val});
+	return;
+      }
+
+      if (!std::strcmp(name, "U")) {
+	macro_defs_and_undefs.emplace_back(macro_def_or_undef{true, val});
+	return;
+      }
+
+      if (!std::strcmp(name, "O")) {
+	if (val && !strcmp(val, "0"))
+	  optimize = false;
+	else
+	  optimize = true;
+	return;
+      }
+    };
+
+  p(argc, argv, handle_opt);
+
+  if (!_base_file) {
+    throw cmdline_except{"no input file"};
+  }
+
+  for (const auto dir : include_dirs_quoted)
+    hr.append_search_dir_quoted(dir);
+
+  for (const auto dir : include_dirs)
+    hr.append_search_dir(dir);
+
+  for (const auto dir : include_dirs_after)
+    hr.append_search_dir(dir);
+
+  const std::string base_file{_base_file};
+
+  for (const auto i : pre_includes) {
+    std::string resolved = hr.resolve(i, base_file, header_resolver::cwd);
+    if (resolved.empty()) {
+      throw cmdline_except{
+	      std::string{"file '"} + i + "' not found"
+	    };
+    }
+
+    pp.add_root_source(resolved, true);
+  }
+
+  pp.add_root_source(base_file, false);
+  pp.set_base_file(base_file);
+
+  pp.register_builtin_macro("__STDC__", "1");
+  pp.register_builtin_macro("__STDC_HOSTED__", "1");
+  pp.register_builtin_macro("__STDC_VERSION__", "199901L");
+
+  if (!undef) {
+    _register_builtin_macros(pp);
+    if (optimize)
+      pp.register_builtin_macro("__OPTIMIZE__", "1");
+  }
+
+  for (const auto &m : macro_defs_and_undefs) {
+    if (!m.undef) {
+      const auto &_report_warning =
+	[&](const std::string &msg) {
+	  report_warning(std::string{"predefined macro '"} +
+			 m.arg + "': " + msg);
+	};
+
+      const char * const repl = std::strchr(m.arg, '=');
+      if (!repl) {
+	try {
+	  pp.register_predefined_macro(m.arg, "1", _report_warning);
+	} catch (const pp_except &e) {
+	  throw cmdline_except{
+		  std::string{"failed to parse predefined macro '"} +
+		  m.arg + "': " + e.what()
+		};
+	}
+
+      } else {
+	const std::string signature{m.arg, repl};
+	try {
+	  pp.register_predefined_macro(signature, repl + 1, _report_warning);
+	} catch (const pp_except &e) {
+	  throw cmdline_except{
+		  std::string{"failed to parse predefined macro '"} +
+		  m.arg + "': " + e.what()
+		};
+	}
+      }
+
+    } else {
+      const auto &_report_warning =
+	[&](const std::string &msg) {
+	  report_warning(std::string{"macro undef '"} +
+			 m.arg + "': " + msg);
+	};
+
+      try {
+	pp.register_predefined_macro_undef(m.arg, _report_warning);
+      } catch (const pp_except &e) {
+	throw cmdline_except{
+		std::string{"failed to parse macro undef '"} +
+		m.arg + "': " + e.what()
+	      };
+      }
+    }
+  }
+}
+
+void arch_x86_64_gcc::_register_builtin_macros(preprocessor &pp) const
 {
   const std::initializer_list<std::pair<const char *, const char*>>
     builtin_object_macros = {
+	{ "__x86_64__", "1" },
+	{ "__x86_64", "1" },
+	{ "__unix__", "1" },
+	{ "__unix", "1" },
+	{ "__linux__", "1" },
+	{ "__linux", "1" },
 	{ "__SIZE_TYPE__", "unsigned long" },
 	{ "__PTRDIFF_TYPE__", "long" },
 	{ "__INTPTR_TYPE__", "long" },
@@ -191,6 +413,11 @@ void arch_x86_64_gcc::register_builtin_macros(preprocessor &pp) const
 	{ "__ATOMIC_ACQ_REL", "4" },
 	{ "__ATOMIC_SEQ_CST", "5" },
   };
+
+  pp.register_builtin_macro("__GNUC__", std::to_string(_gcc_ver_major));
+  pp.register_builtin_macro("__GNUC_MINOR__", std::to_string(_gcc_ver_minor));
+  pp.register_builtin_macro("__GNUC_PATCHLEVEL__",
+			    std::to_string(_gcc_ver_patchlevel));
 
   for (const auto &bom : builtin_object_macros)
     pp.register_builtin_macro(bom.first, bom.second);

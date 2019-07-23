@@ -14,7 +14,12 @@ namespace klp
 
       virtual ~arch_x86_64_gcc() noexcept override = default;
 
-      virtual void register_builtin_macros(preprocessor &pp) const override;
+      virtual void parse_command_line
+		(int argc, const char *argv[],
+		 header_resolver &hr,
+		 preprocessor &pp,
+		 const std::function<void(const std::string&)> &report_warning)
+	override;
 
       virtual const builtin_typedef::factories&
       get_builtin_typedefs() const noexcept override;
@@ -105,6 +110,8 @@ namespace klp
     private:
       static std::tuple<unsigned int, unsigned int, unsigned int>
       _parse_version(const char * const version);
+
+      void _register_builtin_macros(preprocessor &pp) const;
 
       static types::std_int_type::kind
       _width_to_int_kind(const mpa::limbs::size_type w) noexcept;

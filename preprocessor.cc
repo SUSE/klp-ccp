@@ -31,8 +31,6 @@ preprocessor::preprocessor(const header_resolver &header_resolver,
       _pp_result->_add_macro(name, pp_result::macro::builtin_special_tag{});
     _macros.insert(std::make_pair(m.get_name(), std::ref(m)));
   }
-
-  _arch.register_builtin_macros(*this);
 }
 
 void preprocessor::add_root_source(const std::string &filename,
