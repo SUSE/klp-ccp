@@ -603,6 +603,7 @@ declaration_specifiers_ts_no_tdid:
 	  {
 	    if (!$1) {
 	      $$ = new declaration_specifiers(std::move($2));
+	      @$.begin = @2.begin;
 	    } else {
 	      $$ = MV_P($1);
 	      $$->extend(std::move($2));
@@ -893,6 +894,7 @@ specifier_qualifier_list_ts:
 	      } catch (...) {
 		delete ts_tdid;
 	      }
+	      @$.begin = @2.begin;
 	    } else {
 	      $$ = MV_P($1);
 	      $$->extend(std::move(ts_tdid));
@@ -938,6 +940,8 @@ struct_declarator_no_tdid:
 	  }
 	| declarator_no_tdid_opt TOK_COLON constant_expression attribute_specifier_list_opt
 	  {
+	    if (!$1)
+	      @$.begin = @2.begin;
 	    $$ = new struct_declarator(@$, std::move($1), std::move($3),
 				       std::move($4));
 	  }
@@ -962,6 +966,8 @@ struct_declarator_tdid:
 	  }
 	| declarator_tdid_opt TOK_COLON constant_expression attribute_specifier_list_opt
 	  {
+	    if (!$1)
+	      @$.begin = @2.begin;
 	    $$ = new struct_declarator(@$, std::move($1), std::move($3),
 				       std::move($4));
 	  }
@@ -1098,31 +1104,41 @@ direct_abstract_declarator:
 	  }
 	| direct_abstract_declarator_opt TOK_LBRACKET type_qualifier_list assignment_expression_opt TOK_RBRACKET
 	  {
+	    if (!$1)
+	      @$.begin = @2.begin;
 	    $$ = new direct_abstract_declarator_array(@$, std::move($1),
 						      std::move($3),
 						      std::move($4), false);
 	  }
 	| direct_abstract_declarator_opt TOK_LBRACKET assignment_expression_opt TOK_RBRACKET
 	  {
+	    if (!$1)
+	      @$.begin = @2.begin;
 	    $$ = new direct_abstract_declarator_array(@$, std::move($1),
 						      nullptr,
 						      std::move($3), false);
 	  }
 	| direct_abstract_declarator_opt TOK_LBRACKET TOK_KW_STATIC type_qualifier_list_opt assignment_expression TOK_RBRACKET
 	  {
+	    if (!$1)
+	      @$.begin = @2.begin;
 	    $$ = new direct_abstract_declarator_array(@$, std::move($1),
 						      std::move($4),
 						      std::move($5), true);
 	  }
 	| direct_abstract_declarator_opt TOK_LBRACKET type_qualifier_list TOK_KW_STATIC assignment_expression TOK_RBRACKET
 	  {
+	    if (!$1)
+	      @$.begin = @2.begin;
 	    $$ = new direct_abstract_declarator_array(@$, std::move($1),
 						      std::move($3),
 						      std::move($5), true);
 	  }
 	| direct_abstract_declarator_opt TOK_LBRACKET TOK_ASTERISK TOK_RBRACKET
 	  {
-		    $$ = new direct_abstract_declarator_array(@$, std::move($1),
+	    if (!$1)
+	      @$.begin = @2.begin;
+	    $$ = new direct_abstract_declarator_array(@$, std::move($1),
 		       direct_abstract_declarator_array::vla_unspec_size_tag{});
 	  }
 	| direct_abstract_declarator lparen_ign_td_spec parameter_type_list_opt TOK_RPAREN
@@ -1336,7 +1352,11 @@ declarator_tdid_opt:
 
 declarator_tdid:
 	pointer_opt direct_declarator_tdid
-	  { $$ = new declarator(@$, std::move($1), std::move($2)); }
+	  {
+	    if (!$1)
+	      @$.begin = @2.begin;
+	    $$ = new declarator(@$, std::move($1), std::move($2));
+	  }
 ;
 
 direct_declarator_tdid:
@@ -1586,6 +1606,7 @@ declaration_specifiers_not_starting_with_att_ts_no_tdid:
 	  {
 	    if (!$1) {
 	      $$ = new declaration_specifiers(std::move($2));
+	      @$.begin = @2.begin;
 	    } else {
 	      $$ = MV_P($1); $$->extend(std::move($2));
 	    }
@@ -1614,6 +1635,7 @@ declaration_specifiers_not_starting_with_att_ts:
 	      } catch (...) {
 		delete ts_tdid;
 	      }
+	      @$.begin = @2.begin;
 	    } else {
 	      $$ = MV_P($1);
 	      $$->extend(std::move(ts_tdid));
@@ -1739,6 +1761,8 @@ initializer:
 initializer_list:
 	designation_opt initializer
 	  {
+	    if (!$1)
+	      @$.begin = @2.begin;
 	    $2->set_designation(std::move($1));
 	    $$ = new initializer_list(std::move($2));
 	  }
@@ -1857,7 +1881,11 @@ block_item:
 
 expression_statement:
 	expression_opt TOK_SEMICOLON
-	  { $$ = new stmt_expr(@$, std::move($1)); }
+	  {
+	    if (!$1)
+	      @$.begin = @2.begin;
+	    $$ = new stmt_expr(@$, std::move($1));
+	  }
 ;
 
 
@@ -1989,7 +2017,11 @@ asm_operand_list:
 
 asm_operand:
 	asm_operand_name_opt TOK_STRING_LITERAL TOK_LPAREN expression TOK_RPAREN
-	  { $$ = new asm_operand(@$, std::move($1), $2, std::move($4)); }
+	  {
+	    if (!$1)
+	      @$.begin = @2.begin;
+	    $$ = new asm_operand(@$, std::move($1), $2, std::move($4));
+	  }
 ;
 
 asm_operand_name_opt:

@@ -5,4 +5,4 @@
 
 int a[]; /* { dg-warning "array 'a' assumed to have one element" } */
 
-/* cp-out: warning: [^:]*: line 6, columns 3-7: init declarator has incomplete type */
+/* cp-out: warning: [^:]*: line 6, columns 4-7: init declarator has incomplete type */
