@@ -13,6 +13,7 @@ namespace klp
     {
     public:
       pp_except(const code_remark &remark);
+      pp_except(const std::string &msg);
       pp_except(pp_except &&) = default;
 
       virtual ~pp_except() noexcept;
