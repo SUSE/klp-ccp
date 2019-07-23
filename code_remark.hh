@@ -37,6 +37,10 @@ namespace klp
 		  const pp_token_index tok_index);
 
       code_remark(const severity sev, const std::string &msg,
+		  const pp_result &pp_result,
+		  const raw_pp_tokens_range &raw_range);
+
+      code_remark(const severity sev, const std::string &msg,
 		  const pp_result::header_inclusion_node &file,
 		  const range_in_file &range_in_file);
 

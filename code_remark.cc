@@ -11,16 +11,27 @@ using namespace klp::ccp;
 code_remark::code_remark(const severity sev, const std::string &msg,
 			 const pp_result &pp_result,
 			 const pp_tokens_range &range)
+  : code_remark(sev, msg, pp_result, pp_result.pp_tokens_range_to_raw(range))
+{}
+
+code_remark::code_remark(const severity sev, const std::string &msg,
+			 const pp_result &pp_result,
+			 const pp_token_index first,
+			 const pp_token_index last)
+  : code_remark(sev, msg, pp_result, pp_tokens_range{first, last + 1})
+{}
+
+code_remark::code_remark(const severity sev, const std::string &msg,
+			       const pp_result &pp_result,
+			       const pp_token_index tok_index)
+  : code_remark(sev, msg, pp_result, tok_index, tok_index)
+{}
+
+code_remark::code_remark(const severity sev, const std::string &msg,
+			 const pp_result &pp_result,
+			 const raw_pp_tokens_range &raw_range)
   : _msg(msg), _sev(sev)
 {
-  const pp_tokens &tokens = pp_result.get_pp_tokens();
-
-  // Initialize _fr and _fr_end to be used from operator<<().  How to
-  // set them depends on whether the range spans more than one token
-  // and whether these tokens are coming from source multiple files or
-  // not.
-  assert(range.end - range.begin >= 1);
-  const raw_pp_tokens_range raw_range = pp_result.pp_tokens_range_to_raw(range);
   auto is_it = pp_result.intersecting_sources_begin(raw_range);
   const auto is_end
     = pp_result.intersecting_sources_end(raw_range);
@@ -47,19 +58,6 @@ code_remark::code_remark(const severity sev, const std::string &msg,
     _end_loc = last_tok_rif.end;
   }
 }
-
-code_remark::code_remark(const severity sev, const std::string &msg,
-			 const pp_result &pp_result,
-			 const pp_token_index first,
-			 const pp_token_index last)
-  : code_remark(sev, msg, pp_result, pp_tokens_range{first, last + 1})
-{}
-
-code_remark::code_remark(const severity sev, const std::string &msg,
-			       const pp_result &pp_result,
-			       const pp_token_index tok_index)
-  : code_remark(sev, msg, pp_result, tok_index, tok_index)
-{}
 
 code_remark::code_remark(const severity sev, const std::string &msg,
 			 const pp_result::header_inclusion_node &file,
