@@ -54,7 +54,8 @@ noinst_HEADERS =				\
 	target_int.hh				\
 	type_set.hh				\
 	types.hh				\
-	types_impl.hh
+	types_impl.hh				\
+	user_policy_command.hh
 
 noinst_LIBRARIES = libcp.a
 libcp_a_SOURCES =				\
@@ -98,7 +99,8 @@ libcp_a_SOURCES =				\
 	source_writer.cc			\
 	target_float.cc			\
 	target_int.cc				\
-	types.cc
+	types.cc				\
+	user_policy_command.cc
 
 check_PROGRAMS = cpp_tokenize normalize_path dirname cpp cparse \
 	test_mp_arithmetic test_target_int test_target_float
