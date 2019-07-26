@@ -75,7 +75,12 @@ namespace klp
 	{ return !(*this == rhs); }
 
 	bool operator<(const raw_pp_tokens_range &r) const noexcept
-	{ return _directive_range < r; }
+	{
+	  if (!is_predefined())
+	    return _directive_range < r;
+	  else
+	    return true;
+	}
 
 	bool is_func_like() const noexcept
 	{ return _func_like; }
@@ -301,7 +306,12 @@ namespace klp
 		    const predefined_user_tag&);
 
 	bool operator<(const raw_pp_tokens_range &r) const noexcept
-	{ return _directive_range < r; }
+	{
+	  if (!is_predefined())
+	    return _directive_range < r;
+	  else
+	    return true;
+	}
 
 	const std::string& get_name() const noexcept
 	{ return _name; }
@@ -1311,11 +1321,21 @@ namespace klp
 
     static inline bool operator<(const raw_pp_tokens_range &r,
 				 const pp_result::macro &m) noexcept
-    { return r < m.get_directive_range(); }
+    {
+      if (!m.is_predefined())
+       return r < m.get_directive_range();
+      else
+	return false;
+    }
 
     static inline bool operator<(const raw_pp_tokens_range &r,
 				 const pp_result::macro_undef &mu) noexcept
-    { return r < mu.get_directive_range(); }
+    {
+      if (!mu.is_predefined())
+	return r < mu.get_directive_range();
+      else
+	return false;
+    }
 
     static inline bool operator<(const raw_pp_tokens_range &r,
 				 const pp_result::macro_invocation &mi) noexcept
