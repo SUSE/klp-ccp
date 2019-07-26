@@ -394,7 +394,7 @@ _child(std::unique_ptr<conditional_inclusion_node> &&_c) noexcept
 {}
 
 pp_result::inclusion_node::_child::_child(_child &&chld) noexcept
-  : k(chld.k)
+  : k(chld.k), h(nullptr)
 {
   switch(k) {
   case kind::header:
@@ -402,7 +402,8 @@ pp_result::inclusion_node::_child::_child(_child &&chld) noexcept
     break;
 
   case kind::conditional:
-    c = std::move(chld.c);
+    h.~unique_ptr<header_inclusion_child>();
+    new (&c) std::unique_ptr<conditional_inclusion_node>{std::move(chld.c)};
     break;
   }
 }
