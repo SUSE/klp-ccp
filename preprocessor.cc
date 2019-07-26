@@ -805,6 +805,21 @@ void preprocessor::_handle_pp_directive()
       _cond_incl_states.top().branch_active = false;
     }
 
+  } else if (it_tok->get_value() == "else") {
+    if (!_cur_incl_node_is_cond()) {
+      code_remark remark(code_remark::severity::fatal,
+			 "#else without #if",
+			 _raw_tok_it_to_source(it_tok),
+			 it_tok->get_range_in_file());
+      _remarks.add(remark);
+      throw pp_except(remark);
+    }
+
+    if (_cond_incl_nesting > _cond_incl_states.size())
+      return;
+
+    if (_cond_incl_inactive())
+      _enter_cond_incl();
   }
 
   // Look at the other directives only if they're not within a
