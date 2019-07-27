@@ -1,0 +1,9 @@
+void klpp_pu_f(void)
+{
+	
+
+extern char (*klpe_espr_o)[];
+
+
+	(*klpe_espr_o);
+}

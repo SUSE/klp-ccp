@@ -1,0 +1,7 @@
+enum A
+{
+	a,
+};
+
+void klpp_pu_f(enum A)
+{}

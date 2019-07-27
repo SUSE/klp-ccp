@@ -1,0 +1,15 @@
+static
+void
+
+#include "headers-6-1.h"
+
+(void)
+
+#include "headers-6-2.h"
+
+}
+
+void klpp_pu_f(void)
+{
+	g();
+}

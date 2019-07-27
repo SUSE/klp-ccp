@@ -1,0 +1,6 @@
+#define B(a) # a
+
+void klpp_pu_f(void)
+{
+	B(A);
+}

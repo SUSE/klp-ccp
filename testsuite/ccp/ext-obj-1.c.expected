@@ -1,0 +1,6 @@
+int eu_o;
+
+void klpp_pu_f(void)
+{
+	eu_o;
+}

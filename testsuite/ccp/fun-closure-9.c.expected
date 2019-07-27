@@ -1,0 +1,22 @@
+static void* ee_g(void);
+
+void *ee_j(void);
+
+static void *ee_i(void)
+{
+	return &ee_j;
+}
+
+void *ee_h(void);
+
+void *ee_g(void)
+{
+	return &ee_h;
+}
+
+void klpp_pu_f(void)
+{
+	ee_g();
+	ee_i();
+	ee_j();
+}

@@ -1,0 +1,6 @@
+extern int ee_o;
+
+void klpp_pu_f(void)
+{
+	ee_o;
+}

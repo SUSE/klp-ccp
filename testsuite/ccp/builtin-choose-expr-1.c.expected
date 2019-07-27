@@ -1,0 +1,10 @@
+static void g(void)
+{}
+
+static void h(void)
+{}
+
+void klpp_pu_f(void)
+{
+	__builtin_choose_expr(0, g, h)();
+}

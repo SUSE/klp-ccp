@@ -1,0 +1,8 @@
+#define VOID void
+
+static VOID (*klpe_espr_g)(void);
+
+void klpp_pu_f(void)
+{
+	(*klpe_espr_g)();
+}

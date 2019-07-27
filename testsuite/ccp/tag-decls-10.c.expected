@@ -1,0 +1,7 @@
+enum unneeded_container
+{
+	uc0 = sizeof(enum A*),
+};
+
+void klpp_pu_f(enum A*)
+{}

@@ -1,0 +1,7 @@
+struct A
+{
+	int a;
+};
+
+void klpp_pu_f(struct A)
+{}

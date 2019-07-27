@@ -1,0 +1,17 @@
+#define s hello
+
+#define __str(a) #a
+
+#define str(a) __str(a)
+
+static void g(void)
+{
+	str(s);
+}
+
+#undef s
+void klpp_pu_f(void)
+{
+	g();
+	str(s);
+}

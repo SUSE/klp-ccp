@@ -1,0 +1,6 @@
+struct A;
+
+void klpp_pu_f(void)
+{
+	struct A *a;
+}

@@ -1,0 +1,2 @@
+struct A* klpp_pu_f(struct A*)
+{}

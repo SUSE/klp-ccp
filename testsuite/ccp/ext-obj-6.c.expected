@@ -1,0 +1,6 @@
+extern char espr_o[4];
+
+void klpp_pu_f(void)
+{
+	char s[sizeof(espr_o)];
+}

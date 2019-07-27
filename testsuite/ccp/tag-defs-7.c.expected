@@ -1,0 +1,10 @@
+struct A
+{
+	struct B
+	{
+		int b;
+	} *a_b;
+};
+
+static void klpp_ps_f(struct B)
+{}

@@ -1,0 +1,20 @@
+#define klpp_pu_f hello
+
+#define __str(a) #a
+
+#define str(a) __str(a)
+
+static void g(void)
+{
+	str(klpp_pu_f);
+}
+
+#undef klpp_pu_f
+void klpp_pu_f(void)
+{
+	g();
+	
+#define klpp_pu_f hello
+
+str(klpp_pu_f);
+}

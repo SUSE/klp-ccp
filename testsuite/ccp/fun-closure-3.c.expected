@@ -1,0 +1,8 @@
+void ee_g(void);
+
+void ee_g(void);
+
+void klpp_pu_f(void)
+{
+	ee_g();
+}

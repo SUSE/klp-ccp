@@ -1,0 +1,10 @@
+struct A
+{
+	enum B
+	{
+		b_b,
+	} *a_b;
+};
+
+static void klpp_ps_f(enum B)
+{}

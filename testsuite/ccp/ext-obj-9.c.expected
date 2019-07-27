@@ -1,0 +1,6 @@
+int a;
+
+static void klpp_ps_f(void)
+{
+	a;
+}

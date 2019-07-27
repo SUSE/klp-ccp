@@ -1,0 +1,8 @@
+static void ee_g(void);
+
+#include "fun-closure-4.h"
+
+void klpp_pu_f(void)
+{
+	ee_g();
+}

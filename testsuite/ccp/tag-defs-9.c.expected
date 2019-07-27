@@ -1,0 +1,4 @@
+typedef struct A td_a;
+
+static void klpp_ps_f(td_a *)
+{}

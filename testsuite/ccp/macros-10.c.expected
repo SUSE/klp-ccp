@@ -1,0 +1,10 @@
+static void g(void);
+
+#define A "macros-10.h"
+
+#include A
+
+void klpp_pu_f(void)
+{
+	g();
+}

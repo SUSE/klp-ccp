@@ -1,0 +1,10 @@
+#define G g
+
+static void G(void);
+
+#include "macros-18.h"
+
+void klpp_pu_f(void)
+{
+	g();
+}

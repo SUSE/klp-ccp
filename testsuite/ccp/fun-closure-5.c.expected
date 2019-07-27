@@ -1,0 +1,6 @@
+void ee_g(void);
+
+void* klpp_pu_f(void)
+{
+	return &ee_g;
+}

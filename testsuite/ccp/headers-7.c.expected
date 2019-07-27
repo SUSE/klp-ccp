@@ -1,0 +1,8 @@
+void h(void);
+
+#include "headers-7.h"
+
+void klpp_pu_f(void)
+{
+	g();
+}

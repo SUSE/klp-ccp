@@ -1,0 +1,13 @@
+#define G g
+
+static void G(void)
+{}
+
+#undef G
+#include "macros-15.h"
+
+void klpp_pu_f(void)
+{
+	g();
+	G();
+}

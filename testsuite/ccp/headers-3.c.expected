@@ -1,0 +1,7 @@
+static void g(void)
+{}
+
+void klpp_pu_f(void)
+{
+	g();
+}

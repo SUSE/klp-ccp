@@ -1,0 +1,13 @@
+#define G g
+
+static void G(void);
+
+#define FOO()
+
+#undef G
+#include "macros-20.h"
+
+void klpp_pu_f(void)
+{
+	G();
+}

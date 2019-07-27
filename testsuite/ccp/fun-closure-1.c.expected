@@ -1,0 +1,11 @@
+void klpp_pu_f(void);
+
+void klpp_pu_g(void)
+{
+	klpp_pu_f();
+}
+
+void klpp_pu_f(void)
+{
+	klpp_pu_g();
+}
