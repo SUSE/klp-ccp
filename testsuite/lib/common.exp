@@ -1,0 +1,36 @@
+# Extract the expected output from special comments prefixed with
+# "cp-out" within the source code file.
+# A line spanning comment containing only "cp-xfail" marks the test
+# as expected to fail.
+proc get_expected_result {filename} {
+    set fp [open "$filename"]
+
+    set expected_msgs [list]
+    set is_xfailer 0
+    while {[gets $fp line] >= 0} {
+	if {[regexp {(?:\s*/\*)(?:\s*)(?:cp-out:\s*)(.+[^\s])(?:\s*\*/)(?:\s*)} $line -> m]} {
+	    lappend expected_msgs "$m"
+	} elseif {[regexp {(?:\s*/\*)(?:\s*)(?:cp-xfail)(?:\s*\*/)(?:\s*)} $line]} {
+	    set is_xfailer 1
+	}
+    }
+
+    close $fp
+    return [list $expected_msgs $is_xfailer]
+}
+
+proc do_fail {is_xfailer msg} {
+    if $is_xfailer {
+	xfail "$msg"
+    } else {
+	fail "$msg"
+    }
+}
+
+proc do_pass {is_xfailer msg} {
+    if $is_xfailer {
+	xpass "$msg"
+    } else {
+	pass "$msg"
+    }
+}
