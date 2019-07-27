@@ -1,0 +1,91 @@
+source "$srcdir/lib/common.exp"
+
+proc run_ccp {test} {
+    global objdir
+    global srcdir
+    global subdir
+
+    set expected_result [get_expected_result "$test"]
+    set expected_msgs [lindex $expected_result 0]
+    set is_xfailer [lindex $expected_result 1]
+
+    set cmd "$objdir/../klp-ccp"
+    set outfile_base "$objdir/$subdir/[file tail $test]"
+    set result_file "$outfile_base.result"
+    set pol_dir "$srcdir/lib/ccp-toy-policy"
+    if {[catch {spawn "$cmd" -c "x86_64-gcc-4.8.1" \
+		    -o "$result_file" \
+		    -I "$pol_dir/toy_pol_is_patched.sh" \
+		    -H "$pol_dir/toy_pol_may_include_header.sh" \
+		    -F "$pol_dir/toy_pol_can_externalize_fun.sh" \
+		    -S "$pol_dir/toy_pol_shall_externalize_fun.sh" \
+		    -O "$pol_dir/toy_pol_shall_externalize_obj.sh" \
+		    -E "$pol_dir/toy_pol_modify_externalized_sym.sh" \
+		    -P "$pol_dir/toy_pol_modify_patched_fun_sym.sh" \
+		    -R "$pol_dir/toy_pol_rename_rewritten_fun.sh" \
+		    -- "$test"}]} {
+	error "$test: failed to spawn $cmd"
+    }
+
+    set should_fail 0
+    set timeout 120
+    match_max 8192
+    foreach msg $expected_msgs {
+	if {[regexp {^error:} "$msg"]} {
+	    set should_fail 1
+	}
+	expect {
+	    timeout		{do_fail $is_xfailer "$test: timeout"}
+	    -re {^(\n|\r)+}	{exp_continue}
+	    -re "^$msg"	{}
+	    full_buffer	{do_fail $is_xfailer "$test: expect buffer full"}
+	    eof		{
+		if {[string length "$expect_out(buffer)"]} {
+		    do_fail $is_xfailer "$test: unexpected output: \"$expect_out(buffer)\""
+		    return
+		} else {
+		    do_fail $is_xfailer "$test: unexpected EOF, expected: \"$msg\""
+		    return
+		}
+	    }
+	}
+    }
+    expect {
+	-re {^(\n|\r)+}	{exp_continue}
+	full_buffer		{do_fail $is_xfailer "$test: expect buffer full"}
+	eof			{
+	    if {[string length "$expect_out(buffer)"]} {
+		do_fail $is_xfailer "$test: unexpected output: \"$expect_out(buffer)\""
+		return
+	    }
+	}
+    }
+
+    lassign [wait] p spawnid os_error_flag value
+    if {$os_error_flag} {
+	error "$test: failed to wait for $cmd: errno=$value"
+    }
+
+    if { $should_fail && $value } {
+	do_pass $is_xfailer "$test"
+    } elseif { !$should_fail && $value } {
+	do_fail $is_xfailer "$test"
+    }
+
+    # Compare the normalized tokenization with the expected result.
+    set tokenized_result "$result_file.tokenized"
+    set tok_cmd "$objdir/../cpp_tokenize"
+    exec "$tok_cmd" "$result_file" > "$tokenized_result"
+    set tokenized_expected "$outfile_base.expected.tokenized"
+    exec "$tok_cmd" "$test.expected" > "$tokenized_expected"
+
+    set toks_norm_sed_script "/^\}\{newline:/ d; s/^\}\{ws:\[\[:blank:\]\]//"
+    exec sed -i "$toks_norm_sed_script" "$tokenized_result"
+    exec sed -i "$toks_norm_sed_script" "$tokenized_expected"
+
+    if {[catch {exec diff "$tokenized_expected" "$tokenized_result"}]} {
+	do_fail $is_xfailer "$test: result doesn't match expectations"
+    } else {
+	do_pass $is_xfailer "test"
+    }
+}

@@ -20,11 +20,13 @@ AC_CONFIG_FILES([Makefile
 		 arch/Makefile
 		 testsuite/Makefile
 		 testsuite/lib/Makefile
+		 testsuite/lib/ccp-toy-policy/Makefile
 		 testsuite/cpp/Makefile
 		 testsuite/cparse/Makefile
 		 testsuite/cparse/gcc.dg/Makefile
 		 testsuite/cparse/gcc.c-torture/Makefile
 		 testsuite/cparse/gcc.c-torture/compile/Makefile
 		 testsuite/cparse/gcc.c-torture/execute/Makefile
-		 testsuite/unit/Makefile])
+		 testsuite/unit/Makefile
+		 testsuite/ccp/Makefile])
 AC_OUTPUT
