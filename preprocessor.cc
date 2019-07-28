@@ -1063,29 +1063,35 @@ preprocessor::_expand(_expansion_state &state,
       } while (tok.is_ws() || tok.is_newline() || tok.is_empty());
       assert(state.pending_tokens.empty());
 
-      // No opening parenthesis?
-      if (!tok.is_punctuator("(")) {
-	code_remark remark(code_remark::severity::fatal,
-			   "operator \"defined\" without arguments",
-			   _pp_token_to_source(tok),
-			   _pp_token_to_range_in_file(tok));
-	_remarks.add(remark);
-	throw pp_except(remark);
-      }
+      std::tuple<_pp_tokens, _pp_tokens, _pp_token> arg =
+	[&]() {
+	  if (tok.is_punctuator("(")) {
+	    std::tuple<_pp_tokens, _pp_tokens, _pp_token> arg =
+	      _create_macro_arg(read_tok, false, false);
+	    const char arg_delim = std::get<2>(arg).get_value()[0];
+	    if (arg_delim == ',') {
+	      code_remark remark(code_remark::severity::fatal,
+				 "too many arguments to \"defined\" operator",
+				 _pp_token_to_source(std::get<2>(arg)),
+				 _pp_token_to_range_in_file(std::get<2>(arg)));
+	      _remarks.add(remark);
+	      throw pp_except(remark);
+	    }
+	    assert(arg_delim == ')');
+	    return arg;
 
-      std::tuple<_pp_tokens, _pp_tokens, _pp_token> arg
-	= _create_macro_arg(read_tok, false, false);
-      const _pp_token delim_tok = std::get<2>(arg);
-      const char arg_delim = delim_tok.get_value()[0];
-      if (arg_delim == ',') {
-	code_remark remark(code_remark::severity::fatal,
-			   "too many arguments to \"defined\" operator",
-			   _pp_token_to_source(std::get<2>(arg)),
-			   _pp_token_to_range_in_file(std::get<2>(arg)));
-	_remarks.add(remark);
-	throw pp_except(remark);
-      }
-      assert(arg_delim == ')');
+	  } else {
+	    // 'defined FOO' form of the defined operator
+	    _pp_token delim_tok = tok;
+	    _pp_tokens arg;
+
+	    if (!tok.is_eof())
+	      arg.emplace_back(std::move(tok));
+
+	    return (std::tuple<_pp_tokens, _pp_tokens, _pp_token>
+		    { std::move(arg), _pp_tokens{}, std::move(delim_tok)});
+	  }
+	}();
 
       if (std::get<0>(arg).size() != 1 ||
 	  std::get<0>(arg)[0].get_type() != pp_token::type::id) {
@@ -1097,6 +1103,7 @@ preprocessor::_expand(_expansion_state &state,
 	throw pp_except(remark);
       }
 
+      const _pp_token &delim_tok = std::get<2>(arg);
       pp_result::macro_invocation *mi = defined_tok.get_macro_invocation();
       if (mi) {
 	// Extend the macro expansion the "defined" token came from,
