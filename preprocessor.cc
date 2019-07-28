@@ -818,8 +818,11 @@ void preprocessor::_handle_pp_directive()
     if (_cond_incl_nesting > _cond_incl_states.size())
       return;
 
-    if (_cond_incl_inactive())
+    if (!_cond_incl_states.top().incl_node) {
       _enter_cond_incl();
+    } else {
+      _cond_incl_states.top().branch_active = false;
+    }
   }
 
   // Look at the other directives only if they're not within a
