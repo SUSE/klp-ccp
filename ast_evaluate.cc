@@ -6227,23 +6227,33 @@ void expr_statement::evaluate_type(ast&, const architecture&)
   }
 
   // And get its type, if any.
-  if (!(bis->get_stmt().process<bool, type_set<stmt_expr>>
-	(wrap_callables<default_action_return_value<bool, false>::type>
-	 ([this](const stmt_expr &se) {
-	    const expr * const e = se.get_expr();
-	    if (!e)
-	      return false;
-	    _set_type(e->get_type());
-	    if (e->is_constexpr()) {
-	      auto cv = e->get_constexpr_value().clone();
-	      cv->drop_constness();
-	      _set_value(std::move(cv));
-	    }
-	    _convert_type_for_expr_context();
-	    return true;
-	  })))) {
+  const stmt *s = &bis->get_stmt();
+  bool is_stmt_labeled;
+  do {
+    is_stmt_labeled =
+      (s->process<bool, type_set<stmt_expr, stmt_labeled>>
+       (wrap_callables<default_action_return_value<bool, false>::type>
+	([&](const stmt_labeled &sl) {
+	   s = &sl.get_stmt();
+	   return true;
+	 },
+	 [this](const stmt_expr &se) {
+	   const expr * const e = se.get_expr();
+	   if (!e)
+	     return false;
+	   _set_type(e->get_type());
+	   if (e->is_constexpr()) {
+	     auto cv = e->get_constexpr_value().clone();
+	     cv->drop_constness();
+	     _set_value(std::move(cv));
+	   }
+	   _convert_type_for_expr_context();
+	   return false;
+	 })));
+  } while (is_stmt_labeled);
+
+  if (!this->is_evaluated())
     _set_type(void_type::create());
-  }
 }
 
 

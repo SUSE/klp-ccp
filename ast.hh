@@ -3757,6 +3757,9 @@ namespace klp
 	pp_token_index get_label_tok() const noexcept
 	{ return _label_tok; }
 
+	const stmt& get_stmt() const noexcept
+	{ return _s; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
