@@ -883,7 +883,7 @@ void preprocessor::_handle_pp_directive()
       throw pp_except(remark);
     }
 
-    _pp_result->_add_macro_undef(it_tok->get_value(),
+    _pp_result->_add_macro_undef(it_tok_id->get_value(),
 				 raw_pp_tokens_range{raw_begin, raw_end});
 
     auto it_m = _macros.find(it_tok_id->get_value());
