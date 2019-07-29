@@ -2016,11 +2016,11 @@ asm_operand_list:
 ;
 
 asm_operand:
-	asm_operand_name_opt TOK_STRING_LITERAL TOK_LPAREN expression TOK_RPAREN
+	asm_operand_name_opt string_literal TOK_LPAREN expression TOK_RPAREN
 	  {
 	    if (!$1)
 	      @$.begin = @2.begin;
-	    $$ = new asm_operand(@$, std::move($1), $2, std::move($4));
+	    $$ = new asm_operand(@$, std::move($1), std::move($2), std::move($4));
 	  }
 ;
 

@@ -1278,7 +1278,8 @@ namespace klp
       public:
 	typedef type_set<expr_string_literal,
 			 asm_directive,
-			 asm_label> parent_types;
+			 asm_label,
+			 asm_operand> parent_types;
 
 	string_literal(const pp_token_index s);
 
@@ -4331,7 +4332,7 @@ namespace klp
 	typedef type_set<asm_operand_list> parent_types;
 
 	asm_operand(const pp_tokens_range &tr, asm_operand_name* &&aon,
-		    const pp_token_index constraint_tok, expr* &&e) noexcept;
+		    string_literal* &&constaint, expr* &&e) noexcept;
 
 	virtual ~asm_operand() noexcept override;
 
@@ -4347,7 +4348,7 @@ namespace klp
 	virtual bool _process(const_processor<bool> &p) const override;
 
 	asm_operand_name *_aon;
-	pp_token_index _constraint_tok;
+	string_literal &_constraint;
 	expr &_e;
       };
 

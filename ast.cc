@@ -7227,19 +7227,21 @@ bool asm_operand_name::_process(const_processor<bool> &p) const
 
 
 asm_operand::asm_operand(const pp_tokens_range &tr, asm_operand_name* &&aon,
-			 const pp_token_index constraint_tok, expr* &&e)
+			 string_literal* &&constaint, expr* &&e)
   noexcept
   : ast_entity(tr), _aon(mv_p(std::move(aon))),
-    _constraint_tok(constraint_tok), _e(*mv_p(std::move(e)))
+    _constraint(*mv_p(std::move(constaint))), _e(*mv_p(std::move(e)))
 {
   if (_aon)
     _aon->_set_parent(*this);
+  _constraint._set_parent(*this);
   _e._set_parent(*this);
 }
 
 asm_operand::~asm_operand() noexcept
 {
   delete _aon;
+  delete &_constraint;
   delete &_e;
 }
 
@@ -7249,9 +7251,17 @@ _ast_entity* asm_operand::_get_child(const size_t i) const noexcept
     if (_aon)
       return _aon;
     else
+      return &_constraint;
+  } else if (i == 1) {
+    if (_aon)
+      return &_constraint;
+    else
       return &_e;
-  } else if (i == 1 && _aon) {
-    return &_e;
+  } else if (i == 2) {
+    if (_aon)
+      return &_e;
+    else
+      return nullptr;
   }
 
   return nullptr;
