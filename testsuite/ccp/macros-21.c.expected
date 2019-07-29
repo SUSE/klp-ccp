@@ -1,0 +1,12 @@
+#define FOO int
+
+static FOO g(void);
+
+#include "macros-21.h"
+
+#define FOO void
+
+FOO klpp_pu_f(void)
+{
+	g();
+}

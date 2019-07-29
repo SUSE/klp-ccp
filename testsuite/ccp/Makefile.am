@@ -119,6 +119,14 @@ EXTRA_DIST = ccp.exp						\
 	testsuite/ccp/macros-20.c				\
 	testsuite/ccp/macros-20.h				\
 	testsuite/ccp/macros-20.c.expected			\
+	testsuite/ccp/macros-21.c				\
+	testsuite/ccp/macros-21.h				\
+	testsuite/ccp/macros-21.c.expected			\
+	testsuite/ccp/macros-22.c				\
+	testsuite/ccp/macros-22.c.expected			\
+	testsuite/ccp/macros-23.c				\
+	testsuite/ccp/macros-23.h				\
+	testsuite/ccp/macros-23.c.expected			\
 	testsuite/ccp/simple.c					\
 	testsuite/ccp/simple.c.expected			\
 	testsuite/ccp/tag-decls-1.c				\
