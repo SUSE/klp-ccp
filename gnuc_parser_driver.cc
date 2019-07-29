@@ -32,6 +32,7 @@ static const _val_tok_map_entry kw_map_entries[] = {
   { "float", gnuc_parser::token_type::TOK_KW_FLOAT },
   { "double", gnuc_parser::token_type::TOK_KW_DOUBLE },
   { "signed", gnuc_parser::token_type::TOK_KW_SIGNED },
+  { "__signed__", gnuc_parser::token_type::TOK_KW_SIGNED },
   { "unsigned", gnuc_parser::token_type::TOK_KW_UNSIGNED },
   { "_Bool", gnuc_parser::token_type::TOK_KW_BOOL },
   { "_Complex", gnuc_parser::token_type::TOK_KW_COMPLEX },
