@@ -4071,17 +4071,17 @@ void expr_binop::_evaluate_bin_binop(const types::int_type &it_left,
     assert(cv_right.get_value_kind() ==
 	   constexpr_value::value_kind::vk_int);
     const target_int i_left = cv_left.convert_to(arch, *it_result);
-    const target_int i_right = cv_left.convert_to(arch, *it_result);
+    const target_int i_right = cv_right.convert_to(arch, *it_result);
 
     target_int i_result;
     switch (_op) {
     case binary_op::mod:
       if (!i_right) {
-	code_remark remark(code_remark::severity::fatal,
+	code_remark remark(code_remark::severity::warning,
 			   "division by zero",
 			   a.get_pp_result(), get_tokens_range());
 	a.get_remarks().add(remark);
-	throw semantic_except(remark);
+	return;
       }
 
       i_result = i_left % i_right;

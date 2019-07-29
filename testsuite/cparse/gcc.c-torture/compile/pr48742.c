@@ -15,3 +15,4 @@ bar (void)
 }
 
 /* cp-out: warning: [^:]*: line 8, columns 9-14: division by zero */
+/* cp-out: warning: [^:]*: line 14, columns 12-37: division by zero */

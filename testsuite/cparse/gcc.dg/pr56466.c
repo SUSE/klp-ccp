@@ -29,3 +29,5 @@ f (void)
   a = 0;
   goto lbl2;
 }
+
+/* cp-out: warning: [^:]*: line 14, columns 7-12: division by zero */
