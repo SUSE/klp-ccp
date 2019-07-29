@@ -2044,10 +2044,10 @@ asm_clobber_list_opt:
 ;
 
 asm_clobber_list:
-	TOK_STRING_LITERAL
-	  { $$ = new asm_clobber_list($1); }
-	| asm_clobber_list TOK_COMMA TOK_STRING_LITERAL
-	  { $$ = MV_P($1); $$->extend($3); }
+	string_literal
+	  { $$ = new asm_clobber_list(std::move($1)); }
+	| asm_clobber_list TOK_COMMA string_literal
+	  { $$ = MV_P($1); $$->extend(std::move($3)); }
 ;
 
 asm_jump_to_label_list_opt:

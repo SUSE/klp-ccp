@@ -1279,7 +1279,8 @@ namespace klp
 	typedef type_set<expr_string_literal,
 			 asm_directive,
 			 asm_label,
-			 asm_operand> parent_types;
+			 asm_operand,
+			 asm_clobber_list> parent_types;
 
 	string_literal(const pp_token_index s);
 
@@ -4380,21 +4381,21 @@ namespace klp
       public:
 	typedef type_set<asm_directive> parent_types;
 
-	asm_clobber_list(const pp_token_index clobber_tok);
+	asm_clobber_list(string_literal* &&clobber);
 
 	virtual ~asm_clobber_list() noexcept override;
 
-	void extend(const pp_token_index clobber_tok);
+	void extend(string_literal* && clobber);
 
       private:
-	virtual _ast_entity* _get_child(const size_t) const noexcept override;
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
 	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
 	virtual bool _process(const_processor<bool> &p) const override;
 
-	std::vector<pp_token_index> _clobber_toks;
+	std::vector<std::reference_wrapper<string_literal> > _clobbers;
       };
 
       class asm_jump_to_label_list final

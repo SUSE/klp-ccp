@@ -7349,22 +7349,44 @@ bool asm_operand_list::_process(const_processor<bool> &p) const
 }
 
 
-asm_clobber_list::asm_clobber_list(const pp_token_index clobber_tok)
-  : ast_entity(pp_tokens_range{clobber_tok, clobber_tok + 1}),
-    _clobber_toks(1, clobber_tok)
-{}
-
-asm_clobber_list::~asm_clobber_list() noexcept = default;
-
-void asm_clobber_list::extend(const pp_token_index clobber_tok)
+asm_clobber_list::asm_clobber_list(string_literal* &&clobber)
+  : ast_entity(clobber->get_tokens_range())
 {
-  _clobber_toks.push_back(clobber_tok);
-  _extend_tokens_range(pp_tokens_range{clobber_tok, clobber_tok + 1});
+  auto _c = std::ref(*mv_p(std::move(clobber)));
+  try {
+    _clobbers.push_back(_c);
+  } catch (...) {
+    delete &_c.get();
+    throw;
+  }
+  _c.get()._set_parent(*this);
 }
 
-_ast_entity* asm_clobber_list::_get_child(const size_t) const noexcept
+asm_clobber_list::~asm_clobber_list() noexcept
 {
-  return nullptr;
+  for (auto &c : _clobbers)
+    delete &c.get();
+}
+
+void asm_clobber_list::extend(string_literal* && clobber)
+{
+  auto _c = std::ref(*mv_p(std::move(clobber)));
+  try {
+    _clobbers.push_back(_c);
+  } catch (...) {
+    delete &_c.get();
+    throw;
+  }
+  _extend_tokens_range(_c.get().get_tokens_range());
+  _c.get()._set_parent(*this);
+}
+
+_ast_entity* asm_clobber_list::_get_child(const size_t i) const noexcept
+{
+  if (i >= _clobbers.size())
+    return nullptr;
+
+  return &_clobbers[i].get();
 }
 
 void asm_clobber_list::_process(processor<void> &p)
