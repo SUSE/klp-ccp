@@ -983,10 +983,23 @@ pp_result::pp_tokens_range_to_raw(const pp_tokens_range &r) const noexcept
 		_pp_tokens[r.end - 1].get_token_source().end
 	   };
   } else if (r.end && r.end != _pp_tokens.size()) {
-    return raw_pp_tokens_range {
+    const raw_pp_tokens_range &before =
+      _pp_tokens[r.end - 1].get_token_source();
+    const raw_pp_tokens_range &after =
+      _pp_tokens[r.end].get_token_source();
+    if (before.begin != after.begin) {
+      return raw_pp_tokens_range {
 		_pp_tokens[r.end - 1].get_token_source().end,
 		_pp_tokens[r.end].get_token_source().begin
-	   };
+	     };
+    } else {
+      // Both, the token before the position as well as the one
+      // after it orginate from the same macro invocation.
+      return raw_pp_tokens_range {
+		before.begin,
+		after.end
+	     };
+    }
   } else if (r.end) {
     assert(r.end == _pp_tokens.size() && !_pp_tokens.empty());
     return raw_pp_tokens_range {
