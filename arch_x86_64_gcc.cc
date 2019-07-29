@@ -1106,7 +1106,8 @@ void record_layout_info::finish_record_layout(struct_or_union_content &sc)
   const mpa::limbs type_size = unpadded_size.align(_record_align_ffs - 1);
   assert(!type_size.is_any_set_below(3));
 
-  sc.set_alignment(_record_align_ffs - 1);
+  assert(_record_align_ffs >= 4);
+  sc.set_alignment(_record_align_ffs - 3 - 1);
   if (_is_size_constant) {
     sc.set_size(type_size.rshift(3, false));
     sc.set_size_constant(true);
