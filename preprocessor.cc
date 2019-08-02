@@ -554,6 +554,10 @@ void preprocessor::_fixup_inclusion_node_ranges() noexcept
 {
   // Fixup the all pending inclusion nodes' range information such
   // that those intersecting a given query range can be found.
+  if (_cur_header_inclusion_root ==
+      _pp_result->get_header_inclusion_roots().end()) {
+    return;
+  }
   const raw_pp_token_index cur_raw_end = _pp_result->_raw_tokens.size();
   for (auto it_root = _cur_header_inclusion_root + 1;
        it_root != _pp_result->get_header_inclusion_roots().end();
