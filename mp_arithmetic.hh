@@ -106,7 +106,7 @@ namespace klp
 	{ return _low; }
 
 	bool add(const limb &op) noexcept;
-	limb div(const limb divisor) noexcept;
+	limb div(const limb divisor);
 
       private:
 	limb _high;

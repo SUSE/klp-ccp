@@ -110,7 +110,7 @@ bool double_limb::add(const limb &op) noexcept
   return _high.add(carry);
 }
 
-limb double_limb::div(const limb divisor) noexcept
+limb double_limb::div(const limb divisor)
 {
   if (!divisor)
     throw std::invalid_argument("division by zero");
