@@ -319,10 +319,22 @@ void gnuc_parser_driver::error(const gnuc_parser::location_type& loc,
 
   const pp_token &tok = _pp.get_result().get_pp_tokens()[loc.begin];
   const raw_pp_token_index tok_index = tok.get_token_source().begin;
-  const raw_pp_token &raw_tok = _pp.get_result().get_raw_tokens()[tok_index];
+  const raw_pp_tokens &raw_toks = _pp.get_result().get_raw_tokens();
+  range_in_file rif;
+  if (!tok.is_eof()) {
+    assert(tok_index < raw_toks.size());
+    const raw_pp_token &raw_tok = raw_toks[tok_index];
+    rif = raw_tok.get_range_in_file();
+  } else if (tok_index) {
+    const raw_pp_token &raw_last_tok = raw_toks[tok_index - 1];
+    rif = raw_last_tok.get_range_in_file();
+    rif.begin = rif.end;
+  } else {
+    rif = range_in_file{0};
+  }
   code_remark remark(code_remark::severity::fatal, msg,
 		     _pp.get_pending_token_source(tok_index),
-		     raw_tok.get_range_in_file());
+		     rif);
   _remarks.add(remark);
   throw parse_except(remark);
 }
