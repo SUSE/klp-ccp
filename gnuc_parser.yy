@@ -446,8 +446,12 @@ static void empty(klp::ccp::pp_tokens_range &loc)
 
 start:
 	/* empty */
+	  { pd.leave_td_scope(); }
 	| translation_unit
-	  { pd._result = MV_P($1); }
+	  {
+	    pd.leave_td_scope();
+	    pd._result = MV_P($1);
+	  }
 ;
 
 translation_unit:

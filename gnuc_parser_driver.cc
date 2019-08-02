@@ -216,7 +216,6 @@ gnuc_parser_driver::lex(gnuc_parser::semantic_type *value,
 
   const pp_token &tok = tokens.back();
   if (tok.is_eof()) {
-    leave_td_scope();
     return static_cast<gnuc_parser::token_type>(0);
   }
 
