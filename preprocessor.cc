@@ -2571,6 +2571,11 @@ const pp_result::header_inclusion_node&
 preprocessor::get_pending_token_source(const raw_pp_token_index tok)
 {
   _fixup_inclusion_node_ranges();
+  if (tok == _pp_result->get_raw_tokens().size()) {
+    // Virtual EOF token.
+    assert(!_pp_result->get_header_inclusion_roots().empty());
+    return *(_pp_result->get_header_inclusion_roots().end() - 1);
+  }
   return _pp_result->get_raw_token_source(tok);
 }
 
