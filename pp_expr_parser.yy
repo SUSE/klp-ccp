@@ -1,10 +1,10 @@
 %language "C++"
 %skeleton "lalr1.cc"
 %defines
-%define namespace "klp::ccp::yy"
-%define parser_class_name "pp_expr_parser"
+%define api.namespace {klp::ccp::yy}
+%define parser_class_name {pp_expr_parser}
 %name-prefix "pd."
-%define api.location.type pp_tokens_range
+%define api.location.type {pp_tokens_range}
 %locations
 
 %code requires {

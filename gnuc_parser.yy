@@ -1,10 +1,10 @@
 %language "C++"
 %skeleton "lalr1.cc"
 %defines
-%define namespace "klp::ccp::yy"
-%define parser_class_name "gnuc_parser"
+%define api.namespace {klp::ccp::yy}
+%define parser_class_name {gnuc_parser}
 %name-prefix "pd."
-%define api.location.type pp_tokens_range
+%define api.location.type {pp_tokens_range}
 %locations
 
 %code requires {
@@ -1920,9 +1920,10 @@ iteration_statement:
 	     * Ugly hack: recheck whether the lookahead token is
 	     * a typedef identifier.
 	     */
-	    if (yychar == token::TOK_IDENTIFIER) {
-		if (pd.is_typedef_id(pd._pp.get_result().get_pp_tokens()[yylval.token_index].get_value()))
-			yychar = token::TOK_TYPEDEF_IDENTIFIER;
+	    if (yyla.type == by_type(token::TOK_IDENTIFIER).type) {
+	      if (pd.is_typedef_id(pd._pp.get_result().get_pp_tokens()[yyla.value.token_index].get_value())) {
+		yyla.type = by_type(token::TOK_TYPEDEF_IDENTIFIER).type;
+	      }
 	    }
 	    $$ = new stmt_for_init_decl(@$, std::move($3), std::move($4),
 					std::move($6), std::move($8));
