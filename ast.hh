@@ -1000,6 +1000,12 @@ namespace klp
 
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
+	const expr& get_base() const noexcept
+	{ return _base; }
+
+	const expr& get_index() const noexcept
+	{ return _index; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
