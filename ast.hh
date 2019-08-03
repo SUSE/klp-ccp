@@ -4619,6 +4619,14 @@ namespace klp
 	void for_each_dfs_pre_and_po(callables_wrapper_type_pre &&c_pre,
 				     callables_wrapper_type_post &&c_post);
 
+	template <typename handled_types_pre,
+		  typename handled_types_post,
+		  typename callables_wrapper_type_pre,
+		  typename callables_wrapper_type_post>
+	void for_each_dfs_pre_and_po(callables_wrapper_type_pre &&c_pre,
+				     callables_wrapper_type_post &&c_post)
+	  const;
+
 	void resolve();
 
 	void evaluate(const architecture &arch);

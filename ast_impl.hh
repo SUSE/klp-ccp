@@ -569,6 +569,25 @@ namespace klp
 	   std::forward<callables_wrapper_type_post>(c_post));
       }
 
+      template <typename handled_types_pre,
+		typename handled_types_post,
+		typename callables_wrapper_type_pre,
+		typename callables_wrapper_type_post>
+      void ast_translation_unit::
+      for_each_dfs_pre_and_po(callables_wrapper_type_pre &&c_pre,
+			      callables_wrapper_type_post &&c_post)
+	const
+      {
+	if (!_tu)
+	  return;
+
+	const_cast<const translation_unit&>(*_tu)
+	  .for_each_dfs_pre_and_po<handled_types_pre,
+				   handled_types_post>
+	  (std::forward<callables_wrapper_type_pre>(c_pre),
+	   std::forward<callables_wrapper_type_post>(c_post));
+      }
+
       template <typename callable_type>
       bool attribute_list::for_each_attribute(callable_type &&c)
       {
