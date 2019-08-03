@@ -20,6 +20,7 @@ noinst_HEADERS =				\
 	code_remark.hh				\
 	code_remarks.hh			\
 	constexpr_value.hh			\
+	create_lp.hh				\
 	depreprocessor.hh			\
 	execution_charset_encoder.hh		\
 	execution_charset_encoder_iconv.hh	\
@@ -65,6 +66,7 @@ libcp_a_SOURCES =				\
 	code_remark.cc				\
 	code_remarks.cc			\
 	constexpr_value.cc			\
+	create_lp.cc				\
 	depreprocessor.cc			\
 	execution_charset_encoder.cc		\
 	execution_charset_encoder_iconv.cc	\
