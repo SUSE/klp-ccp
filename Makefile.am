@@ -17,13 +17,14 @@ noinst_HEADERS =				\
 	ast_processor_impl.hh			\
 	builtins.hh				\
 	callables_wrapper.hh			\
-	code_remark.hh			\
+	code_remark.hh				\
 	code_remarks.hh			\
 	constexpr_value.hh			\
 	execution_charset_encoder.hh		\
 	execution_charset_encoder_iconv.hh	\
 	gnuc_parser_driver.hh			\
 	header_resolver.hh			\
+	lp_except.hh				\
 	mp_arithmetic.hh			\
 	offset_to_line_col_map.hh		\
 	output_remark.hh			\
@@ -67,6 +68,7 @@ libcp_a_SOURCES =				\
 	gnuc_parser.yy				\
 	gnuc_parser_driver.cc			\
 	header_resolver.cc			\
+	lp_except.cc				\
 	mp_arithmetic.cc			\
 	offset_to_line_col_map.cc		\
 	output_remark.cc			\
