@@ -650,6 +650,16 @@ pp_result::get_raw_token_source(const raw_pp_token_index tok_index) const
   return *it;
 }
 
+const raw_pp_tokens_range
+pp_result::pp_tokens_range_to_raw(const pp_tokens_range &r) const noexcept
+{
+  return raw_pp_tokens_range {
+		_pp_tokens[r.begin].get_token_source().begin,
+		_pp_tokens[r.end - 1].get_token_source().end,
+	 };
+}
+
+
 void pp_result::_append_token(const raw_pp_token &tok)
 {
   _raw_tokens.push_back(tok);

@@ -20,11 +20,7 @@ code_remark::code_remark(const severity sev, const std::string &msg,
   // and whether these tokens are coming from source multiple files or
   // not.
   assert(range.end - range.begin >= 1);
-  const raw_pp_tokens_range raw_range {
-	tokens[range.begin].get_token_source().begin,
-	tokens[range.end - 1].get_token_source().end,
-  };
-
+  const raw_pp_tokens_range raw_range = pp_result.pp_tokens_range_to_raw(range);
   auto is_it = pp_result.intersecting_sources_begin(raw_range);
   const auto is_end
     = pp_result.intersecting_sources_end(raw_range);

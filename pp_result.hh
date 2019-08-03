@@ -8,6 +8,7 @@
 #include "raw_pp_tokens_range.hh"
 #include "pp_token.hh"
 #include "pp_tokens.hh"
+#include "pp_tokens_range.hh"
 #include "used_macros.hh"
 #include "used_macro_undefs.hh"
 #include "offset_to_line_col_map.hh"
@@ -684,6 +685,9 @@ namespace klp
 
       unsigned long get_header_ids_end() const noexcept
       { return _next_header_node_id; }
+
+      const raw_pp_tokens_range
+      pp_tokens_range_to_raw(const pp_tokens_range &r) const noexcept;
 
 
     private:
