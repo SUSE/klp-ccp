@@ -3441,6 +3441,24 @@ sou_decl_link::sou_decl_link(struct_or_union_def &soud) noexcept
   : _target_kind(target_kind::def), _soud(&soud)
 {}
 
+bool sou_decl_link::operator==(const sou_decl_link &rhs) const noexcept
+{
+  if (_target_kind != rhs._target_kind)
+    return false;
+
+  switch (_target_kind) {
+  case target_kind::ref:
+    return _sour == rhs._sour;
+
+  case target_kind::def:
+    return _soud == rhs._soud;
+
+  case target_kind::unlinked:
+    assert(0);
+    __builtin_unreachable();
+  };
+}
+
 struct_or_union_ref& sou_decl_link::get_target_sou_ref() const noexcept
 {
   assert(_target_kind == target_kind::ref);
@@ -3907,6 +3925,24 @@ enum_decl_link::enum_decl_link(enum_ref &er) noexcept
 enum_decl_link::enum_decl_link (enum_def &ed) noexcept
   : _target_kind(target_kind::def), _ed(&ed)
 {}
+
+bool enum_decl_link::operator==(const enum_decl_link &rhs) const noexcept
+{
+  if (_target_kind != rhs._target_kind)
+    return false;
+
+  switch (_target_kind) {
+  case target_kind::ref:
+    return _er == rhs._er;
+
+  case target_kind::def:
+    return _ed == rhs._ed;
+
+  case target_kind::unlinked:
+    assert(0);
+    __builtin_unreachable();
+  };
+}
 
 enum_ref& enum_decl_link::get_target_enum_ref() const noexcept
 {

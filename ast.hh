@@ -2318,6 +2318,8 @@ namespace klp
 	  sou_decl_link(struct_or_union_ref &sour) noexcept;
 	  sou_decl_link(struct_or_union_def &soud) noexcept;
 
+	  bool operator==(const sou_decl_link &rhs) const noexcept;
+
 	  enum class target_kind
 	  {
 	    unlinked,
@@ -2648,6 +2650,8 @@ namespace klp
 	enum_decl_link() noexcept;
 	enum_decl_link(enum_ref &er) noexcept;
 	enum_decl_link (enum_def &ed) noexcept;
+
+	bool operator==(const enum_decl_link &rhs) const noexcept;
 
 	enum class target_kind
 	{
