@@ -83,9 +83,9 @@ void ast_translation_unit::_register_labels()
 		registrar = &sc;
 
 		if (sc.lookup_label(*this, label_tok)) {
-		  code_remark_pp remark(code_remark_pp::severity::fatal,
-					"label redefined",
-					get_pp_result(), label_tok);
+		  code_remark remark(code_remark::severity::fatal,
+				     "label redefined",
+				     get_pp_result(), label_tok);
 		  get_remarks().add(remark);
 		  throw semantic_except(remark);
 		}
@@ -608,9 +608,9 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
   // In violation of C99 6.9(2), GCC accepts the 'register'
   // storage class at file scope.
   if (is_at_file_scope && sc == storage_class::sc_auto) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "invalid storage class at file scope",
-			    _ast.get_pp_result(), d.get_tokens_range());
+      code_remark remark(code_remark::severity::fatal,
+			 "invalid storage class at file scope",
+			 _ast.get_pp_result(), d.get_tokens_range());
       _ast.get_remarks().add(remark);
       throw semantic_except(remark);
   }
@@ -625,21 +625,21 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
   // identifier list.
   if (d.get_parent()->is_any_of<declaration_list>()) {
     if (sc != storage_class::sc_none && sc != storage_class::sc_register) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "invalid storage class at parameter declaration",
-			    _ast.get_pp_result(), d.get_tokens_range());
+      code_remark remark(code_remark::severity::fatal,
+			 "invalid storage class at parameter declaration",
+			 _ast.get_pp_result(), d.get_tokens_range());
       _ast.get_remarks().add(remark);
       throw semantic_except(remark);
     } else if (!prev || !prev_is_in_cur_scope) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "old-style parameter not in identifier list",
-			    _ast.get_pp_result(), ddid.get_id_tok());
+      code_remark remark(code_remark::severity::fatal,
+			 "old-style parameter not in identifier list",
+			 _ast.get_pp_result(), ddid.get_id_tok());
       _ast.get_remarks().add(remark);
       throw semantic_except(remark);
     } else if (prev->get_kind() != resolved_kind::in_param_id_list) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "invalid redeclaration",
-			    _ast.get_pp_result(), ddid.get_id_tok());
+      code_remark remark(code_remark::severity::fatal,
+			 "invalid redeclaration",
+			 _ast.get_pp_result(), ddid.get_id_tok());
       _ast.get_remarks().add(remark);
       throw semantic_except(remark);
     }
@@ -659,9 +659,9 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
   if (sc == storage_class::sc_typedef) {
     if (prev && prev_is_in_cur_scope) {
       if (!prev_is_td_in_cur_scope) {
-	code_remark_pp remark(code_remark_pp::severity::fatal,
-			      "redeclaration of non-typedef symbol as typedef",
-			      _ast.get_pp_result(), ddid.get_id_tok());
+	code_remark remark(code_remark::severity::fatal,
+			   "redeclaration of non-typedef symbol as typedef",
+			   _ast.get_pp_result(), ddid.get_id_tok());
 	_ast.get_remarks().add(remark);
 	throw semantic_except(remark);
       }
@@ -676,9 +676,9 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
     return;
 
   } else if (prev_is_td_in_cur_scope) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "redeclaration of typedef symbol as non-typedef",
-			  _ast.get_pp_result(), ddid.get_id_tok());
+    code_remark remark(code_remark::severity::fatal,
+		       "redeclaration of typedef symbol as non-typedef",
+		       _ast.get_pp_result(), ddid.get_id_tok());
     _ast.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -690,9 +690,9 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
   if (is_fun &&
       (sc == storage_class::sc_register ||
        (!is_at_file_scope && sc == storage_class::sc_static))) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "invalid storage class at function declaration",
-			  _ast.get_pp_result(), ddid.get_id_tok());
+    code_remark remark(code_remark::severity::fatal,
+		       "invalid storage class at function declaration",
+		       _ast.get_pp_result(), ddid.get_id_tok());
     _ast.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -704,9 +704,9 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
   // the same scope.
   if (prev && prev_is_in_cur_scope &&
       (no_linkage || _get_linkage_kind(*prev) == linkage::linkage_kind::none)) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "invalid redeclaration",
-			  _ast.get_pp_result(), ddid.get_id_tok());
+    code_remark remark(code_remark::severity::fatal,
+		       "invalid redeclaration",
+		       _ast.get_pp_result(), ddid.get_id_tok());
     _ast.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -731,9 +731,9 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
 
       const linkage::linkage_kind prev_linkage = _get_linkage_kind(*prev);
       if (prev_linkage != linkage::linkage_kind::internal) {
-	code_remark_pp remark(code_remark_pp::severity::fatal,
-			      "static declaration follows non-static one",
-			      _ast.get_pp_result(), ddid.get_id_tok());
+	code_remark remark(code_remark::severity::fatal,
+			   "static declaration follows non-static one",
+			   _ast.get_pp_result(), ddid.get_id_tok());
 	_ast.get_remarks().add(remark);
 	throw semantic_except(remark);
       }
@@ -785,9 +785,9 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
 	if (prev) {
 	  const linkage::linkage_kind prev_linkage = _get_linkage_kind(*prev);
 	  if (prev_linkage != linkage::linkage_kind::external) {
-	    code_remark_pp remark(code_remark_pp::severity::fatal,
-				  "extern declaration follows static one",
-				  _ast.get_pp_result(), ddid.get_id_tok());
+	    code_remark remark(code_remark::severity::fatal,
+			       "extern declaration follows static one",
+			       _ast.get_pp_result(), ddid.get_id_tok());
 	    _ast.get_remarks().add(remark);
 	    throw semantic_except(remark);
 	  }
@@ -814,9 +814,9 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
 
       const linkage::linkage_kind prev_linkage = _get_linkage_kind(*prev);
       if (prev_linkage != linkage::linkage_kind::external) {
-	code_remark_pp remark(code_remark_pp::severity::fatal,
-			      "non-static declaration follows static one",
-			      _ast.get_pp_result(), ddid.get_id_tok());
+	code_remark remark(code_remark::severity::fatal,
+			   "non-static declaration follows static one",
+			   _ast.get_pp_result(), ddid.get_id_tok());
 	_ast.get_remarks().add(remark);
 	throw semantic_except(remark);
       }
@@ -837,8 +837,8 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
 
       const linkage::linkage_kind prev_linkage = _get_linkage_kind(*prev);
       if (prev_linkage != linkage::linkage_kind::nested_fun_auto) {
-	code_remark_pp remark{
-	  code_remark_pp::severity::fatal,
+	code_remark remark{
+	  code_remark::severity::fatal,
 	  "auto nested function declaration follows an external one",
 	  _ast.get_pp_result(), ddid.get_id_tok()
 	};
@@ -868,9 +868,9 @@ void _id_resolver::_handle_param_decl(parameter_declaration_declarator &pdd)
   if (sc != storage_class::sc_none && sc != storage_class::sc_register) {
     const direct_declarator_id &ddid =
       pdd.get_declarator().get_direct_declarator_id();
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "invalid storage class at parameter declaration",
-			  _ast.get_pp_result(), pdd.get_tokens_range());
+    code_remark remark(code_remark::severity::fatal,
+		       "invalid storage class at parameter declaration",
+		       _ast.get_pp_result(), pdd.get_tokens_range());
     _ast.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -883,10 +883,10 @@ void _id_resolver::_handle_fun_def(function_definition &fd)
   const direct_declarator_id &ddid =
     fd.get_declarator().get_direct_declarator_id();
   if (!ddid.is_function()) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "no function declarator in definition's prototype",
-			  _ast.get_pp_result(),
-			  fd.get_declarator().get_tokens_range());
+    code_remark remark(code_remark::severity::fatal,
+		       "no function declarator in definition's prototype",
+		       _ast.get_pp_result(),
+		       fd.get_declarator().get_tokens_range());
       _ast.get_remarks().add(remark);
       throw semantic_except(remark);
   }
@@ -899,10 +899,10 @@ void _id_resolver::_handle_fun_def(function_definition &fd)
       !(is_at_file_scope && (sc == storage_class::sc_static ||
 			     sc == storage_class::sc_extern)) &&
       !(!is_at_file_scope && sc == storage_class::sc_auto)) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "invalid storage class at function definition",
-			  _ast.get_pp_result(),
-			  fd.get_declarator().get_tokens_range());
+    code_remark remark(code_remark::severity::fatal,
+		       "invalid storage class at function definition",
+		       _ast.get_pp_result(),
+		       fd.get_declarator().get_tokens_range());
     _ast.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -917,15 +917,15 @@ void _id_resolver::_handle_fun_def(function_definition &fd)
     if (prev->get_kind() == resolved_kind::enumerator ||
 	prev->get_kind() == resolved_kind::parameter_declaration_declarator ||
 	prev->get_kind() == resolved_kind::in_param_id_list) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "invalid redeclaration",
-			    _ast.get_pp_result(), ddid.get_id_tok());
+      code_remark remark(code_remark::severity::fatal,
+			 "invalid redeclaration",
+			 _ast.get_pp_result(), ddid.get_id_tok());
       _ast.get_remarks().add(remark);
       throw semantic_except(remark);
     } else if (prev->get_kind() == resolved_kind::function_definition) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "function redefined",
-			    _ast.get_pp_result(), ddid.get_id_tok());
+      code_remark remark(code_remark::severity::fatal,
+			 "function redefined",
+			 _ast.get_pp_result(), ddid.get_id_tok());
       _ast.get_remarks().add(remark);
       throw semantic_except(remark);
     }
@@ -938,8 +938,8 @@ void _id_resolver::_handle_fun_def(function_definition &fd)
 
       const linkage::linkage_kind prev_linkage = _get_linkage_kind(*prev);
       if (prev_linkage != linkage::linkage_kind::nested_fun_auto) {
-	code_remark_pp remark{
-	  code_remark_pp::severity::fatal,
+	code_remark remark{
+	  code_remark::severity::fatal,
 	  "nested function definition follows an external declaration",
 	  _ast.get_pp_result(), ddid.get_id_tok()
 	};
@@ -962,9 +962,9 @@ void _id_resolver::_handle_fun_def(function_definition &fd)
 
       const linkage::linkage_kind prev_linkage = _get_linkage_kind(*prev);
       if (prev_linkage != linkage::linkage_kind::internal) {
-	code_remark_pp remark(code_remark_pp::severity::fatal,
-			      "static declaration follows non-static one",
-			      _ast.get_pp_result(), ddid.get_id_tok());
+	code_remark remark(code_remark::severity::fatal,
+			   "static declaration follows non-static one",
+			   _ast.get_pp_result(), ddid.get_id_tok());
 	_ast.get_remarks().add(remark);
 	throw semantic_except(remark);
       }
@@ -1034,9 +1034,9 @@ void _id_resolver::_handle_sou_ref(struct_or_union_ref &sour)
   } else if (!prev_decl) {
     // It's the first occurence and thus a declaration.
     if (_lookup_enum_decl(sour.get_id_tok(), false, false)) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "tag redeclared as a different kind",
-			    _ast.get_pp_result(), sour.get_id_tok());
+      code_remark remark(code_remark::severity::fatal,
+			 "tag redeclared as a different kind",
+			 _ast.get_pp_result(), sour.get_id_tok());
       _ast.get_remarks().add(remark);
       throw semantic_except(remark);
     }
@@ -1067,9 +1067,9 @@ void _id_resolver::_handle_sou_ref(struct_or_union_ref &sour)
 
   assert(prev_decl);
   if (prev_tag_kind != sour.get_tag_kind()) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "tag redeclared as a different kind",
-			  _ast.get_pp_result(), sour.get_id_tok());
+    code_remark remark(code_remark::severity::fatal,
+		       "tag redeclared as a different kind",
+		       _ast.get_pp_result(), sour.get_id_tok());
     _ast.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -1111,15 +1111,15 @@ void _id_resolver::_handle_sou_def(struct_or_union_def &soud)
     }
 
     if (prev_tag_kind != soud.get_tag_kind()) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "tag redeclared as a different kind",
-			    _ast.get_pp_result(), soud.get_id_tok());
+      code_remark remark(code_remark::severity::fatal,
+			 "tag redeclared as a different kind",
+			 _ast.get_pp_result(), soud.get_id_tok());
       _ast.get_remarks().add(remark);
       throw semantic_except(remark);
     } else if (prev_def) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "struct or union redefined",
-			    _ast.get_pp_result(), soud.get_id_tok());
+      code_remark remark(code_remark::severity::fatal,
+			 "struct or union redefined",
+			 _ast.get_pp_result(), soud.get_id_tok());
       _ast.get_remarks().add(remark);
       throw semantic_except(remark);
     }
@@ -1127,9 +1127,9 @@ void _id_resolver::_handle_sou_def(struct_or_union_def &soud)
   } else {
     // It's the first declaration.
     if (_lookup_enum_decl(soud.get_id_tok(), false, false)) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "tag redeclared as a different kind",
-			    _ast.get_pp_result(), soud.get_id_tok());
+      code_remark remark(code_remark::severity::fatal,
+			 "tag redeclared as a different kind",
+			 _ast.get_pp_result(), soud.get_id_tok());
       _ast.get_remarks().add(remark);
       throw semantic_except(remark);
     }
@@ -1174,9 +1174,9 @@ void _id_resolver::_handle_enum_ref(enum_ref &er)
   } else if (!prev_decl) {
     // It's the first occurence and thus a declaration.
     if (_lookup_sou_decl(er.get_id_tok(), false, false)) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "tag redeclared as a different kind",
-			    _ast.get_pp_result(), er.get_id_tok());
+      code_remark remark(code_remark::severity::fatal,
+			 "tag redeclared as a different kind",
+			 _ast.get_pp_result(), er.get_id_tok());
       _ast.get_remarks().add(remark);
       throw semantic_except(remark);
     }
@@ -1237,9 +1237,9 @@ void _id_resolver::_handle_enum_def(enum_def &ed)
     }
 
     if (prev_def) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "enum redefined",
-			    _ast.get_pp_result(), ed.get_id_tok());
+      code_remark remark(code_remark::severity::fatal,
+			 "enum redefined",
+			 _ast.get_pp_result(), ed.get_id_tok());
       _ast.get_remarks().add(remark);
       throw semantic_except(remark);
     }
@@ -1247,9 +1247,9 @@ void _id_resolver::_handle_enum_def(enum_def &ed)
   } else {
     // It's the first declaration.
     if (_lookup_sou_decl(ed.get_id_tok(), false, false)) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "tag redeclared as a different kind",
-			    _ast.get_pp_result(), ed.get_id_tok());
+      code_remark remark(code_remark::severity::fatal,
+			 "tag redeclared as a different kind",
+			 _ast.get_pp_result(), ed.get_id_tok());
       _ast.get_remarks().add(remark);
       throw semantic_except(remark);
     }
@@ -1361,9 +1361,9 @@ _id_resolver::_try_resolve_pending_linkages(init_declarator &id,
     = pl_id.get_linkage().get_linkage_kind();
   assert(pl_linkage_kind == linkage::linkage_kind::external);
   if (kind != pl_linkage_kind) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "static declaration follows external one",
-			  _ast.get_pp_result(), ddid.get_id_tok());
+    code_remark remark(code_remark::severity::fatal,
+		       "static declaration follows external one",
+		       _ast.get_pp_result(), ddid.get_id_tok());
     _ast.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -1398,9 +1398,9 @@ _id_resolver::_try_resolve_pending_linkages(function_definition &fd,
     = pl_id.get_linkage().get_linkage_kind();
   assert(pl_linkage_kind == linkage::linkage_kind::external);
   if (kind != pl_linkage_kind) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "static declaration follows external one",
-			  _ast.get_pp_result(), ddid.get_id_tok());
+    code_remark remark(code_remark::severity::fatal,
+		       "static declaration follows external one",
+		       _ast.get_pp_result(), ddid.get_id_tok());
     _ast.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -1454,16 +1454,16 @@ void _id_resolver::_resolve_id(expr_id &ei)
 
   if (non_parens_parent->is_any_of<expr_func_invocation>()) {
     // warn only about calls to undeclared functions
-    code_remark_pp remark
-      (code_remark_pp::severity::warning,
+    code_remark remark
+      (code_remark::severity::warning,
        "identifier \"" + id_tok.get_value() + "\" not declared",
        _ast.get_pp_result(), ei.get_id_tok());
     _ast.get_remarks().add(remark);
     return;
   }
 
-  code_remark_pp remark
-    (code_remark_pp::severity::fatal,
+  code_remark remark
+    (code_remark::severity::fatal,
      "identifier \"" + id_tok.get_value() + "\" not declared",
      _ast.get_pp_result(), ei.get_id_tok());
   _ast.get_remarks().add(remark);
@@ -1484,9 +1484,9 @@ void _id_resolver::_resolve_id(expr_label_addr &ela)
     }
   }
 
-  code_remark_pp remark(code_remark_pp::severity::fatal,
-			"label not found",
-			_ast.get_pp_result(), ela.get_label_tok());
+  code_remark remark(code_remark::severity::fatal,
+		     "label not found",
+		     _ast.get_pp_result(), ela.get_label_tok());
   _ast.get_remarks().add(remark);
   throw semantic_except(remark);
 }
@@ -1521,9 +1521,9 @@ void _id_resolver::_resolve_id(type_specifier_tdid &ts_tdid)
     return;
   }
 
-  code_remark_pp remark(code_remark_pp::severity::fatal,
-			"typedef identifier not declared",
-			_ast.get_pp_result(), ts_tdid.get_id_tok());
+  code_remark remark(code_remark::severity::fatal,
+		     "typedef identifier not declared",
+		     _ast.get_pp_result(), ts_tdid.get_id_tok());
   _ast.get_remarks().add(remark);
   throw semantic_except(remark);
 }

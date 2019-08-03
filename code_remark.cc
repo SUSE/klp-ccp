@@ -1,5 +1,5 @@
 #include <ostream>
-#include "code_remark_pp.hh"
+#include "code_remark.hh"
 #include "pp_token.hh"
 #include "raw_pp_token.hh"
 #include "pp_tokens.hh"
@@ -8,9 +8,9 @@
 using namespace klp::ccp;
 
 
-code_remark_pp::code_remark_pp(const severity sev, const std::string &msg,
-			       const pp_result &pp_result,
-			       const pp_tokens_range &range)
+code_remark::code_remark(const severity sev, const std::string &msg,
+			 const pp_result &pp_result,
+			 const pp_tokens_range &range)
   : _msg(msg), _sev(sev)
 {
   const pp_tokens &tokens = pp_result.get_pp_tokens();
@@ -52,23 +52,30 @@ code_remark_pp::code_remark_pp(const severity sev, const std::string &msg,
   }
 }
 
-code_remark_pp::code_remark_pp(const severity sev, const std::string &msg,
-			       const pp_result &pp_result,
-			       const pp_token_index first,
-			       const pp_token_index last)
-  : code_remark_pp(sev, msg, pp_result, pp_tokens_range{first, last + 1})
+code_remark::code_remark(const severity sev, const std::string &msg,
+			 const pp_result &pp_result,
+			 const pp_token_index first,
+			 const pp_token_index last)
+  : code_remark(sev, msg, pp_result, pp_tokens_range{first, last + 1})
 {}
 
-code_remark_pp::code_remark_pp(const severity sev, const std::string &msg,
+code_remark::code_remark(const severity sev, const std::string &msg,
 			       const pp_result &pp_result,
 			       const pp_token_index tok_index)
-  : code_remark_pp(sev, msg, pp_result, tok_index, tok_index)
+  : code_remark(sev, msg, pp_result, tok_index, tok_index)
 {}
 
-std::ostream& klp::ccp::operator<<(std::ostream &o,
-				   const code_remark_pp &remark)
+code_remark::code_remark(const severity sev, const std::string &msg,
+			 const pp_result::header_inclusion_node &file,
+			 const range_in_file &range_in_file)
+  : _first_file(&file), _last_file(&file),
+    _begin_loc(range_in_file.begin), _end_loc(range_in_file.end),
+    _msg(msg), _sev(sev)
+{}
+
+std::ostream& klp::ccp::operator<<(std::ostream &o, const code_remark &remark)
 {
-  o << ((remark.get_severity() == code_remark_pp::severity::fatal)
+  o << ((remark.get_severity() == code_remark::severity::fatal)
 	? "error" : "warning");
   o << ": ";
 

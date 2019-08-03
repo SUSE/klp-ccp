@@ -4748,10 +4748,10 @@ storage_class declaration_specifiers::get_storage_class(ast &ast) const
     if (sc == storage_class::sc_none) {
       sc = scs.get().get_storage_class();
     } else if (sc != scs.get().get_storage_class()) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "conflicting storage class specifiers",
-			    ast.get_pp_result(),
-			    scs.get().get_tokens_range());
+      code_remark remark(code_remark::severity::fatal,
+			 "conflicting storage class specifiers",
+			 ast.get_pp_result(),
+			 scs.get().get_tokens_range());
       ast.get_remarks().add(remark);
       throw semantic_except(remark);
     }

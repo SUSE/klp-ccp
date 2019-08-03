@@ -30,9 +30,9 @@ execution_charset_encoder::encode_string(ast::ast &a,
     if (*it == '\\') {
       // Some sort of escape sequence
       if (it + 1 == utf8_string.end()) {
-	code_remark_pp remark(code_remark_pp::severity::fatal,
-			      "unexpected end of string after '\\'",
-			      a.get_pp_result(), tok_ix);
+	code_remark remark(code_remark::severity::fatal,
+			   "unexpected end of string after '\\'",
+			   a.get_pp_result(), tok_ix);
 	a.get_remarks().add(remark);
 	throw semantic_except(remark);
       }
@@ -43,8 +43,8 @@ execution_charset_encoder::encode_string(ast::ast &a,
 	const int n_digits = (*it == 'u' ? 4 : 8);
 	++it;
 	if (utf8_string.end() - it < n_digits) {
-	  code_remark_pp remark
-	    (code_remark_pp::severity::fatal,
+	  code_remark remark
+	    (code_remark::severity::fatal,
 	     "preliminary end of string in universal character name",
 	     a.get_pp_result(), tok_ix);
 	  a.get_remarks().add(remark);
@@ -55,8 +55,8 @@ execution_charset_encoder::encode_string(ast::ast &a,
 	try {
 	  ls = mpa::limbs::from_string(it, it + n_digits, mpa::limb(16));
 	} catch(const std::range_error&) {
-	  code_remark_pp remark
-	    (code_remark_pp::severity::fatal,
+	  code_remark remark
+	    (code_remark::severity::fatal,
 	     "unrecognized digit in universal character name",
 	     a.get_pp_result(), tok_ix);
 	  a.get_remarks().add(remark);
@@ -89,9 +89,9 @@ execution_charset_encoder::encode_string(ast::ast &a,
 	}
 
 	if (hex_end == it) {
-	  code_remark_pp remark(code_remark_pp::severity::fatal,
-				"no digit in hexadecimal escape sequence",
-				a.get_pp_result(), tok_ix);
+	  code_remark remark(code_remark::severity::fatal,
+			     "no digit in hexadecimal escape sequence",
+			     a.get_pp_result(), tok_ix);
 	  a.get_remarks().add(remark);
 	  throw semantic_except(remark);
 	}
@@ -99,8 +99,8 @@ execution_charset_encoder::encode_string(ast::ast &a,
 	mpa::limbs ls =
 	  mpa::limbs::from_string(it, hex_end, mpa::limb(16));
 	if (ls.is_any_set_at_or_above(_target_char_width)) {
-	  code_remark_pp remark
-	    (code_remark_pp::severity::fatal,
+	  code_remark remark
+	    (code_remark::severity::fatal,
 	     "hexadecimal escape sequence exceeds target character width",
 	     a.get_pp_result(), tok_ix);
 	  a.get_remarks().add(remark);
@@ -123,8 +123,8 @@ execution_charset_encoder::encode_string(ast::ast &a,
 	mpa::limbs ls =
 	  mpa::limbs::from_string(it, oct_end, mpa::limb(8));
 	if (ls.is_any_set_at_or_above(_target_char_width)) {
-	  code_remark_pp remark
-	    (code_remark_pp::severity::fatal,
+	  code_remark remark
+	    (code_remark::severity::fatal,
 	     "octal escape sequence exceeds target character width",
 	     a.get_pp_result(), tok_ix);
 	  a.get_remarks().add(remark);
@@ -184,9 +184,9 @@ execution_charset_encoder::encode_string(ast::ast &a,
 
 
 	default:
-	  code_remark_pp remark(code_remark_pp::severity::fatal,
-				"unrecognized escape sequence",
-				a.get_pp_result(), tok_ix);
+	  code_remark remark(code_remark::severity::fatal,
+			     "unrecognized escape sequence",
+			     a.get_pp_result(), tok_ix);
 	  a.get_remarks().add(remark);
 	  throw semantic_except(remark);
 	}
@@ -212,17 +212,17 @@ execution_charset_encoder::encode_string(ast::ast &a,
 	n_bytes = 4;
 	high_byte_mask = 0x7;
       } else {
-	code_remark_pp remark(code_remark_pp::severity::fatal,
-			      "invalid UTF-8 character encoding",
-			      a.get_pp_result(), tok_ix);
+	code_remark remark(code_remark::severity::fatal,
+			   "invalid UTF-8 character encoding",
+			   a.get_pp_result(), tok_ix);
 	a.get_remarks().add(remark);
 	throw semantic_except(remark);
       }
 
       if (utf8_string.end() - it < n_bytes) {
-	code_remark_pp remark(code_remark_pp::severity::fatal,
-			      "preliminary end in multibyte UTF-8 character",
-			      a.get_pp_result(), tok_ix);
+	code_remark remark(code_remark::severity::fatal,
+			   "preliminary end in multibyte UTF-8 character",
+			   a.get_pp_result(), tok_ix);
 	a.get_remarks().add(remark);
 	throw semantic_except(remark);
       }
@@ -233,8 +233,8 @@ execution_charset_encoder::encode_string(ast::ast &a,
       while (n_bytes) {
 	const unsigned char cur_byte = static_cast<unsigned char>(*it);
 	if ((cur_byte >> 6) != 0x2) {
-	  code_remark_pp remark
-	    (code_remark_pp::severity::fatal,
+	  code_remark remark
+	    (code_remark::severity::fatal,
 	     "unexpected non-continuation byte in multibyte UTF-8 character",
 	     a.get_pp_result(), tok_ix);
 	  a.get_remarks().add(remark);

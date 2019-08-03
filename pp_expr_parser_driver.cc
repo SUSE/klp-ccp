@@ -165,10 +165,10 @@ pp_expr_parser_driver::lex(pp_expr_parser::semantic_type *value,
       const raw_pp_token_index tok_index = tok.get_token_source().begin;
       const raw_pp_token &raw_tok =
 	_pp_result.get_raw_tokens()[tok_index];
-      code_remark_raw remark(code_remark_raw::severity::fatal,
-			     "unrecognized preprocessor token (punctuator)",
-			     _pp_result.get_raw_token_source(tok_index),
-			     raw_tok.get_range_in_file());
+      code_remark remark(code_remark::severity::fatal,
+			 "unrecognized preprocessor token (punctuator)",
+			 _pp_result.get_raw_token_source(tok_index),
+			 raw_tok.get_range_in_file());
       _remarks.add(remark);
       throw pp_except(remark);
     }
@@ -197,10 +197,10 @@ pp_expr_parser_driver::lex(pp_expr_parser::semantic_type *value,
       const raw_pp_token_index tok_index = tok.get_token_source().begin;
       const raw_pp_token &raw_tok =
 	_pp_result.get_raw_tokens()[tok_index];
-      code_remark_raw remark(code_remark_raw::severity::fatal,
-			     "unrecognized preprocessor token (non-ws char)",
-			     _pp_result.get_raw_token_source(tok_index),
-			     raw_tok.get_range_in_file());
+      code_remark remark(code_remark::severity::fatal,
+			 "unrecognized preprocessor token (non-ws char)",
+			 _pp_result.get_raw_token_source(tok_index),
+			 raw_tok.get_range_in_file());
       _remarks.add(remark);
       throw pp_except(remark);
     }
@@ -212,8 +212,8 @@ pp_expr_parser_driver::lex(pp_expr_parser::semantic_type *value,
 void pp_expr_parser_driver::error(const pp_expr_parser::location_type& loc,
 				  const std::string& msg)
 {
-  code_remark_pp remark(code_remark_pp::severity::fatal, msg,
-			_pp_result, loc.begin);
+  code_remark remark(code_remark::severity::fatal, msg,
+		     _pp_result, loc.begin);
   _remarks.add(remark);
   throw parse_except(remark);
 }

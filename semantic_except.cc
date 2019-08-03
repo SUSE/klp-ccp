@@ -3,7 +3,7 @@
 
 using namespace klp::ccp;
 
-semantic_except::semantic_except(const code_remark_pp &remark)
+semantic_except::semantic_except(const code_remark &remark)
 {
   std::stringstream ss;
 

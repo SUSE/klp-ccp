@@ -4,8 +4,7 @@
 #include <vector>
 #include <ios>
 
-#include "code_remark_raw.hh"
-#include "code_remark_pp.hh"
+#include "code_remark.hh"
 
 namespace klp
 {
@@ -14,10 +13,8 @@ namespace klp
     class code_remarks
     {
     public:
-      void add(const code_remark_pp &r);
-      void add(code_remark_pp &&r);
-      void add(const code_remark_raw &r);
-      void add(code_remark_raw &&r);
+      void add(const code_remark &r);
+      void add(code_remark &&r);
       void clear() noexcept;
       bool empty() const noexcept;
       bool any_fatal() const noexcept;
@@ -27,8 +24,7 @@ namespace klp
       friend std::ostream& operator<<(std::ostream &o, const code_remarks &rs);
 
     private:
-      std::vector<code_remark_raw> _remarks_raw;
-      std::vector<code_remark_pp> _remarks_pp;
+      std::vector<code_remark> _remarks;
     };
 
     std::ostream& operator<<(std::ostream &o, const code_remarks &rs);

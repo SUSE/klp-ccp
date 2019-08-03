@@ -59,9 +59,9 @@ char pp_tokenizer::_read_next_char(range_in_file::loc_type &loc)
   while (c == '\\') {
     const char next = _read_next_char_raw();
     if (!next) {
-      _remarks.add(code_remark_raw(code_remark_raw::severity::warning,
-				   "no newline after continuation",
-				   _file, range_in_file(_cur_loc)));
+      _remarks.add(code_remark(code_remark::severity::warning,
+			       "no newline after continuation",
+			       _file, range_in_file(_cur_loc)));
       return 0;
     }
     if (next != '\n') {
@@ -114,9 +114,9 @@ raw_pp_token pp_tokenizer::_tokenize_string(const char delim,
     }
   }
 
-  code_remark_raw remark(code_remark_raw::severity::fatal,
-			 "encountered EOF while searching for end of string",
-			 _file, range_in_file(_cur_loc));
+  code_remark remark(code_remark::severity::fatal,
+		     "encountered EOF while searching for end of string",
+		     _file, range_in_file(_cur_loc));
   _remarks.add(remark);
   throw(remark);
 }
@@ -322,9 +322,9 @@ std::size_t pp_tokenizer::_skip_c_comment(const std::size_t n_trailing_spaces)
     }
   }
 
-  code_remark_raw remark(code_remark_raw::severity::fatal,
-			 "EOF within C-style comment",
-			 _file, range_in_file(_cur_loc));
+  code_remark remark(code_remark::severity::fatal,
+		     "EOF within C-style comment",
+		     _file, range_in_file(_cur_loc));
   _remarks.add(remark);
   throw pp_except(remark);
 }
@@ -337,9 +337,9 @@ void pp_tokenizer::_skip_cpp_comment()
       _advance_to_next_char();
 
   if (!_cur) {
-    _remarks.add(code_remark_raw(code_remark_raw::severity::warning,
-				 "EOF within C++-style comment",
-				 _file, range_in_file(_cur_loc)));
+    _remarks.add(code_remark(code_remark::severity::warning,
+			     "EOF within C++-style comment",
+			     _file, range_in_file(_cur_loc)));
   }
 }
 

@@ -161,9 +161,9 @@ void _evaluator::_check_return_stmt(const klp::ccp::ast::stmt_return &ret_stmt)
   }
 
   if (!fd) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "return statement outside of function definition",
-			  _ast.get_pp_result(), ret_stmt.get_tokens_range());
+    code_remark remark(code_remark::severity::fatal,
+		       "return statement outside of function definition",
+		       _ast.get_pp_result(), ret_stmt.get_tokens_range());
     _ast.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -196,16 +196,16 @@ void _evaluator::_check_return_stmt(const klp::ccp::ast::stmt_return &ret_stmt)
       check_types_assignment(_ast, _arch, *ret_type, *ret_e);
     } else if (!is_type<void_type>(*ret_e->get_type())) {
       // GCC still accepts this.
-      code_remark_pp remark(code_remark_pp::severity::warning,
-			    "return with value in function returning void",
-			    _ast.get_pp_result(), ret_stmt.get_tokens_range());
+      code_remark remark(code_remark::severity::warning,
+			 "return with value in function returning void",
+			 _ast.get_pp_result(), ret_stmt.get_tokens_range());
       _ast.get_remarks().add(remark);
     }
   } else {
     if (!ret_type_is_void) {
       // GCC still accepts this.
-      code_remark_pp remark
-	(code_remark_pp::severity::warning,
+      code_remark remark
+	(code_remark::severity::warning,
 	 "return without value in function returning non-void",
 	 _ast.get_pp_result(), ret_stmt.get_tokens_range());
       _ast.get_remarks().add(remark);
@@ -227,8 +227,8 @@ _check_function_definition(const klp::ccp::ast::function_definition &fd)
 	  return _ft;
 	},
 	 [&](const type&) -> const function_type& {
-	   code_remark_pp remark
-	     (code_remark_pp::severity::fatal,
+	   code_remark remark
+	     (code_remark::severity::fatal,
 	      "non-function type declarator at function definition",
 	      _ast.get_pp_result(), fd.get_declarator().get_tokens_range());
 	   _ast.get_remarks().add(remark);
@@ -240,8 +240,8 @@ _check_function_definition(const klp::ccp::ast::function_definition &fd)
     = ft.get_return_type();
 
   if (!ret_type->is_complete() && !is_type<void_type>(*ret_type)) {
-    code_remark_pp remark
-      (code_remark_pp::severity::warning,
+    code_remark remark
+      (code_remark::severity::warning,
        "function definition's return value has incomplete type",
        _ast.get_pp_result(), fd.get_declarator().get_tokens_range());
     _ast.get_remarks().add(remark);
@@ -259,8 +259,8 @@ _check_function_definition(const klp::ccp::ast::function_definition &fd)
   pdl->for_each
     ([&](const parameter_declaration &pd) {
        if (!pd.get_type()->is_complete()) {
-	 code_remark_pp remark
-	   (code_remark_pp::severity::warning,
+	 code_remark remark
+	   (code_remark::severity::warning,
 	    "parameter in function definition has incomplete type",
 	    _ast.get_pp_result(), pd.get_tokens_range());
 	 _ast.get_remarks().add(remark);
@@ -389,9 +389,9 @@ void _initializer_list_evaluator::operator()()
 
 	 _advance_cursor();
 	 if (_cursor.empty()) {
-	   code_remark_pp remark(code_remark_pp::severity::warning,
-				 "excess elements in intializer",
-				 _a.get_pp_result(), _il.get_tokens_range());
+	   code_remark remark(code_remark::severity::warning,
+			      "excess elements in intializer",
+			      _a.get_pp_result(), _il.get_tokens_range());
 	   _a.get_remarks().add(remark);
 	   excess_elements = true;
 	   return;
@@ -471,8 +471,8 @@ void _initializer_list_evaluator::_set_cursor(const designator_list &dl)
 		   _get_current_target_type());
 	      }
 	      if (!sout) {
-		code_remark_pp remark
-		  (code_remark_pp::severity::fatal,
+		code_remark remark
+		  (code_remark::severity::fatal,
 		   "member designator in non-struct initialization",
 		   _a.get_pp_result(), dm.get_tokens_range());
 		_a.get_remarks().add(remark);
@@ -485,10 +485,10 @@ void _initializer_list_evaluator::_set_cursor(const designator_list &dl)
 	      const struct_or_union_content::lookup_result lr
 		= sout->get_content()->lookup(name);
 	      if (lr.empty()) {
-		code_remark_pp remark(code_remark_pp::severity::fatal,
-				      "member lookup failed",
-				      _a.get_pp_result(),
-				      dm.get_tokens_range());
+		code_remark remark(code_remark::severity::fatal,
+				   "member lookup failed",
+				   _a.get_pp_result(),
+				   dm.get_tokens_range());
 		_a.get_remarks().add(remark);
 		throw semantic_except(remark);
 	      }
@@ -513,8 +513,8 @@ void _initializer_list_evaluator::_set_cursor(const designator_list &dl)
 		   _get_current_target_type());
 	      }
 	      if (!at) {
-		code_remark_pp remark
-		  (code_remark_pp::severity::fatal,
+		code_remark remark
+		  (code_remark::severity::fatal,
 		   "array index designator in non-array initialization",
 		   _a.get_pp_result(), da.get_tokens_range());
 		_a.get_remarks().add(remark);
@@ -523,8 +523,8 @@ void _initializer_list_evaluator::_set_cursor(const designator_list &dl)
 
 	      assert(at->get_element_type()->is_complete());
 	      if (at->is_complete() && !at->is_size_constant()) {
-		code_remark_pp remark
-		  (code_remark_pp::severity::fatal,
+		code_remark remark
+		  (code_remark::severity::fatal,
 		   "initialization of variable-length array",
 		   _a.get_pp_result(), da.get_tokens_range());
 		_a.get_remarks().add(remark);
@@ -536,8 +536,8 @@ void _initializer_list_evaluator::_set_cursor(const designator_list &dl)
 	      const expr &e_index_last = da.get_index_last();
 	      assert(e_index_last.is_evaluated());
 	      if (!e_index_last.is_constexpr()) {
-		code_remark_pp remark
-		  (code_remark_pp::severity::fatal,
+		code_remark remark
+		  (code_remark::severity::fatal,
 		   "non-constant array index designator in initialization",
 		   _a.get_pp_result(), e_index_last.get_tokens_range());
 		_a.get_remarks().add(remark);
@@ -548,8 +548,8 @@ void _initializer_list_evaluator::_set_cursor(const designator_list &dl)
 		e_index_last.get_constexpr_value();
 	      if (!(last_index_cv.has_constness
 		    (constexpr_value::constness::c_integer_constant_expr))) {
-		code_remark_pp remark
-		  (code_remark_pp::severity::fatal,
+		code_remark remark
+		  (code_remark::severity::fatal,
 		   "array index designator is not an integer constant",
 		   _a.get_pp_result(), e_index_last.get_tokens_range());
 		_a.get_remarks().add(remark);
@@ -560,8 +560,8 @@ void _initializer_list_evaluator::_set_cursor(const designator_list &dl)
 		     constexpr_value::value_kind::vk_int);
 	      const target_int &last_index_ti = last_index_cv.get_int_value();
 	      if (last_index_ti.is_negative()) {
-		code_remark_pp remark
-		  (code_remark_pp::severity::fatal,
+		code_remark remark
+		  (code_remark::severity::fatal,
 		   "negative array index designator in initializer",
 		   _a.get_pp_result(), e_index_last.get_tokens_range());
 		_a.get_remarks().add(remark);
@@ -570,8 +570,8 @@ void _initializer_list_evaluator::_set_cursor(const designator_list &dl)
 
 	      if (at->is_complete() &&
 		  at->get_length() <= last_index_ti.get_limbs()) {
-		code_remark_pp remark
-		  (code_remark_pp::severity::fatal,
+		code_remark remark
+		  (code_remark::severity::fatal,
 		   "array index designator exceeds array bounds",
 		   _a.get_pp_result(), e_index_last.get_tokens_range());
 		_a.get_remarks().add(remark);
@@ -688,8 +688,8 @@ bool _initializer_list_evaluator::_descend_cursor(const expr &e_init)
 	   if (next_at.is_complete() && !next_at.get_length()) {
 	     // Trying to initialize an array of zero length with some
 	     // expression.
-	     code_remark_pp remark
-	       (code_remark_pp::severity::warning,
+	     code_remark remark
+	       (code_remark::severity::warning,
 		"excess elements in initialization of zero length array",
 		_a.get_pp_result(), e_init.get_tokens_range());
 	     _a.get_remarks().add(remark);
@@ -721,8 +721,8 @@ bool _initializer_list_evaluator::_descend_cursor(const expr &e_init)
 	     // Now, that's bad, the struct/union subobject is essentially
 	     // empty, yet there's an attempt to initialize it with an
 	     // expression.
-	     code_remark_pp remark
-	       (code_remark_pp::severity::warning,
+	     code_remark remark
+	       (code_remark::severity::warning,
 		"excess elements initialization of empty struct/union",
 		_a.get_pp_result(), e_init.get_tokens_range());
 	     _a.get_remarks().add(remark);
@@ -783,8 +783,8 @@ _evaluate_array_init_from_string_literal (klp::ccp::ast::ast &a,
   }
 
   if (!compatible) {
-    code_remark_pp remark
-      (code_remark_pp::severity::fatal,
+    code_remark remark
+      (code_remark::severity::fatal,
        "initialization of empty struct/union with expression",
        a.get_pp_result(), e.get_tokens_range());
     a.get_remarks().add(remark);
@@ -795,8 +795,8 @@ _evaluate_array_init_from_string_literal (klp::ccp::ast::ast &a,
   assert(!at_target.is_complete() || at_target.is_size_constant());
   if (at_target.is_complete()) {
     if (at_target.get_length() < at_source->get_length()) {
-      code_remark_pp remark
-	(code_remark_pp::severity::warning,
+      code_remark remark
+	(code_remark::severity::warning,
 	 "excess characters in array initialization",
 	 a.get_pp_result(), e.get_tokens_range());
       a.get_remarks().add(remark);
@@ -823,8 +823,8 @@ _evaluate_array_init(klp::ccp::ast::ast &a, const architecture &arch,
 
   // The to be initialized array must not be a VLA.
   if (at_target.is_complete() && !at_target.is_size_constant()) {
-    code_remark_pp remark
-      (code_remark_pp::severity::fatal,
+    code_remark remark
+      (code_remark::severity::fatal,
        "initialization of variable size array",
        a.get_pp_result(), ie.get_tokens_range());
     a.get_remarks().add(remark);
@@ -835,8 +835,8 @@ _evaluate_array_init(klp::ccp::ast::ast &a, const architecture &arch,
   // expression.
   const expr &e = ie.get_expr();
   if (!_is_compound_literal_expr(e)) {
-    code_remark_pp remark
-      (code_remark_pp::severity::fatal,
+    code_remark remark
+      (code_remark::severity::fatal,
        "initialization of array with non-compound literal",
        a.get_pp_result(), ie.get_tokens_range());
     a.get_remarks().add(remark);
@@ -852,8 +852,8 @@ _evaluate_array_init(klp::ccp::ast::ast &a, const architecture &arch,
        },
        [&](const std::shared_ptr<const type>&)
 		-> std::shared_ptr<const array_type> {
-	 code_remark_pp remark
-	   (code_remark_pp::severity::fatal,
+	 code_remark remark
+	   (code_remark::severity::fatal,
 	    "initialization of array with non-array expression",
 	    a.get_pp_result(), ie.get_tokens_range());
 	 a.get_remarks().add(remark);
@@ -864,8 +864,8 @@ _evaluate_array_init(klp::ccp::ast::ast &a, const architecture &arch,
   assert(at_source->is_complete() && at_source->is_size_constant());
 
   if (!at_source->is_compatible_with(arch, at_target, true)) {
-    code_remark_pp remark
-      (code_remark_pp::severity::fatal,
+    code_remark remark
+      (code_remark::severity::fatal,
        "incompatible array types at initialization",
        a.get_pp_result(), ie.get_tokens_range());
     a.get_remarks().add(remark);
@@ -924,8 +924,8 @@ _evaluate_array_init(klp::ccp::ast::ast &a, const architecture &arch,
 
   // The to be initialized array must not be a VLA.
   if (at_target.is_complete() && !at_target.is_size_constant()) {
-    code_remark_pp remark
-      (code_remark_pp::severity::fatal,
+    code_remark remark
+      (code_remark::severity::fatal,
        "braced initialization of variable size array",
        a.get_pp_result(), il.get_tokens_range());
     a.get_remarks().add(remark);
@@ -946,8 +946,8 @@ _evaluate_sou_init(klp::ccp::ast::ast &a, const architecture &arch,
 		   initializer_list &il)
 {
   if (!sout_target.is_complete()) {
-    code_remark_pp remark
-      (code_remark_pp::severity::fatal,
+    code_remark remark
+      (code_remark::severity::fatal,
        "initialization of incomplete struct/union",
        a.get_pp_result(), il.get_tokens_range());
     a.get_remarks().add(remark);
@@ -1010,8 +1010,8 @@ _evaluate_init(klp::ccp::ast::ast &a, const architecture &arch,
 	 initializer_expr * const unwrapped_ie
 	   = _try_unwrap_initializer_list(*il);
 	 if (!unwrapped_ie) {
-	   code_remark_pp remark
-	     (code_remark_pp::severity::warning,
+	   code_remark remark
+	     (code_remark::severity::warning,
 	      "invalid initialization of scalar type",
 	      a.get_pp_result(), il->get_tokens_range());
 	   a.get_remarks().add(remark);
@@ -1118,9 +1118,9 @@ void _check_type_completeness_global(klp::ccp::ast::ast &a,
   if (!need_completeness)
     return;
 
-  code_remark_pp remark(code_remark_pp::severity::warning,
-			"init declarator has incomplete type",
-			a.get_pp_result(), i.get_tokens_range());
+  code_remark remark(code_remark::severity::warning,
+		     "init declarator has incomplete type",
+		     a.get_pp_result(), i.get_tokens_range());
   a.get_remarks().add(remark);
 }
 
@@ -1157,9 +1157,9 @@ _check_type_completeness_local(klp::ccp::ast::ast &a,
   if (is_type<array_type>(t) && d.get_parent()->is_any_of<declaration_list>())
     return;
 
-  code_remark_pp remark(code_remark_pp::severity::warning,
-			"init declarator has incomplete type",
-			a.get_pp_result(), i.get_tokens_range());
+  code_remark remark(code_remark::severity::warning,
+		     "init declarator has incomplete type",
+		     a.get_pp_result(), i.get_tokens_range());
   a.get_remarks().add(remark);
 }
 
@@ -1204,8 +1204,8 @@ bool align_attribute_finder::operator()(attribute &attr)
 
   } else {
     if (!params || params->size() != 1) {
-      code_remark_pp remark
-	(code_remark_pp::severity::fatal,
+      code_remark remark
+	(code_remark::severity::fatal,
 	 "wrong number of parameters for 'aligned' attribute",
 	 _a.get_pp_result(), attr.get_tokens_range());
       _a.get_remarks().add(remark);
@@ -1218,8 +1218,8 @@ bool align_attribute_finder::operator()(attribute &attr)
       ev();
     }
     if (!e.is_evaluated()) {
-      code_remark_pp remark
-	(code_remark_pp::severity::fatal,
+      code_remark remark
+	(code_remark::severity::fatal,
 	 "failed to evaluate 'aligned' attribute's parameter",
 	 _a.get_pp_result(), attr.get_tokens_range());
       _a.get_remarks().add(remark);
@@ -1227,8 +1227,8 @@ bool align_attribute_finder::operator()(attribute &attr)
     }
 
     if (!e.is_constexpr()) {
-      code_remark_pp remark
-	(code_remark_pp::severity::fatal,
+      code_remark remark
+	(code_remark::severity::fatal,
 	 "'aligned' attribute's parameter is not a constant expression",
 	 _a.get_pp_result(), attr.get_tokens_range());
       _a.get_remarks().add(remark);
@@ -1237,8 +1237,8 @@ bool align_attribute_finder::operator()(attribute &attr)
 
     const constexpr_value &cv = e.get_constexpr_value();
     if (!cv.has_constness(constness::c_integer_constant_expr)) {
-      code_remark_pp remark
-	(code_remark_pp::severity::fatal,
+      code_remark remark
+	(code_remark::severity::fatal,
 	 "'aligned' attribute's parameter is not an integer constant",
 	 _a.get_pp_result(), attr.get_tokens_range());
       _a.get_remarks().add(remark);
@@ -1248,9 +1248,9 @@ bool align_attribute_finder::operator()(attribute &attr)
     assert(cv.get_value_kind() == constexpr_value::value_kind::vk_int);
     const target_int &ti = cv.get_int_value();
     if (ti.is_negative()) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "'aligned' attribute's parameter is negative",
-			    _a.get_pp_result(), attr.get_tokens_range());
+      code_remark remark(code_remark::severity::fatal,
+			 "'aligned' attribute's parameter is negative",
+			 _a.get_pp_result(), attr.get_tokens_range());
       _a.get_remarks().add(remark);
       throw semantic_except(remark);
     }
@@ -1258,9 +1258,9 @@ bool align_attribute_finder::operator()(attribute &attr)
     const mpa::limbs &ls = ti.get_limbs();
     const mpa::limbs::size_type ls_fls = ls.fls();
     if (!ls_fls || ls.is_any_set_below(ls_fls - 1)) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "'aligned' attribute value is not a power of two",
-			    _a.get_pp_result(), attr.get_tokens_range());
+      code_remark remark(code_remark::severity::fatal,
+			 "'aligned' attribute value is not a power of two",
+			 _a.get_pp_result(), attr.get_tokens_range());
       _a.get_remarks().add(remark);
       throw semantic_except(remark);
     }
@@ -1311,9 +1311,9 @@ bool packed_attribute_finder::operator()(const attribute &attr)
 
   const expr_list *params = attr.get_params();
   if (params) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "unexpected parameters to 'packed' attribute",
-			  _a.get_pp_result(), attr.get_tokens_range());
+    code_remark remark(code_remark::severity::fatal,
+		       "unexpected parameters to 'packed' attribute",
+		       _a.get_pp_result(), attr.get_tokens_range());
     _a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -1368,9 +1368,9 @@ bool mode_attribute_finder::operator()(const attribute &attr)
 
   const expr_list *params = attr.get_params();
   if (!params || params->size() != 1) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "wrong number of parameters for 'mode' attribute",
-			  _a.get_pp_result(), attr.get_tokens_range());
+    code_remark remark(code_remark::severity::fatal,
+		       "wrong number of parameters for 'mode' attribute",
+		       _a.get_pp_result(), attr.get_tokens_range());
     _a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -1382,9 +1382,9 @@ bool mode_attribute_finder::operator()(const attribute &attr)
 	e_id = &_e_id;
       }));
   if (!e_id) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "invalid expression for 'mode' attribute",
-			  _a.get_pp_result(), (*params)[0].get_tokens_range());
+    code_remark remark(code_remark::severity::fatal,
+		       "invalid expression for 'mode' attribute",
+		       _a.get_pp_result(), (*params)[0].get_tokens_range());
     _a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -1409,17 +1409,17 @@ bool mode_attribute_finder::operator()(const attribute &attr)
   } else if (id == "DF" || id == "__DF__") {
     _fmk = float_mode_kind::fmk_DF;
   } else {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "unrecognized 'mode' attribute specifier",
-			  _a.get_pp_result(), e_id->get_tokens_range());
+    code_remark remark(code_remark::severity::fatal,
+		       "unrecognized 'mode' attribute specifier",
+		       _a.get_pp_result(), e_id->get_tokens_range());
     _a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
 
   if (_imk != int_mode_kind::imk_none && _fmk != float_mode_kind::fmk_none) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "inconsistent 'mode' attribute specifier domains",
-			  _a.get_pp_result(), e_id->get_tokens_range());
+    code_remark remark(code_remark::severity::fatal,
+		       "inconsistent 'mode' attribute specifier domains",
+		       _a.get_pp_result(), e_id->get_tokens_range());
     _a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -1440,8 +1440,8 @@ apply_to_type(std::shared_ptr<const addressable_type> &&orig_t)
     ((wrap_callables<no_default_action>
       ([&](const std::shared_ptr<const int_type> &it) {
 	 if (_imk == int_mode_kind::imk_none) {
-	   code_remark_pp remark
-	     (code_remark_pp::severity::fatal,
+	   code_remark remark
+	     (code_remark::severity::fatal,
 	      "invalid 'mode' attribute specifier for int type",
 	      _a.get_pp_result(), _mode_tok);
 	   _a.get_remarks().add(remark);
@@ -1449,8 +1449,8 @@ apply_to_type(std::shared_ptr<const addressable_type> &&orig_t)
 	 }
 
 	 if (!orig_t->is_complete()) {
-	   code_remark_pp remark
-	     (code_remark_pp::severity::fatal,
+	   code_remark remark
+	     (code_remark::severity::fatal,
 	      "applying 'mode' attribute specifier to incomplete integer type",
 	      _a.get_pp_result(), _mode_tok);
 	   _a.get_remarks().add(remark);
@@ -1464,8 +1464,8 @@ apply_to_type(std::shared_ptr<const addressable_type> &&orig_t)
        },
        [&](const std::shared_ptr<const real_float_type> &rft) {
 	 if (_fmk == float_mode_kind::fmk_none) {
-	   code_remark_pp remark
-	     (code_remark_pp::severity::fatal,
+	   code_remark remark
+	     (code_remark::severity::fatal,
 	      "invalid 'mode' attribute specifier for float type",
 	      _a.get_pp_result(), _mode_tok);
 	   _a.get_remarks().add(remark);
@@ -1480,8 +1480,8 @@ apply_to_type(std::shared_ptr<const addressable_type> &&orig_t)
 		-> std::shared_ptr<const addressable_type> {
 	 if (_imk == int_mode_kind::imk_none ||
 	     _imk != _arch.get_pointer_mode()) {
-	   code_remark_pp remark
-	     (code_remark_pp::severity::fatal,
+	   code_remark remark
+	     (code_remark::severity::fatal,
 	      "invalid 'mode' attribute specifier for pointer type",
 	      _a.get_pp_result(), _mode_tok);
 	   _a.get_remarks().add(remark);
@@ -1493,8 +1493,8 @@ apply_to_type(std::shared_ptr<const addressable_type> &&orig_t)
        },
        [&](const std::shared_ptr<const type>&)
 		-> std::shared_ptr<const addressable_type> {
-	 code_remark_pp remark
-	   (code_remark_pp::severity::fatal,
+	 code_remark remark
+	   (code_remark::severity::fatal,
 	    "'mode' attribute specifier not applicable to type",
 	    _a.get_pp_result(), _mode_tok);
 	 _a.get_remarks().add(remark);
@@ -1536,8 +1536,8 @@ bool ast_pp_expr::evaluate(const architecture &arch)
   if (!_e->is_constexpr() ||
       !(_e->get_constexpr_value().has_constness
 	(constexpr_value::constness::c_integer_constant_expr))) {
-    code_remark_pp remark
-      (code_remark_pp::severity::fatal,
+    code_remark remark
+      (code_remark::severity::fatal,
        "preprocesser conditional is not an integer constant expression",
        get_pp_result(), _e->get_tokens_range());
     get_remarks().add(remark);
@@ -1608,8 +1608,8 @@ evaluate_type(ast &a, const architecture &arch)
 	}
 
 	if (maf.get_float_mode_result() != float_mode_kind::fmk_none) {
-	  code_remark_pp remark
-	    (code_remark_pp::severity::fatal,
+	  code_remark remark
+	    (code_remark::severity::fatal,
 	     "float domain 'mode' attribute at enum definition",
 	     a.get_pp_result(), maf.get_mode_tok());
 	  a.get_remarks().add(remark);
@@ -1631,10 +1631,10 @@ evaluate_type(ast &a, const architecture &arch)
 	       result = a_t.amend_qualifiers(qs);
 	     },
 	     [&](const type&) {
-	       code_remark_pp remark(code_remark_pp::severity::fatal,
-				     "invalid expression type in typeof()",
-				     a.get_pp_result(),
-				     to_e.get_expr().get_tokens_range());
+	       code_remark remark(code_remark::severity::fatal,
+				  "invalid expression type in typeof()",
+				  a.get_pp_result(),
+				  to_e.get_expr().get_tokens_range());
 	       a.get_remarks().add(remark);
 	       throw semantic_except(remark);
 	     })),
@@ -1647,9 +1647,9 @@ evaluate_type(ast &a, const architecture &arch)
   if (result.get()) {
     if (_tss.size() > 1) {
       const type_specifier &extra_ts = _tss[1].get();
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "conflicting type specifier",
-			    a.get_pp_result(), extra_ts.get_tokens_range());
+      code_remark remark(code_remark::severity::fatal,
+			 "conflicting type specifier",
+			 a.get_pp_result(), extra_ts.get_tokens_range());
       a.get_remarks().add(remark);
       throw semantic_except(remark);
     }
@@ -1791,17 +1791,17 @@ evaluate_type(ast &a, const architecture &arch)
 	 }
 
 	 if (conflict) {
-	   code_remark_pp remark(code_remark_pp::severity::fatal,
-				 "conflicting type specifier",
-				 a.get_pp_result(), ts_pod.get_tokens_range());
+	   code_remark remark(code_remark::severity::fatal,
+			      "conflicting type specifier",
+			      a.get_pp_result(), ts_pod.get_tokens_range());
 	   a.get_remarks().add(remark);
 	   throw semantic_except(remark);
 	 }
        },
        [&](const type_specifier &_ts) {
-	 code_remark_pp remark(code_remark_pp::severity::fatal,
-			       "conflicting type specifier",
-			       a.get_pp_result(), _ts.get_tokens_range());
+	 code_remark remark(code_remark::severity::fatal,
+			    "conflicting type specifier",
+			    a.get_pp_result(), _ts.get_tokens_range());
 	 a.get_remarks().add(remark);
 	 throw semantic_except(remark);
        }));
@@ -1991,9 +1991,9 @@ static void evaluate_array_size_expr(expr &size, klp::ccp::ast::ast &a,
 
 
   if (!is_type<int_type>(*size.get_type())) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "array size expression is not of integer type",
-			  a.get_pp_result(), size.get_tokens_range());
+    code_remark remark(code_remark::severity::fatal,
+		       "array size expression is not of integer type",
+		       a.get_pp_result(), size.get_tokens_range());
     a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -2005,9 +2005,9 @@ static void evaluate_array_size_expr(expr &size, klp::ccp::ast::ast &a,
   assert(size_cv.get_value_kind() ==
 	 klp::ccp::ast::constexpr_value::value_kind::vk_int);
   if (size_cv.get_int_value().is_negative()) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "array size expression is negative",
-			  a.get_pp_result(), size.get_tokens_range());
+    code_remark remark(code_remark::severity::fatal,
+		       "array size expression is negative",
+		       a.get_pp_result(), size.get_tokens_range());
     a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -2023,9 +2023,9 @@ evaluate_type(ast &a, const architecture &arch)
 	 return _o_et;
        },
        [&](const type&) -> const object_type& {
-	 code_remark_pp remark(code_remark_pp::severity::fatal,
-			       "invalid array element type",
-			       a.get_pp_result(), get_tokens_range());
+	 code_remark remark(code_remark::severity::fatal,
+			    "invalid array element type",
+			    a.get_pp_result(), get_tokens_range());
 	 a.get_remarks().add(remark);
 	 throw semantic_except(remark);
        })),
@@ -2070,9 +2070,9 @@ evaluate_type(ast &a, const architecture &arch)
     // The common case: either not a parameter declaration or not
     // the outermost array -- the type will be an array type.
     if (!o_et.is_complete()) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "incomplete array element type",
-			    a.get_pp_result(), get_tokens_range());
+      code_remark remark(code_remark::severity::fatal,
+			 "incomplete array element type",
+			 a.get_pp_result(), get_tokens_range());
       a.get_remarks().add(remark);
       throw semantic_except(remark);
     }
@@ -2096,9 +2096,9 @@ evaluate_type(ast &a, const architecture &arch)
 	 return _r_et;
        },
        [&](const type&) -> const returnable_type& {
-	 code_remark_pp remark(code_remark_pp::severity::fatal,
-			       "invalid function return type",
-			       a.get_pp_result(), get_tokens_range());
+	 code_remark remark(code_remark::severity::fatal,
+			    "invalid function return type",
+			    a.get_pp_result(), get_tokens_range());
 	 a.get_remarks().add(remark);
 	 throw semantic_except(remark);
        })),
@@ -2336,9 +2336,9 @@ evaluate_type(ast &a, const architecture &arch)
     }
 
     if (!a_t->is_compatible_with(arch, *prev_ddid->get_type(), false)) {
-      code_remark_pp remark(code_remark_pp::severity::warning,
-			    "incompatible redeclaration",
-			    a.get_pp_result(), get_tokens_range());
+      code_remark remark(code_remark::severity::warning,
+			 "incompatible redeclaration",
+			 a.get_pp_result(), get_tokens_range());
       a.get_remarks().add(remark);
 
     } else if (l->get_linkage_kind() != linkage::linkage_kind::none &&
@@ -2389,9 +2389,9 @@ evaluate_type(ast &a, const architecture &arch)
 	 return _o_et;
        },
        [&](const type&) -> const object_type& {
-	 code_remark_pp remark(code_remark_pp::severity::fatal,
-			       "invalid array element type",
-			       a.get_pp_result(), get_tokens_range());
+	 code_remark remark(code_remark::severity::fatal,
+			    "invalid array element type",
+			    a.get_pp_result(), get_tokens_range());
 	 a.get_remarks().add(remark);
 	 throw semantic_except(remark);
        })),
@@ -2399,9 +2399,9 @@ evaluate_type(ast &a, const architecture &arch)
 
 
   if (!o_et.is_complete()) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "incomplete array element type",
-			  a.get_pp_result(), get_tokens_range());
+    code_remark remark(code_remark::severity::fatal,
+		       "incomplete array element type",
+		       a.get_pp_result(), get_tokens_range());
     a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -2426,9 +2426,9 @@ evaluate_type(ast &a, const architecture &arch)
 	 return _r_et;
        },
        [&](const type&) -> const returnable_type& {
-	 code_remark_pp remark(code_remark_pp::severity::fatal,
-			       "invalid function return type",
-			       a.get_pp_result(), get_tokens_range());
+	 code_remark remark(code_remark::severity::fatal,
+			    "invalid function return type",
+			    a.get_pp_result(), get_tokens_range());
 	 a.get_remarks().add(remark);
 	 throw semantic_except(remark);
        })),
@@ -2463,9 +2463,9 @@ evaluate_type(ast &a, const architecture &arch)
       if (is_definition) {
 	t = r_t.derive_function(_il->get_identifiers().size());
       } else {
-	code_remark_pp remark(code_remark_pp::severity::warning,
-			      "initializer list not part of definition",
-			      a.get_pp_result(), _il->get_tokens_range());
+	code_remark remark(code_remark::severity::warning,
+			   "initializer list not part of definition",
+			   a.get_pp_result(), _il->get_tokens_range());
 	a.get_remarks().add(remark);
 	t = r_t.derive_function(false);
       }
@@ -2605,8 +2605,8 @@ void struct_declarator::evaluate_type(ast &a, const architecture &arch)
 	 ([&](const std::shared_ptr<const enum_type> &et) {
 	    // Bitfield's base type is an enum type specifier.
 	    if (!et->is_complete()) {
-	      code_remark_pp remark
-		(code_remark_pp::severity::fatal,
+	      code_remark remark
+		(code_remark::severity::fatal,
 		 "bitfield base type is an incomplete enum type",
 		 a.get_pp_result(), get_tokens_range());
 	      a.get_remarks().add(remark);
@@ -2632,9 +2632,9 @@ void struct_declarator::evaluate_type(ast &a, const architecture &arch)
 	  },
 	  [&](const std::shared_ptr<const type>&)
 		-> std::shared_ptr<const returnable_int_type> {
-	   code_remark_pp remark(code_remark_pp::severity::fatal,
-				 "invalid bitfield base type",
-				 a.get_pp_result(), get_tokens_range());
+	   code_remark remark(code_remark::severity::fatal,
+			      "invalid bitfield base type",
+			      a.get_pp_result(), get_tokens_range());
 	   a.get_remarks().add(remark);
 	    throw semantic_except(remark);
 	  })),
@@ -2643,17 +2643,17 @@ void struct_declarator::evaluate_type(ast &a, const architecture &arch)
   assert(_width->is_evaluated());
 
   if (!_width->is_constexpr()) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "bit-field width is not a constant expression",
-			  a.get_pp_result(), _width->get_tokens_range());
+    code_remark remark(code_remark::severity::fatal,
+		       "bit-field width is not a constant expression",
+		       a.get_pp_result(), _width->get_tokens_range());
     a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
 
   const constexpr_value &cv = _width->get_constexpr_value();
   if (!cv.has_constness(constness::c_integer_constant_expr)) {
-    code_remark_pp remark
-      (code_remark_pp::severity::fatal,
+    code_remark remark
+      (code_remark::severity::fatal,
        "bit-field width is not an integer constant expression",
        a.get_pp_result(), _width->get_tokens_range());
     a.get_remarks().add(remark);
@@ -2663,9 +2663,9 @@ void struct_declarator::evaluate_type(ast &a, const architecture &arch)
   assert(cv.get_value_kind() == constexpr_value::value_kind::vk_int);
   const target_int &ti_width = cv.get_int_value();
   if (ti_width.is_negative()) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "negative bit-field width",
-			  a.get_pp_result(), _width->get_tokens_range());
+    code_remark remark(code_remark::severity::fatal,
+		       "negative bit-field width",
+		       a.get_pp_result(), _width->get_tokens_range());
     a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -2675,18 +2675,18 @@ void struct_declarator::evaluate_type(ast &a, const architecture &arch)
   if (!ls_width.fits_into_type<mpa::limbs::size_type>() ||
       ((width = ls_width.to_type<mpa::limbs::size_type>()) >
        ri_t->get_width(arch))) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "bit-field width exceeds underlying type's width",
-			  a.get_pp_result(), _width->get_tokens_range());
+    code_remark remark(code_remark::severity::fatal,
+		       "bit-field width exceeds underlying type's width",
+		       a.get_pp_result(), _width->get_tokens_range());
     a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
 
   if (_d && !width) {
     // 6.7.2.1(3)
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "zero width bit-field shall not have a declarator",
-			  a.get_pp_result(), _width->get_tokens_range());
+    code_remark remark(code_remark::severity::fatal,
+		       "zero width bit-field shall not have a declarator",
+		       a.get_pp_result(), _width->get_tokens_range());
     a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -2721,9 +2721,9 @@ create_content(ast &a, const struct_or_union_kind souk) const
 		const pp_token &id_tok = a.get_pp_tokens()[d->get_id_tok()];
 		id = id_tok.get_value();
 		if (id.length() && !content.lookup(id).empty()) {
-		  code_remark_pp remark(code_remark_pp::severity::fatal,
-					"member already declared",
-					a.get_pp_result(), d->get_id_tok());
+		  code_remark remark(code_remark::severity::fatal,
+				     "member already declared",
+				     a.get_pp_result(), d->get_id_tok());
 		  a.get_remarks().add(remark);
 		  throw semantic_except(remark);
 		}
@@ -2738,10 +2738,10 @@ create_content(ast &a, const struct_or_union_kind souk) const
 		       if (!(souk == struct_or_union_kind::souk_struct &&
 			     (is_last && (it + 1 == _sds.end())) &&
 			     is_type<array_type>(*o_t))) {
-			 code_remark_pp remark(code_remark_pp::severity::fatal,
-					       "incomplete type for member",
-					       a.get_pp_result(),
-					       sd.get_tokens_range());
+			 code_remark remark(code_remark::severity::fatal,
+					    "incomplete type for member",
+					    a.get_pp_result(),
+					    sd.get_tokens_range());
 			 a.get_remarks().add(remark);
 			 throw semantic_except(remark);
 		       }
@@ -2755,10 +2755,10 @@ create_content(ast &a, const struct_or_union_kind souk) const
 					 (id, std::move(bf_t))));
 		   },
 		   [&](const std::shared_ptr<const type>&) {
-		     code_remark_pp remark(code_remark_pp::severity::fatal,
-					   "invalid type for member",
-					   a.get_pp_result(),
-					   sd.get_tokens_range());
+		     code_remark remark(code_remark::severity::fatal,
+					"invalid type for member",
+					a.get_pp_result(),
+					sd.get_tokens_range());
 		     a.get_remarks().add(remark);
 		     throw semantic_except(remark);
 		   })),
@@ -2773,10 +2773,10 @@ create_content(ast &a, const struct_or_union_kind souk) const
 	    ([&](const struct_or_union_content::member &m) {
 	       if (m.get_name().length() &&
 		   !content.lookup(m.get_name()).empty()) {
-		 code_remark_pp remark(code_remark_pp::severity::fatal,
-				       "unnamed struct/union redeclares member",
-				       a.get_pp_result(),
-				       sd.get_tokens_range());
+		 code_remark remark(code_remark::severity::fatal,
+				    "unnamed struct/union redeclares member",
+				    a.get_pp_result(),
+				    sd.get_tokens_range());
 		 a.get_remarks().add(remark);
 		 throw semantic_except(remark);
 	       }
@@ -2853,9 +2853,9 @@ void enumerator::register_at_parent(ast &a, const architecture &arch)
 
   enumerator_list &el = get_unique_parent<enumerator_list>();
   if (el.get_content().lookup(name)) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "enumerator redefined",
-			  a.get_pp_result(), _id_tok);
+    code_remark remark(code_remark::severity::fatal,
+		       "enumerator redefined",
+		       a.get_pp_result(), _id_tok);
     a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -2863,17 +2863,17 @@ void enumerator::register_at_parent(ast &a, const architecture &arch)
   enum_content &ec = el.get_content();
   if (_value) {
     if (!_value->is_constexpr()) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "enumerator's value is not a constant expression",
-			    a.get_pp_result(), _value->get_tokens_range());
+      code_remark remark(code_remark::severity::fatal,
+			 "enumerator's value is not a constant expression",
+			 a.get_pp_result(), _value->get_tokens_range());
       a.get_remarks().add(remark);
       throw semantic_except(remark);
     }
 
     const constexpr_value &cv = _value->get_constexpr_value();
     if (!cv.has_constness(constness::c_integer_constant_expr)) {
-      code_remark_pp remark
-	(code_remark_pp::severity::fatal,
+      code_remark remark
+	(code_remark::severity::fatal,
 	 "enumerator's value is not an integer constant expression",
 	 a.get_pp_result(), _value->get_tokens_range());
       a.get_remarks().add(remark);
@@ -2891,9 +2891,9 @@ void enumerator::register_at_parent(ast &a, const architecture &arch)
       ec.add_member(*this, name, arch);
 
     } catch (const std::overflow_error&) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "overflow in enumerator value",
-			    a.get_pp_result(), get_tokens_range());
+      code_remark remark(code_remark::severity::fatal,
+			 "overflow in enumerator value",
+			 a.get_pp_result(), get_tokens_range());
       a.get_remarks().add(remark);
       throw semantic_except(remark);
     }
@@ -3095,9 +3095,9 @@ static mpa::limbs _check_pointer_arithmetic(klp::ccp::ast::ast &a,
 			   ::type>
 	    ([&](const object_type &o_t) {
 	       if (!o_t.is_complete()) {
-		 code_remark_pp remark(code_remark_pp::severity::fatal,
-				       "pointer arithmetic on incomplete type",
-				       a.get_pp_result(), e.get_tokens_range());
+		 code_remark remark(code_remark::severity::fatal,
+				    "pointer arithmetic on incomplete type",
+				    a.get_pp_result(), e.get_tokens_range());
 		 a.get_remarks().add(remark);
 		 throw semantic_except(remark);
 	       } else if (o_t.is_size_constant()) {
@@ -3160,10 +3160,10 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 	   ((wrap_callables<default_action_nop>
 	     ([&](const enum_type &et_lhs) {
 		if (!et_lhs.is_complete()) {
-		  code_remark_pp remark(code_remark_pp::severity::fatal,
-					"assignment to incomplete enum type",
-					a.get_pp_result(),
-					e_source.get_tokens_range());
+		  code_remark remark(code_remark::severity::fatal,
+				     "assignment to incomplete enum type",
+				     a.get_pp_result(),
+				     e_source.get_tokens_range());
 		  a.get_remarks().add(remark);
 		  throw semantic_except(remark);
 		}
@@ -3177,10 +3177,10 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 	   ((wrap_callables<default_action_nop>
 	     ([&](const enum_type &et_rhs) {
 		if (!et_rhs.is_complete()) {
-		  code_remark_pp remark(code_remark_pp::severity::fatal,
-					"assignment from incomplete enum type",
-					a.get_pp_result(),
-					e_source.get_tokens_range());
+		  code_remark remark(code_remark::severity::fatal,
+				     "assignment from incomplete enum type",
+				     a.get_pp_result(),
+				     e_source.get_tokens_range());
 		  a.get_remarks().add(remark);
 		  throw semantic_except(remark);
 		}
@@ -3212,8 +3212,8 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 	 // then the assignment is Ok and has the same semantics
 	 // as an assignment to plain bool.
 	 if (!is_type<bool_type>(*bft.get_base_type())) {
-	   code_remark_pp remark
-	     (code_remark_pp::severity::warning,
+	   code_remark remark
+	     (code_remark::severity::warning,
 	      "assignment from pointer to non-boolean bitfield type",
 	      a.get_pp_result(), e_source.get_tokens_range());
 	   a.get_remarks().add(remark);
@@ -3221,8 +3221,8 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 
        },
        [&](const int_type &target, const pointer_type&) {
-	 code_remark_pp remark
-	   (code_remark_pp::severity::warning,
+	 code_remark remark
+	   (code_remark::severity::warning,
 	    "assignment to integer from pointer",
 	    a.get_pp_result(), e_source.get_tokens_range());
 	 a.get_remarks().add(remark);
@@ -3235,8 +3235,8 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 	 if (!e_source.is_constexpr() ||
 	     !e_source.get_constexpr_value().is_zero()) {
 	   // Not a null pointer constant.
-	   code_remark_pp remark
-	     (code_remark_pp::severity::warning,
+	   code_remark remark
+	     (code_remark::severity::warning,
 	      "assignment to pointer from integer which is not NULL",
 	      a.get_pp_result(), e_source.get_tokens_range());
 	   a.get_remarks().add(remark);
@@ -3253,8 +3253,8 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 
 	 if (!(pointed_to_type_source.get_qualifiers().is_subset_of
 	       (pointed_to_type_target.get_qualifiers()))) {
-	   code_remark_pp remark
-	     (code_remark_pp::severity::warning,
+	   code_remark remark
+	     (code_remark::severity::warning,
 	      "assignment's source qualifiers are not a subset of target ones",
 	      a.get_pp_result(), e_source.get_tokens_range());
 	   a.get_remarks().add(remark);
@@ -3275,22 +3275,22 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 		      pointed_to_type_source.is_complete() &&
 		      ptt_it_target.get_width(arch) !=
 		      ptt_it_source.get_width(arch)) {
-		    code_remark_pp remark
-		      (code_remark_pp::severity::warning,
+		    code_remark remark
+		      (code_remark::severity::warning,
 		       "assigning pointers to integer types of different width",
 		       a.get_pp_result(), e_source.get_tokens_range());
 		    a.get_remarks().add(remark);
 		  } else {
-		    code_remark_pp remark
-		      (code_remark_pp::severity::warning,
+		    code_remark remark
+		      (code_remark::severity::warning,
 		       "pointers to different integer types in assignment",
 		       a.get_pp_result(), e_source.get_tokens_range());
 		    a.get_remarks().add(remark);
 		  }
 		},
 		[&](const addressable_type&, const addressable_type&) {
-		    code_remark_pp remark
-		      (code_remark_pp::severity::warning,
+		    code_remark remark
+		      (code_remark::severity::warning,
 		       "incompatible pointer types in assignment",
 		       a.get_pp_result(), e_source.get_tokens_range());
 		    a.get_remarks().add(remark);
@@ -3302,15 +3302,15 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
        [&](const struct_or_union_type &target,
 	   const struct_or_union_type &source) {
 	 if (!target.is_complete()) {
-	   code_remark_pp remark
-	     (code_remark_pp::severity::fatal,
+	   code_remark remark
+	     (code_remark::severity::fatal,
 	      "assignment to incomplete struct or union type",
 	      a.get_pp_result(), e_source.get_tokens_range());
 	   a.get_remarks().add(remark);
 	   throw semantic_except(remark);
 	 } else if (!target.is_compatible_with(arch, source, true)) {
-	   code_remark_pp remark
-	     (code_remark_pp::severity::fatal,
+	   code_remark remark
+	     (code_remark::severity::fatal,
 	      "assignment from incompatible struct or union type",
 	      a.get_pp_result(), e_source.get_tokens_range());
 	   a.get_remarks().add(remark);
@@ -3319,8 +3319,8 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 
        },
        [&](const type&, const type&) {
-	 code_remark_pp remark
-	   (code_remark_pp::severity::fatal,
+	 code_remark remark
+	   (code_remark::severity::fatal,
 	    "invalid type for assignment target",
 	    a.get_pp_result(), e_source.get_tokens_range());
 	 a.get_remarks().add(remark);
@@ -3333,9 +3333,9 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 void expr_assignment::evaluate_type(ast &a, const architecture &arch)
 {
   if (!_lhs.is_lvalue()) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "assigment to something which is not a lvalue",
-			  a.get_pp_result(), _lhs.get_tokens_range());
+    code_remark remark(code_remark::severity::fatal,
+		       "assigment to something which is not a lvalue",
+		       a.get_pp_result(), _lhs.get_tokens_range());
     a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -3349,10 +3349,10 @@ void expr_assignment::evaluate_type(ast &a, const architecture &arch)
 	   ((wrap_callables<default_action_nop>
 	     ([&](const enum_type &et_lhs) {
 		if (!et_lhs.is_complete()) {
-		  code_remark_pp remark(code_remark_pp::severity::fatal,
-					"assignment to incomplete enum type",
-					a.get_pp_result(),
-					_lhs.get_tokens_range());
+		  code_remark remark(code_remark::severity::fatal,
+				     "assignment to incomplete enum type",
+				     a.get_pp_result(),
+				     _lhs.get_tokens_range());
 		  a.get_remarks().add(remark);
 		  throw semantic_except(remark);
 		}
@@ -3366,10 +3366,10 @@ void expr_assignment::evaluate_type(ast &a, const architecture &arch)
 	   ((wrap_callables<default_action_nop>
 	     ([&](const enum_type &et_rhs) {
 		if (!et_rhs.is_complete()) {
-		  code_remark_pp remark(code_remark_pp::severity::fatal,
-					"assignment from incomplete enum type",
-					a.get_pp_result(),
-					_rhs.get_tokens_range());
+		  code_remark remark(code_remark::severity::fatal,
+				     "assignment from incomplete enum type",
+				     a.get_pp_result(),
+				     _rhs.get_tokens_range());
 		  a.get_remarks().add(remark);
 		  throw semantic_except(remark);
 		}
@@ -3418,8 +3418,8 @@ void expr_assignment::evaluate_type(ast &a, const architecture &arch)
 	   _convert_type_for_expr_context();
 	 },
 	 [&](const type&, const type&) {
-	   code_remark_pp remark
-	     (code_remark_pp::severity::fatal,
+	   code_remark remark
+	     (code_remark::severity::fatal,
 	      "non-arithmetic operand in arithmetic assignment",
 	      a.get_pp_result(), get_tokens_range());
 	   a.get_remarks().add(remark);
@@ -3445,9 +3445,9 @@ void expr_assignment::evaluate_type(ast &a, const architecture &arch)
 	   _convert_type_for_expr_context();
 	 },
 	 [&](const type&, const type&) {
-	   code_remark_pp remark (code_remark_pp::severity::fatal,
-				  "non-integer operand in integer assignment",
-				  a.get_pp_result(), get_tokens_range());
+	   code_remark remark (code_remark::severity::fatal,
+			       "non-integer operand in integer assignment",
+			       a.get_pp_result(), get_tokens_range());
 	   a.get_remarks().add(remark);
 	   throw semantic_except(remark);
 	 })),
@@ -3460,8 +3460,8 @@ void expr_assignment::evaluate_type(ast &a, const architecture &arch)
 void expr_conditional::evaluate_type(ast &a, const architecture &arch)
 {
   if (!is_scalar_type(*_cond.get_type())) {
-    code_remark_pp remark
-      (code_remark_pp::severity::fatal,
+    code_remark remark
+      (code_remark::severity::fatal,
        "ternary operator's condition evaluates to non-scalar type",
        a.get_pp_result(), _cond.get_tokens_range());
     a.get_remarks().add(remark);
@@ -3488,8 +3488,8 @@ void expr_conditional::evaluate_type(ast &a, const architecture &arch)
 	   ((wrap_callables<default_action_nop>
 	     ([&](const enum_type &et_true) {
 		if (!et_true.is_complete()) {
-		  code_remark_pp remark
-		    (code_remark_pp::severity::fatal,
+		  code_remark remark
+		    (code_remark::severity::fatal,
 		     "ternary operator's operand has incomplete enum type",
 		     a.get_pp_result(), expr_true.get_tokens_range());
 		  a.get_remarks().add(remark);
@@ -3505,8 +3505,8 @@ void expr_conditional::evaluate_type(ast &a, const architecture &arch)
 	   ((wrap_callables<default_action_nop>
 	     ([&](const enum_type &et_false) {
 		if (!et_false.is_complete()) {
-		  code_remark_pp remark
-		    (code_remark_pp::severity::fatal,
+		  code_remark remark
+		    (code_remark::severity::fatal,
 		     "ternary operator's operand has incomplete enum type",
 		     a.get_pp_result(), _expr_false.get_tokens_range());
 		  a.get_remarks().add(remark);
@@ -3609,8 +3609,8 @@ void expr_conditional::evaluate_type(ast &a, const architecture &arch)
 	 } else {
 	  if (!(pointed_to_type_true.is_compatible_with
 		(arch, pointed_to_type_false, true))) {
-	    code_remark_pp remark
-	      (code_remark_pp::severity::fatal,
+	    code_remark remark
+	      (code_remark::severity::fatal,
 	       "ternary operator's operands have incompatible pointer types",
 	       a.get_pp_result(), get_tokens_range());
 	    a.get_remarks().add(remark);
@@ -3647,8 +3647,8 @@ void expr_conditional::evaluate_type(ast &a, const architecture &arch)
 	 // (NULL).
 	 if (!_expr_false.is_constexpr() ||
 	     !_expr_false.get_constexpr_value().is_zero()) {
-	   code_remark_pp remark
-	     (code_remark_pp::severity::fatal,
+	   code_remark remark
+	     (code_remark::severity::fatal,
 	      "expected null pointer constant for ternary operator's operand",
 	      a.get_pp_result(), _expr_false.get_tokens_range());
 	   a.get_remarks().add(remark);
@@ -3677,8 +3677,8 @@ void expr_conditional::evaluate_type(ast &a, const architecture &arch)
 	 // (NULL).
 	 if (!expr_true.is_constexpr() ||
 	     !expr_true.get_constexpr_value().is_zero()) {
-	   code_remark_pp remark
-	     (code_remark_pp::severity::fatal,
+	   code_remark remark
+	     (code_remark::severity::fatal,
 	      "expected null pointer constant for ternary operator's operand",
 	      a.get_pp_result(), expr_true.get_tokens_range());
 	   a.get_remarks().add(remark);
@@ -3705,16 +3705,16 @@ void expr_conditional::evaluate_type(ast &a, const architecture &arch)
        [&](const struct_or_union_type &sout_true,
 	   const struct_or_union_type &sout_false) {
 	 if (!sout_true.is_compatible_with(arch, sout_false, true)) {
-	   code_remark_pp remark
-	     (code_remark_pp::severity::fatal,
+	   code_remark remark
+	     (code_remark::severity::fatal,
 	      "ternary operator's operands have incompatible types",
 	      a.get_pp_result(), get_tokens_range());
 	   a.get_remarks().add(remark);
 	   throw semantic_except(remark);
 
 	 } else if (!sout_true.is_complete()) {
-	   code_remark_pp remark
-	     (code_remark_pp::severity::fatal,
+	   code_remark remark
+	     (code_remark::severity::fatal,
 	      "ternary operator's operand has incomplete struct/union type",
 	      a.get_pp_result(), expr_true.get_tokens_range());
 	   a.get_remarks().add(remark);
@@ -3741,8 +3741,8 @@ void expr_conditional::evaluate_type(ast &a, const architecture &arch)
 
        },
        [&](const type&, const type&) {
-	 code_remark_pp remark
-	   (code_remark_pp::severity::fatal,
+	 code_remark remark
+	   (code_remark::severity::fatal,
 	    "ternary operator's operands have invalid types",
 	    a.get_pp_result(), get_tokens_range());
 	 a.get_remarks().add(remark);
@@ -3776,9 +3776,9 @@ void expr_binop::_evaluate_arith_binop(const arithmetic_type &at_left,
 	     try {
 	       i_result = i_left * i_right;
 	     } catch (const std::overflow_error&) {
-	       code_remark_pp remark(code_remark_pp::severity::warning,
-				     "integer overflow in multiplication",
-				     a.get_pp_result(), get_tokens_range());
+	       code_remark remark(code_remark::severity::warning,
+				  "integer overflow in multiplication",
+				  a.get_pp_result(), get_tokens_range());
 	       a.get_remarks().add(remark);
 	       return;
 	     }
@@ -3786,9 +3786,9 @@ void expr_binop::_evaluate_arith_binop(const arithmetic_type &at_left,
 
 	   case binary_op::div:
 	     if (!i_right) {
-	       code_remark_pp remark(code_remark_pp::severity::warning,
-				     "division by zero",
-				     a.get_pp_result(), get_tokens_range());
+	       code_remark remark(code_remark::severity::warning,
+				  "division by zero",
+				  a.get_pp_result(), get_tokens_range());
 	       a.get_remarks().add(remark);
 	       return;
 	     }
@@ -3800,9 +3800,9 @@ void expr_binop::_evaluate_arith_binop(const arithmetic_type &at_left,
 	     try {
 	       i_result = i_left + i_right;
 	     } catch (const std::overflow_error&) {
-	       code_remark_pp remark(code_remark_pp::severity::warning,
-				     "integer overflow in addition",
-				     a.get_pp_result(), get_tokens_range());
+	       code_remark remark(code_remark::severity::warning,
+				  "integer overflow in addition",
+				  a.get_pp_result(), get_tokens_range());
 	       a.get_remarks().add(remark);
 	       return;
 	     }
@@ -3812,9 +3812,9 @@ void expr_binop::_evaluate_arith_binop(const arithmetic_type &at_left,
 	     try {
 	       i_result = i_left - i_right;
 	     } catch (const std::overflow_error&) {
-	       code_remark_pp remark(code_remark_pp::severity::warning,
-				     "integer overflow in subtraction",
-				     a.get_pp_result(), get_tokens_range());
+	       code_remark remark(code_remark::severity::warning,
+				  "integer overflow in subtraction",
+				  a.get_pp_result(), get_tokens_range());
 	       a.get_remarks().add(remark);
 	       return;
 	     }
@@ -3878,7 +3878,7 @@ void expr_binop::_evaluate_ptr_sub(const pointer_type &pt_left,
 				   ast &a, const architecture &arch)
 {
   if (!pt_left.is_compatible_with(arch, pt_right, true)) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
+    code_remark remark(code_remark::severity::fatal,
 			  "subtraction of pointers to incompatible types",
 			  a.get_pp_result(), get_tokens_range());
     a.get_remarks().add(remark);
@@ -3918,8 +3918,8 @@ void expr_binop::_evaluate_ptr_sub(const pointer_type &pt_left,
 
       auto div_result = distance / pointed_to_size;
       if (div_result.second) {
-	code_remark_pp remark
-	  (code_remark_pp::severity::warning,
+	code_remark remark
+	  (code_remark::severity::warning,
 	   "pointer difference is not a multiple of element size",
 	   a.get_pp_result(), get_tokens_range());
 	a.get_remarks().add(remark);
@@ -3942,8 +3942,8 @@ void expr_binop::_evaluate_ptr_sub(const pointer_type &pt_left,
 	arch.get_std_int_width(ptrdiff_kind);
 
       if (ptrdiff_width < (distance.width() - distance.clrsb())) {
-	code_remark_pp remark
-	  (code_remark_pp::severity::warning,
+	code_remark remark
+	  (code_remark::severity::warning,
 	   "pointer difference overflows ptrdiff_t",
 	   a.get_pp_result(), get_tokens_range());
 	a.get_remarks().add(remark);
@@ -3981,9 +3981,9 @@ void expr_binop::_evaluate_shift(const types::int_type &it_left,
     const target_int &i_right = cv_right.get_int_value();
 
     if (i_right.is_negative()) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "negative shift distance",
-			    a.get_pp_result(), _right.get_tokens_range());
+      code_remark remark(code_remark::severity::fatal,
+			 "negative shift distance",
+			 a.get_pp_result(), _right.get_tokens_range());
       a.get_remarks().add(remark);
       throw semantic_except(remark);
     }
@@ -3991,9 +3991,9 @@ void expr_binop::_evaluate_shift(const types::int_type &it_left,
     if (!i_right.get_limbs().fits_into_type<mpa::limbs::size_type>() ||
 	(i_right.get_limbs().to_type<mpa::limbs::size_type>() >
 	 i_left.width())) {
-      code_remark_pp remark(code_remark_pp::severity::warning,
-			    "shift distance exceeds integer width",
-			    a.get_pp_result(), get_tokens_range());
+      code_remark remark(code_remark::severity::warning,
+			 "shift distance exceeds integer width",
+			 a.get_pp_result(), get_tokens_range());
       a.get_remarks().add(remark);
       return;
     }
@@ -4003,9 +4003,9 @@ void expr_binop::_evaluate_shift(const types::int_type &it_left,
       try {
 	i_result = i_left << i_right;
       } catch(const std::overflow_error&) {
-	code_remark_pp remark(code_remark_pp::severity::warning,
-			      "integer overflow in shift operation",
-			      a.get_pp_result(), get_tokens_range());
+	code_remark remark(code_remark::severity::warning,
+			   "integer overflow in shift operation",
+			   a.get_pp_result(), get_tokens_range());
 	a.get_remarks().add(remark);
 
 	// We're in undefined behaviour land. However, gcc still
@@ -4068,9 +4068,9 @@ void expr_binop::_evaluate_bin_binop(const types::int_type &it_left,
     switch (_op) {
     case binary_op::mod:
       if (!i_right) {
-	code_remark_pp remark(code_remark_pp::severity::fatal,
-			      "division by zero",
-			      a.get_pp_result(), get_tokens_range());
+	code_remark remark(code_remark::severity::fatal,
+			   "division by zero",
+			   a.get_pp_result(), get_tokens_range());
 	a.get_remarks().add(remark);
 	throw semantic_except(remark);
       }
@@ -4179,8 +4179,8 @@ void expr_binop::_evaluate_cmp(const types::pointer_type &pt_left,
        },
        [&](const void_type&, const addressable_type&) {
 	 if (_op != binary_op::eq && _op != binary_op::neq) {
-	    code_remark_pp remark
-	      (code_remark_pp::severity::warning,
+	    code_remark remark
+	      (code_remark::severity::warning,
 	       "comparison between incompatible pointers without cast",
 	       a.get_pp_result(), get_tokens_range());
 	    a.get_remarks().add(remark);
@@ -4188,8 +4188,8 @@ void expr_binop::_evaluate_cmp(const types::pointer_type &pt_left,
        },
        [&](const addressable_type&, const void_type&) {
 	 if (_op != binary_op::eq && _op != binary_op::neq) {
-	    code_remark_pp remark
-	      (code_remark_pp::severity::warning,
+	    code_remark remark
+	      (code_remark::severity::warning,
 	       "comparison between incompatible pointers without cast",
 	       a.get_pp_result(), get_tokens_range());
 	    a.get_remarks().add(remark);
@@ -4197,8 +4197,8 @@ void expr_binop::_evaluate_cmp(const types::pointer_type &pt_left,
        },
        [&](const addressable_type &at_left, const addressable_type &at_right) {
 	 if (!at_left.is_compatible_with(arch, at_right, true)) {
-	   code_remark_pp remark
-	     (code_remark_pp::severity::fatal,
+	   code_remark remark
+	     (code_remark::severity::fatal,
 	      "comparison between incompatible pointer types",
 	      a.get_pp_result(), get_tokens_range());
 	   a.get_remarks().add(remark);
@@ -4367,8 +4367,8 @@ void expr_binop::_evaluate_cmp(const types::pointer_type &pt_left,
   // The right operand must be a NULL pointer constant in integer
   // constant expression form.
   if (!_right.is_constexpr() || !_right.get_constexpr_value().is_zero()) {
-    code_remark_pp remark
-      (code_remark_pp::severity::warning,
+    code_remark remark
+      (code_remark::severity::warning,
        "pointer comparison against non-NULL integer",
        a.get_pp_result(), _right.get_tokens_range());
     a.get_remarks().add(remark);
@@ -4436,8 +4436,8 @@ void expr_binop::_evaluate_cmp(const types::int_type &it_left,
   // The left operand must be a NULL pointer constant in integer
   // constant expression form.
   if (!_left.is_constexpr() || !_left.get_constexpr_value().is_zero()) {
-    code_remark_pp remark
-      (code_remark_pp::severity::warning,
+    code_remark remark
+      (code_remark::severity::warning,
        "pointer comparison against non-NULL integer",
        a.get_pp_result(), _left.get_tokens_range());
     a.get_remarks().add(remark);
@@ -4619,8 +4619,8 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
 	   ((wrap_callables<default_action_nop>
 	     ([&](const enum_type &et_op) {
 		if (!et_op.is_complete()) {
-		  code_remark_pp remark
-		    (code_remark_pp::severity::fatal,
+		  code_remark remark
+		    (code_remark::severity::fatal,
 		     "binary expression's operand has incomplete enum type",
 		     a.get_pp_result(), e_op.get_tokens_range());
 		  a.get_remarks().add(remark);
@@ -4661,8 +4661,8 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
 
 	 },
 	 [&](const type&, const type&) {
-	   code_remark_pp remark
-	     (code_remark_pp::severity::fatal,
+	   code_remark remark
+	     (code_remark::severity::fatal,
 	      "invalid operand types for subtraction operator",
 	      a.get_pp_result(), get_tokens_range());
 	   a.get_remarks().add(remark);
@@ -4714,9 +4714,9 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
 
 	 },
 	 [&](const type&, const type&) {
-	   code_remark_pp remark(code_remark_pp::severity::fatal,
-				 "invalid operand types for addition operator",
-				 a.get_pp_result(), get_tokens_range());
+	   code_remark remark(code_remark::severity::fatal,
+			      "invalid operand types for addition operator",
+			      a.get_pp_result(), get_tokens_range());
 	   a.get_remarks().add(remark);
 	   throw semantic_except(remark);
 
@@ -4736,8 +4736,8 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
 
 	 },
 	 [&](const type&, const type&) {
-	   code_remark_pp remark
-	     (code_remark_pp::severity::fatal,
+	   code_remark remark
+	     (code_remark::severity::fatal,
 	      "invalid operand types for multiplicative operator",
 	      a.get_pp_result(), get_tokens_range());
 	   a.get_remarks().add(remark);
@@ -4759,9 +4759,9 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
 
 	 },
 	 [&](const type&, const type&) {
-	   code_remark_pp remark(code_remark_pp::severity::fatal,
-				 "invalid operand types for shift operator",
-				 a.get_pp_result(), get_tokens_range());
+	   code_remark remark(code_remark::severity::fatal,
+			      "invalid operand types for shift operator",
+			      a.get_pp_result(), get_tokens_range());
 	   a.get_remarks().add(remark);
 	   throw semantic_except(remark);
 
@@ -4785,9 +4785,9 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
 
 	 },
 	 [&](const type&, const type&) {
-	   code_remark_pp remark(code_remark_pp::severity::fatal,
-				 "invalid operand types for binary operator",
-				 a.get_pp_result(), get_tokens_range());
+	   code_remark remark(code_remark::severity::fatal,
+			      "invalid operand types for binary operator",
+			      a.get_pp_result(), get_tokens_range());
 	   a.get_remarks().add(remark);
 	   throw semantic_except(remark);
 
@@ -4800,12 +4800,12 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
   case binary_op::logical_or:
     if (!is_scalar_type(*_left.get_type()) ||
 	!is_scalar_type(*_right.get_type())) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "non-scalar operand to logical or/and",
-			    a.get_pp_result(),
-			    (!is_scalar_type(*_left.get_type()) ?
-			     _left.get_tokens_range() :
-			     _right.get_tokens_range()));
+      code_remark remark(code_remark::severity::fatal,
+			 "non-scalar operand to logical or/and",
+			 a.get_pp_result(),
+			 (!is_scalar_type(*_left.get_type()) ?
+			  _left.get_tokens_range() :
+			  _right.get_tokens_range()));
       a.get_remarks().add(remark);
       throw semantic_except(remark);
     }
@@ -4850,8 +4850,8 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
 
 	 },
 	 [&](const type&, const type&) {
-	   code_remark_pp remark
-	     (code_remark_pp::severity::fatal,
+	   code_remark remark
+	     (code_remark::severity::fatal,
 	      "invalid operand types for comparison operator",
 	      a.get_pp_result(), get_tokens_range());
 	   a.get_remarks().add(remark);
@@ -4874,10 +4874,10 @@ void expr_cast::evaluate_type(ast &a, const architecture &arch)
 	   ((wrap_callables<default_action_nop>
 	     ([&](const enum_type &et_target) {
 		if (!et_target.is_complete()) {
-		  code_remark_pp remark(code_remark_pp::severity::fatal,
-					"cast to incomplete enum type",
-					a.get_pp_result(),
-					_tn.get_tokens_range());
+		  code_remark remark(code_remark::severity::fatal,
+				     "cast to incomplete enum type",
+				     a.get_pp_result(),
+				     _tn.get_tokens_range());
 		  a.get_remarks().add(remark);
 		  throw semantic_except(remark);
 		}
@@ -4891,10 +4891,10 @@ void expr_cast::evaluate_type(ast &a, const architecture &arch)
 	   ((wrap_callables<default_action_nop>
 	     ([&](const enum_type &et_source) {
 		if (!et_source.is_complete()) {
-		  code_remark_pp remark(code_remark_pp::severity::fatal,
-					"cast from incomplete enum type",
-					a.get_pp_result(),
-					_e.get_tokens_range());
+		  code_remark remark(code_remark::severity::fatal,
+				     "cast from incomplete enum type",
+				     a.get_pp_result(),
+				     _e.get_tokens_range());
 		  a.get_remarks().add(remark);
 		  throw semantic_except(remark);
 		}
@@ -4929,9 +4929,9 @@ void expr_cast::evaluate_type(ast &a, const architecture &arch)
 	 try {
 	   i_result = cv.convert_to(arch, *it_target);
 	 } catch (const std::overflow_error&) {
-	   code_remark_pp remark(code_remark_pp::severity::warning,
-				 "integer overflow in cast",
-				 a.get_pp_result(), get_tokens_range());
+	   code_remark remark(code_remark::severity::warning,
+			      "integer overflow in cast",
+			      a.get_pp_result(), get_tokens_range());
 	   a.get_remarks().add(remark);
 
 	   // GCC still accepts this. Do the same, interpreting the
@@ -4974,9 +4974,9 @@ void expr_cast::evaluate_type(ast &a, const architecture &arch)
 	 try {
 	   i_result = cv.convert_to(arch, *it_target);
 	 } catch (const std::overflow_error&) {
-	   code_remark_pp remark(code_remark_pp::severity::warning,
-				 "integer overflow in cast",
-				 a.get_pp_result(), get_tokens_range());
+	   code_remark remark(code_remark::severity::warning,
+			      "integer overflow in cast",
+			      a.get_pp_result(), get_tokens_range());
 	   a.get_remarks().add(remark);
 	   return;
 	 }
@@ -5017,9 +5017,9 @@ void expr_cast::evaluate_type(ast &a, const architecture &arch)
 	 mpa::limbs offset = ac.get_offset();
 
 	 if (is_signed && (offset.width() - offset.clrsb()) > width) {
-	   code_remark_pp remark(code_remark_pp::severity::warning,
-				 "integer overflow in cast",
-				 a.get_pp_result(), get_tokens_range());
+	   code_remark remark(code_remark::severity::warning,
+			      "integer overflow in cast",
+			      a.get_pp_result(), get_tokens_range());
 	   a.get_remarks().add(remark);
 	 } else {
 	   offset.resize(mpa::limbs::width_to_size(width));
@@ -5101,9 +5101,9 @@ void expr_cast::evaluate_type(ast &a, const architecture &arch)
        },
        [&](const std::shared_ptr<const type>&,
 	   const std::shared_ptr<const type>&) {
-	 code_remark_pp remark(code_remark_pp::severity::warning,
-			       "invalid types in cast",
-			       a.get_pp_result(), get_tokens_range());
+	 code_remark remark(code_remark::severity::warning,
+			    "invalid types in cast",
+			    a.get_pp_result(), get_tokens_range());
 	 a.get_remarks().add(remark);
 	 _set_type(t_target);
        })),
@@ -5130,8 +5130,8 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
 	   ((wrap_callables<default_action_nop>
 	     ([&](const enum_type &et_op) {
 		if (!et_op.is_complete()) {
-		  code_remark_pp remark
-		    (code_remark_pp::severity::fatal,
+		  code_remark remark
+		    (code_remark::severity::fatal,
 		     "unary expression's operand has incomplete enum type",
 		     a.get_pp_result(), _e.get_tokens_range());
 		  a.get_remarks().add(remark);
@@ -5146,8 +5146,8 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
     /* fall through */
   case unary_op_pre::dec:
     if (!_e.is_lvalue()) {
-      code_remark_pp remark
-	(code_remark_pp::severity::fatal,
+      code_remark remark
+	(code_remark::severity::fatal,
 	 "non-lvalue operand to increment/decrement operator",
 	 a.get_pp_result(), _e.get_tokens_range());
       a.get_remarks().add(remark);
@@ -5168,8 +5168,8 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
 
 	 },
 	 [&](const type&) {
-	   code_remark_pp remark
-	     (code_remark_pp::severity::fatal,
+	   code_remark remark
+	     (code_remark::severity::fatal,
 	      "invalid operand to increment/decrement operator",
 	      a.get_pp_result(), _e.get_tokens_range());
 	   a.get_remarks().add(remark);
@@ -5182,9 +5182,9 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
 
   case unary_op_pre::addr:
     if (!_e.is_lvalue()) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "non-lvalue operand to address operator",
-			    a.get_pp_result(), _e.get_tokens_range());
+      code_remark remark(code_remark::severity::fatal,
+			 "non-lvalue operand to address operator",
+			 a.get_pp_result(), _e.get_tokens_range());
       a.get_remarks().add(remark);
       throw semantic_except(remark);
     }
@@ -5203,9 +5203,9 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
 
 	 },
 	 [&](const type&) {
-	   code_remark_pp remark(code_remark_pp::severity::fatal,
-				 "operand's type is not addressable",
-				 a.get_pp_result(), _e.get_tokens_range());
+	   code_remark remark(code_remark::severity::fatal,
+			      "operand's type is not addressable",
+			      a.get_pp_result(), _e.get_tokens_range());
 	   a.get_remarks().add(remark);
 	   throw semantic_except(remark);
 
@@ -5232,9 +5232,9 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
 		this->get_parent()->is_any_of<stmt_goto>());
 
 	     if (!is_local_label_ptr_deref) {
-	       code_remark_pp remark(code_remark_pp::severity::warning,
-				     "dereferencing pointer to incomplete type",
-				     a.get_pp_result(), _e.get_tokens_range());
+	       code_remark remark(code_remark::severity::warning,
+				  "dereferencing pointer to incomplete type",
+				  a.get_pp_result(), _e.get_tokens_range());
 	       a.get_remarks().add(remark);
 	     }
 	   }
@@ -5256,8 +5256,8 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
 	   // with integer targets. Accept that too, but warn.
 	   if (is_type<int_type>(t) &&
 	       this->get_parent()->is_any_of<stmt_goto>()) {
-	     code_remark_pp remark
-	       (code_remark_pp::severity::warning,
+	     code_remark remark
+	       (code_remark::severity::warning,
 		"dereferencing integer at computed goto",
 		a.get_pp_result(), _e.get_tokens_range());
 	     a.get_remarks().add(remark);
@@ -5267,8 +5267,8 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
 	     _set_type(void_type::create());
 
 	   } else {
-	     code_remark_pp remark
-	       (code_remark_pp::severity::fatal,
+	     code_remark remark
+	       (code_remark::severity::fatal,
 		"dereferencing something which is not a pointer",
 		a.get_pp_result(), _e.get_tokens_range());
 	     a.get_remarks().add(remark);
@@ -5336,8 +5336,8 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
 
 	 },
 	 [&](const std::shared_ptr<const type>&) {
-	   code_remark_pp remark
-	     (code_remark_pp::severity::fatal,
+	   code_remark remark
+	     (code_remark::severity::fatal,
 	      "unary +/- operand applied to non-arithmetic type",
 	      a.get_pp_result(), _e.get_tokens_range());
 	   a.get_remarks().add(remark);
@@ -5389,9 +5389,9 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
 
 	 },
 	 [&](const std::shared_ptr<const type>&) {
-	   code_remark_pp remark(code_remark_pp::severity::fatal,
-				 "binary negation applied to non-integer type",
-				 a.get_pp_result(), _e.get_tokens_range());
+	   code_remark remark(code_remark::severity::fatal,
+			      "binary negation applied to non-integer type",
+			      a.get_pp_result(), _e.get_tokens_range());
 	   a.get_remarks().add(remark);
 	   throw semantic_except(remark);
 
@@ -5402,9 +5402,9 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
 
   case unary_op_pre::logical_not:
     if (!is_scalar_type(*t)) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "logical not applied to non-integer type",
-			    a.get_pp_result(), _e.get_tokens_range());
+      code_remark remark(code_remark::severity::fatal,
+			 "logical not applied to non-integer type",
+			 a.get_pp_result(), _e.get_tokens_range());
       a.get_remarks().add(remark);
       throw semantic_except(remark);
     }
@@ -5462,9 +5462,9 @@ void expr_sizeof_expr::evaluate_type(ast &a, const architecture &arch)
       ((wrap_callables<default_action_unreachable<void, type_set<> >::type>
 	([&](const object_type &ot) {
 	   if (!ot.is_complete()) {
-	     code_remark_pp remark(code_remark_pp::severity::fatal,
-				   "sizeof applied to incomplete type",
-				   a.get_pp_result(), _e.get_tokens_range());
+	     code_remark remark(code_remark::severity::fatal,
+				"sizeof applied to incomplete type",
+				a.get_pp_result(), _e.get_tokens_range());
 	     a.get_remarks().add(remark);
 	     throw semantic_except(remark);
 	   }
@@ -5505,9 +5505,9 @@ void expr_sizeof_type_name::evaluate_type(ast &a, const architecture &arch)
       ((wrap_callables<default_action_unreachable<void, type_set<> >::type>
 	([&](const object_type &ot) {
 	   if (!ot.is_complete()) {
-	     code_remark_pp remark(code_remark_pp::severity::fatal,
-				   "sizeof applied to incomplete type",
-				   a.get_pp_result(), _tn.get_tokens_range());
+	     code_remark remark(code_remark::severity::fatal,
+				"sizeof applied to incomplete type",
+				a.get_pp_result(), _tn.get_tokens_range());
 	     a.get_remarks().add(remark);
 	     throw semantic_except(remark);
 	   }
@@ -5548,9 +5548,9 @@ void expr_alignof_expr::evaluate_type(ast &a, const architecture &arch)
       ((wrap_callables<default_action_unreachable<void, type_set<> >::type>
 	([&](const object_type &ot) {
 	   if (!ot.is_complete()) {
-	     code_remark_pp remark(code_remark_pp::severity::fatal,
-				   "alignof applied to incomplete type",
-				   a.get_pp_result(), _e.get_tokens_range());
+	     code_remark remark(code_remark::severity::fatal,
+				"alignof applied to incomplete type",
+				a.get_pp_result(), _e.get_tokens_range());
 	     a.get_remarks().add(remark);
 	     throw semantic_except(remark);
 	   }
@@ -5594,9 +5594,9 @@ void expr_alignof_type_name::evaluate_type(ast &a, const architecture &arch)
       ((wrap_callables<default_action_unreachable<void, type_set<> >::type>
 	([&](const object_type &ot) {
 	   if (!ot.is_complete()) {
-	     code_remark_pp remark(code_remark_pp::severity::fatal,
-				   "alignof applied to incomplete type",
-				   a.get_pp_result(), _tn.get_tokens_range());
+	     code_remark remark(code_remark::severity::fatal,
+				"alignof applied to incomplete type",
+				a.get_pp_result(), _tn.get_tokens_range());
 	     a.get_remarks().add(remark);
 	     throw semantic_except(remark);
 	   }
@@ -5652,8 +5652,8 @@ void expr_builtin_offsetof::evaluate_type(ast &a, const architecture &arch)
 		 return at_base.get_element_type().get();
 	       },
 	       [&](const type&) -> const addressable_type* {
-		 code_remark_pp remark
-		   (code_remark_pp::severity::fatal,
+		 code_remark remark
+		   (code_remark::severity::fatal,
 		    "'->' style member designator applied to non-array type",
 		    a.get_pp_result(), m.member_tok);
 		 a.get_remarks().add(remark);
@@ -5666,8 +5666,8 @@ void expr_builtin_offsetof::evaluate_type(ast &a, const architecture &arch)
 	  ((wrap_callables<default_action_nop>
 	    ([&](const struct_or_union_type &sout_base) {
 	       if (!sout_base.is_complete()) {
-		 code_remark_pp remark
-		   (code_remark_pp::severity::fatal,
+		 code_remark remark
+		   (code_remark::severity::fatal,
 		    "member dereference in incomplete struct or union",
 		    a.get_pp_result(), m.member_tok);
 		 a.get_remarks().add(remark);
@@ -5678,7 +5678,7 @@ void expr_builtin_offsetof::evaluate_type(ast &a, const architecture &arch)
 		 (sout_base.get_content()
 		  ->lookup(a.get_pp_tokens()[m.member_tok].get_value()));
 	       if (lr.empty()) {
-		 code_remark_pp remark(code_remark_pp::severity::fatal,
+		 code_remark remark(code_remark::severity::fatal,
 				       "member lookup failed",
 				       a.get_pp_result(), m.member_tok);
 		 a.get_remarks().add(remark);
@@ -5693,8 +5693,8 @@ void expr_builtin_offsetof::evaluate_type(ast &a, const architecture &arch)
 			return &at;
 		      },
 		      [&](const type&) -> const addressable_type* {
-			code_remark_pp remark
-			  (code_remark_pp::severity::fatal,
+			code_remark remark
+			  (code_remark::severity::fatal,
 			   "taking address of non-addressable member",
 			   a.get_pp_result(), m.member_tok);
 			a.get_remarks().add(remark);
@@ -5716,8 +5716,8 @@ void expr_builtin_offsetof::evaluate_type(ast &a, const architecture &arch)
 	       }
 	     },
 	     [&](const type&) {
-	       code_remark_pp remark
-		 (code_remark_pp::severity::fatal,
+	       code_remark remark
+		 (code_remark::severity::fatal,
 		  "member dereference in something which is not a struct/union",
 		  a.get_pp_result(), m.member_tok);
 	       a.get_remarks().add(remark);
@@ -5734,8 +5734,8 @@ void expr_builtin_offsetof::evaluate_type(ast &a, const architecture &arch)
 		 return *at_base.get_element_type();
 	       },
 	       [&](const type&) -> const object_type& {
-		 code_remark_pp remark
-		   (code_remark_pp::severity::fatal,
+		 code_remark remark
+		   (code_remark::severity::fatal,
 		    "array dereference designator applied to non-array type",
 		    a.get_pp_result(), e_index.get_tokens_range());
 		 a.get_remarks().add(remark);
@@ -5744,8 +5744,8 @@ void expr_builtin_offsetof::evaluate_type(ast &a, const architecture &arch)
 	     *t_base);
 
 	if (!is_type<int_type>(*e_index.get_type())) {
-	  code_remark_pp remark
-	    (code_remark_pp::severity::fatal,
+	  code_remark remark
+	    (code_remark::severity::fatal,
 	     "array index expression doesn't have integer type",
 	     a.get_pp_result(), e_index.get_tokens_range());
 	  a.get_remarks().add(remark);
@@ -5756,8 +5756,8 @@ void expr_builtin_offsetof::evaluate_type(ast &a, const architecture &arch)
 	  ((wrap_callables<default_action_nop>
 	    ([&](const enum_type &et_index) {
 	       if (!et_index.is_complete()) {
-		 code_remark_pp remark
-		   (code_remark_pp::severity::fatal,
+		 code_remark remark
+		   (code_remark::severity::fatal,
 		    "array index expression has incomplete enum type",
 		    a.get_pp_result(), e_index.get_tokens_range());
 		 a.get_remarks().add(remark);
@@ -5864,8 +5864,8 @@ void expr_array_subscript::evaluate_type(ast &a, const architecture &arch)
 	((wrap_callables<default_action_nop>
 	  ([&](const enum_type &et_index) {
 	     if (!et_index.is_complete()) {
-	       code_remark_pp remark
-		 (code_remark_pp::severity::fatal,
+	       code_remark remark
+		 (code_remark::severity::fatal,
 		  "array index expression has incomplete enum type",
 		  a.get_pp_result(), e_index.get_tokens_range());
 	       a.get_remarks().add(remark);
@@ -5886,9 +5886,9 @@ void expr_array_subscript::evaluate_type(ast &a, const architecture &arch)
 	 _evaluate_type(a, arch, pt_base, _index, _base);
        },
        [&](const type&, const type&) {
-	 code_remark_pp remark(code_remark_pp::severity::fatal,
-			       "invalid types for array subscript operator",
-			       a.get_pp_result(), get_tokens_range());
+	 code_remark remark(code_remark::severity::fatal,
+			    "invalid types for array subscript operator",
+			    a.get_pp_result(), get_tokens_range());
 	 a.get_remarks().add(remark);
 	 throw semantic_except(remark);
        })),
@@ -5908,16 +5908,16 @@ void expr_func_invocation::evaluate_type(ast &a, const architecture &arch)
 		const parameter_type_list &ptl = pft.get_parameter_type_list();
 
 		if (n_args < ptl.size()) {
-		  code_remark_pp remark
-		    (code_remark_pp::severity::fatal,
+		  code_remark remark
+		    (code_remark::severity::fatal,
 		     "too few arguments in function invocation",
 		     a.get_pp_result(), get_tokens_range());
 		  a.get_remarks().add(remark);
 		  throw semantic_except(remark);
 
 		} else if (!pft.is_variadic() && n_args > ptl.size()) {
-		  code_remark_pp remark
-		    (code_remark_pp::severity::fatal,
+		  code_remark remark
+		    (code_remark::severity::fatal,
 		     "too many arguments in function invocation",
 		     a.get_pp_result(), get_tokens_range());
 		  a.get_remarks().add(remark);
@@ -5938,8 +5938,8 @@ void expr_func_invocation::evaluate_type(ast &a, const architecture &arch)
 		  // than indicated by the function definition's
 		  // parameter identifier list.
 		  if (n_args != upft.get_n_args()) {
-		    code_remark_pp remark
-		      (code_remark_pp::severity::warning,
+		    code_remark remark
+		      (code_remark::severity::warning,
 		       "wrong number of arguments to function invocation",
 		       a.get_pp_result(), get_tokens_range());
 		    a.get_remarks().add(remark);
@@ -5951,8 +5951,8 @@ void expr_func_invocation::evaluate_type(ast &a, const architecture &arch)
 
 	      },
 	      [&](const type&) {
-		code_remark_pp remark
-		  (code_remark_pp::severity::fatal,
+		code_remark remark
+		  (code_remark::severity::fatal,
 		   "function call on something which is not a function pointer",
 		   a.get_pp_result(), _func.get_tokens_range());
 		a.get_remarks().add(remark);
@@ -5973,8 +5973,8 @@ void expr_func_invocation::evaluate_type(ast &a, const architecture &arch)
 
        },
        [&](const type&) {
-	 code_remark_pp remark
-	   (code_remark_pp::severity::fatal,
+	 code_remark remark
+	   (code_remark::severity::fatal,
 	    "function call on something which is not a function",
 	    a.get_pp_result(), _func.get_tokens_range());
 	 a.get_remarks().add(remark);
@@ -5998,8 +5998,8 @@ void expr_member_deref::evaluate_type(ast &a, const architecture&)
 		   return *pt.get_pointed_to_type();
 		 },
 		 [&](const type&) -> const addressable_type& {
-		   code_remark_pp remark
-		     (code_remark_pp::severity::fatal,
+		   code_remark remark
+		     (code_remark::severity::fatal,
 		      "application of -> member deref operator to non-pointer",
 		      a.get_pp_result(), _base.get_tokens_range());
 		   a.get_remarks().add(remark);
@@ -6021,8 +6021,8 @@ void expr_member_deref::evaluate_type(ast &a, const architecture&)
 	   return _sout_base;
 	 },
 	 [&](const type&) -> const struct_or_union_type& {
-	   code_remark_pp remark
-	     (code_remark_pp::severity::fatal,
+	   code_remark remark
+	     (code_remark::severity::fatal,
 	      "application of member dereference operator to non-struct/union",
 	      a.get_pp_result(), _base.get_tokens_range());
 	   a.get_remarks().add(remark);
@@ -6032,8 +6032,8 @@ void expr_member_deref::evaluate_type(ast &a, const architecture&)
        t_base);
 
   if (!sout_base.is_complete()) {
-    code_remark_pp remark
-      (code_remark_pp::severity::fatal,
+    code_remark remark
+      (code_remark::severity::fatal,
        "application of member dereference operator to incomplete type",
        a.get_pp_result(), _base.get_tokens_range());
     a.get_remarks().add(remark);
@@ -6045,9 +6045,9 @@ void expr_member_deref::evaluate_type(ast &a, const architecture&)
     (sout_base.get_content()->lookup
      (a.get_pp_tokens()[_member_tok].get_value()));
   if (lr.empty()) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "member not found in struct or union",
-			  a.get_pp_result(), _member_tok);
+    code_remark remark(code_remark::severity::fatal,
+		       "member not found in struct or union",
+		       a.get_pp_result(), _member_tok);
     a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -6118,9 +6118,9 @@ void expr_unop_post::evaluate_type(ast &a, const architecture &arch)
 {
   const std::shared_ptr<const type> &t = _e.get_type();
   if (!_e.is_lvalue()) {
-    code_remark_pp remark(code_remark_pp::severity::fatal,
-			  "non-lvalue operand to increment/decrement operator",
-			  a.get_pp_result(), _e.get_tokens_range());
+    code_remark remark(code_remark::severity::fatal,
+		       "non-lvalue operand to increment/decrement operator",
+		       a.get_pp_result(), _e.get_tokens_range());
     a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -6132,8 +6132,8 @@ void expr_unop_post::evaluate_type(ast &a, const architecture &arch)
 	   ((wrap_callables<default_action_nop>
 	     ([&](const enum_type &et_op) {
 		if (!et_op.is_complete()) {
-		  code_remark_pp remark
-		    (code_remark_pp::severity::fatal,
+		  code_remark remark
+		    (code_remark::severity::fatal,
 		     "unary expression's operand has incomplete enum type",
 		     a.get_pp_result(), _e.get_tokens_range());
 		  a.get_remarks().add(remark);
@@ -6150,8 +6150,8 @@ void expr_unop_post::evaluate_type(ast &a, const architecture &arch)
 	 _set_type(pt->strip_qualifiers());
        },
        [&](const std::shared_ptr<const type>&) {
-	 code_remark_pp remark
-	   (code_remark_pp::severity::fatal,
+	 code_remark remark
+	   (code_remark::severity::fatal,
 	    "invalid operand to increment/decrement operator",
 	    a.get_pp_result(), _e.get_tokens_range());
 	 a.get_remarks().add(remark);
@@ -6385,9 +6385,9 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
 
     const std::vector<mpa::limbs> encoded = encoder->encode_string(a, _const_tok);
     if (!encoded.size()) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "empty character constant",
-			    a.get_pp_result(), _const_tok);
+      code_remark remark(code_remark::severity::fatal,
+			 "empty character constant",
+			 a.get_pp_result(), _const_tok);
       a.get_remarks().add(remark);
       throw semantic_except(remark);
     }
@@ -6442,9 +6442,9 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
 	}
 
 	if (value.is_any_set_at_or_above(target_int_width)) {
-	  code_remark_pp remark(code_remark_pp::severity::fatal,
-				"integer overflow in multi-character constant",
-				a.get_pp_result(), _const_tok);
+	  code_remark remark(code_remark::severity::fatal,
+			     "integer overflow in multi-character constant",
+			     a.get_pp_result(), _const_tok);
 	  a.get_remarks().add(remark);
 	  throw semantic_except(remark);
 	}
@@ -6460,11 +6460,11 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
     } else {
       // Wide-character
       if (encoded.size() != 1) {
-	  code_remark_pp remark(code_remark_pp::severity::fatal,
-				"wide character constant too long for its type",
-				a.get_pp_result(), _const_tok);
-	  a.get_remarks().add(remark);
-	  throw semantic_except(remark);
+	code_remark remark(code_remark::severity::fatal,
+			   "wide character constant too long for its type",
+			   a.get_pp_result(), _const_tok);
+	a.get_remarks().add(remark);
+	throw semantic_except(remark);
       }
 
       std_int_type::kind target_int_kind = target_char_kind;
@@ -6557,8 +6557,8 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
   if (it_dot != val.end() || it_flt_exp != val.end()) {
     // Floating point constant
     if (a.is_pp_expr()) {
-      code_remark_pp remark
-	(code_remark_pp::severity::fatal,
+      code_remark remark
+	(code_remark::severity::fatal,
 	 "floating point constant in preprocessor expression",
 	 a.get_pp_result(), _const_tok);
       a.get_remarks().add(remark);
@@ -6566,9 +6566,9 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
     }
 
     if (b == base::hex && it_flt_exp == val.end()) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "hexadecimal floating constant requires exponent",
-			    a.get_pp_result(), _const_tok);
+      code_remark remark(code_remark::severity::fatal,
+			 "hexadecimal floating constant requires exponent",
+			 a.get_pp_result(), _const_tok);
       a.get_remarks().add(remark);
       throw semantic_except(remark);
     }
@@ -6605,9 +6605,9 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
       std::string::const_iterator it = it_flt_exp + 1;
 
       if (it == it_flt_suffix) {
-	code_remark_pp remark(code_remark_pp::severity::fatal,
-			      "invalid floating constant exponent format",
-			      a.get_pp_result(), _const_tok);
+	code_remark remark(code_remark::severity::fatal,
+			   "invalid floating constant exponent format",
+			   a.get_pp_result(), _const_tok);
 	a.get_remarks().add(remark);
 	throw semantic_except(remark);
       }
@@ -6625,9 +6625,9 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
       }
 
       if (it == it_flt_suffix) {
-	code_remark_pp remark(code_remark_pp::severity::fatal,
-			      "invalid floating constant exponent format",
-			      a.get_pp_result(), _const_tok);
+	code_remark remark(code_remark::severity::fatal,
+			   "invalid floating constant exponent format",
+			   a.get_pp_result(), _const_tok);
 	a.get_remarks().add(remark);
 	throw semantic_except(remark);
       }
@@ -6635,8 +6635,8 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
       try {
 	e = mpa::limbs::from_string(it, it_flt_suffix, mpa::limb{10});
       } catch(const std::range_error&) {
-	code_remark_pp remark
-	  (code_remark_pp::severity::fatal,
+	code_remark remark
+	  (code_remark::severity::fatal,
 	   "unrecognized digit in floating constant's exponent",
 	   a.get_pp_result(), _const_tok);
 	a.get_remarks().add(remark);
@@ -6661,9 +6661,9 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
 
       if (it_dot == val_begin && it_dot + 1 == it_flt_exp) {
 	// Just a single dot with no integer and no fractional part
-	code_remark_pp remark(code_remark_pp::severity::fatal,
-			      "invalid floating constant format",
-			      a.get_pp_result(), _const_tok);
+	code_remark remark(code_remark::severity::fatal,
+			   "invalid floating constant format",
+			   a.get_pp_result(), _const_tok);
 	a.get_remarks().add(remark);
 	throw semantic_except(remark);
       }
@@ -6680,8 +6680,8 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
 	     (val_begin, it_dot,
 	      mpa::limb{static_cast<mpa::limb::limb_type>(b)}));
       } catch(const std::range_error&) {
-	code_remark_pp remark
-	  (code_remark_pp::severity::fatal,
+	code_remark remark
+	  (code_remark::severity::fatal,
 	   "unrecognized digit in floating constant's integer part",
 	   a.get_pp_result(), _const_tok);
 	a.get_remarks().add(remark);
@@ -6720,8 +6720,8 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
 		(it_frac, it_flt_exp,
 		 mpa::limb{static_cast<mpa::limb::limb_type>(b)}));
       } catch(const std::range_error&) {
-	code_remark_pp remark
-	  (code_remark_pp::severity::fatal,
+	code_remark remark
+	  (code_remark::severity::fatal,
 	   "unrecognized digit in floating constant's fractional part",
 	   a.get_pp_result(), _const_tok);
 	a.get_remarks().add(remark);
@@ -6757,8 +6757,8 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
     switch(*(it_int_suffix - 1)) {
     case 'l':
       if (k != std_int_type::kind::k_int) {
-	code_remark_pp remark
-	  (code_remark_pp::severity::fatal, "invalid integer constant suffix",
+	code_remark remark
+	  (code_remark::severity::fatal, "invalid integer constant suffix",
 	   a.get_pp_result(), _const_tok);
 	a.get_remarks().add(remark);
 	throw semantic_except(remark);
@@ -6775,8 +6775,8 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
 
     case 'L':
       if (k != std_int_type::kind::k_int) {
-	code_remark_pp remark
-	  (code_remark_pp::severity::fatal, "invalid integer constant suffix",
+	code_remark remark
+	  (code_remark::severity::fatal, "invalid integer constant suffix",
 	   a.get_pp_result(), _const_tok);
 	a.get_remarks().add(remark);
 	throw semantic_except(remark);
@@ -6795,8 +6795,8 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
       /* fall through */
     case 'U':
       if (is_unsigned) {
-	code_remark_pp remark
-	  (code_remark_pp::severity::fatal, "invalid integer constant suffix",
+	code_remark remark
+	  (code_remark::severity::fatal, "invalid integer constant suffix",
 	   a.get_pp_result(), _const_tok);
 	a.get_remarks().add(remark);
 	throw semantic_except(remark);
@@ -6818,8 +6818,8 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
     k = arch.get_int_max_kind();
 
   if (val_begin == it_int_suffix) {
-    code_remark_pp remark
-      (code_remark_pp::severity::fatal, "invalid integer constant format",
+    code_remark remark
+      (code_remark::severity::fatal, "invalid integer constant format",
        a.get_pp_result(), _const_tok);
     a.get_remarks().add(remark);
     throw semantic_except(remark);
@@ -6830,9 +6830,9 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
     m = (mpa::limbs::from_string(val_begin, it_int_suffix,
 			 mpa::limb{static_cast<mpa::limb::limb_type>(b)}));
   } catch (const std::range_error&) {
-    code_remark_pp remark (code_remark_pp::severity::fatal,
-			   "unrecognized digit in integer constant",
-			   a.get_pp_result(), _const_tok);
+    code_remark remark (code_remark::severity::fatal,
+			"unrecognized digit in integer constant",
+			a.get_pp_result(), _const_tok);
     a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -6845,9 +6845,9 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
   try {
     int_mode = width_to_int_mode(req_width);
   } catch (const std::overflow_error &) {
-    code_remark_pp remark (code_remark_pp::severity::fatal,
-			   "integer constant overflow",
-			   a.get_pp_result(), _const_tok);
+    code_remark remark (code_remark::severity::fatal,
+			"integer constant overflow",
+			a.get_pp_result(), _const_tok);
     a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -6861,9 +6861,9 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
     is_unsigned = true;
   }
   if (!is_unsigned && m.is_any_set_at_or_above(width - 1)) {
-    code_remark_pp remark (code_remark_pp::severity::fatal,
-			   "integer constant overflow",
-			   a.get_pp_result(), _const_tok);
+    code_remark remark (code_remark::severity::fatal,
+			"integer constant overflow",
+			a.get_pp_result(), _const_tok);
     a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
@@ -6917,9 +6917,9 @@ void expr_string_literal::evaluate_type(ast &a, const architecture &arch)
       ecse = cur_ecse;
 
     } else if (ecse != cur_ecse) {
-      code_remark_pp remark(code_remark_pp::severity::fatal,
-			    "incompatible encodings in string concatenation",
-			    a.get_pp_result(), tok_index);
+      code_remark remark(code_remark::severity::fatal,
+			 "incompatible encodings in string concatenation",
+			 a.get_pp_result(), tok_index);
       a.get_remarks().add(remark);
       throw semantic_except(remark);
 
