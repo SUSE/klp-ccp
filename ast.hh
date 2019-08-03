@@ -673,6 +673,9 @@ namespace klp
 	const type_name& get_type_name() const noexcept
 	{ return _tn; }
 
+	const expr& get_expr() const noexcept
+	{ return _e; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
