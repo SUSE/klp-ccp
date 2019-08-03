@@ -210,10 +210,33 @@ namespace klp
 	macro_undef(const std::string &name,
 		    const raw_pp_tokens_range &directive_range);
 
+	bool operator<(const raw_pp_tokens_range &r) const noexcept
+	{ return _directive_range < r; }
+
+	const raw_pp_tokens_range& get_directive_range() const noexcept
+	{ return _directive_range; }
+
       private:
 	std::string _name;
 	raw_pp_tokens_range _directive_range;
       };
+
+    private:
+      typedef std::vector<macro_undef> _macro_undefs_container_type;
+
+    public:
+      typedef _macro_undefs_container_type::const_iterator
+	const_macro_undef_iterator;
+
+      const_macro_undef_iterator macro_undefs_begin() const
+      { return _macro_undefs.begin(); }
+
+      const_macro_undef_iterator macro_undefs_end() const
+      { return _macro_undefs.end(); }
+
+      std::pair<const_macro_undef_iterator, const_macro_undef_iterator>
+      find_overlapping_macro_undefs(const raw_pp_tokens_range &r) const;
+
 
       class used_macros
       {
@@ -999,7 +1022,7 @@ namespace klp
       std::vector<std::unique_ptr<macro_invocation>> _macro_invocations;
       _directives_container_type _directives;
       _macros_container_type _macros;
-      std::vector<macro_undef> _macro_undefs;
+      _macro_undefs_container_type _macro_undefs;
 
       unsigned long _next_header_node_id;
     };
@@ -1011,6 +1034,10 @@ namespace klp
     static inline bool operator<(const raw_pp_tokens_range &r,
 				 const pp_result::macro &m) noexcept
     { return r < m.get_directive_range(); }
+
+    static inline bool operator<(const raw_pp_tokens_range &r,
+				 const pp_result::macro_undef &mu) noexcept
+    { return r < mu.get_directive_range(); }
 
     static inline bool operator<(const raw_pp_tokens_range &r,
 				 const pp_result::macro_invocation &mi) noexcept
