@@ -4084,6 +4084,15 @@ namespace klp
 
 	virtual ~stmt_for_init_expr() noexcept override;
 
+	const expr* get_init_expr() const noexcept
+	{ return _init; }
+
+	const expr* get_cond() const noexcept
+	{ return _cond; }
+
+	const expr* get_next_expr() const noexcept
+	{ return _next; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
