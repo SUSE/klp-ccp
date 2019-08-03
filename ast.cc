@@ -5178,7 +5178,8 @@ linkage::linkage() noexcept
   : _linkage_kind(linkage_kind::none),
     _target_kind(link_target_kind::unlinked),
     _target_is_visible(false), _first_in_chain(true),
-    _last_in_file_scope_chain(false)
+    _last_in_file_scope_chain(false),
+    _type_modified_through_linkage(false)
 {}
 
 void linkage::set_linkage_kind(const linkage_kind kind) noexcept

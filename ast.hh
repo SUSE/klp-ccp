@@ -3357,6 +3357,12 @@ namespace klp
 	template <typename callable_type>
 	void for_each_visible(callable_type &&c) const;
 
+	void set_type_modified_through_linkage() noexcept
+	{ _type_modified_through_linkage = true; }
+
+	bool is_type_modified_through_linkage() const noexcept
+	{ return _type_modified_through_linkage; }
+
       private:
 	void _link_to(init_declarator &target, const linkage_kind kind,
 		      const bool target_is_visible) noexcept;
@@ -3381,6 +3387,7 @@ namespace klp
 	bool _target_is_visible;
 	bool _first_in_chain;
 	bool _last_in_file_scope_chain;
+	bool _type_modified_through_linkage;
       };
 
       class init_declarator final : public ast_entity<init_declarator>
