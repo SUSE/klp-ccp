@@ -1106,6 +1106,9 @@ namespace klp
 	unary_op_post get_op() const noexcept
 	{ return _op; }
 
+	const expr& get_expr() const noexcept
+	{ return _e; }
+
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:
