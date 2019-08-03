@@ -1200,6 +1200,9 @@ namespace klp
 	const std::shared_ptr<const std_int_type>&
 	get_underlying_type() const noexcept;
 
+	const ast::enum_decl_list_node& get_decl_list_node() const noexcept
+	{ return _decl_node; }
+
       private:
 	enum_type(const ast::enum_decl_list_node &decl_node,
 		  const qualifiers qs);
