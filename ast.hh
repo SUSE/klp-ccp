@@ -521,10 +521,17 @@ namespace klp
 
 	virtual ~expr_assignment() noexcept override;
 
+	assign_op get_op() const noexcept
+	{ return _op; }
+
 	const expr& get_lhs() const noexcept
 	{ return _lhs; }
 
+	const expr& get_rhs() const noexcept
+	{ return _rhs; }
+
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
+
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
