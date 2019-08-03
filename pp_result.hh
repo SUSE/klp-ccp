@@ -270,16 +270,20 @@ namespace klp
 	const raw_pp_tokens_range& get_range() const noexcept
 	{ return _range; }
 
-      protected:
-	inclusion_node();
-	inclusion_node(inclusion_node * const parent,
-		       const raw_pp_token_index range_begin);
-
 	recursive_header_inclusion_iterator
 	header_inclusions_recursive_begin() const;
 
 	recursive_header_inclusion_iterator
 	header_inclusions_recursive_end() const;
+
+	const inclusion_node *
+	get_parent() const noexcept
+	{ return _parent; }
+
+      protected:
+	inclusion_node();
+	inclusion_node(inclusion_node * const parent,
+		       const raw_pp_token_index range_begin);
 
 	inclusion_node * const _parent;
 
