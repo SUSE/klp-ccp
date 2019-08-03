@@ -4060,6 +4060,9 @@ namespace klp
 
 	virtual ~stmt_do() noexcept override;
 
+	const expr& get_cond() const noexcept
+	{ return _e; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
