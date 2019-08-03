@@ -611,6 +611,15 @@ namespace klp
 
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
+	binary_op get_op() const noexcept
+	{ return _op; }
+
+	const expr& get_left_expr() const noexcept
+	{ return _left; }
+
+	const expr& get_right_expr() const noexcept
+	{ return _right; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
