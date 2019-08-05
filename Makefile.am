@@ -2,7 +2,7 @@ SUBDIRS = . arch testsuite
 
 AM_YFLAGS = -d
 BUILT_SOURCES = gnuc_parser.hh pp_expr_parser.hh stack.hh
-EXTRA_DIST = stack.hh
+EXTRA_DIST = COPYING stack.hh
 
 stack.hh: gnuc_parser.hh pp_expr_parser.hh
 
