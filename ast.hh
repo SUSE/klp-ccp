@@ -1239,6 +1239,9 @@ namespace klp
 
 	const resolved& get_resolved() const noexcept;
 
+	bool is_resolved() const noexcept
+	{ return _resolved.get_kind() != resolved::resolved_kind::none; }
+
 	virtual void evaluate_type(ast &a, const architecture &arch) override;
 
       private:

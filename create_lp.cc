@@ -4160,9 +4160,13 @@ void _ast_info_collector::_handle_expr(const ast::expr_id &e)
     // This is a expr_id in an attribute specifier which hasn't been
     // resolved to anything.
     return;
+  } else if (!e.is_resolved()) {
+    // Identifier in function invocation without any prior declaration.
+    // The resolver has warned about it already, ignore it for now.
+    return;
   }
-  const ast::expr_id::resolved &r = e.get_resolved();
 
+  const ast::expr_id::resolved &r = e.get_resolved();
   switch (r.get_kind()) {
   case ast::expr_id::resolved::resolved_kind::init_declarator:
     {

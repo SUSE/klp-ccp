@@ -1,0 +1,4 @@
+int klpp_pu_f(void)
+{
+	g();
+}
