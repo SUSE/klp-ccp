@@ -2,3 +2,8 @@ foreach src [glob -nocomplain $srcdir/$subdir/*.c] {
     set testname $src
     run_cpp $src
 }
+
+foreach src [glob -nocomplain $srcdir/$subdir/gcc.dg/*.c] {
+    set testname $src
+    run_cpp $src
+}

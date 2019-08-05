@@ -1,74 +1,6 @@
+SUBDIRS = gcc.dg
+
 EXTRA_DIST = compare-w-gnu-cpp.exp \
-	19921210-1.c \
-	19990119-1.c \
-	19990228-1.c \
-	19990409-1.c \
-	20000127-1.c \
-	20000209-2.c \
-	20000301-1.c \
-	20000519-1.c \
-	20000627-1.c \
-	20000725-1.c \
-	20020927-1.c \
-	20050215-1.c \
-	avoidpaste1.c \
-	avoidpaste2.c \
-	c99-empty-macro-args.c \
-	c99-hexfloat-3.c \
-	charconst-2.c \
-	cmdlne-C2.c \
-	cmdlne-dD.c \
-	cmdlne-dD-dM.c \
-	cmdlne-dD-M.c \
-	cmdlne-dM.c \
-	cmdlne-dM-dD.c \
-	cmdlne-dM-M.c \
-	cmdlne-dN-M.c \
-	cmdlne-dU-10.c \
-	cmdlne-dU-14.c \
-	cmdlne-dU-18.c \
-	cmdlne-dU-20.c \
-	cmdlne-dU-7.c \
-	cmdlne-dU-8.c \
-	cmdlne-dU-9.c \
-	cmdlne-P.c \
-	counter-3.c \
-	fpreprocessed.c \
-	hash1.c \
-	include7.c \
-	line1.c \
-	maccom1.c \
-	maccom2.c \
-	maccom3.c \
-	maccom4.c \
-	maccom5.c \
-	macro10.c \
-	macro2.c \
-	macro6.c \
-	macro7.c \
-	macro8.c \
-	macro9.c \
-	macro-exp-tracking-2.c \
-	macro-exp-tracking-4.c \
-	paste10.c \
-	paste16.c \
-	paste17.c \
-	paste3.c \
-	paste7.c \
-	pr23827_c90.c \
-	pr23827_c99.c \
-	pr30805.c \
-	pr32868.c \
-	pr34859.c \
-	pr61854-1.c \
-	pr61854-2.c \
-	pr61854-5.c \
-	pr61977.c \
-	pr71591.c \
-	redef1.c \
-	spacing1.c \
-	spacing2.c \
-	strify5.c \
 	test1.c \
 	test2.c \
 	test3.c \
@@ -99,8 +31,4 @@ EXTRA_DIST = compare-w-gnu-cpp.exp \
 	test28.c \
 	test29.c \
 	test30.c \
-	test31.c \
-	tr-paste.c \
-	uchar-3.c \
-	Wvariadic-2.c \
-	Wvariadic-4.c
+	test31.c

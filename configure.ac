@@ -22,6 +22,7 @@ AC_CONFIG_FILES([Makefile
 		 testsuite/lib/Makefile
 		 testsuite/lib/ccp-toy-policy/Makefile
 		 testsuite/cpp/Makefile
+		 testsuite/cpp/gcc.dg/Makefile
 		 testsuite/cparse/Makefile
 		 testsuite/cparse/gcc.dg/Makefile
 		 testsuite/cparse/gcc.c-torture/Makefile
