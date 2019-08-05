@@ -1,4 +1,4 @@
-AC_INIT([cp], [0.0.1], [nstange@suse.de])
+AC_INIT([klp-ccp], [0.0.1], [nstange@suse.de])
 AC_CONFIG_AUX_DIR([config])
 AM_INIT_AUTOMAKE
 
