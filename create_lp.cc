@@ -4831,20 +4831,27 @@ void _closure_builder::_construct_fd_id_closure()
       = [&](dep_on_obj &d) {
 	  object_info &oi = d.get_object_info();
 	  if (!oi.shall_externalize_valid) {
-	    oi.shall_externalize =
-	      (_pol.shall_externalize_object(d.oidi.get().init_declarator,
-					     _remarks));
-	    oi.shall_externalize_valid = true;
+	    const ast::linkage &l = d.oidi.get().init_declarator.get_linkage();
+	    if (l.get_linkage_kind() != ast::linkage::linkage_kind::none) {
+	      oi.shall_externalize =
+		(_pol.shall_externalize_object(d.oidi.get().init_declarator,
+					       _remarks));
+	      oi.shall_externalize_valid = true;
 
-	    if (!oi.shall_externalize) {
-	      const pp_tokens &toks = _ai.atu.get_pp_result().get_pp_tokens();
-	      const std::string &name =
-		toks[d.from_eid.get_id_tok()].get_value();
-	      code_remark remark
-		(code_remark::severity::warning,
-		 "referenced object \"" + name + "\" cannot get externalized",
-		 _ai.atu.get_pp_result(), d.from_eid.get_tokens_range());
-	      _remarks.add(remark);
+	      if (!oi.shall_externalize) {
+		const pp_tokens &toks = _ai.atu.get_pp_result().get_pp_tokens();
+		const std::string &name =
+		  toks[d.from_eid.get_id_tok()].get_value();
+		code_remark remark
+		  (code_remark::severity::warning,
+		   "referenced object \"" + name + "\" cannot get externalized",
+		   _ai.atu.get_pp_result(), d.from_eid.get_tokens_range());
+		_remarks.add(remark);
+	      }
+	    } else {
+	      // File scope declaration with 'register' storage class specifier.
+	      oi.shall_externalize = false;
+	      oi.shall_externalize_valid = true;
 	    }
 	  }
 
