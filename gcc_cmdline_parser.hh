@@ -30,6 +30,33 @@ namespace klp
     class gcc_cmdline_parser
     {
     public:
+      struct gcc_version
+      {
+	constexpr gcc_version() noexcept
+	  : maj(0), min(0), patchlevel(0)
+	{}
+
+	constexpr gcc_version(unsigned int _maj, unsigned int _min,
+			      unsigned int _patchlevel) noexcept
+	  : maj(_maj), min(_min), patchlevel(_patchlevel)
+	{}
+
+	constexpr bool operator<=(const gcc_version &v) const noexcept
+	{
+	  return (((!this->maj && !this->min && !this->patchlevel) ||
+		   (!v.maj && !v.min && !v.patchlevel)) ? true :
+		  (this->maj < v.maj ? true :
+		   (this->maj > v.maj ? false :
+		    (this->min < v.min ? true :
+		     this->min > v.min ? false :
+		     this->patchlevel <= v.patchlevel))));
+	}
+
+	unsigned int maj;
+	unsigned int min;
+	unsigned int patchlevel;
+      };
+
       struct option
       {
 	enum component
@@ -64,7 +91,12 @@ namespace klp
 	unsigned int arg;
 	bool reject_negative;
 	alias_type alias;
+
+	gcc_version min_gcc_version;
+	gcc_version max_gcc_version;
       };
+
+      gcc_cmdline_parser(const gcc_version version) noexcept;
 
       void register_table(const option * const table);
 
@@ -76,10 +108,12 @@ namespace klp
     private:
       typedef std::pair<const option*, std::size_t> _table_type;
 
-      static const option* _find_option(const char *s, const _table_type &table)
-	noexcept;
+      const option* _find_option(const char *s, const _table_type &table)
+	const noexcept;
 
       const option* _find_option(const char *s) const noexcept;
+
+      const gcc_version _version;
 
       std::vector<_table_type> _tables;
     };

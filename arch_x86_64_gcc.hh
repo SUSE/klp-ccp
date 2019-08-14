@@ -20,6 +20,7 @@
 #define ARCH_X86_64_GCC_HH
 
 #include "architecture.hh"
+#include "gcc_cmdline_parser.hh"
 
 namespace klp
 {
@@ -126,7 +127,7 @@ namespace klp
       virtual bool is_pid_t_signed() const noexcept override;
 
     private:
-      static std::tuple<unsigned int, unsigned int, unsigned int>
+      static gcc_cmdline_parser::gcc_version
       _parse_version(const char * const version);
 
       void _register_builtin_macros(preprocessor &pp) const;
@@ -134,10 +135,7 @@ namespace klp
       static types::std_int_type::kind
       _width_to_int_kind(const mpa::limbs::size_type w) noexcept;
 
-      unsigned int _gcc_ver_major;
-      unsigned int _gcc_ver_minor;
-      unsigned int _gcc_ver_patchlevel;
-
+      const gcc_cmdline_parser::gcc_version _gcc_version;
       builtin_typedef::factories _builtin_typedefs;
     };
   }

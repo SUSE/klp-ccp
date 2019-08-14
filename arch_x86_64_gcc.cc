@@ -25,7 +25,6 @@
 #include "pp_token.hh"
 #include "preprocessor.hh"
 #include "cmdline_except.hh"
-#include "gcc_cmdline_parser.hh"
 #include "pp_except.hh"
 
 using namespace klp::ccp;
@@ -142,10 +141,8 @@ _builtin_typedef__int128::_create(const bool is_signed)
 
 
 arch_x86_64_gcc::arch_x86_64_gcc(const char * const version)
+  : _gcc_version(_parse_version(version))
 {
-  std::tie(_gcc_ver_major, _gcc_ver_minor, _gcc_ver_patchlevel) =
-    _parse_version(version);
-
   _builtin_typedefs.emplace_back("__builtin_va_list",
 				 _builtin_typedef_va_list::create);
   _builtin_typedefs.emplace_back("__int128_t",
@@ -171,7 +168,7 @@ void arch_x86_64_gcc::parse_command_line
     return;
   }
 
-  gcc_cmdline_parser p;
+  gcc_cmdline_parser p{_gcc_version};
   p.register_table(gcc_opts_common);
   p.register_table(gcc_opts_c_family);
   p.register_table(gcc_opts_i386);
@@ -432,10 +429,10 @@ void arch_x86_64_gcc::_register_builtin_macros(preprocessor &pp) const
 	{ "__ATOMIC_SEQ_CST", "5" },
   };
 
-  pp.register_builtin_macro("__GNUC__", std::to_string(_gcc_ver_major));
-  pp.register_builtin_macro("__GNUC_MINOR__", std::to_string(_gcc_ver_minor));
+  pp.register_builtin_macro("__GNUC__", std::to_string(_gcc_version.maj));
+  pp.register_builtin_macro("__GNUC_MINOR__", std::to_string(_gcc_version.min));
   pp.register_builtin_macro("__GNUC_PATCHLEVEL__",
-			    std::to_string(_gcc_ver_patchlevel));
+			    std::to_string(_gcc_version.patchlevel));
 
   for (const auto &bom : builtin_object_macros)
     pp.register_builtin_macro(bom.first, bom.second);
@@ -1259,7 +1256,7 @@ arch_x86_64_gcc::_width_to_int_kind(const mpa::limbs::size_type w) noexcept
 }
 
 
-std::tuple<unsigned int, unsigned int, unsigned int>
+gcc_cmdline_parser::gcc_version
 arch_x86_64_gcc::_parse_version(const char * const version)
 {
   const char * const pmajor = version;
@@ -1303,22 +1300,18 @@ arch_x86_64_gcc::_parse_version(const char * const version)
 	  };
   }
 
-  bool is_known = false;
-  if (major == 4) {
-    if (minor == 8) {
-      if (patchlevel <= 5)
-	is_known = true;
-    }
-  }
+  using gcc_version = gcc_cmdline_parser::gcc_version;
+  const gcc_version parsed_version(major, minor, patchlevel);
+  const gcc_version MIN_SUPPORTED_VERSION{4, 8, 0};
+  const gcc_version MAX_SUPPORTED_VERSION{0, 0, 0};
 
-  if (!is_known) {
+  if (!(MIN_SUPPORTED_VERSION <= parsed_version &&
+	parsed_version <= MAX_SUPPORTED_VERSION)) {
     throw cmdline_except {
 		(std::string{"unrecognized compiler version \'"}
 		 + version + "\'")
 	  };
   }
 
-  return std::make_tuple(static_cast<unsigned int>(major),
-			 static_cast<unsigned int>(minor),
-			 static_cast<unsigned int>(patchlevel));
+  return parsed_version;
 }
