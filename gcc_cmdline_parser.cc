@@ -54,7 +54,9 @@ operator()(const int argc, const char *argv[],
     bool negative = false;
     const char *cur_arg = argv[optind];
     const option *o = nullptr;
-    if ((cur_arg[1] == 'f' || cur_arg[1] == 'W' ||
+    o = _find_option(cur_arg + 1);
+    if (!o &&
+	(cur_arg[1] == 'f' || cur_arg[1] == 'W' ||
 	 cur_arg[1] == 'm') &&
 	cur_arg[2] == 'n' && cur_arg[3] == 'o' && cur_arg[4] == '-') {
       negative = true;
@@ -64,9 +66,6 @@ operator()(const int argc, const char *argv[],
       name.push_back(cur_arg[1]);
       name.append(&cur_arg[5], cur_arg + cur_arg_len);
       o = _find_option(name.c_str());
-
-    } else {
-      o = _find_option(cur_arg + 1);
     }
 
     if (!o || (negative && o->reject_negative)) {
