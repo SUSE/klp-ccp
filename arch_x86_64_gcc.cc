@@ -178,6 +178,7 @@ void arch_x86_64_gcc::parse_command_line
 
   std::vector<const char *> include_dirs;
   std::vector<const char *> include_dirs_quoted;
+  std::vector<const char *> include_dirs_system;
   std::vector<const char *> include_dirs_after;
 
   bool undef = false;
@@ -229,6 +230,11 @@ void arch_x86_64_gcc::parse_command_line
 	return;
       }
 
+      if (!std::strcmp(name, "isystem")) {
+	include_dirs_after.push_back(val);
+	return;
+      }
+
       if (!std::strcmp(name, "idirafter")) {
 	include_dirs_after.push_back(val);
 	return;
@@ -268,6 +274,9 @@ void arch_x86_64_gcc::parse_command_line
     hr.append_search_dir_quoted(dir);
 
   for (const auto dir : include_dirs)
+    hr.append_search_dir(dir);
+
+  for (const auto dir : include_dirs_system)
     hr.append_search_dir(dir);
 
   for (const auto dir : include_dirs_after)
