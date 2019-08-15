@@ -822,9 +822,7 @@ namespace klp
 			pp_result &container);
 
 	conditional_inclusion_node&
-	_add_conditional_inclusion(const raw_pp_token_index range_begin,
-			used_macros &&used_macros,
-			macro_nondef_constraints &&macro_nondef_constraints);
+	_add_conditional_inclusion(const raw_pp_token_index range_begin);
 
 	void _set_range_begin(const raw_pp_token_index range_begin) noexcept;
 	void _set_range_end(const raw_pp_token_index range_end) noexcept;
@@ -943,9 +941,11 @@ namespace klp
 	friend class preprocessor;
 
 	conditional_inclusion_node(inclusion_node &parent,
-			const raw_pp_token_index range_begin,
-			used_macros &&used_macros,
-			macro_nondef_constraints &&macro_nondef_constraints);
+			const raw_pp_token_index range_begin);
+
+	void _finalize(const raw_pp_token_index range_end,
+		       used_macros &&used_macros,
+		       macro_nondef_constraints &&macro_nondef_constraints);
 
 	used_macros _used_macros;
 	macro_nondef_constraints _macro_nondef_constraints;

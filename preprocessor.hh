@@ -270,13 +270,13 @@ namespace klp
 
       struct _cond_incl_state
       {
-	_cond_incl_state(const pp_token_index _range_begin);
+	_cond_incl_state(pp_result::conditional_inclusion_node &_incl_node);
 
-	pp_token_index range_begin;
+	std::reference_wrapper<pp_result::conditional_inclusion_node> incl_node;
 	pp_result::used_macros um;
 	pp_result::macro_nondef_constraints mnc;
-	pp_result::conditional_inclusion_node *incl_node;
 	bool branch_active;
+	bool branch_taken;
       };
 
       struct _expansion_state
@@ -338,13 +338,13 @@ namespace klp
 
       void _handle_include(const raw_pp_tokens_range &directive_range);
 
-      bool _cond_incl_inactive() const noexcept;
 
-      bool _cur_incl_node_is_cond() const noexcept;
 
-      void _enter_cond_incl();
-
+      void _push_cond_incl(const raw_pp_token_index range_begin);
       void _pop_cond_incl(const raw_pp_token_index range_end);
+      bool _cur_incl_node_is_cond() const noexcept;
+      void _enter_cond_incl();
+      bool _cond_incl_inactive() const noexcept;
 
       bool
       _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range);

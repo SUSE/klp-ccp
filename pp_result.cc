@@ -376,14 +376,10 @@ _add_header_inclusion(const std::string &filename,
 }
 
 pp_result::conditional_inclusion_node& pp_result::inclusion_node::
-_add_conditional_inclusion(const raw_pp_token_index range_begin,
-			   used_macros &&used_macros,
-			   macro_nondef_constraints &&macro_nondef_constraints)
+_add_conditional_inclusion(const raw_pp_token_index range_begin)
 {
   std::unique_ptr<conditional_inclusion_node> new_child
-     (new conditional_inclusion_node(*this, range_begin,
-				     std::move(used_macros),
-				     std::move(macro_nondef_constraints)));
+     (new conditional_inclusion_node(*this, range_begin));
   conditional_inclusion_node &_new_child = *new_child;
   _children.emplace_back(std::move(new_child));
   return _new_child;
@@ -886,12 +882,8 @@ pp_result::header_inclusion_child::~header_inclusion_child() noexcept = default;
 
 pp_result::conditional_inclusion_node::
 conditional_inclusion_node(inclusion_node &parent,
-			   const raw_pp_token_index range_begin,
-			   used_macros &&used_macros,
-			   macro_nondef_constraints &&macro_nondef_constraints)
-  : inclusion_node(&parent, range_begin),
-    _used_macros(std::move(used_macros)),
-    _macro_nondef_constraints(std::move(macro_nondef_constraints))
+			   const raw_pp_token_index range_begin)
+  : inclusion_node(&parent, range_begin)
 {}
 
 pp_result::conditional_inclusion_node::~conditional_inclusion_node() = default;
@@ -900,6 +892,16 @@ const pp_result::header_inclusion_node&
 pp_result::conditional_inclusion_node::get_containing_header() const noexcept
 {
   return _parent->get_containing_header();
+}
+
+void pp_result::conditional_inclusion_node::
+_finalize(const raw_pp_token_index range_end,
+	  used_macros &&used_macros,
+	  macro_nondef_constraints &&macro_nondef_constraints)
+{
+  _set_range_end(range_end);
+  _used_macros = std::move(used_macros);
+  _macro_nondef_constraints = std::move(macro_nondef_constraints);
 }
 
 

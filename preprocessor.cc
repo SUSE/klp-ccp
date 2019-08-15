@@ -744,7 +744,7 @@ void preprocessor::_handle_pp_directive()
     if (_cond_incl_inactive())
       return;
 
-    _cond_incl_states.emplace(raw_begin);
+    _push_cond_incl(raw_begin);
 
     if (_eval_conditional_inclusion(raw_pp_tokens_range{raw_begin, raw_end}))
       _enter_cond_incl();
@@ -767,7 +767,7 @@ void preprocessor::_handle_pp_directive()
       throw pp_except(remark);
     }
 
-    _cond_incl_states.emplace (raw_begin);
+    _push_cond_incl(raw_begin);
 
     auto it_m = _macros.find(it_tok->get_value());
     if (it_m != _macros.end()) {
@@ -796,7 +796,7 @@ void preprocessor::_handle_pp_directive()
       throw pp_except(remark);
     }
 
-    _cond_incl_states.emplace(raw_begin);
+    _push_cond_incl(raw_begin);
 
     auto it_m = _macros.find(it_tok->get_value());
     if (it_m != _macros.end()) {
@@ -820,7 +820,7 @@ void preprocessor::_handle_pp_directive()
     if (_cond_incl_nesting > _cond_incl_states.size())
       return;
 
-    if (!_cond_incl_states.top().incl_node) {
+    if (!_cond_incl_states.top().branch_taken) {
       if (_eval_conditional_inclusion(raw_pp_tokens_range{raw_begin, raw_end}))
 	_enter_cond_incl();
     } else {
@@ -840,7 +840,7 @@ void preprocessor::_handle_pp_directive()
     if (_cond_incl_nesting > _cond_incl_states.size())
       return;
 
-    if (!_cond_incl_states.top().incl_node) {
+    if (!_cond_incl_states.top().branch_taken) {
       _enter_cond_incl();
     } else {
       _cond_incl_states.top().branch_active = false;
@@ -1753,9 +1753,23 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
   _inclusions.emplace(std::ref(new_header_inclusion_node));
 }
 
-bool preprocessor::_cond_incl_inactive() const noexcept
+void preprocessor::_push_cond_incl(const raw_pp_token_index range_begin)
 {
-  return !_cond_incl_states.empty() && !_cond_incl_states.top().branch_active;
+  pp_result::conditional_inclusion_node &node
+    = _inclusions.top().get()._add_conditional_inclusion(range_begin);
+  _cond_incl_states.emplace(std::ref(node));
+  _inclusions.emplace(std::ref(node));
+}
+
+void preprocessor::_pop_cond_incl(const raw_pp_token_index range_end)
+{
+  _cond_incl_state &cond_incl_state = _cond_incl_states.top();
+  cond_incl_state.incl_node.get()._finalize(range_end,
+					    std::move(cond_incl_state.um),
+					    std::move(cond_incl_state.mnc));
+  assert(&cond_incl_state.incl_node.get() == &_inclusions.top().get());
+  _inclusions.pop();
+  _cond_incl_states.pop();
 }
 
 bool preprocessor::_cur_incl_node_is_cond() const noexcept
@@ -1763,49 +1777,19 @@ bool preprocessor::_cur_incl_node_is_cond() const noexcept
   if (_cond_incl_states.empty())
     return false;
 
-  // Is there some conditional inclusion pending from which neither any
-  // of its branches has evaluated to true yet?
-  if (!_cond_incl_states.top().incl_node)
-    return true;
-
-  return &_inclusions.top().get() == _cond_incl_states.top().incl_node;
+  return &_inclusions.top().get() == &_cond_incl_states.top().incl_node.get();
 }
 
 void preprocessor::_enter_cond_incl()
 {
   _cond_incl_state &cond_incl_state = _cond_incl_states.top();
-  assert(!cond_incl_state.incl_node);
-
-  pp_result::conditional_inclusion_node &new_conditional_inclusion_node =
-    (_inclusions.top().get()._add_conditional_inclusion
-     (cond_incl_state.range_begin, std::move(cond_incl_state.um),
-      std::move(cond_incl_state.mnc)));
-
-  cond_incl_state.incl_node = &new_conditional_inclusion_node;
   cond_incl_state.branch_active = true;
-  _inclusions.emplace(std::ref(new_conditional_inclusion_node));
+  cond_incl_state.branch_taken = true;
 }
 
-void preprocessor::_pop_cond_incl(const raw_pp_token_index range_end)
+bool preprocessor::_cond_incl_inactive() const noexcept
 {
-  _cond_incl_state &cond_incl_state = _cond_incl_states.top();
-
-  if (!cond_incl_state.incl_node) {
-    // None of the branches had been taken. Insert the conditional inclusion
-    // into the inclusion tree now.
-    pp_result::conditional_inclusion_node &node
-      = (_inclusions.top().get()._add_conditional_inclusion
-	 (cond_incl_state.range_begin, std::move(cond_incl_state.um),
-	  std::move(cond_incl_state.mnc)));
-    node._set_range_end(range_end);
-
-  } else {
-    cond_incl_state.incl_node->_set_range_end(range_end);
-    assert(cond_incl_state.incl_node == &_inclusions.top().get());
-    _inclusions.pop();
-  }
-
-  _cond_incl_states.pop();
+  return !_cond_incl_states.empty() && !_cond_incl_states.top().branch_active;
 }
 
 bool preprocessor::
@@ -2598,8 +2582,8 @@ preprocessor::get_pending_token_source(const raw_pp_token_index tok)
 }
 
 preprocessor::_cond_incl_state::
-_cond_incl_state(const pp_token_index _range_begin)
-  : range_begin(_range_begin), incl_node(nullptr), branch_active(false)
+_cond_incl_state(pp_result::conditional_inclusion_node &_incl_node)
+  : incl_node(_incl_node), branch_active(false), branch_taken(false)
 {}
 
 
