@@ -666,12 +666,61 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "Wabi=",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "Wabsolute-value",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {9, 1, 0},
+},
+{
   "Waddress",
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Waddress-of-packed-member",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {9, 1, 0},
+},
+{
+  "Waligned-new",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "Waligned-new=", "global", "none" },
+  .min_gcc_version = {7, 1, 0},
+},
+{
+  "Waligned-new=",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
 },
 {
   "Wall",
@@ -682,12 +731,76 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "Walloc-size-larger-than=",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
+},
+{
+  "Walloc-zero",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
+},
+{
+  "Walloca",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
+},
+{
+  "Walloca-larger-than=",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
+  .max_gcc_version = {8, 3, std::numeric_limits<unsigned int>::max()},
+},
+{
+  "Walloca-larger-than=",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {9, 1, 0},
+},
+{
   "Warray-bounds",
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Warray-bounds=",
+  gcc_cmdline_parser::option::comp_none,
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
 },
 {
   "Wassign-intercept",
@@ -700,6 +813,39 @@
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Wbool-compare",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "Wbool-operation",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
+},
+{
+  "Wbuiltin-declaration-mismatch",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
 },
 {
   "Wbuiltin-macro-redefined",
@@ -720,6 +866,19 @@
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {},
+  .max_gcc_version = {5, 5, std::numeric_limits<unsigned int>::max()},
+},
+{
+  "Wc++0x-compat",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "Wc++11-compat" },
+  .min_gcc_version = {6, 1, 0},
 },
 {
   "Wc++11-compat",
@@ -728,6 +887,102 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = { "Wc++0x-compat" },
+  .min_gcc_version = {},
+  .max_gcc_version = {5, 5, std::numeric_limits<unsigned int>::max()},
+},
+{
+  "Wc++11-compat",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {6, 1, 0},
+},
+{
+  "Wc++14-compat",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "Wc++17-compat",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "Wc++1z-compat" },
+  .min_gcc_version = {7, 1, 0},
+  .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+},
+{
+  "Wc++17-compat",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {8, 1, 0},
+},
+{
+  "Wc++1z-compat",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
+  .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+},
+{
+  "Wc++1z-compat",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "Wc++17-compat" },
+  .min_gcc_version = {8, 1, 0},
+},
+{
+  "Wc11-c2x-compat",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {9, 1, 0},
+},
+{
+  "Wc90-c99-compat",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "Wc99-c11-compat",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "Wcast-function-type",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {8, 1, 0},
 },
 {
   "Wcast-qual",
@@ -738,12 +993,59 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "Wcatch-value",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "Wcatch-value=", "1", "0" },
+  .min_gcc_version = {8, 1, 0},
+},
+{
+  "Wcatch-value=",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {8, 1, 0},
+},
+{
   "Wchar-subscripts",
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Wchkp",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "Wclass-conversion",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {9, 1, 0},
+},
+{
+  "Wclass-memaccess",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {8, 1, 0},
 },
 {
   "Wclobbered",
@@ -772,6 +1074,15 @@
   .alias = { "Wcomment" },
 },
 {
+  "Wconditionally-supported",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {4, 9, 0},
+},
+{
   "Wconversion",
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
@@ -786,16 +1097,67 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "Wcpp",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
   "Wctor-dtor-privacy",
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "Wdangling-else",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
+},
+{
+  "Wdate-time",
+  gcc_cmdline_parser::option::comp_common,
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {4, 9, 0},
+  .max_gcc_version = {4, 9, 4},
+},
+{
+  "Wdate-time",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
   "Wdeclaration-after-statement",
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Wdelete-incomplete",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {4, 9, 0},
 },
 {
   "Wdelete-non-virtual-dtor",
@@ -812,6 +1174,51 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "Wdeprecated-copy",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {9, 1, 0},
+},
+{
+  "Wdeprecated-copy-dtor",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {9, 1, 0},
+},
+{
+  "Wdesignated-init",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "Wdiscarded-array-qualifiers",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "Wdiscarded-qualifiers",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
   "Wdiv-by-zero",
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
@@ -826,6 +1233,37 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Wduplicate-decl-specifier",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
+},
+{
+  "Wduplicated-branches",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
+},
+{
+  "Wduplicated-cond",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {6, 1, 0},
 },
 {
   "Weffc++",
@@ -874,6 +1312,48 @@
   .alias = { "Werror=", "implicit-function-declaration" },
 },
 {
+  "Wexpansion-to-defined",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
+},
+{
+  "Wextra",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
+},
+{
+  "Wextra-semi",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {8, 1, 0},
+},
+{
+  "Wfloat-conversion",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {4, 9, 0},
+},
+{
   "Wfloat-equal",
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
@@ -916,12 +1396,67 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "Wformat-overflow",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "Wformat-overflow=", "1", "0" },
+  .min_gcc_version = {7, 1, 0},
+},
+{
+  "Wformat-overflow=",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
+},
+{
   "Wformat-security",
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Wformat-signedness",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "Wformat-truncation",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "Wformat-truncation=", "1", "0" },
+  .min_gcc_version = {7, 1, 0},
+},
+{
+  "Wformat-truncation=",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
 },
 {
   "Wformat-y2k",
@@ -949,6 +1484,37 @@
   .reject_negative = true,
 },
 {
+  "Wframe-address",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {6, 1, 0},
+},
+{
+  "Wif-not-aligned",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {8, 1, 0},
+},
+{
+  "Wignored-attributes",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_cxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {6, 1, 0},
+},
+{
   "Wignored-qualifiers",
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_cxx),
@@ -959,6 +1525,14 @@
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Wimplicit-fallthrough=",
+  gcc_cmdline_parser::option::comp_none,
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
 },
 {
   "Wimplicit-function-declaration",
@@ -981,10 +1555,28 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "Wincompatible-pointer-types",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
   "Winherited-variadic-ctor",
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Winit-list-lifetime",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {9, 1, 0},
 },
 {
   "Winit-self",
@@ -993,6 +1585,26 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Wint-conversion",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "Wint-in-bool-context",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
 },
 {
   "Wint-to-pointer-cast",
@@ -1029,6 +1641,17 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "Wlogical-not-parentheses",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
   "Wlogical-op",
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
@@ -1059,6 +1682,49 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Wmemset-elt-size",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
+},
+{
+  "Wmemset-transposed-args",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "Wmisleading-indentation",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_common),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {6, 1, 0},
+},
+{
+  "Wmissing-attributes",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {8, 1, 0},
 },
 {
   "Wmissing-braces",
@@ -1131,12 +1797,45 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "Wmultiple-inheritance",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {6, 1, 0},
+},
+{
+  "Wmultistatement-macros",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {8, 1, 0},
+},
+{
+  "Wnamespaces",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {6, 1, 0},
+},
+{
   "Wnarrowing",
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {},
+  .max_gcc_version = {4, 9, 4},
 },
 {
   "Wnested-externs",
@@ -1145,10 +1844,52 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "Wno-alloc-size-larger-than",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "Walloc-size-larger-than=", "18446744073709551615EiB", "none" },
+  .min_gcc_version = {9, 1, 0},
+},
+{
+  "Wno-alloca-larger-than",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "Walloca-larger-than=", "18446744073709551615EiB", "none" },
+  .min_gcc_version = {9, 1, 0},
+},
+{
+  "Wno-vla-larger-than",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "Wvla-larger-than=", "18446744073709551615EiB", "none" },
+  .min_gcc_version = {9, 1, 0},
+},
+{
   "Wnoexcept",
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Wnoexcept-type",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
 },
 {
   "Wnon-template-friend",
@@ -1171,12 +1912,49 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "Wnonnull-compare",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {6, 1, 0},
+},
+{
+  "Wnormalized",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "Wnormalized=", "nfc", "none" },
+  .min_gcc_version = {5, 1, 0},
+},
+{
   "Wnormalized=",
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {},
+  .max_gcc_version = {4, 9, 4},
+},
+{
+  "Wnormalized=",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
 },
 {
   "Wold-style-cast",
@@ -1195,6 +1973,15 @@
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Wopenmp-simd",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_cxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {4, 9, 0},
 },
 {
   "Woverlength-strings",
@@ -1217,12 +2004,32 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "Woverride-init-side-effects",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {6, 1, 0},
+},
+{
   "Wpacked-bitfield-compat",
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Wpacked-not-aligned",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {8, 1, 0},
 },
 {
   "Wparentheses",
@@ -1241,6 +2048,31 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "Wpessimizing-move",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {9, 1, 0},
+},
+{
+  "Wplacement-new",
+  gcc_cmdline_parser::option::comp_cxx,
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "Wplacement-new=", "1", "0" },
+  .min_gcc_version = {6, 1, 0},
+},
+{
+  "Wplacement-new=",
+  gcc_cmdline_parser::option::comp_cxx,
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {6, 1, 0},
+},
+{
   "Wpmf-conversions",
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
@@ -1253,6 +2085,17 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Wpointer-compare",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
 },
 {
   "Wpointer-sign",
@@ -1273,6 +2116,17 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Wprio-ctor-dtor",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {9, 1, 0},
 },
 {
   "Wproperty-assign-default",
@@ -1303,10 +2157,39 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "Wredundant-move",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {9, 1, 0},
+},
+{
+  "Wregister",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
+},
+{
   "Wreorder",
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Wrestrict",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
 },
 {
   "Wreturn-local-addr",
@@ -1315,6 +2198,10 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {},
+  .max_gcc_version = {4, 9, 4},
 },
 {
   "Wreturn-type",
@@ -1323,6 +2210,17 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Wscalar-storage-order",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {6, 1, 0},
 },
 {
   "Wselector",
@@ -1337,6 +2235,70 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Wshadow-ivar",
+  (gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "Wshift-count-negative",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "Wshift-count-overflow",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "Wshift-negative-value",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {6, 1, 0},
+},
+{
+  "Wshift-overflow",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "Wshift-overflow=", "1", "0" },
+  .min_gcc_version = {6, 1, 0},
+},
+{
+  "Wshift-overflow=",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {6, 1, 0},
 },
 {
   "Wsign-compare",
@@ -1359,6 +2321,37 @@
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Wsized-deallocation",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "Wsizeof-array-argument",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "Wsizeof-pointer-div",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {8, 1, 0},
 },
 {
   "Wsizeof-pointer-memaccess",
@@ -1403,6 +2396,48 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "Wstringop-overflow",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "Wstringop-overflow=", "2", "0" },
+  .min_gcc_version = {7, 1, 0},
+},
+{
+  "Wstringop-overflow=",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
+},
+{
+  "Wstringop-truncation",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {8, 1, 0},
+},
+{
+  "Wsubobject-linkage",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {6, 1, 0},
+},
+{
   "Wsuggest-attribute=format",
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
@@ -1411,12 +2446,32 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "Wsuggest-override",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
   "Wswitch",
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Wswitch-bool",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
 },
 {
   "Wswitch-default",
@@ -1453,6 +2508,35 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Wtautological-compare",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {6, 1, 0},
+},
+{
+  "Wtemplates",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {6, 1, 0},
+},
+{
+  "Wterminate",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {6, 1, 0},
 },
 {
   "Wtraditional",
@@ -1519,6 +2603,28 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "Wunused-const-variable",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "Wunused-const-variable=", "2", "0" },
+  .min_gcc_version = {6, 1, 0},
+},
+{
+  "Wunused-const-variable=",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {6, 1, 0},
+},
+{
   "Wunused-local-typedefs",
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
@@ -1543,6 +2649,17 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "Wunused-variable",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {6, 1, 0},
+},
+{
   "Wuseless-cast",
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
@@ -1565,6 +2682,15 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "Wvirtual-inheritance",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {6, 1, 0},
+},
+{
   "Wvirtual-move-assign",
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
@@ -1577,6 +2703,29 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "Wvla-larger-than=",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
+  .max_gcc_version = {8, 3, std::numeric_limits<unsigned int>::max()},
+},
+{
+  "Wvla-larger-than=",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {9, 1, 0},
 },
 {
   "Wvolatile-register-var",
@@ -1617,6 +2766,15 @@
   gcc_cmdline_parser::option::arg_joined,
 },
 {
+  "fabi-compat-version=",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
   "faccess-control",
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
@@ -1630,6 +2788,24 @@
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
+},
+{
+  "faligned-new",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "faligned-new=", "1", "0" },
+  .min_gcc_version = {7, 1, 0},
+},
+{
+  "faligned-new=",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
 },
 {
   "fall-virtual",
@@ -1690,10 +2866,243 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "fchar8_t",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {9, 1, 0},
+},
+{
   "fcheck-new",
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {},
+  .max_gcc_version = {4, 8, 5},
+},
+{
+  "fcheck-pointer-bounds",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "fchkp-check-incomplete-type",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "fchkp-check-read",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "fchkp-check-write",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "fchkp-first-field-has-own-bounds",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "fchkp-flexible-struct-trailing-arrays",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
+},
+{
+  "fchkp-instrument-calls",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "fchkp-instrument-marked-only",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "fchkp-narrow-bounds",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "fchkp-narrow-to-innermost-array",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "fchkp-optimize",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "fchkp-store-bounds",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "fchkp-treat-zero-dynamic-size-as-infinite",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "fchkp-use-fast-string-functions",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "fchkp-use-nochk-string-functions",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "fchkp-use-static-bounds",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "fchkp-use-static-const-bounds",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "fchkp-use-wrappers",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "fchkp-zero-input-bounds-for-main",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "fcilkplus",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {4, 9, 0},
 },
 {
   "fcond-mismatch",
@@ -1723,6 +3132,15 @@
   .reject_negative = true,
 },
 {
+  "fconstexpr-ops-limit=",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {9, 1, 0},
+},
+{
   "fdebug-cpp",
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
@@ -1731,7 +3149,15 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
-  "fdeduce-init-list",
+  "fdeclone-ctor-dtor",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {4, 9, 0},
+},
+{  "fdeduce-init-list",
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -1741,6 +3167,15 @@
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "fdiagnostics-show-template-tree",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {8, 1, 0},
 },
 {
   "fdirectives-only",
@@ -1781,6 +3216,15 @@
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "felide-type",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {8, 1, 0},
 },
 {
   "femit-struct-debug-baseonly",
@@ -1874,6 +3318,14 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "fgimple",
+  gcc_cmdline_parser::option::comp_c,
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
+},
+{
   "fgnu-keywords",
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
@@ -1952,6 +3404,15 @@
   .reject_negative = true,
 },
 {
+  "fivar-visibility=",
+  (gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
   "fkeep-inline-dllexport",
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1974,6 +3435,26 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "flocal-ivars",
+  (gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "fmacro-prefix-map=",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {8, 1, 0},
+},
+{
   "fms-extensions",
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
@@ -1989,6 +3470,20 @@
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {},
+  .max_gcc_version = {4, 8, 5},
+},
+{
+  "fmudflap",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {4, 9, 0},
 },
 {
   "fmudflapir",
@@ -1998,6 +3493,20 @@
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {},
+  .max_gcc_version = {4, 8, 5},
+},
+{
+  "fmudflapir",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {4, 9, 0},
 },
 {
   "fmudflapth",
@@ -2007,6 +3516,21 @@
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {},
+  .max_gcc_version = {4, 8, 5},
+},
+{
+  "fmudflapth",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {},
+  .max_gcc_version = {4, 9, 0},
 },
 {
   "fname-mangling-version-",
@@ -2019,6 +3543,24 @@
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "fnew-inheriting-ctors",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
+},
+{
+  "fnew-ttp-matching",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
 },
 {
   "fnext-runtime",
@@ -2100,12 +3642,45 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "fopenacc",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "fopenacc-dim=",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {6, 1, 0},
+},
+{
   "fopenmp",
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "fopenmp-simd",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {4, 9, 0},
 },
 {
   "foperator-names",
@@ -2162,6 +3737,17 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "fprintf-return-value",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
+},
+{
   "freplace-objc-classes",
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
@@ -2186,6 +3772,10 @@
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {},
+  .max_gcc_version = {5, 5, std::numeric_limits<unsigned int>::max()},
 },
 {
   "fshort-enums",
@@ -2220,10 +3810,38 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "fsized-deallocation",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
   "fsquangle",
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "fsso-struct=",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {6, 1, 0},
+  .max_gcc_version = {6, 5, std::numeric_limits<unsigned int>::max()},
+},
+{
+  "fsso-struct=",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
 },
 {
   "fstats",
@@ -2242,6 +3860,26 @@
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+},
+{
+  "fstrong-eval-order",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx |
+   gcc_cmdline_parser::option::comp_common),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "fstrong-eval-order=", "all", "none" },
+  .min_gcc_version = {7, 1, 0},
+},
+{
+  "fstrong-eval-order=",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx |
+   gcc_cmdline_parser::option::comp_common),
+  gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
 },
 {
   "ftabstop=",
@@ -2394,8 +4032,22 @@
 {
   "gen-decls",
   (gcc_cmdline_parser::option::comp_objc |
+   gcc_cmdline_parser::option::comp_objcxx |
+   gcc_cmdline_parser::option::comp_driver),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {},
+  .max_gcc_version = {6, 5, std::numeric_limits<unsigned int>::max()},
+},
+{
+  "gen-decls",
+  (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {7, 1, 0},
 },
 {
   "idirafter",
@@ -2545,6 +4197,22 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "static-libmpx",
+  gcc_cmdline_parser::option::comp_driver,
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "static-libmpxwrappers",
+  gcc_cmdline_parser::option::comp_driver,
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
   "std=c++03",
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
@@ -2567,10 +4235,89 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "std=c++14",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "std=c++1y" },
+  .min_gcc_version = {4, 9, 0},
+  .max_gcc_version = {4, 9, 4},
+},
+{
+  "std=c++14",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "std=c++17",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "std=c++1z" },
+  .min_gcc_version = {5, 1, 0},
+  .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+},
+{
+  "std=c++17",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {8, 1, 0},
+},
+{
   "std=c++1y",
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {},
+  .max_gcc_version = {4, 9, 4},
+},
+{
+  "std=c++1y",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "std=c++14" },
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "std=c++1z",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+  .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+},
+{
+  "std=c++1z",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "std=c++17" },
+  .min_gcc_version = {8, 1, 0},
+},
+{
+  "std=c++2a",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {8, 1, 0},
 },
 {
   "std=c++98",
@@ -2585,12 +4332,39 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "std=c17",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {8, 1, 0},
+},
+{
+  "std=c18",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "std=c17" },
+  .min_gcc_version = {8, 1, 0},
+},
+{
   "std=c1x",
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = { "std=c11" },
+},
+{
+  "std=c2x",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {9, 1, 0},
 },
 {
   "std=c89",
@@ -2643,10 +4417,89 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "std=gnu++14",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "std=gnu++1y" },
+  .min_gcc_version = {4, 9, 0},
+  .max_gcc_version = {4, 9, 4},
+},
+{
+  "std=gnu++14",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "std=gnu++17",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "std=gnu++1z" },
+  .min_gcc_version = {5, 1, 0},
+  .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+},
+{
+  "std=gnu++17",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {8, 1, 0},
+},
+{
   "std=gnu++1y",
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {},
+  .max_gcc_version = {4, 9, 4},
+},
+{
+  "std=gnu++1y",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "gnu++14" },
+  .min_gcc_version = {5, 1, 0},
+},
+{
+  "std=gnu++1z",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {5, 1, 0},
+  .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+},
+{
+  "std=gnu++1z",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "std=gnu++17" },
+  .min_gcc_version = {8, 1, 0},
+},
+{
+  "std=gnu++2a",
+  (gcc_cmdline_parser::option::comp_cxx |
+   gcc_cmdline_parser::option::comp_objcxx),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {8, 1, 0},
 },
 {
   "std=gnu++98",
@@ -2661,12 +4514,39 @@
   gcc_cmdline_parser::option::arg_none,
 },
 {
+  "std=gnu17",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {8, 1, 0},
+},
+{
+  "std=gnu18",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "std=gnu17" },
+  .min_gcc_version = {8, 1, 0},
+},
+{
   "std=gnu1x",
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = { "std=gnu11" },
+},
+{
+  "std=gnu2x",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .min_gcc_version = {9, 1, 0},
 },
 {
   "std=gnu89",
@@ -2733,6 +4613,24 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = { "std=c11" },
+},
+{
+  "std=iso9899:2017",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "std=c17" },
+  .min_gcc_version = {8, 1, 0},
+},
+{
+  "std=iso9899:2018",
+  (gcc_cmdline_parser::option::comp_c |
+   gcc_cmdline_parser::option::comp_objc),
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "std=c17" },
+  .min_gcc_version = {8, 1, 0},
 },
 {
   "traditional",

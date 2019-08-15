@@ -1302,11 +1302,44 @@ arch_x86_64_gcc::_parse_version(const char * const version)
 
   using gcc_version = gcc_cmdline_parser::gcc_version;
   const gcc_version parsed_version(major, minor, patchlevel);
-  const gcc_version MIN_SUPPORTED_VERSION{4, 8, 0};
-  const gcc_version MAX_SUPPORTED_VERSION{0, 0, 0};
+  constexpr gcc_version MIN_SUPP_VER_48{4, 8, 0};
+  constexpr gcc_version MAX_SUPP_VER_48{4, 8, 5};
+  constexpr gcc_version MIN_SUPP_VER_49{4, 9, 0};
+  constexpr gcc_version MAX_SUPP_VER_49{4, 9, 4};
+  // It looks like from 5.1.0 onwards, the upstream patchlevel is
+  // always set to zero and may be used freely by distributions.
+  constexpr gcc_version MIN_SUPP_VER_5{5, 1, 0};
+  constexpr gcc_version MAX_SUPP_VER_5{
+    5, 5, std::numeric_limits<unsigned int>::max()
+  };
+  constexpr gcc_version MIN_SUPP_VER_6{6, 1, 0};
+  constexpr gcc_version MAX_SUPP_VER_6{
+    6, 5, std::numeric_limits<unsigned int>::max()
+  };
+  constexpr gcc_version MIN_SUPP_VER_7{7, 1, 0};
+  constexpr gcc_version MAX_SUPP_VER_7{
+    7, 4, std::numeric_limits<unsigned int>::max()
+  };
+  constexpr gcc_version MIN_SUPP_VER_8{8, 1, 0};
+  constexpr gcc_version MAX_SUPP_VER_8{
+    8, 3, std::numeric_limits<unsigned int>::max()
+  };
+  constexpr gcc_version MIN_SUPP_VER_9{9, 1, 0};
+  constexpr gcc_version MAX_SUPP_VER_9{
+    9, 2, std::numeric_limits<unsigned int>::max()
+  };
 
-  if (!(MIN_SUPPORTED_VERSION <= parsed_version &&
-	parsed_version <= MAX_SUPPORTED_VERSION)) {
+  auto &&in_range = [&](const gcc_version &f, const gcc_version &l) {
+    return (f <= parsed_version && parsed_version <= l);
+  };
+
+  if (!in_range(MIN_SUPP_VER_48, MAX_SUPP_VER_48) &&
+      !in_range(MIN_SUPP_VER_49, MAX_SUPP_VER_49) &&
+      !in_range(MIN_SUPP_VER_5, MAX_SUPP_VER_5) &&
+      !in_range(MIN_SUPP_VER_6, MAX_SUPP_VER_6) &&
+      !in_range(MIN_SUPP_VER_7, MAX_SUPP_VER_7) &&
+      !in_range(MIN_SUPP_VER_8, MAX_SUPP_VER_8) &&
+      !in_range(MIN_SUPP_VER_9, MAX_SUPP_VER_9)) {
     throw cmdline_except {
 		(std::string{"unrecognized compiler version \'"}
 		 + version + "\'")
