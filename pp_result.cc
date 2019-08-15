@@ -883,7 +883,7 @@ pp_result::header_inclusion_child::~header_inclusion_child() noexcept = default;
 pp_result::conditional_inclusion_node::
 conditional_inclusion_node(inclusion_node &parent,
 			   const raw_pp_token_index range_begin)
-  : inclusion_node(&parent, range_begin)
+  : inclusion_node(&parent, range_begin), _taken_branch(0)
 {}
 
 pp_result::conditional_inclusion_node::~conditional_inclusion_node() = default;
@@ -898,12 +898,14 @@ void pp_result::conditional_inclusion_node::
 _finalize(const raw_pp_token_index range_end,
 	  used_macros &&used_macros,
 	  macro_nondef_constraints &&macro_nondef_constraints,
-	  directive_ranges_type &&directive_ranges)
+	  directive_ranges_type &&directive_ranges,
+	  const directive_ranges_type::size_type taken_branch)
 {
   _set_range_end(range_end);
   _used_macros = std::move(used_macros);
   _macro_nondef_constraints = std::move(macro_nondef_constraints);
   _directive_ranges = std::move(_directive_ranges);
+  _taken_branch = taken_branch;
 }
 
 

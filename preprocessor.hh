@@ -278,7 +278,8 @@ namespace klp
 	pp_result::conditional_inclusion_node::directive_ranges_type
 		directive_ranges;
 	bool branch_active;
-	bool branch_taken;
+	pp_result::conditional_inclusion_node::directive_ranges_type::size_type
+		taken_branch;
       };
 
       struct _expansion_state

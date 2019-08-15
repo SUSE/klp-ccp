@@ -943,16 +943,19 @@ namespace klp
 	friend class preprocessor;
 
 	conditional_inclusion_node(inclusion_node &parent,
-			const raw_pp_token_index range_begin);
+				   const raw_pp_token_index range_begin);
 
 	void _finalize(const raw_pp_token_index range_end,
 		       used_macros &&used_macros,
 		       macro_nondef_constraints &&macro_nondef_constraints,
-		       directive_ranges_type &&directive_ranges);
+		       directive_ranges_type &&directive_ranges,
+		       const directive_ranges_type::size_type taken_branch);
 
 	used_macros _used_macros;
 	macro_nondef_constraints _macro_nondef_constraints;
 	directive_ranges_type _directive_ranges;
+	// Zero -> no branch taken, otherwise the index is 1-based.
+	directive_ranges_type::size_type _taken_branch;
       };
 
 

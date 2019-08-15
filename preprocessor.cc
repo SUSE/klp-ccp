@@ -828,7 +828,7 @@ void preprocessor::_handle_pp_directive()
 
     _cond_incl_states.top().directive_ranges.emplace_back(raw_begin, raw_end);
 
-    if (!_cond_incl_states.top().branch_taken) {
+    if (!_cond_incl_states.top().taken_branch) {
       if (_eval_conditional_inclusion(raw_pp_tokens_range{raw_begin, raw_end}))
 	_enter_cond_incl();
     } else {
@@ -850,7 +850,7 @@ void preprocessor::_handle_pp_directive()
 
     _cond_incl_states.top().directive_ranges.emplace_back(raw_begin, raw_end);
 
-    if (!_cond_incl_states.top().branch_taken) {
+    if (!_cond_incl_states.top().taken_branch) {
       _enter_cond_incl();
     } else {
       _cond_incl_states.top().branch_active = false;
@@ -1777,7 +1777,8 @@ void preprocessor::_pop_cond_incl(const raw_pp_token_index range_end)
   cond_incl_state.incl_node.get()._finalize
     (range_end,
      std::move(cond_incl_state.um), std::move(cond_incl_state.mnc),
-     std::move(cond_incl_state.directive_ranges));
+     std::move(cond_incl_state.directive_ranges),
+     cond_incl_state.taken_branch);
   assert(&cond_incl_state.incl_node.get() == &_inclusions.top().get());
   _inclusions.pop();
   _cond_incl_states.pop();
@@ -1795,7 +1796,7 @@ void preprocessor::_enter_cond_incl()
 {
   _cond_incl_state &cond_incl_state = _cond_incl_states.top();
   cond_incl_state.branch_active = true;
-  cond_incl_state.branch_taken = true;
+  cond_incl_state.taken_branch = cond_incl_state.directive_ranges.size();;
 }
 
 bool preprocessor::_cond_incl_inactive() const noexcept
@@ -2594,7 +2595,7 @@ preprocessor::get_pending_token_source(const raw_pp_token_index tok)
 
 preprocessor::_cond_incl_state::
 _cond_incl_state(pp_result::conditional_inclusion_node &_incl_node)
-  : incl_node(_incl_node), branch_active(false), branch_taken(false)
+  : incl_node(_incl_node), branch_active(false), taken_branch(0)
 {}
 
 
