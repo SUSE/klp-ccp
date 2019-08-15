@@ -275,6 +275,8 @@ namespace klp
 	std::reference_wrapper<pp_result::conditional_inclusion_node> incl_node;
 	pp_result::used_macros um;
 	pp_result::macro_nondef_constraints mnc;
+	pp_result::conditional_inclusion_node::directive_ranges_type
+		directive_ranges;
 	bool branch_active;
 	bool branch_taken;
       };

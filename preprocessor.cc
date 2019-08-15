@@ -688,8 +688,11 @@ void preprocessor::_handle_pp_directive()
 	throw pp_except(remark);
       }
 
-      if (_cond_incl_nesting == _cond_incl_states.size())
+      if (_cond_incl_nesting == _cond_incl_states.size()) {
+	_cond_incl_states.top().directive_ranges.emplace_back(raw_begin,
+							      raw_end);
 	_pop_cond_incl(raw_end);
+      }
       --_cond_incl_nesting;
 
     } else if (!tok.is_ws()) {
@@ -745,6 +748,7 @@ void preprocessor::_handle_pp_directive()
       return;
 
     _push_cond_incl(raw_begin);
+    _cond_incl_states.top().directive_ranges.emplace_back(raw_begin, raw_end);
 
     if (_eval_conditional_inclusion(raw_pp_tokens_range{raw_begin, raw_end}))
       _enter_cond_incl();
@@ -768,6 +772,7 @@ void preprocessor::_handle_pp_directive()
     }
 
     _push_cond_incl(raw_begin);
+    _cond_incl_states.top().directive_ranges.emplace_back(raw_begin, raw_end);
 
     auto it_m = _macros.find(it_tok->get_value());
     if (it_m != _macros.end()) {
@@ -797,6 +802,7 @@ void preprocessor::_handle_pp_directive()
     }
 
     _push_cond_incl(raw_begin);
+    _cond_incl_states.top().directive_ranges.emplace_back(raw_begin, raw_end);
 
     auto it_m = _macros.find(it_tok->get_value());
     if (it_m != _macros.end()) {
@@ -820,6 +826,8 @@ void preprocessor::_handle_pp_directive()
     if (_cond_incl_nesting > _cond_incl_states.size())
       return;
 
+    _cond_incl_states.top().directive_ranges.emplace_back(raw_begin, raw_end);
+
     if (!_cond_incl_states.top().branch_taken) {
       if (_eval_conditional_inclusion(raw_pp_tokens_range{raw_begin, raw_end}))
 	_enter_cond_incl();
@@ -839,6 +847,8 @@ void preprocessor::_handle_pp_directive()
 
     if (_cond_incl_nesting > _cond_incl_states.size())
       return;
+
+    _cond_incl_states.top().directive_ranges.emplace_back(raw_begin, raw_end);
 
     if (!_cond_incl_states.top().branch_taken) {
       _enter_cond_incl();
@@ -1764,9 +1774,10 @@ void preprocessor::_push_cond_incl(const raw_pp_token_index range_begin)
 void preprocessor::_pop_cond_incl(const raw_pp_token_index range_end)
 {
   _cond_incl_state &cond_incl_state = _cond_incl_states.top();
-  cond_incl_state.incl_node.get()._finalize(range_end,
-					    std::move(cond_incl_state.um),
-					    std::move(cond_incl_state.mnc));
+  cond_incl_state.incl_node.get()._finalize
+    (range_end,
+     std::move(cond_incl_state.um), std::move(cond_incl_state.mnc),
+     std::move(cond_incl_state.directive_ranges));
   assert(&cond_incl_state.incl_node.get() == &_inclusions.top().get());
   _inclusions.pop();
   _cond_incl_states.pop();

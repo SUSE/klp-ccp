@@ -921,6 +921,8 @@ namespace klp
       class conditional_inclusion_node final : public inclusion_node
       {
       public:
+	typedef std::vector<raw_pp_tokens_range> directive_ranges_type;
+
 	virtual ~conditional_inclusion_node();
 
 	virtual const header_inclusion_node&
@@ -945,10 +947,12 @@ namespace klp
 
 	void _finalize(const raw_pp_token_index range_end,
 		       used_macros &&used_macros,
-		       macro_nondef_constraints &&macro_nondef_constraints);
+		       macro_nondef_constraints &&macro_nondef_constraints,
+		       directive_ranges_type &&directive_ranges);
 
 	used_macros _used_macros;
 	macro_nondef_constraints _macro_nondef_constraints;
+	directive_ranges_type _directive_ranges;
       };
 
 
