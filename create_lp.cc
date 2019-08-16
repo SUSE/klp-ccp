@@ -6956,8 +6956,8 @@ void _lp_deps_resolver::operator()()
 
   // Recursively process the dependencies on types, declarations and
   // headers.
-  while (!_sou_defs_wl.empty() && !_enum_defs_wl.empty() &&
-	 !_typedefs_wl.empty() && !_orig_decls_wl.empty()) {
+  while (!_sou_defs_wl.empty() || !_enum_defs_wl.empty() ||
+	 !_typedefs_wl.empty() || !_orig_decls_wl.empty()) {
     while (!_sou_defs_wl.empty()) {
       sou_def_info &soudi = _sou_defs_wl.front().get();
       _sou_defs_wl.pop();
