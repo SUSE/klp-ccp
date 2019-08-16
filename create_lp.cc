@@ -7396,7 +7396,7 @@ bool _lp_deps_resolver::_queue_includes_for(const pp_tokens_range &r)
 
     auto &&queue_deps_from_header
       = std::bind(&_lp_deps_resolver::_queue_deps,
-		  *this, std::placeholders::_1, true);
+		  this, std::placeholders::_1, true);
 
     auto &&handle_descendant_tags =
       [&](tags_infos &child_tags) {
