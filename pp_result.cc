@@ -528,27 +528,291 @@ _skip_non_headers()
 }
 
 
+template <typename node_type>
+pp_result::_const_intersecting_child_node_iterator<node_type>::
+_const_intersecting_child_node_iterator(const header_inclusion_root &root,
+					const raw_pp_tokens_range &range)
+  : _range(range), _pos(_range.begin), _cur_val(nullptr)
+{
+  auto chlds_sr = _intersecting_chlds_subrange(root._children.cbegin(),
+					       root._children.end());
+  if (chlds_sr.first != chlds_sr.second) {
+    // Descend
+    _walk_stack.emplace_back(_walk_stack_entry{chlds_sr.first,
+			     chlds_sr.first,
+			     chlds_sr.second});
+    _descend_walk_stack();
+    _fwd_walk_stack_to_node_kind();
+  }
+
+  if (!_walk_stack.empty()) {
+    _cur_val = _find_deepest_covering_pos();
+    if (!_cur_val)
+      _cur_val = _find_node_after_pos();
+    assert(_cur_val);
+    _pos = _cur_val->get_range().begin;
+  } else {
+    _pos = _range.end;
+  }
+}
+
+template <typename node_type>
+pp_result::_const_intersecting_child_node_iterator<node_type>::
+_const_intersecting_child_node_iterator(const raw_pp_tokens_range &range)
+  noexcept
+  : _range(range), _pos(_range.end), _cur_val(nullptr)
+{}
+
+template <typename node_type>
+bool
+pp_result::_const_intersecting_child_node_iterator<node_type>::
+operator==(const _const_intersecting_child_node_iterator &rhs) const noexcept
+{
+  assert(this->_range == rhs._range);
+  return (this->_pos == rhs._pos);
+}
+
+template <typename node_type>
+void pp_result::_const_intersecting_child_node_iterator<node_type>::
+advance()
+{
+  assert(!_walk_stack.empty());
+  assert(_walk_stack.back().chlds_it->k == _get_node_kind());
+
+  if (_pos < _access_chld(*_walk_stack.back().chlds_it).get_range().begin) {
+    // The current _pos is somewhere to the left of the current
+    // leaf node. Find the deepest node of the desired type coming next.
+    _cur_val = _find_node_after_pos();
+    assert(_cur_val);
+    _pos = _cur_val->get_range().begin;
+
+  } else {
+    assert(_access_chld(*_walk_stack.back().chlds_it).get_range().begin <=
+	   _pos);
+    assert(_pos <=
+	   _access_chld(*_walk_stack.back().chlds_it).get_range().end);
+    const raw_pp_token_index end_pos =
+      _walk_stack.back().chlds_it->h->get_range().end;
+    if (_range.end <= end_pos) {
+      // We're done.
+      _pos = _range.end;
+      _walk_stack.clear();
+      _cur_val = nullptr;
+      return;
+    }
+
+    _pos = end_pos;
+
+    // Move the walk stack to the next DFS post node of the desired
+    // kind not ending at end_pos.
+    do {
+      if (_walk_stack.back().chlds_it + 1 != _walk_stack.back().chlds_end) {
+	++_walk_stack.back().chlds_it;
+	_descend_walk_stack();
+	_fwd_walk_stack_to_node_kind();
+      } else {
+	_walk_stack.pop_back();
+	if (!_walk_stack.empty())
+	  _fwd_walk_stack_to_node_kind();
+      }
+    } while (!_walk_stack.empty() &&
+	     (_access_chld(*_walk_stack.back().chlds_it).get_range().end ==
+	      end_pos));
+
+    if (_walk_stack.empty()) {
+      _pos = _range.end;
+      _walk_stack.clear();
+      _cur_val = nullptr;
+      return;
+    }
+
+    // There are two possible cases now: some of the nodes of the
+    // desired kind on the walk stack either overlap with the current
+    // _pos or there is a gap at the top level.
+    _cur_val = _find_deepest_covering_pos();
+    if (!_cur_val) {
+      // There aren't any. Advance past the top level gap.
+      assert(_pos <
+	     _access_chld(*_walk_stack.back().chlds_it).get_range().begin);
+      advance();
+    }
+  }
+}
+
+template <>
+pp_result::inclusion_node::_child::kind
+pp_result::_const_intersecting_child_node_iterator
+				<pp_result::header_inclusion_child>::
+_get_node_kind() noexcept
+{
+  return inclusion_node::_child::kind::header;
+}
+
+template <>
+pp_result::inclusion_node::_child::kind
+pp_result::_const_intersecting_child_node_iterator
+				<pp_result::conditional_inclusion_node>::
+_get_node_kind() noexcept
+{
+  return inclusion_node::_child::kind::conditional;
+}
+
+template <>
+const pp_result::header_inclusion_child&
+pp_result::_const_intersecting_child_node_iterator
+				<pp_result::header_inclusion_child>::
+_access_chld(const inclusion_node::_child &c) noexcept
+{
+  assert(c.k == _get_node_kind());
+  return *c.h;
+}
+
+template <>
+const pp_result::conditional_inclusion_node&
+pp_result::_const_intersecting_child_node_iterator
+				<pp_result::conditional_inclusion_node>::
+_access_chld(const inclusion_node::_child &c) noexcept
+{
+  assert(c.k == _get_node_kind());
+  return *c.c;
+}
+
+template <typename node_type>
+std::pair<pp_result::inclusion_node::_children_container_type::const_iterator,
+	  pp_result::inclusion_node::_children_container_type::const_iterator>
+pp_result::_const_intersecting_child_node_iterator<node_type>::
+_intersecting_chlds_subrange
+(const inclusion_node::_children_container_type::const_iterator &b,
+ const inclusion_node::_children_container_type::const_iterator &e) noexcept
+{
+  const auto srb =
+    std::lower_bound(b, e, _range,
+		     [](const inclusion_node::_child &c,
+			const raw_pp_tokens_range &r) {
+		       return (c.get_inclusion_node().get_range() < r);
+		     });
+  const auto sre =
+    std::upper_bound(srb, e, _range,
+		     [](const raw_pp_tokens_range &r,
+			const inclusion_node::_child &c) {
+		       return r < c.get_inclusion_node().get_range();
+		     });
+  return std::make_pair(srb, sre);
+}
+
+template <typename node_type>
+void pp_result::_const_intersecting_child_node_iterator<node_type>::
+_descend_walk_stack()
+{
+  assert(!_walk_stack.empty());
+  const inclusion_node::_child *cur = &*_walk_stack.back().chlds_it;
+  const inclusion_node *n = &cur->get_inclusion_node();
+  auto chlds_sr = _intersecting_chlds_subrange(n->_children.cbegin(),
+					       n->_children.end());
+  while (chlds_sr.first != chlds_sr.second) {
+    // Descend
+    _walk_stack.emplace_back(_walk_stack_entry{chlds_sr.first,
+			     chlds_sr.first,
+			     chlds_sr.second});
+    cur = &*_walk_stack.back().chlds_it;
+    n = &cur->get_inclusion_node();
+    chlds_sr = _intersecting_chlds_subrange(n->_children.cbegin(),
+					    n->_children.end());
+  }
+}
+
+template <typename node_type>
+void pp_result::_const_intersecting_child_node_iterator<node_type>::
+_fwd_walk_stack_to_node_kind()
+{
+  // Move the walk stack to the next (in DFS post order) node of the
+  // desired kind.
+  typedef inclusion_node::_child _child;
+  assert(!_walk_stack.empty());
+  assert(_walk_stack.back().chlds_it != _walk_stack.back().chlds_end);
+  while (!_walk_stack.empty() &&
+	 _walk_stack.back().chlds_it->k != _get_node_kind()) {
+    if (_walk_stack.back().chlds_it + 1 != _walk_stack.back().chlds_end) {
+      ++_walk_stack.back().chlds_it;
+      _descend_walk_stack();
+    } else {
+      _walk_stack.pop_back();
+    }
+  }
+}
+
+template <typename node_type>
+const node_type *
+pp_result::_const_intersecting_child_node_iterator<node_type>::
+_find_deepest_covering_pos() noexcept
+{
+  // Find the deepest node of the desired kind on the walk stack
+  // which begins before or at the current _pos.
+  auto deepest_covering_pos =
+    std::find_if(_walk_stack.crbegin(), _walk_stack.crend(),
+		 [&](const _walk_stack_entry &e) {
+		   return (e.chlds_it->k == _get_node_kind() &&
+			   (_access_chld(*e.chlds_it).get_range().begin
+			    <= _pos));
+		 });
+
+  if (deepest_covering_pos != _walk_stack.crend())
+    return &_access_chld(*deepest_covering_pos->chlds_it);
+  else
+    return nullptr;
+}
+
+template <typename node_type>
+const node_type *
+pp_result::_const_intersecting_child_node_iterator<node_type>::
+_find_node_after_pos() noexcept
+{
+  // Find the first node of the desired kind on the walk stack
+  // which begins after the current _pos. If there are multiple
+  // (nested) candidates, take the innermost one.
+  const auto topmost_gt_pos =
+    std::find_if(_walk_stack.cbegin(), _walk_stack.cend(),
+		 [&](const _walk_stack_entry &e) {
+		   return (e.chlds_it->k == _get_node_kind() &&
+			   (_access_chld(*e.chlds_it).get_range().begin
+			    > _pos));
+		 });
+  assert(topmost_gt_pos != _walk_stack.cend());
+  const auto next_pos =
+    _access_chld(*topmost_gt_pos->chlds_it).get_range().begin;
+  const auto deepest_at_pos =
+    std::find_if(_walk_stack.crbegin(), _walk_stack.crend(),
+		 [&](const _walk_stack_entry &e) {
+		   return (e.chlds_it->k == _get_node_kind() &&
+			   (_access_chld(*e.chlds_it).get_range().begin
+			    == next_pos));
+		 });
+  assert(deepest_at_pos != _walk_stack.crend());
+  return &_access_chld(*deepest_at_pos->chlds_it);
+}
+
+
 pp_result::const_intersecting_source_iterator::
 const_intersecting_source_iterator(const header_inclusion_roots &roots,
 				   const raw_pp_tokens_range &range,
 				   const init_begin_iterator_tag&)
-  : _range(range), _pos(_range.begin), _cur_val(nullptr)
+  : _range(range),
+    _roots(_intersecting_roots_subrange(roots.begin(), roots.end())),
+    _roots_it(_roots.first),
+    _child_it(_range), _max_pos_seen_from_chlds(_range.begin)
 {
-  assert(!roots.empty());
 
-  std::tie(_roots_begin, _roots_end) =
-    _intersecting_roots_subrange(roots.begin(), roots.end());
-
-  if (_roots_begin != roots.end()) {
-    _roots_it = _roots_begin;
-    _enter_root();
+  if (_roots.first != _roots.second) {
+    _child_it =
+      _const_intersecting_child_node_iterator<header_inclusion_child> {
+	*_roots_it, _range
+      };
   } else {
     // Range is an empty range at EOF, special case it.
-    --_roots_begin;
-    _roots_it = _roots_begin;
+    --_roots.first;
+    _roots_it = _roots.first;
     assert(range.begin == range.end);
-    assert(range.begin == _roots_begin->get_range().end);
-    _cur_val = &*_roots_begin;
+    assert(range.begin == _roots.first->get_range().end);
   }
 }
 
@@ -556,134 +820,66 @@ pp_result::const_intersecting_source_iterator::
 const_intersecting_source_iterator(const header_inclusion_roots &roots,
 				   const raw_pp_tokens_range &range,
 				   const init_end_iterator_tag&)
-  : _range(range), _pos(_range.end), _cur_val(nullptr)
+  : _range(range),
+    _roots(_intersecting_roots_subrange(roots.begin(), roots.end())),
+    _roots_it(_roots.second),
+    _child_it(_range), _max_pos_seen_from_chlds(_range.end)
 {
-  assert(!roots.empty());
-
-  std::tie(_roots_begin, _roots_end) =
-    _intersecting_roots_subrange(roots.begin(), roots.end());
-
-  if (_roots_begin == roots.end()) {
+  if (_roots.first == roots.end()) {
     // C.f. begin iterator construction
-    --_roots_begin;
+    --_roots.first;
   }
-  _roots_it = _roots_end;
 }
 
 bool pp_result::const_intersecting_source_iterator::
 operator==(const const_intersecting_source_iterator &rhs) const noexcept
 {
-  if (this->_pos != rhs._pos)
-    return false;
-  else if (this->_cur_val != rhs._cur_val)
-    return false;
-  else if (this->_range != rhs._range)
-    return false;
-  else
-    return true;
+  assert(this->_range == rhs._range);
+  return (this->_roots_it == rhs._roots_it &&
+	  this->_child_it == rhs._child_it);
+}
+
+pp_result::const_intersecting_source_iterator::reference
+pp_result::const_intersecting_source_iterator::operator*() const noexcept
+{
+  assert(_roots_it != _roots.second);
+
+  if (_child_it.get_value() &&
+      _max_pos_seen_from_chlds >= _child_it.get_value()->get_range().begin) {
+    return *_child_it.get_value();
+  } else {
+    // Current position is within some gap not covered by any child
+    // header.
+    return *_roots_it;
+  }
 }
 
 pp_result::const_intersecting_source_iterator&
 pp_result::const_intersecting_source_iterator::operator++()
 {
-  typedef inclusion_node::_child _child;
-
-  if (_walk_stack.empty()) {
-  next_root:
-    ++_roots_it;
-    if (_roots_it == _roots_end) {
-      _pos = _range.end;
-      _cur_val = nullptr;
-      return *this;
-    }
-
-    assert(_pos <= _roots_it->get_range().begin);
-    _pos = _roots_it->get_range().begin;
-    _enter_root();
-    return *this;
-  }
-
-  assert(_walk_stack.back().chlds_it->k == _child::kind::header);
-
-  if (_pos < _walk_stack.back().chlds_it->h->get_range().begin) {
-    // The current _pos is somewhere to the left of the current
-    // leaf header. Find the deepest header coming next.
-    const auto beginning_gt_pos =
-      std::find_if(_walk_stack.cbegin(), _walk_stack.cend(),
-		   [&](const _walk_stack_entry &e) {
-		     return (e.chlds_it->k == _child::kind::header &&
-			     e.chlds_it->h->get_range().begin > _pos);
-		   });
-    assert(beginning_gt_pos != _walk_stack.cend());
-    _pos = beginning_gt_pos->chlds_it->h->get_range().begin;
-    const auto deepest =
-      std::find_if(_walk_stack.crbegin(), _walk_stack.crend(),
-		   [&](const _walk_stack_entry &e) {
-		     return (e.chlds_it->k == _child::kind::header &&
-			     e.chlds_it->h->get_range().begin == _pos);
-		   });
-    assert(deepest != _walk_stack.crend());
-    _cur_val = deepest->chlds_it->h.get();
-
-  } else {
-    assert(_walk_stack.back().chlds_it->h->get_range().begin <= _pos);
-    assert(_pos <= _walk_stack.back().chlds_it->h->get_range().end);
-    const raw_pp_token_index end_pos =
-      _walk_stack.back().chlds_it->h->get_range().end;
-    if (_range.end <= end_pos) {
-      // We're done.
-      _pos = _range.end;
-      ++_roots_it;
-      assert(_roots_it == _roots_end);
-      _walk_stack.clear();
-      _cur_val = nullptr;
-      return *this;
-    }
-
-    _pos = end_pos;
-
-    // Pop all ancestor headers off the stack which have their
-    // ->get_range().end == end_pos and forward the walk stack to the
-    // next header.
-    while (_walk_stack.back().chlds_it->h->get_range().end == end_pos) {
-      ++_walk_stack.back().chlds_it;
-      while (_walk_stack.back().chlds_it == _walk_stack.back().chlds_end) {
-	_walk_stack.pop_back();
-	if (_walk_stack.empty())
-	  break;
-	++_walk_stack.back().chlds_it;
-      }
-      if (!_walk_stack.empty())
-	_fwd_walk_to_header_dfs_po();
-
-      if (_walk_stack.empty()) {
-	if (_roots_it->get_range().end == end_pos) {
-	  goto next_root;
-	} else {
-	  _cur_val = &*_roots_it;
-	  return *this;
-	}
-      }
-
-      assert(_walk_stack.back().chlds_it != _walk_stack.back().chlds_end);
-      assert(_walk_stack.back().chlds_it->k == _child::kind::header);
-    }
-
-    assert(_walk_stack.back().chlds_it->h->get_range().end > end_pos);
-    auto deepest_beginning_leq_pos =
-      std::find_if(_walk_stack.crbegin(), _walk_stack.crend(),
-		   [&](const _walk_stack_entry &e) {
-		     return (e.chlds_it->k == _child::kind::header &&
-			     e.chlds_it->h->get_range().begin <= _pos);
-		   });
-
-    if (deepest_beginning_leq_pos == _walk_stack.crend()) {
-      _cur_val = &*_roots_it;
+  assert(_roots_it != _roots.second);
+  if (_child_it.get_value()) {
+    if (_max_pos_seen_from_chlds < _child_it.get_value()->get_range().begin) {
+      // We're currently within some range not covered by any
+      // children. Move on to the next child.
+      _max_pos_seen_from_chlds = _child_it.get_value()->get_range().begin;
     } else {
-      _cur_val = deepest_beginning_leq_pos->chlds_it->h.get();
-    }
-  }
+      _max_pos_seen_from_chlds =
+	std::max(_child_it.get_value()->get_range().end,
+		 _max_pos_seen_from_chlds);
+      _child_it.advance();
 
+      if (!_child_it.get_value() &&
+	  (_max_pos_seen_from_chlds >= _roots_it->get_range().end ||
+	   _max_pos_seen_from_chlds >= _range.end)) {
+	  _next_root();
+      }
+    }
+  } else {
+    // Current position is within the current root header, after all
+    // of its children, if any.
+    _next_root();
+  }
   return *this;
 }
 
@@ -718,88 +914,25 @@ pp_result::const_intersecting_source_iterator::_intersecting_roots_subrange
   return std::make_pair(srb, sre);
 }
 
-std::pair<pp_result::inclusion_node::_children_container_type::const_iterator,
-	  pp_result::inclusion_node::_children_container_type::const_iterator>
-pp_result::const_intersecting_source_iterator::_intersecting_chlds_subrange
-	(const inclusion_node::_children_container_type::const_iterator &b,
-	 const inclusion_node::_children_container_type::const_iterator &e)
-  noexcept
+void pp_result::const_intersecting_source_iterator::_next_root()
 {
-  const auto srb =
-    std::lower_bound(b, e, _range,
-		     [](const inclusion_node::_child &c,
-			const raw_pp_tokens_range &r) {
-		       return (c.get_inclusion_node().get_range() < r);
-		     });
-  const auto sre =
-    std::upper_bound(srb, e, _range,
-		     [](const raw_pp_tokens_range &r,
-			const inclusion_node::_child &c) {
-		       return r < c.get_inclusion_node().get_range();
-		     });
-  return std::make_pair(srb, sre);
-}
+  assert(_roots_it != _roots.second);
+  ++_roots_it;
 
+  if (_roots_it != _roots.second) {
+    _child_it =
+      _const_intersecting_child_node_iterator<header_inclusion_child> {
+	*_roots_it, _range
+      };
+    _max_pos_seen_from_chlds = _roots_it->get_range().begin;
 
-void pp_result::const_intersecting_source_iterator::_enter_root()
-{
-  typedef inclusion_node::_child _child;
-
-  auto chlds_sr = _intersecting_chlds_subrange(_roots_it->_children.cbegin(),
-					       _roots_it->_children.end());
-  if (chlds_sr.first != chlds_sr.second) {
-    _walk_stack.emplace_back(_walk_stack_entry{chlds_sr.first,
-					       chlds_sr.first,
-					       chlds_sr.second});
-    _fwd_walk_to_header_dfs_po();
-  }
-
-  auto deepest_beginning_leq_pos =
-    std::find_if(_walk_stack.crbegin(), _walk_stack.crend(),
-		 [&](const _walk_stack_entry &e) {
-		   return (e.chlds_it->k == _child::kind::header &&
-			   e.chlds_it->h->get_range().begin <= _pos);
-		 });
-  if (deepest_beginning_leq_pos == _walk_stack.crend()) {
-    _cur_val = &*_roots_it;
   } else {
-    _cur_val = deepest_beginning_leq_pos->chlds_it->h.get();
-  }
-}
+    _child_it =
+      _const_intersecting_child_node_iterator<header_inclusion_child> {
+	_range
+      };
+    _max_pos_seen_from_chlds = _range.end;
 
-void pp_result::const_intersecting_source_iterator::_fwd_walk_to_header_dfs_po()
-{
-  typedef inclusion_node::_child _child;
-
-  assert(!_walk_stack.empty());
-  assert(_walk_stack.back().chlds_it != _walk_stack.back().chlds_end);
-  while (true) {
-    // Determine begin and end of children overlapping with the range.
-    const _child &cur = *_walk_stack.back().chlds_it;
-    const inclusion_node &n = cur.get_inclusion_node();
-    auto chlds_sr = _intersecting_chlds_subrange(n._children.cbegin(),
-					       n._children.end());
-    if (chlds_sr.first != chlds_sr.second) {
-      // Descend
-      _walk_stack.emplace_back(_walk_stack_entry{chlds_sr.first,
-						 chlds_sr.first,
-						 chlds_sr.second});
-
-    } else {
-      // Go to next sibling or up, but leave only non-header nodes.
-      if (_walk_stack.back().chlds_it->k == _child::kind::header)
-	return;
-
-      ++_walk_stack.back().chlds_it;
-      while (_walk_stack.back().chlds_it == _walk_stack.back().chlds_end) {
-	_walk_stack.pop_back();
-	if (_walk_stack.empty() ||
-	    _walk_stack.back().chlds_it->k == _child::kind::header) {
-	  return;
-	}
-	++_walk_stack.back().chlds_it;
-      }
-    }
   }
 }
 

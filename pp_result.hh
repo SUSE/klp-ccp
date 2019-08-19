@@ -1150,6 +1150,62 @@ namespace klp
       header_inclusion_roots& get_header_inclusion_roots() noexcept
       { return _header_inclusion_roots; }
 
+    private:
+      template <typename node_type>
+      class _const_intersecting_child_node_iterator
+      {
+      public:
+	_const_intersecting_child_node_iterator
+		(const header_inclusion_root &root,
+		 const raw_pp_tokens_range &range);
+
+	_const_intersecting_child_node_iterator
+		(const raw_pp_tokens_range &range) noexcept;
+
+	bool operator==(const _const_intersecting_child_node_iterator &rhs)
+	  const noexcept;
+
+	void advance();
+
+	const node_type *get_value() const noexcept
+	{ return _cur_val; }
+
+      private:
+	static inclusion_node::_child::kind _get_node_kind() noexcept;
+
+	static const node_type& _access_chld(const inclusion_node::_child &c)
+	  noexcept;
+
+	std::pair<inclusion_node::_children_container_type::const_iterator,
+		  inclusion_node::_children_container_type::const_iterator>
+	_intersecting_chlds_subrange
+	(const inclusion_node::_children_container_type::const_iterator &b,
+	 const inclusion_node::_children_container_type::const_iterator &e)
+	  noexcept;
+
+	struct _walk_stack_entry
+	{
+	  inclusion_node::_children_container_type::const_iterator chlds_it;
+	  inclusion_node::_children_container_type::const_iterator chlds_begin;
+	  inclusion_node::_children_container_type::const_iterator chlds_end;
+	};
+
+	void _descend_walk_stack();
+	void _fwd_walk_stack_to_node_kind();
+
+	const node_type * _find_deepest_covering_pos() noexcept;
+	const node_type * _find_node_after_pos() noexcept;
+
+	raw_pp_tokens_range _range;
+	raw_pp_token_index _pos;
+
+	const node_type *_cur_val;
+
+	typedef std::vector<_walk_stack_entry> _walk_stack_type;
+	_walk_stack_type _walk_stack;
+      };
+
+    public:
       class const_intersecting_source_iterator :
 	public std::iterator<std::forward_iterator_tag,
 			     const header_inclusion_node>
@@ -1173,11 +1229,10 @@ namespace klp
 	  const noexcept
 	{ return !(*this == rhs); }
 
-	reference operator*() const noexcept
-	{ return *_cur_val; }
+	reference operator*() const noexcept;
 
 	pointer operator->() const noexcept
-	{ return _cur_val; }
+	{ return &**this; }
 
 	const_intersecting_source_iterator&
 	operator++();
@@ -1191,35 +1246,17 @@ namespace klp
 		(const header_inclusion_roots::const_iterator &b,
 		 const header_inclusion_roots::const_iterator &e) noexcept;
 
-	std::pair<inclusion_node::_children_container_type::const_iterator,
-		  inclusion_node::_children_container_type::const_iterator>
-	_intersecting_chlds_subrange
-	(const inclusion_node::_children_container_type::const_iterator &b,
-	 const inclusion_node::_children_container_type::const_iterator &e)
-	  noexcept;
-
-	void _enter_root();
-
-	void _fwd_walk_to_header_dfs_po();
-
-	struct _walk_stack_entry
-	{
-	  inclusion_node::_children_container_type::const_iterator chlds_it;
-	  inclusion_node::_children_container_type::const_iterator chlds_begin;
-	  inclusion_node::_children_container_type::const_iterator chlds_end;
-	};
+	void _next_root();
 
 	raw_pp_tokens_range _range;
-	raw_pp_token_index _pos;
 
-	header_inclusion_roots::const_iterator _roots_begin;
-	header_inclusion_roots::const_iterator _roots_end;
+	std::pair<header_inclusion_roots::const_iterator,
+		  header_inclusion_roots::const_iterator> _roots;
 	header_inclusion_roots::const_iterator _roots_it;
 
-	const header_inclusion_node *_cur_val;
-
-	typedef std::vector<_walk_stack_entry> _walk_stack_type;
-	_walk_stack_type _walk_stack;
+	_const_intersecting_child_node_iterator<header_inclusion_child>
+		_child_it;
+	raw_pp_token_index _max_pos_seen_from_chlds;
       };
 
       const_intersecting_source_iterator
