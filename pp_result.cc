@@ -946,7 +946,7 @@ const_intersecting_source_iterator(const header_inclusion_roots &roots,
 pp_result::const_intersecting_source_iterator::
 const_intersecting_source_iterator(const header_inclusion_roots &roots,
 				   const raw_pp_tokens_range &range,
-				   const init_end_iterator_tag&)
+				   const init_end_iterator_tag&) noexcept
   : _range(range),
     _roots(_intersecting_roots_subrange(roots.begin(), roots.end())),
     _roots_it(_roots.second),
@@ -1114,7 +1114,8 @@ pp_result::intersecting_sources_begin(const raw_pp_tokens_range &range) const
 }
 
 pp_result::const_intersecting_source_iterator
-pp_result::intersecting_sources_end(const raw_pp_tokens_range &range) const
+pp_result::intersecting_sources_end(const raw_pp_tokens_range &range)
+  const noexcept
 {
   return (const_intersecting_source_iterator
 	  {_header_inclusion_roots, range,

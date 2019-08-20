@@ -1220,7 +1220,8 @@ namespace klp
 
 	const_intersecting_source_iterator(const header_inclusion_roots &roots,
 					   const raw_pp_tokens_range &range,
-					   const init_end_iterator_tag&);
+					   const init_end_iterator_tag&)
+	  noexcept;
 
 	bool operator==(const const_intersecting_source_iterator &rhs)
 	  const noexcept;
@@ -1263,7 +1264,7 @@ namespace klp
       intersecting_sources_begin(const raw_pp_tokens_range &range) const;
 
       const_intersecting_source_iterator
-      intersecting_sources_end(const raw_pp_tokens_range &range) const;
+      intersecting_sources_end(const raw_pp_tokens_range &range) const noexcept;
 
       const header_inclusion_node&
       get_raw_token_source(const raw_pp_token_index tok_index) const;
