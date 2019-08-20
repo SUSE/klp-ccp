@@ -1266,6 +1266,70 @@ namespace klp
       const_intersecting_source_iterator
       intersecting_sources_end(const raw_pp_tokens_range &range) const noexcept;
 
+
+      class const_intersecting_conditional_iterator :
+	public std::iterator<std::forward_iterator_tag,
+			     const conditional_inclusion_node>
+      {
+      public:
+	struct init_begin_iterator_tag {};
+	struct init_end_iterator_tag {};
+
+	const_intersecting_conditional_iterator
+					(const header_inclusion_roots &roots,
+					 const raw_pp_tokens_range &range,
+					 const init_begin_iterator_tag&);
+
+	const_intersecting_conditional_iterator
+					(const header_inclusion_roots &roots,
+					 const raw_pp_tokens_range &range,
+					 const init_end_iterator_tag&)
+	  noexcept;
+
+	bool operator==(const const_intersecting_conditional_iterator &rhs)
+	  const noexcept;
+
+	bool operator!=(const const_intersecting_conditional_iterator &rhs)
+	  const noexcept
+	{ return !(*this == rhs); }
+
+	reference operator*() const noexcept;
+
+	pointer operator->() const noexcept
+	{ return &**this; }
+
+	const_intersecting_conditional_iterator&
+	operator++();
+
+	const const_intersecting_conditional_iterator operator++(int);
+
+      private:
+	std::pair<header_inclusion_roots::const_iterator,
+		  header_inclusion_roots::const_iterator>
+	_intersecting_roots_subrange
+		(const header_inclusion_roots::const_iterator &b,
+		 const header_inclusion_roots::const_iterator &e) noexcept;
+
+	void _enter_root();
+
+	raw_pp_tokens_range _range;
+
+	std::pair<header_inclusion_roots::const_iterator,
+		  header_inclusion_roots::const_iterator> _roots;
+	header_inclusion_roots::const_iterator _roots_it;
+
+	_const_intersecting_child_node_iterator<conditional_inclusion_node>
+		_child_it;
+      };
+
+      const_intersecting_conditional_iterator
+      intersecting_conditionals_begin(const raw_pp_tokens_range &range) const;
+
+      const_intersecting_conditional_iterator
+      intersecting_conditionals_end(const raw_pp_tokens_range &range)
+	const noexcept;
+
+
       const header_inclusion_node&
       get_raw_token_source(const raw_pp_token_index tok_index) const;
 

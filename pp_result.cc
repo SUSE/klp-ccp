@@ -1064,6 +1064,104 @@ void pp_result::const_intersecting_source_iterator::_next_root()
 }
 
 
+pp_result::const_intersecting_conditional_iterator::
+const_intersecting_conditional_iterator(const header_inclusion_roots &roots,
+					const raw_pp_tokens_range &range,
+					const init_begin_iterator_tag&)
+  : _range(range),
+    _roots(_intersecting_roots_subrange(roots.begin(), roots.end())),
+    _roots_it(_roots.first),
+    _child_it(_range)
+{
+  _enter_root();
+}
+
+pp_result::const_intersecting_conditional_iterator::
+const_intersecting_conditional_iterator(const header_inclusion_roots &roots,
+					const raw_pp_tokens_range &range,
+					const init_end_iterator_tag&)
+  noexcept
+  : _range(range),
+    _roots(_intersecting_roots_subrange(roots.begin(), roots.end())),
+    _roots_it(_roots.second),
+    _child_it(_range)
+{}
+
+bool pp_result::const_intersecting_conditional_iterator::
+operator==(const const_intersecting_conditional_iterator &rhs) const noexcept
+{
+  assert(this->_range == rhs._range);
+  return (this->_roots_it == rhs._roots_it &&
+	  this->_child_it == rhs._child_it);
+}
+
+pp_result::const_intersecting_conditional_iterator::reference
+pp_result::const_intersecting_conditional_iterator::operator*() const noexcept
+{
+  assert(_child_it.get_value());
+  return *_child_it.get_value();
+}
+
+pp_result::const_intersecting_conditional_iterator&
+pp_result::const_intersecting_conditional_iterator::operator++()
+{
+  assert(_child_it.get_value());
+  _child_it.advance();
+  if (!_child_it.get_value()) {
+    ++_roots_it;
+    _enter_root();
+  }
+  return *this;
+}
+
+const pp_result::const_intersecting_conditional_iterator
+pp_result::const_intersecting_conditional_iterator::operator++(int)
+{
+  const_intersecting_conditional_iterator it = *this;
+  ++*this;
+  return it;
+}
+
+std::pair<pp_result::header_inclusion_roots::const_iterator,
+	  pp_result::header_inclusion_roots::const_iterator>
+pp_result::const_intersecting_conditional_iterator::
+_intersecting_roots_subrange(const header_inclusion_roots::const_iterator &b,
+			     const header_inclusion_roots::const_iterator &e)
+  noexcept
+{
+  const auto srb =
+    std::lower_bound(b, e, _range,
+		     [&](const header_inclusion_root &root,
+			 const raw_pp_tokens_range &range) {
+		       return root.get_range() < range;
+		     });
+  const auto sre =
+    std::upper_bound(srb, e, _range,
+		     [&](const raw_pp_tokens_range &range,
+			 const header_inclusion_root &root) {
+		       return range < root.get_range();
+		     });
+
+  return std::make_pair(srb, sre);
+}
+
+void pp_result::const_intersecting_conditional_iterator::_enter_root()
+{
+  if (_roots_it == _roots.second) {
+    assert(!_child_it.get_value());
+    return;
+  }
+
+  // Skip roots without any condition inclusion descendants.
+  do {
+    _child_it =
+      _const_intersecting_child_node_iterator<conditional_inclusion_node> {
+	*_roots_it, _range
+      };
+  } while (!_child_it.get_value() && ++_roots_it != _roots.second);
+}
+
+
 pp_result::pp_result()
   : _next_header_node_id(0), _next_predefinition_pos(0)
 {}
@@ -1120,6 +1218,24 @@ pp_result::intersecting_sources_end(const raw_pp_tokens_range &range)
   return (const_intersecting_source_iterator
 	  {_header_inclusion_roots, range,
 	   const_intersecting_source_iterator::init_end_iterator_tag{}});
+}
+
+pp_result::const_intersecting_conditional_iterator
+pp_result::intersecting_conditionals_begin(const raw_pp_tokens_range &range)
+  const
+{
+  return (const_intersecting_conditional_iterator
+	  {_header_inclusion_roots, range,
+	   const_intersecting_conditional_iterator::init_begin_iterator_tag{}});
+}
+
+pp_result::const_intersecting_conditional_iterator
+pp_result::intersecting_conditionals_end(const raw_pp_tokens_range &range)
+  const noexcept
+{
+  return (const_intersecting_conditional_iterator
+	  {_header_inclusion_roots, range,
+	   const_intersecting_conditional_iterator::init_end_iterator_tag{}});
 }
 
 const pp_result::header_inclusion_node&
