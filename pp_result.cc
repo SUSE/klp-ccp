@@ -528,6 +528,133 @@ _skip_non_headers()
 }
 
 
+pp_result::header_inclusion_node::
+header_inclusion_node(const std::string &filename)
+  : _filename(filename), _id(std::numeric_limits<unsigned long>::max())
+{}
+
+pp_result::header_inclusion_node::
+header_inclusion_node(inclusion_node &parent,
+		      const raw_pp_token_index range_begin,
+		      const std::string &filename,
+		      const unsigned long id)
+  : inclusion_node(&parent, range_begin), _filename(filename), _id(id)
+{}
+
+pp_result::header_inclusion_node::~header_inclusion_node() noexcept = default;
+
+const pp_result::header_inclusion_node&
+pp_result::header_inclusion_node::get_containing_header() const noexcept
+{
+  return *this;
+}
+
+void pp_result::header_inclusion_node::add_line(const std::streamoff length)
+{
+  _offset_to_line_col_map.add_line(length);
+}
+
+std::pair<std::streamoff, std::streamoff>
+pp_result::header_inclusion_node::offset_to_line_col(const std::streamoff off)
+  const noexcept
+{
+  return _offset_to_line_col_map.offset_to_line_col(off);
+}
+
+std::unique_ptr<source_reader>
+pp_result::header_inclusion_node::create_source_reader() const
+{
+  return std::unique_ptr<source_reader>(new file_source_reader(_filename));
+}
+
+unsigned long pp_result::header_inclusion_node::get_id() const noexcept
+{
+  assert(_id != std::numeric_limits<unsigned long>::max());
+  return _id;
+}
+
+void pp_result::header_inclusion_node::_set_id(const unsigned long id) noexcept
+{
+  assert(_id == std::numeric_limits<unsigned long>::max());
+  _id = id;
+}
+
+
+pp_result::header_inclusion_root::
+header_inclusion_root(const std::string &filename, const bool is_preinclude)
+  : header_inclusion_node(filename), _is_preinclude(is_preinclude)
+{}
+
+pp_result::header_inclusion_root::~header_inclusion_root() noexcept = default;
+
+
+pp_result::header_inclusion_child::
+header_inclusion_child(inclusion_node &parent,
+		       const std::string &filename,
+		       const raw_pp_tokens_range &directive_range,
+		       used_macros &&used_macros,
+		       macro_nondef_constraints &&macro_nondef_constraints,
+		       const unsigned long id)
+  : header_inclusion_node(parent, directive_range.end, filename, id),
+    _directive_range(directive_range),
+    _used_macros(std::move(used_macros)),
+    _macro_nondef_constraints(std::move(macro_nondef_constraints))
+{}
+
+pp_result::header_inclusion_child::~header_inclusion_child() noexcept = default;
+
+
+pp_result::conditional_inclusion_node::
+conditional_inclusion_node(inclusion_node &parent,
+			   const raw_pp_token_index range_begin)
+  : inclusion_node(&parent, range_begin), _taken_branch(0)
+{}
+
+pp_result::conditional_inclusion_node::~conditional_inclusion_node() = default;
+
+const pp_result::header_inclusion_node&
+pp_result::conditional_inclusion_node::get_containing_header() const noexcept
+{
+  return _parent->get_containing_header();
+}
+
+void pp_result::conditional_inclusion_node::
+_finalize(const raw_pp_token_index range_end,
+	  used_macros &&used_macros,
+	  macro_nondef_constraints &&macro_nondef_constraints,
+	  directive_ranges_type &&directive_ranges,
+	  const directive_ranges_type::size_type taken_branch)
+{
+  _set_range_end(range_end);
+  _used_macros = std::move(used_macros);
+  _macro_nondef_constraints = std::move(macro_nondef_constraints);
+  _directive_ranges = std::move(_directive_ranges);
+  _taken_branch = taken_branch;
+}
+
+
+pp_result::header_inclusion_roots::header_inclusion_roots() = default;
+
+pp_result::header_inclusion_roots::
+header_inclusion_roots(header_inclusion_roots &&hirs)
+  : _roots(std::move(hirs._roots))
+{}
+
+pp_result::header_inclusion_roots::~header_inclusion_roots() noexcept = default;
+
+pp_result::header_inclusion_root&
+pp_result::header_inclusion_roots::add(const std::string &filename,
+				       const bool is_preinclude)
+{
+  std::unique_ptr<header_inclusion_root> n{
+    new header_inclusion_root{filename, is_preinclude}
+  };
+
+  _roots.emplace_back(std::move(n));
+  return *_roots.back();
+}
+
+
 template <typename node_type>
 pp_result::_const_intersecting_child_node_iterator<node_type>::
 _const_intersecting_child_node_iterator(const header_inclusion_root &root,
@@ -935,134 +1062,6 @@ void pp_result::const_intersecting_source_iterator::_next_root()
 
   }
 }
-
-
-pp_result::header_inclusion_node::
-header_inclusion_node(const std::string &filename)
-  : _filename(filename), _id(std::numeric_limits<unsigned long>::max())
-{}
-
-pp_result::header_inclusion_node::
-header_inclusion_node(inclusion_node &parent,
-		      const raw_pp_token_index range_begin,
-		      const std::string &filename,
-		      const unsigned long id)
-  : inclusion_node(&parent, range_begin), _filename(filename), _id(id)
-{}
-
-pp_result::header_inclusion_node::~header_inclusion_node() noexcept = default;
-
-const pp_result::header_inclusion_node&
-pp_result::header_inclusion_node::get_containing_header() const noexcept
-{
-  return *this;
-}
-
-void pp_result::header_inclusion_node::add_line(const std::streamoff length)
-{
-  _offset_to_line_col_map.add_line(length);
-}
-
-std::pair<std::streamoff, std::streamoff>
-pp_result::header_inclusion_node::offset_to_line_col(const std::streamoff off)
-  const noexcept
-{
-  return _offset_to_line_col_map.offset_to_line_col(off);
-}
-
-std::unique_ptr<source_reader>
-pp_result::header_inclusion_node::create_source_reader() const
-{
-  return std::unique_ptr<source_reader>(new file_source_reader(_filename));
-}
-
-unsigned long pp_result::header_inclusion_node::get_id() const noexcept
-{
-  assert(_id != std::numeric_limits<unsigned long>::max());
-  return _id;
-}
-
-void pp_result::header_inclusion_node::_set_id(const unsigned long id) noexcept
-{
-  assert(_id == std::numeric_limits<unsigned long>::max());
-  _id = id;
-}
-
-
-pp_result::header_inclusion_root::
-header_inclusion_root(const std::string &filename, const bool is_preinclude)
-  : header_inclusion_node(filename), _is_preinclude(is_preinclude)
-{}
-
-pp_result::header_inclusion_root::~header_inclusion_root() noexcept = default;
-
-
-pp_result::header_inclusion_child::
-header_inclusion_child(inclusion_node &parent,
-		       const std::string &filename,
-		       const raw_pp_tokens_range &directive_range,
-		       used_macros &&used_macros,
-		       macro_nondef_constraints &&macro_nondef_constraints,
-		       const unsigned long id)
-  : header_inclusion_node(parent, directive_range.end, filename, id),
-    _directive_range(directive_range),
-    _used_macros(std::move(used_macros)),
-    _macro_nondef_constraints(std::move(macro_nondef_constraints))
-{}
-
-pp_result::header_inclusion_child::~header_inclusion_child() noexcept = default;
-
-
-pp_result::conditional_inclusion_node::
-conditional_inclusion_node(inclusion_node &parent,
-			   const raw_pp_token_index range_begin)
-  : inclusion_node(&parent, range_begin), _taken_branch(0)
-{}
-
-pp_result::conditional_inclusion_node::~conditional_inclusion_node() = default;
-
-const pp_result::header_inclusion_node&
-pp_result::conditional_inclusion_node::get_containing_header() const noexcept
-{
-  return _parent->get_containing_header();
-}
-
-void pp_result::conditional_inclusion_node::
-_finalize(const raw_pp_token_index range_end,
-	  used_macros &&used_macros,
-	  macro_nondef_constraints &&macro_nondef_constraints,
-	  directive_ranges_type &&directive_ranges,
-	  const directive_ranges_type::size_type taken_branch)
-{
-  _set_range_end(range_end);
-  _used_macros = std::move(used_macros);
-  _macro_nondef_constraints = std::move(macro_nondef_constraints);
-  _directive_ranges = std::move(_directive_ranges);
-  _taken_branch = taken_branch;
-}
-
-
-pp_result::header_inclusion_roots::header_inclusion_roots() = default;
-
-pp_result::header_inclusion_roots::
-header_inclusion_roots(header_inclusion_roots &&hirs)
-  : _roots(std::move(hirs._roots))
-{}
-
-pp_result::header_inclusion_roots::~header_inclusion_roots() noexcept = default;
-
-pp_result::header_inclusion_root&
-pp_result::header_inclusion_roots::add(const std::string &filename,
-				       const bool is_preinclude)
-{
-  std::unique_ptr<header_inclusion_root> n{
-    new header_inclusion_root{filename, is_preinclude}
-  };
-
-  _roots.emplace_back(std::move(n));
-  return *_roots.back();
-}
-
 
 
 pp_result::pp_result()
