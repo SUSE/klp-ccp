@@ -1737,12 +1737,16 @@ write(source_writer &writer, const pp_result &pp_result,
 }
 
 
-depreprocessor::_chunk::_chunk(transformed_input_chunk &&_tic)
-  : k(kind::transformed_input), tic(std::move(_tic))
+depreprocessor::_chunk::_chunk(transformed_input_chunk &&_tic,
+			       const pp_result &pp_result)
+  : k(kind::transformed_input), tic(std::move(_tic)),
+    range_raw(pp_result.pp_tokens_range_to_raw(tic._get_range()))
 {}
 
 depreprocessor::_chunk::_chunk(_header_inclusion_chunk &&_hic)
-  : k(kind::header_inclusion), hic(std::move(_hic))
+  : k(kind::header_inclusion), hic(std::move(_hic)),
+    range_raw(hic.get_inclusion_node().get_range())
+{}
 {}
 
 depreprocessor::_chunk::_chunk(_chunk &&c)
@@ -1875,7 +1879,7 @@ void depreprocessor::append(transformed_input_chunk &&tic)
   tic._trim();
   if (tic._ops.empty())
     return;
-  _chunks.emplace_back(std::move(tic));
+  _chunks.emplace_back(std::move(tic), _pp_result);
 }
 
 void depreprocessor::append(const pp_result::header_inclusion_child &include)
@@ -2103,21 +2107,15 @@ void depreprocessor::_compute_needed_macro_defs_and_undefs()
 	}
       };
 
+    check_chunk_in_order(rit_chunk.base() - 1);
     switch (rit_chunk->k) {
     case _chunk::kind::transformed_input:
-      rit_chunk->range_raw =
-	_pp_result.pp_tokens_range_to_raw(rit_chunk->tic._get_range());
-      check_chunk_in_order(rit_chunk.base() - 1);
-
       next_raw_tok_is_opening_parenthesis =
 	(rit_chunk->tic._find_macro_constraints
 	 (_pp_result, next_raw_tok_is_opening_parenthesis));
       break;
 
     case _chunk::kind::header_inclusion:
-      rit_chunk->range_raw = rit_chunk->hic.get_inclusion_node().get_range();
-      check_chunk_in_order(rit_chunk.base() - 1);
-
       rit_chunk->hic.find_macro_constraints(_pp_result);
       next_raw_tok_is_opening_parenthesis = false;
       break;

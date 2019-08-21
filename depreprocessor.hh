@@ -357,7 +357,7 @@ namespace klp
 	  _dead,
 	};
 
-	_chunk(transformed_input_chunk &&_tic);
+	_chunk(transformed_input_chunk &&_tic, const pp_result &pp_result);
 	_chunk(_header_inclusion_chunk &&_hic);
 	_chunk(_chunk &&c);
 	~_chunk() noexcept;
