@@ -163,8 +163,8 @@ get(const pp_result::header_inclusion_node &h)
 
 
 depreprocessor::transformed_input_chunk::
-transformed_input_chunk(const pp_tokens_range &r)
-  : _r(r)
+transformed_input_chunk(const pp_tokens_range &bounding_r)
+  : _bounding_r(bounding_r)
 {}
 
 void depreprocessor::transformed_input_chunk::
@@ -283,14 +283,14 @@ depreprocessor::transformed_input_chunk
 depreprocessor::transformed_input_chunk::
 split_head_off(const pp_tokens_range &r)
 {
-  assert(r.is_contained_in(_r));
+  assert(r.is_contained_in(_bounding_r));
 
   auto ops_tail_begin = _prepare_insert(r);
-  transformed_input_chunk head_tic{pp_tokens_range{_r.begin, r.begin}};
+  transformed_input_chunk head_tic{pp_tokens_range{_bounding_r.begin, r.begin}};
   head_tic._ops.insert(head_tic._ops.begin(),
 		       std::make_move_iterator(_ops.begin()),
 		       std::make_move_iterator(ops_tail_begin));
-  _r.begin = r.end;
+  _bounding_r.begin = r.end;
   _ops.erase(_ops.begin(), ops_tail_begin);
   return head_tic;
 }
@@ -401,7 +401,7 @@ _directive_range_to_pos_in_chunk(const raw_pp_tokens_range &directive_range,
   };
 
   const raw_pp_tokens_range chunk_range_raw =
-    pp_result.pp_tokens_range_to_raw(this->_r);
+    pp_result.pp_tokens_range_to_raw(_get_range());
   const auto overlapping_ops =
     std::equal_range(_ops.begin(), _ops.end(), directive_range,
 		     comp_op_range{pp_result, chunk_range_raw});
@@ -447,8 +447,8 @@ depreprocessor::transformed_input_chunk::_ops_type::iterator
 depreprocessor::transformed_input_chunk::
 _prepare_insert(const pp_tokens_range &subrange)
 {
-  assert(subrange.begin >= this->_r.begin);
-  assert(subrange.end <= this->_r.end);
+  assert(subrange.begin >= this->_bounding_r.begin);
+  assert(subrange.end <= this->_bounding_r.end);
 
   // The ops are sorted by their respective range. Search for
   // existing ops overlapping with the to be inserted op's
@@ -523,6 +523,13 @@ _prepare_insert(const pp_tokens_range &subrange)
   return it;
 }
 
+pp_tokens_range depreprocessor::transformed_input_chunk::_get_range()
+  const noexcept
+{
+  assert(!_ops.empty());
+  return pp_tokens_range{_ops.front().r.begin, _ops.back().r.end};
+}
+
 void depreprocessor::transformed_input_chunk::_trim()
 {
   // Strip any leading or trailining insert_ws ops and collate
@@ -566,7 +573,7 @@ _find_macro_constraints(const pp_result &pp_result,
 			bool next_raw_tok_is_opening_parenthesis)
 {
   const raw_pp_tokens_range range_raw
-    = pp_result.pp_tokens_range_to_raw(this->_r);
+    = pp_result.pp_tokens_range_to_raw(_get_range());
   const auto mis = pp_result.find_overlapping_macro_invocations(range_raw);
 
   // Function-like macros get expanded by the preprocessor depending
@@ -1013,7 +1020,8 @@ _write(source_writer &writer, const pp_result &pp_result,
   // pp_result::const_intersecting_source_iterator will visit each
   // source file once for every maximal subregion in the queried range
   // originating from it.
-  const raw_pp_tokens_range range_raw = pp_result.pp_tokens_range_to_raw(_r);
+  const raw_pp_tokens_range range_raw =
+    pp_result.pp_tokens_range_to_raw(_get_range());
   pp_result::const_intersecting_source_iterator it_source =
     pp_result.intersecting_sources_begin(range_raw);
   const pp_result::const_intersecting_source_iterator sources_end =
@@ -2096,7 +2104,7 @@ void depreprocessor::_compute_needed_macro_defs_and_undefs()
 
     switch (rit_chunk->k) {
     case _chunk::kind::transformed_input:
-      rit_chunk->range = rit_chunk->tic._r;
+      rit_chunk->range = rit_chunk->tic._get_range();
       rit_chunk->range_raw =
 	_pp_result.pp_tokens_range_to_raw(rit_chunk->range);
       check_chunk_in_order(rit_chunk.base() - 1);

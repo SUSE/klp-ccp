@@ -71,7 +71,7 @@ namespace klp
       class transformed_input_chunk
       {
       public:
-	transformed_input_chunk(const pp_tokens_range &r);
+	transformed_input_chunk(const pp_tokens_range &bounding_r);
 
 	void copy_subrange(const pp_tokens_range &r,
 			   const bool need_whitespace_before,
@@ -194,6 +194,8 @@ namespace klp
 
 	_ops_type::iterator _prepare_insert(const pp_tokens_range &r);
 
+	pp_tokens_range _get_range() const noexcept;
+
 	void _trim();
 
 	_pos_in_chunk _begin_pos_in_chunk() const noexcept;
@@ -221,7 +223,7 @@ namespace klp
 		    _source_reader_cache &source_reader_cache,
 		    output_remarks &remarks) const;
 
-	pp_tokens_range _r;
+	pp_tokens_range _bounding_r;
 	_ops_type _ops;
 
 	_used_macros_in_chunk_type _used_macros_in_chunk;
