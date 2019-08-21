@@ -297,9 +297,7 @@ namespace klp
 	const pp_result::header_inclusion_node& get_inclusion_node()
 	  const noexcept;
 
-	void find_macro_constraints(const pp_result &pp_result,
-				    const raw_pp_tokens_range &header_range_raw,
-				    const pp_tokens_range &header_range);
+	void find_macro_constraints(const pp_result &pp_result);
 
 	bool needs_undef_before_include(const pp_result::macro &m)
 	  const noexcept;
@@ -374,7 +372,6 @@ namespace klp
 	  _header_inclusion_chunk hic;
 	};
 
-	pp_tokens_range range;
 	raw_pp_tokens_range range_raw;
       };
 

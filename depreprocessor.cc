@@ -1403,15 +1403,15 @@ depreprocessor::_header_inclusion_chunk::get_inclusion_node()const noexcept
 }
 
 void depreprocessor::_header_inclusion_chunk::
-find_macro_constraints(const pp_result &pp_result,
-		       const raw_pp_tokens_range &header_range_raw,
-		       const pp_tokens_range &header_range)
+find_macro_constraints(const pp_result &pp_result)
 {
   // Process the #defines and #undefs within this header in file
   // order. Maintain a list of currently active macro definitions as
   // well as a list of all macro definitions ever seen. The latter one
   // will be used to resolve internal references to macros from within
   // this header itself. Similarly for all #undefs seen.
+  const raw_pp_tokens_range header_range_raw =
+    this->get_inclusion_node().get_range();
   const auto mds = pp_result.find_overlapping_macros(header_range_raw);
   const auto mus = pp_result.find_overlapping_macro_undefs(header_range_raw);
   std::multimap<std::string, std::reference_wrapper<const pp_result::macro> >
@@ -1540,6 +1540,8 @@ find_macro_constraints(const pp_result &pp_result,
   const auto mis =
     pp_result.find_overlapping_macro_invocations(header_range_raw);
   auto it_mi = mis.first;
+  const pp_tokens_range header_range =
+    pp_result.raw_pp_tokens_range_to_nonraw(header_range_raw);
   const auto tok_begin = pp_result.get_pp_tokens().begin() + header_range.begin;
   const auto tok_end = pp_result.get_pp_tokens().begin() + header_range.end;
   auto it_tok = tok_begin;
@@ -1744,7 +1746,7 @@ depreprocessor::_chunk::_chunk(_header_inclusion_chunk &&_hic)
 {}
 
 depreprocessor::_chunk::_chunk(_chunk &&c)
-  : k(c.k), range(c.range), range_raw(c.range_raw)
+  : k(c.k), range_raw(c.range_raw)
 {
   switch (k) {
   case kind::transformed_input:
@@ -1813,7 +1815,6 @@ depreprocessor::_chunk& depreprocessor::_chunk::operator=(_chunk &&rhs)
   };
 
   this->k = rhs.k;
-  this->range = rhs.range;
   this->range_raw = rhs.range_raw;
 
   return *this;
@@ -2081,13 +2082,13 @@ void depreprocessor::_compute_needed_macro_defs_and_undefs()
 	// Maintain in_order_chunks in reversed output order for the
 	// moment, it will get reversed below.
 	if (!in_order_chunks.empty()) {
-	  const pp_tokens_range &min_range_seen
-	    = in_order_chunks.back().it_chunk->range;
-	  if (it->range < min_range_seen) {
+	  const raw_pp_tokens_range &min_range_seen
+	    = in_order_chunks.back().it_chunk->range_raw;
+	  if (it->range_raw < min_range_seen) {
 	    in_order_chunks.back().attributed_range_raw.begin
 	      = it->range_raw.end;
 	    in_order_chunks.emplace_back(it);
-	  } else if (it->range == min_range_seen) {
+	  } else if (it->range_raw == min_range_seen) {
 	    // Keep only the first (in output order) of consecutive
 	    // chunks with equal ranges.
 	    in_order_chunks.pop_back();
@@ -2104,9 +2105,8 @@ void depreprocessor::_compute_needed_macro_defs_and_undefs()
 
     switch (rit_chunk->k) {
     case _chunk::kind::transformed_input:
-      rit_chunk->range = rit_chunk->tic._get_range();
       rit_chunk->range_raw =
-	_pp_result.pp_tokens_range_to_raw(rit_chunk->range);
+	_pp_result.pp_tokens_range_to_raw(rit_chunk->tic._get_range());
       check_chunk_in_order(rit_chunk.base() - 1);
 
       next_raw_tok_is_opening_parenthesis =
@@ -2116,13 +2116,9 @@ void depreprocessor::_compute_needed_macro_defs_and_undefs()
 
     case _chunk::kind::header_inclusion:
       rit_chunk->range_raw = rit_chunk->hic.get_inclusion_node().get_range();
-      rit_chunk->range =
-	_pp_result.raw_pp_tokens_range_to_nonraw(rit_chunk->range_raw);
       check_chunk_in_order(rit_chunk.base() - 1);
 
-      rit_chunk->hic.find_macro_constraints(_pp_result,
-					    rit_chunk->range_raw,
-					    rit_chunk->range);
+      rit_chunk->hic.find_macro_constraints(_pp_result);
       next_raw_tok_is_opening_parenthesis = false;
       break;
 
@@ -2154,13 +2150,13 @@ void depreprocessor::_compute_needed_macro_defs_and_undefs()
   // Traverse all chunks in forward order now and form longest runs of
   // chunks with strictly increasing (or equal) ranges.
   auto cur_run_begin = _chunks.begin();
-  pp_tokens_range last_range_in_run = pp_tokens_range{0, 0};
+  raw_pp_tokens_range last_range_in_run = raw_pp_tokens_range{0, 0};
   for (auto it_chunk = _chunks.begin(); it_chunk != _chunks.end(); ++it_chunk) {
-    if (!(last_range_in_run < it_chunk->range ||
-	  last_range_in_run == it_chunk->range)) {
+    if (!(last_range_in_run < it_chunk->range_raw ||
+	  last_range_in_run == it_chunk->range_raw)) {
       cur_run_begin = it_chunk;
     }
-    last_range_in_run = it_chunk->range;
+    last_range_in_run = it_chunk->range_raw;
 
     switch (it_chunk->k) {
     case _chunk::kind::transformed_input:
