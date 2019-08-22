@@ -213,7 +213,7 @@ copy_subrange(const pp_tokens_range &r, const bool need_whitespace_before,
     if (need_whitespace_before &&
 	!(it != _ops.begin() && (it - 1)->a == _op::action::insert_ws &&
 	  (it - 1)->r.end == r.begin)) {
-      it = _ops.emplace(it, r.begin);
+      it = _ops.emplace(it, r.begin, _op::sticky_side::right);
     }
 
     it = _ops.emplace(it, r);
@@ -242,7 +242,7 @@ purge_subrange(const pp_tokens_range &r, const bool need_whitespace_before)
   if (need_whitespace_before &&
       !(it != _ops.begin() && (it - 1)->a == _op::action::insert_ws &&
 	(it - 1)->r.end == r.begin)) {
-    _ops.emplace(it, r.begin);
+    _ops.emplace(it, r.begin, _op::sticky_side::left);
   }
 }
 
@@ -262,13 +262,18 @@ insert_token(const pp_token_index &pos, pp_token &&new_tok,
 {
   auto it = _prepare_insert(pp_tokens_range{pos, pos});
 
+  const _op::sticky_side stickiness =
+    (need_whitespace_before ? _op::sticky_side::left :
+     (need_whitespace_after ? _op::sticky_side::right :
+      _op::sticky_side::left));
+
   if (need_whitespace_before &&
       !(it != _ops.begin() && (it - 1)->a == _op::action::insert_ws &&
 	(it - 1)->r.end == pos)) {
-    it = _ops.emplace(it, pos) + 1;
+    it = _ops.emplace(it, pos, stickiness) + 1;
   }
 
-  it = _ops.emplace(it, pos, std::move(new_tok));
+  it = _ops.emplace(it, pos, std::move(new_tok), stickiness);
 
   // insert and insert_ws ops have zero length ranges associated with
   // them. When given a point range, _prepare_insert() always returns
@@ -276,7 +281,7 @@ insert_token(const pp_token_index &pos, pp_token &&new_tok,
   // or at this point. In particular, there can't be an insert_ws op
   // with ->r.begin == pos after the element just inserted.
   if (need_whitespace_after)
-    _ops.emplace(it + 1, pos);
+    _ops.emplace(it + 1, pos, stickiness);
 }
 
 depreprocessor::transformed_input_chunk
@@ -360,6 +365,34 @@ _pos_in_chunk_to_token_index(const _pos_in_chunk &pos) const noexcept
   }
 }
 
+std::pair<depreprocessor::transformed_input_chunk::_ops_type::const_iterator,
+	  depreprocessor::transformed_input_chunk::_ops_type::const_iterator>
+depreprocessor::transformed_input_chunk::
+_find_overlapping_ops_range(const raw_pp_tokens_range &r,
+			    const pp_result &pp_result) const noexcept
+{
+  struct comp_op_range
+  {
+    comp_op_range(const class pp_result &_pp_result) noexcept
+      : pp_result(_pp_result)
+    {}
+
+    bool operator()(const _op &op, const raw_pp_tokens_range &r)
+    {
+      return (op.get_range_raw(pp_result) < r);
+    }
+
+    bool operator()(const raw_pp_tokens_range &r, const _op &op)
+    {
+      return (r < op.get_range_raw(pp_result));
+    }
+
+    const class pp_result &pp_result;
+  };
+
+  return std::equal_range(_ops.begin(), _ops.end(), r,
+			  comp_op_range{pp_result});
+}
 
 depreprocessor::transformed_input_chunk::_pos_in_chunk
 depreprocessor::transformed_input_chunk::
@@ -371,46 +404,13 @@ _directive_range_to_pos_in_chunk(const raw_pp_tokens_range &directive_range,
   // with macro expansions and can always be associated with locations
   // inbetween preprocessed pp_tokens and thus, with some
   // _pos_in_chunk.
-  struct comp_op_range
-  {
-    comp_op_range(const class pp_result &_pp_result,
-		  const raw_pp_tokens_range &_chunk_range_raw) noexcept
-      : pp_result(_pp_result), chunk_range_raw(_chunk_range_raw)
-    {}
-
-    bool operator()(const _op &op, const raw_pp_tokens_range &r)
-    {
-      // If the first or last entries from _ops are insert or
-      // insert_ws actions, their associated point pp_token_ranges
-      // will in general get mapped to raw_pp_tokens_ranges escaping
-      // this chunk. Crop them.
-      return (pp_result.pp_tokens_range_to_raw(op.r).crop(chunk_range_raw) < r);
-    }
-
-    bool operator()(const raw_pp_tokens_range &r, const _op &op)
-    {
-      // If the first or last entries from _ops are insert or
-      // insert_ws actions, their associated point pp_token_ranges
-      // will in general get mapped to raw_pp_tokens_ranges escaping
-      // this chunk. Crop them.
-      return (r < pp_result.pp_tokens_range_to_raw(op.r).crop(chunk_range_raw));
-    }
-
-    const class pp_result &pp_result;
-    const raw_pp_tokens_range &chunk_range_raw;
-  };
-
-  const raw_pp_tokens_range chunk_range_raw =
-    pp_result.pp_tokens_range_to_raw(_get_range());
-  const auto overlapping_ops =
-    std::equal_range(_ops.begin(), _ops.end(), directive_range,
-		     comp_op_range{pp_result, chunk_range_raw});
-
+  const auto overlapping_ops = _find_overlapping_ops_range(directive_range,
+							   pp_result);
   if (overlapping_ops.first == _ops.end()) {
     return _end_pos_in_chunk();
   } else if (overlapping_ops.first == overlapping_ops.second) {
-    // We have comp(directive_range, *overlapping_ops.first) true, i.e the
-    // op at overlapping_ops.first comes strictly after directive_range.
+    // The op at overlapping_ops.first comes strictly after
+    // directive_range.
     return _pos_in_chunk {
 	     static_cast<_ops_type::size_type>(overlapping_ops.first -
 					       _ops.begin()),
@@ -425,9 +425,9 @@ _directive_range_to_pos_in_chunk(const raw_pp_tokens_range &directive_range,
   // the spot beween the two consecutive pp_tokens where the
   // directive_range is located.
   assert(overlapping_ops.second - overlapping_ops.first == 1);
+  assert(overlapping_ops.first->a == _op::action::copy);
   const pp_tokens_range &op_range= overlapping_ops.first->r;
   assert(op_range.end - op_range.begin > 1);
-  assert(overlapping_ops.first->a == _op::action::copy);
   const pp_tokens &toks = pp_result.get_pp_tokens();
   auto it_first_tok_after
     = std::upper_bound(toks.begin() + op_range.begin,
@@ -456,9 +456,9 @@ _prepare_insert(const pp_tokens_range &subrange)
   struct comp_op_range
   {
     bool operator()(const _op &op, const pp_tokens_range &r) const noexcept
-    { return op.r < r; }
+    { return op < r; }
     bool operator()(const pp_tokens_range &r, const _op &op) const noexcept
-    { return r < op.r; }
+    { return op > r; }
   };
   auto it_overlap
     = std::equal_range(_ops.begin(), _ops.end(), subrange, comp_op_range{});
@@ -530,6 +530,16 @@ pp_tokens_range depreprocessor::transformed_input_chunk::_get_range()
   return pp_tokens_range{_ops.front().r.begin, _ops.back().r.end};
 }
 
+raw_pp_tokens_range depreprocessor::transformed_input_chunk::
+_get_range_raw(const pp_result &pp_result) const noexcept
+{
+  assert(!_ops.empty());
+  return raw_pp_tokens_range{
+		_ops.front().get_range_raw(pp_result).begin,
+		_ops.back().get_range_raw(pp_result).end
+	 };
+}
+
 void depreprocessor::transformed_input_chunk::_trim()
 {
   // Strip any leading or trailining insert_ws ops and collate
@@ -572,8 +582,7 @@ bool depreprocessor::transformed_input_chunk::
 _find_macro_constraints(const pp_result &pp_result,
 			bool next_raw_tok_is_opening_parenthesis)
 {
-  const raw_pp_tokens_range range_raw
-    = pp_result.pp_tokens_range_to_raw(_get_range());
+  const raw_pp_tokens_range range_raw = _get_range_raw(pp_result);
   const auto mis = pp_result.find_overlapping_macro_invocations(range_raw);
 
   // Function-like macros get expanded by the preprocessor depending
@@ -638,7 +647,7 @@ _find_macro_constraints(const pp_result &pp_result,
     case _op::action::copy:
       {
 	const raw_pp_tokens_range cur_copy_range_raw
-	  = pp_result.pp_tokens_range_to_raw(it_op->r);
+	  = it_op->get_range_raw(pp_result);
 	auto directives =
 	  pp_result.find_overlapping_directives(cur_copy_range_raw);
 	pp_token_index _cur_tok_index = it_op->r.end;
@@ -1020,8 +1029,7 @@ _write(source_writer &writer, const pp_result &pp_result,
   // pp_result::const_intersecting_source_iterator will visit each
   // source file once for every maximal subregion in the queried range
   // originating from it.
-  const raw_pp_tokens_range range_raw =
-    pp_result.pp_tokens_range_to_raw(_get_range());
+  const raw_pp_tokens_range range_raw = _get_range_raw(pp_result);
   pp_result::const_intersecting_source_iterator it_source =
     pp_result.intersecting_sources_begin(range_raw);
   const pp_result::const_intersecting_source_iterator sources_end =
@@ -1279,26 +1287,32 @@ _write(source_writer &writer, const pp_result &pp_result,
 
 depreprocessor::transformed_input_chunk::_op::
 _op(const pp_tokens_range &copied_range)
-  : a(action::copy), r(copied_range),
+  : a(action::copy), r(copied_range), stickiness(sticky_side::none),
     new_tok{pp_token::type::eof, std::string{}, raw_pp_tokens_range{}},
     add_pointer_deref(false)
-{}
+{
+  assert(copied_range.begin != copied_range.end);
+}
 
 depreprocessor::transformed_input_chunk::_op::
 _op(const pp_tokens_range &replaced_range, pp_token &&repl_tok,
     const bool _add_pointer_deref)
-  : a(action::replace), r(replaced_range), new_tok(std::move(repl_tok)),
-    add_pointer_deref(_add_pointer_deref)
-{}
+  : a(action::replace), r(replaced_range), stickiness(sticky_side::none),
+    new_tok(std::move(repl_tok)),add_pointer_deref(_add_pointer_deref)
+{
+  assert(replaced_range.begin + 1 == replaced_range.end);
+}
 
 depreprocessor::transformed_input_chunk::_op::_op(const pp_token_index pos,
-						  pp_token &&_new_tok)
-  : a(action::insert), r(pp_tokens_range{pos, pos}),
+						  pp_token &&_new_tok,
+						  const sticky_side _stickiness)
+  : a(action::insert), r(pp_tokens_range{pos, pos}), stickiness(_stickiness),
     new_tok(std::move(_new_tok)), add_pointer_deref(false)
 {}
 
-depreprocessor::transformed_input_chunk::_op::_op(const pp_token_index pos)
-  : a(action::insert_ws), r(pp_tokens_range{pos, pos}),
+depreprocessor::transformed_input_chunk::_op::_op(const pp_token_index pos,
+						  const sticky_side _stickiness)
+  : a(action::insert_ws), r(pp_tokens_range{pos, pos}), stickiness(_stickiness),
     new_tok{pp_token::type::eof, std::string{}, raw_pp_tokens_range{}},
     add_pointer_deref(false)
 {}
@@ -1313,6 +1327,51 @@ bool depreprocessor::transformed_input_chunk::_op::
 operator>(const pp_tokens_range &rhs) const noexcept
 {
   return (rhs < this->r);
+}
+
+raw_pp_tokens_range depreprocessor::transformed_input_chunk::_op::
+get_range_raw(const pp_result &pp_result)
+  const noexcept
+{
+  switch (a) {
+  case action::copy:
+    /* fall through */
+  case action::replace:
+    /* fall through */
+    return pp_result.pp_tokens_range_to_raw(r);
+
+  case action::insert:
+    /* fall through */
+  case action::insert_ws:
+    // Point pp_token_ranges get mapped mapped to raw_pp_tokens_ranges
+    // spanning everything inbetween the preceeding and the subsequent
+    // pp_token. Use the stickiness flag to determine which end of
+    // that raw range to pick.
+    {
+      const pp_tokens &toks = pp_result.get_pp_tokens();
+      assert(r.begin == r.end);
+      if (r.begin && r.begin < toks.size() &&
+	  toks[r.begin - 1].get_token_source().begin ==
+	  toks[r.begin].get_token_source().begin) {
+	// The preceeding and subsequent pp_tokens from the input
+	// originate from the same macro invocation. Return its
+	// associated raw_pp_tokens_range.
+	return pp_result.pp_tokens_range_to_raw(r);
+      }
+      raw_pp_tokens_range raw_range = pp_result.pp_tokens_range_to_raw(r);
+      switch (stickiness) {
+      case sticky_side::left:
+	return raw_pp_tokens_range{raw_range.begin, raw_range.begin};
+
+      case sticky_side::right:
+	return raw_pp_tokens_range{raw_range.end, raw_range.end};
+
+      case sticky_side::none:
+	assert(0);
+	__builtin_unreachable();
+      }
+    }
+  }
 }
 
 
@@ -1740,7 +1799,7 @@ write(source_writer &writer, const pp_result &pp_result,
 depreprocessor::_chunk::_chunk(transformed_input_chunk &&_tic,
 			       const pp_result &pp_result)
   : k(kind::transformed_input), tic(std::move(_tic)),
-    range_raw(pp_result.pp_tokens_range_to_raw(tic._get_range()))
+    range_raw(tic._get_range_raw(pp_result))
 {}
 
 depreprocessor::_chunk::_chunk(_header_inclusion_chunk &&_hic)

@@ -92,14 +92,27 @@ namespace klp
 	struct _op
 	{
 	public:
+	  enum class sticky_side
+	  {
+	    none,
+	    left,
+	    right,
+	  };
+
 	  _op(const pp_tokens_range &copied_range);
 	  _op(const pp_tokens_range &replaced_range,
 	      pp_token &&repl_tok, const bool _add_pointer_deref);
-	  _op(const pp_token_index pos, pp_token &&_new_tok);
-	  _op(const pp_token_index pos);
+	  _op(const pp_token_index pos, pp_token &&_new_tok,
+	      const sticky_side _stickiness);
+	  _op(const pp_token_index pos, const sticky_side _stickiness);
+	  _op(const pp_result::conditional_inclusion_node &_c,
+	      const _cond_incl_transition_kind k);
 
 	  bool operator<(const pp_tokens_range &rhs) const noexcept;
 	  bool operator>(const pp_tokens_range &rhs) const noexcept;
+
+	  raw_pp_tokens_range get_range_raw(const pp_result &pp_result)
+	    const noexcept;
 
 	  enum class action
 	  {
@@ -111,6 +124,7 @@ namespace klp
 
 	  action a;
 	  pp_tokens_range r;
+	  sticky_side stickiness;
 
 	  pp_token new_tok;
 	  bool add_pointer_deref;
@@ -196,6 +210,9 @@ namespace klp
 
 	pp_tokens_range _get_range() const noexcept;
 
+	raw_pp_tokens_range _get_range_raw(const pp_result &pp_result)
+	  const noexcept;
+
 	void _trim();
 
 	_pos_in_chunk _begin_pos_in_chunk() const noexcept;
@@ -204,6 +221,10 @@ namespace klp
 	  const noexcept;
 	pp_token_index _pos_in_chunk_to_token_index(const _pos_in_chunk &pos)
 	  const noexcept;
+
+	std::pair<_ops_type::const_iterator, _ops_type::const_iterator>
+	_find_overlapping_ops_range(const raw_pp_tokens_range &r,
+				    const pp_result &pp_result) const noexcept;
 
 	_pos_in_chunk _directive_range_to_pos_in_chunk
 			(const raw_pp_tokens_range &directive_range,
