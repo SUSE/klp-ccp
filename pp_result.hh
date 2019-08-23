@@ -950,6 +950,16 @@ namespace klp
 	  const noexcept
 	{ return _macro_nondef_constraints; }
 
+	directive_ranges_type::size_type nbranches() const noexcept;
+
+	const raw_pp_tokens_range&
+	get_branch_directive_range(const directive_ranges_type::size_type i)
+	  const noexcept;
+
+	bool has_taken_branch() const noexcept;
+
+	directive_ranges_type::size_type get_taken_branch() const noexcept;
+
       private:
 	friend class inclusion_node;
 	friend class preprocessor;

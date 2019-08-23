@@ -639,6 +639,33 @@ pp_result::conditional_inclusion_node::get_containing_conditional_inclusion()
   return this;
 }
 
+pp_result::conditional_inclusion_node::directive_ranges_type::size_type
+pp_result::conditional_inclusion_node::nbranches() const noexcept
+{
+  return _directive_ranges.size() - 1;
+}
+
+const raw_pp_tokens_range& pp_result::conditional_inclusion_node::
+get_branch_directive_range(const directive_ranges_type::size_type i)
+  const noexcept
+{
+  assert(i < _directive_ranges.size());
+  return _directive_ranges[i];
+}
+
+bool pp_result::conditional_inclusion_node::has_taken_branch() const noexcept
+{
+  return _taken_branch;
+}
+
+pp_result::conditional_inclusion_node::directive_ranges_type::size_type
+pp_result::conditional_inclusion_node::get_taken_branch() const noexcept
+{
+  assert(_taken_branch);
+  assert(_taken_branch < _directive_ranges.size());
+  return _taken_branch - 1;
+}
+
 void pp_result::conditional_inclusion_node::
 _finalize(const raw_pp_token_index range_end,
 	  used_macros &&used_macros,
