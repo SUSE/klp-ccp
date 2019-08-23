@@ -1706,62 +1706,11 @@ write(source_writer &writer, const pp_result &pp_result,
       output_remarks &remarks) const
 {
   // First, write the needed #defines + #undefs.
-  auto write_md =
-    [&](const _macro_define_to_emit &md) {
-      _write_define(writer, md.m.get(), pp_result, source_reader_cache,
-		    remarks);
+  depreprocessor::_write_defines_and_undefs(writer, _macro_defines_to_emit,
+					    _macro_undefs_to_emit, pp_result,
+					    source_reader_cache, remarks);
 
-      // Always emit an empty line after the directive.
-      writer.append(source_writer::newline_tag{});
-    };
-
-  auto write_mu =
-    [&](const _macro_undef_to_emit &mu) {
-      _write_undef(writer, mu, pp_result, source_reader_cache);
-    };
-
-  // Write in directive order, except for undefs for which a
-  // corresponding define is about to get emitted at cur_pos:
-  // always put these immediately in front of the #define.
-  const auto mus_begin = _macro_undefs_to_emit.begin();
-  const auto mus_end = _macro_undefs_to_emit.end();
-  const auto mds_begin = _macro_defines_to_emit.begin();
-  const auto mds_end = _macro_defines_to_emit.end();
-  auto it_mu = mus_begin;
-  auto it_md = mds_begin;
-  while (it_mu != mus_end || it_md != mds_end) {
-    while (it_md != mds_end &&
-	   (it_mu == mus_end || *it_md < *it_mu)) {
-      const auto it_matching_mu =
-	std::find_if(mus_begin, mus_end,
-		     [&](const _macro_undef_to_emit &mu) {
-		       return (it_md->m.get().get_name() ==
-			       (mu.original ?
-				mu.original->get_name() :
-				mu.name));
-			 });
-      if (it_matching_mu != mus_end)
-	write_mu(*it_matching_mu);
-      write_md(*it_md);
-      ++it_md;
-    }
-
-    while (it_mu != mus_end &&
-	   (it_md == mds_end || *it_mu < *it_md)) {
-      const std::string &name =  (it_mu->original ?
-				  it_mu->original->get_name() :
-				  it_mu->name);
-      if (!std::any_of(mds_begin, mds_end,
-		       [&](const _macro_define_to_emit &md) {
-			 return md.m.get().get_name() == name;
-		       })) {
-	write_mu(*it_mu);
-      }
-      ++it_mu;
-    }
-  }
-
-  // Finally, write the #include directive.
+  // And write the #include directive.
   switch (_k) {
   case _kind::k_child:
     _write_directive(writer, this->_child_node->get_directive_range(),
@@ -2874,5 +2823,69 @@ void depreprocessor::_write_undef(source_writer &writer,
   } else {
     const std::string &name = mu.original ? mu.original->get_name() : mu.name;
     writer.append("#undef " + name + "\n");
+  }
+}
+
+void depreprocessor::
+_write_defines_and_undefs(source_writer &writer,
+			  const std::vector<_macro_define_to_emit> &mds,
+			  const std::vector<_macro_undef_to_emit> &mus,
+			  const pp_result &pp_result,
+			  _source_reader_cache &source_reader_cache,
+			  output_remarks &remarks)
+{
+  auto write_md =
+    [&](const _macro_define_to_emit &md) {
+    _write_define(writer, md.m.get(), pp_result, source_reader_cache,
+		  remarks);
+
+    // Always emit an empty line after the directive.
+    writer.append(source_writer::newline_tag{});
+  };
+
+  auto write_mu =
+    [&](const _macro_undef_to_emit &mu) {
+    _write_undef(writer, mu, pp_result, source_reader_cache);
+  };
+
+  // Write in directive order, except for undefs for which a
+  // corresponding define is about to get emitted at cur_pos:
+  // always put these immediately in front of the #define.
+  const auto mus_begin = mus.begin();
+  const auto mus_end = mus.end();
+  const auto mds_begin = mds.begin();
+  const auto mds_end = mds.end();
+  auto it_mu = mus_begin;
+  auto it_md = mds_begin;
+  while (it_mu != mus_end || it_md != mds_end) {
+    while (it_md != mds_end &&
+	   (it_mu == mus_end || *it_md < *it_mu)) {
+      const auto it_matching_mu =
+	std::find_if(mus_begin, mus_end,
+		     [&](const _macro_undef_to_emit &mu) {
+		       return (it_md->m.get().get_name() ==
+			       (mu.original ?
+				mu.original->get_name() :
+				mu.name));
+		     });
+      if (it_matching_mu != mus_end)
+	write_mu(*it_matching_mu);
+      write_md(*it_md);
+      ++it_md;
+    }
+
+    while (it_mu != mus_end &&
+	   (it_md == mds_end || *it_mu < *it_md)) {
+      const std::string &name =  (it_mu->original ?
+				  it_mu->original->get_name() :
+				  it_mu->name);
+      if (!std::any_of(mds_begin, mds_end,
+		       [&](const _macro_define_to_emit &md) {
+			 return md.m.get().get_name() == name;
+		       })) {
+	write_mu(*it_mu);
+      }
+      ++it_mu;
+    }
   }
 }

@@ -527,6 +527,14 @@ namespace klp
 			       const pp_result &pp_result,
 			       _source_reader_cache &source_reader_cache);
 
+      static void
+      _write_defines_and_undefs(source_writer &writer,
+				const std::vector<_macro_define_to_emit> &mds,
+				const std::vector<_macro_undef_to_emit> &mus,
+				const pp_result &pp_result,
+				_source_reader_cache &source_reader_cache,
+				output_remarks &remarks);
+
       const pp_result &_pp_result;
       _chunks_type _chunks;
       output_remarks &_remarks;
