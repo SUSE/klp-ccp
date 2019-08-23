@@ -1406,6 +1406,7 @@ namespace
     header_info * const parent;
 
     bool eligible; // may be included from live patch
+    bool only_directives;
     bool include;
 
   private:
@@ -2778,12 +2779,14 @@ object_info::object_info()
 
 header_info::header_info(const pp_result::header_inclusion_root &root_node)
 noexcept
-  : _root_node(&root_node), parent(nullptr), eligible(true), include(false)
+  : _root_node(&root_node), parent(nullptr), eligible(true),
+    only_directives(false), include(false)
 {}
 
 header_info::header_info(const pp_result::header_inclusion_child &child_node,
 			 header_info &_parent) noexcept
-  : _child_node(&child_node), parent(&_parent), eligible(true), include(false)
+  : _child_node(&child_node), parent(&_parent), eligible(true),
+    only_directives(false), include(false)
 {}
 
 const pp_result::header_inclusion_root&
@@ -6206,6 +6209,11 @@ _check_header_ordering_constraints(const pp_result::header_inclusion_node &h)
     _ai.intersecting_external_declarations_begin(r.begin);
   const auto it_ed_end = _ai.intersecting_external_declarations_end(r.end);
 
+  if (it_ed_begin == it_ed_end) {
+    hi.only_directives = true;
+    return;
+  }
+
   deps_on_tag_non_decls block_deps_on_tag_non_decls;
   std::set<std::string> block_tag_decls;
   for (auto it_ed = it_ed_begin; it_ed != it_ed_end; ++it_ed) {
@@ -9388,6 +9396,21 @@ void klp::ccp::create_lp(const std::string &outfile,
   // Recursively find all dependencies on types and declarations and
   // determine which headers are to be included from the live patch.
   _lp_deps_resolver{ai, pol, remarks}();
+
+  // Add #include directives for headers containing nothing but
+  // preprocessor directives and which haven't been included yet.
+  for (auto &hi : ai.header_infos) {
+    if (!hi.eligible || !hi.only_directives)
+      continue;
+
+    assert(!hi.include);
+    // See if any of the parents has been included;
+    const header_info *p = hi.parent;
+    while (p && !p->include)
+      p = p->parent;
+    if (!p)
+      hi.include = true;
+  }
 
   // Write the live patch.
   depreprocessor d{atu.get_pp_result(), output_remarks};
