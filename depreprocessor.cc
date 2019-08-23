@@ -333,6 +333,8 @@ _next_pos_in_chunk(const _pos_in_chunk &cur_pos)const noexcept
   case _op::action::insert:
     /* fall through */
   case _op::action::insert_ws:
+    /* fall through */
+  case _op::action::cond_incl_transition:
     if (cur_pos.op + 1 < _ops.size() &&
 	_ops[cur_pos.op + 1].a == _op::action::copy) {
       return _pos_in_chunk{
@@ -423,6 +425,14 @@ _directive_range_to_pos_in_chunk(const raw_pp_tokens_range &directive_range,
 	 };
 }
 
+bool depreprocessor::transformed_input_chunk::
+_is_range_in_hole(const raw_pp_tokens_range &r,
+		  const pp_result &pp_result) const noexcept
+{
+  auto overlapping_ops = _find_overlapping_ops_range(r, pp_result);
+  return (overlapping_ops.first == overlapping_ops.second);
+}
+
 depreprocessor::transformed_input_chunk::_ops_type::iterator
 depreprocessor::transformed_input_chunk::
 _prepare_insert(const pp_tokens_range &subrange)
@@ -433,12 +443,22 @@ _prepare_insert(const pp_tokens_range &subrange)
   // The ops are sorted by their respective range. Search for
   // existing ops overlapping with the to be inserted op's
   // subrange and make room by shrinking/splitting/removing.
+  assert(!std::any_of(_ops.cbegin(), _ops.cend(),
+		      [](const _op &o) {
+			return o.a == _op::action::cond_incl_transition;
+		      }));
   struct comp_op_range
   {
     bool operator()(const _op &op, const pp_tokens_range &r) const noexcept
-    { return op < r; }
+    {
+      assert(op.a != _op::action::cond_incl_transition);
+      return op < r;
+    }
     bool operator()(const pp_tokens_range &r, const _op &op) const noexcept
-    { return op > r; }
+    {
+      assert(op.a != _op::action::cond_incl_transition);
+      return op > r;
+    }
   };
   auto it_overlap
     = std::equal_range(_ops.begin(), _ops.end(), subrange, comp_op_range{});
@@ -556,6 +576,34 @@ void depreprocessor::transformed_input_chunk::_trim()
     insert_ws_end = _ops.erase(insert_ws_begin + 1, insert_ws_end);
     insert_ws_begin = std::find_if(insert_ws_end, _ops.end(),  is_insert_ws_op);
   }
+}
+
+void depreprocessor::transformed_input_chunk::
+_insert_cond_incl_transition(const pp_result::conditional_inclusion_node &c,
+			      const _cond_incl_transition_kind k,
+			      const pp_result &pp_result)
+{
+  const raw_pp_tokens_range range_raw =
+    depreprocessor::_get_cond_incl_trans_range_raw(c, k);
+  const _pos_in_chunk insertion_pos =
+    _directive_range_to_pos_in_chunk(range_raw, pp_result);
+  _ops_type::iterator insertion_it;
+  if (insertion_pos.op != _ops.size() &&
+      _ops[insertion_pos.op].a == _op::action::copy &&
+      _ops[insertion_pos.op].r.begin != insertion_pos.tok) {
+    // Split the copy operation.
+    assert(_ops[insertion_pos.op].r.end != insertion_pos.tok);
+    insertion_it = _ops.emplace(_ops.begin() + insertion_pos.op,
+				pp_tokens_range{
+				  insertion_pos.tok,
+				  _ops[insertion_pos.op].r.end
+				});
+    (insertion_it - 1)->r.end = insertion_pos.tok;
+  } else {
+    insertion_it = _ops.begin() + insertion_pos.op;
+  }
+
+  _ops.emplace(insertion_it, c, k);
 }
 
 bool depreprocessor::transformed_input_chunk::
@@ -800,6 +848,28 @@ _find_macro_constraints(const pp_result &pp_result,
 		--_it_mi;
 	    }
 	  }
+	}
+      }
+      break;
+
+    case _op::action::cond_incl_transition:
+      next_raw_tok_is_opening_parenthesis = false;
+      if (it_op->cond_incl_trans_kind != _cond_incl_transition_kind::leave) {
+	for (const auto &um : it_op->cond_incl_node->get_used_macros()) {
+	    _used_macros_in_chunk.emplace_back
+	      (_pos_in_chunk{(static_cast<_ops_type::size_type>
+			      (it_op - _ops.begin())),
+			     0},
+		um);
+	  }
+
+	for (const auto &mnc :
+	       it_op->cond_incl_node->get_macro_nondef_constraints()) {
+	  _macro_nondef_constraints_in_chunk.emplace_back
+	    (_pos_in_chunk{(static_cast<_ops_type::size_type>
+			    (it_op - _ops.begin())),
+			   0},
+	      pp_result::macro_nondef_constraint{mnc});
 	}
       }
       break;
@@ -1253,6 +1323,13 @@ _write(source_writer &writer, const pp_result &pp_result,
 	}
       }
       break;
+
+    case _op::action::cond_incl_transition:
+      depreprocessor::_write_cond_incl_transition(writer, *op.cond_incl_node,
+						  op.cond_incl_trans_kind,
+						  pp_result,
+						  source_reader_cache, remarks);
+      break;
     }
 
     cur_pos = _next_pos_in_chunk(cur_pos);
@@ -1269,7 +1346,7 @@ depreprocessor::transformed_input_chunk::_op::
 _op(const pp_tokens_range &copied_range)
   : a(action::copy), r(copied_range), stickiness(sticky_side::none),
     new_tok{pp_token::type::eof, std::string{}, raw_pp_tokens_range{}},
-    add_pointer_deref(false)
+    add_pointer_deref(false), cond_incl_node(nullptr)
 {
   assert(copied_range.begin != copied_range.end);
 }
@@ -1278,7 +1355,8 @@ depreprocessor::transformed_input_chunk::_op::
 _op(const pp_tokens_range &replaced_range, pp_token &&repl_tok,
     const bool _add_pointer_deref)
   : a(action::replace), r(replaced_range), stickiness(sticky_side::none),
-    new_tok(std::move(repl_tok)),add_pointer_deref(_add_pointer_deref)
+    new_tok(std::move(repl_tok)),add_pointer_deref(_add_pointer_deref),
+    cond_incl_node(nullptr)
 {
   assert(replaced_range.begin + 1 == replaced_range.end);
 }
@@ -1287,14 +1365,23 @@ depreprocessor::transformed_input_chunk::_op::_op(const pp_token_index pos,
 						  pp_token &&_new_tok,
 						  const sticky_side _stickiness)
   : a(action::insert), r(pp_tokens_range{pos, pos}), stickiness(_stickiness),
-    new_tok(std::move(_new_tok)), add_pointer_deref(false)
+    new_tok(std::move(_new_tok)), add_pointer_deref(false),
+    cond_incl_node(nullptr)
 {}
 
 depreprocessor::transformed_input_chunk::_op::_op(const pp_token_index pos,
 						  const sticky_side _stickiness)
   : a(action::insert_ws), r(pp_tokens_range{pos, pos}), stickiness(_stickiness),
     new_tok{pp_token::type::eof, std::string{}, raw_pp_tokens_range{}},
-    add_pointer_deref(false)
+    add_pointer_deref(false), cond_incl_node(nullptr)
+{}
+
+depreprocessor::transformed_input_chunk::_op::
+_op(const pp_result::conditional_inclusion_node &_c,
+    const _cond_incl_transition_kind k)
+  : a(action::cond_incl_transition), r(), stickiness(sticky_side::none),
+    new_tok{pp_token::type::eof, std::string{}, raw_pp_tokens_range{}},
+    add_pointer_deref(false), cond_incl_node(&_c), cond_incl_trans_kind(k)
 {}
 
 bool depreprocessor::transformed_input_chunk::_op::
@@ -1351,6 +1438,10 @@ get_range_raw(const pp_result &pp_result)
 	__builtin_unreachable();
       }
     }
+
+  case action::cond_incl_transition:
+    return (depreprocessor::_get_cond_incl_trans_range_raw
+	    (*cond_incl_node, cond_incl_trans_kind));
   }
 }
 
@@ -1725,6 +1816,75 @@ write(source_writer &writer, const pp_result &pp_result,
 }
 
 
+depreprocessor::_cond_incl_transition_chunk::
+_cond_incl_transition_chunk(const pp_result::conditional_inclusion_node &c,
+			    const _cond_incl_transition_kind k) noexcept
+  : _c(c), _k(k)
+{
+  assert(_c.get().has_taken_branch());
+}
+
+raw_pp_tokens_range depreprocessor::_cond_incl_transition_chunk::get_range_raw()
+  const noexcept
+{
+  return depreprocessor::_get_cond_incl_trans_range_raw(_c.get(), _k);
+}
+
+const pp_result::used_macros&
+depreprocessor::_cond_incl_transition_chunk::get_used_macros() const noexcept
+{
+  assert(_k != _cond_incl_transition_kind::leave);
+  return _c.get().get_used_macros();
+}
+
+const pp_result::macro_nondef_constraints&
+depreprocessor::_cond_incl_transition_chunk::get_macro_nondef_constraints()
+  const noexcept
+{
+  assert(_k != _cond_incl_transition_kind::leave);
+  return _c.get().get_macro_nondef_constraints();
+}
+
+void depreprocessor::_cond_incl_transition_chunk::
+add_macro_undef_to_emit(_macro_undef_to_emit &&mu)
+{
+  const auto it = std::upper_bound(_macro_undefs_to_emit.begin(),
+				   _macro_undefs_to_emit.end(),
+				   mu);
+  _macro_undefs_to_emit.insert(it, std::move(mu));
+}
+
+void depreprocessor::_cond_incl_transition_chunk::
+add_macro_define_to_emit(_macro_define_to_emit &&m)
+{
+  const auto it = std::upper_bound(_macro_defines_to_emit.begin(),
+				   _macro_defines_to_emit.end(),
+				   m);
+  _macro_defines_to_emit.insert(it, std::move(m));
+}
+
+bool depreprocessor::_cond_incl_transition_chunk::
+has_macro_undefs_or_defines_to_emit() const noexcept
+{
+  return !_macro_undefs_to_emit.empty() || !_macro_defines_to_emit.empty();
+}
+
+void depreprocessor::_cond_incl_transition_chunk::
+write(source_writer &writer, const pp_result &pp_result,
+      _source_reader_cache &source_reader_cache,
+      output_remarks &remarks) const
+{
+  // First, write the needed #defines + #undefs.
+  depreprocessor::_write_defines_and_undefs(writer, _macro_defines_to_emit,
+					    _macro_undefs_to_emit, pp_result,
+					    source_reader_cache, remarks);
+
+  // And write the conditional inclusion transition.
+  depreprocessor::_write_cond_incl_transition(writer, _c.get(), _k, pp_result,
+					      source_reader_cache, remarks);
+}
+
+
 depreprocessor::_chunk::_chunk(transformed_input_chunk &&_tic,
 			       const pp_result &pp_result)
   : k(kind::transformed_input), tic(std::move(_tic)),
@@ -1735,6 +1895,10 @@ depreprocessor::_chunk::_chunk(_header_inclusion_chunk &&_hic)
   : k(kind::header_inclusion), hic(std::move(_hic)),
     range_raw(hic.get_inclusion_node().get_range())
 {}
+
+depreprocessor::_chunk::_chunk(_cond_incl_transition_chunk &&_cic)
+  : k(kind::cond_incl_transition), cic(std::move(_cic)),
+    range_raw(cic.get_range_raw())
 {}
 
 depreprocessor::_chunk::_chunk(_chunk &&c)
@@ -1747,6 +1911,10 @@ depreprocessor::_chunk::_chunk(_chunk &&c)
 
   case kind::header_inclusion:
     new (&hic) _header_inclusion_chunk{std::move(c.hic)};
+    break;
+
+  case kind::cond_incl_transition:
+    new (&cic) _cond_incl_transition_chunk{std::move(c.cic)};
     break;
 
   case kind::_dead:
@@ -1764,6 +1932,10 @@ depreprocessor::_chunk::~_chunk() noexcept
 
   case kind::header_inclusion:
     hic.~_header_inclusion_chunk();
+    break;
+
+  case kind::cond_incl_transition:
+    cic.~_cond_incl_transition_chunk();
     break;
 
   case kind::_dead:
@@ -1785,6 +1957,10 @@ depreprocessor::_chunk& depreprocessor::_chunk::operator=(_chunk &&rhs)
     hic.~_header_inclusion_chunk();
     break;
 
+  case kind::cond_incl_transition:
+    cic.~_cond_incl_transition_chunk();
+    break;
+
   case kind::_dead:
     __builtin_unreachable();
     assert(0);
@@ -1799,6 +1975,10 @@ depreprocessor::_chunk& depreprocessor::_chunk::operator=(_chunk &&rhs)
 
   case kind::header_inclusion:
     new (&this->hic) _header_inclusion_chunk{std::move(rhs.hic)};
+    break;
+
+  case kind::cond_incl_transition:
+    new (&cic) _cond_incl_transition_chunk{std::move(rhs.cic)};
     break;
 
   case kind::_dead:
@@ -1867,11 +2047,14 @@ void depreprocessor::append(transformed_input_chunk &&tic)
   tic._trim();
   if (tic._ops.empty())
     return;
+
+  _prepare_cond_incls(tic);
   _chunks.emplace_back(std::move(tic), _pp_result);
 }
 
 void depreprocessor::append(const pp_result::header_inclusion_child &include)
 {
+  _prepare_cond_incls(include);
   _chunks.emplace_back(_header_inclusion_chunk{include});
 }
 
@@ -1882,6 +2065,7 @@ void depreprocessor::append(const pp_result::header_inclusion_root &hir)
 
 void depreprocessor::operator()(const std::string &outfile)
 {
+  _leave_cond_incls(0);
   _try_merge_chunks_pre();
   _compute_needed_macro_defs_and_undefs();
 
@@ -1889,6 +2073,7 @@ void depreprocessor::operator()(const std::string &outfile)
   _source_reader_cache source_reader_cache;
   bool is_first_chunk = true;
   bool prev_was_header_inclusion = false;
+  bool prev_was_cond_incl_transition = false;
   for (const auto &c : _chunks) {
     switch (c.k) {
     case _chunk::kind::transformed_input:
@@ -1900,6 +2085,7 @@ void depreprocessor::operator()(const std::string &outfile)
       c.tic._write(writer, _pp_result, source_reader_cache, _remarks);
 
       prev_was_header_inclusion = false;
+      prev_was_cond_incl_transition = false;
       break;
 
     case _chunk::kind::header_inclusion:
@@ -1914,6 +2100,22 @@ void depreprocessor::operator()(const std::string &outfile)
       c.hic.write(writer, _pp_result, source_reader_cache, _remarks);
 
       prev_was_header_inclusion = true;
+      prev_was_cond_incl_transition = false;
+      break;
+
+    case _chunk::kind::cond_incl_transition:
+      // Add an empty line if there will be some #defines or #undefs
+      // before this conditional inclusion transition or if the
+      // previous chunk was not a _cond_incl_transition_chunk.
+      if (!is_first_chunk &&
+	  (!prev_was_cond_incl_transition ||
+	   c.cic.has_macro_undefs_or_defines_to_emit())) {
+	writer.append(source_writer::newline_tag{});
+      }
+      c.cic.write(writer, _pp_result, source_reader_cache, _remarks);
+
+      prev_was_header_inclusion = false;
+      prev_was_cond_incl_transition = true;
       break;
 
     case _chunk::kind::_dead:
@@ -2108,6 +2310,10 @@ void depreprocessor::_compute_needed_macro_defs_and_undefs()
       next_raw_tok_is_opening_parenthesis = false;
       break;
 
+    case _chunk::kind::cond_incl_transition:
+      next_raw_tok_is_opening_parenthesis = false;
+      break;
+
     case _chunk::kind::_dead:
       assert(0);
       __builtin_unreachable();
@@ -2154,6 +2360,13 @@ void depreprocessor::_compute_needed_macro_defs_and_undefs()
 
     case _chunk::kind::header_inclusion:
       _compute_needed_macro_defs_and_undefs_hic(it_chunk,
+						in_order_chunks,
+						cur_run_begin,
+						macro_states);
+      break;
+
+    case _chunk::kind::cond_incl_transition:
+      _compute_needed_macro_defs_and_undefs_cic(it_chunk,
 						in_order_chunks,
 						cur_run_begin,
 						macro_states);
@@ -2298,6 +2511,61 @@ void depreprocessor::_compute_needed_macro_defs_and_undefs_hic
   }
 }
 
+void depreprocessor::_compute_needed_macro_defs_and_undefs_cic
+		(const _chunks_type::iterator &it_chunk,
+		 const _in_order_chunks_type &in_order_chunks,
+		 const _chunks_type::iterator &cur_run_begin,
+		 _macro_states_type &macro_states)
+{
+  const _cond_incl_transition_chunk &cic = it_chunk->cic;
+  if (cic.get_kind() == _cond_incl_transition_kind::leave)
+    return;
+
+  for (const auto &mnc : cic.get_macro_nondef_constraints()) {
+    const auto it_ms = macro_states.find(mnc.get_name());
+    if (it_ms != macro_states.end() &&
+	!(it_ms->second.m.get().is_func_like() &&
+	  mnc.is_func_like_allowed())) {
+      // #undef after last usage is needed.
+      _emit_undef(it_ms->second, _pos_in_output{it_chunk},
+		  in_order_chunks, cur_run_begin);
+      macro_states.erase(it_ms);
+    }
+  }
+
+  for (const auto &um : cic.get_used_macros()) {
+    const auto it_ms = macro_states.find(um.get_name());
+    if (it_ms != macro_states.end() &&
+	(&it_ms->second.m.get() == &um ||
+	 it_ms->second.m.get() == um)) {
+      // Macro active, update its last usage.
+      it_ms->second.last_usage = _pos_in_output{it_chunk};
+
+    } else if (it_ms == macro_states.end()) {
+      // Macro not active at all.
+      _emit_define(um,
+		   _pos_in_output{it_chunk},
+		   in_order_chunks, cur_run_begin,
+		   nullptr);
+      macro_states.emplace(um.get_name(),
+			   _macro_state {
+			     um,
+			     _pos_in_output{it_chunk}
+			   });
+
+    } else {
+      // Incompatible macro with same name is active.
+      _emit_define(um,
+		   _pos_in_output{it_chunk},
+		   in_order_chunks, cur_run_begin, &it_ms->second);
+      it_ms->second = _macro_state {
+			  um,
+			  _pos_in_output{it_chunk}
+		      };
+    }
+  }
+}
+
 bool depreprocessor::
 _can_place_define_at(const pp_result::macro &m,
 		     const _pos_in_output &placement_pos,
@@ -2363,6 +2631,18 @@ _can_place_define_at(const pp_result::macro &m,
 	if (hic.needs_undef_before_include(m) ||
 	    !hic.is_unmodified_by_include(m)) {
 	  return false;
+	}
+      }
+      break;
+
+    case _chunk::kind::cond_incl_transition:
+      {
+	const _cond_incl_transition_chunk &cic = cur_pos.chunk->cic;
+	if (cic.get_kind() != _cond_incl_transition_kind::leave) {
+	  const pp_result::macro_nondef_constraints &mncs =
+	    cic.get_macro_nondef_constraints();
+	  if (mncs.find(m.get_name()) != mncs.end())
+	    return false;
 	}
       }
       break;
@@ -2447,6 +2727,10 @@ void depreprocessor::_emit_undef(const _macro_state &macro_state,
       mu_pos.chunk->hic.add_macro_undef_to_emit(_macro_undef_to_emit{*it_mu});
       break;
 
+    case _chunk::kind::cond_incl_transition:
+      mu_pos.chunk->cic.add_macro_undef_to_emit(_macro_undef_to_emit{*it_mu});
+      break;
+
     case _chunk::kind::_dead:
       assert(0);
       __builtin_unreachable();
@@ -2470,6 +2754,10 @@ void depreprocessor::_emit_undef(const _macro_state &macro_state,
 
     case _chunk::kind::header_inclusion:
       mu_pos.chunk->hic.add_macro_undef_to_emit(_macro_undef_to_emit{name});
+      break;
+
+    case _chunk::kind::cond_incl_transition:
+      mu_pos.chunk->cic.add_macro_undef_to_emit(_macro_undef_to_emit{name});
       break;
 
     case _chunk::kind::_dead:
@@ -2529,6 +2817,10 @@ _emit_define(const pp_result::macro &m,
 
   case _chunk::kind::header_inclusion:
     md_pos.chunk->hic.add_macro_define_to_emit(_macro_define_to_emit{m});
+    break;
+
+  case _chunk::kind::cond_incl_transition:
+    md_pos.chunk->cic.add_macro_define_to_emit(_macro_define_to_emit{m});
     break;
 
   case _chunk::kind::_dead:
@@ -2630,6 +2922,9 @@ _find_directive_in_order_pos(const raw_pp_tokens_range &directive_range,
   case _chunk::kind::header_inclusion:
     return _pos_in_output{it_ioc->it_chunk};
 
+  case _chunk::kind::cond_incl_transition:
+    return _pos_in_output{it_ioc->it_chunk};
+
   case _chunk::kind::_dead:
     assert(0);
     __builtin_unreachable();
@@ -2701,6 +2996,9 @@ _find_directive_in_run_pos(const raw_pp_tokens_range &directive_range,
   case _chunk::kind::header_inclusion:
     return _pos_in_output{it_chunk_in_run};
 
+  case _chunk::kind::cond_incl_transition:
+    return _pos_in_output{it_chunk_in_run};
+
   case _chunk::kind::_dead:
     assert(0);
     __builtin_unreachable();
@@ -2721,6 +3019,9 @@ _chunk_pos_in_output(const _chunks_type::iterator &it_chunk) noexcept
 	   };
 
   case _chunk::kind::header_inclusion:
+    return _pos_in_output{it_chunk};
+
+  case _chunk::kind::cond_incl_transition:
     return _pos_in_output{it_chunk};
 
   case _chunk::kind::_dead:
@@ -2887,5 +3188,345 @@ _write_defines_and_undefs(source_writer &writer,
       }
       ++it_mu;
     }
+  }
+}
+
+bool depreprocessor::
+_is_cond_incl_header_guard(const pp_result::conditional_inclusion_node &c)
+  const noexcept
+{
+  if (c.nbranches() != 1)
+    return false;
+
+  const raw_pp_tokens_range &dir_range = c.get_branch_directive_range(0);
+  auto it_dir_tok = _pp_result.get_raw_tokens().begin() + dir_range.begin;
+  assert(it_dir_tok->is_punctuator("#"));
+  ++it_dir_tok;
+  if (it_dir_tok->is_ws())
+    ++it_dir_tok;
+  assert(it_dir_tok->is_id());
+
+  if (it_dir_tok->get_value() != "ifndef")
+    return false;
+
+  const pp_result::header_inclusion_node &h = c.get_containing_header();
+  if (!h.get_parent())
+      return false;
+  else if (c.get_parent() != &h)
+    return false;
+
+  auto &&any_nontrivial_token_between =
+    [&](const raw_pp_token_index b, const raw_pp_token_index e) {
+      const auto raw_toks_begin = _pp_result.get_raw_tokens().begin();
+      return std::any_of(raw_toks_begin + b, raw_toks_begin + e,
+			 [](const raw_pp_token &tok) {
+			   return !(tok.is_ws() || tok.is_newline());
+			 });
+    };
+
+  if (any_nontrivial_token_between(h.get_range().begin, c.get_range().begin) ||
+      any_nontrivial_token_between(c.get_range().end, h.get_range().end)) {
+    return false;
+  }
+
+  const pp_result::macro_nondef_constraints &mncs =
+    c.get_macro_nondef_constraints();
+  if (mncs.size() != 1)
+    return false;
+  const pp_result::macro_nondef_constraint &mnc = *mncs.begin();
+
+  const auto macro_defs = _pp_result.find_overlapping_macros(c.get_range());
+  if (macro_defs.first == macro_defs.second)
+    return false;
+  else if (macro_defs.first->get_name() != mnc.get_name())
+    return false;
+
+  const raw_pp_tokens_range &macro_def_range =
+    macro_defs.first->get_directive_range().begin;
+  if (any_nontrivial_token_between(dir_range.end, macro_def_range.begin))
+    return false;
+
+  return true;
+}
+
+depreprocessor::_cond_incl_stack_type depreprocessor::
+_build_cond_incl_stack(const pp_result::conditional_inclusion_node &c) const
+{
+  _cond_incl_stack_type s;
+
+  const pp_result::conditional_inclusion_node *_c = &c;
+  do {
+    if (!_is_cond_incl_header_guard(*_c))
+      s.push_back(std::ref(*_c));
+    _c = _c->get_parent()->get_containing_conditional_inclusion();
+  } while (_c);
+
+  std::reverse(s.begin(), s.end());
+  return s;
+}
+
+depreprocessor::_cond_incl_stack_type::size_type
+depreprocessor::_cond_incl_stacks_common_length(const _cond_incl_stack_type &s1,
+						const _cond_incl_stack_type &s2)
+  noexcept
+{
+  _cond_incl_stack_type::size_type l = std::min(s1.size(), s2.size());
+
+  l = (std::mismatch(s1.begin(), s1.begin() + l, s2.begin(),
+		     [&](const std::reference_wrapper
+				<const pp_result::conditional_inclusion_node>
+			   &c1,
+			const std::reference_wrapper
+				<const pp_result::conditional_inclusion_node>
+			   &c2) {
+		       return &c1.get() == &c2.get();
+		     }).first
+       - s1.begin());
+
+  return l;
+}
+
+void depreprocessor::_prepare_cond_incls(transformed_input_chunk &tic)
+{
+  const raw_pp_tokens_range range_raw = tic._get_range_raw(_pp_result);
+  auto it_cond_incl =
+    _pp_result.intersecting_conditionals_begin(range_raw);
+  const auto cond_incls_end =
+    _pp_result.intersecting_conditionals_end(range_raw);
+
+  // First, leave all conditional inclusions (from previous chunks) on
+  // the current stack which don't overlap at all with the given
+  // chunk's range.
+  if (it_cond_incl == cond_incls_end) {
+    _leave_cond_incls(0);
+    return;
+  }
+
+  _cond_incl_stack_type s = _build_cond_incl_stack(*it_cond_incl);
+  // Ignore all conditional inclusions which are completely contained
+  // within some of the transformed_input_chunk's holes.
+  for (_cond_incl_stack_type::size_type i = s.size();
+       i && tic._is_range_in_hole(s[i - 1].get().get_range(), _pp_result);
+       --i) {
+    s.pop_back();
+  }
+  _leave_cond_incls(_cond_incl_stacks_common_length(_cond_incl_stack, s));
+  assert(_cond_incl_stack.size() <= s.size());
+
+  // Enter those conditional inclusions which are active at the
+  // beginning of the chunk.
+  for (_cond_incl_stack_type::size_type i = _cond_incl_stack.size();
+       i < s.size() && s[i].get().get_range().begin <= range_raw.begin;
+       ++i) {
+    assert(s[i].get().has_taken_branch());
+    assert((s[i].get().get_branch_directive_range(s[i].get().get_taken_branch())
+	    .end) <=
+	   range_raw.begin);
+    _enter_cond_incl(s[i].get());
+  }
+
+  // Now, handle the conditional inclusions which are entered or
+  // left somewhere within the given chunk's interior.
+  auto &&enter_new_cond_incls_in_chunk =
+    [&](const _cond_incl_stack_type &s) {
+      assert(_cond_incl_stacks_common_length(_cond_incl_stack, s) ==
+	     _cond_incl_stack.size());
+      for (_cond_incl_stack_type::size_type i = _cond_incl_stack.size();
+	   i < s.size(); ++i) {
+	if (s[i].get().has_taken_branch()) {
+	  tic._insert_cond_incl_transition(s[i].get(),
+					   _cond_incl_transition_kind::enter,
+					   _pp_result);
+	  _cond_incl_stack.push_back(s[i]);
+	} else {
+	  // Conditional inclusion nodes with no taken branch are possible
+	  // only as leaf nodes.
+	  assert(i == s.size() - 1);
+	  tic._insert_cond_incl_transition
+	    (s[i].get(), _cond_incl_transition_kind::enter_leave, _pp_result);
+	}
+      }
+    };
+
+  enter_new_cond_incls_in_chunk(s);
+
+  raw_pp_token_index max_begin_seen =
+    !s.empty() ? s.back().get().get_range().begin : 0;
+  s.clear();
+
+  auto &&leave_cond_incls_in_chunk =
+    [&](const _cond_incl_stack_type::size_type nkeep) {
+      for (_cond_incl_stack_type::size_type i = _cond_incl_stack.size();
+	   i > nkeep; --i) {
+	tic._insert_cond_incl_transition(_cond_incl_stack.back().get(),
+					 _cond_incl_transition_kind::leave,
+					 _pp_result);
+	_cond_incl_stack.pop_back();
+      }
+    };
+
+  auto &&next_cond_incl =
+    [&]() {
+      do {
+	++it_cond_incl;
+      } while (it_cond_incl != cond_incls_end &&
+	       tic._is_range_in_hole(it_cond_incl->get_range(), _pp_result));
+    };
+
+  for (; it_cond_incl != cond_incls_end; next_cond_incl()) {
+    if (tic._is_range_in_hole(it_cond_incl->get_range(), _pp_result))
+      continue;
+
+    if (max_begin_seen < it_cond_incl->get_range().begin) {
+      max_begin_seen = it_cond_incl->get_range().begin;
+
+      s = _build_cond_incl_stack(*it_cond_incl);
+      const _cond_incl_stack_type::size_type common_length =
+	   _cond_incl_stacks_common_length(_cond_incl_stack, s);
+      leave_cond_incls_in_chunk(common_length);
+      enter_new_cond_incls_in_chunk(s);
+      s.clear();
+
+    } else {
+      // The current conditional inclusion is an ancestor of the leaf
+      // currently at the _cond_incl_stack which covers some of the
+      // chunk's range by itself. Leave conditional inclusions all
+      // the way up to that node. Note that this is an optimization
+      // avoiding the above call to _build_cond_incl_stack().
+      _cond_incl_stack_type::size_type i;
+      for (i = _cond_incl_stack.size();
+	   i > 0 && &_cond_incl_stack[i - 1].get() != &*it_cond_incl;
+	   --i)
+	{}
+      if (i) {
+	leave_cond_incls_in_chunk(i);
+      } else {
+	// The only possible reason this inclusion node has not been
+	// found on the stack is that it has never been pushed because
+	// it's been classified as a header guard.
+	assert(_is_cond_incl_header_guard(*it_cond_incl));
+      }
+    }
+  }
+
+  // Finally, leave all conditional inclusions which have their #endif
+  // somewhere within the chunk's range. The remaining ones will
+  // either get left during the next chunk's processing or eventually
+  // at EOF.
+  while (!_cond_incl_stack.empty() &&
+	 _cond_incl_stack.back().get().get_range().end < range_raw.end) {
+    leave_cond_incls_in_chunk(_cond_incl_stack.size() - 1);
+  }
+}
+
+void depreprocessor::
+_prepare_cond_incls(const pp_result::header_inclusion_child &h)
+{
+  const pp_result::conditional_inclusion_node *c =
+    h.get_containing_conditional_inclusion();
+  if (!c) {
+    _leave_cond_incls(0);
+    return;
+  }
+
+  _cond_incl_stack_type s = _build_cond_incl_stack(*c);
+  _leave_cond_incls(_cond_incl_stacks_common_length(_cond_incl_stack, s));
+  for (_cond_incl_stack_type::size_type i = _cond_incl_stack.size();
+       i < s.size(); ++i) {
+    _enter_cond_incl(s[i].get());
+  }
+}
+
+
+void depreprocessor::
+_leave_cond_incls(const _cond_incl_stack_type::size_type nkeep)
+{
+  while (_cond_incl_stack.size() > nkeep) {
+    _cond_incl_transition_chunk c{
+      _cond_incl_stack.back().get(),
+      _cond_incl_transition_kind::leave
+     };
+    _chunks.emplace_back(std::move(c));
+    _cond_incl_stack.pop_back();
+  }
+}
+
+void depreprocessor::
+_enter_cond_incl(const pp_result::conditional_inclusion_node &c)
+{
+  _chunks.emplace_back(_cond_incl_transition_chunk{
+			 c,_cond_incl_transition_kind::enter
+		       });
+  _cond_incl_stack.push_back(std::ref(c));
+}
+
+raw_pp_tokens_range depreprocessor::
+_get_cond_incl_trans_range_raw(const pp_result::conditional_inclusion_node &c,
+			       const _cond_incl_transition_kind k) noexcept
+{
+  switch (k) {
+  case _cond_incl_transition_kind::enter:
+    assert(c.has_taken_branch());
+    return raw_pp_tokens_range{
+	     c.get_range().begin,
+	     c.get_branch_directive_range(c.get_taken_branch()).end
+	   };
+  case _cond_incl_transition_kind::leave:
+    assert(c.has_taken_branch());
+    return raw_pp_tokens_range{
+	     c.get_branch_directive_range(c.get_taken_branch() + 1).begin,
+	     c.get_range().end
+	   };
+
+  case _cond_incl_transition_kind::enter_leave:
+    assert(!c.has_taken_branch());
+    return c.get_range();
+  }
+}
+
+void depreprocessor::
+_write_cond_incl_transition(source_writer &writer,
+			    const pp_result::conditional_inclusion_node &c,
+			    const _cond_incl_transition_kind k,
+			    const pp_result &pp_result,
+			    _source_reader_cache &source_reader_cache,
+			    output_remarks &remarks)
+{
+  switch (k) {
+  case _cond_incl_transition_kind::enter:
+    assert(c.has_taken_branch());
+    for (auto i = 0; i < c.get_taken_branch(); ++i) {
+      _write_directive(writer, c.get_branch_directive_range(i),
+		       pp_result, source_reader_cache);
+      writer.append("#error \"klp-ccp: non-taken branch\"");
+      writer.append(source_writer::newline_tag{});
+    }
+    _write_directive(writer, c.get_branch_directive_range(c.get_taken_branch()),
+		     pp_result, source_reader_cache);
+    break;
+
+  case _cond_incl_transition_kind::leave:
+    assert(c.has_taken_branch());
+    for (auto i = c.get_taken_branch() + 1; i < c.nbranches(); ++i) {
+      _write_directive(writer, c.get_branch_directive_range(i),
+		       pp_result, source_reader_cache);
+      writer.append("#error \"klp-ccp: non-taken branch\"");
+      writer.append(source_writer::newline_tag{});
+    }
+    _write_directive(writer, c.get_branch_directive_range(c.nbranches()),
+		     pp_result, source_reader_cache);
+    break;
+
+  case _cond_incl_transition_kind::enter_leave:
+    assert(!c.has_taken_branch());
+    for (auto i = 0; i < c.nbranches(); ++i) {
+      _write_directive(writer, c.get_branch_directive_range(i),
+		       pp_result, source_reader_cache);
+      writer.append("#error \"klp-ccp: non-taken branch\"");
+      writer.append(source_writer::newline_tag{});
+    }
+    _write_directive(writer, c.get_branch_directive_range(c.nbranches()),
+		     pp_result, source_reader_cache);
+    break;
   }
 }

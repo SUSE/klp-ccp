@@ -67,6 +67,13 @@ namespace klp
 	std::vector<std::unique_ptr<source_reader>> _cache;
       };
 
+      enum class _cond_incl_transition_kind
+      {
+	enter,
+	leave,
+	enter_leave,
+      };
+
     public:
       class transformed_input_chunk
       {
@@ -120,6 +127,7 @@ namespace klp
 	    replace,
 	    insert,
 	    insert_ws,
+	    cond_incl_transition,
 	  };
 
 	  action a;
@@ -128,6 +136,9 @@ namespace klp
 
 	  pp_token new_tok;
 	  bool add_pointer_deref;
+
+	  const pp_result::conditional_inclusion_node *cond_incl_node;
+	  _cond_incl_transition_kind cond_incl_trans_kind;
 	};
 
 	typedef std::vector<_op> _ops_type;
@@ -228,6 +239,14 @@ namespace klp
 			(const raw_pp_tokens_range &directive_range,
 			 const pp_result &pp_result)
 	  const noexcept;
+
+	bool _is_range_in_hole(const raw_pp_tokens_range &r,
+			       const pp_result &pp_result) const noexcept;
+
+	void _insert_cond_incl_transition
+		(const pp_result::conditional_inclusion_node &c,
+		 const _cond_incl_transition_kind k,
+		 const pp_result &pp_result);
 
 	bool _find_macro_constraints(const pp_result &pp_result,
 				     bool next_raw_tok_is_opening_parenthesis);
@@ -367,17 +386,53 @@ namespace klp
 	std::vector<_macro_define_to_emit> _macro_defines_to_emit;
       };
 
+      class _cond_incl_transition_chunk
+      {
+      public:
+	_cond_incl_transition_chunk
+		(const pp_result::conditional_inclusion_node &c,
+		 const _cond_incl_transition_kind k) noexcept;
+
+	raw_pp_tokens_range get_range_raw() const noexcept;
+
+	_cond_incl_transition_kind get_kind() const noexcept
+	{ return _k; }
+
+	const pp_result::used_macros& get_used_macros() const noexcept;
+
+	const pp_result::macro_nondef_constraints&
+	get_macro_nondef_constraints() const noexcept;
+
+	void add_macro_undef_to_emit(_macro_undef_to_emit &&mu);
+	void add_macro_define_to_emit(_macro_define_to_emit &&m);
+
+	bool has_macro_undefs_or_defines_to_emit() const noexcept;
+
+	void write(source_writer &writer, const pp_result &pp_result,
+		   _source_reader_cache &source_reader_cache,
+		   output_remarks &remarks) const;
+
+      private:
+	std::reference_wrapper<const pp_result::conditional_inclusion_node> _c;
+	_cond_incl_transition_kind _k;
+
+	std::vector<_macro_undef_to_emit> _macro_undefs_to_emit;
+	std::vector<_macro_define_to_emit> _macro_defines_to_emit;
+      };
+
       struct _chunk
       {
 	enum class kind
 	{
 	  transformed_input,
 	  header_inclusion,
+	  cond_incl_transition,
 	  _dead,
 	};
 
 	_chunk(transformed_input_chunk &&_tic, const pp_result &pp_result);
 	_chunk(_header_inclusion_chunk &&_hic);
+	_chunk(_cond_incl_transition_chunk &&_cic);
 	_chunk(_chunk &&c);
 	~_chunk() noexcept;
 
@@ -389,6 +444,7 @@ namespace klp
 	{
 	  transformed_input_chunk tic;
 	  _header_inclusion_chunk hic;
+	  _cond_incl_transition_chunk cic;
 	};
 
 	raw_pp_tokens_range range_raw;
@@ -452,6 +508,11 @@ namespace klp
 		 const _chunks_type::iterator &cur_run_begin,
 		 _macro_states_type &macro_states);
       void _compute_needed_macro_defs_and_undefs_hic
+		(const _chunks_type::iterator &it_chunk,
+		 const _in_order_chunks_type &in_order_chunks,
+		 const _chunks_type::iterator &cur_run_begin,
+		 _macro_states_type &macro_states);
+      void _compute_needed_macro_defs_and_undefs_cic
 		(const _chunks_type::iterator &it_chunk,
 		 const _in_order_chunks_type &in_order_chunks,
 		 const _chunks_type::iterator &cur_run_begin,
@@ -535,9 +596,48 @@ namespace klp
 				_source_reader_cache &source_reader_cache,
 				output_remarks &remarks);
 
+      typedef std::vector
+		<std::reference_wrapper
+		 <const pp_result::conditional_inclusion_node>>
+	_cond_incl_stack_type;
+
+      bool
+      _is_cond_incl_header_guard(const pp_result::conditional_inclusion_node &c)
+	const noexcept;
+
+      _cond_incl_stack_type
+      _build_cond_incl_stack(const pp_result::conditional_inclusion_node &c)
+	const;
+
+      static _cond_incl_stack_type::size_type
+      _cond_incl_stacks_common_length(const _cond_incl_stack_type &s1,
+				      const _cond_incl_stack_type &s2) noexcept;
+
+      void _prepare_cond_incls(transformed_input_chunk &tic);
+      void _prepare_cond_incls(const pp_result::header_inclusion_child &h);
+
+      void _leave_cond_incls(const _cond_incl_stack_type::size_type nkeep);
+      void _enter_cond_incl(const pp_result::conditional_inclusion_node &c);
+
+      static raw_pp_tokens_range
+      _get_cond_incl_trans_range_raw
+		(const pp_result::conditional_inclusion_node &c,
+		 const _cond_incl_transition_kind k) noexcept;
+
+      static void
+      _write_cond_incl_transition
+		(source_writer &writer,
+		 const pp_result::conditional_inclusion_node &c,
+		 const _cond_incl_transition_kind k,
+		 const pp_result &pp_result,
+		 _source_reader_cache &source_reader_cache,
+		 output_remarks &remarks);
+
       const pp_result &_pp_result;
       _chunks_type _chunks;
       output_remarks &_remarks;
+
+      _cond_incl_stack_type _cond_incl_stack;
     };
   }
 }

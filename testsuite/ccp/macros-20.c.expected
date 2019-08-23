@@ -1,9 +1,14 @@
+#define FOO()
+
+#if defined(G)
+#error "klp-ccp: non-taken branch"
+#elif defined(FOO)
+
 #define G g
 
 static void G(void);
 
-#define FOO()
-
+#endif
 #undef G
 #include "macros-20.h"
 
