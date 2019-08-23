@@ -280,6 +280,7 @@ namespace klp
 	bool branch_active;
 	pp_result::conditional_inclusion_node::directive_ranges_type::size_type
 		taken_branch;
+	bool has_else_branch;
       };
 
       struct _expansion_state

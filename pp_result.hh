@@ -963,6 +963,9 @@ namespace klp
 
 	directive_ranges_type::size_type get_taken_branch() const noexcept;
 
+	bool has_else_branch() const noexcept
+	{ return _has_else_branch; }
+
       private:
 	friend class inclusion_node;
 	friend class preprocessor;
@@ -974,13 +977,15 @@ namespace klp
 		       used_macros &&used_macros,
 		       macro_nondef_constraints &&macro_nondef_constraints,
 		       directive_ranges_type &&directive_ranges,
-		       const directive_ranges_type::size_type taken_branch);
+		       const directive_ranges_type::size_type taken_branch,
+		       const bool has_else_branch);
 
 	used_macros _used_macros;
 	macro_nondef_constraints _macro_nondef_constraints;
 	directive_ranges_type _directive_ranges;
 	// Zero -> no branch taken, otherwise the index is 1-based.
 	directive_ranges_type::size_type _taken_branch;
+	bool _has_else_branch;
       };
 
 

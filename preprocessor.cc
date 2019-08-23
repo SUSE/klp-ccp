@@ -855,6 +855,7 @@ void preprocessor::_handle_pp_directive()
     } else {
       _cond_incl_states.top().branch_active = false;
     }
+    _cond_incl_states.top().has_else_branch = true;
   }
 
   // Look at the other directives only if they're not within a
@@ -1778,7 +1779,8 @@ void preprocessor::_pop_cond_incl(const raw_pp_token_index range_end)
     (range_end,
      std::move(cond_incl_state.um), std::move(cond_incl_state.mnc),
      std::move(cond_incl_state.directive_ranges),
-     cond_incl_state.taken_branch);
+     cond_incl_state.taken_branch,
+     cond_incl_state.has_else_branch);
   assert(&cond_incl_state.incl_node.get() == &_inclusions.top().get());
   _inclusions.pop();
   _cond_incl_states.pop();
@@ -2595,7 +2597,8 @@ preprocessor::get_pending_token_source(const raw_pp_token_index tok)
 
 preprocessor::_cond_incl_state::
 _cond_incl_state(pp_result::conditional_inclusion_node &_incl_node)
-  : incl_node(_incl_node), branch_active(false), taken_branch(0)
+  : incl_node(_incl_node), branch_active(false), taken_branch(0),
+    has_else_branch(false)
 {}
 
 

@@ -3513,6 +3513,13 @@ _write_cond_incl_transition(source_writer &writer,
       writer.append("#error \"klp-ccp: non-taken branch\"");
       writer.append(source_writer::newline_tag{});
     }
+    if (!c.has_else_branch()) {
+      writer.append("#else");
+      writer.append(source_writer::newline_tag{});
+      writer.append
+	("#error \"klp-ccp: a preceeding branch should have been taken\"");
+      writer.append(source_writer::newline_tag{});
+    }
     _write_directive(writer, c.get_branch_directive_range(c.nbranches()),
 		     pp_result, source_reader_cache);
     break;

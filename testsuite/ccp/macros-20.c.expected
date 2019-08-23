@@ -8,6 +8,8 @@
 
 static void G(void);
 
+#else
+#error "klp-ccp: a preceeding branch should have been taken"
 #endif
 #undef G
 #include "macros-20.h"

@@ -671,13 +671,15 @@ _finalize(const raw_pp_token_index range_end,
 	  used_macros &&used_macros,
 	  macro_nondef_constraints &&macro_nondef_constraints,
 	  directive_ranges_type &&directive_ranges,
-	  const directive_ranges_type::size_type taken_branch)
+	  const directive_ranges_type::size_type taken_branch,
+	  const bool has_else_branch)
 {
   _set_range_end(range_end);
   _used_macros = std::move(used_macros);
   _macro_nondef_constraints = std::move(macro_nondef_constraints);
   _directive_ranges = std::move(directive_ranges);
   _taken_branch = taken_branch;
+  _has_else_branch = has_else_branch;
 }
 
 
