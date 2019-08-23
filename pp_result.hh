@@ -533,6 +533,9 @@ namespace klp
 
 	const_iterator find(const std::string &id) const noexcept;
 
+	_macro_nondef_constraints_type::size_type size() const noexcept
+	{ return _macro_nondef_constraints.size(); }
+
       private:
 	_macro_nondef_constraints_type _macro_nondef_constraints;
       };
