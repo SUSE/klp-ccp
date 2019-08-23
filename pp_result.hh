@@ -790,6 +790,9 @@ namespace klp
 	virtual const header_inclusion_node&
 	get_containing_header() const noexcept = 0;
 
+	virtual const conditional_inclusion_node*
+	get_containing_conditional_inclusion() const noexcept = 0;
+
 	const raw_pp_tokens_range& get_range() const noexcept
 	{ return _range; }
 
@@ -880,6 +883,9 @@ namespace klp
 
 	virtual ~header_inclusion_root() noexcept;
 
+	virtual const conditional_inclusion_node*
+	get_containing_conditional_inclusion() const noexcept override;
+
 	bool is_preinclude() const noexcept
 	{ return _is_preinclude; }
 
@@ -892,6 +898,9 @@ namespace klp
       {
       public:
 	virtual ~header_inclusion_child() noexcept;
+
+	virtual const conditional_inclusion_node*
+	get_containing_conditional_inclusion() const noexcept override;
 
 	const raw_pp_tokens_range& get_directive_range() const noexcept
 	{ return _directive_range; }
@@ -927,6 +936,9 @@ namespace klp
 
 	virtual const header_inclusion_node&
 	get_containing_header() const noexcept override;
+
+	virtual const conditional_inclusion_node*
+	get_containing_conditional_inclusion() const noexcept override;
 
 	const raw_pp_token_index get_directive_begin() const noexcept
 	{ return this->get_range().begin; }

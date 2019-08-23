@@ -587,6 +587,13 @@ header_inclusion_root(const std::string &filename, const bool is_preinclude)
 
 pp_result::header_inclusion_root::~header_inclusion_root() noexcept = default;
 
+const pp_result::conditional_inclusion_node*
+pp_result::header_inclusion_root::get_containing_conditional_inclusion()
+  const noexcept
+{
+  return nullptr;
+}
+
 
 pp_result::header_inclusion_child::
 header_inclusion_child(inclusion_node &parent,
@@ -603,6 +610,13 @@ header_inclusion_child(inclusion_node &parent,
 
 pp_result::header_inclusion_child::~header_inclusion_child() noexcept = default;
 
+const pp_result::conditional_inclusion_node*
+pp_result::header_inclusion_child::get_containing_conditional_inclusion()
+  const noexcept
+{
+  return this->get_parent()->get_containing_conditional_inclusion();
+}
+
 
 pp_result::conditional_inclusion_node::
 conditional_inclusion_node(inclusion_node &parent,
@@ -616,6 +630,13 @@ const pp_result::header_inclusion_node&
 pp_result::conditional_inclusion_node::get_containing_header() const noexcept
 {
   return _parent->get_containing_header();
+}
+
+const pp_result::conditional_inclusion_node*
+pp_result::conditional_inclusion_node::get_containing_conditional_inclusion()
+  const noexcept
+{
+  return this;
 }
 
 void pp_result::conditional_inclusion_node::
