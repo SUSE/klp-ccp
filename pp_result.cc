@@ -676,7 +676,7 @@ _finalize(const raw_pp_token_index range_end,
   _set_range_end(range_end);
   _used_macros = std::move(used_macros);
   _macro_nondef_constraints = std::move(macro_nondef_constraints);
-  _directive_ranges = std::move(_directive_ranges);
+  _directive_ranges = std::move(directive_ranges);
   _taken_branch = taken_branch;
 }
 
