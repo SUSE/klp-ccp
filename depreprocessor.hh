@@ -219,8 +219,6 @@ namespace klp
 	_pos_in_chunk _end_pos_in_chunk() const noexcept;
 	_pos_in_chunk _next_pos_in_chunk(const _pos_in_chunk &cur_pos)
 	  const noexcept;
-	pp_token_index _pos_in_chunk_to_token_index(const _pos_in_chunk &pos)
-	  const noexcept;
 
 	std::pair<_ops_type::const_iterator, _ops_type::const_iterator>
 	_find_overlapping_ops_range(const raw_pp_tokens_range &r,

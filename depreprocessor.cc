@@ -345,26 +345,6 @@ _next_pos_in_chunk(const _pos_in_chunk &cur_pos)const noexcept
   }
 }
 
-pp_token_index depreprocessor::transformed_input_chunk::
-_pos_in_chunk_to_token_index(const _pos_in_chunk &pos) const noexcept
-{
-  assert(pos.op != _ops.size());
-  const _op &op = _ops[pos.op];
-  switch (op.a) {
-  case _op::action::copy:
-    return pos.tok;
-
-  case _op::action::replace:
-    /* fall through */
-  case _op::action::insert:
-    /* fall through */
-  case _op::action::insert_ws:
-    /* fall through */
-    assert(!pos.tok);
-    return op.r.begin;
-  }
-}
-
 std::pair<depreprocessor::transformed_input_chunk::_ops_type::const_iterator,
 	  depreprocessor::transformed_input_chunk::_ops_type::const_iterator>
 depreprocessor::transformed_input_chunk::
@@ -2456,29 +2436,9 @@ void depreprocessor::_emit_undef(const _macro_state &macro_state,
 {
   // As an optimization, only consider those #undef directives from
   // the original input which are located before the
-  // raw_pp_token_index corresponding to mnc_pos.
-  const raw_pp_token_index search_range_end =
-    [&]() {
-      switch (mnc_pos.chunk->k) {
-      case _chunk::kind::transformed_input:
-	{
-	  const pp_token_index pos_tok =
-	    (mnc_pos.chunk->tic._pos_in_chunk_to_token_index
-	     (mnc_pos.pos_in_chunk));
-
-	  return (_pp_result.pp_tokens_range_to_raw(pp_tokens_range{pos_tok,
-								    pos_tok})
-		  .end);
-	}
-
-      case _chunk::kind::header_inclusion:
-	return mnc_pos.chunk->range_raw.begin;
-
-      case _chunk::kind::_dead:
-	assert(0);
-	__builtin_unreachable();
-      }
-    }();
+  // raw_pp_token_index corresponding to mnc_pos. Use the depending
+  // chunk's raw range end as an approximation.
+  const raw_pp_token_index search_range_end =  mnc_pos.chunk->range_raw.end;
 
   const std::string &name = macro_state.m.get().get_name();
   pp_result::const_macro_undef_iterator it_mu;
