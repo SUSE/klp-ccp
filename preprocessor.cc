@@ -688,16 +688,17 @@ void preprocessor::_handle_pp_directive()
 	throw pp_except(remark);
       }
 
-      if (_cond_incl_nesting == _cond_incl_states.size()) {
-	_cond_incl_states.top().directive_ranges.emplace_back(raw_begin,
-							      raw_end);
-	_pop_cond_incl(raw_end);
-      }
-      --_cond_incl_nesting;
+      do {
+	tok = _tokenizers.top().read_next_token();
+	_grab_remarks_from(_tokenizers.top());
+	_pp_result->_append_token(tok);
+	raw_end = _pp_result->_get_last_raw_index() + 1;
+      } while (tok.is_ws());
 
-    } else if (!tok.is_ws()) {
-      endif_possible = false;
-      if (is_endif) {
+      if (tok.is_newline()) {
+	_pp_result->_append_token(tok);
+	raw_end = _pp_result->_get_last_raw_index() + 1;
+      } else if (!tok.is_eof()) {
 	code_remark remark
 	  (code_remark::severity::warning,
 	   "garbage after #endif",
@@ -705,6 +706,23 @@ void preprocessor::_handle_pp_directive()
 	   tok.get_range_in_file());
 	_remarks.add(remark);
       }
+
+      if (_cond_incl_nesting == _cond_incl_states.size()) {
+	_cond_incl_states.top().directive_ranges.emplace_back(raw_begin,
+							      raw_end);
+	_pop_cond_incl(raw_end);
+      }
+      --_cond_incl_nesting;
+
+      // Handling EOF is safe now after the conditional inclusion has
+      // been popped.
+      if (tok.is_eof())
+	_handle_eof_from_tokenizer(std::move(tok));
+
+      break;
+
+    } else if (!tok.is_ws()) {
+      endif_possible = false;
     }
   }
 
