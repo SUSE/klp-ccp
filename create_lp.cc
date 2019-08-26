@@ -4834,8 +4834,11 @@ void _closure_builder::_construct_fd_id_closure()
       = [&](dep_on_obj &d) {
 	  object_info &oi = d.get_object_info();
 	  if (!oi.shall_externalize_valid) {
+	    const ast::storage_class_specifier * const scs =
+	      d.oidi.get().enclosing_declaration.storage_class_specifier;
 	    const ast::linkage &l = d.oidi.get().init_declarator.get_linkage();
-	    if (l.get_linkage_kind() != ast::linkage::linkage_kind::none) {
+	    if (!scs ||
+		(scs->get_storage_class() != ast::storage_class::sc_register)) {
 	      oi.shall_externalize =
 		(_pol.shall_externalize_object(d.oidi.get().init_declarator,
 					       _remarks));
