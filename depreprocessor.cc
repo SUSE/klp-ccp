@@ -99,6 +99,21 @@ _macro_undef_to_emit::operator<(const _macro_define_to_emit& rhs) const noexcept
   }
 }
 
+raw_pp_tokens_range depreprocessor::_macro_undef_to_emit::get_range_raw()
+  const noexcept
+{
+  if (original) {
+    if (!original->is_predefined())
+      return original->get_directive_range();
+    else
+      return raw_pp_tokens_range{0, 0};
+  } else {
+    return raw_pp_tokens_range{
+	     std::numeric_limits<raw_pp_token_index>::max(),
+	     std::numeric_limits<raw_pp_token_index>::max()
+	   };
+  }
+}
 
 depreprocessor::_macro_define_to_emit::
 _macro_define_to_emit(const pp_result::macro &_m) noexcept
@@ -145,6 +160,15 @@ operator<(const _macro_undef_to_emit& rhs) const noexcept
     else
       return md_lhs.get_predefinition_pos() < mu_rhs.get_predefinition_pos();
   }
+}
+
+raw_pp_tokens_range depreprocessor::_macro_define_to_emit::get_range_raw()
+  const noexcept
+{
+  if (!m.get().is_predefined())
+    return m.get().get_directive_range();
+  else
+    return raw_pp_tokens_range{0, 0};
 }
 
 
@@ -981,18 +1005,33 @@ _add_macro_define_to_emit(const _pos_in_chunk &pos, _macro_define_to_emit &&m)
   _macro_defines_to_emit.insert(it, std::move(md_in_chunk));
 }
 
-void depreprocessor::transformed_input_chunk::
-_write(source_writer &writer, const pp_result &pp_result,
+bool depreprocessor::transformed_input_chunk::
+_has_macro_undefs_or_defines_to_emit_before() const noexcept
+{
+  const _pos_in_chunk begin_pos = _begin_pos_in_chunk();
+  return ((!_macro_undefs_to_emit.empty() &&
+	   _macro_undefs_to_emit.front().pos == begin_pos) ||
+	  (!_macro_defines_to_emit.empty() &&
+	   _macro_defines_to_emit.front().pos == begin_pos));
+}
+
+std::pair<raw_pp_token_index, bool> depreprocessor::transformed_input_chunk::
+_write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
+       bool last_was_newline, const bool write_newlines_before,
+       const pp_result &pp_result,
        _source_reader_cache &source_reader_cache,
        output_remarks &remarks) const
 {
+  // This controls whether to insert separating newlines before any
+  // #undefs, #defines or before this chunk's contents. It gets
+  // toggled to true once the first output has been written.
+  bool write_newlines = write_newlines_before;
+
   // In what follows, iterate through the _ops and write out each one
   // as appropriate. Macro #defines and #undefs might have to get emitted
   // inbetween consecutive ops, or, in the case of copy ops, even at some
   // place inside those.
   bool skip_following_insert_ws = true;
-  bool last_was_newline = true;
-
   _pos_in_chunk cur_pos = _begin_pos_in_chunk();
   auto it_mu = _macro_undefs_to_emit.cbegin();
   auto it_md = _macro_defines_to_emit.cbegin();
@@ -1000,14 +1039,8 @@ _write(source_writer &writer, const pp_result &pp_result,
     [&]() {
       auto write_md =
 	[&](const _macro_define_to_emit &md) {
-	  if (!last_was_newline)
-	    writer.append(source_writer::newline_tag{});
-
 	  _write_define(writer, md.m.get(), pp_result, source_reader_cache,
 			remarks);
-
-	  // Always emit an empty line after the directive.
-	  writer.append(source_writer::newline_tag{});
 
 	  last_was_newline = true;
 	  skip_following_insert_ws = true;
@@ -1015,9 +1048,6 @@ _write(source_writer &writer, const pp_result &pp_result,
 
       auto write_mu =
 	[&](const _macro_undef_to_emit &mu) {
-	  if (!last_was_newline)
-	    writer.append(source_writer::newline_tag{});
-
 	  _write_undef(writer, mu, pp_result, source_reader_cache);
 
 	  last_was_newline = true;
@@ -1050,9 +1080,28 @@ _write(source_writer &writer, const pp_result &pp_result,
 				    mu.mu.original->get_name() :
 				    mu.mu.name));
 			 });
-	  if (it_matching_mu != mus_end)
+	  const raw_pp_tokens_range md_range = it_md->m.get_range_raw();
+	  if (it_matching_mu != mus_end) {
+	    if (write_newlines) {
+	      depreprocessor::_write_newlines
+		(writer, cur_input_pos_raw,
+		 it_matching_mu->mu.get_range_raw().begin,
+		 last_was_newline, true, pp_result, source_reader_cache);
+	    } else {
+	      write_newlines = true;
+	    }
 	    write_mu(it_matching_mu->mu);
+
+	  } else if (write_newlines) {
+	    depreprocessor::_write_newlines(writer, cur_input_pos_raw,
+					    md_range.begin, last_was_newline,
+					    true, pp_result,
+					    source_reader_cache);
+	  } else {
+	    write_newlines = true;
+	  }
 	  write_md(it_md->m);
+	  cur_input_pos_raw = md_range.end;
 	  ++it_md;
 	}
 
@@ -1065,7 +1114,17 @@ _write(source_writer &writer, const pp_result &pp_result,
 			   [&](const _macro_define_to_emit_in_chunk &md) {
 			     return md.m.m.get().get_name() == name;
 			   })) {
+	    const raw_pp_tokens_range mu_range = it_mu->mu.get_range_raw();
+	    if (write_newlines) {
+	      depreprocessor::_write_newlines(writer, cur_input_pos_raw,
+					      mu_range.begin, last_was_newline,
+					      true, pp_result,
+					      source_reader_cache);
+	    } else {
+	      write_newlines = true;
+	    }
 	    write_mu(it_mu->mu);
+	    cur_input_pos_raw = mu_range.end;
 	  }
 	  ++it_mu;
 	}
@@ -1116,7 +1175,7 @@ _write(source_writer &writer, const pp_result &pp_result,
   };
 
   auto advance_source_to =
-    [&](const pp_token_index raw_index) {
+    [&](const raw_pp_token_index raw_index) {
       assert(raw_index >= cur_source_range.begin);
       while (cur_source_range.end <= raw_index) {
 	it_source = it_source_next;
@@ -1127,11 +1186,11 @@ _write(source_writer &writer, const pp_result &pp_result,
       }
     };
 
-
   const _pos_in_chunk end_pos = _end_pos_in_chunk();
   auto it_range_to_emit_expanded = _ranges_to_emit_expanded.cbegin();
   const auto directives = pp_result.find_overlapping_directives(range_raw);
   auto it_directive = directives.first;
+  bool at_beginning = true;
   while (cur_pos != end_pos) {
     const _op &op = _ops[cur_pos.op];
     switch (op.a) {
@@ -1201,6 +1260,18 @@ _write(source_writer &writer, const pp_result &pp_result,
 	      }
 	    }
 
+	    if (at_beginning) {
+	      if (write_newlines) {
+		last_was_newline = _write_newlines(writer, cur_input_pos_raw,
+						   batch_range_raw.begin,
+						   last_was_newline, false,
+						   pp_result,
+						   source_reader_cache);
+	      }
+	      at_beginning = false;
+	      write_newlines = true;
+	    }
+
 	    advance_source_to(batch_range_raw.begin);
 	    copy_end = std::min(cur_source_range.end, copy_end);
 	    assert(copy_end != batch_range_raw.begin);
@@ -1220,11 +1291,23 @@ _write(source_writer &writer, const pp_result &pp_result,
 					last_tok.is_punctuator("{") ||
 					last_tok.is_ws() ||
 					last_was_newline);
+	    cur_input_pos_raw = copy_end;
 	  }
 	  cur_pos.tok = next_stop;
 
 	} else {
 	  // Copy preprocessed tokens.
+	  if (at_beginning) {
+	    if (write_newlines) {
+	      last_was_newline =
+		_write_newlines(writer, cur_input_pos_raw,
+				std::numeric_limits<raw_pp_token_index>::max(),
+				last_was_newline, false, pp_result,
+				source_reader_cache);
+	    }
+	    at_beginning = false;
+	    write_newlines = true;
+	  }
 	  const pp_tokens &toks = pp_result.get_pp_tokens();
 	  while (cur_pos.tok != it_range_to_emit_expanded->end) {
 	    const pp_token &tok = toks[cur_pos.tok];
@@ -1238,19 +1321,63 @@ _write(source_writer &writer, const pp_result &pp_result,
 					tok.is_ws() ||
 					last_was_newline);
 	  }
+	  cur_input_pos_raw = std::numeric_limits<raw_pp_token_index>::max();
 	  ++it_range_to_emit_expanded;
 	}
       }
       break;
 
     case _op::action::replace:
-      write_mus_and_mds_at_cur_pos();
+      {
+	write_mus_and_mds_at_cur_pos();
 
-      if (op.add_pointer_deref) {
-	writer.append("(*" + op.new_tok.get_value() + ")");
-	last_was_newline = false;
-	skip_following_insert_ws = false;
-      } else {
+	const raw_pp_tokens_range op_range_raw =
+	  op.get_range_raw(pp_result).end;
+	if (at_beginning) {
+	  if (write_newlines) {
+	    last_was_newline =
+	      _write_newlines(writer, cur_input_pos_raw, op_range_raw.begin,
+			      last_was_newline, false, pp_result,
+			      source_reader_cache);
+	  }
+	  write_newlines = true;
+	  at_beginning = false;
+	}
+
+	if (op.add_pointer_deref) {
+	  writer.append("(*" + op.new_tok.get_value() + ")");
+	  last_was_newline = false;
+	  skip_following_insert_ws = false;
+	} else {
+	  writer.append(op.new_tok.get_value());
+	  last_was_newline = op.new_tok.is_newline();
+	  skip_following_insert_ws = (op.new_tok.is_punctuator("(") ||
+				      op.new_tok.is_punctuator("[") ||
+				      op.new_tok.is_punctuator("{") ||
+				      op.new_tok.is_ws() ||
+				      last_was_newline);
+	}
+	cur_input_pos_raw = op_range_raw.end;
+      }
+      break;
+
+    case _op::action::insert:
+      {
+	write_mus_and_mds_at_cur_pos();
+
+	const raw_pp_tokens_range op_range_raw =
+	  op.get_range_raw(pp_result).end;
+	if (at_beginning) {
+	  if (write_newlines) {
+	    last_was_newline =
+	      _write_newlines(writer, cur_input_pos_raw, op_range_raw.begin,
+			      last_was_newline, false, pp_result,
+			      source_reader_cache);
+	  }
+	  write_newlines = true;
+	  at_beginning = false;
+	}
+
 	writer.append(op.new_tok.get_value());
 	last_was_newline = op.new_tok.is_newline();
 	skip_following_insert_ws = (op.new_tok.is_punctuator("(") ||
@@ -1258,27 +1385,17 @@ _write(source_writer &writer, const pp_result &pp_result,
 				    op.new_tok.is_punctuator("{") ||
 				    op.new_tok.is_ws() ||
 				    last_was_newline);
+	cur_input_pos_raw = op_range_raw.end;
       }
-      break;
-
-    case _op::action::insert:
-      write_mus_and_mds_at_cur_pos();
-      writer.append(op.new_tok.get_value());
-      last_was_newline = op.new_tok.is_newline();
-      skip_following_insert_ws = (op.new_tok.is_punctuator("(") ||
-				  op.new_tok.is_punctuator("[") ||
-				  op.new_tok.is_punctuator("{") ||
-				  op.new_tok.is_ws() ||
-				  last_was_newline);
       break;
 
     case _op::action::insert_ws:
       {
 	write_mus_and_mds_at_cur_pos();
-
+	assert(!at_beginning);
 	bool skip_insert_ws = skip_following_insert_ws;
 	if (!skip_insert_ws) {
-	  // Look ahaed to see if anything would render this extra
+	  // Look ahead to see if anything would render this extra
 	  // whitespace redundant.
 	  const _pos_in_chunk next_pos = _next_pos_in_chunk(cur_pos);
 	  if (it_mu != _macro_undefs_to_emit.cend() && it_mu->pos == next_pos) {
@@ -1320,25 +1437,30 @@ _write(source_writer &writer, const pp_result &pp_result,
 	if (!skip_insert_ws) {
 	  assert(!last_was_newline);
 	  writer.append(" ");
+	  cur_input_pos_raw = op.get_range_raw(pp_result).end;
 	}
       }
       break;
 
     case _op::action::cond_incl_transition:
-      depreprocessor::_write_cond_incl_transition(writer, *op.cond_incl_node,
-						  op.cond_incl_trans_kind,
-						  pp_result,
-						  source_reader_cache, remarks);
+      cur_input_pos_raw =
+	depreprocessor::_write_cond_incl_transition(writer, *op.cond_incl_node,
+						    op.cond_incl_trans_kind,
+						    cur_input_pos_raw,
+						    last_was_newline,
+						    write_newlines,
+						    pp_result,
+						    source_reader_cache,
+						    remarks);
+      last_was_newline = true;
+      skip_following_insert_ws = true;
       break;
     }
 
     cur_pos = _next_pos_in_chunk(cur_pos);
   }
 
-  // Finally, terminate the chunk by a newline, depending on
-  // whether or not the last written charakter was a newline.
-  if (!last_was_newline)
-    writer.append(source_writer::newline_tag{});
+  return std::make_pair(cur_input_pos_raw, last_was_newline);
 }
 
 
@@ -1791,28 +1913,69 @@ has_macro_undefs_or_defines_to_emit() const noexcept
   return !_macro_undefs_to_emit.empty() || !_macro_defines_to_emit.empty();
 }
 
-void depreprocessor::_header_inclusion_chunk::
-write(source_writer &writer, const pp_result &pp_result,
+raw_pp_token_index depreprocessor::_header_inclusion_chunk::
+write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
+      bool last_was_newline, const bool write_newlines_before,
+      const pp_result &pp_result,
       _source_reader_cache &source_reader_cache,
       output_remarks &remarks) const
 {
-  // First, write the needed #defines + #undefs.
-  depreprocessor::_write_defines_and_undefs(writer, _macro_defines_to_emit,
-					    _macro_undefs_to_emit, pp_result,
-					    source_reader_cache, remarks);
+  bool write_newlines;
+  if (has_macro_undefs_or_defines_to_emit()) {
+    // First, write the needed #defines + #undefs.
+    cur_input_pos_raw =
+      depreprocessor::_write_defines_and_undefs(writer,
+						_macro_defines_to_emit,
+						_macro_undefs_to_emit,
+						cur_input_pos_raw,
+						last_was_newline,
+						write_newlines_before,
+						pp_result,
+						source_reader_cache, remarks);
+    last_was_newline = true;
+    if (cur_input_pos_raw != std::numeric_limits<raw_pp_token_index>::max()) {
+      write_newlines = true;
+    } else {
+      // The last preprocessor directive written had been an #undef
+      // without any relation to an input #undef. Hence it is
+      // artifical and was inserted specifically for this chunk.
+      // Don't separate it by an empty line.
+      write_newlines = false;
+    }
+  } else if (write_newlines_before) {
+    write_newlines = write_newlines_before;
+  }
 
   // And write the #include directive.
+  const raw_pp_tokens_range &range_raw =
+    this->get_inclusion_node().get_range();
+
   switch (_k) {
   case _kind::k_child:
-    _write_directive(writer, this->_child_node->get_directive_range(),
-		     pp_result, source_reader_cache);
+    {
+      const raw_pp_tokens_range &directive_range =
+	this->_child_node->get_directive_range();
+      if (write_newlines) {
+	depreprocessor::_write_newlines(writer, cur_input_pos_raw,
+					directive_range.begin, last_was_newline,
+					true, pp_result, source_reader_cache);
+      }
+      _write_directive(writer, directive_range, pp_result, source_reader_cache);
+    }
     break;
 
   case _kind::k_root:
+    if (write_newlines) {
+      depreprocessor::_write_newlines(writer, cur_input_pos_raw,
+				      range_raw.begin, last_was_newline,
+				      true, pp_result, source_reader_cache);
+    }
     writer.append("#include \"" + _root_node->get_filename() + "\"");
     writer.append(source_writer::newline_tag{});
     break;
   }
+
+  return range_raw.end;
 }
 
 
@@ -1869,19 +2032,47 @@ has_macro_undefs_or_defines_to_emit() const noexcept
   return !_macro_undefs_to_emit.empty() || !_macro_defines_to_emit.empty();
 }
 
-void depreprocessor::_cond_incl_transition_chunk::
-write(source_writer &writer, const pp_result &pp_result,
+raw_pp_token_index depreprocessor::_cond_incl_transition_chunk::
+write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
+      bool last_was_newline, const bool write_newlines_before,
+      const pp_result &pp_result,
       _source_reader_cache &source_reader_cache,
       output_remarks &remarks) const
 {
-  // First, write the needed #defines + #undefs.
-  depreprocessor::_write_defines_and_undefs(writer, _macro_defines_to_emit,
-					    _macro_undefs_to_emit, pp_result,
-					    source_reader_cache, remarks);
+  bool write_newlines;
+  if (has_macro_undefs_or_defines_to_emit()) {
+    // First, write the needed #defines + #undefs.
+    cur_input_pos_raw =
+      depreprocessor::_write_defines_and_undefs(writer,
+						_macro_defines_to_emit,
+						_macro_undefs_to_emit,
+						cur_input_pos_raw,
+						last_was_newline,
+						write_newlines_before,
+						pp_result,
+						source_reader_cache, remarks);
+    last_was_newline = true;
+    if (cur_input_pos_raw != std::numeric_limits<raw_pp_token_index>::max()) {
+      write_newlines = true;
+    } else {
+      // The last preprocessor directive written had been an #undef
+      // without any relation to an input #undef. Hence it is
+      // artifical and was inserted specifically for this chunk.
+      // Don't separate it by an empty line.
+      write_newlines = false;
+    }
+  } else if (write_newlines_before) {
+    write_newlines = write_newlines_before;
+  }
 
   // And write the conditional inclusion transition.
-  depreprocessor::_write_cond_incl_transition(writer, _c.get(), _k, pp_result,
-					      source_reader_cache, remarks);
+  return depreprocessor::_write_cond_incl_transition(writer, _c.get(), _k,
+						     cur_input_pos_raw,
+						     last_was_newline,
+						     write_newlines,
+						     pp_result,
+						     source_reader_cache,
+						     remarks);
 }
 
 
@@ -2071,60 +2262,90 @@ void depreprocessor::operator()(const std::string &outfile)
 
   source_writer writer{outfile};
   _source_reader_cache source_reader_cache;
+
   bool is_first_chunk = true;
-  bool prev_was_header_inclusion = false;
-  bool prev_was_cond_incl_transition = false;
-  for (const auto &c : _chunks) {
-    switch (c.k) {
+  raw_pp_token_index cur_input_pos_raw =
+    std::numeric_limits<raw_pp_token_index>::max();
+  bool last_was_newline = true;
+  bool write_newlines_before;
+  for (auto it_c = _chunks.cbegin(); it_c != _chunks.cend(); ++it_c) {
+    switch (it_c->k) {
     case _chunk::kind::transformed_input:
-      // Separate transformed_input_chunks by an empty line from
-      // whatever came before.
-      if (!is_first_chunk)
-	writer.append(source_writer::newline_tag{});
+      if (!is_first_chunk) {
+	// If the previous chunk is of the same type and range and
+	// there aren't any macro #defines or #undefs to be emitted in
+	// front of the current chunk, then insert separating
+	// newlines. Otherwise make sure there's a newline inbetween, but
+	// don't insert empty lines.
+	if (it_c != _chunks.cbegin() && (it_c - 1)->k == it_c->k &&
+	    (it_c - 1)->tic._bounding_r == it_c->tic._bounding_r &&
+	    !it_c->tic._has_macro_undefs_or_defines_to_emit_before()) {
+	  if (!last_was_newline) {
+	    writer.append(source_writer::newline_tag{});
+	    last_was_newline = true;
+	  }
+	  write_newlines_before = false;
+	} else {
+	  write_newlines_before = true;
+	}
+      } else {
+	write_newlines_before = false;
+	is_first_chunk = false;
+      }
 
-      c.tic._write(writer, _pp_result, source_reader_cache, _remarks);
-
-      prev_was_header_inclusion = false;
-      prev_was_cond_incl_transition = false;
+      std::tie(cur_input_pos_raw, last_was_newline) =
+	it_c->tic._write(writer, cur_input_pos_raw, last_was_newline,
+			 write_newlines_before, _pp_result, source_reader_cache,
+			 _remarks);
       break;
 
     case _chunk::kind::header_inclusion:
-      // Add an empty line if there will be some #defines or #undefs
-      // before this header or if the previous chunk was not a
+      // Insert separating newlines if there will be some #defines or
+      // #undefs before this header or if the previous chunk was not a
       // _header_inclusion_chunk.
-      if (!is_first_chunk &&
-	  (!prev_was_header_inclusion ||
-	   c.hic.has_macro_undefs_or_defines_to_emit())) {
-	writer.append(source_writer::newline_tag{});
+      if (!is_first_chunk) {
+	if (it_c != _chunks.cbegin() && (it_c - 1)->k == it_c->k &&
+	    !it_c->hic.has_macro_undefs_or_defines_to_emit()) {
+	  assert(last_was_newline);
+	  write_newlines_before = false;
+	} else {
+	  write_newlines_before = true;
+	}
+      } else {
+	write_newlines_before = false;
+	is_first_chunk = false;
       }
-      c.hic.write(writer, _pp_result, source_reader_cache, _remarks);
 
-      prev_was_header_inclusion = true;
-      prev_was_cond_incl_transition = false;
+      cur_input_pos_raw =
+	it_c->hic.write(writer, cur_input_pos_raw, last_was_newline,
+			write_newlines_before, _pp_result, source_reader_cache,
+			_remarks);
+      last_was_newline = true;
       break;
 
     case _chunk::kind::cond_incl_transition:
-      // Add an empty line if there will be some #defines or #undefs
-      // before this conditional inclusion transition or if the
-      // previous chunk was not a _cond_incl_transition_chunk.
-      if (!is_first_chunk &&
-	  (!prev_was_cond_incl_transition ||
-	   c.cic.has_macro_undefs_or_defines_to_emit())) {
-	writer.append(source_writer::newline_tag{});
+      if (!is_first_chunk) {
+	write_newlines_before = true;
+      } else {
+	write_newlines_before = false;
+	is_first_chunk = false;
       }
-      c.cic.write(writer, _pp_result, source_reader_cache, _remarks);
-
-      prev_was_header_inclusion = false;
-      prev_was_cond_incl_transition = true;
+      cur_input_pos_raw =
+	it_c->cic.write(writer, cur_input_pos_raw, last_was_newline,
+			write_newlines_before, _pp_result, source_reader_cache,
+			_remarks);
+      last_was_newline = true;
       break;
 
     case _chunk::kind::_dead:
       assert(0);
       __builtin_unreachable();
     }
-
-    is_first_chunk = false;
   }
+
+  // C source files should always end with a newline.
+  if (!last_was_newline)
+    writer.append(source_writer::newline_tag{});
 
   writer.flush();
 }
@@ -3036,6 +3257,77 @@ depreprocessor::_pos_in_output depreprocessor::_end_pos_in_output() noexcept
 }
 
 
+bool depreprocessor::_write_newlines(source_writer &writer,
+				     const raw_pp_token_index last_end_raw,
+				     const raw_pp_token_index next_begin_raw,
+				     const bool last_was_newline,
+				     const bool need_newline,
+				     const pp_result &pp_result,
+				     _source_reader_cache &source_reader_cache)
+{
+  const raw_pp_tokens &raw_toks = pp_result.get_raw_tokens();
+  if (last_end_raw != std::numeric_limits<raw_pp_token_index>::max() &&
+      next_begin_raw != std::numeric_limits<raw_pp_token_index>::max() &&
+      last_end_raw <= next_begin_raw &&
+      std::all_of(raw_toks.begin() + last_end_raw,
+		  raw_toks.begin() + next_begin_raw,
+		  [](const raw_pp_token &raw_tok) {
+		    return raw_tok.is_ws() || raw_tok.is_newline();
+		  })) {
+    // The next position is separated from the previous one only by
+    // whitespace and newlines.
+    if (std::all_of(raw_toks.begin() + last_end_raw,
+		    raw_toks.begin() + next_begin_raw,
+		    [](const raw_pp_token &raw_tok) {
+		      return raw_tok.is_ws();
+		    })) {
+      // The next position is separated from the previous one only by
+      // whitespace.
+      if (!last_was_newline && need_newline) {
+	writer.append(source_writer::newline_tag{});
+	return true;
+      } else {
+	// Copy the separating whitespace, if any. Note that the
+	// whitespace comes all from a single source file, thus
+	// _write_directive() can be used.
+	if (last_end_raw != next_begin_raw) {
+	  _write_directive(writer,
+			   raw_pp_tokens_range{last_end_raw, next_begin_raw},
+			   pp_result, source_reader_cache);
+	}
+	return false;
+      }
+
+    } else {
+      // There are some newlines inbetween the previous and and the
+      // next position. Count them in order to determine how many to
+      // emit.
+      raw_pp_tokens::size_type n_newlines =
+	std::count_if(raw_toks.begin() + last_end_raw,
+		      raw_toks.begin() + next_begin_raw,
+		      [](const raw_pp_token &raw_tok) {
+			return raw_tok.is_newline();
+		      });
+      // Emit at most one empty line.
+      n_newlines = std::max(n_newlines,
+			    static_cast<raw_pp_tokens::size_type>(2));
+      if (!n_newlines && need_newline)
+	n_newlines = 1;
+      n_newlines -= last_was_newline;
+      for (raw_pp_tokens::size_type i = 0; i < n_newlines; ++i)
+	writer.append(source_writer::newline_tag{});
+
+      return last_was_newline || n_newlines;
+    }
+  }
+
+  // Separate the previous output from the next by an empty line.
+  if (!last_was_newline)
+    writer.append(source_writer::newline_tag{});
+  writer.append(source_writer::newline_tag{});
+  return true;
+}
+
 void
 depreprocessor::_write_directive(source_writer &writer,
 				 const raw_pp_tokens_range &directive_range,
@@ -3127,10 +3419,13 @@ void depreprocessor::_write_undef(source_writer &writer,
   }
 }
 
-void depreprocessor::
+raw_pp_token_index depreprocessor::
 _write_defines_and_undefs(source_writer &writer,
 			  const std::vector<_macro_define_to_emit> &mds,
 			  const std::vector<_macro_undef_to_emit> &mus,
+			  raw_pp_token_index cur_input_pos_raw,
+			  bool last_was_newline,
+			  const bool write_newlines_before,
 			  const pp_result &pp_result,
 			  _source_reader_cache &source_reader_cache,
 			  output_remarks &remarks)
@@ -3139,15 +3434,16 @@ _write_defines_and_undefs(source_writer &writer,
     [&](const _macro_define_to_emit &md) {
     _write_define(writer, md.m.get(), pp_result, source_reader_cache,
 		  remarks);
-
-    // Always emit an empty line after the directive.
-    writer.append(source_writer::newline_tag{});
+    last_was_newline = true;
   };
 
   auto write_mu =
     [&](const _macro_undef_to_emit &mu) {
     _write_undef(writer, mu, pp_result, source_reader_cache);
+    last_was_newline = true;
   };
+
+  bool write_newlines = write_newlines_before;
 
   // Write in directive order, except for undefs for which a
   // corresponding define is about to get emitted at cur_pos:
@@ -3169,9 +3465,27 @@ _write_defines_and_undefs(source_writer &writer,
 				mu.original->get_name() :
 				mu.name));
 		     });
-      if (it_matching_mu != mus_end)
+      const raw_pp_tokens_range md_range = it_md->get_range_raw();
+      if (it_matching_mu != mus_end) {
+	if (write_newlines) {
+	  depreprocessor::_write_newlines
+	    (writer, cur_input_pos_raw,
+	     it_matching_mu->get_range_raw().begin,
+	     last_was_newline, true, pp_result, source_reader_cache);
+	} else {
+	  write_newlines = true;
+	}
 	write_mu(*it_matching_mu);
+
+      } else if (write_newlines) {
+	depreprocessor::_write_newlines(writer, cur_input_pos_raw,
+					md_range.begin, last_was_newline,
+					true, pp_result, source_reader_cache);
+      } else {
+	write_newlines = true;
+      }
       write_md(*it_md);
+      cur_input_pos_raw = md_range.end;
       ++it_md;
     }
 
@@ -3184,11 +3498,22 @@ _write_defines_and_undefs(source_writer &writer,
 		       [&](const _macro_define_to_emit &md) {
 			 return md.m.get().get_name() == name;
 		       })) {
+	const raw_pp_tokens_range mu_range = it_mu->get_range_raw();
+	if (write_newlines) {
+	  depreprocessor::_write_newlines(writer, cur_input_pos_raw,
+					  mu_range.begin, last_was_newline,
+					  true, pp_result, source_reader_cache);
+	} else {
+	  write_newlines = true;
+	}
 	write_mu(*it_mu);
+	cur_input_pos_raw = mu_range.end;
       }
       ++it_mu;
     }
   }
+
+  return cur_input_pos_raw;
 }
 
 bool depreprocessor::
@@ -3484,56 +3809,85 @@ _get_cond_incl_trans_range_raw(const pp_result::conditional_inclusion_node &c,
   }
 }
 
-void depreprocessor::
+raw_pp_token_index depreprocessor::
 _write_cond_incl_transition(source_writer &writer,
 			    const pp_result::conditional_inclusion_node &c,
 			    const _cond_incl_transition_kind k,
+			    raw_pp_token_index cur_input_pos_raw,
+			    const bool last_was_newline,
+			    const bool write_newlines_before,
 			    const pp_result &pp_result,
 			    _source_reader_cache &source_reader_cache,
 			    output_remarks &remarks)
 {
   switch (k) {
   case _cond_incl_transition_kind::enter:
-    assert(c.has_taken_branch());
-    for (auto i = 0; i < c.get_taken_branch(); ++i) {
-      _write_directive(writer, c.get_branch_directive_range(i),
-		       pp_result, source_reader_cache);
-      writer.append("#error \"klp-ccp: non-taken branch\"");
-      writer.append(source_writer::newline_tag{});
+    {
+      if (write_newlines_before) {
+	_write_newlines(writer, cur_input_pos_raw,
+			c.get_branch_directive_range(0).begin,
+			last_was_newline, true, pp_result, source_reader_cache);
+      }
+      assert(c.has_taken_branch());
+      for (auto i = 0; i < c.get_taken_branch(); ++i) {
+	_write_directive(writer, c.get_branch_directive_range(i),
+			 pp_result, source_reader_cache);
+	writer.append("#error \"klp-ccp: non-taken branch\"");
+	writer.append(source_writer::newline_tag{});
+      }
+      const raw_pp_tokens_range &taken_branch_range
+	= c.get_branch_directive_range(c.get_taken_branch());
+      _write_directive(writer, taken_branch_range, pp_result,
+		       source_reader_cache);
+      return taken_branch_range.end;
     }
-    _write_directive(writer, c.get_branch_directive_range(c.get_taken_branch()),
-		     pp_result, source_reader_cache);
-    break;
 
   case _cond_incl_transition_kind::leave:
-    assert(c.has_taken_branch());
-    for (auto i = c.get_taken_branch() + 1; i < c.nbranches(); ++i) {
-      _write_directive(writer, c.get_branch_directive_range(i),
-		       pp_result, source_reader_cache);
-      writer.append("#error \"klp-ccp: non-taken branch\"");
-      writer.append(source_writer::newline_tag{});
+    {
+      assert(c.has_taken_branch());
+      if (write_newlines_before) {
+	_write_newlines
+	  (writer, cur_input_pos_raw,
+	   c.get_branch_directive_range(c.get_taken_branch() + 1).begin,
+	   last_was_newline, true, pp_result, source_reader_cache);
+      }
+      for (auto i = c.get_taken_branch() + 1; i < c.nbranches(); ++i) {
+	_write_directive(writer, c.get_branch_directive_range(i),
+			 pp_result, source_reader_cache);
+	writer.append("#error \"klp-ccp: non-taken branch\"");
+	writer.append(source_writer::newline_tag{});
+      }
+      if (!c.has_else_branch()) {
+	writer.append("#else");
+	writer.append(source_writer::newline_tag{});
+	writer.append
+	  ("#error \"klp-ccp: a preceeding branch should have been taken\"");
+	writer.append(source_writer::newline_tag{});
+      }
+      const raw_pp_tokens_range &endif_range =
+	c.get_branch_directive_range(c.nbranches());
+      _write_directive(writer, endif_range, pp_result, source_reader_cache);
+      return endif_range.end;
     }
-    if (!c.has_else_branch()) {
-      writer.append("#else");
-      writer.append(source_writer::newline_tag{});
-      writer.append
-	("#error \"klp-ccp: a preceeding branch should have been taken\"");
-      writer.append(source_writer::newline_tag{});
-    }
-    _write_directive(writer, c.get_branch_directive_range(c.nbranches()),
-		     pp_result, source_reader_cache);
-    break;
 
   case _cond_incl_transition_kind::enter_leave:
-    assert(!c.has_taken_branch());
-    for (auto i = 0; i < c.nbranches(); ++i) {
-      _write_directive(writer, c.get_branch_directive_range(i),
-		       pp_result, source_reader_cache);
-      writer.append("#error \"klp-ccp: non-taken branch\"");
-      writer.append(source_writer::newline_tag{});
+    {
+      if (write_newlines_before) {
+	_write_newlines(writer, cur_input_pos_raw,
+			c.get_branch_directive_range(0).begin,
+			last_was_newline, true, pp_result, source_reader_cache);
+      }
+      assert(!c.has_taken_branch());
+      for (auto i = 0; i < c.nbranches(); ++i) {
+	_write_directive(writer, c.get_branch_directive_range(i),
+			 pp_result, source_reader_cache);
+	writer.append("#error \"klp-ccp: non-taken branch\"");
+	writer.append(source_writer::newline_tag{});
+      }
+      const raw_pp_tokens_range &endif_range =
+	c.get_branch_directive_range(c.nbranches());
+      _write_directive(writer, endif_range, pp_result, source_reader_cache);
+      return endif_range.end;
     }
-    _write_directive(writer, c.get_branch_directive_range(c.nbranches()),
-		     pp_result, source_reader_cache);
-    break;
   }
 }

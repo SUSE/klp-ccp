@@ -44,6 +44,8 @@ namespace klp
 	bool operator<(const _macro_undef_to_emit& rhs) const noexcept;
 	bool operator<(const _macro_define_to_emit& rhs) const noexcept;
 
+	raw_pp_tokens_range get_range_raw() const noexcept;
+
 	const pp_result::macro_undef *original;
 	std::string name;
       };
@@ -54,6 +56,8 @@ namespace klp
 
 	bool operator<(const _macro_define_to_emit& rhs) const noexcept;
 	bool operator<(const _macro_undef_to_emit& rhs) const noexcept;
+
+	raw_pp_tokens_range get_range_raw() const noexcept;
 
 	std::reference_wrapper<const pp_result::macro> m;
       };
@@ -257,9 +261,14 @@ namespace klp
 	void _add_macro_define_to_emit(const _pos_in_chunk &pos,
 				       _macro_define_to_emit &&m);
 
-	void _write(source_writer &writer, const pp_result &pp_result,
-		    _source_reader_cache &source_reader_cache,
-		    output_remarks &remarks) const;
+	bool _has_macro_undefs_or_defines_to_emit_before() const noexcept;
+
+	std::pair<raw_pp_token_index, bool>
+	_write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
+	       bool last_was_newline, const bool write_newlines_before,
+	       const pp_result &pp_result,
+	       _source_reader_cache &source_reader_cache,
+	       output_remarks &remarks) const;
 
 	pp_tokens_range _bounding_r;
 	_ops_type _ops;
@@ -357,9 +366,13 @@ namespace klp
 
 	bool has_macro_undefs_or_defines_to_emit() const noexcept;
 
-	void write(source_writer &writer, const pp_result &pp_result,
-		   _source_reader_cache &source_reader_cache,
-		   output_remarks &remarks) const;
+	raw_pp_token_index write(source_writer &writer,
+				 raw_pp_token_index cur_input_pos_raw,
+				 bool last_was_newline,
+				 const bool write_newlines_before,
+				 const pp_result &pp_result,
+				 _source_reader_cache &source_reader_cache,
+				 output_remarks &remarks) const;
 
       private:
 	enum class _kind
@@ -408,9 +421,13 @@ namespace klp
 
 	bool has_macro_undefs_or_defines_to_emit() const noexcept;
 
-	void write(source_writer &writer, const pp_result &pp_result,
-		   _source_reader_cache &source_reader_cache,
-		   output_remarks &remarks) const;
+	raw_pp_token_index write(source_writer &writer,
+				 raw_pp_token_index cur_input_pos_raw,
+				 bool last_was_newline,
+				 const bool write_newlines_before,
+				 const pp_result &pp_result,
+				 _source_reader_cache &source_reader_cache,
+				 output_remarks &remarks) const;
 
       private:
 	std::reference_wrapper<const pp_result::conditional_inclusion_node> _c;
@@ -574,6 +591,14 @@ namespace klp
 	noexcept;
       _pos_in_output _end_pos_in_output() noexcept;
 
+      static bool _write_newlines(source_writer &writer,
+				  const raw_pp_token_index last_end_raw,
+				  const raw_pp_token_index next_begin_raw,
+				  const bool last_was_newline,
+				  const bool need_newline,
+				  const pp_result &pp_result,
+				  _source_reader_cache &source_reader_cache);
+
       static void _write_directive(source_writer &writer,
 				   const raw_pp_tokens_range &directive_range,
 				   const pp_result &pp_result,
@@ -588,10 +613,13 @@ namespace klp
 			       const pp_result &pp_result,
 			       _source_reader_cache &source_reader_cache);
 
-      static void
+      static raw_pp_token_index
       _write_defines_and_undefs(source_writer &writer,
 				const std::vector<_macro_define_to_emit> &mds,
 				const std::vector<_macro_undef_to_emit> &mus,
+				raw_pp_token_index cur_input_pos_raw,
+				bool last_was_newline,
+				const bool write_newlines_before,
 				const pp_result &pp_result,
 				_source_reader_cache &source_reader_cache,
 				output_remarks &remarks);
@@ -624,11 +652,14 @@ namespace klp
 		(const pp_result::conditional_inclusion_node &c,
 		 const _cond_incl_transition_kind k) noexcept;
 
-      static void
+      static raw_pp_token_index
       _write_cond_incl_transition
 		(source_writer &writer,
 		 const pp_result::conditional_inclusion_node &c,
 		 const _cond_incl_transition_kind k,
+		 raw_pp_token_index cur_input_pos_raw,
+		 const bool last_was_newline,
+		 const bool write_newlines_before,
 		 const pp_result &pp_result,
 		 _source_reader_cache &source_reader_cache,
 		 output_remarks &remarks);
