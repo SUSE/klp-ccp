@@ -1149,17 +1149,7 @@ preprocessor::_expand(_expansion_state &state,
       }
 
       const _pp_token &delim_tok = std::get<2>(arg);
-      pp_result::macro_invocation *mi = defined_tok.get_macro_invocation();
-      if (mi) {
-	// Extend the macro expansion the "defined" token came from,
-	// if necessary.
-	if (!delim_tok.get_macro_invocation()) {
-	  _pp_result->_extend_macro_invocation_range
-	    (*mi, delim_tok.get_token_source().end);
-	} else {
-	  assert(delim_tok.get_macro_invocation() == mi);
-	}
-      } else {
+      if (defined_tok.expansion_history().empty()) {
 	// After the expansion, the whole defined(...) sequence will
 	// be replaced by either zero or one and there won't be any
 	// trace of the "defined" identifier token left. In
@@ -1174,45 +1164,19 @@ preprocessor::_expand(_expansion_state &state,
       bool is_defined = false;
       auto it_m = _macros.find(id);
       if (it_m != _macros.end()) {
-	if (!mi) {
-	  // Add a macro invocation to record this macro usage against,
-	  // if any.
-	  mi = &_pp_result->_add_macro_invocation
-		(it_m->second,
-		 raw_pp_tokens_range{defined_tok.get_token_source().begin,
-				     delim_tok.get_token_source().end});
-	} else {
-	  mi->_used_macros += it_m->second;
-	}
-
+	assert(!_cond_incl_states.empty());
+	_cond_incl_states.top().um += it_m->second;
 	is_defined = true;
       } else {
-	if (mi) {
-	  // Add this macro undef to the macro_invocation the
-	  // "defined" token came from.
-	  mi->_macro_nondef_constraints +=
-	    pp_result::macro_nondef_constraint{id};
-	} else {
-	  assert(!_cond_incl_states.empty());
-	  _cond_incl_states.top().mnc += pp_result::macro_nondef_constraint{id};
-	}
+	assert(!_cond_incl_states.empty());
+	_cond_incl_states.top().mnc += pp_result::macro_nondef_constraint{id};
       }
 
       const raw_pp_token_index invocation_end =
 	delim_tok.get_token_source().end;
-      if (mi) {
-	_pp_token result_tok{pp_token::type::pp_number,
-			     is_defined ? "1" : "0",
-			     raw_pp_tokens_range{invocation_begin,
-						 invocation_end}};
-	result_tok.set_macro_invocation(mi);
-	return result_tok;
-
-      } else {
-	return _pp_token(pp_token::type::pp_number,
-			 is_defined ? "1" : "0",
-			 raw_pp_tokens_range{invocation_begin, invocation_end});
-      }
+      return _pp_token(pp_token::type::pp_number,
+		       is_defined ? "1" : "0",
+		       raw_pp_tokens_range{invocation_begin, invocation_end});
     }
   }
 
