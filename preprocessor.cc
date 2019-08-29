@@ -2274,7 +2274,7 @@ preprocessor::_pp_token preprocessor::_macro_instance::_yield_empty_token()
   _last_tok_was_empty_or_ws = true;
   _emit_empty_tok = false;
   return _pp_token{pp_token::type::empty, std::string{},
-		   raw_pp_tokens_range{}};
+		   _invocation_range};
 }
 
 
