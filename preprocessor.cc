@@ -466,14 +466,8 @@ void preprocessor::_grab_remarks_from(T &from)
 
 pp_token_index preprocessor::_emit_pp_token(pp_result &r, _pp_token &&tok)
 {
-  if (!tok.get_macro_invocation()) {
-    r._append_token
-      (pp_token{tok.get_type(), tok.get_value(), tok.get_token_source()});
-  } else {
-    r._append_token
-      (pp_token{tok.get_type(), tok.get_value(),
-		tok.get_macro_invocation()->get_source_range()});
-  }
+  r._append_token
+    (pp_token{tok.get_type(), tok.get_value(), tok.get_token_source()});
   return r._get_last_pp_index();
 }
 
