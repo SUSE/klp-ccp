@@ -513,8 +513,11 @@ preprocessor::_pp_token preprocessor::_read_next_plain_token()
     if (_cond_incl_inactive())
       goto again;
 
+    const raw_pp_token_index raw_token_index =
+      _pp_result->_get_last_raw_index();
     return _pp_token{raw_tok.get_type(), raw_tok.get_value(),
-		     raw_pp_tokens_range{_pp_result->_get_last_raw_index()}};
+		     raw_pp_tokens_range{raw_token_index},
+		     raw_token_index};
   } catch (const pp_except&) {
     _grab_remarks_from(_tokenizers.top());
     throw;
@@ -1187,16 +1190,19 @@ preprocessor::_expand(_expansion_state &state,
 preprocessor::_pp_token::
 _pp_token(const pp_token::type type, const std::string &value,
 	  const raw_pp_tokens_range &token_source,
-	  const pp_result::used_macros &eh)
+	  const pp_result::used_macros &eh,
+	  const raw_pp_token_index passed_through_raw_token)
   : _value(value), _token_source(token_source), _macro_invocation(nullptr),
-    _expansion_history(std::move(eh)), _type(type)
+    _expansion_history(std::move(eh)), _type(type),
+    _passed_through_raw_token(passed_through_raw_token)
 {}
 
 preprocessor::_pp_token::
 _pp_token(const pp_token::type type, const std::string &value,
-	  const raw_pp_tokens_range &token_source)
+	  const raw_pp_tokens_range &token_source,
+	  const raw_pp_token_index passed_through_raw_token)
   : _value(value), _token_source(token_source), _macro_invocation(nullptr),
-    _type(type)
+    _type(type), _passed_through_raw_token(passed_through_raw_token)
 {}
 
 void preprocessor::_pp_token::set_type_and_value(const pp_token::type type,
@@ -2364,7 +2370,8 @@ preprocessor::_pp_token preprocessor::_macro_instance::read_next_token()
       assert(_cur_arg_it != _cur_arg->end());
 
       auto tok = _pp_token(_cur_arg_it->get_type(), _cur_arg_it->get_value(),
-			   _invocation_range, _tok_expansion_history_init());
+			   _invocation_range, _tok_expansion_history_init(),
+			   _cur_arg_it->get_passed_through_raw_token());
       tok.expansion_history() += _cur_arg_it->expansion_history();
       ++_cur_arg_it;
       _last_tok_was_empty_or_ws = (tok.is_empty() || tok.is_ws());

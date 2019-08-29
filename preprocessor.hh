@@ -91,12 +91,19 @@ namespace klp
 	struct __is_type_any_of;
 
       public:
-	_pp_token(const pp_token::type type, const std::string &value,
-		  const raw_pp_tokens_range &token_source,
-		  const pp_result::used_macros &eh);
+	static constexpr raw_pp_token_index not_passed_through =
+	  std::numeric_limits<raw_pp_token_index>::max();
 
 	_pp_token(const pp_token::type type, const std::string &value,
-		  const raw_pp_tokens_range &token_source);
+		  const raw_pp_tokens_range &token_source,
+		  const pp_result::used_macros &eh,
+		  const raw_pp_token_index passed_through_raw_token
+			= not_passed_through);
+
+	_pp_token(const pp_token::type type, const std::string &value,
+		  const raw_pp_tokens_range &token_source,
+		  const raw_pp_token_index passed_through_raw_token
+			= not_passed_through);
 
 	pp_token::type get_type() const noexcept
 	{
@@ -131,6 +138,9 @@ namespace klp
 
 	pp_result::macro_invocation * get_macro_invocation()
 	  const noexcept;
+
+	raw_pp_token_index get_passed_through_raw_token() const noexcept
+	{ return _passed_through_raw_token; }
 
 	operator bool() const noexcept
 	{
@@ -201,6 +211,7 @@ namespace klp
 	std::string _value;
 	raw_pp_tokens_range _token_source;
 	pp_result::macro_invocation * _macro_invocation;
+	raw_pp_token_index _passed_through_raw_token;
 
 	// Used for avoiding macro recursion as appropriate.
 	pp_result::used_macros _expansion_history;
