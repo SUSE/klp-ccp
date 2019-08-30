@@ -332,6 +332,58 @@ macro_invocation(const macro &m,
   _used_macros += m;
 }
 
+void pp_result::macro_invocation::
+_add_passed_through_macro_arg_token(const raw_pp_token_index arg_tok_raw,
+				    const pp_token_index emerged_token)
+{
+  auto it_pta =
+    std::lower_bound(_passed_through_arg_tokens.begin(),
+		     _passed_through_arg_tokens.end(),
+		     arg_tok_raw);
+  if (it_pta == _passed_through_arg_tokens.end() ||
+      it_pta->get_arg_tok_raw() != arg_tok_raw) {
+    it_pta =
+      _passed_through_arg_tokens.insert(it_pta,
+					passed_through_arg_token{arg_tok_raw});
+  }
+
+  it_pta->_add_emerged_tok(emerged_token);
+}
+
+void pp_result::macro_invocation::
+_add_non_passthrough_macro_arg_token(const raw_pp_token_index arg_tok_raw)
+{
+  // Add an impossible emerged pp_token_index for signalling that the
+  // specified raw macro argument token had been an operand to the
+  // concatenation or stringification operator.
+  _add_passed_through_macro_arg_token
+    (arg_tok_raw, std::numeric_limits<pp_token_index>::max());
+}
+
+
+pp_result::macro_invocation::passed_through_arg_token::
+passed_through_arg_token(const raw_pp_token_index arg_tok_raw) noexcept
+  : _arg_tok_raw(arg_tok_raw)
+{}
+
+bool pp_result::macro_invocation::passed_through_arg_token::
+operator<(const raw_pp_token_index rhs) const noexcept
+{
+  return this->_arg_tok_raw < rhs;
+}
+
+void pp_result::macro_invocation::passed_through_arg_token::
+_add_emerged_tok(const pp_token_index tok)
+{
+  auto it_emerged_tok
+    = std::lower_bound(_emerged_tokens.begin(), _emerged_tokens.end(), tok);
+
+  if (it_emerged_tok != _emerged_tokens.end() && *it_emerged_tok == tok)
+    return;
+
+  _emerged_tokens.insert(it_emerged_tok, tok);
+}
+
 
 pp_result::inclusion_node::inclusion_node()
   : _parent(nullptr)

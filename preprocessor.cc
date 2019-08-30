@@ -468,7 +468,17 @@ pp_token_index preprocessor::_emit_pp_token(pp_result &r, _pp_token &&tok)
 {
   r._append_token
     (pp_token{tok.get_type(), tok.get_value(), tok.get_token_source()});
-  return r._get_last_pp_index();
+
+  const pp_token_index tok_index = r._get_last_pp_index();
+  // Amend the macro_invocation's map of passed through raw macro
+  // argument tokens.
+  if (tok.get_macro_invocation() &&
+      tok.get_passed_through_raw_token() != _pp_token::not_passed_through) {
+    tok.get_macro_invocation()->_add_passed_through_macro_arg_token
+      (tok.get_passed_through_raw_token(), tok_index);
+  }
+
+  return tok_index;
 }
 
 preprocessor::_pp_token preprocessor::_read_next_plain_token()
@@ -2176,6 +2186,15 @@ preprocessor::_pp_token preprocessor::_macro_instance::_handle_stringification()
   // Concatenate the stringified argument tokens
   std::string s;
   for (auto &&it_tok = (*arg).begin(); it_tok != (*arg).end(); ++it_tok) {
+    // Mark macro argument tokens participating in stringifications as
+    // non-passthrough.
+    if (it_tok->get_passed_through_raw_token() !=
+	_pp_token::not_passed_through) {
+      assert(_preprocessor._cur_macro_invocation);
+      _preprocessor._cur_macro_invocation->_add_non_passthrough_macro_arg_token
+	(it_tok->get_passed_through_raw_token());
+    }
+
     s += it_tok->stringify();
   }
 
@@ -2196,6 +2215,13 @@ preprocessor::_pp_token preprocessor::_macro_instance::_handle_stringification()
 void preprocessor::_macro_instance::_add_concat_token(const _pp_token &tok)
 {
   assert(!tok.is_ws() && !tok.is_newline() && !tok.is_eof());
+
+  // Mark macro argument tokens participating in concatenations as
+  // non-passthrough.
+  if (tok.get_passed_through_raw_token() != _pp_token::not_passed_through) {
+    _preprocessor._cur_macro_invocation->_add_non_passthrough_macro_arg_token
+      (tok.get_passed_through_raw_token());
+  }
 
   if (!_concat_token) {
     _concat_token.reset(new _pp_token(tok.get_type(), tok.get_value(),

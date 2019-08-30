@@ -543,6 +543,31 @@ namespace klp
       class macro_invocation
       {
       public:
+	class passed_through_arg_token
+	{
+	public:
+	  typedef std::vector<pp_token_index> emerged_tokens_type;
+
+	  bool operator<(const raw_pp_token_index rhs) const noexcept;
+
+	  const raw_pp_token_index get_arg_tok_raw() const noexcept
+	  { return _arg_tok_raw; }
+
+	private:
+	  friend class macro_invocation;
+
+	  passed_through_arg_token(const raw_pp_token_index arg_tok_raw)
+	    noexcept;
+
+	  void _add_emerged_tok(const pp_token_index tok);
+
+	  raw_pp_token_index _arg_tok_raw;
+	  emerged_tokens_type _emerged_tokens;
+	};
+
+	typedef std::vector<passed_through_arg_token>
+		passed_through_arg_tokens_type;
+
 	const raw_pp_tokens_range& get_source_range() const noexcept
 	{ return _invocation_range; }
 
@@ -563,9 +588,16 @@ namespace klp
 	macro_invocation(const macro &m,
 			 const raw_pp_tokens_range &invocation_range);
 
+	void _add_passed_through_macro_arg_token
+			(const raw_pp_token_index arg_tok_raw,
+			 const pp_token_index emerged_token);
+	void _add_non_passthrough_macro_arg_token
+			(const raw_pp_token_index arg_tok_raw);
+
 	raw_pp_tokens_range _invocation_range;
 	used_macros _used_macros;
 	macro_nondef_constraints _macro_nondef_constraints;
+	passed_through_arg_tokens_type _passed_through_arg_tokens;
       };
 
     private:
