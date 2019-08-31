@@ -3308,8 +3308,10 @@ bool depreprocessor::_write_newlines(source_writer &writer,
 		      [](const raw_pp_token &raw_tok) {
 			return raw_tok.is_newline();
 		      });
+      n_newlines += last_was_newline;
+
       // Emit at most one empty line.
-      n_newlines = std::max(n_newlines,
+      n_newlines = std::min(n_newlines,
 			    static_cast<raw_pp_tokens::size_type>(2));
       if (!n_newlines && need_newline)
 	n_newlines = 1;
