@@ -617,7 +617,7 @@ _insert_cond_incl_transition(const pp_result::conditional_inclusion_node &c,
       _ops[insertion_pos.op].r.begin != insertion_pos.tok) {
     // Split the copy operation.
     assert(_ops[insertion_pos.op].r.end != insertion_pos.tok);
-    insertion_it = _ops.emplace(_ops.begin() + insertion_pos.op,
+    insertion_it = _ops.emplace(_ops.begin() + insertion_pos.op + 1,
 				pp_tokens_range{
 				  insertion_pos.tok,
 				  _ops[insertion_pos.op].r.end
