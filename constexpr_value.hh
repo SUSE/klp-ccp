@@ -28,7 +28,7 @@ namespace klp
 {
   namespace ccp
   {
-    class architecture;
+    class target;
 
     namespace types
     {
@@ -162,9 +162,9 @@ namespace klp
 	const address_constant& get_address_value() const noexcept;
 	address_constant& get_address_value() noexcept;
 
-	target_int convert_to(const architecture &arch,
+	target_int convert_to(const target &tgt,
 			      const types::int_type &it) const;
-	target_float convert_to(const architecture &arch,
+	target_float convert_to(const target &tgt,
 				const types::real_float_type &ft) const;
 
 	bool is_zero() const noexcept;

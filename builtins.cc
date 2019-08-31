@@ -21,7 +21,7 @@
 #include "ast_impl.hh"
 #include "constexpr_value.hh"
 #include "ast_evaluate.hh"
-#include "architecture.hh"
+#include "target.hh"
 #include "semantic_except.hh"
 #include "pp_token.hh"
 #include <map>
@@ -39,7 +39,7 @@ builtin_func::~builtin_func() noexcept = default;
 namespace
 {
   typedef std::shared_ptr<const addressable_type>
-    (*t_fac)(const architecture&);
+    (*t_fac)(const target&);
 
   class builtin_func_simple_proto final : public builtin_func
   {
@@ -51,7 +51,7 @@ namespace
     virtual ~builtin_func_simple_proto() noexcept override;
 
     virtual evaluation_result_type
-    evaluate(klp::ccp::ast::ast &a, const architecture &arch,
+    evaluate(klp::ccp::ast::ast &a, const target &tgt,
 	     const expr_func_invocation &efi) const override;
 
   private:
@@ -83,7 +83,7 @@ builtin_func_simple_proto(const t_fac ret_fac,
 builtin_func_simple_proto::~builtin_func_simple_proto() noexcept = default;
 
 builtin_func::evaluation_result_type builtin_func_simple_proto::
-evaluate(klp::ccp::ast::ast &a, const architecture &arch,
+evaluate(klp::ccp::ast::ast &a, const target &tgt,
 	 const expr_func_invocation &efi) const
 {
   const expr_list * const args = efi.get_args();
@@ -108,11 +108,11 @@ evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 
   std::size_t i = 0;
   for (const auto tf : _exp_arg_facs) {
-    check_types_assignment(a, arch, *tf(arch), (*args)[i]);
+    check_types_assignment(a, tgt, *tf(tgt), (*args)[i]);
     ++i;
   }
 
-  return evaluation_result_type{_ret_fac(arch), nullptr, false};
+  return evaluation_result_type{_ret_fac(tgt), nullptr, false};
 }
 
 
@@ -131,7 +131,7 @@ namespace
     virtual ~builtin_func_pi_overload() noexcept override;
 
     virtual evaluation_result_type
-    evaluate(klp::ccp::ast::ast &a, const architecture &arch,
+    evaluate(klp::ccp::ast::ast &a, const target &tgt,
 	     const expr_func_invocation &efi) const override;
 
   private:
@@ -174,7 +174,7 @@ builtin_func_pi_overload(const unsigned int pi_arg_index,
 builtin_func_pi_overload::~builtin_func_pi_overload() noexcept = default;
 
 builtin_func::evaluation_result_type builtin_func_pi_overload::
-evaluate(klp::ccp::ast::ast &a, const architecture &arch,
+evaluate(klp::ccp::ast::ast &a, const target &tgt,
 	     const expr_func_invocation &efi) const
 {
   const expr_list * const args = efi.get_args();
@@ -214,12 +214,12 @@ evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 		       })),
 		     _it);
 
-		  return _it.get_width(arch);
+		  return _it.get_width(tgt);
 		},
 		[&](const pointer_type&) {
 		  // Undocumented, but gcc also accepts pointers to pointers
 		  // for the atomic primitives.
-		  return arch.get_std_int_width(arch.get_ptrdiff_kind());
+		  return tgt.get_std_int_width(tgt.get_ptrdiff_kind());
 		},
 		[&](const type&) -> mpa::limbs::size_type {
 		  code_remark remark
@@ -274,7 +274,7 @@ evaluate(klp::ccp::ast::ast &a, const architecture &arch,
     }
   };
 
-  return fac()->evaluate(a, arch, efi);
+  return fac()->evaluate(a, tgt, efi);
 }
 
 
@@ -288,7 +288,7 @@ namespace
     virtual ~builtin_func_choose_expr() noexcept override;
 
     virtual evaluation_result_type
-    evaluate(klp::ccp::ast::ast &a, const architecture &arch,
+    evaluate(klp::ccp::ast::ast &a, const target &tgt,
 	     const expr_func_invocation &efi) const override;
   };
 }
@@ -298,7 +298,7 @@ builtin_func_choose_expr::builtin_func_choose_expr() noexcept = default;
 builtin_func_choose_expr::~builtin_func_choose_expr() noexcept = default;
 
 builtin_func::evaluation_result_type
-builtin_func_choose_expr::evaluate(klp::ccp::ast::ast &a, const architecture&,
+builtin_func_choose_expr::evaluate(klp::ccp::ast::ast &a, const target&,
 				   const expr_func_invocation &efi) const
 {
   const expr_list * const args = efi.get_args();
@@ -356,7 +356,7 @@ namespace
     virtual ~builtin_func_constant_p() noexcept override;
 
     virtual evaluation_result_type
-    evaluate(klp::ccp::ast::ast &a, const architecture &arch,
+    evaluate(klp::ccp::ast::ast &a, const target &tgt,
 	     const expr_func_invocation &efi) const override;
 
     static std::unique_ptr<builtin_func> create();
@@ -368,7 +368,7 @@ builtin_func_constant_p::builtin_func_constant_p() noexcept = default;
 builtin_func_constant_p::~builtin_func_constant_p() noexcept = default;
 
 builtin_func::evaluation_result_type
-builtin_func_constant_p::evaluate(klp::ccp::ast::ast &a, const architecture &arch,
+builtin_func_constant_p::evaluate(klp::ccp::ast::ast &a, const target &tgt,
 				  const expr_func_invocation &efi) const
 {
   const expr_list * const args = efi.get_args();
@@ -385,9 +385,9 @@ builtin_func_constant_p::evaluate(klp::ccp::ast::ast &a, const architecture &arc
 
   std::shared_ptr<const std_int_type> it_result
     = std_int_type::create(std_int_type::kind::k_int, true);
-  const bool is_signed = it_result->is_signed(arch);
+  const bool is_signed = it_result->is_signed(tgt);
   const mpa::limbs::size_type prec =
-    it_result->get_width(arch) - is_signed;
+    it_result->get_width(tgt) - is_signed;
 
   std::unique_ptr<constexpr_value> value;
   const expr &e = (*args)[0];
@@ -432,7 +432,7 @@ namespace
     typedef std::shared_ptr<const int_type>(*t_fac)();
 
     virtual evaluation_result_type
-    evaluate(klp::ccp::ast::ast &a, const architecture &arch,
+    evaluate(klp::ccp::ast::ast &a, const target &tgt,
 	     const expr_func_invocation &efi) const override;
 
     template <t_fac tfac, bool p_variant, op o>
@@ -469,7 +469,7 @@ std::unique_ptr<builtin_func> builtin_overflow::create()
 }
 
 builtin_func::evaluation_result_type
-builtin_overflow::evaluate(klp::ccp::ast::ast &a, const architecture &arch,
+builtin_overflow::evaluate(klp::ccp::ast::ast &a, const target &tgt,
 			       const expr_func_invocation &efi) const
 {
   auto &&myname =
@@ -608,7 +608,7 @@ builtin_overflow::evaluate(klp::ccp::ast::ast &a, const architecture &arch,
 		     *t);
 
 		  if (it_target_spec) {
-		    if (it_target_spec->is_compatible_with(arch, *t, true)) {
+		    if (it_target_spec->is_compatible_with(tgt, *t, true)) {
 		      it_target = it_target_spec;
 
 		    } else {
@@ -662,12 +662,12 @@ builtin_overflow::evaluate(klp::ccp::ast::ast &a, const architecture &arch,
   const target_int &i0 =
     (!it_target_spec ?
      cv0.get_int_value() :
-     cv0.convert_to(arch, *it_target_spec));
+     cv0.convert_to(tgt, *it_target_spec));
   const constexpr_value &cv1 = args[1].get_constexpr_value();
   const target_int &i1 =
     (!it_target_spec ?
      cv1.get_int_value() :
-     cv1.convert_to(arch, *it_target_spec));
+     cv1.convert_to(tgt, *it_target_spec));
 
   mpa::limbs r;
   if (_op == op::add || _op == op::sub) {
@@ -713,19 +713,19 @@ builtin_overflow::evaluate(klp::ccp::ast::ast &a, const architecture &arch,
   }
 
   bool overflow = false;
-  if (it_target->is_signed(arch)) {
-    if (it_target->get_width(arch) < r.width() - r.clrsb())
+  if (it_target->is_signed(tgt)) {
+    if (it_target->get_width(tgt) < r.width() - r.clrsb())
       overflow = true;
   } else {
     if (r.test_bit(r.width() - 1))
       overflow = true;
-    else if (r.is_any_set_at_or_above(it_target->get_width(arch)))
+    else if (r.is_any_set_at_or_above(it_target->get_width(tgt)))
       overflow = true;
   }
 
   std::shared_ptr<const bool_type> t_result = bool_type::create();
-  const mpa::limbs::size_type w = t_result->get_width(arch);
-  const bool is_signed = t_result->is_signed(arch);
+  const mpa::limbs::size_type w = t_result->get_width(tgt);
+  const bool is_signed = t_result->is_signed(tgt);
   target_int ti_result =
     (overflow ?
      target_int::create_one(w - is_signed, is_signed) :
@@ -789,251 +789,251 @@ std::shared_ptr<const int_type> builtin_overflow::fac_ull()
 namespace
 {
   static std::shared_ptr<const addressable_type>
-  mk_v(const architecture&)
+  mk_v(const target&)
   {
     return void_type::create();
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_i(const architecture&)
+  mk_i(const target&)
   {
     return std_int_type::create(std_int_type::kind::k_int, true);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_u(const architecture&)
+  mk_u(const target&)
   {
     return std_int_type::create(std_int_type::kind::k_int, false);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_l(const architecture&)
+  mk_l(const target&)
   {
     return std_int_type::create(std_int_type::kind::k_long, true);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_ul(const architecture&)
+  mk_ul(const target&)
   {
     return std_int_type::create(std_int_type::kind::k_long, false);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_ll(const architecture&)
+  mk_ll(const target&)
   {
     return std_int_type::create(std_int_type::kind::k_long_long, true);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_ull(const architecture&)
+  mk_ull(const target&)
   {
     return std_int_type::create(std_int_type::kind::k_long_long, false);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_b(const architecture&)
+  mk_b(const target&)
   {
     return bool_type::create();
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_imax(const architecture &arch)
+  mk_imax(const target &tgt)
   {
-    return std_int_type::create(arch.get_int_max_kind(), true);
+    return std_int_type::create(tgt.get_int_max_kind(), true);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_umax(const architecture &arch)
+  mk_umax(const target &tgt)
   {
-    return std_int_type::create(arch.get_int_max_kind(), false);
+    return std_int_type::create(tgt.get_int_max_kind(), false);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_i8(const architecture &arch)
+  mk_i8(const target &tgt)
   {
     const int_mode_kind m = width_to_int_mode(8);
-    return std_int_type::create(arch.int_mode_to_std_int_kind(m), true);
+    return std_int_type::create(tgt.int_mode_to_std_int_kind(m), true);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_i16(const architecture &arch)
+  mk_i16(const target &tgt)
   {
     const int_mode_kind m = width_to_int_mode(16);
-    return std_int_type::create(arch.int_mode_to_std_int_kind(m), true);
+    return std_int_type::create(tgt.int_mode_to_std_int_kind(m), true);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_u16(const architecture &arch)
+  mk_u16(const target &tgt)
   {
     const int_mode_kind m = width_to_int_mode(16);
-    return std_int_type::create(arch.int_mode_to_std_int_kind(m), false);
+    return std_int_type::create(tgt.int_mode_to_std_int_kind(m), false);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_i32(const architecture &arch)
+  mk_i32(const target &tgt)
   {
     const int_mode_kind m = width_to_int_mode(32);
-    return std_int_type::create(arch.int_mode_to_std_int_kind(m), true);
+    return std_int_type::create(tgt.int_mode_to_std_int_kind(m), true);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_u32(const architecture &arch)
+  mk_u32(const target &tgt)
   {
     const int_mode_kind m = width_to_int_mode(32);
-    return std_int_type::create(arch.int_mode_to_std_int_kind(m), false);
+    return std_int_type::create(tgt.int_mode_to_std_int_kind(m), false);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_i64(const architecture &arch)
+  mk_i64(const target &tgt)
   {
     const int_mode_kind m = width_to_int_mode(64);
-    return std_int_type::create(arch.int_mode_to_std_int_kind(m), true);
+    return std_int_type::create(tgt.int_mode_to_std_int_kind(m), true);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_u64(const architecture &arch)
+  mk_u64(const target &tgt)
   {
     const int_mode_kind m = width_to_int_mode(64);
-    return std_int_type::create(arch.int_mode_to_std_int_kind(m), false);
+    return std_int_type::create(tgt.int_mode_to_std_int_kind(m), false);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_i128(const architecture &arch)
+  mk_i128(const target &tgt)
   {
     const int_mode_kind m = width_to_int_mode(128);
-    return std_int_type::create(arch.int_mode_to_std_int_kind(m), true);
+    return std_int_type::create(tgt.int_mode_to_std_int_kind(m), true);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_wi(const architecture &arch)
+  mk_wi(const target &tgt)
   {
-    return std_int_type::create(arch.get_wint_kind(), arch.is_wint_signed());
+    return std_int_type::create(tgt.get_wint_kind(), tgt.is_wint_signed());
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_sz(const architecture &arch)
+  mk_sz(const target &tgt)
   {
-    return std_int_type::create(arch.get_ptrdiff_kind(), false);
+    return std_int_type::create(tgt.get_ptrdiff_kind(), false);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_ssz(const architecture &arch)
+  mk_ssz(const target &tgt)
   {
-    return std_int_type::create(arch.get_ptrdiff_kind(), true);
+    return std_int_type::create(tgt.get_ptrdiff_kind(), true);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_pid(const architecture &arch)
+  mk_pid(const target &tgt)
   {
-    return std_int_type::create(arch.get_pid_t_kind(), arch.is_pid_t_signed());
+    return std_int_type::create(tgt.get_pid_t_kind(), tgt.is_pid_t_signed());
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_f(const architecture&)
+  mk_f(const target&)
   {
     return real_float_type::create(real_float_type::kind::k_float);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_d(const architecture&)
+  mk_d(const target&)
   {
     return real_float_type::create(real_float_type::kind::k_double);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_ld(const architecture&)
+  mk_ld(const target&)
   {
     return real_float_type::create(real_float_type::kind::k_long_double);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_fC(const architecture&)
+  mk_fC(const target&)
   {
     return complex_float_type::create(real_float_type::kind::k_float);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_dC(const architecture&)
+  mk_dC(const target&)
   {
     return complex_float_type::create(real_float_type::kind::k_double);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_ldC(const architecture&)
+  mk_ldC(const target&)
   {
     return complex_float_type::create(real_float_type::kind::k_long_double);
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_pv(const architecture&)
+  mk_pv(const target&)
   {
     return void_type::create()->derive_pointer();
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_pcv(const architecture&)
+  mk_pcv(const target&)
   {
     return (void_type::create(qualifiers{qualifier::q_const})
 	    ->derive_pointer());
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_pvv(const architecture&)
+  mk_pvv(const target&)
   {
     return (void_type::create(qualifiers{qualifier::q_volatile})
 	    ->derive_pointer());
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_pcvv(const architecture&)
+  mk_pcvv(const target&)
   {
     return (void_type::create(qualifiers{qualifier::q_const,
 					 qualifier::q_volatile})
 	    ->derive_pointer());
   }
   static std::shared_ptr<const addressable_type>
-  mk_pc(const architecture&)
+  mk_pc(const target&)
   {
     return plain_char_type::create()->derive_pointer();
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_pcc(const architecture&)
+  mk_pcc(const target&)
   {
     return (plain_char_type::create(qualifiers{qualifier::q_const})
 	    ->derive_pointer());
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_pi(const architecture&)
+  mk_pi(const target&)
   {
     return (std_int_type::create(std_int_type::kind::k_int, true)
 	    ->derive_pointer());
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_pf(const architecture&)
+  mk_pf(const target&)
   {
     return (real_float_type::create(real_float_type::kind::k_float)
 	    ->derive_pointer());
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_pd(const architecture&)
+  mk_pd(const target&)
   {
     return (real_float_type::create(real_float_type::kind::k_double)
 	    ->derive_pointer());
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_pld(const architecture&)
+  mk_pld(const target&)
   {
     return (real_float_type::create(real_float_type::kind::k_long_double)
 	    ->derive_pointer());
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_pF_v_var(const architecture&)
+  mk_pF_v_var(const target&)
   {
     return (void_type::create()
 	    ->derive_function(false)
@@ -1041,10 +1041,10 @@ namespace
   }
 
   static std::shared_ptr<const addressable_type>
-  mk_val(const architecture &arch)
+  mk_val(const target &tgt)
   {
     std::shared_ptr<const addressable_type> t =
-      arch.create_builtin_va_list_type();
+      tgt.create_builtin_va_list_type();
     handle_types<void>
       ((wrap_callables<default_action_nop>
 	([&](const array_type &at) {
@@ -2223,7 +2223,7 @@ namespace
     virtual ~builtin_var__func__() noexcept override;
 
     virtual evaluation_result_type
-    evaluate(klp::ccp::ast::ast &a, const architecture &arch,
+    evaluate(klp::ccp::ast::ast &a, const target &tgt,
 	     const expr_id &eid) const override;
 
     static std::unique_ptr<builtin_var> create();
@@ -2233,7 +2233,7 @@ namespace
 builtin_var__func__::~builtin_var__func__() noexcept = default;
 
 builtin_var::evaluation_result_type
-builtin_var__func__::evaluate(klp::ccp::ast::ast &a, const architecture &arch,
+builtin_var__func__::evaluate(klp::ccp::ast::ast &a, const target &tgt,
 			      const expr_id &eid) const
 {
   const function_definition *fd = nullptr;

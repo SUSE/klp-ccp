@@ -8,8 +8,6 @@ stack.hh: gnuc_parser.hh pp_expr_parser.hh
 
 
 noinst_HEADERS =				\
-	architecture.hh			\
-	arch_x86_64_gcc.hh			\
 	ast.hh					\
 	ast_evaluate.hh			\
 	ast_impl.hh				\
@@ -55,6 +53,8 @@ noinst_HEADERS =				\
 	semantic_except.hh			\
 	source_reader.hh			\
 	source_writer.hh			\
+	target.hh				\
+	target_x86_64_gcc.hh			\
 	target_float.hh			\
 	target_int.hh				\
 	type_set.hh				\
@@ -64,8 +64,6 @@ noinst_HEADERS =				\
 
 noinst_LIBRARIES = libcp.a
 libcp_a_SOURCES =				\
-	architecture.cc			\
-	arch_x86_64_gcc.cc			\
 	ast.cc					\
 	ast_evaluate.cc			\
 	ast_resolve.cc				\
@@ -104,6 +102,8 @@ libcp_a_SOURCES =				\
 	semantic_except.cc			\
 	source_reader.cc			\
 	source_writer.cc			\
+	target.cc				\
+	target_x86_64_gcc.cc			\
 	target_float.cc			\
 	target_int.cc				\
 	types.cc				\

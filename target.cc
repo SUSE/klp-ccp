@@ -16,7 +16,7 @@
  * along with klp-ccp. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "architecture.hh"
+#include "target.hh"
 #include <stdexcept>
 
 using namespace klp::ccp;
@@ -63,9 +63,9 @@ int_mode_kind klp::ccp::width_to_int_mode(const mpa::limbs::size_type w)
 }
 
 
-architecture::~architecture() noexcept = default;
+target::~target() noexcept = default;
 
-types::std_int_type::kind architecture::get_ptrdiff_kind() const noexcept
+types::std_int_type::kind target::get_ptrdiff_kind() const noexcept
 {
   return this->int_mode_to_std_int_kind(this->get_pointer_mode());
 }

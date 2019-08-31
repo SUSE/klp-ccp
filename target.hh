@@ -16,8 +16,8 @@
  * along with klp-ccp. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef ARCHITECTURE_HH
-#define ARCHITECTURE_HH
+#ifndef TARGET_HH
+#define TARGET_HH
 
 #include <functional>
 #include "types.hh"
@@ -57,10 +57,10 @@ namespace klp
       fmk_DF,
     };
 
-    class architecture
+    class target
     {
     public:
-      virtual ~architecture() noexcept;
+      virtual ~target() noexcept;
 
       virtual void parse_command_line
 		(int argc, const char *argv[],

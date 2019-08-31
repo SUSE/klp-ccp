@@ -37,13 +37,13 @@ namespace klp
   namespace ccp
   {
     class pp_tokenizer;
-    class architecture;
+    class target;
 
     class preprocessor
     {
     public:
       preprocessor(const header_resolver &header_resolver,
-		   const architecture &arch);
+		   const target &tgt);
 
       void add_root_source(const std::string &filename,
 			   const bool is_preinclude);
@@ -391,7 +391,7 @@ namespace klp
 
       std::string _base_file;
       const header_resolver &_header_resolver;
-      const architecture &_arch;
+      const target &_tgt;
 
       std::unique_ptr<pp_result> _pp_result;
       pp_result::header_inclusion_roots::iterator _cur_header_inclusion_root;

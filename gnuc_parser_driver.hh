@@ -32,14 +32,14 @@ namespace klp
 {
   namespace ccp
   {
-    class architecture;
+    class target;
 
     namespace yy
     {
       class gnuc_parser_driver
       {
       public:
-	gnuc_parser_driver(preprocessor &&pp, const architecture &arch);
+	gnuc_parser_driver(preprocessor &&pp, const target &tgt);
 
 	gnuc_parser_driver(gnuc_parser_driver&&) = delete;
 

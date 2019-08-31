@@ -21,7 +21,7 @@
 #include "ast_impl.hh"
 #include "semantic_except.hh"
 #include "pp_token.hh"
-#include "architecture.hh"
+#include "target.hh"
 
 using namespace klp::ccp;
 using namespace klp::ccp::ast;
@@ -143,7 +143,7 @@ namespace
   class _id_resolver
   {
   public:
-    _id_resolver(ast_translation_unit &ast, const architecture &arch);
+    _id_resolver(ast_translation_unit &ast, const target &tgt);
 
     void operator()();
 
@@ -195,7 +195,7 @@ namespace
     void _resolve_id(expr_label_addr &ela);
     void _resolve_id(type_specifier_tdid &ts_tdid);
 
-    const architecture &_arch;
+    const target &_tgt;
     ast_translation_unit &_ast;
 
     struct _scope
@@ -214,8 +214,8 @@ namespace
 }
 
 _id_resolver::_id_resolver(ast_translation_unit &ast,
-			   const architecture &arch)
-  : _ast(ast), _arch(arch)
+			   const target &tgt)
+  : _ast(ast), _tgt(tgt)
 {
   _enter_scope();
 }
@@ -1533,7 +1533,7 @@ void _id_resolver::_resolve_id(type_specifier_tdid &ts_tdid)
 
   // Typedef id not found. Check whether the identifier refers to a
   // builtin and if so, silently accept it.
-  for (const auto &btd : _arch.get_builtin_typedefs()) {
+  for (const auto &btd : _tgt.get_builtin_typedefs()) {
     if (btd.name == id_tok.get_value()) {
       ts_tdid.set_resolved(type_specifier_tdid::resolved{btd});
       return;
@@ -1549,14 +1549,14 @@ void _id_resolver::_resolve_id(type_specifier_tdid &ts_tdid)
 
 
 
-void ast_translation_unit::_resolve_ids(const architecture &arch)
+void ast_translation_unit::_resolve_ids(const target &tgt)
 {
-  _id_resolver ir(*this, arch);
+  _id_resolver ir(*this, tgt);
   ir();
 }
 
-void ast_translation_unit::resolve(const architecture &arch)
+void ast_translation_unit::resolve(const target &tgt)
 {
   _register_labels();
-  _resolve_ids(arch);
+  _resolve_ids(tgt);
 }

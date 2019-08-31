@@ -16,22 +16,22 @@
  * along with klp-ccp. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef ARCH_X86_64_GCC_HH
-#define ARCH_X86_64_GCC_HH
+#ifndef TARGET_X86_64_GCC_HH
+#define TARGET_X86_64_GCC_HH
 
-#include "architecture.hh"
+#include "target.hh"
 #include "gcc_cmdline_parser.hh"
 
 namespace klp
 {
   namespace ccp
   {
-    class arch_x86_64_gcc final : public architecture
+    class target_x86_64_gcc final : public target
     {
     public:
-      arch_x86_64_gcc(const char * const version);
+      target_x86_64_gcc(const char * const version);
 
-      virtual ~arch_x86_64_gcc() noexcept override = default;
+      virtual ~target_x86_64_gcc() noexcept override = default;
 
       virtual void parse_command_line
 		(int argc, const char *argv[],

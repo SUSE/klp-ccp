@@ -45,7 +45,7 @@ namespace klp
       { return _target_char_kind; }
 
     protected:
-      execution_charset_encoder(const architecture &arch,
+      execution_charset_encoder(const target &tgt,
 			const types::std_int_type::kind target_char_kind)
 	noexcept;
 

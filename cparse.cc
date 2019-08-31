@@ -23,7 +23,7 @@
 #include "pp_except.hh"
 #include "parse_except.hh"
 #include "semantic_except.hh"
-#include "arch_x86_64_gcc.hh"
+#include "target_x86_64_gcc.hh"
 
 using namespace klp::ccp;
 
@@ -50,13 +50,13 @@ int main(int argc, char* argv[])
 {
   int r = 0;
   header_resolver hr;
-  arch_x86_64_gcc arch{"4.8.5"};
-  preprocessor p{hr, arch};
-  arch.parse_command_line(0, nullptr, hr, p,
-			  [](const std::string&) {
-			    assert(0);
-			    __builtin_unreachable();
-			  });
+  target_x86_64_gcc tgt{"4.8.5"};
+  preprocessor p{hr, tgt};
+  tgt.parse_command_line(0, nullptr, hr, p,
+			 [](const std::string&) {
+			   assert(0);
+			   __builtin_unreachable();
+			 });
   std::vector<const char*> pre_includes;
 
   while(true) {
@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
 
   p.add_root_source(base_file, false);
   p.set_base_file(base_file);
-  yy::gnuc_parser_driver pd{std::move(p), arch};
+  yy::gnuc_parser_driver pd{std::move(p), tgt};
 
   try {
 #ifdef DEBUG_PARSER
@@ -123,7 +123,7 @@ int main(int argc, char* argv[])
 
   ast::ast_translation_unit ast(pd.grab_result());
   try {
-    ast.resolve(arch);
+    ast.resolve(tgt);
   } catch (const semantic_except&) {
     r = 5;
   }
@@ -134,7 +134,7 @@ int main(int argc, char* argv[])
     return r;
 
   try {
-    ast.evaluate(arch);
+    ast.evaluate(tgt);
   } catch (const semantic_except&) {
     r = 6;
   }

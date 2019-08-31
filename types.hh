@@ -31,7 +31,7 @@ namespace klp
 {
   namespace ccp
   {
-    class architecture;
+    class target;
 
     namespace ast
     {
@@ -154,48 +154,48 @@ namespace klp
 
 	virtual type_id get_type_id() const noexcept = 0;
 
-	virtual bool is_compatible_with(const architecture &arch, const type &t,
+	virtual bool is_compatible_with(const target &tgt, const type &t,
 					const bool ignore_qualifiers) const = 0;
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const void_type &t,
 					const bool ignore_qualifiers) const;
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const plain_char_type &t,
 					const bool ignore_qualifiers) const;
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const bool_type &t,
 					const bool ignore_qualifiers) const;
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const std_int_type &t,
 					const bool ignore_qualifiers) const;
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const enum_type &t,
 					const bool ignore_qualifiers) const;
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const real_float_type &t,
 					const bool ignore_qualifiers) const;
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const complex_float_type &t,
 					const bool ignore_qualifiers) const;
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const struct_or_union_type &t,
 					const bool ignore_qualifiers) const;
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const array_type &t,
 					const bool ignore_qualifiers) const;
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const prototyped_function_type &t,
 					const bool ignore_qualifiers) const;
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const unprototyped_function_type &t,
 					const bool ignore_qualifiers) const;
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const pointer_type &t,
 					const bool ignore_qualifiers) const;
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const bitfield_type &t,
 					const bool ignore_qualifiers) const;
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const builtin_func_type &t,
 					const bool ignore_qualifiers) const;
 
@@ -249,10 +249,10 @@ namespace klp
 
 	virtual bool is_size_constant() const noexcept = 0;
 
-	virtual mpa::limbs get_size(const architecture &arch) const = 0;
+	virtual mpa::limbs get_size(const target &tgt) const = 0;
 
 	virtual mpa::limbs::size_type
-	get_type_alignment(const architecture &arch) const noexcept = 0;
+	get_type_alignment(const target &tgt) const noexcept = 0;
 
 	alignment&
 	get_user_alignment() noexcept
@@ -265,11 +265,11 @@ namespace klp
 	std::shared_ptr<const addressable_type>
 	set_user_alignment(const alignment &user_align) const;
 
-	mpa::limbs::size_type get_effective_alignment(const architecture &arch)
+	mpa::limbs::size_type get_effective_alignment(const target &tgt)
 	  const noexcept;
 
 	virtual std::shared_ptr<const addressable_type>
-	construct_composite(const architecture &arch,
+	construct_composite(const target &tgt,
 			    const addressable_type& prev_type) const;
 
       protected:
@@ -288,20 +288,20 @@ namespace klp
 	virtual addressable_type* _clone() const override = 0;
 
 	virtual std::shared_ptr<const array_type>
-	_construct_composite(const architecture &arch,
-			     const array_type& next_type) const;
+	_construct_composite(const target&,
+			     const array_type&) const;
 
 	virtual std::shared_ptr<const prototyped_function_type>
-	_construct_composite(const architecture &arch,
-			     const unprototyped_function_type& next_type) const;
+	_construct_composite(const target&,
+			     const unprototyped_function_type&) const;
 
 	virtual std::shared_ptr<const prototyped_function_type>
-	_construct_composite(const architecture &arch,
-			     const prototyped_function_type& next_type) const;
+	_construct_composite(const target&,
+			     const prototyped_function_type&) const;
 
 	virtual std::shared_ptr<const pointer_type>
-	_construct_composite(const architecture &arch,
-			     const pointer_type& next_type) const;
+	_construct_composite(const target&,
+			     const pointer_type&) const;
 
 	alignment _user_align;
       };
@@ -315,10 +315,10 @@ namespace klp
 
 	virtual bool is_size_constant() const noexcept override;
 
-	virtual mpa::limbs get_size(const architecture &arch) const override;
+	virtual mpa::limbs get_size(const target &tgt) const override;
 
 	virtual mpa::limbs::size_type
-	get_type_alignment(const architecture &arch) const noexcept override;
+	get_type_alignment(const target &tgt) const noexcept override;
 
 	const std::shared_ptr<const returnable_type>&
 	get_return_type() const noexcept
@@ -364,7 +364,7 @@ namespace klp
 	virtual object_type* _clone() const override = 0;
 
 	virtual std::shared_ptr<const object_type>
-	_construct_composite(const architecture &arch,
+	_construct_composite(const target &tgt,
 			     const object_type& prev_type) const;
       };
 
@@ -394,7 +394,7 @@ namespace klp
 	virtual returnable_type* _clone() const override = 0;
 
 	virtual std::shared_ptr<const returnable_type>
-	_construct_composite(const architecture &arch,
+	_construct_composite(const target &tgt,
 			     const returnable_type& prev_type) const;
       };
 
@@ -423,15 +423,15 @@ namespace klp
 
 	virtual type_id get_type_id() const noexcept override;
 
-	virtual bool is_compatible_with(const architecture &arch, const type &t,
+	virtual bool is_compatible_with(const target &tgt, const type &t,
 					const bool ignore_qualifiers)
 	  const override;
 
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const prototyped_function_type &t,
 					const bool ignore_qualifiers)
 	  const override;
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const unprototyped_function_type &t,
 					const bool ignore_qualifiers)
 	  const override;
@@ -455,16 +455,16 @@ namespace klp
 	virtual prototyped_function_type* _clone() const override;
 
 	virtual std::shared_ptr<const addressable_type>
-	construct_composite(const architecture &arch,
+	construct_composite(const target &tgt,
 			    const addressable_type& prev_type) const override;
 
 	virtual std::shared_ptr<const prototyped_function_type>
-	_construct_composite(const architecture &arch,
+	_construct_composite(const target &tgt,
 			     const unprototyped_function_type& next_type)
 	  const override;
 
 	virtual std::shared_ptr<const prototyped_function_type>
-	_construct_composite(const architecture &arch,
+	_construct_composite(const target &tgt,
 			     const prototyped_function_type& next_type)
 	  const override;
 
@@ -479,14 +479,14 @@ namespace klp
 
 	virtual type_id get_type_id() const noexcept override;
 
-	virtual bool is_compatible_with(const architecture &arch, const type &t,
+	virtual bool is_compatible_with(const target &tgt, const type &t,
 					const bool ignore_qualifiers)
 	  const override;
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const unprototyped_function_type &t,
 					const bool ignore_qualifiers)
 	  const override;
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const prototyped_function_type &t,
 					const bool ignore_qualifiers)
 	  const override;
@@ -510,11 +510,11 @@ namespace klp
 	virtual unprototyped_function_type* _clone() const override;
 
 	virtual std::shared_ptr<const addressable_type>
-	construct_composite(const architecture &arch,
+	construct_composite(const target &tgt,
 			    const addressable_type& prev_type) const override;
 
 	virtual std::shared_ptr<const prototyped_function_type>
-	_construct_composite(const architecture &arch,
+	_construct_composite(const target &tgt,
 			     const prototyped_function_type& next_type)
 	  const override;
 
@@ -529,10 +529,10 @@ namespace klp
 
 	virtual type_id get_type_id() const noexcept override;
 
-	virtual bool is_compatible_with(const architecture &arch, const type &t,
+	virtual bool is_compatible_with(const target &tgt, const type &t,
 					const bool ignore_qualifiers)
 	  const override;
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const array_type &t,
 					const bool ignore_qualifiers)
 	  const override;
@@ -541,10 +541,10 @@ namespace klp
 
 	virtual bool is_size_constant() const noexcept override;
 
-	virtual mpa::limbs get_size(const architecture &arch) const override;
+	virtual mpa::limbs get_size(const target &tgt) const override;
 
 	virtual mpa::limbs::size_type
-	get_type_alignment(const architecture &arch) const noexcept override;
+	get_type_alignment(const target &tgt) const noexcept override;
 
 	std::shared_ptr<const array_type>
 	set_user_alignment(const alignment &user_align) const;
@@ -580,15 +580,15 @@ namespace klp
 	virtual void _amend_qualifiers(const qualifiers &qs) override;
 
 	virtual std::shared_ptr<const addressable_type>
-	construct_composite(const architecture &arch,
+	construct_composite(const target &tgt,
 			    const addressable_type& prev_type) const override;
 
 	virtual std::shared_ptr<const object_type>
-	_construct_composite(const architecture &arch,
+	_construct_composite(const target &tgt,
 			     const object_type& prev_type) const override;
 
 	virtual std::shared_ptr<const array_type>
-	_construct_composite(const architecture &arch,
+	_construct_composite(const target &tgt,
 			     const array_type& next_type) const override;
 
 
@@ -608,10 +608,10 @@ namespace klp
 
 	virtual type_id get_type_id() const noexcept override;
 
-	virtual bool is_compatible_with(const architecture &arch, const type &t,
+	virtual bool is_compatible_with(const target &tgt, const type &t,
 					const bool ignore_qualifiers)
 	  const override;
-	virtual bool is_compatible_with(const architecture&, const void_type &t,
+	virtual bool is_compatible_with(const target&, const void_type &t,
 					const bool ignore_qualifiers)
 	  const override;
 
@@ -619,10 +619,10 @@ namespace klp
 
 	virtual bool is_size_constant() const noexcept override;
 
-	virtual mpa::limbs get_size(const architecture &arch) const override;
+	virtual mpa::limbs get_size(const target &tgt) const override;
 
 	virtual mpa::limbs::size_type
-	get_type_alignment(const architecture &arch) const noexcept override;
+	get_type_alignment(const target &tgt) const noexcept override;
 
       private:
 	void_type(const qualifiers &qs);
@@ -639,19 +639,19 @@ namespace klp
 
 	virtual type_id get_type_id() const noexcept override;
 
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const type &t,
 					const bool ignore_qualifiers)
 	  const override;
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const pointer_type &t,
 					const bool ignore_qualifiers)
 	  const override;
 
-	virtual mpa::limbs get_size(const architecture &arch) const override;
+	virtual mpa::limbs get_size(const target &tgt) const override;
 
 	virtual mpa::limbs::size_type
-	get_type_alignment(const architecture &arch) const noexcept override;
+	get_type_alignment(const target &tgt) const noexcept override;
 
 	std::shared_ptr<const pointer_type>
 	set_user_alignment(const alignment &user_align) const;
@@ -671,19 +671,19 @@ namespace klp
 	virtual pointer_type* _clone() const override;
 
 	virtual std::shared_ptr<const addressable_type>
-	construct_composite(const architecture &arch,
+	construct_composite(const target &tgt,
 			    const addressable_type& prev_type) const override;
 
 	virtual std::shared_ptr<const object_type>
-	_construct_composite(const architecture &arch,
+	_construct_composite(const target &tgt,
 			     const object_type& prev_type) const override;
 
 	virtual std::shared_ptr<const returnable_type>
-	_construct_composite(const architecture &arch,
+	_construct_composite(const target &tgt,
 			     const returnable_type& prev_type) const override;
 
 	virtual std::shared_ptr<const pointer_type>
-	_construct_composite(const architecture &arch,
+	_construct_composite(const target &tgt,
 			     const pointer_type& next_type) const override;
 
 	const std::shared_ptr<const addressable_type> _pointed_to_type;
@@ -805,10 +805,10 @@ namespace klp
 
 	virtual type_id get_type_id() const noexcept override;
 
-	virtual bool is_compatible_with(const architecture &arch, const type &t,
+	virtual bool is_compatible_with(const target &tgt, const type &t,
 					const bool ignore_qualifiers)
 	  const override;
-	virtual bool is_compatible_with(const architecture&,
+	virtual bool is_compatible_with(const target&,
 					const struct_or_union_type &t,
 					const bool ignore_qualifiers)
 	  const override;
@@ -817,10 +817,10 @@ namespace klp
 
 	virtual bool is_size_constant() const noexcept override;
 
-	virtual mpa::limbs get_size(const architecture &arch) const override;
+	virtual mpa::limbs get_size(const target &tgt) const override;
 
 	virtual mpa::limbs::size_type
-	get_type_alignment(const architecture &arch) const noexcept override;
+	get_type_alignment(const target &tgt) const noexcept override;
 
 	const struct_or_union_content* get_content() const noexcept;
 
@@ -856,16 +856,16 @@ namespace klp
 	std::shared_ptr<const arithmetic_type> strip_qualifiers() const;
 
 	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const architecture &arch,
+	arithmetic_conversion(const target &tgt,
 			      const arithmetic_type &at) const = 0;
 	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const architecture &arch,
+	arithmetic_conversion(const target &tgt,
 			      const std_int_type &it) const = 0;
 	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const architecture &arch,
+	arithmetic_conversion(const target &tgt,
 			      const real_float_type &ft) const = 0;
 	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const architecture &arch,
+	arithmetic_conversion(const target &tgt,
 			      const complex_float_type &ct) const = 0;
 
       protected:
@@ -883,32 +883,32 @@ namespace klp
 	virtual ~int_type() noexcept = 0;
 
 	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const architecture &arch,
+	arithmetic_conversion(const target &tgt,
 			      const arithmetic_type &at) const override;
 	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const architecture &arch,
+	arithmetic_conversion(const target &tgt,
 			      const std_int_type &it) const override;
 	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const architecture &arch,
+	arithmetic_conversion(const target &tgt,
 			      const real_float_type &ft) const override;
 	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const architecture &arch,
+	arithmetic_conversion(const target &tgt,
 			      const complex_float_type &ct) const override;
 
 	virtual std::shared_ptr<const std_int_type>
-	integer_conversion(const architecture &arch, const int_type &it) const;
+	integer_conversion(const target &tgt, const int_type &it) const;
 
 	virtual std::shared_ptr<const std_int_type>
-	integer_conversion(const architecture &arch, const std_int_type &it)
+	integer_conversion(const target &tgt, const std_int_type &it)
 	  const;
 
-	virtual bool is_signed(const architecture &arch) const noexcept = 0;
+	virtual bool is_signed(const target &tgt) const noexcept = 0;
 
-	virtual mpa::limbs::size_type get_width(const architecture &arch)
+	virtual mpa::limbs::size_type get_width(const target &tgt)
 	  const noexcept = 0;
 
 	virtual std::shared_ptr<const std_int_type>
-	promote(const architecture &arch) const = 0;
+	promote(const target &tgt) const = 0;
 
       protected:
 	int_type();
@@ -959,54 +959,54 @@ namespace klp
 
 	virtual type_id get_type_id() const noexcept override;
 
-	virtual bool is_compatible_with(const architecture &arch, const type &t,
+	virtual bool is_compatible_with(const target &tgt, const type &t,
 					const bool ignore_qualifiers)
 	  const override;
-	virtual bool is_compatible_with(const architecture&,
+	virtual bool is_compatible_with(const target&,
 					const std_int_type &t,
 					const bool ignore_qualifiers)
 	  const override;
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const enum_type &t,
 					const bool ignore_qualifiers)
 	  const override;
 
 	std::shared_ptr<const std_int_type> strip_qualifiers() const;
 
-	virtual mpa::limbs get_size(const architecture &arch) const override;
+	virtual mpa::limbs get_size(const target &tgt) const override;
 
 	virtual mpa::limbs::size_type
-	get_type_alignment(const architecture &arch) const noexcept override;
+	get_type_alignment(const target &tgt) const noexcept override;
 
 	std::shared_ptr<const std_int_type>
 	set_user_alignment(const alignment &user_align) const;
 
 	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const architecture &arch,
+	arithmetic_conversion(const target &tgt,
 			      const arithmetic_type &at) const override;
 	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const architecture &arch,
+	arithmetic_conversion(const target &tgt,
 			      const real_float_type &ft) const override;
 	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const architecture &arch,
+	arithmetic_conversion(const target &tgt,
 			      const complex_float_type &ct) const override;
 
 	virtual std::shared_ptr<const std_int_type>
-	integer_conversion(const architecture &arch, const int_type &it)
+	integer_conversion(const target &tgt, const int_type &it)
 	  const override;
 
 	virtual std::shared_ptr<const std_int_type>
-	integer_conversion(const architecture &arch, const std_int_type &it)
+	integer_conversion(const target &tgt, const std_int_type &it)
 	  const override;
 
-	virtual bool is_signed(const architecture &arch)
+	virtual bool is_signed(const target &tgt)
 	  const noexcept override;
 
-	virtual mpa::limbs::size_type get_width(const architecture &arch)
+	virtual mpa::limbs::size_type get_width(const target &tgt)
 	  const noexcept override;
 
 	virtual std::shared_ptr<const std_int_type>
-	promote(const architecture &arch) const override;
+	promote(const target &tgt) const override;
 
 	virtual std::shared_ptr<const returnable_int_type> to_unsigned()
 	  const override;
@@ -1036,27 +1036,27 @@ namespace klp
 
 	virtual type_id get_type_id() const noexcept override;
 
-	virtual bool is_compatible_with(const architecture &arch, const type &t,
+	virtual bool is_compatible_with(const target &tgt, const type &t,
 					const bool ignore_qualifiers)
 	  const override;
-	virtual bool is_compatible_with(const architecture&,
+	virtual bool is_compatible_with(const target&,
 					const plain_char_type &t,
 					const bool ignore_qualifiers)
 	  const override;
 
-	virtual mpa::limbs get_size(const architecture &arch) const override;
+	virtual mpa::limbs get_size(const target &tgt) const override;
 
 	virtual mpa::limbs::size_type
-	get_type_alignment(const architecture &arch) const noexcept override;
+	get_type_alignment(const target &tgt) const noexcept override;
 
-	virtual bool is_signed(const architecture &arch)
+	virtual bool is_signed(const target &tgt)
 	  const noexcept override;
 
-	virtual mpa::limbs::size_type get_width(const architecture &arch)
+	virtual mpa::limbs::size_type get_width(const target &tgt)
 	  const noexcept override;
 
 	virtual std::shared_ptr<const std_int_type>
-	promote(const architecture &arch) const override;
+	promote(const target &tgt) const override;
 
 	virtual std::shared_ptr<const returnable_int_type> to_unsigned()
 	  const override;
@@ -1079,27 +1079,27 @@ namespace klp
 
 	virtual type_id get_type_id() const noexcept override;
 
-	virtual bool is_compatible_with(const architecture &arch, const type &t,
+	virtual bool is_compatible_with(const target &tgt, const type &t,
 					const bool ignore_qualifiers)
 	  const override;
-	virtual bool is_compatible_with(const architecture&,
+	virtual bool is_compatible_with(const target&,
 					const bool_type &t,
 					const bool ignore_qualifiers)
 	  const override;
 
-	virtual mpa::limbs get_size(const architecture &arch) const override;
+	virtual mpa::limbs get_size(const target &tgt) const override;
 
 	virtual mpa::limbs::size_type
-	get_type_alignment(const architecture &arch) const noexcept override;
+	get_type_alignment(const target &tgt) const noexcept override;
 
-	virtual bool is_signed(const architecture &arch)
+	virtual bool is_signed(const target &tgt)
 	  const noexcept override;
 
-	virtual mpa::limbs::size_type get_width(const architecture &arch)
+	virtual mpa::limbs::size_type get_width(const target &tgt)
 	  const noexcept override;
 
 	virtual std::shared_ptr<const std_int_type>
-	promote(const architecture &arch) const override;
+	promote(const target &tgt) const override;
 
 	virtual std::shared_ptr<const returnable_int_type> to_unsigned()
 	  const override;
@@ -1154,7 +1154,7 @@ namespace klp
 			const target_int &value);
 
 	void add_member(const ast::enumerator &e, const std::string &name,
-			const architecture &arch);
+			const target &tgt);
 
 	const member* lookup(const std::string &name) const noexcept;
 
@@ -1185,32 +1185,32 @@ namespace klp
 
 	virtual type_id get_type_id() const noexcept override;
 
-	virtual bool is_compatible_with(const architecture &arch, const type &t,
+	virtual bool is_compatible_with(const target &tgt, const type &t,
 					const bool ignore_qualifiers)
 	  const override;
-	virtual bool is_compatible_with(const architecture&, const enum_type &t,
+	virtual bool is_compatible_with(const target&, const enum_type &t,
 					const bool ignore_qualifiers)
 	  const override;
-	virtual bool is_compatible_with(const architecture &arch,
+	virtual bool is_compatible_with(const target &tgt,
 					const std_int_type &t,
 					const bool ignore_qualifiers)
 	  const override;
 
 	virtual bool is_complete() const noexcept override;
 
-	virtual mpa::limbs get_size(const architecture &arch) const override;
+	virtual mpa::limbs get_size(const target &tgt) const override;
 
 	virtual mpa::limbs::size_type
-	get_type_alignment(const architecture &arch) const noexcept override;
+	get_type_alignment(const target &tgt) const noexcept override;
 
-	virtual bool is_signed(const architecture &arch)
+	virtual bool is_signed(const target &tgt)
 	  const noexcept override;
 
-	virtual mpa::limbs::size_type get_width(const architecture &arch)
+	virtual mpa::limbs::size_type get_width(const target &tgt)
 	  const noexcept override;
 
 	virtual std::shared_ptr<const std_int_type>
-	promote(const architecture &arch) const override;
+	promote(const target &tgt) const override;
 
 	virtual std::shared_ptr<const returnable_int_type> to_unsigned()
 	  const override;
@@ -1247,18 +1247,18 @@ namespace klp
 
 	virtual type_id get_type_id() const noexcept override;
 
-	virtual bool is_compatible_with(const architecture &arch, const type &t,
+	virtual bool is_compatible_with(const target &tgt, const type &t,
 					const bool ignore_qualifiers)
 	  const override;
 
-	virtual bool is_signed(const architecture &arch)
+	virtual bool is_signed(const target &tgt)
 	  const noexcept override;
 
-	virtual mpa::limbs::size_type get_width(const architecture &arch)
+	virtual mpa::limbs::size_type get_width(const target &tgt)
 	  const noexcept override;
 
 	virtual std::shared_ptr<const std_int_type>
-	promote(const architecture &arch) const override;
+	promote(const target &tgt) const override;
 
 	const std::shared_ptr<const returnable_int_type>& get_base_type()
 	  const noexcept
@@ -1307,10 +1307,10 @@ namespace klp
 	{ return _k; }
 
 	mpa::limbs::size_type
-	get_significand_width(const architecture &arch) const noexcept;
+	get_significand_width(const target &tgt) const noexcept;
 
 	mpa::limbs::size_type
-	get_exponent_width(const architecture &arch) const noexcept;
+	get_exponent_width(const target &tgt) const noexcept;
 
 	virtual std::shared_ptr<const float_type> promote() const = 0;
 
@@ -1335,30 +1335,30 @@ namespace klp
 
 	virtual type_id get_type_id() const noexcept override;
 
-	virtual bool is_compatible_with(const architecture &arch, const type &t,
+	virtual bool is_compatible_with(const target &tgt, const type &t,
 					const bool ignore_qualifiers)
 	  const override;
-	virtual bool is_compatible_with(const architecture&,
+	virtual bool is_compatible_with(const target&,
 					const real_float_type &t,
 					const bool ignore_qualifiers)
 	  const override;
 
-	virtual mpa::limbs get_size(const architecture &arch) const override;
+	virtual mpa::limbs get_size(const target &tgt) const override;
 
 	virtual mpa::limbs::size_type
-	get_type_alignment(const architecture &arch) const noexcept override;
+	get_type_alignment(const target &tgt) const noexcept override;
 
 	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const architecture &arch,
+	arithmetic_conversion(const target &tgt,
 			      const arithmetic_type &at) const override;
 	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const architecture&,
+	arithmetic_conversion(const target&,
 			      const std_int_type&) const override;
 	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const architecture&,
+	arithmetic_conversion(const target&,
 			      const real_float_type &ft) const override;
 	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const architecture &arch,
+	arithmetic_conversion(const target &tgt,
 			      const complex_float_type &ct) const override;
 
 	virtual std::shared_ptr<const float_type> promote() const override;
@@ -1381,30 +1381,30 @@ namespace klp
 
 	virtual type_id get_type_id() const noexcept override;
 
-	virtual bool is_compatible_with(const architecture &arch, const type &t,
+	virtual bool is_compatible_with(const target &tgt, const type &t,
 					const bool ignore_qualifiers)
 	  const override;
-	virtual bool is_compatible_with(const architecture&,
+	virtual bool is_compatible_with(const target&,
 					const complex_float_type &t,
 					const bool ignore_qualifiers)
 	  const override;
 
-	virtual mpa::limbs get_size(const architecture &arch) const override;
+	virtual mpa::limbs get_size(const target &tgt) const override;
 
 	virtual mpa::limbs::size_type
-	get_type_alignment(const architecture &arch) const noexcept override;
+	get_type_alignment(const target &tgt) const noexcept override;
 
 	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const architecture &arch,
+	arithmetic_conversion(const target &tgt,
 			      const arithmetic_type &at) const override;
 	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const architecture&,
+	arithmetic_conversion(const target&,
 			      const std_int_type&) const override;
 	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const architecture&,
+	arithmetic_conversion(const target&,
 			      const real_float_type &ft) const override;
 	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const architecture &arch,
+	arithmetic_conversion(const target &tgt,
 			      const complex_float_type &ct) const override;
 
 	virtual std::shared_ptr<const float_type> promote() const override;
@@ -1427,7 +1427,7 @@ namespace klp
 
 	virtual type_id get_type_id() const noexcept override;
 
-	virtual bool is_compatible_with(const architecture &arch, const type &t,
+	virtual bool is_compatible_with(const target &tgt, const type &t,
 					const bool ignore_qualifiers)
 	  const override;
 

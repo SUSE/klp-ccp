@@ -19,7 +19,7 @@
 #include <cassert>
 #include <functional>
 #include "preprocessor.hh"
-#include "architecture.hh"
+#include "target.hh"
 #include "pp_except.hh"
 #include "parse_except.hh"
 #include "semantic_except.hh"
@@ -29,8 +29,8 @@
 using namespace klp::ccp;
 
 preprocessor::preprocessor(const header_resolver &header_resolver,
-			   const architecture &arch)
-  : _header_resolver(header_resolver), _arch(arch),
+			   const target &tgt)
+  : _header_resolver(header_resolver), _tgt(tgt),
     _pp_result(new pp_result{}),
     _cur_header_inclusion_root(_pp_result->get_header_inclusion_roots()
 			       .begin()),
@@ -1856,7 +1856,7 @@ _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range)
   ast::ast_pp_expr a = pd.grab_result();
   bool result;
   try {
-    result = a.evaluate(_arch);
+    result = a.evaluate(_tgt);
   } catch (const semantic_except&) {
     _remarks += a.get_remarks();
     a.get_remarks().clear();

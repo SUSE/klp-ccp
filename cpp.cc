@@ -21,7 +21,7 @@
 #include "pp_except.hh"
 #include "parse_except.hh"
 #include "semantic_except.hh"
-#include "arch_x86_64_gcc.hh"
+#include "target_x86_64_gcc.hh"
 
 using namespace klp::ccp;
 
@@ -33,13 +33,13 @@ int main(int argc, char* argv[])
   }
 
   header_resolver hr;
-  arch_x86_64_gcc arch{"4.8.5"};
-  preprocessor p{hr, arch};
-  arch.parse_command_line(0, nullptr, hr, p,
-			  [](const std::string&) {
-			    assert(0);
-			    __builtin_unreachable();
-			  });
+  target_x86_64_gcc tgt{"4.8.5"};
+  preprocessor p{hr, tgt};
+  tgt.parse_command_line(0, nullptr, hr, p,
+			 [](const std::string&) {
+			   assert(0);
+			   __builtin_unreachable();
+			 });
   p.add_root_source(argv[1], false);
   p.set_base_file(argv[1]);
 

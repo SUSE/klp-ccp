@@ -31,7 +31,7 @@ namespace klp
     {
     public:
       execution_charset_encoder_iconv
-		(const architecture &arch,
+		(const target &tgt,
 		 const types::std_int_type::kind target_char_kind,
 		 const std::string &target_code,
 		 const bool target_code_is_big_endian);

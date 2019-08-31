@@ -28,7 +28,7 @@ namespace klp
 {
   namespace ccp
   {
-    class architecture;
+    class target;
 
     namespace ast
     {
@@ -61,7 +61,7 @@ namespace klp
       virtual ~builtin_func() noexcept;
 
       virtual evaluation_result_type
-      evaluate(ast::ast &a, const architecture &arch,
+      evaluate(ast::ast &a, const target &tgt,
 	       const ast::expr_func_invocation &efi) const = 0;
 
       static factory lookup(const std::string &id);
@@ -84,7 +84,7 @@ namespace klp
       virtual ~builtin_var() noexcept;
 
       virtual evaluation_result_type
-      evaluate(ast::ast &a, const architecture &arch,
+      evaluate(ast::ast &a, const target &tgt,
 	       const ast::expr_id &eid) const = 0;
 
       static factory lookup(const std::string &id);
@@ -111,7 +111,7 @@ namespace klp
       virtual ~builtin_typedef() noexcept;
 
       virtual std::shared_ptr<const types::addressable_type>
-      evaluate(ast::ast &a, const architecture &arch,
+      evaluate(ast::ast &a, const target &tgt,
 	       const ast::type_specifier_tdid &ts_tdid) const = 0;
     };
   }

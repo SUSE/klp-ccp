@@ -22,7 +22,7 @@
 #include "pp_except.hh"
 #include "parse_except.hh"
 #include "semantic_except.hh"
-#include "architecture.hh"
+#include "target.hh"
 
 using namespace klp::ccp::yy;
 using namespace klp::ccp::ast;
@@ -161,12 +161,12 @@ static _val_tok_map_type _initialize_val_tok_map(const _val_tok_map_entry *e)
 }
 
 gnuc_parser_driver::gnuc_parser_driver(preprocessor &&pp,
-				       const architecture &arch)
+				       const target &tgt)
   : _result(nullptr), _pp(std::move(pp)),
     _parser(*this), _ignore_td_spec(0), _in_typedef(false)
 {
   _typedefs_scopes.emplace();
-  for (const auto &btd : arch.get_builtin_typedefs())
+  for (const auto &btd : tgt.get_builtin_typedefs())
     _typedefs_scopes.top().insert(btd.name);
 }
 

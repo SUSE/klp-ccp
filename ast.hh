@@ -37,7 +37,7 @@ namespace klp
 {
   namespace ccp
   {
-    class architecture;
+    class target;
 
     namespace ast
     {
@@ -207,7 +207,7 @@ namespace klp
       public:
 	virtual ~_typed() noexcept;
 
-	virtual void evaluate_type(ast &a, const architecture &arch) = 0;
+	virtual void evaluate_type(ast &a, const target &tgt) = 0;
 
 	virtual bool is_evaluated() const noexcept = 0;
 
@@ -502,7 +502,7 @@ namespace klp
 
 	virtual ~expr_comma() noexcept override;
 
-	virtual void evaluate_type(ast&, const architecture&) override;
+	virtual void evaluate_type(ast&, const target&) override;
 
 	const expr& get_left() const noexcept
 	{ return _left; }
@@ -550,7 +550,7 @@ namespace klp
 	const expr& get_rhs() const noexcept
 	{ return _rhs; }
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
 
       private:
@@ -576,7 +576,7 @@ namespace klp
 
 	virtual ~expr_conditional() noexcept override;
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
 	const expr& get_cond() const noexcept
 	{ return _cond; }
@@ -629,7 +629,7 @@ namespace klp
 
 	virtual ~expr_binop() noexcept override;
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
 	binary_op get_op() const noexcept
 	{ return _op; }
@@ -650,30 +650,30 @@ namespace klp
 
 	void _evaluate_arith_binop(const types::arithmetic_type &at_left,
 				   const types::arithmetic_type &at_right,
-				   ast &a, const architecture &arch);
+				   ast &a, const target &tgt);
 	void _evaluate_ptr_sub(const types::pointer_type &pt_left,
 			       const types::pointer_type &pt_right,
-			       ast &a, const architecture &arch);
+			       ast &a, const target &tgt);
 	void _evaluate_shift(const types::int_type &it_left,
 			     const types::int_type &it_right,
-			     ast &a, const architecture &arch);
+			     ast &a, const target &tgt);
 	void _evaluate_bin_binop(const types::int_type &it_left,
 				 const types::int_type &it_right,
-				 ast &a, const architecture &arch);
-	void _evaluate_logical_binop(const ast &a, const architecture &arch);
+				 ast &a, const target &tgt);
+	void _evaluate_logical_binop(const ast &a, const target &tgt);
 
 	void _evaluate_cmp(const types::pointer_type &pt_left,
 			   const types::pointer_type &pt_right,
-			   ast &a, const architecture &arch);
+			   ast &a, const target &tgt);
 	void _evaluate_cmp(const types::pointer_type &pt_left,
 			   const types::int_type &it_right,
-			   ast &a, const architecture &arch);
+			   ast &a, const target &tgt);
 	void _evaluate_cmp(const types::int_type &it_left,
 			   const types::pointer_type &pt_right,
-			   ast &a, const architecture &arch);
+			   ast &a, const target &tgt);
 	void _evaluate_cmp(const types::arithmetic_type &at_left,
 			   const types::arithmetic_type &at_right,
-			   ast &a, const architecture &arch);
+			   ast &a, const target &tgt);
 
 	binary_op _op;
 	expr &_left;
@@ -688,7 +688,7 @@ namespace klp
 
 	virtual ~expr_cast() noexcept override;
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
 	const type_name& get_type_name() const noexcept
 	{ return _tn; }
@@ -733,7 +733,7 @@ namespace klp
 
 	void set_resolved(const stmt_labeled &resolved) noexcept;
 
-	virtual void evaluate_type(ast&, const architecture&) override;
+	virtual void evaluate_type(ast&, const target&) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t) const noexcept override;
@@ -758,7 +758,7 @@ namespace klp
 	unary_op_pre get_op() const noexcept
 	{ return _op; }
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
 	const expr& get_expr() const noexcept
 	{ return _e; }
@@ -782,7 +782,7 @@ namespace klp
 
 	virtual ~expr_sizeof_expr() noexcept override;
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -803,7 +803,7 @@ namespace klp
 
 	virtual ~expr_sizeof_type_name() noexcept override;
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
 	const type_name& get_type_name() const noexcept
 	{ return _tn; }
@@ -826,7 +826,7 @@ namespace klp
 
 	virtual ~expr_alignof_expr() noexcept override;
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -847,7 +847,7 @@ namespace klp
 
 	virtual ~expr_alignof_type_name() noexcept override;
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
 	const type_name& get_type_name() const noexcept
 	{ return _tn; }
@@ -942,7 +942,7 @@ namespace klp
 
 	virtual ~expr_builtin_offsetof() noexcept override;
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
 	const type_name& get_type_name() const noexcept
 	{ return _tn; }
@@ -968,7 +968,7 @@ namespace klp
 
 	virtual ~expr_builtin_types_compatible_p() noexcept override;
 
-	virtual void evaluate_type(ast&, const architecture &arch) override;
+	virtual void evaluate_type(ast&, const target &tgt) override;
 
 	const type_name& get_type_name1() const noexcept
 	{ return _tn1; }
@@ -996,7 +996,7 @@ namespace klp
 
 	virtual ~expr_builtin_va_arg() noexcept override;
 
-	virtual void evaluate_type(ast&, const architecture&) override;
+	virtual void evaluate_type(ast&, const target&) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -1018,7 +1018,7 @@ namespace klp
 
 	virtual ~expr_array_subscript() noexcept override;
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
 	const expr& get_base() const noexcept
 	{ return _base; }
@@ -1034,7 +1034,7 @@ namespace klp
 	virtual bool _process(processor<bool> &p) override;
 	virtual bool _process(const_processor<bool> &p) const override;
 
-	void _evaluate_type(ast &a, const architecture &arch,
+	void _evaluate_type(ast &a, const target &tgt,
 			    const types::pointer_type &pt_base,
 			    const expr &e_base, const expr &e_index);
 
@@ -1058,7 +1058,7 @@ namespace klp
 	const expr_list * get_args() const noexcept
 	{ return _args; }
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -1091,7 +1091,7 @@ namespace klp
 	member_deref_type get_deref_type() const noexcept
 	{ return _deref_type; }
 
-	virtual void evaluate_type(ast &a, const architecture&) override;
+	virtual void evaluate_type(ast &a, const target&) override;
 
 	const expr& get_base() const noexcept
 	{ return _base; }
@@ -1129,7 +1129,7 @@ namespace klp
 	const expr& get_expr() const noexcept
 	{ return _e; }
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -1151,7 +1151,7 @@ namespace klp
 
 	virtual ~expr_compound_literal() noexcept override;
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
 	const type_name& get_type_name() const noexcept
 	{ return _tn; }
@@ -1175,7 +1175,7 @@ namespace klp
 
 	virtual ~expr_statement() noexcept override;
 
-	virtual void evaluate_type(ast&, const architecture&) override;
+	virtual void evaluate_type(ast&, const target&) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -1260,7 +1260,7 @@ namespace klp
 	bool is_resolved() const noexcept
 	{ return _resolved.get_kind() != resolved::resolved_kind::none; }
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t) const noexcept override;
@@ -1281,7 +1281,7 @@ namespace klp
 
 	virtual ~expr_constant() noexcept override;
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t) const noexcept override;
@@ -1330,7 +1330,7 @@ namespace klp
 
 	virtual ~expr_string_literal() noexcept override;
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -1354,7 +1354,7 @@ namespace klp
 	virtual const _ast_entity* skip_parens_up() const noexcept override;
 	virtual _ast_entity* skip_parens_up() noexcept override;
 
-	virtual void evaluate_type(ast&, const architecture&) override;
+	virtual void evaluate_type(ast&, const target&) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -1549,7 +1549,7 @@ namespace klp
 
 	virtual ~direct_abstract_declarator_parenthesized() noexcept override;
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
 	virtual std::shared_ptr<const types::addressable_type>
 	get_innermost_type() const noexcept override;
@@ -1586,7 +1586,7 @@ namespace klp
 
 	virtual ~direct_abstract_declarator_array() noexcept override;
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
 	virtual std::shared_ptr<const types::addressable_type>
 	get_innermost_type() const noexcept override;
@@ -1617,7 +1617,7 @@ namespace klp
 
 	virtual ~direct_abstract_declarator_func() noexcept override;
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
 	virtual std::shared_ptr<const types::addressable_type>
 	get_innermost_type() const noexcept override;
@@ -1657,7 +1657,7 @@ namespace klp
 	  return _pt;
 	}
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
 	std::shared_ptr<const types::addressable_type>
 	get_innermost_type() const noexcept;
@@ -1700,7 +1700,7 @@ namespace klp
 	specifier_qualifier_list& get_specifier_qualifier_list() noexcept
 	{ return _sql; }
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -1754,7 +1754,7 @@ namespace klp
 
 	const direct_declarator_func* is_function() const noexcept;
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
 	void complete_type(std::shared_ptr<const types::array_type> &&at);
 
@@ -1796,7 +1796,7 @@ namespace klp
 	  return _d;
 	}
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -1833,7 +1833,7 @@ namespace klp
 	virtual direct_declarator_id& get_direct_declarator_id()
 	  noexcept override;
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
 	const type_qualifier_list* get_type_qualifier_list() const noexcept
 	{ return _tql; }
@@ -1877,7 +1877,7 @@ namespace klp
 	virtual direct_declarator_id& get_direct_declarator_id()
 	  noexcept override;
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
 	const parameter_declaration_list* get_parameter_declaration_list()
 	  const noexcept
@@ -1922,7 +1922,7 @@ namespace klp
 	  return _pt;
 	}
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
 	std::shared_ptr<const types::addressable_type>
 	get_innermost_type() const noexcept;
@@ -2190,13 +2190,13 @@ namespace klp
 	const expr* get_width() const noexcept
 	{ return _width; }
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
 	const declarator* get_declarator() const noexcept
 	{ return _d; }
 
 	std::pair<types::alignment, bool>
-	find_align_attribute(klp::ccp::ast::ast &a, const architecture &arch);
+	find_align_attribute(klp::ccp::ast::ast &a, const target &tgt);
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -2279,7 +2279,7 @@ namespace klp
 
 	virtual ~unnamed_struct_or_union() noexcept override;
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
 	attribute_specifier_list* get_asl_before() noexcept
 	{ return _asl_before; }
@@ -2298,7 +2298,7 @@ namespace klp
 	virtual bool _process(processor<bool> &p) override;
 	virtual bool _process(const_processor<bool> &p) const override;
 
-	void _layout_content(ast &a, const architecture &arch);
+	void _layout_content(ast &a, const target &tgt);
 
 	types::struct_or_union_kind _souk;
 	struct_declaration_list *_sdl;
@@ -2524,7 +2524,7 @@ namespace klp
 	attribute_specifier_list *get_asl_after() noexcept
 	{ return _asl_after; }
 
-	void layout_content(ast &a, const architecture &arch);
+	void layout_content(ast &a, const target &tgt);
 
 	const types::struct_or_union_content& get_content() const noexcept
 	{ return _content; }
@@ -2647,7 +2647,7 @@ namespace klp
 	pp_token_index get_id_tok() const noexcept
 	{ return _id_tok; }
 
-	void register_at_parent(ast &a, const architecture &arch);
+	void register_at_parent(ast &a, const target &tgt);
 
 	const types::enum_content::member& to_member(const ast &a)
 	  const noexcept;
@@ -3007,7 +3007,7 @@ namespace klp
 
 	void extend(specifier_qualifier_list* &&sql);
 
-	virtual void evaluate_type(ast &a, const architecture &arch) override;
+	virtual void evaluate_type(ast &a, const target &tgt) override;
 
 	const types::qualifiers
 	get_qualifiers() const;
@@ -3652,7 +3652,7 @@ namespace klp
 	virtual std::shared_ptr<const types::addressable_type> get_type()
 	  const override;
 
-	void evaluate_type(ast &a, const architecture &arch);
+	void evaluate_type(ast &a, const target &tgt);
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -4682,9 +4682,9 @@ namespace klp
 				     callables_wrapper_type_post &&c_post)
 	  const;
 
-	void resolve(const architecture &arch);
+	void resolve(const target &tgt);
 
-	void evaluate(const architecture &arch);
+	void evaluate(const target &tgt);
 
 	const translation_unit& get_translation_unit() const
 	{ return *_tu; }
@@ -4692,7 +4692,7 @@ namespace klp
       private:
 	void _register_labels();
 
-	void _resolve_ids(const architecture &arch);
+	void _resolve_ids(const target &tgt);
 
 	std::unique_ptr<const pp_result> _pp_result;
 	std::unique_ptr<translation_unit> _tu;
@@ -4707,7 +4707,7 @@ namespace klp
 
 	virtual ~ast_pp_expr() noexcept override;
 
-	bool evaluate(const architecture &arch);
+	bool evaluate(const target &tgt);
 
       private:
 	std::unique_ptr<expr> _e;

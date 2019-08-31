@@ -24,7 +24,7 @@
 #include "types_impl.hh"
 #include "callables_wrapper.hh"
 #include "type_set.hh"
-#include "architecture.hh"
+#include "target.hh"
 #include "mp_arithmetic.hh"
 #include "target_float.hh"
 #include "execution_charset_encoder.hh"
@@ -39,7 +39,7 @@ using constness = constexpr_value::constness;
 
 
 static void _complete_type_from_init(klp::ccp::ast::ast &a,
-				     const architecture &arch,
+				     const target &tgt,
 				     init_declarator &i);
 
 static void
@@ -53,7 +53,7 @@ namespace
   public:
     _evaluator(klp::ccp::ast::ast &ast,
 	       klp::ccp::ast::_ast_entity &ae,
-	       const architecture &arch) noexcept;
+	       const target &tgt) noexcept;
 
     void operator()();
 
@@ -64,14 +64,14 @@ namespace
 
     klp::ccp::ast::ast &_ast;
     klp::ccp::ast::_ast_entity &_ae;
-    const architecture &_arch;
+    const target &_tgt;
   };
 }
 
 _evaluator::_evaluator(klp::ccp::ast::ast &ast,
 		       klp::ccp::ast::_ast_entity &ae,
-		       const architecture &arch) noexcept
-  : _ast(ast), _ae(ae), _arch(arch)
+		       const target &tgt) noexcept
+  : _ast(ast), _ae(ae), _tgt(tgt)
 {}
 
 void _evaluator::operator()()
@@ -81,25 +81,25 @@ void _evaluator::operator()()
      ([this](abstract_declarator &ad) {
        if (ad.is_evaluated())
 	  return false;
-	ad.evaluate_type(_ast, _arch);
+	ad.evaluate_type(_ast, _tgt);
 	return false;
       },
       [this](direct_abstract_declarator &dad) {
 	if (dad.is_evaluated())
 	  return false;
-	dad.evaluate_type(_ast, _arch);
+	dad.evaluate_type(_ast, _tgt);
 	return false;
       },
       [this](declarator &d) {
 	if (d.is_evaluated())
 	  return false;
-	d.evaluate_type(_ast, _arch);
+	d.evaluate_type(_ast, _tgt);
 	return false;
       },
       [this](direct_declarator &dd) {
 	if (dd.is_evaluated())
 	  return false;
-	dd.evaluate_type(_ast, _arch);
+	dd.evaluate_type(_ast, _tgt);
 	return false;
       },
       [](enumerator&) {
@@ -126,14 +126,14 @@ void _evaluator::operator()()
   auto &&post =
     (wrap_callables<default_action_nop>
      ([this](enumerator &e) {
-	 e.register_at_parent(_ast, _arch);
+	 e.register_at_parent(_ast, _tgt);
       },
       [this](init_declarator &i) {
-	_complete_type_from_init(_ast, _arch, i);
+	_complete_type_from_init(_ast, _tgt, i);
 	_check_type_completeness_local(_ast, i);
       },
       [this](parameter_declaration_abstract &pda) {
-	pda.evaluate_type(_ast, _arch);
+	pda.evaluate_type(_ast, _tgt);
       },
       [this](const stmt_return &ret_stmt) {
 	_check_return_stmt(ret_stmt);
@@ -142,7 +142,7 @@ void _evaluator::operator()()
 	_check_function_definition(fd);
       },
       [this](_typed &t) {
-	t.evaluate_type(_ast, _arch);
+	t.evaluate_type(_ast, _tgt);
      }));
 
   _ae.for_each_dfs_pre_and_po<type_set<abstract_declarator,
@@ -211,7 +211,7 @@ void _evaluator::_check_return_stmt(const klp::ccp::ast::stmt_return &ret_stmt)
   const bool ret_type_is_void = is_type<void_type>(*ret_type);
   if (ret_e) {
     if (!ret_type_is_void) {
-      check_types_assignment(_ast, _arch, *ret_type, *ret_e);
+      check_types_assignment(_ast, _tgt, *ret_type, *ret_e);
     } else if (!is_type<void_type>(*ret_e->get_type())) {
       // GCC still accepts this.
       code_remark remark(code_remark::severity::warning,
@@ -319,11 +319,11 @@ static bool _is_compound_literal_expr(const expr &e)
 }
 
 static std::shared_ptr<const array_type>
-_evaluate_init(klp::ccp::ast::ast &a, const architecture &arch,
+_evaluate_init(klp::ccp::ast::ast &a, const target &tgt,
 	       const type &t_target, initializer_expr &ie);
 
 static std::shared_ptr<const array_type>
-_evaluate_init(klp::ccp::ast::ast &a, const architecture &arch,
+_evaluate_init(klp::ccp::ast::ast &a, const target &tgt,
 	       const type &t_target, initializer_list * const il);
 
 namespace
@@ -332,12 +332,12 @@ namespace
   {
   public:
     _initializer_list_evaluator(klp::ccp::ast::ast &a,
-				const architecture &arch,
+				const target &tgt,
 				const array_type &at,
 				initializer_list &il);
 
     _initializer_list_evaluator(klp::ccp::ast::ast &a,
-				const architecture &arch,
+				const target &tgt,
 				const struct_or_union_type &sout,
 				initializer_list &il);
 
@@ -356,7 +356,7 @@ namespace
 
 
     klp::ccp::ast::ast &_a;
-    const architecture &_arch;
+    const target &_tgt;
     const array_type * const _at_start;
     const struct_or_union_type * const _sout_start;
     initializer_list &_il;
@@ -380,16 +380,16 @@ namespace
 }
 
 _initializer_list_evaluator::
-_initializer_list_evaluator(klp::ccp::ast::ast &a, const architecture &arch,
+_initializer_list_evaluator(klp::ccp::ast::ast &a, const target &tgt,
 			    const array_type &at, initializer_list &il)
-  : _a(a), _arch(arch), _at_start(&at), _sout_start(nullptr), _il(il)
+  : _a(a), _tgt(tgt), _at_start(&at), _sout_start(nullptr), _il(il)
 {}
 
 _initializer_list_evaluator::
-_initializer_list_evaluator(klp::ccp::ast::ast &a, const architecture &arch,
+_initializer_list_evaluator(klp::ccp::ast::ast &a, const target &tgt,
 			    const struct_or_union_type &sout,
 			    initializer_list &il)
-  : _a(a), _arch(arch), _at_start(nullptr), _sout_start(&sout), _il(il)
+  : _a(a), _tgt(tgt), _at_start(nullptr), _sout_start(&sout), _il(il)
 {}
 
 void _initializer_list_evaluator::operator()()
@@ -419,7 +419,7 @@ void _initializer_list_evaluator::operator()()
        i.process<void, type_set<initializer_init_list, initializer_expr> >
 	 ((wrap_callables<default_action_unreachable<void, type_set<> >::type>
 	   ([&](initializer_init_list &iil) {
-	      _evaluate_init(_a, _arch, _get_current_target_type(),
+	      _evaluate_init(_a, _tgt, _get_current_target_type(),
 			     iil.get_initializer_list());
 	    },
 	    [&](initializer_expr &ie) {
@@ -427,7 +427,7 @@ void _initializer_list_evaluator::operator()()
 		excess_elements = true;
 		return;
 	      }
-	      _evaluate_init(_a, _arch, _get_current_target_type(), ie);
+	      _evaluate_init(_a, _tgt, _get_current_target_type(), ie);
 	    })));
      });
 }
@@ -689,7 +689,7 @@ bool _initializer_list_evaluator::_descend_cursor(const expr &e_init)
     handle_types<void>
       ((wrap_callables<no_default_action>
 	([&](const array_type &next_at) {
-	   if (e_init.get_type()->is_compatible_with(_arch, next_at, true)) {
+	   if (e_init.get_type()->is_compatible_with(_tgt, next_at, true)) {
 	     stop = true;
 	     found = true;
 	     return;
@@ -720,7 +720,7 @@ bool _initializer_list_evaluator::_descend_cursor(const expr &e_init)
 
 	 },
 	 [&](const struct_or_union_type &next_sout) {
-	   if (e_init.get_type()->is_compatible_with(_arch, next_sout, true)) {
+	   if (e_init.get_type()->is_compatible_with(_tgt, next_sout, true)) {
 	     stop = true;
 	     found = true;
 	     return;
@@ -776,7 +776,7 @@ _cur_obj::_cur_obj(const struct_or_union_type &_sout,
 
 static std::shared_ptr<const array_type>
 _evaluate_array_init_from_string_literal (klp::ccp::ast::ast &a,
-					  const architecture &arch,
+					  const target &tgt,
 					  const array_type &at_target,
 					  const expr &e)
 {
@@ -786,7 +786,7 @@ _evaluate_array_init_from_string_literal (klp::ccp::ast::ast &a,
 
   bool compatible = false;
   if (at_source->get_element_type()->is_compatible_with
-      (arch, *at_target.get_element_type(), true)) {
+      (tgt, *at_target.get_element_type(), true)) {
     compatible = true;
   } else {
     handle_types<void>
@@ -827,7 +827,7 @@ _evaluate_array_init_from_string_literal (klp::ccp::ast::ast &a,
 }
 
 static std::shared_ptr<const array_type>
-_evaluate_array_init(klp::ccp::ast::ast &a, const architecture &arch,
+_evaluate_array_init(klp::ccp::ast::ast &a, const target &tgt,
 		     const array_type &at_target,
 		     const initializer_expr &ie)
 {
@@ -835,7 +835,7 @@ _evaluate_array_init(klp::ccp::ast::ast &a, const architecture &arch,
   // being a string literal.
   if (_is_string_literal_expr(ie.get_expr()) &&
       is_type<int_type>(*at_target.get_element_type())) {
-    return _evaluate_array_init_from_string_literal(a, arch, at_target,
+    return _evaluate_array_init_from_string_literal(a, tgt, at_target,
 						    ie.get_expr());
   }
 
@@ -881,7 +881,7 @@ _evaluate_array_init(klp::ccp::ast::ast &a, const architecture &arch,
 
   assert(at_source->is_complete() && at_source->is_size_constant());
 
-  if (!at_source->is_compatible_with(arch, at_target, true)) {
+  if (!at_source->is_compatible_with(tgt, at_target, true)) {
     code_remark remark
       (code_remark::severity::fatal,
        "incompatible array types at initialization",
@@ -924,7 +924,7 @@ _try_unwrap_initializer_list(initializer_list &il)
 }
 
 static std::shared_ptr<const array_type>
-_evaluate_array_init(klp::ccp::ast::ast &a, const architecture &arch,
+_evaluate_array_init(klp::ccp::ast::ast &a, const target &tgt,
 		     const array_type &at_target,
 		     initializer_list &il)
 {
@@ -936,7 +936,7 @@ _evaluate_array_init(klp::ccp::ast::ast &a, const architecture &arch,
     if (unwrapped_ie) {
       if (_is_string_literal_expr(unwrapped_ie->get_expr()))
 	return (_evaluate_array_init_from_string_literal
-		(a, arch, at_target, unwrapped_ie->get_expr()));
+		(a, tgt, at_target, unwrapped_ie->get_expr()));
       }
   }
 
@@ -950,7 +950,7 @@ _evaluate_array_init(klp::ccp::ast::ast &a, const architecture &arch,
     throw semantic_except(remark);
   }
 
-  _initializer_list_evaluator ev(a, arch, at_target, il);
+  _initializer_list_evaluator ev(a, tgt, at_target, il);
   ev();
   if (!at_target.is_complete())
     return at_target.set_length_from_initializer(ev.grab_array_length());
@@ -959,7 +959,7 @@ _evaluate_array_init(klp::ccp::ast::ast &a, const architecture &arch,
 }
 
 static void
-_evaluate_sou_init(klp::ccp::ast::ast &a, const architecture &arch,
+_evaluate_sou_init(klp::ccp::ast::ast &a, const target &tgt,
 		   const struct_or_union_type &sout_target,
 		   initializer_list &il)
 {
@@ -972,31 +972,31 @@ _evaluate_sou_init(klp::ccp::ast::ast &a, const architecture &arch,
     throw semantic_except(remark);
   }
 
-  _initializer_list_evaluator ev(a, arch, sout_target, il);
+  _initializer_list_evaluator ev(a, tgt, sout_target, il);
   ev();
 }
 
 static std::shared_ptr<const array_type>
-_evaluate_init(klp::ccp::ast::ast &a, const architecture &arch,
+_evaluate_init(klp::ccp::ast::ast &a, const target &tgt,
 	       const type &t_target, initializer_expr &ie)
 {
   return
     (handle_types<std::shared_ptr<const array_type>>
      ((wrap_callables<no_default_action>
        ([&](const array_type &at) {
-	  return _evaluate_array_init(a, arch, at, ie);
+	  return _evaluate_array_init(a, tgt, at, ie);
 	},
 	[&](const type &t) {
 	  expr &e_source = ie.get_expr();
 	  e_source.decay_array_types();
-	  check_types_assignment(a, arch, t, e_source);
+	  check_types_assignment(a, tgt, t, e_source);
 	  return nullptr;
 	})),
       t_target));
 }
 
 static std::shared_ptr<const array_type>
-_evaluate_init(klp::ccp::ast::ast &a, const architecture &arch,
+_evaluate_init(klp::ccp::ast::ast &a, const target &tgt,
 	       const type &t_target, initializer_list * const il)
 {
   std::shared_ptr<const array_type> completed_at;
@@ -1005,7 +1005,7 @@ _evaluate_init(klp::ccp::ast::ast &a, const architecture &arch,
     ((wrap_callables<no_default_action>
       ([&](const array_type &at_target) {
 	 if (il) {
-	   completed_at = _evaluate_array_init(a, arch, at_target, *il);
+	   completed_at = _evaluate_array_init(a, tgt, at_target, *il);
 	 } else {
 	   // Empty initializer list. Complete the array to zero size,
 	   // if needed.
@@ -1017,7 +1017,7 @@ _evaluate_init(klp::ccp::ast::ast &a, const architecture &arch,
        },
        [&](const struct_or_union_type &sout_target) {
 	 if (il)
-	   _evaluate_sou_init(a, arch, sout_target, *il);
+	   _evaluate_sou_init(a, tgt, sout_target, *il);
        },
        [&](const type &t) {
 	 // Scalar initialization with single value wrapped in
@@ -1037,7 +1037,7 @@ _evaluate_init(klp::ccp::ast::ast &a, const architecture &arch,
 	 }
 	 expr &e_source = unwrapped_ie->get_expr();
 	 e_source.decay_array_types();
-	 check_types_assignment(a, arch, t_target, e_source);
+	 check_types_assignment(a, tgt, t_target, e_source);
        })),
      t_target);
 
@@ -1045,7 +1045,7 @@ _evaluate_init(klp::ccp::ast::ast &a, const architecture &arch,
 }
 
 static std::shared_ptr<const array_type>
-_evaluate_init(klp::ccp::ast::ast &a, const architecture &arch,
+_evaluate_init(klp::ccp::ast::ast &a, const target &tgt,
 	       const type &t_target, initializer &i)
 {
   std::shared_ptr<const array_type> completed_at;
@@ -1053,10 +1053,10 @@ _evaluate_init(klp::ccp::ast::ast &a, const architecture &arch,
   i.process<void, type_set<initializer_expr, initializer_init_list> >
     (wrap_callables<default_action_unreachable<void, type_set<> >::type>
      ([&](initializer_expr &ie) {
-	completed_at = _evaluate_init(a, arch, t_target, ie);
+	completed_at = _evaluate_init(a, tgt, t_target, ie);
       },
       [&](initializer_init_list &iil) {
-	completed_at = _evaluate_init(a, arch, t_target,
+	completed_at = _evaluate_init(a, tgt, t_target,
 				      iil.get_initializer_list());
       }));
 
@@ -1064,7 +1064,7 @@ _evaluate_init(klp::ccp::ast::ast &a, const architecture &arch,
 }
 
 static void _complete_type_from_init(klp::ccp::ast::ast &a,
-				     const architecture &arch,
+				     const target &tgt,
 				     init_declarator &i)
 
 {
@@ -1076,7 +1076,7 @@ static void _complete_type_from_init(klp::ccp::ast::ast &a,
   direct_declarator_id &ddid = i.get_declarator().get_direct_declarator_id();
 
   std::shared_ptr<const array_type> completed_at =
-    _evaluate_init(a, arch, *ddid.get_type(), *i.get_initializer());
+    _evaluate_init(a, tgt, *ddid.get_type(), *i.get_initializer());
   if (static_cast<bool>(completed_at)) {
     ddid.complete_type(std::move(completed_at));
   }
@@ -1185,7 +1185,7 @@ _check_type_completeness_local(klp::ccp::ast::ast &a,
 class align_attribute_finder
 {
 public:
-  align_attribute_finder(klp::ccp::ast::ast &a, const architecture &arch,
+  align_attribute_finder(klp::ccp::ast::ast &a, const target &tgt,
 			 const bool choose_max)
     noexcept;
 
@@ -1196,16 +1196,16 @@ public:
 private:
   alignment _result;
   klp::ccp::ast::ast &_a;
-  const architecture &_arch;
+  const target &_tgt;
   const bool _choose_max;
 };
 
 
 align_attribute_finder::align_attribute_finder(klp::ccp::ast::ast &a,
-					       const architecture &arch,
+					       const target &tgt,
 					       const bool choose_max)
   noexcept
-  : _a(a), _arch(arch), _choose_max(choose_max)
+  : _a(a), _tgt(tgt), _choose_max(choose_max)
 {}
 
 bool align_attribute_finder::operator()(attribute &attr)
@@ -1217,8 +1217,8 @@ bool align_attribute_finder::operator()(attribute &attr)
   mpa::limbs::size_type log2_value = 0;
   if (!params) {
     // An single 'aligned' attribute w/o any parameters
-    // means the architecture's "biggest alignment".
-    log2_value = _arch.get_biggest_alignment_log2();
+    // means the target's "biggest alignment".
+    log2_value = _tgt.get_biggest_alignment_log2();
 
   } else {
     if (!params || params->size() != 1) {
@@ -1232,7 +1232,7 @@ bool align_attribute_finder::operator()(attribute &attr)
 
     expr &e = (*params)[0];
     if (!e.is_evaluated()) {
-      _evaluator ev(_a, e, _arch);
+      _evaluator ev(_a, e, _tgt);
       ev();
     }
     if (!e.is_evaluated()) {
@@ -1345,7 +1345,7 @@ class mode_attribute_finder
 {
 public:
 
-  mode_attribute_finder(klp::ccp::ast::ast &a, const architecture &arch)
+  mode_attribute_finder(klp::ccp::ast::ast &a, const target &tgt)
     noexcept;
 
   bool operator()(const attribute &attr);
@@ -1364,16 +1364,16 @@ public:
 
 private:
   klp::ccp::ast::ast &_a;
-  const architecture &_arch;
+  const target &_tgt;
   int_mode_kind _imk;
   float_mode_kind _fmk;
   pp_token_index _mode_tok;
 };
 
 mode_attribute_finder::mode_attribute_finder(klp::ccp::ast::ast &a,
-					     const architecture &arch)
+					     const target &tgt)
   noexcept
-  : _a(a), _arch(arch),
+  : _a(a), _tgt(tgt),
     _imk(int_mode_kind::imk_none), _fmk(float_mode_kind::fmk_none)
 {}
 
@@ -1419,9 +1419,9 @@ bool mode_attribute_finder::operator()(const attribute &attr)
   } else if (id == "TI" || id == "__TI__") {
     _imk = int_mode_kind::imk_TI;
   } else if (id == "word" || id == "__word__") {
-    _imk = _arch.get_word_mode();
+    _imk = _tgt.get_word_mode();
   } else if (id == "pointer" || id == "__pointer__") {
-    _imk = _arch.get_pointer_mode();
+    _imk = _tgt.get_pointer_mode();
   } else if (id == "SF" || id == "__SF__") {
     _fmk = float_mode_kind::fmk_SF;
   } else if (id == "DF" || id == "__DF__") {
@@ -1475,8 +1475,8 @@ apply_to_type(std::shared_ptr<const addressable_type> &&orig_t)
 	   throw semantic_except(remark);
 	 }
 
-	 return std_int_type::create(_arch.int_mode_to_std_int_kind(_imk),
-				     it->is_signed(_arch),
+	 return std_int_type::create(_tgt.int_mode_to_std_int_kind(_imk),
+				     it->is_signed(_tgt),
 				     it->get_qualifiers());
 
        },
@@ -1490,14 +1490,14 @@ apply_to_type(std::shared_ptr<const addressable_type> &&orig_t)
 	   throw semantic_except(remark);
 	 }
 
-	 return real_float_type::create(_arch.float_mode_to_float_kind(_fmk),
+	 return real_float_type::create(_tgt.float_mode_to_float_kind(_fmk),
 					rft->get_qualifiers());
 
        },
        [&](std::shared_ptr<const pointer_type> &&pt)
 		-> std::shared_ptr<const addressable_type> {
 	 if (_imk == int_mode_kind::imk_none ||
-	     _imk != _arch.get_pointer_mode()) {
+	     _imk != _tgt.get_pointer_mode()) {
 	   code_remark remark
 	     (code_remark::severity::fatal,
 	      "invalid 'mode' attribute specifier for pointer type",
@@ -1523,9 +1523,9 @@ apply_to_type(std::shared_ptr<const addressable_type> &&orig_t)
 
 
 
-void ast_translation_unit::evaluate(const architecture &arch)
+void ast_translation_unit::evaluate(const target &tgt)
 {
-  _evaluator ev(*this, *_tu, arch);
+  _evaluator ev(*this, *_tu, tgt);
   ev();
 
   // Finally, sweep over all global objects defined in this
@@ -1546,9 +1546,9 @@ void ast_translation_unit::evaluate(const architecture &arch)
 }
 
 
-bool ast_pp_expr::evaluate(const architecture &arch)
+bool ast_pp_expr::evaluate(const target &tgt)
 {
-  _evaluator ev(*this, *_e, arch);
+  _evaluator ev(*this, *_e, tgt);
   ev();
 
   if (!_e->is_constexpr() ||
@@ -1567,7 +1567,7 @@ bool ast_pp_expr::evaluate(const architecture &arch)
 
 
 void klp::ccp::ast::specifier_qualifier_list::
-evaluate_type(ast &a, const architecture &arch)
+evaluate_type(ast &a, const target &tgt)
 {
   types::qualifiers qs;
 
@@ -1596,7 +1596,7 @@ evaluate_type(ast &a, const architecture &arch)
 	switch (r.get_kind()) {
 	case type_specifier_tdid::resolved::resolved_kind::builtin_typedef:
 	  result = (r.get_builtin_typedef_factory().create()
-		    ->evaluate(a, arch, ts_tdid)->amend_qualifiers(qs));
+		    ->evaluate(a, tgt, ts_tdid)->amend_qualifiers(qs));
 	  break;
 
 	case type_specifier_tdid::resolved::resolved_kind::init_declarator:
@@ -1611,7 +1611,7 @@ evaluate_type(ast &a, const architecture &arch)
 	};
       },
       [&](struct_or_union_def &soud) {
-	soud.layout_content(a, arch);
+	soud.layout_content(a, tgt);
 	result = struct_or_union_type::create(soud.get_tag_kind(),
 					      soud.get_decl_list_node(), qs);
       },
@@ -1620,9 +1620,9 @@ evaluate_type(ast &a, const architecture &arch)
 					      sour.get_decl_list_node(), qs);
       },
       [&](enum_def &ed) {
-	align_attribute_finder aaf(a, arch, false);
+	align_attribute_finder aaf(a, tgt, false);
 	packed_attribute_finder paf(a);
-	mode_attribute_finder maf(a, arch);
+	mode_attribute_finder maf(a, tgt);
 	if (ed.get_asl_before()) {
 	  ed.get_asl_before()->for_each_attribute(aaf);
 	  ed.get_asl_before()->for_each_attribute(paf);
@@ -1644,8 +1644,8 @@ evaluate_type(ast &a, const architecture &arch)
 	}
 
 	enum_content &ec = ed.get_enumerator_list().get_content();
-	arch.evaluate_enum_type(a, ec, paf.get_result(),
-				maf.get_int_mode_result(), aaf.grab_result());
+	tgt.evaluate_enum_type(a, ec, paf.get_result(),
+			       maf.get_int_mode_result(), aaf.grab_result());
 	result = enum_type::create(ed.get_decl_list_node(), qs);
       },
       [&](const enum_ref &er) {
@@ -1928,7 +1928,7 @@ parameter_declaration_declarator::get_type() const
 
 
 void parameter_declaration_abstract::
-evaluate_type(ast &a, const architecture &arch)
+evaluate_type(ast &a, const target &tgt)
 {
   if (static_cast<bool>(_type))
     return;
@@ -1963,8 +1963,8 @@ evaluate_type(ast &a, const architecture &arch)
        })),
      _ds.get_type());
 
-  align_attribute_finder aaf(a, arch, true);
-  mode_attribute_finder maf(a, arch);
+  align_attribute_finder aaf(a, tgt, true);
+  mode_attribute_finder maf(a, tgt);
   if (get_asl()) {
     get_asl()->for_each_attribute(aaf);
     get_asl()->for_each_attribute(maf);
@@ -1987,13 +1987,13 @@ parameter_declaration_abstract::get_type()const
 
 
 void direct_abstract_declarator_parenthesized::
-evaluate_type(ast &a, const architecture &arch)
+evaluate_type(ast &a, const target &tgt)
 {
   std::shared_ptr<const addressable_type> t = _get_enclosing_type();
 
   if (_asl) {
-    align_attribute_finder aaf(a, arch, true);
-    mode_attribute_finder maf(a, arch);
+    align_attribute_finder aaf(a, tgt, true);
+    mode_attribute_finder maf(a, tgt);
 
     _asl->for_each_attribute(aaf);
     _asl->for_each_attribute(maf);
@@ -2009,11 +2009,11 @@ evaluate_type(ast &a, const architecture &arch)
 }
 
 static void evaluate_array_size_expr(expr &size, klp::ccp::ast::ast &a,
-				     const architecture &arch)
+				     const target &tgt)
 {
   // Array declarators are evaluated in DFS pre, evaluate the size
   // expr.
-  _evaluator e(a, size, arch);
+  _evaluator e(a, size, tgt);
   e();
 
 
@@ -2041,7 +2041,7 @@ static void evaluate_array_size_expr(expr &size, klp::ccp::ast::ast &a,
 }
 
 void direct_abstract_declarator_array::
-evaluate_type(ast &a, const architecture &arch)
+evaluate_type(ast &a, const target &tgt)
 {
   const object_type &o_et =
     handle_types<const object_type &>
@@ -2086,7 +2086,7 @@ evaluate_type(ast &a, const architecture &arch)
     if (_tql)
       qs = _tql->get_qualifiers();
 
-    mode_attribute_finder maf(a, arch);
+    mode_attribute_finder maf(a, tgt);
     if (pda->get_asl())
       pda->get_asl()->for_each_attribute(maf);
     pda->get_declaration_specifiers().for_each_attribute(maf);
@@ -2105,7 +2105,7 @@ evaluate_type(ast &a, const architecture &arch)
     }
 
     if (_size) {
-      evaluate_array_size_expr(*_size, a, arch);
+      evaluate_array_size_expr(*_size, a, tgt);
       _set_type(o_et.derive_array(_size));
     } else {
       _set_type(o_et.derive_array(_vla_unspec_size));
@@ -2114,7 +2114,7 @@ evaluate_type(ast &a, const architecture &arch)
 }
 
 void direct_abstract_declarator_func::
-evaluate_type(ast &a, const architecture &arch)
+evaluate_type(ast &a, const target &tgt)
 {
   const returnable_type &r_t =
     handle_types<const returnable_type &>
@@ -2135,7 +2135,7 @@ evaluate_type(ast &a, const architecture &arch)
   if (_ptl) {
     // direct_declarator_func is evaluated in DFS PRE.
     // Evaluate parameter types first.
-    _evaluator e(a, *_ptl, arch);
+    _evaluator e(a, *_ptl, tgt);
     e();
 
     types::parameter_type_list ptl;
@@ -2176,7 +2176,7 @@ evaluate_type(ast &a, const architecture &arch)
   if (pda) {
     // Outermost array in a function parameter declaration, adjust the
     // type to "pointer to element type".
-    mode_attribute_finder maf(a, arch);
+    mode_attribute_finder maf(a, tgt);
     if (pda->get_asl())
       pda->get_asl()->for_each_attribute(maf);
     pda->get_declaration_specifiers().for_each_attribute(maf);
@@ -2188,16 +2188,16 @@ evaluate_type(ast &a, const architecture &arch)
 }
 
 void abstract_declarator::
-evaluate_type(ast &a, const architecture &arch)
+evaluate_type(ast &a, const target &tgt)
 {
   std::shared_ptr<const addressable_type> t = _get_enclosing_type();
   if (_pt) {
     for (auto tql : _pt->get_type_qualifier_lists()) {
       qualifiers qs;
       alignment align;
-      mode_attribute_finder maf(a, arch);
+      mode_attribute_finder maf(a, tgt);
       if (tql) {
-	align_attribute_finder aaf(a, arch, false);
+	align_attribute_finder aaf(a, tgt, false);
 	qs = tql->get_qualifiers();
 	tql->for_each_attribute(aaf);
 	tql->for_each_attribute(maf);
@@ -2219,8 +2219,8 @@ evaluate_type(ast &a, const architecture &arch)
     // attributes at the enclosing context (which take precedence
     // over any such attribute from the base type or attached to any
     // declarator).
-    align_attribute_finder aaf(a, arch, true);
-    mode_attribute_finder maf(a, arch);
+    align_attribute_finder aaf(a, tgt, true);
+    mode_attribute_finder maf(a, tgt);
     for_each_ancestor<type_set<type_name, parameter_declaration_abstract> >
       (wrap_callables<no_default_action>
        ([&](type_name &tn) {
@@ -2256,7 +2256,7 @@ evaluate_type(ast &a, const architecture &arch)
 }
 
 void direct_declarator_id::
-evaluate_type(ast &a, const architecture &arch)
+evaluate_type(ast &a, const target &tgt)
 {
   std::shared_ptr<const addressable_type> a_t = _get_enclosing_type();
 
@@ -2278,8 +2278,8 @@ evaluate_type(ast &a, const architecture &arch)
 	  (id.get_unique_parent<init_declarator_list>()
 	   .get_unique_parent<declaration>());
 
-	align_attribute_finder aaf(a, arch, true);
-	mode_attribute_finder maf(a, arch);
+	align_attribute_finder aaf(a, tgt, true);
+	mode_attribute_finder maf(a, tgt);
 	if (id.get_asl_after()) {
 	  id.get_asl_after()->for_each_attribute(aaf);
 	  id.get_asl_after()->for_each_attribute(maf);
@@ -2321,8 +2321,8 @@ evaluate_type(ast &a, const architecture &arch)
 	     })),
 	   *a_t);
 
-	align_attribute_finder aaf(a, arch, true);
-	mode_attribute_finder maf(a, arch);
+	align_attribute_finder aaf(a, tgt, true);
+	mode_attribute_finder maf(a, tgt);
 	if (pdd.get_asl()) {
 	  pdd.get_asl()->for_each_attribute(aaf);
 	  pdd.get_asl()->for_each_attribute(maf);
@@ -2362,7 +2362,7 @@ evaluate_type(ast &a, const architecture &arch)
       __builtin_unreachable();
     }
 
-    if (!a_t->is_compatible_with(arch, *prev_ddid->get_type(), false)) {
+    if (!a_t->is_compatible_with(tgt, *prev_ddid->get_type(), false)) {
       code_remark remark(code_remark::severity::warning,
 			 "incompatible redeclaration",
 			 a.get_pp_result(), get_tokens_range());
@@ -2372,7 +2372,7 @@ evaluate_type(ast &a, const architecture &arch)
 	       l->is_target_visible()) {
       // See whether composite type construction gives something new.
       std::shared_ptr<const addressable_type> comp_type
-	= a_t->construct_composite(arch, *prev_ddid->get_type());
+	= a_t->construct_composite(tgt, *prev_ddid->get_type());
       if (comp_type) {
 	// It did.
 	l->set_type_modified_through_linkage();
@@ -2385,13 +2385,13 @@ evaluate_type(ast &a, const architecture &arch)
 }
 
 void direct_declarator_parenthesized::
-evaluate_type(ast &a, const architecture &arch)
+evaluate_type(ast &a, const target &tgt)
 {
   std::shared_ptr<const addressable_type> t = _get_enclosing_type();
 
   if (_asl) {
-    align_attribute_finder aaf(a, arch, false);
-    mode_attribute_finder maf(a, arch);
+    align_attribute_finder aaf(a, tgt, false);
+    mode_attribute_finder maf(a, tgt);
 
     _asl->for_each_attribute(aaf);
     _asl->for_each_attribute(maf);
@@ -2407,7 +2407,7 @@ evaluate_type(ast &a, const architecture &arch)
 }
 
 void direct_declarator_array::
-evaluate_type(ast &a, const architecture &arch)
+evaluate_type(ast &a, const target &tgt)
 {
   const object_type &o_et =
     handle_types<const object_type&>
@@ -2434,7 +2434,7 @@ evaluate_type(ast &a, const architecture &arch)
   }
 
   if (_size) {
-    evaluate_array_size_expr(*_size, a, arch);
+    evaluate_array_size_expr(*_size, a, tgt);
     _set_type(o_et.derive_array(_size));
   } else {
     // No size given. In the context of init declarators, the type
@@ -2444,7 +2444,7 @@ evaluate_type(ast &a, const architecture &arch)
 }
 
 void direct_declarator_func::
-evaluate_type(ast &a, const architecture &arch)
+evaluate_type(ast &a, const target &tgt)
 {
   const returnable_type &r_t =
     handle_types<const returnable_type&>
@@ -2465,7 +2465,7 @@ evaluate_type(ast &a, const architecture &arch)
   if (_ptl) {
     // direct_declarator_func is evaluated in DFS PRE.
     // Evaluate parameter types first.
-    _evaluator e(a, *_ptl, arch);
+    _evaluator e(a, *_ptl, tgt);
     e();
 
     types::parameter_type_list ptl;
@@ -2504,16 +2504,16 @@ evaluate_type(ast &a, const architecture &arch)
   _set_type(std::move(t));
 }
 
-void declarator::evaluate_type(ast &a, const architecture &arch)
+void declarator::evaluate_type(ast &a, const target &tgt)
 {
   std::shared_ptr<const addressable_type> a_t = _get_enclosing_type();
   if (_pt) {
     for (auto tql : _pt->get_type_qualifier_lists()) {
       qualifiers qs;
       alignment align;
-      mode_attribute_finder maf(a, arch);
+      mode_attribute_finder maf(a, tgt);
       if (tql) {
-	align_attribute_finder aaf(a, arch, false);
+	align_attribute_finder aaf(a, tgt, false);
 	qs = tql->get_qualifiers();
 	tql->for_each_attribute(aaf);
 	tql->for_each_attribute(maf);
@@ -2530,7 +2530,7 @@ void declarator::evaluate_type(ast &a, const architecture &arch)
   _set_type(std::move(a_t));
 }
 
-void type_name::evaluate_type(ast&, const architecture&)
+void type_name::evaluate_type(ast&, const target&)
 {
   if (_ad)
     _set_type(_ad->get_innermost_type());
@@ -2540,7 +2540,7 @@ void type_name::evaluate_type(ast&, const architecture&)
 
 std::pair<types::alignment, bool>
 struct_declarator::find_align_attribute(klp::ccp::ast::ast &a,
-					const architecture &arch)
+					const target &tgt)
 {
   struct_declaration_c99 &enclosing_decl =
     (get_unique_parent<struct_declarator_list>()
@@ -2568,7 +2568,7 @@ struct_declarator::find_align_attribute(klp::ccp::ast::ast &a,
       }));
 
 
-  align_attribute_finder aaf(a, arch, true);
+  align_attribute_finder aaf(a, tgt, true);
   if (enclosing_decl.get_specifier_qualifier_list()) {
     enclosing_decl.get_specifier_qualifier_list()->for_each_attribute(aaf);
     enclosing_decl.get_specifier_qualifier_list()->for_each_attribute(paf);
@@ -2586,7 +2586,7 @@ struct_declarator::find_align_attribute(klp::ccp::ast::ast &a,
   return std::make_pair(aaf.grab_result(), paf.get_result());
 }
 
-void struct_declarator::evaluate_type(ast &a, const architecture &arch)
+void struct_declarator::evaluate_type(ast &a, const target &tgt)
 {
   std::shared_ptr<const addressable_type> a_t;
   specifier_qualifier_list *sql = (get_unique_parent<struct_declarator_list>()
@@ -2599,12 +2599,12 @@ void struct_declarator::evaluate_type(ast &a, const architecture &arch)
     a_t = sql->get_type();
   }
 
-  std::pair<alignment, bool> align = this->find_align_attribute(a, arch);
+  std::pair<alignment, bool> align = this->find_align_attribute(a, tgt);
   if (!_width) {
     // Not a bitfield.
     // Oddly, gcc seems to ignore 'mode' attributes for bitfields. So
     // do it here.
-    mode_attribute_finder maf(a, arch);
+    mode_attribute_finder maf(a, tgt);
     sql->for_each_attribute(maf);
     if (_asl_after)
       _asl_after->for_each_attribute(maf);
@@ -2614,7 +2614,7 @@ void struct_declarator::evaluate_type(ast &a, const architecture &arch)
 
     if (align.first.is_set() &&
 	(align.second ||
-	 (a_t->get_effective_alignment(arch) <
+	 (a_t->get_effective_alignment(tgt) <
 	  align.first.get_log2_value()))) {
       a_t = a_t->set_user_alignment(std::move(align.first));
     } else if (align.second) {
@@ -2643,12 +2643,12 @@ void struct_declarator::evaluate_type(ast &a, const architecture &arch)
 	    return et->get_underlying_type();
 	  },
 	  [&](std::shared_ptr<const returnable_int_type> &&_r_it) {
-	    if (_r_it->is_signed(arch) && arch.is_bitfield_default_signed()) {
+	    if (_r_it->is_signed(tgt) && tgt.is_bitfield_default_signed()) {
 	      if (!sql->is_signed_explicit()) {
 		// Whether or not a bitfield without an explicit
 		// 'signed' specifier is actually signed or not is
 		// implementation specific, i.e. determined by the
-		// arch/ABI. In the evaluation of the specifier
+		// target/ABI. In the evaluation of the specifier
 		// qualifier list, we chose the wrong default. Correct
 		// this.
 		return _r_it->to_unsigned();
@@ -2701,7 +2701,7 @@ void struct_declarator::evaluate_type(ast &a, const architecture &arch)
   mpa::limbs::size_type width;
   if (!ls_width.fits_into_type<mpa::limbs::size_type>() ||
       ((width = ls_width.to_type<mpa::limbs::size_type>()) >
-       ri_t->get_width(arch))) {
+       ri_t->get_width(tgt))) {
     code_remark remark(code_remark::severity::fatal,
 		       "bit-field width exceeds underlying type's width",
 		       a.get_pp_result(), _width->get_tokens_range());
@@ -2823,9 +2823,9 @@ create_content(ast &a, const struct_or_union_kind souk) const
 }
 
 void klp::ccp::ast::unnamed_struct_or_union::
-_layout_content(ast &a, const architecture &arch)
+_layout_content(ast &a, const target &tgt)
 {
-  align_attribute_finder aaf(a, arch, false);
+  align_attribute_finder aaf(a, tgt, false);
   if (_asl_before)
     _asl_before->for_each_attribute(aaf);
   if (_asl_after)
@@ -2836,25 +2836,25 @@ _layout_content(ast &a, const architecture &arch)
 
   switch (_souk) {
   case struct_or_union_kind::souk_struct:
-    arch.layout_struct(_content, aaf.grab_result());
+    tgt.layout_struct(_content, aaf.grab_result());
     break;
 
   case struct_or_union_kind::souk_union:
-    arch.layout_union(_content, aaf.grab_result());
+    tgt.layout_union(_content, aaf.grab_result());
     break;
   }
 }
 
-void unnamed_struct_or_union::evaluate_type(ast &a, const architecture &arch)
+void unnamed_struct_or_union::evaluate_type(ast &a, const target &tgt)
 {
-  _layout_content(a, arch);
+  _layout_content(a, tgt);
   _set_type(struct_or_union_type::create(_souk, _content));
 }
 
 void klp::ccp::ast::struct_or_union_def::
-layout_content(ast &a, const architecture &arch)
+layout_content(ast &a, const target &tgt)
 {
-  align_attribute_finder aaf(a, arch, false);
+  align_attribute_finder aaf(a, tgt, false);
   if (_asl_before)
     _asl_before->for_each_attribute(aaf);
   if (_asl_after)
@@ -2865,16 +2865,16 @@ layout_content(ast &a, const architecture &arch)
 
   switch (_souk) {
   case struct_or_union_kind::souk_struct:
-    arch.layout_struct(_content, aaf.grab_result());
+    tgt.layout_struct(_content, aaf.grab_result());
     break;
 
   case struct_or_union_kind::souk_union:
-    arch.layout_union(_content, aaf.grab_result());
+    tgt.layout_union(_content, aaf.grab_result());
     break;
   }
 }
 
-void enumerator::register_at_parent(ast &a, const architecture &arch)
+void enumerator::register_at_parent(ast &a, const target &tgt)
 {
   const std::string& name = a.get_pp_tokens()[_id_tok].get_value();
 
@@ -2915,7 +2915,7 @@ void enumerator::register_at_parent(ast &a, const architecture &arch)
 
   } else {
     try {
-      ec.add_member(*this, name, arch);
+      ec.add_member(*this, name, tgt);
 
     } catch (const std::overflow_error&) {
       code_remark remark(code_remark::severity::fatal,
@@ -3101,7 +3101,7 @@ void expr::_convert_type_for_expr_context()
 }
 
 
-void expr_comma::evaluate_type(ast&, const architecture&)
+void expr_comma::evaluate_type(ast&, const target&)
 {
   _set_type(_right.get_type());
   if (_right.is_constexpr()) {
@@ -3115,7 +3115,7 @@ void expr_comma::evaluate_type(ast&, const architecture&)
 static mpa::limbs _check_pointer_arithmetic(klp::ccp::ast::ast &a,
 					    const pointer_type &pt,
 					    const expr &e,
-					    const architecture &arch)
+					    const target &tgt)
 {
   return (handle_types<mpa::limbs>
 	  ((wrap_callables<default_action_unreachable<mpa::limbs, type_set<>>
@@ -3128,7 +3128,7 @@ static mpa::limbs _check_pointer_arithmetic(klp::ccp::ast::ast &a,
 		 a.get_remarks().add(remark);
 		 throw semantic_except(remark);
 	       } else if (o_t.is_size_constant()) {
-		 return o_t.get_size(arch);
+		 return o_t.get_size(tgt);
 	       } else {
 		 return mpa::limbs{};
 	       }
@@ -3177,7 +3177,7 @@ _do_pointer_arithmetic(const constexpr_value &cv_pointer,
 
 void
 klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
-				 const architecture &arch,
+				 const target &tgt,
 				 const type &t_target,
 				 const expr &e_source)
 {
@@ -3290,7 +3290,7 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 	 if (!is_type<void_type>(pointed_to_type_target) &&
 	     !is_type<void_type>(pointed_to_type_source) &&
 	     !(pointed_to_type_target
-	       .is_compatible_with(arch, pointed_to_type_source,
+	       .is_compatible_with(tgt, pointed_to_type_source,
 				   true))) {
 	   // Ugh, oh. But gcc still only emits a warning though.
 	   handle_types<void>
@@ -3300,8 +3300,8 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 		    const int_type &ptt_it_source) {
 		  if (pointed_to_type_target.is_complete() &&
 		      pointed_to_type_source.is_complete() &&
-		      ptt_it_target.get_width(arch) !=
-		      ptt_it_source.get_width(arch)) {
+		      ptt_it_target.get_width(tgt) !=
+		      ptt_it_source.get_width(tgt)) {
 		    code_remark remark
 		      (code_remark::severity::warning,
 		       "assigning pointers to integer types of different width",
@@ -3335,7 +3335,7 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 	      a.get_pp_result(), e_source.get_tokens_range());
 	   a.get_remarks().add(remark);
 	   throw semantic_except(remark);
-	 } else if (!target.is_compatible_with(arch, source, true)) {
+	 } else if (!target.is_compatible_with(tgt, source, true)) {
 	   code_remark remark
 	     (code_remark::severity::fatal,
 	      "assignment from incompatible struct or union type",
@@ -3357,7 +3357,7 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
      t_target, *e_source.get_type());
 }
 
-void expr_assignment::evaluate_type(ast &a, const architecture &arch)
+void expr_assignment::evaluate_type(ast &a, const target &tgt)
 {
   if (!_lhs.is_lvalue()) {
     code_remark remark(code_remark::severity::fatal,
@@ -3407,7 +3407,7 @@ void expr_assignment::evaluate_type(ast &a, const architecture &arch)
   switch (_op) {
   case assign_op::set:
     {
-      check_types_assignment(a, arch, *t_lhs, _rhs);
+      check_types_assignment(a, tgt, *t_lhs, _rhs);
       _set_type(t_lhs);
       _convert_type_for_expr_context();
     }
@@ -3420,7 +3420,7 @@ void expr_assignment::evaluate_type(ast &a, const architecture &arch)
     if ((handle_types<bool>
 	 ((wrap_callables<default_action_return_value<bool, false>::type>
 	   ([&](const pointer_type &pt_lhs, const int_type&) {
-	      _check_pointer_arithmetic(a, pt_lhs, _lhs, arch);
+	      _check_pointer_arithmetic(a, pt_lhs, _lhs, tgt);
 	      check_enum_completeness_rhs();
 	      _set_type(pt_lhs.strip_qualifiers());
 	      _convert_type_for_expr_context();
@@ -3484,7 +3484,7 @@ void expr_assignment::evaluate_type(ast &a, const architecture &arch)
 }
 
 
-void expr_conditional::evaluate_type(ast &a, const architecture &arch)
+void expr_conditional::evaluate_type(ast &a, const target &tgt)
 {
   if (!is_scalar_type(*_cond.get_type())) {
     code_remark remark
@@ -3550,14 +3550,14 @@ void expr_conditional::evaluate_type(ast &a, const architecture &arch)
 	 check_enum_completeness_t_false();
 
 	 const std::shared_ptr<const arithmetic_type> at_result
-	   = at_true.arithmetic_conversion(arch, at_false);
+	   = at_true.arithmetic_conversion(tgt, at_false);
 	 _set_type(at_result);
 
 	 if (cv_value) {
 	   handle_types<void>
 	     ((wrap_callables<default_action_nop>
 	       ([&](const int_type &it_result) {
-		  target_int i_result = cv_value->convert_to(arch, it_result);
+		  target_int i_result = cv_value->convert_to(tgt, it_result);
 		  // Strictly speaking, the result is an integer
 		  // constant expression if and only if all
 		  // constituent subexpressions are. However, gcc relaxes this
@@ -3580,7 +3580,7 @@ void expr_conditional::evaluate_type(ast &a, const architecture &arch)
 		  }
 		},
 		[&](const real_float_type &rft_result) {
-		  target_float f_result = cv_value->convert_to(arch,
+		  target_float f_result = cv_value->convert_to(tgt,
 							       rft_result);
 		  if (cv_cond->has_constness(constness::
 						c_arithmetic_constant_expr) &&
@@ -3635,7 +3635,7 @@ void expr_conditional::evaluate_type(ast &a, const architecture &arch)
 
 	 } else {
 	  if (!(pointed_to_type_true.is_compatible_with
-		(arch, pointed_to_type_false, true))) {
+		(tgt, pointed_to_type_false, true))) {
 	    code_remark remark
 	      (code_remark::severity::fatal,
 	       "ternary operator's operands have incompatible pointer types",
@@ -3731,7 +3731,7 @@ void expr_conditional::evaluate_type(ast &a, const architecture &arch)
        },
        [&](const struct_or_union_type &sout_true,
 	   const struct_or_union_type &sout_false) {
-	 if (!sout_true.is_compatible_with(arch, sout_false, true)) {
+	 if (!sout_true.is_compatible_with(tgt, sout_false, true)) {
 	   code_remark remark
 	     (code_remark::severity::fatal,
 	      "ternary operator's operands have incompatible types",
@@ -3781,10 +3781,10 @@ void expr_conditional::evaluate_type(ast &a, const architecture &arch)
 
 void expr_binop::_evaluate_arith_binop(const arithmetic_type &at_left,
 				       const arithmetic_type &at_right,
-				       ast &a, const architecture &arch)
+				       ast &a, const target &tgt)
 {
   const std::shared_ptr<const arithmetic_type> at
-    = at_left.arithmetic_conversion(arch, at_right);
+    = at_left.arithmetic_conversion(tgt, at_right);
 
   _set_type(at);
 
@@ -3795,8 +3795,8 @@ void expr_binop::_evaluate_arith_binop(const arithmetic_type &at_left,
     handle_types<void>
       ((wrap_callables<default_action_nop>
 	([&](const int_type &it) {
-	   const target_int i_left = cv_left.convert_to(arch, it);
-	   const target_int i_right = cv_right.convert_to(arch, it);
+	   const target_int i_left = cv_left.convert_to(tgt, it);
+	   const target_int i_right = cv_right.convert_to(tgt, it);
 	   target_int i_result;
 	   switch (_op) {
 	   case binary_op::mul:
@@ -3864,8 +3864,8 @@ void expr_binop::_evaluate_arith_binop(const arithmetic_type &at_left,
 
 	 },
 	 [&](const real_float_type &rft) {
-	   const target_float f_left = cv_left.convert_to(arch, rft);
-	   const target_float f_right = cv_right.convert_to(arch, rft);
+	   const target_float f_left = cv_left.convert_to(tgt, rft);
+	   const target_float f_right = cv_right.convert_to(tgt, rft);
 	   target_float f_result;
 	   switch (_op) {
 	   case binary_op::mul:
@@ -3902,9 +3902,9 @@ void expr_binop::_evaluate_arith_binop(const arithmetic_type &at_left,
 
 void expr_binop::_evaluate_ptr_sub(const pointer_type &pt_left,
 				   const pointer_type &pt_right,
-				   ast &a, const architecture &arch)
+				   ast &a, const target &tgt)
 {
-  if (!pt_left.is_compatible_with(arch, pt_right, true)) {
+  if (!pt_left.is_compatible_with(tgt, pt_right, true)) {
     code_remark remark(code_remark::severity::fatal,
 			  "subtraction of pointers to incompatible types",
 			  a.get_pp_result(), get_tokens_range());
@@ -3913,9 +3913,9 @@ void expr_binop::_evaluate_ptr_sub(const pointer_type &pt_left,
   }
 
   const mpa::limbs pointed_to_size =
-    _check_pointer_arithmetic(a, pt_left, _left, arch);
+    _check_pointer_arithmetic(a, pt_left, _left, tgt);
 
-  _set_type(std_int_type::create(arch.get_ptrdiff_kind(), true));
+  _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), true));
 
   if (pointed_to_size && _left.is_constexpr() && _right.is_constexpr()) {
     const constexpr_value::address_constant &ac_left
@@ -3964,9 +3964,9 @@ void expr_binop::_evaluate_ptr_sub(const pointer_type &pt_left,
       if (negate)
 	distance = distance.complement();
 
-      const std_int_type::kind ptrdiff_kind = arch.get_ptrdiff_kind();
+      const std_int_type::kind ptrdiff_kind = tgt.get_ptrdiff_kind();
       const mpa::limbs::size_type ptrdiff_width =
-	arch.get_std_int_width(ptrdiff_kind);
+	tgt.get_std_int_width(ptrdiff_kind);
 
       if (ptrdiff_width < (distance.width() - distance.clrsb())) {
 	code_remark remark
@@ -3992,10 +3992,10 @@ void expr_binop::_evaluate_ptr_sub(const pointer_type &pt_left,
 
 void expr_binop::_evaluate_shift(const types::int_type &it_left,
 				 const types::int_type &it_right,
-				 ast &a, const architecture &arch)
+				 ast &a, const target &tgt)
 {
   const std::shared_ptr<const std_int_type> it_result
-    = it_left.promote(arch);
+    = it_left.promote(tgt);
 
   _set_type(it_result);
 
@@ -4004,7 +4004,7 @@ void expr_binop::_evaluate_shift(const types::int_type &it_left,
     const constexpr_value &cv_right = _right.get_constexpr_value();
     assert(cv_left.get_value_kind() == constexpr_value::value_kind::vk_int);
     assert(cv_right.get_value_kind() == constexpr_value::value_kind::vk_int);
-    const target_int i_left = cv_left.convert_to(arch, *it_result);
+    const target_int i_left = cv_left.convert_to(tgt, *it_result);
     const target_int &i_right = cv_right.get_int_value();
 
     if (i_right.is_negative()) {
@@ -4075,10 +4075,10 @@ void expr_binop::_evaluate_shift(const types::int_type &it_left,
 
 void expr_binop::_evaluate_bin_binop(const types::int_type &it_left,
 				     const types::int_type &it_right,
-				     ast &a, const architecture &arch)
+				     ast &a, const target &tgt)
 {
   const std::shared_ptr<const std_int_type> it_result
-    = it_left.integer_conversion(arch, it_right);
+    = it_left.integer_conversion(tgt, it_right);
   _set_type(it_result);
 
   if (_left.is_constexpr() && _right.is_constexpr()) {
@@ -4088,8 +4088,8 @@ void expr_binop::_evaluate_bin_binop(const types::int_type &it_left,
 	   constexpr_value::value_kind::vk_int);
     assert(cv_right.get_value_kind() ==
 	   constexpr_value::value_kind::vk_int);
-    const target_int i_left = cv_left.convert_to(arch, *it_result);
-    const target_int i_right = cv_right.convert_to(arch, *it_result);
+    const target_int i_left = cv_left.convert_to(tgt, *it_result);
+    const target_int i_right = cv_right.convert_to(tgt, *it_result);
 
     target_int i_result;
     switch (_op) {
@@ -4134,19 +4134,19 @@ void expr_binop::_evaluate_bin_binop(const types::int_type &it_left,
   }
 }
 
-void expr_binop::_evaluate_logical_binop(const ast &a, const architecture &arch)
+void expr_binop::_evaluate_logical_binop(const ast &a, const target &tgt)
 {
   const std::shared_ptr<const std_int_type> it_result
     = std_int_type::create((!a.is_pp_expr() ?
 			    std_int_type::kind::k_int :
-			    arch.get_int_max_kind()),
+			    tgt.get_int_max_kind()),
 			   true);
 
   if (_left.is_constexpr()) {
     const constexpr_value &cv_left = _left.get_constexpr_value();
-    const bool is_signed = it_result->is_signed(arch);
+    const bool is_signed = it_result->is_signed(tgt);
     const mpa::limbs::size_type prec =
-      it_result->get_width(arch) - is_signed;
+      it_result->get_width(tgt) - is_signed;
 
     if (_right.is_constexpr()) {
       const constexpr_value &cv_right = _right.get_constexpr_value();
@@ -4192,7 +4192,7 @@ void expr_binop::_evaluate_logical_binop(const ast &a, const architecture &arch)
 
 void expr_binop::_evaluate_cmp(const types::pointer_type &pt_left,
 			       const types::pointer_type &pt_right,
-			       ast &a, const architecture &arch)
+			       ast &a, const target &tgt)
 {
   const addressable_type &pointed_to_type_left =
     *pt_left.get_pointed_to_type();
@@ -4223,7 +4223,7 @@ void expr_binop::_evaluate_cmp(const types::pointer_type &pt_left,
 	 }
        },
        [&](const addressable_type &at_left, const addressable_type &at_right) {
-	 if (!at_left.is_compatible_with(arch, at_right, true)) {
+	 if (!at_left.is_compatible_with(tgt, at_right, true)) {
 	   code_remark remark
 	     (code_remark::severity::fatal,
 	      "comparison between incompatible pointer types",
@@ -4241,8 +4241,8 @@ void expr_binop::_evaluate_cmp(const types::pointer_type &pt_left,
   if (!(_left.is_constexpr() && _right.is_constexpr()))
     return;
 
-  const bool is_signed = it_result->is_signed(arch);
-  const mpa::limbs::size_type prec = it_result->get_width(arch) - is_signed;
+  const bool is_signed = it_result->is_signed(tgt);
+  const mpa::limbs::size_type prec = it_result->get_width(tgt) - is_signed;
 
   const constexpr_value &cv_left = _left.get_constexpr_value();
   const constexpr_value &cv_right = _right.get_constexpr_value();
@@ -4385,7 +4385,7 @@ void expr_binop::_evaluate_cmp(const types::pointer_type &pt_left,
 
 void expr_binop::_evaluate_cmp(const types::pointer_type &pt_left,
 			       const types::int_type &it_right,
-			       ast &a, const architecture &arch)
+			       ast &a, const target &tgt)
 {
   const std::shared_ptr<const std_int_type> it_result
     = std_int_type::create(std_int_type::kind::k_int, true);
@@ -4405,8 +4405,8 @@ void expr_binop::_evaluate_cmp(const types::pointer_type &pt_left,
   if (!_left.is_constexpr())
     return;
 
-  const bool is_signed = it_result->is_signed(arch);
-  const mpa::limbs::size_type prec = it_result->get_width(arch) - is_signed;
+  const bool is_signed = it_result->is_signed(tgt);
+  const mpa::limbs::size_type prec = it_result->get_width(tgt) - is_signed;
   const constexpr_value &cv_left = _left.get_constexpr_value();
 
   if (cv_left.is_zero()) {
@@ -4454,7 +4454,7 @@ void expr_binop::_evaluate_cmp(const types::pointer_type &pt_left,
 
 void expr_binop::_evaluate_cmp(const types::int_type &it_left,
 			       const types::pointer_type &pt_right,
-			       ast &a, const architecture &arch)
+			       ast &a, const target &tgt)
 {
   const std::shared_ptr<const std_int_type> it_result
     = std_int_type::create(std_int_type::kind::k_int, true);
@@ -4474,8 +4474,8 @@ void expr_binop::_evaluate_cmp(const types::int_type &it_left,
   if (!_right.is_constexpr())
     return;
 
-  const bool is_signed = it_result->is_signed(arch);
-  const mpa::limbs::size_type prec = it_result->get_width(arch) - is_signed;
+  const bool is_signed = it_result->is_signed(tgt);
+  const mpa::limbs::size_type prec = it_result->get_width(tgt) - is_signed;
   const constexpr_value &cv_right = _right.get_constexpr_value();
 
   if (cv_right.is_zero()) {
@@ -4522,32 +4522,32 @@ void expr_binop::_evaluate_cmp(const types::int_type &it_left,
 
 void expr_binop::_evaluate_cmp(const types::arithmetic_type &at_left,
 			       const types::arithmetic_type &at_right,
-			       ast &a, const architecture &arch)
+			       ast &a, const target &tgt)
 {
   const std::shared_ptr<const std_int_type> it_result
     = std_int_type::create((!a.is_pp_expr() ?
 			    std_int_type::kind::k_int :
-			    arch.get_int_max_kind()),
+			    tgt.get_int_max_kind()),
 			   true);
   _set_type(it_result);
 
   if (!(_left.is_constexpr() && _right.is_constexpr()))
     return;
 
-  const bool is_signed = it_result->is_signed(arch);
-  const mpa::limbs::size_type prec = it_result->get_width(arch) - is_signed;
+  const bool is_signed = it_result->is_signed(tgt);
+  const mpa::limbs::size_type prec = it_result->get_width(tgt) - is_signed;
 
   const constexpr_value &cv_left = _left.get_constexpr_value();
   const constexpr_value &cv_right = _right.get_constexpr_value();
 
   const std::shared_ptr<const arithmetic_type> at
-    = at_left.arithmetic_conversion(arch, at_right);
+    = at_left.arithmetic_conversion(tgt, at_right);
 
   handle_types<void>
     ((wrap_callables<default_action_nop>
       ([&](const real_float_type &rft) {
-	 const target_float f_left = cv_left.convert_to(arch, rft);
-	 const target_float f_right = cv_right.convert_to(arch, rft);
+	 const target_float f_left = cv_left.convert_to(tgt, rft);
+	 const target_float f_right = cv_right.convert_to(tgt, rft);
 
 	 bool result;
 	 switch (_op) {
@@ -4587,8 +4587,8 @@ void expr_binop::_evaluate_cmp(const types::arithmetic_type &at_left,
        [&](const int_type &it) {
 	    // These don't overflow because the result type comes from
 	    // an arithmetic conversion.
-	    const target_int i_left = cv_left.convert_to(arch, it);
-	    const target_int i_right = cv_right.convert_to(arch, it);
+	    const target_int i_left = cv_left.convert_to(tgt, it);
+	    const target_int i_right = cv_right.convert_to(tgt, it);
 
 	    bool result;
 	    switch (_op) {
@@ -4638,7 +4638,7 @@ void expr_binop::_evaluate_cmp(const types::arithmetic_type &at_left,
      *at);
 }
 
-void expr_binop::evaluate_type(ast &a, const architecture &arch)
+void expr_binop::evaluate_type(ast &a, const target &tgt)
 {
   auto &&check_enum_completeness_op =
     [&](const expr &e_op) {
@@ -4662,12 +4662,12 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
     handle_types<void>
       ((wrap_callables<no_default_action>
 	([&](const pointer_type &pt_left, const pointer_type &pt_right) {
-	   _evaluate_ptr_sub(pt_left, pt_right, a, arch);
+	   _evaluate_ptr_sub(pt_left, pt_right, a, tgt);
 
 	 },
 	 [&](const pointer_type &pt_left, const int_type &it_right) {
 	   const mpa::limbs pointed_to_size =
-	     _check_pointer_arithmetic(a, pt_left, *this, arch);
+	     _check_pointer_arithmetic(a, pt_left, *this, tgt);
 
 	   check_enum_completeness_op(_right);
 
@@ -4684,7 +4684,7 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
 	 [&](const arithmetic_type &at_left, const arithmetic_type &at_right) {
 	   check_enum_completeness_op(_left);
 	   check_enum_completeness_op(_right);
-	   _evaluate_arith_binop(at_left, at_right, a, arch);
+	   _evaluate_arith_binop(at_left, at_right, a, tgt);
 
 	 },
 	 [&](const type&, const type&) {
@@ -4704,7 +4704,7 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
       ((wrap_callables<no_default_action>
 	([&](const pointer_type &pt_left, const int_type &it_right) {
 	   const mpa::limbs pointed_to_size =
-	     _check_pointer_arithmetic(a, pt_left, *this, arch);
+	     _check_pointer_arithmetic(a, pt_left, *this, tgt);
 
 	   check_enum_completeness_op(_right);
 
@@ -4720,7 +4720,7 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
 	 },
 	 [&](const int_type &it_left, const pointer_type &pt_right) {
 	   const mpa::limbs pointed_to_size =
-	     _check_pointer_arithmetic(a, pt_right, *this, arch);
+	     _check_pointer_arithmetic(a, pt_right, *this, tgt);
 
 	   check_enum_completeness_op(_left);
 
@@ -4737,7 +4737,7 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
 	 [&](const arithmetic_type &at_left, const arithmetic_type &at_right) {
 	   check_enum_completeness_op(_left);
 	   check_enum_completeness_op(_right);
-	   _evaluate_arith_binop(at_left, at_right, a, arch);
+	   _evaluate_arith_binop(at_left, at_right, a, tgt);
 
 	 },
 	 [&](const type&, const type&) {
@@ -4759,7 +4759,7 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
 	([&](const arithmetic_type &at_left, const arithmetic_type &at_right) {
 	   check_enum_completeness_op(_left);
 	   check_enum_completeness_op(_right);
-	   _evaluate_arith_binop(at_left, at_right, a, arch);
+	   _evaluate_arith_binop(at_left, at_right, a, tgt);
 
 	 },
 	 [&](const type&, const type&) {
@@ -4782,7 +4782,7 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
 	([&](const int_type &it_left, const int_type &it_right) {
 	   check_enum_completeness_op(_left);
 	   check_enum_completeness_op(_right);
-	   _evaluate_shift(it_left, it_right, a, arch);
+	   _evaluate_shift(it_left, it_right, a, tgt);
 
 	 },
 	 [&](const type&, const type&) {
@@ -4808,7 +4808,7 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
 	([&](const int_type &it_left, const int_type &it_right) {
 	   check_enum_completeness_op(_left);
 	   check_enum_completeness_op(_right);
-	   _evaluate_bin_binop(it_left, it_right, a, arch);
+	   _evaluate_bin_binop(it_left, it_right, a, tgt);
 
 	 },
 	 [&](const type&, const type&) {
@@ -4839,7 +4839,7 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
 
     check_enum_completeness_op(_left);
     check_enum_completeness_op(_right);
-    _evaluate_logical_binop(a, arch);
+    _evaluate_logical_binop(a, tgt);
 
     break;
 
@@ -4857,23 +4857,23 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
     handle_types<void>
       ((wrap_callables<no_default_action>
 	([&](const pointer_type &pt_left, const pointer_type &pt_right) {
-	   _evaluate_cmp(pt_left, pt_right, a, arch);
+	   _evaluate_cmp(pt_left, pt_right, a, tgt);
 
 	 },
 	 [&](const pointer_type &pt_left, const int_type &it_right) {
 	   check_enum_completeness_op(_right);
-	   _evaluate_cmp(pt_left, it_right, a, arch);
+	   _evaluate_cmp(pt_left, it_right, a, tgt);
 
 	 },
 	 [&](const int_type &it_left, const pointer_type &pt_right) {
 	   check_enum_completeness_op(_left);
-	   _evaluate_cmp(it_left, pt_right, a, arch);
+	   _evaluate_cmp(it_left, pt_right, a, tgt);
 
 	 },
 	 [&](const arithmetic_type &at_left, const arithmetic_type &at_right) {
 	   check_enum_completeness_op(_left);
 	   check_enum_completeness_op(_right);
-	   _evaluate_cmp(at_left, at_right, a, arch);
+	   _evaluate_cmp(at_left, at_right, a, tgt);
 
 	 },
 	 [&](const type&, const type&) {
@@ -4890,7 +4890,7 @@ void expr_binop::evaluate_type(ast &a, const architecture &arch)
   }
 }
 
-void expr_cast::evaluate_type(ast &a, const architecture &arch)
+void expr_cast::evaluate_type(ast &a, const target &tgt)
 {
   const std::shared_ptr<const addressable_type> &t_target = _tn.get_type();
   const std::shared_ptr<const type> t_source = _e.get_type();
@@ -4954,7 +4954,7 @@ void expr_cast::evaluate_type(ast &a, const architecture &arch)
 
 	 target_int i_result;
 	 try {
-	   i_result = cv.convert_to(arch, *it_target);
+	   i_result = cv.convert_to(tgt, *it_target);
 	 } catch (const std::overflow_error&) {
 	   code_remark remark(code_remark::severity::warning,
 			      "integer overflow in cast",
@@ -4963,10 +4963,10 @@ void expr_cast::evaluate_type(ast &a, const architecture &arch)
 
 	   // GCC still accepts this. Do the same, interpreting the
 	   // limbs as is.
-	   assert(it_target->is_signed(arch) &&
-		  it_target->get_width(arch) <= it_source->get_width(arch));
+	   assert(it_target->is_signed(tgt) &&
+		  it_target->get_width(tgt) <= it_source->get_width(tgt));
 	   mpa::limbs ls = cv.get_int_value().get_limbs();
-	   const mpa::limbs::size_type width = it_target->get_width(arch);
+	   const mpa::limbs::size_type width = it_target->get_width(tgt);
 	   ls.resize(mpa::limbs::width_to_size(width));
 	   // Propagate sign bit to high.
 	   ls.set_bits_at_and_above(width, ls.test_bit(width - 1));
@@ -4999,7 +4999,7 @@ void expr_cast::evaluate_type(ast &a, const architecture &arch)
 
 	 target_int i_result;
 	 try {
-	   i_result = cv.convert_to(arch, *it_target);
+	   i_result = cv.convert_to(tgt, *it_target);
 	 } catch (const std::overflow_error&) {
 	   code_remark remark(code_remark::severity::warning,
 			      "integer overflow in cast",
@@ -5039,8 +5039,8 @@ void expr_cast::evaluate_type(ast &a, const architecture &arch)
 	   return;
 	 }
 
-	 const mpa::limbs::size_type width = it_target->get_width(arch);
-	 const bool is_signed = it_target->is_signed(arch);
+	 const mpa::limbs::size_type width = it_target->get_width(tgt);
+	 const bool is_signed = it_target->is_signed(tgt);
 	 mpa::limbs offset = ac.get_offset();
 
 	 if (is_signed && (offset.width() - offset.clrsb()) > width) {
@@ -5074,7 +5074,7 @@ void expr_cast::evaluate_type(ast &a, const architecture &arch)
 	 assert(cv.get_value_kind() == constexpr_value::value_kind::vk_int ||
 		cv.get_value_kind() == constexpr_value::value_kind::vk_float);
 
-	 target_float f_result = cv.convert_to(arch, *rft_target);
+	 target_float f_result = cv.convert_to(tgt, *rft_target);
 	 if (cv.has_constness(constness::c_arithmetic_constant_expr)) {
 	   _set_value(constexpr_value::arithmetic_constant_expr_tag{},
 		      std::move(f_result));
@@ -5138,7 +5138,7 @@ void expr_cast::evaluate_type(ast &a, const architecture &arch)
 }
 
 
-void expr_label_addr::evaluate_type(ast&, const architecture&)
+void expr_label_addr::evaluate_type(ast&, const target&)
 {
   assert(_resolved);
   _set_type(void_type::create()->derive_pointer());
@@ -5147,7 +5147,7 @@ void expr_label_addr::evaluate_type(ast&, const architecture&)
 }
 
 
-void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
+void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
 {
   const std::shared_ptr<const type> &t = _e.get_type();
 
@@ -5190,7 +5190,7 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
 
 	 },
 	 [&](const pointer_type &pt) {
-	   _check_pointer_arithmetic(a, pt, _e, arch);
+	   _check_pointer_arithmetic(a, pt, _e, tgt);
 	   _set_type(t->strip_qualifiers());
 
 	 },
@@ -5315,13 +5315,13 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
 	   check_enum_completeness_op();
 
 	   std::shared_ptr<const std_int_type> it_result =
-	     it->promote(arch);
+	     it->promote(tgt);
 
 	   if (_e.is_constexpr()) {
 	     const constexpr_value &cv = _e.get_constexpr_value();
 	     assert(cv.get_value_kind() ==
 		    constexpr_value::value_kind::vk_int);
-	     target_int i_result = cv.convert_to(arch, *it_result);
+	     target_int i_result = cv.convert_to(tgt, *it_result);
 	     if (_op == unary_op_pre::neg)
 	       i_result = -i_result;
 
@@ -5382,13 +5382,13 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
 	   check_enum_completeness_op();
 
 	   std::shared_ptr<const std_int_type> it_result =
-	     it->promote(arch);
+	     it->promote(tgt);
 
 	   if (_e.is_constexpr()) {
 	     const constexpr_value &cv = _e.get_constexpr_value();
 	     assert(cv.get_value_kind() ==
 		    constexpr_value::value_kind::vk_int);
-	     target_int i_result = cv.convert_to(arch, *it_result);
+	     target_int i_result = cv.convert_to(tgt, *it_result);
 	     i_result = ~i_result;
 
 	     if (cv.has_constness(constness::c_integer_constant_expr)) {
@@ -5442,12 +5442,12 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
       const std::shared_ptr<const std_int_type> it_result
 	= std_int_type::create((!a.is_pp_expr() ?
 				std_int_type::kind::k_int :
-				arch.get_int_max_kind()),
+				tgt.get_int_max_kind()),
 			       true);
 
       if (_e.is_constexpr()) {
 	const constexpr_value &cv = _e.get_constexpr_value();
-	const mpa::limbs::size_type prec = it_result->get_width(arch) - 1;
+	const mpa::limbs::size_type prec = it_result->get_width(tgt) - 1;
 	target_int i_result;
 	if (cv.is_zero())
 	  i_result = target_int::create_one(prec, true);
@@ -5473,17 +5473,17 @@ void expr_unop_pre::evaluate_type(ast &a, const architecture &arch)
 }
 
 
-static target_int _limbs_to_size_t(const architecture &arch, mpa::limbs &&ls)
+static target_int _limbs_to_size_t(const target &tgt, mpa::limbs &&ls)
 {
   const mpa::limbs::size_type width
-    = arch.get_std_int_width(arch.get_ptrdiff_kind());
+    = tgt.get_std_int_width(tgt.get_ptrdiff_kind());
   ls.resize(mpa::limbs::width_to_size(width));
   ls.set_bits_at_and_above(width, false);
   return target_int{width, false, std::move(ls)};
 }
 
 
-void expr_sizeof_expr::evaluate_type(ast &a, const architecture &arch)
+void expr_sizeof_expr::evaluate_type(ast &a, const target &tgt)
 {
     handle_types<void>
       ((wrap_callables<default_action_unreachable<void, type_set<> >::type>
@@ -5496,29 +5496,29 @@ void expr_sizeof_expr::evaluate_type(ast &a, const architecture &arch)
 	     throw semantic_except(remark);
 	   }
 
-	   _set_type(std_int_type::create(arch.get_ptrdiff_kind(), false));
+	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
 
 	   if (ot.is_size_constant()) {
 	     _set_value(constexpr_value::integer_constant_expr_tag{},
-			_limbs_to_size_t(arch, ot.get_size(arch)));
+			_limbs_to_size_t(tgt, ot.get_size(tgt)));
 	   }
 
 	 },
 	 [&](const function_type &ft) {
 	   // GCC extension: sizeof(function type) == 1
-	   _set_type(std_int_type::create(arch.get_ptrdiff_kind(), false));
+	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
 	   _set_value(constexpr_value::integer_constant_expr_tag{},
 		      (target_int::create_one
-		       (arch.get_std_int_width(arch.get_ptrdiff_kind()),
+		       (tgt.get_std_int_width(tgt.get_ptrdiff_kind()),
 			false)));
 
 	 },
 	 [&](const void_type&) {
 	   // GCC extension: sizeof(void) == 1
-	   _set_type(std_int_type::create(arch.get_ptrdiff_kind(), false));
+	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
 	   _set_value(constexpr_value::integer_constant_expr_tag{},
 		      (target_int::create_one
-		       (arch.get_std_int_width(arch.get_ptrdiff_kind()),
+		       (tgt.get_std_int_width(tgt.get_ptrdiff_kind()),
 			false)));
 
 	 })),
@@ -5526,7 +5526,7 @@ void expr_sizeof_expr::evaluate_type(ast &a, const architecture &arch)
 }
 
 
-void expr_sizeof_type_name::evaluate_type(ast &a, const architecture &arch)
+void expr_sizeof_type_name::evaluate_type(ast &a, const target &tgt)
 {
     handle_types<void>
       ((wrap_callables<default_action_unreachable<void, type_set<> >::type>
@@ -5539,29 +5539,29 @@ void expr_sizeof_type_name::evaluate_type(ast &a, const architecture &arch)
 	     throw semantic_except(remark);
 	   }
 
-	   _set_type(std_int_type::create(arch.get_ptrdiff_kind(), false));
+	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
 
 	   if (ot.is_size_constant()) {
 	     _set_value(constexpr_value::integer_constant_expr_tag{},
-			_limbs_to_size_t(arch, ot.get_size(arch)));
+			_limbs_to_size_t(tgt, ot.get_size(tgt)));
 	   }
 
 	 },
 	 [&](const function_type &ft) {
 	   // GCC extension: sizeof(function type) == 1
-	   _set_type(std_int_type::create(arch.get_ptrdiff_kind(), false));
+	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
 	   _set_value(constexpr_value::integer_constant_expr_tag{},
 		      (target_int::create_one
-		       (arch.get_std_int_width(arch.get_ptrdiff_kind()),
+		       (tgt.get_std_int_width(tgt.get_ptrdiff_kind()),
 			false)));
 
 	 },
 	 [&](const void_type&) {
 	   // GCC extension: sizeof(void) == 1
-	   _set_type(std_int_type::create(arch.get_ptrdiff_kind(), false));
+	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
 	   _set_value(constexpr_value::integer_constant_expr_tag{},
 		      (target_int::create_one
-		       (arch.get_std_int_width(arch.get_ptrdiff_kind()),
+		       (tgt.get_std_int_width(tgt.get_ptrdiff_kind()),
 			false)));
 
 	 })),
@@ -5569,7 +5569,7 @@ void expr_sizeof_type_name::evaluate_type(ast &a, const architecture &arch)
 }
 
 
-void expr_alignof_expr::evaluate_type(ast &a, const architecture &arch)
+void expr_alignof_expr::evaluate_type(ast &a, const target &tgt)
 {
     handle_types<void>
       ((wrap_callables<default_action_unreachable<void, type_set<> >::type>
@@ -5582,32 +5582,32 @@ void expr_alignof_expr::evaluate_type(ast &a, const architecture &arch)
 	     throw semantic_except(remark);
 	   }
 
-	   _set_type(std_int_type::create(arch.get_ptrdiff_kind(), false));
+	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
 
 	   const mpa::limbs::size_type align_log2 =
-	     ot.get_effective_alignment(arch);
+	     ot.get_effective_alignment(tgt);
 	   mpa::limbs align;
 	   align.resize(mpa::limbs::width_to_size(align_log2 + 1));
 	   align.set_bit(align_log2, true);
 	   _set_value(constexpr_value::integer_constant_expr_tag{},
-		      _limbs_to_size_t(arch, std::move(align)));
+		      _limbs_to_size_t(tgt, std::move(align)));
 
 	 },
 	 [&](const function_type &ft) {
 	   // GCC extension: __alignof__(function type) == 1
-	   _set_type(std_int_type::create(arch.get_ptrdiff_kind(), false));
+	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
 	   _set_value(constexpr_value::integer_constant_expr_tag{},
 		      (target_int::create_one
-		       (arch.get_std_int_width(arch.get_ptrdiff_kind()),
+		       (tgt.get_std_int_width(tgt.get_ptrdiff_kind()),
 			false)));
 
 	 },
 	 [&](const void_type) {
 	   // GCC extension: __alignof__(void) == 1
-	   _set_type(std_int_type::create(arch.get_ptrdiff_kind(), false));
+	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
 	   _set_value(constexpr_value::integer_constant_expr_tag{},
 		      (target_int::create_one
-		       (arch.get_std_int_width(arch.get_ptrdiff_kind()),
+		       (tgt.get_std_int_width(tgt.get_ptrdiff_kind()),
 			false)));
 
 	 })),
@@ -5615,7 +5615,7 @@ void expr_alignof_expr::evaluate_type(ast &a, const architecture &arch)
 }
 
 
-void expr_alignof_type_name::evaluate_type(ast &a, const architecture &arch)
+void expr_alignof_type_name::evaluate_type(ast &a, const target &tgt)
 {
     handle_types<void>
       ((wrap_callables<default_action_unreachable<void, type_set<> >::type>
@@ -5628,32 +5628,32 @@ void expr_alignof_type_name::evaluate_type(ast &a, const architecture &arch)
 	     throw semantic_except(remark);
 	   }
 
-	   _set_type(std_int_type::create(arch.get_ptrdiff_kind(), false));
+	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
 
 	   const mpa::limbs::size_type align_log2 =
-	     ot.get_effective_alignment(arch);
+	     ot.get_effective_alignment(tgt);
 	   mpa::limbs align;
 	   align.resize(mpa::limbs::width_to_size(align_log2 + 1));
 	   align.set_bit(align_log2, true);
 	   _set_value(constexpr_value::integer_constant_expr_tag{},
-		      _limbs_to_size_t(arch, std::move(align)));
+		      _limbs_to_size_t(tgt, std::move(align)));
 
 	 },
 	 [&](const function_type &ft) {
 	   // GCC extension: __alignof__(function type) == 1
-	   _set_type(std_int_type::create(arch.get_ptrdiff_kind(), false));
+	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
 	   _set_value(constexpr_value::integer_constant_expr_tag{},
 		      (target_int::create_one
-		       (arch.get_std_int_width(arch.get_ptrdiff_kind()),
+		       (tgt.get_std_int_width(tgt.get_ptrdiff_kind()),
 			false)));
 
 	 },
 	 [&](const void_type&) {
 	   // GCC extension: __alignof__(void) == 1
-	   _set_type(std_int_type::create(arch.get_ptrdiff_kind(), false));
+	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
 	   _set_value(constexpr_value::integer_constant_expr_tag{},
 		      (target_int::create_one
-		       (arch.get_std_int_width(arch.get_ptrdiff_kind()),
+		       (tgt.get_std_int_width(tgt.get_ptrdiff_kind()),
 			false)));
 
 	 })),
@@ -5661,7 +5661,7 @@ void expr_alignof_type_name::evaluate_type(ast &a, const architecture &arch)
 }
 
 
-void expr_builtin_offsetof::evaluate_type(ast &a, const architecture &arch)
+void expr_builtin_offsetof::evaluate_type(ast &a, const target &tgt)
 {
   const addressable_type *t_base = _tn.get_type().get();
   constexpr_value::address_constant ac;
@@ -5798,7 +5798,7 @@ void expr_builtin_offsetof::evaluate_type(ast &a, const architecture &arch)
 	if (offset_is_const && e_index.is_constexpr()) {
 	  const constexpr_value &cv_index = e_index.get_constexpr_value();
 	  ac.add_to_offset(false, cv_index.get_int_value(),
-			   ot_element.get_size(arch));
+			   ot_element.get_size(tgt));
 	  if (!cv_index.has_constness(constness::c_integer_constant_expr))
 	    offset_is_integer_constant_expr = false;
 
@@ -5809,12 +5809,12 @@ void expr_builtin_offsetof::evaluate_type(ast &a, const architecture &arch)
 	}
       }));
 
-  const std_int_type::kind ptrdiff_kind = arch.get_ptrdiff_kind();
+  const std_int_type::kind ptrdiff_kind = tgt.get_ptrdiff_kind();
   _set_type(std_int_type::create(ptrdiff_kind, false));
 
   if (offset_is_const) {
     mpa::limbs offset = ac.get_offset();
-    const mpa::limbs::size_type width = arch.get_std_int_width(ptrdiff_kind);
+    const mpa::limbs::size_type width = tgt.get_std_int_width(ptrdiff_kind);
     offset.resize(mpa::limbs::width_to_size(width));
     offset.set_bits_at_and_above(width, false);
     target_int result{width, false, std::move(offset)};
@@ -5829,14 +5829,14 @@ void expr_builtin_offsetof::evaluate_type(ast &a, const architecture &arch)
 
 
 void expr_builtin_types_compatible_p::evaluate_type(ast&,
-						    const architecture &arch)
+						    const target &tgt)
 {
   _set_type(std_int_type::create(std_int_type::kind::k_int, false));
 
   const mpa::limbs::size_type prec
-    = arch.get_std_int_width(std_int_type::kind::k_int) - 1;
+    = tgt.get_std_int_width(std_int_type::kind::k_int) - 1;
   target_int i_result;
-  if (_tn1.get_type()->is_compatible_with(arch, *_tn2.get_type(), true))
+  if (_tn1.get_type()->is_compatible_with(tgt, *_tn2.get_type(), true))
     i_result = target_int::create_one(prec, true);
   else
     i_result = target_int::create_zero(prec, true);
@@ -5845,20 +5845,20 @@ void expr_builtin_types_compatible_p::evaluate_type(ast&,
 }
 
 
-void expr_builtin_va_arg::evaluate_type(ast&, const architecture&)
+void expr_builtin_va_arg::evaluate_type(ast&, const target&)
 {
   _set_type(_tn.get_type());
   _convert_type_for_expr_context();
 }
 
 
-void expr_array_subscript::_evaluate_type(ast &a, const architecture &arch,
+void expr_array_subscript::_evaluate_type(ast &a, const target &tgt,
 					  const pointer_type &pt_base,
 					  const expr &e_base,
 					  const expr &e_index)
 {
   const mpa::limbs pointed_to_size =
-    _check_pointer_arithmetic(a, pt_base, e_base, arch);
+    _check_pointer_arithmetic(a, pt_base, e_base, tgt);
 
   if (pointed_to_size && e_base.is_constexpr() && e_index.is_constexpr()) {
     const constexpr_value &cv_base = e_base.get_constexpr_value();
@@ -5883,7 +5883,7 @@ void expr_array_subscript::_evaluate_type(ast &a, const architecture &arch,
   _convert_type_for_expr_context();
 }
 
-void expr_array_subscript::evaluate_type(ast &a, const architecture &arch)
+void expr_array_subscript::evaluate_type(ast &a, const target &tgt)
 {
   auto &&check_enum_completeness_index =
     [&](const expr &e_index) {
@@ -5906,11 +5906,11 @@ void expr_array_subscript::evaluate_type(ast &a, const architecture &arch)
     ((wrap_callables<default_action_nop>
       ([&](const pointer_type &pt_base, const int_type &it_index) {
 	 check_enum_completeness_index(_index);
-	 _evaluate_type(a, arch, pt_base, _base, _index);
+	 _evaluate_type(a, tgt, pt_base, _base, _index);
        },
        [&](const int_type &it_index, const pointer_type &pt_base) {
 	 check_enum_completeness_index(_base);
-	 _evaluate_type(a, arch, pt_base, _index, _base);
+	 _evaluate_type(a, tgt, pt_base, _index, _base);
        },
        [&](const type&, const type&) {
 	 code_remark remark(code_remark::severity::fatal,
@@ -5923,7 +5923,7 @@ void expr_array_subscript::evaluate_type(ast &a, const architecture &arch)
 
 }
 
-void expr_func_invocation::evaluate_type(ast &a, const architecture &arch)
+void expr_func_invocation::evaluate_type(ast &a, const target &tgt)
 {
   handle_types<void>
     ((wrap_callables<default_action_nop>
@@ -5952,7 +5952,7 @@ void expr_func_invocation::evaluate_type(ast &a, const architecture &arch)
 		}
 
 		for(std::size_t i = 0; i < ptl.size(); ++i)
-		  check_types_assignment(a, arch, *ptl[i], (*_args)[i]);
+		  check_types_assignment(a, tgt, *ptl[i], (*_args)[i]);
 
 		_set_type(pft.get_return_type());
 		_convert_type_for_expr_context();
@@ -5990,7 +5990,7 @@ void expr_func_invocation::evaluate_type(ast &a, const architecture &arch)
        },
        [&](const builtin_func_type &bft) {
 	 auto bf = bft.get_builtin_func_factory()();
-	 auto result = bf->evaluate(a, arch, *this);
+	 auto result = bf->evaluate(a, tgt, *this);
 	 _set_type(std::move(result.type));
 	 if (result.value)
 	   _set_value(std::move(result.value));
@@ -6012,7 +6012,7 @@ void expr_func_invocation::evaluate_type(ast &a, const architecture &arch)
 }
 
 
-void expr_member_deref::evaluate_type(ast &a, const architecture&)
+void expr_member_deref::evaluate_type(ast &a, const target&)
 {
   const type &t_base
     = [&]() -> const type& {
@@ -6141,7 +6141,7 @@ void expr_member_deref::evaluate_type(ast &a, const architecture&)
 }
 
 
-void expr_unop_post::evaluate_type(ast &a, const architecture &arch)
+void expr_unop_post::evaluate_type(ast &a, const target &tgt)
 {
   const std::shared_ptr<const type> &t = _e.get_type();
   if (!_e.is_lvalue()) {
@@ -6173,7 +6173,7 @@ void expr_unop_post::evaluate_type(ast &a, const architecture &arch)
 	 _convert_type_for_expr_context();
        },
        [&](const std::shared_ptr<const pointer_type> &pt) {
-	 _check_pointer_arithmetic(a, *pt, _e, arch);
+	 _check_pointer_arithmetic(a, *pt, _e, tgt);
 	 _set_type(pt->strip_qualifiers());
        },
        [&](const std::shared_ptr<const type>&) {
@@ -6188,7 +6188,7 @@ void expr_unop_post::evaluate_type(ast &a, const architecture &arch)
 }
 
 
-void expr_compound_literal::evaluate_type(ast &a, const architecture &arch)
+void expr_compound_literal::evaluate_type(ast &a, const target &tgt)
 {
   // Only compound literals which are at file scope have static
   // storage duration and thus, can be used in the creation of address
@@ -6210,7 +6210,7 @@ void expr_compound_literal::evaluate_type(ast &a, const architecture &arch)
   }
 
   std::shared_ptr<const array_type> t =
-    _evaluate_init(a, arch, *_tn.get_type(), _il);
+    _evaluate_init(a, tgt, *_tn.get_type(), _il);
   if (static_cast<bool>(t)) {
     _set_type(std::move(t));
   } else {
@@ -6222,7 +6222,7 @@ void expr_compound_literal::evaluate_type(ast &a, const architecture &arch)
 }
 
 
-void expr_statement::evaluate_type(ast&, const architecture&)
+void expr_statement::evaluate_type(ast&, const target&)
 {
   const block_item_list * const bil = _s.get_block_item_list();
   if (!bil) {
@@ -6275,7 +6275,7 @@ void expr_statement::evaluate_type(ast&, const architecture&)
 }
 
 
-void expr_id::evaluate_type(ast &a, const architecture &arch)
+void expr_id::evaluate_type(ast &a, const target &tgt)
 {
   switch(_resolved.get_kind()) {
   case resolved::resolved_kind::none:
@@ -6303,7 +6303,7 @@ void expr_id::evaluate_type(ast &a, const architecture &arch)
   case resolved::resolved_kind::builtin_var:
     {
       builtin_var::evaluation_result_type er
-	= _resolved.get_builtin_var_factory()()->evaluate(a, arch, *this);
+	= _resolved.get_builtin_var_factory()()->evaluate(a, tgt, *this);
       _set_type(std::move(er.type));
       _set_lvalue(er.is_lvalue);
       _convert_type_for_expr_context();
@@ -6391,7 +6391,7 @@ void expr_id::evaluate_type(ast &a, const architecture &arch)
 }
 
 
-void expr_constant::evaluate_type(ast &a, const architecture &arch)
+void expr_constant::evaluate_type(ast &a, const target &tgt)
 {
   const pp_token &val_tok = a.get_pp_tokens()[_const_tok];
   const std::string &val = val_tok.get_value();
@@ -6404,22 +6404,22 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
 	   tok_type == pp_token::type::uchr16 ||
 	   tok_type == pp_token::type::uchr32);
 
-    architecture::execution_charset_encoding encoding;
+    target::execution_charset_encoding encoding;
     switch(tok_type) {
     case pp_token::type::chr:
-      encoding = architecture::execution_charset_encoding::ecse_char;
+      encoding = target::execution_charset_encoding::ecse_char;
       break;
 
     case pp_token::type::wchr:
-      encoding = architecture::execution_charset_encoding::ecse_wchar;
+      encoding = target::execution_charset_encoding::ecse_wchar;
       break;
 
     case pp_token::type::uchr16:
-      encoding = architecture::execution_charset_encoding::ecse_char16;
+      encoding = target::execution_charset_encoding::ecse_char16;
       break;
 
     case pp_token::type::uchr32:
-      encoding = architecture::execution_charset_encoding::ecse_char32;
+      encoding = target::execution_charset_encoding::ecse_char32;
       break;
 
     default:
@@ -6428,7 +6428,7 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
     }
 
     const std::unique_ptr<execution_charset_encoder> encoder =
-      arch.get_execution_charset_encoder(encoding);
+      tgt.get_execution_charset_encoder(encoding);
 
     const std::vector<mpa::limbs> encoded = encoder->encode_string(a, _const_tok);
     if (!encoded.size()) {
@@ -6445,26 +6445,26 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
     // - char16_t: uint_least16_t -- unsigned
     // - char32_t: uint_least32_t -- unsigned
     bool target_char_is_signed = false;
-    if (encoding == architecture::execution_charset_encoding::ecse_char)
-      target_char_is_signed = arch.is_char_signed();
-    else if (encoding == architecture::execution_charset_encoding::ecse_wchar)
-      target_char_is_signed = arch.is_wchar_signed();
+    if (encoding == target::execution_charset_encoding::ecse_char)
+      target_char_is_signed = tgt.is_char_signed();
+    else if (encoding == target::execution_charset_encoding::ecse_wchar)
+      target_char_is_signed = tgt.is_wchar_signed();
 
     const types::std_int_type::kind target_char_kind =
       encoder->get_target_char_kind();
     const mpa::limbs::size_type target_char_width =
-      arch.get_std_int_width(target_char_kind);
+      tgt.get_std_int_width(target_char_kind);
 
-    if (encoding == architecture::execution_charset_encoding::ecse_char) {
+    if (encoding == target::execution_charset_encoding::ecse_char) {
       // non-wide char: the resulting type is int. Furthemore, the
       // value of multi-character character constants is
       // implementation defined, c.f. the GNU cpp manual, sec. 11.1
       // "Implementation defined behavior.
       mpa::limbs value;
       const std_int_type::kind target_int_kind
-	= !a.is_pp_expr() ? std_int_type::kind::k_int : arch.get_int_max_kind();
+	= !a.is_pp_expr() ? std_int_type::kind::k_int : tgt.get_int_max_kind();
       const mpa::limbs::size_type target_int_width =
-	arch.get_std_int_width(target_int_kind);
+	tgt.get_std_int_width(target_int_kind);
       if (encoded.size() == 1) {
 	value = encoded[0];
 	value.resize(mpa::limbs::width_to_size(target_int_width));
@@ -6517,8 +6517,8 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
       std_int_type::kind target_int_kind = target_char_kind;
       mpa::limbs::size_type target_int_width = target_char_width;
       if (a.is_pp_expr()) {
-	target_int_kind = arch.get_int_max_kind();
-	target_int_width = arch.get_std_int_width(target_char_kind);
+	target_int_kind = tgt.get_int_max_kind();
+	target_int_width = tgt.get_std_int_width(target_char_kind);
       }
 
       mpa::limbs value = encoded[0];
@@ -6779,8 +6779,8 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
     }
 
 
-    const mpa::limbs::size_type f_width = arch.get_float_significand_width(k);
-    const mpa::limbs::size_type e_width = arch.get_float_exponent_width(k);
+    const mpa::limbs::size_type f_width = tgt.get_float_significand_width(k);
+    const mpa::limbs::size_type e_width = tgt.get_float_exponent_width(k);
     assert(b == base::hex || b == base::dec);
     target_float flt =
       (b == base::hex ?
@@ -6862,7 +6862,7 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
   }
 
   if (a.is_pp_expr())
-    k = arch.get_int_max_kind();
+    k = tgt.get_int_max_kind();
 
   if (val_begin == it_int_suffix) {
     code_remark remark
@@ -6899,10 +6899,10 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
     throw semantic_except(remark);
   }
 
-  const std_int_type::kind min_kind = arch.int_mode_to_std_int_kind(int_mode);
+  const std_int_type::kind min_kind = tgt.int_mode_to_std_int_kind(int_mode);
   if (k < min_kind)
     k = min_kind;
-  const mpa::limbs::size_type width = arch.get_std_int_width(k);
+  const mpa::limbs::size_type width = tgt.get_std_int_width(k);
   assert(width);
   if (!is_unsigned && b != base::dec && m.is_any_set_at_or_above(width - 1)) {
     is_unsigned = true;
@@ -6923,25 +6923,25 @@ void expr_constant::evaluate_type(ast &a, const architecture &arch)
 }
 
 
-void expr_string_literal::evaluate_type(ast &a, const architecture &arch)
+void expr_string_literal::evaluate_type(ast &a, const target &tgt)
 {
   auto &&string_tok_type_to_ecse =
     [](const pp_token::type tok_type) {
       switch (tok_type) {
       case pp_token::type::str:
-	return architecture::execution_charset_encoding::ecse_char;
+	return target::execution_charset_encoding::ecse_char;
 
       case pp_token::type::wstr:
-	return architecture::execution_charset_encoding::ecse_wchar;
+	return target::execution_charset_encoding::ecse_wchar;
 
       case pp_token::type::ustr8:
-	return architecture::execution_charset_encoding::ecse_char8;
+	return target::execution_charset_encoding::ecse_char8;
 
       case pp_token::type::ustr16:
-	return architecture::execution_charset_encoding::ecse_char16;
+	return target::execution_charset_encoding::ecse_char16;
 
       case pp_token::type::ustr32:
-	return architecture::execution_charset_encoding::ecse_char32;
+	return target::execution_charset_encoding::ecse_char32;
       }
       assert(0);
       __builtin_unreachable();
@@ -6950,17 +6950,17 @@ void expr_string_literal::evaluate_type(ast &a, const architecture &arch)
   // First check that all the string tokens' encodings are the same.
   // If there is any encoding prefix, all string literals w/o such one
   // are treated as if they had that prefix.
-  architecture::execution_charset_encoding ecse =
-    architecture::execution_charset_encoding::ecse_char;
+  target::execution_charset_encoding ecse =
+    target::execution_charset_encoding::ecse_char;
   for (auto tok_index : _sl.get_strings()) {
     const pp_token &tok = a.get_pp_tokens()[tok_index];
-    const architecture::execution_charset_encoding cur_ecse =
+    const target::execution_charset_encoding cur_ecse =
       string_tok_type_to_ecse(tok.get_type());
 
-    if (cur_ecse == architecture::execution_charset_encoding::ecse_char) {
+    if (cur_ecse == target::execution_charset_encoding::ecse_char) {
       continue;
 
-    } else if (ecse == architecture::execution_charset_encoding::ecse_char) {
+    } else if (ecse == target::execution_charset_encoding::ecse_char) {
       ecse = cur_ecse;
 
     } else if (ecse != cur_ecse) {
@@ -6974,16 +6974,16 @@ void expr_string_literal::evaluate_type(ast &a, const architecture &arch)
   }
 
   const std::unique_ptr<execution_charset_encoder> encoder =
-    arch.get_execution_charset_encoder(ecse);
+    tgt.get_execution_charset_encoder(ecse);
   std::shared_ptr<const object_type> element_type;
-  if (ecse == architecture::execution_charset_encoding::ecse_char ||
-      ecse == architecture::execution_charset_encoding::ecse_char8) {
+  if (ecse == target::execution_charset_encoding::ecse_char ||
+      ecse == target::execution_charset_encoding::ecse_char8) {
     element_type = plain_char_type::create();
 
   } else {
     bool target_char_is_signed = false;
-    if (ecse == architecture::execution_charset_encoding::ecse_wchar)
-      target_char_is_signed = arch.is_wchar_signed();
+    if (ecse == target::execution_charset_encoding::ecse_wchar)
+      target_char_is_signed = tgt.is_wchar_signed();
 
     const types::std_int_type::kind target_char_kind =
       encoder->get_target_char_kind();
@@ -7008,7 +7008,7 @@ void expr_string_literal::evaluate_type(ast &a, const architecture &arch)
 }
 
 
-void expr_parenthesized::evaluate_type(ast&, const architecture&)
+void expr_parenthesized::evaluate_type(ast&, const target&)
 {
   if (_e.is_constexpr())
     _set_value(_e.get_constexpr_value().clone());

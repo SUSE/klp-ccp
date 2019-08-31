@@ -303,11 +303,11 @@ constexpr_value::address_constant& constexpr_value::get_address_value() noexcept
   return _ac;
 }
 
-target_int constexpr_value::convert_to(const architecture &arch,
+target_int constexpr_value::convert_to(const target &tgt,
 				       const int_type &it) const
 {
-  const bool is_signed = it.is_signed(arch);
-  const mpa::limbs::size_type prec = it.get_width(arch) - is_signed;
+  const bool is_signed = it.is_signed(tgt);
+  const mpa::limbs::size_type prec = it.get_width(tgt) - is_signed;
 
   switch(_value_kind) {
   case value_kind::vk_int:
@@ -322,12 +322,12 @@ target_int constexpr_value::convert_to(const architecture &arch,
   };
 }
 
-target_float constexpr_value::convert_to(const architecture &arch,
+target_float constexpr_value::convert_to(const target &tgt,
 					 const types::real_float_type &ft) const
 {
   const mpa::limbs::size_type significand_width =
-    ft.get_significand_width(arch);
-  const mpa::limbs::size_type exponent_width = ft.get_exponent_width(arch);
+    ft.get_significand_width(tgt);
+  const mpa::limbs::size_type exponent_width = ft.get_exponent_width(tgt);
 
   switch(_value_kind) {
   case value_kind::vk_int:

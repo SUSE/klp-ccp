@@ -25,7 +25,7 @@ namespace klp
 {
   namespace ccp
   {
-    class arch;
+    class target;
 
     namespace ast
     {
@@ -40,7 +40,7 @@ namespace klp
     }
 
     void
-    check_types_assignment(klp::ccp::ast::ast &a, const architecture &arch,
+    check_types_assignment(klp::ccp::ast::ast &a, const target &tgt,
 			   const types::type &t_target,
 			   const ast::expr &e_source);
   }

@@ -18,7 +18,7 @@
 
 #include <cassert>
 #include <algorithm>
-#include "architecture.hh"
+#include "target.hh"
 #include "ast.hh"
 #include "callables_wrapper.hh"
 #include "constexpr_value.hh"
@@ -146,86 +146,86 @@ type::type(const type&) = default;
 
 type::~type() noexcept = default;
 
-bool type::is_compatible_with(const architecture&, const void_type&,
+bool type::is_compatible_with(const target&, const void_type&,
 			      const bool) const
 {
   return false;
 }
 
-bool type::is_compatible_with(const architecture&, const plain_char_type&,
+bool type::is_compatible_with(const target&, const plain_char_type&,
 			      const bool) const
 {
   return false;
 }
 
-bool type::is_compatible_with(const architecture&, const bool_type&,
+bool type::is_compatible_with(const target&, const bool_type&,
 			      const bool) const
 {
   return false;
 }
 
-bool type::is_compatible_with(const architecture&, const std_int_type&,
+bool type::is_compatible_with(const target&, const std_int_type&,
 			      const bool) const
 {
   return false;
 }
 
-bool type::is_compatible_with(const architecture&, const enum_type&,
+bool type::is_compatible_with(const target&, const enum_type&,
 			      const bool) const
 {
   return false;
 }
 
-bool type::is_compatible_with(const architecture&, const real_float_type&,
+bool type::is_compatible_with(const target&, const real_float_type&,
 			      const bool) const
 {
   return false;
 }
 
-bool type::is_compatible_with(const architecture&, const complex_float_type&,
+bool type::is_compatible_with(const target&, const complex_float_type&,
 			      const bool) const
 {
   return false;
 }
 
-bool type::is_compatible_with(const architecture&, const struct_or_union_type&,
+bool type::is_compatible_with(const target&, const struct_or_union_type&,
 			      const bool) const
 {
   return false;
 }
 
-bool type::is_compatible_with(const architecture&, const array_type&,
+bool type::is_compatible_with(const target&, const array_type&,
 			      const bool) const
 {
   return false;
 }
 
-bool type::is_compatible_with(const architecture&,
+bool type::is_compatible_with(const target&,
 			      const prototyped_function_type&, const bool) const
 {
   return false;
 }
 
-bool type::is_compatible_with(const architecture &,
+bool type::is_compatible_with(const target&,
 			      const unprototyped_function_type&,
 			      const bool) const
 {
   return false;
 }
 
-bool type::is_compatible_with(const architecture&, const pointer_type&,
+bool type::is_compatible_with(const target&, const pointer_type&,
 			      const bool) const
 {
   return false;
 }
 
-bool type::is_compatible_with(const architecture&, const bitfield_type&,
+bool type::is_compatible_with(const target&, const bitfield_type&,
 			      const bool) const
 {
   return false;
 }
 
-bool type::is_compatible_with(const architecture&, const builtin_func_type&,
+bool type::is_compatible_with(const target&, const builtin_func_type&,
 			      const bool) const
 {
   return false;
@@ -302,55 +302,55 @@ addressable_type::set_user_alignment(const alignment &user_align) const
 }
 
 mpa::limbs::size_type
-addressable_type::get_effective_alignment(const architecture &arch)
+addressable_type::get_effective_alignment(const target &tgt)
   const noexcept
 {
   if (_user_align.is_set())
     return _user_align.get_log2_value();
 
-  return get_type_alignment(arch);
+  return get_type_alignment(tgt);
 }
 
 std::shared_ptr<const addressable_type>
-addressable_type::construct_composite(const architecture &arch,
+addressable_type::construct_composite(const target &tgt,
 				      const addressable_type& prev_type) const
 {
   // Function parameters' qualifiers are ignored in
   // prototyped_function_type::is_compatible_with(). So there can be a
   // difference in case we're currently construction a parameter's
   // composite type.
-  assert(this->is_compatible_with(arch, prev_type, true));
+  assert(this->is_compatible_with(tgt, prev_type, true));
   // The default is to use the original, unmodified type.
   return nullptr;
 }
 
 std::shared_ptr<const array_type>
-addressable_type::_construct_composite(const architecture &arch,
-				       const array_type& next_type) const
+addressable_type::_construct_composite(const target&,
+				       const array_type&) const
 {
   // The default is to use the original, unmodified type.
   return nullptr;
 }
 
 std::shared_ptr<const prototyped_function_type> addressable_type::
-_construct_composite(const architecture &arch,
-		     const unprototyped_function_type& next_type) const
+_construct_composite(const target&,
+		     const unprototyped_function_type&) const
 {
   // The default is to use the original, unmodified type.
   return nullptr;
 }
 
 std::shared_ptr<const prototyped_function_type> addressable_type::
-_construct_composite(const architecture &arch,
-		     const prototyped_function_type& next_type) const
+_construct_composite(const target&,
+		     const prototyped_function_type&) const
 {
   // The default is to use the original, unmodified type.
   return nullptr;
 }
 
 std::shared_ptr<const pointer_type>
-addressable_type::_construct_composite(const architecture &arch,
-				       const pointer_type& next_type) const
+addressable_type::_construct_composite(const target&,
+				       const pointer_type&) const
 {
   // The default is to use the original, unmodified type.
   return nullptr;
@@ -378,14 +378,14 @@ bool function_type::is_size_constant() const noexcept
   return true;
 }
 
-mpa::limbs function_type::get_size(const architecture&) const
+mpa::limbs function_type::get_size(const target&) const
 {
   // GCC extension: sizeof(void(void)) is 1.
   return mpa::limbs::from_size_type(1);
 }
 
 mpa::limbs::size_type
-function_type::get_type_alignment(const architecture&) const noexcept
+function_type::get_type_alignment(const target&) const noexcept
 {
   // GCC extension: __alignof__(void(void)) is 1.
   return 0;
@@ -437,10 +437,10 @@ object_type::derive_array(const bool unspec_vla) const
 }
 
 std::shared_ptr<const object_type>
-object_type::_construct_composite(const architecture &arch,
+object_type::_construct_composite(const target &tgt,
 				  const object_type& prev_type) const
 {
-  assert(this->is_compatible_with(arch, prev_type, false));
+  assert(this->is_compatible_with(tgt, prev_type, false));
   // The default is to use the original, unmodified type.
   return nullptr;
 }
@@ -482,10 +482,10 @@ returnable_type::derive_function(const std::size_t n_args) const
 }
 
 std::shared_ptr<const returnable_type>
-returnable_type::_construct_composite(const architecture &arch,
+returnable_type::_construct_composite(const target &tgt,
 				      const returnable_type& prev_type) const
 {
-  assert(this->is_compatible_with(arch, prev_type, false));
+  assert(this->is_compatible_with(tgt, prev_type, false));
   // The default is to use the original, unmodified type.
   return nullptr;
 }
@@ -533,23 +533,23 @@ type::type_id prototyped_function_type::get_type_id() const noexcept
   return type_id::tid_prototyped_function;
 }
 
-bool prototyped_function_type::is_compatible_with(const architecture &arch,
+bool prototyped_function_type::is_compatible_with(const target &tgt,
 						  const type &t,
 						  const bool ignore_qualifiers)
   const
 {
-  return t.is_compatible_with(arch, *this, ignore_qualifiers);
+  return t.is_compatible_with(tgt, *this, ignore_qualifiers);
 }
 
 bool prototyped_function_type::
-is_compatible_with(const architecture &arch,
+is_compatible_with(const target &tgt,
 		   const prototyped_function_type &t,
 		   const bool ignore_qualifiers) const
 {
   if (!ignore_qualifiers && (this->get_qualifiers() != t.get_qualifiers()))
     return false;
 
-  if (!this->get_return_type()->is_compatible_with(arch, *t.get_return_type(),
+  if (!this->get_return_type()->is_compatible_with(tgt, *t.get_return_type(),
 						   false)) {
     return false;
   }
@@ -561,7 +561,7 @@ is_compatible_with(const architecture &arch,
 
   for (auto it1 = _ptl.begin(), it2 = t._ptl.begin(); it1 != _ptl.end();
        ++it1, ++it2) {
-    if (!(*it1)->is_compatible_with(arch, **it2, true))
+    if (!(*it1)->is_compatible_with(tgt, **it2, true))
       return false;
   }
 
@@ -569,23 +569,23 @@ is_compatible_with(const architecture &arch,
 }
 
 bool prototyped_function_type::
-is_compatible_with(const architecture &arch,
+is_compatible_with(const target &tgt,
 		   const unprototyped_function_type &t,
 		   const bool ignore_qualifiers) const
 {
-  return t.is_compatible_with(arch, *this, ignore_qualifiers);
+  return t.is_compatible_with(tgt, *this, ignore_qualifiers);
 }
 
 std::shared_ptr<const addressable_type> prototyped_function_type::
-construct_composite(const architecture &arch,
+construct_composite(const target &tgt,
 		    const addressable_type& prev_type) const
 {
-  assert(this->is_compatible_with(arch, prev_type, false));
-  return prev_type._construct_composite(arch, *this);
+  assert(this->is_compatible_with(tgt, prev_type, false));
+  return prev_type._construct_composite(tgt, *this);
 }
 
 std::shared_ptr<const prototyped_function_type> prototyped_function_type::
-_construct_composite(const architecture &arch,
+_construct_composite(const target &tgt,
 		     const unprototyped_function_type& next_type)
   const
 {
@@ -593,7 +593,7 @@ _construct_composite(const architecture &arch,
 }
 
 std::shared_ptr<const prototyped_function_type> prototyped_function_type::
-_construct_composite(const architecture &arch,
+_construct_composite(const target &tgt,
 		     const prototyped_function_type& next_type)
   const
 {
@@ -609,7 +609,7 @@ _construct_composite(const architecture &arch,
   bool ptl_unchanged = true;
   for (parameter_type_list::size_type i = 0; i < n; ++i) {
     std::shared_ptr<const addressable_type> comp_param_type =
-      next_ptl[i]->construct_composite(arch, *prev_ptl[i]);
+      next_ptl[i]->construct_composite(tgt, *prev_ptl[i]);
     if (!comp_param_type)
       comp_param_type = next_ptl[i];
     else
@@ -620,7 +620,7 @@ _construct_composite(const architecture &arch,
 
   std::shared_ptr<const returnable_type> comp_ret_type
     = (next_type.get_return_type()
-       ->_construct_composite(arch, *this->get_return_type()));
+       ->_construct_composite(tgt, *this->get_return_type()));
   if (!comp_ret_type) {
     if (ptl_unchanged) {
       // Type composition did not alter the type.
@@ -682,21 +682,21 @@ type::type_id unprototyped_function_type::get_type_id() const noexcept
 }
 
 bool unprototyped_function_type::
-is_compatible_with(const architecture &arch, const type &t,
+is_compatible_with(const target &tgt, const type &t,
 		   const bool ignore_qualifiers) const
 {
-  return t.is_compatible_with(arch, *this, ignore_qualifiers);
+  return t.is_compatible_with(tgt, *this, ignore_qualifiers);
 }
 
 bool unprototyped_function_type::
-is_compatible_with(const architecture &arch,
+is_compatible_with(const target &tgt,
 		   const unprototyped_function_type &t,
 		   const bool ignore_qualifiers) const
 {
   if (!ignore_qualifiers && (this->get_qualifiers() != t.get_qualifiers()))
     return false;
 
-  if (!this->get_return_type()->is_compatible_with(arch, *t.get_return_type(),
+  if (!this->get_return_type()->is_compatible_with(tgt, *t.get_return_type(),
 						   false)) {
     return false;
   }
@@ -705,14 +705,14 @@ is_compatible_with(const architecture &arch,
 }
 
 bool unprototyped_function_type::
-is_compatible_with(const architecture &arch,
+is_compatible_with(const target &tgt,
 		   const prototyped_function_type &t,
 		   const bool ignore_qualifiers) const
 {
   if (!ignore_qualifiers && (this->get_qualifiers() != t.get_qualifiers()))
     return false;
 
-  if (!this->get_return_type()->is_compatible_with(arch, *t.get_return_type(),
+  if (!this->get_return_type()->is_compatible_with(tgt, *t.get_return_type(),
 						   false)) {
     return false;
   }
@@ -730,10 +730,10 @@ is_compatible_with(const architecture &arch,
     if (!(handle_types<bool>
 	  ((wrap_callables<default_action_return_value<bool, true>::type>
 	    ([&](const int_type &it) {
-	       return it.is_compatible_with(arch, *it.promote(arch), true);
+	       return it.is_compatible_with(tgt, *it.promote(tgt), true);
 	     },
 	     [&](const float_type &ft) {
-	       return ft.is_compatible_with(arch, *ft.promote(), true);
+	       return ft.is_compatible_with(tgt, *ft.promote(), true);
 	     })),
 	   *pt))) {
       return false;
@@ -750,19 +750,19 @@ std::size_t unprototyped_function_type::get_n_args() const noexcept
 }
 
 std::shared_ptr<const addressable_type> unprototyped_function_type::
-construct_composite(const architecture &arch,
+construct_composite(const target &tgt,
 		    const addressable_type& prev_type) const
 {
-  assert(this->is_compatible_with(arch, prev_type, false));
-  return prev_type._construct_composite(arch, *this);
+  assert(this->is_compatible_with(tgt, prev_type, false));
+  return prev_type._construct_composite(tgt, *this);
 }
 
 std::shared_ptr<const prototyped_function_type> unprototyped_function_type::
-_construct_composite(const architecture &arch,
+_construct_composite(const target &tgt,
 		     const prototyped_function_type& next_type) const
 {
   // This reverses next_type and prev_type, but that doesn't matter.
-  return next_type._construct_composite(arch, *this);
+  return next_type._construct_composite(tgt, *this);
 }
 
 
@@ -803,17 +803,17 @@ type::type_id array_type::get_type_id() const noexcept
   return type_id::tid_array;
 }
 
-bool array_type::is_compatible_with(const architecture &arch, const type &t,
+bool array_type::is_compatible_with(const target &tgt, const type &t,
 				    const bool ignore_qualifiers) const
 {
-  return t.is_compatible_with(arch, *this, ignore_qualifiers);
+  return t.is_compatible_with(tgt, *this, ignore_qualifiers);
 }
 
-bool array_type::is_compatible_with(const architecture &arch,
+bool array_type::is_compatible_with(const target &tgt,
 				    const array_type &t,
 				    const bool ignore_qualifiers) const
 {
-  if (!_element_type->is_compatible_with(arch, *t._element_type,
+  if (!_element_type->is_compatible_with(tgt, *t._element_type,
 					 ignore_qualifiers)) {
     return false;
   }
@@ -847,18 +847,18 @@ bool array_type::is_size_constant() const noexcept
   return true;
 }
 
-mpa::limbs array_type::get_size(const architecture &arch) const
+mpa::limbs array_type::get_size(const target &tgt) const
 {
   assert(is_size_constant());
   const mpa::limbs &length = get_length();
-  mpa::limbs size = length * _element_type->get_size(arch);
+  mpa::limbs size = length * _element_type->get_size(tgt);
   return size;
 }
 
 mpa::limbs::size_type
-array_type::get_type_alignment(const architecture &arch) const noexcept
+array_type::get_type_alignment(const target &tgt) const noexcept
 {
-  return _element_type->get_effective_alignment(arch);
+  return _element_type->get_effective_alignment(tgt);
 }
 
 std::shared_ptr<const array_type>
@@ -919,27 +919,27 @@ void array_type::_amend_qualifiers(const qualifiers &qs)
 }
 
 std::shared_ptr<const addressable_type>
-array_type::construct_composite(const architecture &arch,
+array_type::construct_composite(const target &tgt,
 				const addressable_type& prev_type) const
 {
-  assert(this->is_compatible_with(arch, prev_type, false));
-  return prev_type._construct_composite(arch, *this);
+  assert(this->is_compatible_with(tgt, prev_type, false));
+  return prev_type._construct_composite(tgt, *this);
 }
 
 std::shared_ptr<const object_type>
-array_type::_construct_composite(const architecture &arch,
+array_type::_construct_composite(const target &tgt,
 				 const object_type& prev_type) const
 {
-  assert(this->is_compatible_with(arch, prev_type, false));
-  return prev_type.addressable_type::_construct_composite(arch, *this);
+  assert(this->is_compatible_with(tgt, prev_type, false));
+  return prev_type.addressable_type::_construct_composite(tgt, *this);
 }
 
 std::shared_ptr<const array_type>
-array_type::_construct_composite(const architecture &arch,
+array_type::_construct_composite(const target &tgt,
 				 const array_type& next_type) const
 {
   std::shared_ptr<const object_type> comp_element_type
-    = next_type._element_type->_construct_composite(arch, *_element_type);
+    = next_type._element_type->_construct_composite(tgt, *_element_type);
   if (!comp_element_type)
     comp_element_type = next_type._element_type;
 
@@ -1074,13 +1074,13 @@ type::type_id void_type::get_type_id() const noexcept
   return type_id::tid_void;
 }
 
-bool void_type::is_compatible_with(const architecture &arch, const type &t,
+bool void_type::is_compatible_with(const target &tgt, const type &t,
 				   const bool ignore_qualifiers) const
 {
-  return t.is_compatible_with(arch, *this, ignore_qualifiers);
+  return t.is_compatible_with(tgt, *this, ignore_qualifiers);
 }
 
-bool void_type::is_compatible_with(const architecture&, const void_type &t,
+bool void_type::is_compatible_with(const target&, const void_type &t,
 				   const bool ignore_qualifiers) const
 {
   return ignore_qualifiers || (this->get_qualifiers() == t.get_qualifiers());
@@ -1098,14 +1098,14 @@ bool void_type::is_size_constant() const noexcept
   return true;
 }
 
-mpa::limbs void_type::get_size(const architecture&) const
+mpa::limbs void_type::get_size(const target&) const
 {
   // GCC extension: sizeof(void) is 1.
   return mpa::limbs::from_size_type(1);
 }
 
 mpa::limbs::size_type
-void_type::get_type_alignment(const architecture&) const noexcept
+void_type::get_type_alignment(const target&) const noexcept
 {
   // GCC extension: __alignof__(void) is 1.
   return 0;
@@ -1133,32 +1133,32 @@ type::type_id pointer_type::get_type_id() const noexcept
   return type_id::tid_pointer;
 }
 
-bool pointer_type::is_compatible_with(const architecture &arch,
+bool pointer_type::is_compatible_with(const target &tgt,
 				      const type &t,
 				      const bool ignore_qualifiers) const
 {
-  return t.is_compatible_with(arch, *this, ignore_qualifiers);
+  return t.is_compatible_with(tgt, *this, ignore_qualifiers);
 }
 
-bool pointer_type::is_compatible_with(const architecture &arch,
+bool pointer_type::is_compatible_with(const target &tgt,
 				      const pointer_type &t,
 				      const bool ignore_qualifiers) const
 {
   if (!ignore_qualifiers && (this->get_qualifiers() != t.get_qualifiers()))
     return false;
 
-  return _pointed_to_type->is_compatible_with(arch, *t._pointed_to_type, true);
+  return _pointed_to_type->is_compatible_with(tgt, *t._pointed_to_type, true);
 }
 
-mpa::limbs pointer_type::get_size(const architecture &arch) const
+mpa::limbs pointer_type::get_size(const target &tgt) const
 {
-  return arch.get_pointer_size();
+  return tgt.get_pointer_size();
 }
 
 mpa::limbs::size_type
-pointer_type::get_type_alignment(const architecture &arch) const noexcept
+pointer_type::get_type_alignment(const target &tgt) const noexcept
 {
-  return arch.get_pointer_alignment();
+  return tgt.get_pointer_alignment();
 }
 
 std::shared_ptr<const pointer_type>
@@ -1169,40 +1169,40 @@ pointer_type::set_user_alignment(const alignment &user_align) const
 }
 
 std::shared_ptr<const addressable_type>
-pointer_type::construct_composite(const architecture &arch,
+pointer_type::construct_composite(const target &tgt,
 				  const addressable_type& prev_type) const
 {
   // Function parameters' qualifiers are ignored in
   // prototyped_function_type::is_compatible_with(). So there can be a
   // difference in case we're currently construction a parameter's
   // composite type.
-  assert(this->is_compatible_with(arch, prev_type, true));
-  return prev_type._construct_composite(arch, *this);
+  assert(this->is_compatible_with(tgt, prev_type, true));
+  return prev_type._construct_composite(tgt, *this);
 }
 
 std::shared_ptr<const object_type>
-pointer_type::_construct_composite(const architecture &arch,
+pointer_type::_construct_composite(const target &tgt,
 				   const object_type& prev_type) const
 {
-  assert(this->is_compatible_with(arch, prev_type, false));
-  return prev_type.addressable_type::_construct_composite(arch, *this);
+  assert(this->is_compatible_with(tgt, prev_type, false));
+  return prev_type.addressable_type::_construct_composite(tgt, *this);
 }
 
 std::shared_ptr<const returnable_type>
-pointer_type::_construct_composite(const architecture &arch,
+pointer_type::_construct_composite(const target &tgt,
 				   const returnable_type& prev_type) const
 {
-  assert(this->is_compatible_with(arch, prev_type, false));
-  return prev_type.addressable_type::_construct_composite(arch, *this);
+  assert(this->is_compatible_with(tgt, prev_type, false));
+  return prev_type.addressable_type::_construct_composite(tgt, *this);
 }
 
 std::shared_ptr<const pointer_type>
-pointer_type::_construct_composite(const architecture &arch,
+pointer_type::_construct_composite(const target &tgt,
 				   const pointer_type& next_type) const
 {
   std::shared_ptr<const addressable_type> comp_pointed_to_type =
     (next_type._pointed_to_type->construct_composite
-     (arch, *this->_pointed_to_type));
+     (tgt, *this->_pointed_to_type));
 
   const alignment &comp_user_align =
     alignment::max(this->get_user_alignment(), next_type.get_user_alignment());
@@ -1463,15 +1463,15 @@ type::type_id struct_or_union_type::get_type_id() const noexcept
   return type_id::tid_struct_or_union;
 }
 
-bool struct_or_union_type::is_compatible_with(const architecture &arch,
+bool struct_or_union_type::is_compatible_with(const target &tgt,
 					      const type &t,
 					      const bool ignore_qualifiers)
   const
 {
-  return t.is_compatible_with(arch, *this, ignore_qualifiers);
+  return t.is_compatible_with(tgt, *this, ignore_qualifiers);
 }
 
-bool struct_or_union_type::is_compatible_with(const architecture&,
+bool struct_or_union_type::is_compatible_with(const target&,
 					      const struct_or_union_type &t,
 					      const bool ignore_qualifiers)
   const
@@ -1504,14 +1504,14 @@ bool struct_or_union_type::is_size_constant() const noexcept
   return get_content()->is_size_constant();
 }
 
-mpa::limbs struct_or_union_type::get_size(const architecture&) const
+mpa::limbs struct_or_union_type::get_size(const target&) const
 {
   assert(is_size_constant());
   return get_content()->get_size();
 }
 
 mpa::limbs::size_type
-struct_or_union_type::get_type_alignment(const architecture&)
+struct_or_union_type::get_type_alignment(const target&)
   const noexcept
 {
   assert(is_complete());
@@ -1557,50 +1557,50 @@ arithmetic_type::strip_qualifiers() const
 }
 
 std::shared_ptr<const arithmetic_type>
-int_type::arithmetic_conversion(const architecture &arch,
+int_type::arithmetic_conversion(const target &tgt,
 				const arithmetic_type &at) const
 {
   // Gets called for all non-std_int_type integer types. Promote to
   // std_int_type and forward the call.
-  return at.arithmetic_conversion(arch, *this->promote(arch));
+  return at.arithmetic_conversion(tgt, *this->promote(tgt));
 }
 
 std::shared_ptr<const arithmetic_type>
-int_type::arithmetic_conversion(const architecture &arch,
+int_type::arithmetic_conversion(const target &tgt,
 				const std_int_type &it) const
 {
-  return this->integer_conversion(arch, it);
+  return this->integer_conversion(tgt, it);
 }
 
 std::shared_ptr<const arithmetic_type>
-int_type::arithmetic_conversion(const architecture &arch,
+int_type::arithmetic_conversion(const target &tgt,
 				const real_float_type &ft) const
 {
   // Gets called for all non-std_int_type integer types. Promote to
   // std_int_type and forward the call.
-  return ft.arithmetic_conversion(arch, *this->promote(arch));
+  return ft.arithmetic_conversion(tgt, *this->promote(tgt));
 }
 
 std::shared_ptr<const arithmetic_type>
-int_type::arithmetic_conversion(const architecture &arch,
+int_type::arithmetic_conversion(const target &tgt,
 				const complex_float_type &ct) const
 {
   // Gets called for all non-std_int_type integer types. Promote to
   // std_int_type and forward the call.
-  return ct.arithmetic_conversion(arch, *this->promote(arch));
+  return ct.arithmetic_conversion(tgt, *this->promote(tgt));
 }
 
 std::shared_ptr<const std_int_type>
-int_type::integer_conversion(const architecture &arch, const int_type &it) const
+int_type::integer_conversion(const target &tgt, const int_type &it) const
 {
-  return it.integer_conversion(arch, *this->promote(arch));
+  return it.integer_conversion(tgt, *this->promote(tgt));
 }
 
 std::shared_ptr<const std_int_type>
-int_type::integer_conversion(const architecture &arch, const std_int_type &it)
+int_type::integer_conversion(const target &tgt, const std_int_type &it)
   const
 {
-  return it.integer_conversion(arch, *this->promote(arch));
+  return it.integer_conversion(tgt, *this->promote(tgt));
 }
 
 
@@ -1645,13 +1645,13 @@ type::type_id std_int_type::get_type_id() const noexcept
   return type_id::tid_std_int;
 }
 
-bool std_int_type::is_compatible_with(const architecture &arch, const type &t,
+bool std_int_type::is_compatible_with(const target &tgt, const type &t,
 				      const bool ignore_qualifiers) const
 {
-  return t.is_compatible_with(arch, *this, ignore_qualifiers);
+  return t.is_compatible_with(tgt, *this, ignore_qualifiers);
 }
 
-bool std_int_type::is_compatible_with(const architecture&,
+bool std_int_type::is_compatible_with(const target&,
 				      const std_int_type &t,
 				      const bool ignore_qualifiers) const
 {
@@ -1661,11 +1661,11 @@ bool std_int_type::is_compatible_with(const architecture&,
 	   (this->get_qualifiers() == t.get_qualifiers())));
 }
 
-bool std_int_type::is_compatible_with(const architecture &arch,
+bool std_int_type::is_compatible_with(const target &tgt,
 				      const enum_type &t,
 				      const bool ignore_qualifiers) const
 {
-  return t.is_compatible_with(arch, *this, ignore_qualifiers);
+  return t.is_compatible_with(tgt, *this, ignore_qualifiers);
 }
 
 std::shared_ptr<const std_int_type> std_int_type::strip_qualifiers() const
@@ -1673,15 +1673,15 @@ std::shared_ptr<const std_int_type> std_int_type::strip_qualifiers() const
   return _strip_qualifiers(_self_ptr<std_int_type>(), &std_int_type::_clone);
 }
 
-mpa::limbs std_int_type::get_size(const architecture &arch) const
+mpa::limbs std_int_type::get_size(const target &tgt) const
 {
-  return arch.get_std_int_size(_k);
+  return tgt.get_std_int_size(_k);
 }
 
-mpa::limbs::size_type std_int_type::get_type_alignment(const architecture &arch)
+mpa::limbs::size_type std_int_type::get_type_alignment(const target &tgt)
   const noexcept
 {
-  return arch.get_std_int_alignment(_k);
+  return tgt.get_std_int_alignment(_k);
 }
 
 std::shared_ptr<const std_int_type>
@@ -1692,41 +1692,41 @@ std_int_type::set_user_alignment(const alignment &user_align) const
 }
 
 std::shared_ptr<const arithmetic_type>
-std_int_type::arithmetic_conversion(const architecture &arch,
+std_int_type::arithmetic_conversion(const target &tgt,
 				    const arithmetic_type &at) const
 {
-  return at.arithmetic_conversion(arch, *this);
+  return at.arithmetic_conversion(tgt, *this);
 }
 
 std::shared_ptr<const arithmetic_type>
-std_int_type::arithmetic_conversion(const architecture &arch,
+std_int_type::arithmetic_conversion(const target &tgt,
 				    const real_float_type &ft) const
 {
-  return ft.arithmetic_conversion(arch, *this);
+  return ft.arithmetic_conversion(tgt, *this);
 }
 
 std::shared_ptr<const arithmetic_type>
-std_int_type::arithmetic_conversion(const architecture &arch,
+std_int_type::arithmetic_conversion(const target &tgt,
 				    const complex_float_type &ct) const
 {
-  return ct.arithmetic_conversion(arch, *this);
+  return ct.arithmetic_conversion(tgt, *this);
 }
 
 std::shared_ptr<const std_int_type>
-std_int_type::integer_conversion(const architecture &arch, const int_type &it)
+std_int_type::integer_conversion(const target &tgt, const int_type &it)
   const
 {
-  return it.integer_conversion(arch, *this);
+  return it.integer_conversion(tgt, *this);
 }
 
 std::shared_ptr<const std_int_type>
-std_int_type::integer_conversion(const architecture &arch,
+std_int_type::integer_conversion(const target &tgt,
 				 const std_int_type &it) const
 {
   if (_k < kind::k_int)
-    return this->promote(arch)->integer_conversion(arch, it);
+    return this->promote(tgt)->integer_conversion(tgt, it);
   else if (it._k < kind::k_int)
-    return this->integer_conversion(arch, *it.promote(arch));
+    return this->integer_conversion(tgt, *it.promote(tgt));
 
   if (_signed == it._signed) {
     if (_k >= it._k) {
@@ -1741,8 +1741,8 @@ std_int_type::integer_conversion(const architecture &arch,
   if (t_unsigned._k >= t_signed._k) {
     return t_unsigned.strip_qualifiers();
 
-  } else if (arch.get_std_int_width(t_signed._k) >
-	     arch.get_std_int_width(t_unsigned._k)) {
+  } else if (tgt.get_std_int_width(t_signed._k) >
+	     tgt.get_std_int_width(t_unsigned._k)) {
     return t_signed.strip_qualifiers();
 
   } else {
@@ -1750,19 +1750,19 @@ std_int_type::integer_conversion(const architecture &arch,
   }
 }
 
-bool std_int_type::is_signed(const architecture&) const noexcept
+bool std_int_type::is_signed(const target&) const noexcept
 {
   return _signed;
 }
 
-mpa::limbs::size_type std_int_type::get_width(const architecture &arch)
+mpa::limbs::size_type std_int_type::get_width(const target &tgt)
   const noexcept
 {
-  return arch.get_std_int_width(_k);
+  return tgt.get_std_int_width(_k);
 }
 
 std::shared_ptr<const std_int_type>
-std_int_type::promote(const architecture&) const
+std_int_type::promote(const target&) const
 {
   switch (_k) {
   case kind::k_char:
@@ -1808,44 +1808,44 @@ type::type_id plain_char_type::get_type_id() const noexcept
   return type_id::tid_plain_char;
 }
 
-bool plain_char_type::is_compatible_with(const architecture &arch,
+bool plain_char_type::is_compatible_with(const target &tgt,
 					 const type &t,
 					 const bool ignore_qualifiers) const
 {
-  return t.is_compatible_with(arch, *this, ignore_qualifiers);
+  return t.is_compatible_with(tgt, *this, ignore_qualifiers);
 }
 
-bool plain_char_type::is_compatible_with(const architecture&,
+bool plain_char_type::is_compatible_with(const target&,
 					 const plain_char_type &t,
 					 const bool ignore_qualifiers) const
 {
   return ignore_qualifiers || (this->get_qualifiers() == t.get_qualifiers());
 }
 
-mpa::limbs plain_char_type::get_size(const architecture&) const
+mpa::limbs plain_char_type::get_size(const target&) const
 {
   return mpa::limbs::from_size_type(1);
 }
 
 mpa::limbs::size_type
-plain_char_type::get_type_alignment(const architecture&) const noexcept
+plain_char_type::get_type_alignment(const target&) const noexcept
 {
   return 0;
 }
 
-bool plain_char_type::is_signed(const architecture &arch) const noexcept
+bool plain_char_type::is_signed(const target &tgt) const noexcept
 {
-  return arch.is_char_signed();
+  return tgt.is_char_signed();
 }
 
-mpa::limbs::size_type plain_char_type::get_width(const architecture &arch)
+mpa::limbs::size_type plain_char_type::get_width(const target &tgt)
   const noexcept
 {
-  return arch.get_std_int_width(std_int_type::kind::k_char);
+  return tgt.get_std_int_width(std_int_type::kind::k_char);
 }
 
 std::shared_ptr<const std_int_type>
-plain_char_type::promote(const architecture&) const
+plain_char_type::promote(const target&) const
 {
   return std_int_type::create(std_int_type::kind::k_int, true,
 			      get_qualifiers());
@@ -1882,42 +1882,42 @@ type::type_id bool_type::get_type_id() const noexcept
   return type_id::tid_bool;
 }
 
-bool bool_type::is_compatible_with(const architecture &arch, const type &t,
+bool bool_type::is_compatible_with(const target &tgt, const type &t,
 				   const bool ignore_qualifiers) const
 {
-  return t.is_compatible_with(arch, *this, ignore_qualifiers);
+  return t.is_compatible_with(tgt, *this, ignore_qualifiers);
 }
 
-bool bool_type::is_compatible_with(const architecture&, const bool_type &t,
+bool bool_type::is_compatible_with(const target&, const bool_type &t,
 				   const bool ignore_qualifiers) const
 {
   return ignore_qualifiers || (this->get_qualifiers() == t.get_qualifiers());
 }
 
-mpa::limbs bool_type::get_size(const architecture&) const
+mpa::limbs bool_type::get_size(const target&) const
 {
   return mpa::limbs::from_size_type(1);
 }
 
 mpa::limbs::size_type
-bool_type::get_type_alignment(const architecture&) const noexcept
+bool_type::get_type_alignment(const target&) const noexcept
 {
   return 0;
 }
 
-bool bool_type::is_signed(const architecture&) const noexcept
+bool bool_type::is_signed(const target&) const noexcept
 {
   return false;
 }
 
-mpa::limbs::size_type bool_type::get_width(const architecture&)
+mpa::limbs::size_type bool_type::get_width(const target&)
   const noexcept
 {
   return 1;
 }
 
 std::shared_ptr<const std_int_type>
-bool_type::promote(const architecture&) const
+bool_type::promote(const target&) const
 {
   return std_int_type::create(std_int_type::kind::k_int, true,
 			      get_qualifiers());
@@ -1969,13 +1969,13 @@ add_member(const ast::enumerator &e, const std::string &name,
 }
 
 void enum_content::add_member(const ast::enumerator &e, const std::string &name,
-			      const architecture &arch)
+			      const target &tgt)
 {
   if (_members.empty()) {
     // The initial value is zero and the target_int's width will eventually
-    // get adjusted in architecture::evaluate_enum_type().
+    // get adjusted in target::evaluate_enum_type().
     const mpa::limbs::size_type int_width =
-      arch.get_std_int_width(types::std_int_type::kind::k_int);
+      tgt.get_std_int_width(types::std_int_type::kind::k_int);
     mpa::limbs ls;
     ls.resize(mpa::limbs::width_to_size(int_width));
 
@@ -2053,13 +2053,13 @@ type::type_id enum_type::get_type_id() const noexcept
   return type_id::tid_enum;
 }
 
-bool enum_type::is_compatible_with(const architecture &arch, const type &t,
+bool enum_type::is_compatible_with(const target &tgt, const type &t,
 				   const bool ignore_qualifiers) const
 {
-  return t.is_compatible_with(arch, *this, ignore_qualifiers);
+  return t.is_compatible_with(tgt, *this, ignore_qualifiers);
 }
 
-bool enum_type::is_compatible_with(const architecture&, const enum_type &t,
+bool enum_type::is_compatible_with(const target&, const enum_type &t,
 				   const bool ignore_qualifiers) const
 {
   if (!ignore_qualifiers && (this->get_qualifiers() != t.get_qualifiers()))
@@ -2068,7 +2068,7 @@ bool enum_type::is_compatible_with(const architecture&, const enum_type &t,
   return _decl_node.get_id() == t._decl_node.get_id();
 }
 
-bool enum_type::is_compatible_with(const architecture &arch,
+bool enum_type::is_compatible_with(const target &tgt,
 				   const std_int_type &t,
 				   const bool ignore_qualifiers) const
 {
@@ -2077,7 +2077,7 @@ bool enum_type::is_compatible_with(const architecture &arch,
 
   if (!this->is_complete())
     return false;
-  return this->get_underlying_type()->is_compatible_with(arch, t, false);
+  return this->get_underlying_type()->is_compatible_with(tgt, t, false);
 }
 
 bool enum_type::is_complete() const noexcept
@@ -2089,32 +2089,32 @@ bool enum_type::is_complete() const noexcept
   return !!content->get_underlying_type();
 }
 
-mpa::limbs enum_type::get_size(const architecture &arch) const
+mpa::limbs enum_type::get_size(const target &tgt) const
 {
-  return get_underlying_type()->get_size(arch);
+  return get_underlying_type()->get_size(tgt);
 }
 
-mpa::limbs::size_type enum_type::get_type_alignment(const architecture &arch)
+mpa::limbs::size_type enum_type::get_type_alignment(const target &tgt)
   const noexcept
 {
-  return get_underlying_type()->get_type_alignment(arch);
+  return get_underlying_type()->get_type_alignment(tgt);
 }
 
-bool enum_type::is_signed(const architecture &arch) const noexcept
+bool enum_type::is_signed(const target &tgt) const noexcept
 {
-  return get_underlying_type()->is_signed(arch);
+  return get_underlying_type()->is_signed(tgt);
 }
 
-mpa::limbs::size_type enum_type::get_width(const architecture &arch)
+mpa::limbs::size_type enum_type::get_width(const target &tgt)
   const noexcept
 {
-  return get_underlying_type()->get_width(arch);
+  return get_underlying_type()->get_width(tgt);
 }
 
-std::shared_ptr<const std_int_type> enum_type::promote(const architecture &arch)
+std::shared_ptr<const std_int_type> enum_type::promote(const target &tgt)
   const
 {
-  return this->get_underlying_type()->promote(arch);
+  return this->get_underlying_type()->promote(tgt);
 }
 
 std::shared_ptr<const returnable_int_type> enum_type::to_unsigned() const
@@ -2174,29 +2174,29 @@ type::type_id bitfield_type::get_type_id() const noexcept
   return type_id::tid_bitfield;
 }
 
-bool bitfield_type::is_compatible_with(const architecture &arch, const type &t,
+bool bitfield_type::is_compatible_with(const target &tgt, const type &t,
 				       const bool ignore_qualifiers) const
 {
-  return t.is_compatible_with(arch, *this, ignore_qualifiers);
+  return t.is_compatible_with(tgt, *this, ignore_qualifiers);
 }
 
-bool bitfield_type::is_signed(const architecture &arch) const noexcept
+bool bitfield_type::is_signed(const target &tgt) const noexcept
 {
-  return _base_type->is_signed(arch);
+  return _base_type->is_signed(tgt);
 }
 
-mpa::limbs::size_type bitfield_type::get_width(const architecture&)
+mpa::limbs::size_type bitfield_type::get_width(const target&)
   const noexcept
 {
   return _width;
 }
 
 std::shared_ptr<const std_int_type>
-bitfield_type::promote(const architecture &arch) const
+bitfield_type::promote(const target &tgt) const
 {
   const int_mode_kind m = width_to_int_mode(_width);
-  const std_int_type::kind k = arch.int_mode_to_std_int_kind(m);
-  return std_int_type::create(k, _base_type->is_signed(arch));
+  const std_int_type::kind k = tgt.int_mode_to_std_int_kind(m);
+  return std_int_type::create(k, _base_type->is_signed(tgt));
 }
 
 std::shared_ptr<const bitfield_type>
@@ -2226,15 +2226,15 @@ float_type::float_type(const float_type&) = default;
 float_type::~float_type() noexcept = default;
 
 mpa::limbs::size_type
-float_type::get_significand_width(const architecture &arch) const noexcept
+float_type::get_significand_width(const target &tgt) const noexcept
 {
-  return arch.get_float_significand_width(_k);
+  return tgt.get_float_significand_width(_k);
 }
 
 mpa::limbs::size_type
-float_type::get_exponent_width(const architecture &arch) const noexcept
+float_type::get_exponent_width(const target &tgt) const noexcept
 {
-  return arch.get_float_exponent_width(_k);
+  return tgt.get_float_exponent_width(_k);
 }
 
 
@@ -2263,14 +2263,14 @@ type::type_id real_float_type::get_type_id() const noexcept
   return type_id::tid_real_float;
 }
 
-bool real_float_type::is_compatible_with(const architecture &arch,
+bool real_float_type::is_compatible_with(const target &tgt,
 					 const type &t,
 					 const bool ignore_qualifiers) const
 {
-  return t.is_compatible_with(arch, *this, ignore_qualifiers);
+  return t.is_compatible_with(tgt, *this, ignore_qualifiers);
 }
 
-bool real_float_type::is_compatible_with(const architecture&,
+bool real_float_type::is_compatible_with(const target&,
 					 const real_float_type &t,
 					 const bool ignore_qualifiers) const
 {
@@ -2279,33 +2279,33 @@ bool real_float_type::is_compatible_with(const architecture&,
 	   (this->get_qualifiers() == t.get_qualifiers())));
 }
 
-mpa::limbs real_float_type::get_size(const architecture &arch) const
+mpa::limbs real_float_type::get_size(const target &tgt) const
 {
-  return arch.get_float_size(this->get_kind(), false);
+  return tgt.get_float_size(this->get_kind(), false);
 }
 
 mpa::limbs::size_type
-real_float_type::get_type_alignment(const architecture &arch) const noexcept
+real_float_type::get_type_alignment(const target &tgt) const noexcept
 {
-  return arch.get_float_alignment(this->get_kind(), false);
+  return tgt.get_float_alignment(this->get_kind(), false);
 }
 
 std::shared_ptr<const arithmetic_type>
-real_float_type::arithmetic_conversion(const architecture &arch,
+real_float_type::arithmetic_conversion(const target &tgt,
 				       const arithmetic_type &at) const
 {
-  return at.arithmetic_conversion(arch, *this);
+  return at.arithmetic_conversion(tgt, *this);
 }
 
 std::shared_ptr<const arithmetic_type>
-real_float_type::arithmetic_conversion(const architecture&,
+real_float_type::arithmetic_conversion(const target&,
 				       const std_int_type&) const
 {
   return this->arithmetic_type::strip_qualifiers();
 }
 
 std::shared_ptr<const arithmetic_type>
-real_float_type::arithmetic_conversion(const architecture&,
+real_float_type::arithmetic_conversion(const target&,
 				       const real_float_type &ft) const
 {
   if (this->get_kind() >= ft.get_kind()) {
@@ -2316,10 +2316,10 @@ real_float_type::arithmetic_conversion(const architecture&,
 }
 
 std::shared_ptr<const arithmetic_type>
-real_float_type::arithmetic_conversion(const architecture &arch,
+real_float_type::arithmetic_conversion(const target &tgt,
 				       const complex_float_type &ct) const
 {
-  return ct.arithmetic_conversion(arch, *this);
+  return ct.arithmetic_conversion(tgt, *this);
 }
 
 std::shared_ptr<const float_type> real_float_type::promote() const
@@ -2356,14 +2356,14 @@ type::type_id complex_float_type::get_type_id() const noexcept
   return type_id::tid_complex_float;
 }
 
-bool complex_float_type::is_compatible_with(const architecture &arch,
+bool complex_float_type::is_compatible_with(const target &tgt,
 					    const type &t,
 					    const bool ignore_qualifiers) const
 {
-  return t.is_compatible_with(arch, *this, ignore_qualifiers);
+  return t.is_compatible_with(tgt, *this, ignore_qualifiers);
 }
 
-bool complex_float_type::is_compatible_with(const architecture&,
+bool complex_float_type::is_compatible_with(const target&,
 					    const complex_float_type &t,
 					    const bool ignore_qualifiers) const
 {
@@ -2372,33 +2372,33 @@ bool complex_float_type::is_compatible_with(const architecture&,
 	   (this->get_qualifiers() == t.get_qualifiers())));
 }
 
-mpa::limbs complex_float_type::get_size(const architecture &arch) const
+mpa::limbs complex_float_type::get_size(const target &tgt) const
 {
-  return arch.get_float_size(this->get_kind(), true);
+  return tgt.get_float_size(this->get_kind(), true);
 }
 
 mpa::limbs::size_type
-complex_float_type::get_type_alignment(const architecture &arch) const noexcept
+complex_float_type::get_type_alignment(const target &tgt) const noexcept
 {
-  return arch.get_float_alignment(this->get_kind(), true);
+  return tgt.get_float_alignment(this->get_kind(), true);
 }
 
 std::shared_ptr<const arithmetic_type>
-complex_float_type::arithmetic_conversion(const architecture &arch,
+complex_float_type::arithmetic_conversion(const target &tgt,
 					  const arithmetic_type &at) const
 {
-  return at.arithmetic_conversion(arch, *this);
+  return at.arithmetic_conversion(tgt, *this);
 }
 
 std::shared_ptr<const arithmetic_type>
-complex_float_type::arithmetic_conversion(const architecture&,
+complex_float_type::arithmetic_conversion(const target&,
 					  const std_int_type&) const
 {
   return this->arithmetic_type::strip_qualifiers();
 }
 
 std::shared_ptr<const arithmetic_type>
-complex_float_type::arithmetic_conversion(const architecture&,
+complex_float_type::arithmetic_conversion(const target&,
 					  const real_float_type &ft) const
 {
   if (this->get_kind() >= ft.get_kind()) {
@@ -2409,7 +2409,7 @@ complex_float_type::arithmetic_conversion(const architecture&,
 }
 
 std::shared_ptr<const arithmetic_type>
-complex_float_type::arithmetic_conversion(const architecture&,
+complex_float_type::arithmetic_conversion(const target&,
 					  const complex_float_type &ct) const
 {
   if (this->get_kind() >= ct.get_kind()) {
@@ -2454,9 +2454,9 @@ type::type_id builtin_func_type::get_type_id() const noexcept
   return type_id::tid_builtin_func;
 }
 
-bool builtin_func_type::is_compatible_with(const architecture &arch,
+bool builtin_func_type::is_compatible_with(const target &tgt,
 					   const type &t,
 					   const bool ignore_qualifiers) const
 {
-  return t.is_compatible_with(arch, *this, ignore_qualifiers);
+  return t.is_compatible_with(tgt, *this, ignore_qualifiers);
 }

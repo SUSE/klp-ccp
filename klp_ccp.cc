@@ -21,7 +21,7 @@
 #include <cstring>
 #include <iostream>
 #include <vector>
-#include "arch_x86_64_gcc.hh"
+#include "target_x86_64_gcc.hh"
 #include "cmdline_except.hh"
 #include "user_policy_command.hh"
 #include "header_resolver.hh"
@@ -522,10 +522,10 @@ int main(int argc, char *argv[], char *envp[])
   }
 
 
-  std::unique_ptr<architecture> arch;
+  std::unique_ptr<target> tgt;
   if (!strcmp(o_compiler, "x86_64-gcc")) {
     try {
-      arch.reset(new arch_x86_64_gcc{o_compiler_version});
+      tgt.reset(new target_x86_64_gcc{o_compiler_version});
     } catch (const cmdline_except &e) {
       std::cerr << "command line error: " << e.what() << std::endl;
       show_usage(prog_name);
@@ -540,15 +540,15 @@ int main(int argc, char *argv[], char *envp[])
   }
 
   header_resolver hr;
-  preprocessor pp(hr, *arch);
+  preprocessor pp(hr, *tgt);
   try {
-    arch->parse_command_line(argc - optind,
-			     const_cast<const char **>(&argv[optind]),
-			     hr, pp,
-			     [&](const std::string &warning) {
-			       std::cerr << "compiler command line warning: "
-					 << warning << std::endl;
-			     });
+    tgt->parse_command_line(argc - optind,
+			    const_cast<const char **>(&argv[optind]),
+			    hr, pp,
+			    [&](const std::string &warning) {
+			      std::cerr << "compiler command line warning: "
+					<< warning << std::endl;
+			    });
   } catch (const cmdline_except &e) {
     std::cerr << "compiler command line error: "
 	      << e.what() << std::endl;
@@ -558,7 +558,7 @@ int main(int argc, char *argv[], char *envp[])
 
 
   int r = 0;
-  yy::gnuc_parser_driver pd{std::move(pp), *arch};
+  yy::gnuc_parser_driver pd{std::move(pp), *tgt};
   try {
     pd.parse();
 
@@ -578,7 +578,7 @@ int main(int argc, char *argv[], char *envp[])
 
   ast::ast_translation_unit ast(pd.grab_result());
   try {
-    ast.resolve(*arch);
+    ast.resolve(*tgt);
   } catch (const semantic_except&) {
     r = 2;
   }
@@ -589,7 +589,7 @@ int main(int argc, char *argv[], char *envp[])
     return r;
 
   try {
-    ast.evaluate(*arch);
+    ast.evaluate(*tgt);
   } catch (const semantic_except&) {
     r = 2;
   }

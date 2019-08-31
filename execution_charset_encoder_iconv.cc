@@ -35,11 +35,11 @@ using namespace klp::ccp;
 #endif
 
 execution_charset_encoder_iconv::
-execution_charset_encoder_iconv(const architecture &arch,
+execution_charset_encoder_iconv(const target &tgt,
 			const types::std_int_type::kind target_char_kind,
 			const std::string &target_code,
 			const bool target_code_is_big_endian)
-  : execution_charset_encoder(arch, target_char_kind),
+  : execution_charset_encoder(tgt, target_char_kind),
     _target_code_is_big_endian(target_code_is_big_endian)
 {
   _iconv = iconv_open(target_code.c_str(), UCS4_CODE);

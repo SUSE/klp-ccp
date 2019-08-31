@@ -20,17 +20,17 @@
 #include "execution_charset_encoder.hh"
 #include "ast.hh"
 #include "semantic_except.hh"
-#include "architecture.hh"
+#include "target.hh"
 #include "pp_token.hh"
 
 using namespace klp::ccp;
 
 execution_charset_encoder::
-execution_charset_encoder(const architecture &arch,
+execution_charset_encoder(const target &tgt,
 			  const types::std_int_type::kind target_char_kind)
   noexcept
   : _target_char_kind(target_char_kind),
-    _target_char_width(arch.get_std_int_width(target_char_kind))
+    _target_char_width(tgt.get_std_int_width(target_char_kind))
 {}
 
 std::vector<mpa::limbs>
