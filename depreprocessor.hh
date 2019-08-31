@@ -110,6 +110,16 @@ namespace klp
 	    right,
 	  };
 
+	  struct replaced_macro_arg_tok
+	  {
+	    raw_pp_token_index arg_tok;
+	    pp_token new_tok;
+	    bool add_pointer_deref;
+	  };
+
+	  typedef std::vector<replaced_macro_arg_tok>
+		replaced_macro_arg_toks_type;
+
 	  _op(const pp_tokens_range &copied_range);
 	  _op(const pp_tokens_range &replaced_range,
 	      pp_token &&repl_tok, const bool _add_pointer_deref);
@@ -118,6 +128,9 @@ namespace klp
 	  _op(const pp_token_index pos, const sticky_side _stickiness);
 	  _op(const pp_result::conditional_inclusion_node &_c,
 	      const _cond_incl_transition_kind k);
+	  _op(const pp_tokens_range &expanded_macro_range,
+	      const pp_result::macro_invocation *_rewritten_macro_invocation,
+	      replaced_macro_arg_toks_type &&_replaced_macro_arg_toks);
 
 	  bool operator<(const pp_tokens_range &rhs) const noexcept;
 	  bool operator>(const pp_tokens_range &rhs) const noexcept;
@@ -132,6 +145,7 @@ namespace klp
 	    insert,
 	    insert_ws,
 	    cond_incl_transition,
+	    rewrite_macro_invocation,
 	  };
 
 	  action a;
@@ -143,6 +157,9 @@ namespace klp
 
 	  const pp_result::conditional_inclusion_node *cond_incl_node;
 	  _cond_incl_transition_kind cond_incl_trans_kind;
+
+	  const pp_result::macro_invocation *rewritten_macro_invocation;
+	  replaced_macro_arg_toks_type replaced_macro_arg_toks;
 	};
 
 	typedef std::vector<_op> _ops_type;
@@ -239,6 +256,9 @@ namespace klp
 	_find_overlapping_ops_range(const raw_pp_tokens_range &r,
 				    const pp_result &pp_result) const noexcept;
 
+	std::pair<_ops_type::iterator, _ops_type::iterator>
+	_find_overlapping_ops_range(const pp_tokens_range &r) noexcept;
+
 	_pos_in_chunk _directive_range_to_pos_in_chunk
 			(const raw_pp_tokens_range &directive_range,
 			 const pp_result &pp_result)
@@ -254,6 +274,10 @@ namespace klp
 
 	bool _find_macro_constraints(const pp_result &pp_result,
 				     bool next_raw_tok_is_opening_parenthesis);
+
+	void
+	_try_rewrite_macro_arguments(const pp_result &pp_result,
+				     const pp_result::macro_invocation &mi);
 
 	void _add_macro_undef_to_emit(const _pos_in_chunk &pos,
 				      _macro_undef_to_emit &&mu);

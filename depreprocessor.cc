@@ -359,6 +359,8 @@ _next_pos_in_chunk(const _pos_in_chunk &cur_pos)const noexcept
   case _op::action::insert_ws:
     /* fall through */
   case _op::action::cond_incl_transition:
+    /* fal through */
+  case _op::action::rewrite_macro_invocation:
     if (cur_pos.op + 1 < _ops.size() &&
 	_ops[cur_pos.op + 1].a == _op::action::copy) {
       return _pos_in_chunk{
@@ -398,6 +400,27 @@ _find_overlapping_ops_range(const raw_pp_tokens_range &r,
 
   return std::equal_range(_ops.begin(), _ops.end(), r,
 			  comp_op_range{pp_result});
+}
+
+std::pair<depreprocessor::transformed_input_chunk::_ops_type::iterator,
+	  depreprocessor::transformed_input_chunk::_ops_type::iterator>
+depreprocessor::transformed_input_chunk::
+_find_overlapping_ops_range(const pp_tokens_range &r) noexcept
+{
+  struct comp_op_range
+  {
+    bool operator()(const _op &op, const pp_tokens_range &r)
+    {
+      return (op.r < r);
+    }
+
+    bool operator()(const pp_tokens_range &r, const _op &op)
+    {
+      return (r < op.r);
+    }
+  };
+
+  return std::equal_range(_ops.begin(), _ops.end(), r, comp_op_range{});
 }
 
 depreprocessor::transformed_input_chunk::_pos_in_chunk
@@ -636,6 +659,11 @@ _find_macro_constraints(const pp_result &pp_result,
 {
   const raw_pp_tokens_range range_raw = _get_range_raw(pp_result);
   const auto mis = pp_result.find_overlapping_macro_invocations(range_raw);
+
+  // First try to turn expanded token replacement ops into macro
+  // argument rewrite ops, if possible.
+  for (auto it_mi = mis.first; it_mi != mis.second; ++it_mi)
+    _try_rewrite_macro_arguments(pp_result, *it_mi);
 
   // Function-like macros get expanded by the preprocessor depending
   // on whether or not a referencing identifier token is followed by
@@ -897,6 +925,39 @@ _find_macro_constraints(const pp_result &pp_result,
 	}
       }
       break;
+
+    case _op::action::rewrite_macro_invocation:
+      next_raw_tok_is_opening_parenthesis = false;
+      for (const auto &um :
+	     it_op->rewritten_macro_invocation->get_used_macros()) {
+	_used_macros_in_chunk.emplace_back
+	  (_pos_in_chunk{(static_cast<_ops_type::size_type>
+			  (it_op - _ops.begin())),
+			 0},
+	    um);
+      }
+      for (const auto &mnc :
+	     (it_op->rewritten_macro_invocation
+	      ->get_macro_nondef_constraints())) {
+	_macro_nondef_constraints_in_chunk.emplace_back
+	  (_pos_in_chunk{(static_cast<_ops_type::size_type>
+			  (it_op - _ops.begin())),
+			 0},
+	    pp_result::macro_nondef_constraint{mnc});
+      }
+      for (const auto &replaced_arg_tok : it_op->replaced_macro_arg_toks) {
+	if (replaced_arg_tok.new_tok.is_id()) {
+	  _macro_nondef_constraints_in_chunk.emplace_back
+	    (_pos_in_chunk{(static_cast<_ops_type::size_type>
+			    (it_op - _ops.begin())),
+			   0},
+	     pp_result::macro_nondef_constraint{
+	       replaced_arg_tok.new_tok.get_value(),
+	       replaced_arg_tok.add_pointer_deref,
+	     });
+	}
+      }
+      break;
     }
   }
 
@@ -984,6 +1045,144 @@ _find_macro_constraints(const pp_result &pp_result,
 
   return next_raw_tok_is_opening_parenthesis;
 }
+
+void depreprocessor::transformed_input_chunk::
+_try_rewrite_macro_arguments(const pp_result &pp_result,
+			     const pp_result::macro_invocation &mi)
+{
+  // For macro argument rewriting to be possible at all, all ops
+  // overlapping with the expanded range must fully cover it without
+  // holes and must be of type action::copy or action::replace.
+  const pp_tokens_range expanded_r =
+    pp_result.raw_pp_tokens_range_to_nonraw(mi.get_source_range());
+  auto overlapping_ops = _find_overlapping_ops_range(expanded_r);
+
+  if (overlapping_ops.first == overlapping_ops.second)
+    return;
+
+  if (!(overlapping_ops.first->r.begin <= expanded_r.begin) ||
+      !((overlapping_ops.second - 1)->r.end >= expanded_r.end))
+    return;
+
+  for (auto it_op = overlapping_ops.first + 1;
+       it_op != overlapping_ops.second; ++it_op) {
+    if ((it_op - 1)->r.end != it_op->r.begin) {
+      // There's a hole inbetween the ops.
+      return;
+    }
+  }
+
+  std::vector<const _op*> replace_ops;
+  for (auto it_op = overlapping_ops.first; it_op != overlapping_ops.second;
+       ++it_op) {
+    switch (it_op->a) {
+    case _op::action::copy:
+      break;
+
+    case _op::action::replace:
+      replace_ops.push_back(&*it_op);
+      break;
+
+    default:
+      // Some non-copy and non-replace op, macro can't be retained.
+      return;
+    }
+  }
+
+  if (replace_ops.empty())
+    return;
+
+  using passed_through_arg_token =
+    pp_result::macro_invocation::passed_through_arg_token;
+  _op::replaced_macro_arg_toks_type replaced_macro_arg_toks;
+  while (!replace_ops.empty()) {
+    const _op * const replace_op = replace_ops.back();
+    const passed_through_arg_token *pta =
+      mi.lookup_passed_through_arg_token(replace_op->r.begin);
+    if (!pta) {
+      // No argument token corresponds to the token to be replaced.
+      return;
+    }
+
+    // Now check that all tokens which emerged from this raw argument
+    // token are rewritten in exactly the same way.
+    for (const auto emerged_tok : pta->get_emerged_tokens()) {
+      if (emerged_tok == std::numeric_limits<pp_token_index>::max()) {
+	// This argument token had been an operand to stringification
+	// or concatenation operators. Rewriting it would have side
+	// effects.
+	return;
+      }
+
+      const auto it_op = std::find_if(replace_ops.begin(),
+				      replace_ops.end(),
+				      [emerged_tok](const _op *o) {
+					return o->r.begin == emerged_tok;
+				      });
+
+      if (it_op == replace_ops.end()) {
+	// One of the tokens emerged from this macro argument token
+	// is not supposed to get replaced.
+	return;
+      }
+
+      if ((*it_op)->new_tok.get_type() != replace_op->new_tok.get_type() ||
+	  (*it_op)->new_tok.get_value() != replace_op->new_tok.get_value() ||
+	  (*it_op)->add_pointer_deref != replace_op->add_pointer_deref) {
+	// One of the tokens emerged from this macro argument token
+	// is to be replaced by different content.
+	return;
+      }
+
+      replace_ops.erase(it_op);
+    }
+
+    // Keep replaced_macro_arg_toks sorted by the replaced raw token's
+    // index.
+    const auto insert_pos =
+      std::lower_bound(replaced_macro_arg_toks.begin(),
+		       replaced_macro_arg_toks.end(),
+		       pta->get_arg_tok_raw(),
+		       [](const _op::replaced_macro_arg_tok rmat,
+			  const raw_pp_token_index val) {
+			 return rmat.arg_tok < val;
+		       });
+    assert(insert_pos == replaced_macro_arg_toks.end() ||
+	   insert_pos->arg_tok != pta->get_arg_tok_raw());
+
+    replaced_macro_arg_toks.emplace_back
+      (_op::replaced_macro_arg_tok{
+	 pta->get_arg_tok_raw(),
+	 replace_op->new_tok,
+	 replace_op->add_pointer_deref
+       });
+  }
+
+  // Macro argument token replacement is possible. Replace the former
+  // sequence of copy and replace ops by a single
+  // rewrite_macro_invocation op.
+  if (overlapping_ops.first->a == _op::action::copy &&
+      overlapping_ops.first->r.begin < expanded_r.begin) {
+    assert(overlapping_ops.first->r.end > expanded_r.begin);
+    overlapping_ops.first->r.end = expanded_r.begin;
+    ++overlapping_ops.first;
+  }
+
+  if (overlapping_ops.first != overlapping_ops.second &&
+      (overlapping_ops.second - 1)->a == _op::action::copy &&
+      expanded_r.end < (overlapping_ops.second - 1)->r.end) {
+    assert((overlapping_ops.second - 1)->r.begin < expanded_r.end);
+    (overlapping_ops.second - 1)->r.begin = expanded_r.end;
+    --overlapping_ops.second;
+  }
+
+  if (overlapping_ops.first != overlapping_ops.second)
+    overlapping_ops.first = _ops.erase(overlapping_ops.first,
+				       overlapping_ops.second);
+  _ops.emplace(overlapping_ops.first,
+	       expanded_r, &mi, std::move(replaced_macro_arg_toks));
+}
+
 
 void depreprocessor::transformed_input_chunk::
 _add_macro_undef_to_emit(const _pos_in_chunk &pos, _macro_undef_to_emit &&mu)
@@ -1455,6 +1654,65 @@ _write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
       last_was_newline = true;
       skip_following_insert_ws = true;
       break;
+
+    case _op::action::rewrite_macro_invocation:
+      {
+	write_mus_and_mds_at_cur_pos();
+
+	const raw_pp_tokens_range op_range_raw =
+	  op.rewritten_macro_invocation->get_source_range();
+	if (at_beginning) {
+	  if (write_newlines) {
+	    _write_newlines(writer, cur_input_pos_raw, op_range_raw.begin,
+			    last_was_newline, false, pp_result,
+			    source_reader_cache);
+	  }
+	  write_newlines = true;
+	  at_beginning = false;
+	}
+
+	// All the tokens from a macro invocation come from a single
+	// file.
+	advance_source_to(op_range_raw.begin);
+	source_reader &sr = source_reader_cache.get(*it_source);
+
+	const _op::replaced_macro_arg_toks_type &replaced_arg_toks
+	  = op.replaced_macro_arg_toks;
+	auto it_replaced_macro_arg_tok = replaced_arg_toks.cbegin();
+	raw_pp_token_index cur_tok = op_range_raw.begin;
+	while (cur_tok != op_range_raw.end) {
+	  if (it_replaced_macro_arg_tok != replaced_arg_toks.cend() &&
+	      it_replaced_macro_arg_tok->arg_tok == cur_tok) {
+	    if (it_replaced_macro_arg_tok->add_pointer_deref) {
+	      writer.append("(*" +
+			    it_replaced_macro_arg_tok->new_tok.get_value() +
+			    ")");
+	    } else {
+	      writer.append(it_replaced_macro_arg_tok->new_tok.get_value());
+	    }
+	    ++cur_tok;
+	    ++it_replaced_macro_arg_tok;
+
+	  } else {
+	    const raw_pp_token_index copy_end =
+	      (it_replaced_macro_arg_tok == replaced_arg_toks.cend() ?
+	       op_range_raw.end :
+	       it_replaced_macro_arg_tok->arg_tok);
+	    const raw_pp_tokens &raw_toks = pp_result.get_raw_tokens();
+	    writer.append
+	      (sr,
+	       range_in_file{
+		 raw_toks[cur_tok].get_range_in_file().begin,
+		 raw_toks[copy_end - 1].get_range_in_file().end
+	       });
+	    cur_tok = copy_end;
+	  }
+	}
+
+	last_was_newline = false;
+	cur_input_pos_raw = op_range_raw.end;
+      }
+      break;
     }
 
     cur_pos = _next_pos_in_chunk(cur_pos);
@@ -1468,7 +1726,8 @@ depreprocessor::transformed_input_chunk::_op::
 _op(const pp_tokens_range &copied_range)
   : a(action::copy), r(copied_range), stickiness(sticky_side::none),
     new_tok{pp_token::type::eof, std::string{}, raw_pp_tokens_range{}},
-    add_pointer_deref(false), cond_incl_node(nullptr)
+    add_pointer_deref(false), cond_incl_node(nullptr),
+    rewritten_macro_invocation(nullptr)
 {
   assert(copied_range.begin != copied_range.end);
 }
@@ -1478,7 +1737,8 @@ _op(const pp_tokens_range &replaced_range, pp_token &&repl_tok,
     const bool _add_pointer_deref)
   : a(action::replace), r(replaced_range), stickiness(sticky_side::none),
     new_tok(std::move(repl_tok)),add_pointer_deref(_add_pointer_deref),
-    cond_incl_node(nullptr)
+    cond_incl_node(nullptr),
+    rewritten_macro_invocation(nullptr)
 {
   assert(replaced_range.begin + 1 == replaced_range.end);
 }
@@ -1488,14 +1748,16 @@ depreprocessor::transformed_input_chunk::_op::_op(const pp_token_index pos,
 						  const sticky_side _stickiness)
   : a(action::insert), r(pp_tokens_range{pos, pos}), stickiness(_stickiness),
     new_tok(std::move(_new_tok)), add_pointer_deref(false),
-    cond_incl_node(nullptr)
+    cond_incl_node(nullptr),
+    rewritten_macro_invocation(nullptr)
 {}
 
 depreprocessor::transformed_input_chunk::_op::_op(const pp_token_index pos,
 						  const sticky_side _stickiness)
   : a(action::insert_ws), r(pp_tokens_range{pos, pos}), stickiness(_stickiness),
     new_tok{pp_token::type::eof, std::string{}, raw_pp_tokens_range{}},
-    add_pointer_deref(false), cond_incl_node(nullptr)
+    add_pointer_deref(false), cond_incl_node(nullptr),
+    rewritten_macro_invocation(nullptr)
 {}
 
 depreprocessor::transformed_input_chunk::_op::
@@ -1503,7 +1765,20 @@ _op(const pp_result::conditional_inclusion_node &_c,
     const _cond_incl_transition_kind k)
   : a(action::cond_incl_transition), r(), stickiness(sticky_side::none),
     new_tok{pp_token::type::eof, std::string{}, raw_pp_tokens_range{}},
-    add_pointer_deref(false), cond_incl_node(&_c), cond_incl_trans_kind(k)
+    add_pointer_deref(false), cond_incl_node(&_c), cond_incl_trans_kind(k),
+    rewritten_macro_invocation(nullptr)
+{}
+
+depreprocessor::transformed_input_chunk::_op::
+_op(const pp_tokens_range &expanded_macro_range,
+    const pp_result::macro_invocation *_rewritten_macro_invocation,
+    replaced_macro_arg_toks_type &&_replaced_macro_arg_toks)
+  : a(action::rewrite_macro_invocation), r(expanded_macro_range),
+    stickiness(sticky_side::none),
+    new_tok{pp_token::type::eof, std::string{}, raw_pp_tokens_range{}},
+    add_pointer_deref(false), cond_incl_node(nullptr),
+    rewritten_macro_invocation(_rewritten_macro_invocation),
+    replaced_macro_arg_toks(std::move(_replaced_macro_arg_toks))
 {}
 
 bool depreprocessor::transformed_input_chunk::_op::
@@ -1564,6 +1839,9 @@ get_range_raw(const pp_result &pp_result)
   case action::cond_incl_transition:
     return (depreprocessor::_get_cond_incl_trans_range_raw
 	    (*cond_incl_node, cond_incl_trans_kind));
+
+  case action::rewrite_macro_invocation:
+    return this->rewritten_macro_invocation->get_source_range();
   }
 }
 

@@ -332,6 +332,19 @@ macro_invocation(const macro &m,
   _used_macros += m;
 }
 
+const pp_result::macro_invocation::passed_through_arg_token*
+pp_result::macro_invocation::
+lookup_passed_through_arg_token(const pp_token_index tok) const noexcept
+{
+  for (const auto &pta : _passed_through_arg_tokens) {
+    for (const auto emerged_tok : pta.get_emerged_tokens()) {
+      if (emerged_tok == tok)
+	return &pta;
+    }
+  }
+  return nullptr;
+}
+
 void pp_result::macro_invocation::
 _add_passed_through_macro_arg_token(const raw_pp_token_index arg_tok_raw,
 				    const pp_token_index emerged_token)

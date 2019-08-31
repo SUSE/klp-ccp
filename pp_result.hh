@@ -553,6 +553,9 @@ namespace klp
 	  const raw_pp_token_index get_arg_tok_raw() const noexcept
 	  { return _arg_tok_raw; }
 
+	  const emerged_tokens_type& get_emerged_tokens() const noexcept
+	  { return _emerged_tokens; }
+
 	private:
 	  friend class macro_invocation;
 
@@ -580,6 +583,10 @@ namespace klp
 	const macro_nondef_constraints& get_macro_nondef_constraints()
 	  const noexcept
 	{ return _macro_nondef_constraints; }
+
+	const passed_through_arg_token*
+	lookup_passed_through_arg_token(const pp_token_index tok)
+	  const noexcept;
 
       private:
 	friend class pp_result;

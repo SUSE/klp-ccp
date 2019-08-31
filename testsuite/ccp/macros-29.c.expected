@@ -1,0 +1,6 @@
+static int (*klpe_espr_i);
+
+void klpp_pu_f(void)
+{
+	0, (*klpe_espr_i);
+}

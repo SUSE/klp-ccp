@@ -1,0 +1,8 @@
+#define READ_ONCE(x) (*(volatile typeof(x) *)(x))
+
+static int (*klpe_espr_i);
+
+void klpp_pu_f(void)
+{
+	READ_ONCE((*klpe_espr_i));
+}
