@@ -19,26 +19,19 @@
 #ifndef TARGET_X86_64_GCC_HH
 #define TARGET_X86_64_GCC_HH
 
-#include "target.hh"
+#include "target_gcc.hh"
 #include "gcc_cmdline_parser.hh"
 
 namespace klp
 {
   namespace ccp
   {
-    class target_x86_64_gcc final : public target
+    class target_x86_64_gcc final : public target_gcc
     {
     public:
       target_x86_64_gcc(const char * const version);
 
-      virtual ~target_x86_64_gcc() noexcept override = default;
-
-      virtual void parse_command_line
-		(int argc, const char *argv[],
-		 header_resolver &hr,
-		 preprocessor &pp,
-		 const std::function<void(const std::string&)> &report_warning)
-	override;
+      virtual ~target_x86_64_gcc() noexcept override;
 
       virtual const builtin_typedef::factories&
       get_builtin_typedefs() const noexcept override;
@@ -127,15 +120,15 @@ namespace klp
       virtual bool is_pid_t_signed() const noexcept override;
 
     private:
-      static gcc_cmdline_parser::gcc_version
-      _parse_version(const char * const version);
+      virtual const gcc_cmdline_parser::option *
+      _arch_get_opts() const noexcept override;
 
-      void _register_builtin_macros(preprocessor &pp) const;
+      virtual void _arch_register_builtin_macros(preprocessor &pp)
+	const override;
 
       static types::std_int_type::kind
       _width_to_int_kind(const mpa::limbs::size_type w) noexcept;
 
-      const gcc_cmdline_parser::gcc_version _gcc_version;
       builtin_typedef::factories _builtin_typedefs;
     };
   }

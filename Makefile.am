@@ -54,6 +54,7 @@ noinst_HEADERS =				\
 	source_reader.hh			\
 	source_writer.hh			\
 	target.hh				\
+	target_gcc.hh				\
 	target_x86_64_gcc.hh			\
 	target_float.hh			\
 	target_int.hh				\
@@ -103,6 +104,7 @@ libcp_a_SOURCES =				\
 	source_reader.cc			\
 	source_writer.cc			\
 	target.cc				\
+	target_gcc.cc				\
 	target_x86_64_gcc.cc			\
 	target_float.cc			\
 	target_int.cc				\

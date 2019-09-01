@@ -21,30 +21,16 @@
 #include "types_impl.hh"
 #include "ast.hh"
 #include "semantic_except.hh"
-#include "target_x86_64_gcc.hh"
-#include "pp_token.hh"
 #include "preprocessor.hh"
-#include "cmdline_except.hh"
-#include "pp_except.hh"
+#include "target_x86_64_gcc.hh"
 
 using namespace klp::ccp;
 using namespace klp::ccp::types;
-
-static gcc_cmdline_parser::option gcc_opts_common[] = {
-	#include "gcc_cmdline_opts_common.cc"
-	{ nullptr }
-};
-
-static gcc_cmdline_parser::option gcc_opts_c_family[] = {
-	#include "gcc_cmdline_opts_c_family.cc"
-	{ nullptr }
-};
 
 static gcc_cmdline_parser::option gcc_opts_i386[] = {
 	#include "gcc_cmdline_opts_i386.cc"
 	{ nullptr }
 };
-
 
 namespace
 {
@@ -141,7 +127,7 @@ _builtin_typedef__int128::_create(const bool is_signed)
 
 
 target_x86_64_gcc::target_x86_64_gcc(const char * const version)
-  : _gcc_version(_parse_version(version))
+  : target_gcc(version)
 {
   _builtin_typedefs.emplace_back("__builtin_va_list",
 				 _builtin_typedef_va_list::create);
@@ -151,301 +137,7 @@ target_x86_64_gcc::target_x86_64_gcc(const char * const version)
 				 _builtin_typedef__int128::create_unsigned);
 }
 
-
-void target_x86_64_gcc::parse_command_line
-		(int argc, const char *argv[],
-		 header_resolver &hr,
-		 preprocessor &pp,
-		 const std::function<void(const std::string&)> &report_warning)
-{
-  if (!argv) {
-    // This only happens for the testsuite programs. Provide a
-    // default set of #defines.
-    pp.register_builtin_macro("__STDC__", "1");
-    pp.register_builtin_macro("__STDC_HOSTED__", "1");
-    pp.register_builtin_macro("__STDC_VERSION__", "199901L");
-    _register_builtin_macros(pp);
-    return;
-  }
-
-  gcc_cmdline_parser p{_gcc_version};
-  p.register_table(gcc_opts_common);
-  p.register_table(gcc_opts_c_family);
-  p.register_table(gcc_opts_i386);
-
-  const char *_base_file = nullptr;
-  std::vector<const char *> pre_includes;
-
-  std::vector<const char *> include_dirs;
-  std::vector<const char *> include_dirs_quoted;
-  std::vector<const char *> include_dirs_system;
-  std::vector<const char *> include_dirs_after;
-
-  bool undef = false;
-
-  struct macro_def_or_undef
-  {
-    bool undef;
-    const char *arg;
-  };
-  std::vector<macro_def_or_undef> macro_defs_and_undefs;
-
-  bool optimize = false;
-
-  auto &&handle_opt =
-    [&](const char *name, const char *val, const bool negative) {
-      if (!name) {
-	if (_base_file) {
-	  throw cmdline_except{
-		  std::string{"more than one input file: '"} + _base_file +
-		  "' and '" + val + "'"
-		};
-	}
-
-	_base_file = val;
-	return;
-      }
-
-      if (!std::strcmp(name, "include")) {
-	pre_includes.push_back(val);
-	return;
-      }
-
-      if (!std::strcmp(name, "I")) {
-	if (!std::strcmp(val, "-")) {
-	  include_dirs_quoted.insert
-	    (include_dirs_quoted.end(),
-	     std::make_move_iterator(include_dirs.begin()),
-	     std::make_move_iterator(include_dirs.end()));
-	  include_dirs.clear();
-	  include_dirs.shrink_to_fit();
-	} else {
-	  include_dirs.push_back(val);
-	}
-	return;
-      }
-
-      if (!std::strcmp(name, "iquote")) {
-	include_dirs_quoted.push_back(val);
-	return;
-      }
-
-      if (!std::strcmp(name, "isystem")) {
-	include_dirs_after.push_back(val);
-	return;
-      }
-
-      if (!std::strcmp(name, "idirafter")) {
-	include_dirs_after.push_back(val);
-	return;
-      }
-
-      if (!std::strcmp(name, "undef")) {
-	undef = true;
-	return;
-      }
-
-      if (!std::strcmp(name, "D")) {
-	macro_defs_and_undefs.emplace_back(macro_def_or_undef{false, val});
-	return;
-      }
-
-      if (!std::strcmp(name, "U")) {
-	macro_defs_and_undefs.emplace_back(macro_def_or_undef{true, val});
-	return;
-      }
-
-      if (!std::strcmp(name, "O")) {
-	if (val && !strcmp(val, "0"))
-	  optimize = false;
-	else
-	  optimize = true;
-	return;
-      }
-    };
-
-  p(argc, argv, handle_opt);
-
-  if (!_base_file) {
-    throw cmdline_except{"no input file"};
-  }
-
-  for (const auto dir : include_dirs_quoted)
-    hr.append_search_dir_quoted(dir);
-
-  for (const auto dir : include_dirs)
-    hr.append_search_dir(dir);
-
-  for (const auto dir : include_dirs_system)
-    hr.append_search_dir(dir);
-
-  for (const auto dir : include_dirs_after)
-    hr.append_search_dir(dir);
-
-  const std::string base_file{_base_file};
-
-  for (const auto i : pre_includes) {
-    std::string resolved = hr.resolve(i, base_file, header_resolver::cwd);
-    if (resolved.empty()) {
-      throw cmdline_except{
-	      std::string{"file '"} + i + "' not found"
-	    };
-    }
-
-    pp.add_root_source(resolved, true);
-  }
-
-  pp.add_root_source(base_file, false);
-  pp.set_base_file(base_file);
-
-  pp.register_builtin_macro("__STDC__", "1");
-  pp.register_builtin_macro("__STDC_HOSTED__", "1");
-  pp.register_builtin_macro("__STDC_VERSION__", "199901L");
-
-  if (!undef) {
-    _register_builtin_macros(pp);
-    if (optimize)
-      pp.register_builtin_macro("__OPTIMIZE__", "1");
-  }
-
-  for (const auto &m : macro_defs_and_undefs) {
-    if (!m.undef) {
-      const auto &_report_warning =
-	[&](const std::string &msg) {
-	  report_warning(std::string{"predefined macro '"} +
-			 m.arg + "': " + msg);
-	};
-
-      const char * const repl = std::strchr(m.arg, '=');
-      if (!repl) {
-	try {
-	  pp.register_predefined_macro(m.arg, "1", _report_warning);
-	} catch (const pp_except &e) {
-	  throw cmdline_except{
-		  std::string{"failed to parse predefined macro '"} +
-		  m.arg + "': " + e.what()
-		};
-	}
-
-      } else {
-	const std::string signature{m.arg, repl};
-	try {
-	  pp.register_predefined_macro(signature, repl + 1, _report_warning);
-	} catch (const pp_except &e) {
-	  throw cmdline_except{
-		  std::string{"failed to parse predefined macro '"} +
-		  m.arg + "': " + e.what()
-		};
-	}
-      }
-
-    } else {
-      const auto &_report_warning =
-	[&](const std::string &msg) {
-	  report_warning(std::string{"macro undef '"} +
-			 m.arg + "': " + msg);
-	};
-
-      try {
-	pp.register_predefined_macro_undef(m.arg, _report_warning);
-      } catch (const pp_except &e) {
-	throw cmdline_except{
-		std::string{"failed to parse macro undef '"} +
-		m.arg + "': " + e.what()
-	      };
-      }
-    }
-  }
-}
-
-void target_x86_64_gcc::_register_builtin_macros(preprocessor &pp) const
-{
-  const std::initializer_list<std::pair<const char *, const char*>>
-    builtin_object_macros = {
-	{ "__x86_64__", "1" },
-	{ "__x86_64", "1" },
-	{ "__unix__", "1" },
-	{ "__unix", "1" },
-	{ "__linux__", "1" },
-	{ "__linux", "1" },
-	{ "__SIZE_TYPE__", "unsigned long" },
-	{ "__PTRDIFF_TYPE__", "long" },
-	{ "__INTPTR_TYPE__", "long" },
-	{ "__UINTPTR_TYPE__", "unsigned long" },
-	{ "__INT8_TYPE__", "char" },
-	{ "__UINT8_TYPE__", "unsigned char" },
-	{ "__INT_LEAST8_TYPE__", "char" },
-	{ "__UINT_LEAST8_TYPE__", "unsigned char" },
-	{ "__INT16_TYPE__", "short" },
-	{ "__UINT16_TYPE__", "unsigned short" },
-	{ "__INT_LEAST16_TYPE__", "short" },
-	{ "__UINT_LEAST16_TYPE__", "unsigned short" },
-	{ "__INT32_TYPE__", "int" },
-	{ "__UINT32_TYPE__", "unsigned int" },
-	{ "__INT_LEAST32_TYPE__", "int" },
-	{ "__UINT_LEAST32_TYPE__", "unsigned int" },
-	{ "__INT64_TYPE__", "long" },
-	{ "__UINT64_TYPE__", "unsigned long" },
-	{ "__INT_LEAST64_TYPE__", "long" },
-	{ "__UINT_LEAST64_TYPE__", "unsigned long" },
-	{ "__CHAR16_TYPE__", "unsigned short" },
-	{ "__CHAR32_TYPE__", "unsigned int" },
-	{ "__WCHAR_TYPE__", "int" },
-	{ "__WINT_TYPE__", "unsigned int" },
-
-	{ "__CHAR_BIT__", "8" },
-	{ "__SIZE_MAX__", "0xffffffffffffffffUL" },
-	{ "__PTRDIFF_MAX__", "__LONG_MAX__" },
-	{ "__SCHAR_MAX__", "0x7f" },
-	{ "__INT_MAX__", "0x7fffffff" },
-	{ "__LONG_MAX__", "0x7fffffffffffffffL" },
-	{ "__LLONG_MAX__", "__LONG_MAX__" },
-	{ "__LONG_LONG_MAX__", "__LONG_MAX__" },
-	{ "__SHRT_MAX__", "0x7fff" },
-	{ "__WCHAR_MAX__", "__INT_MAX__" },
-
-	{ "__FLT_MIN__", "1.17549435082228750797e-38F" },
-	{ "__FLT_MAX__", "3.40282346638528859812e+38F" },
-	{ "__DBL_MIN__", "((double)2.22507385850720138309e-308L)" },
-	{ "__DBL_MAX__", "((double)1.79769313486231570815e+308L)" },
-	{ "__LDBL_MIN__", "3.36210314311209350626e-4932L" },
-	{ "__LDBL_MAX__", "1.18973149535723176502e+4932L" },
-
-	{ "__FLT_MANT_DIG__", "24" },
-	{ "__DBL_MANT_DIG__", "53" },
-
-	{ "__SIZEOF_POINTER__", "sizeof(void*)" },
-	{ "__SIZEOF_SIZE_T__", "sizeof(unsigned long)" },
-	{ "__SIZEOF_PTRDIFF_T__", "sizeof(long)" },
-	{ "__SIZEOF_SHORT__", "sizeof(short)" },
-	{ "__SIZEOF_INT__", "sizeof(int)" },
-	{ "__SIZEOF_LONG__", "sizeof(long)" },
-	{ "__SIZEOF_LONG_LONG__", "sizeof(long long)" },
-	{ "__SIZEOF_WCHAR_T__", "sizeof(int)" },
-	{ "__SIZEOF_WINT_T__", "sizeof(unsigned int)" },
-	{ "__SIZEOF_FLOAT__", "sizeof(float)" },
-	{ "__SIZEOF_DOUBLE__", "sizeof(double)" },
-	{ "__SIZEOF_LONG_DOUBLE__", "sizeof(long double)" },
-
-	{ "__BIGGEST_ALIGNMENT__", "16" },
-
-	{ "__GCC_ATOMIC_TEST_AND_SET_TRUEVAL", "1" },
-	{ "__ATOMIC_RELAXED", "0" },
-	{ "__ATOMIC_CONSUME", "1" },
-	{ "__ATOMIC_ACQUIRE", "2" },
-	{ "__ATOMIC_RELEASE", "3" },
-	{ "__ATOMIC_ACQ_REL", "4" },
-	{ "__ATOMIC_SEQ_CST", "5" },
-  };
-
-  pp.register_builtin_macro("__GNUC__", std::to_string(_gcc_version.maj));
-  pp.register_builtin_macro("__GNUC_MINOR__", std::to_string(_gcc_version.min));
-  pp.register_builtin_macro("__GNUC_PATCHLEVEL__",
-			    std::to_string(_gcc_version.patchlevel));
-
-  for (const auto &bom : builtin_object_macros)
-    pp.register_builtin_macro(bom.first, bom.second);
-}
+target_x86_64_gcc::~target_x86_64_gcc() noexcept = default;
 
 const builtin_typedef::factories& target_x86_64_gcc::get_builtin_typedefs()
   const noexcept
@@ -1239,6 +931,84 @@ bool target_x86_64_gcc::is_pid_t_signed() const noexcept
   return true;
 }
 
+const gcc_cmdline_parser::option *
+target_x86_64_gcc::_arch_get_opts() const noexcept
+{
+  return gcc_opts_i386;
+}
+
+void target_x86_64_gcc::_arch_register_builtin_macros(preprocessor &pp) const
+{
+  const std::initializer_list<std::pair<const char *, const char*>>
+    builtin_object_macros = {
+	{ "__x86_64__", "1" },
+	{ "__x86_64", "1" },
+	{ "__SIZE_TYPE__", "unsigned long" },
+	{ "__PTRDIFF_TYPE__", "long" },
+	{ "__INTPTR_TYPE__", "long" },
+	{ "__UINTPTR_TYPE__", "unsigned long" },
+	{ "__INT8_TYPE__", "char" },
+	{ "__UINT8_TYPE__", "unsigned char" },
+	{ "__INT_LEAST8_TYPE__", "char" },
+	{ "__UINT_LEAST8_TYPE__", "unsigned char" },
+	{ "__INT16_TYPE__", "short" },
+	{ "__UINT16_TYPE__", "unsigned short" },
+	{ "__INT_LEAST16_TYPE__", "short" },
+	{ "__UINT_LEAST16_TYPE__", "unsigned short" },
+	{ "__INT32_TYPE__", "int" },
+	{ "__UINT32_TYPE__", "unsigned int" },
+	{ "__INT_LEAST32_TYPE__", "int" },
+	{ "__UINT_LEAST32_TYPE__", "unsigned int" },
+	{ "__INT64_TYPE__", "long" },
+	{ "__UINT64_TYPE__", "unsigned long" },
+	{ "__INT_LEAST64_TYPE__", "long" },
+	{ "__UINT_LEAST64_TYPE__", "unsigned long" },
+	{ "__CHAR16_TYPE__", "unsigned short" },
+	{ "__CHAR32_TYPE__", "unsigned int" },
+	{ "__WCHAR_TYPE__", "int" },
+	{ "__WINT_TYPE__", "unsigned int" },
+
+	{ "__CHAR_BIT__", "8" },
+	{ "__SIZE_MAX__", "0xffffffffffffffffUL" },
+	{ "__PTRDIFF_MAX__", "__LONG_MAX__" },
+	{ "__SCHAR_MAX__", "0x7f" },
+	{ "__INT_MAX__", "0x7fffffff" },
+	{ "__LONG_MAX__", "0x7fffffffffffffffL" },
+	{ "__LLONG_MAX__", "__LONG_MAX__" },
+	{ "__LONG_LONG_MAX__", "__LONG_MAX__" },
+	{ "__SHRT_MAX__", "0x7fff" },
+	{ "__WCHAR_MAX__", "__INT_MAX__" },
+
+	{ "__FLT_MIN__", "1.17549435082228750797e-38F" },
+	{ "__FLT_MAX__", "3.40282346638528859812e+38F" },
+	{ "__DBL_MIN__", "((double)2.22507385850720138309e-308L)" },
+	{ "__DBL_MAX__", "((double)1.79769313486231570815e+308L)" },
+	{ "__LDBL_MIN__", "3.36210314311209350626e-4932L" },
+	{ "__LDBL_MAX__", "1.18973149535723176502e+4932L" },
+
+	{ "__FLT_MANT_DIG__", "24" },
+	{ "__DBL_MANT_DIG__", "53" },
+
+	{ "__SIZEOF_POINTER__", "sizeof(void*)" },
+	{ "__SIZEOF_SIZE_T__", "sizeof(unsigned long)" },
+	{ "__SIZEOF_PTRDIFF_T__", "sizeof(long)" },
+	{ "__SIZEOF_SHORT__", "sizeof(short)" },
+	{ "__SIZEOF_INT__", "sizeof(int)" },
+	{ "__SIZEOF_LONG__", "sizeof(long)" },
+	{ "__SIZEOF_LONG_LONG__", "sizeof(long long)" },
+	{ "__SIZEOF_WCHAR_T__", "sizeof(int)" },
+	{ "__SIZEOF_WINT_T__", "sizeof(unsigned int)" },
+	{ "__SIZEOF_FLOAT__", "sizeof(float)" },
+	{ "__SIZEOF_DOUBLE__", "sizeof(double)" },
+	{ "__SIZEOF_LONG_DOUBLE__", "sizeof(long double)" },
+
+	{ "__BIGGEST_ALIGNMENT__", "16" },
+  };
+
+  for (const auto &bom : builtin_object_macros)
+    pp.register_builtin_macro(bom.first, bom.second);
+}
+
 types::std_int_type::kind
 target_x86_64_gcc::_width_to_int_kind(const mpa::limbs::size_type w) noexcept
 {
@@ -1262,98 +1032,4 @@ target_x86_64_gcc::_width_to_int_kind(const mpa::limbs::size_type w) noexcept
     assert(0);
     __builtin_unreachable();
   };
-}
-
-
-gcc_cmdline_parser::gcc_version
-target_x86_64_gcc::_parse_version(const char * const version)
-{
-  const char * const pmajor = version;
-  const char *pminor = std::strchr(pmajor, '.');
-  const char *ppatchlevel = nullptr;
-
-  if (pminor) {
-    ++pminor;
-    ppatchlevel = std::strchr(pminor, '.');
-    if (ppatchlevel)
-      ++ppatchlevel;
-  }
-
-  if (!ppatchlevel ||
-      (pminor == pmajor + 1) ||
-      (ppatchlevel == pminor + 1) ||
-      (*ppatchlevel == '\0')) {
-    throw cmdline_except {
-		(std::string{"compiler version specifier \'"}
-		 + version + "\' has invalid format")
-	  };
-  }
-
-  std::size_t endpos;
-  int major = std::stoi(std::string{pmajor, pminor - 1}, &endpos);
-  if (*(pmajor + endpos) != '.')
-    major = -1;
-
-  int minor = std::stoi(std::string{pminor, ppatchlevel - 1}, &endpos);
-  if (*(pminor + endpos) != '.')
-    minor = -1;
-
-  int patchlevel = std::stoi(std::string{ppatchlevel}, &endpos);
-  if (*(ppatchlevel + endpos) != '\0')
-    patchlevel = -1;
-
-  if (major < 0 || minor < 0 || patchlevel < 0) {
-    throw cmdline_except {
-		(std::string{"compiler version specifier \'"}
-		 + version + "\' has invalid format")
-	  };
-  }
-
-  using gcc_version = gcc_cmdline_parser::gcc_version;
-  const gcc_version parsed_version(major, minor, patchlevel);
-  constexpr gcc_version MIN_SUPP_VER_48{4, 8, 0};
-  constexpr gcc_version MAX_SUPP_VER_48{4, 8, 5};
-  constexpr gcc_version MIN_SUPP_VER_49{4, 9, 0};
-  constexpr gcc_version MAX_SUPP_VER_49{4, 9, 4};
-  // It looks like from 5.1.0 onwards, the upstream patchlevel is
-  // always set to zero and may be used freely by distributions.
-  constexpr gcc_version MIN_SUPP_VER_5{5, 1, 0};
-  constexpr gcc_version MAX_SUPP_VER_5{
-    5, 5, std::numeric_limits<unsigned int>::max()
-  };
-  constexpr gcc_version MIN_SUPP_VER_6{6, 1, 0};
-  constexpr gcc_version MAX_SUPP_VER_6{
-    6, 5, std::numeric_limits<unsigned int>::max()
-  };
-  constexpr gcc_version MIN_SUPP_VER_7{7, 1, 0};
-  constexpr gcc_version MAX_SUPP_VER_7{
-    7, 4, std::numeric_limits<unsigned int>::max()
-  };
-  constexpr gcc_version MIN_SUPP_VER_8{8, 1, 0};
-  constexpr gcc_version MAX_SUPP_VER_8{
-    8, 3, std::numeric_limits<unsigned int>::max()
-  };
-  constexpr gcc_version MIN_SUPP_VER_9{9, 1, 0};
-  constexpr gcc_version MAX_SUPP_VER_9{
-    9, 2, std::numeric_limits<unsigned int>::max()
-  };
-
-  auto &&in_range = [&](const gcc_version &f, const gcc_version &l) {
-    return (f <= parsed_version && parsed_version <= l);
-  };
-
-  if (!in_range(MIN_SUPP_VER_48, MAX_SUPP_VER_48) &&
-      !in_range(MIN_SUPP_VER_49, MAX_SUPP_VER_49) &&
-      !in_range(MIN_SUPP_VER_5, MAX_SUPP_VER_5) &&
-      !in_range(MIN_SUPP_VER_6, MAX_SUPP_VER_6) &&
-      !in_range(MIN_SUPP_VER_7, MAX_SUPP_VER_7) &&
-      !in_range(MIN_SUPP_VER_8, MAX_SUPP_VER_8) &&
-      !in_range(MIN_SUPP_VER_9, MAX_SUPP_VER_9)) {
-    throw cmdline_except {
-		(std::string{"unrecognized compiler version \'"}
-		 + version + "\'")
-	  };
-  }
-
-  return parsed_version;
 }
