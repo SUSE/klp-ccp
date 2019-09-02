@@ -99,6 +99,7 @@ void target_gcc::parse_command_line
   std::vector<macro_def_or_undef> macro_defs_and_undefs;
 
   bool optimize = false;
+  bool optimize_size = false;
 
   auto &&handle_opt =
     [&](const gcc_cmdline_parser::option * const o,
@@ -140,16 +141,23 @@ void target_gcc::parse_command_line
 	break;
 
       case opt_code_O:
-	/* fall through */
-      case opt_code_Ofast:
-	/* fall through */
-      case opt_code_Og:
-	/* fall through */
-      case opt_code_Os:
+	optimize_size = false;
 	if (val && !strcmp(val, "0"))
 	  optimize = false;
 	else
 	  optimize = true;
+	break;
+
+      case opt_code_Ofast:
+      /* fall through */
+      case opt_code_Og:
+	optimize_size = false;
+	optimize = true;
+	break;
+
+      case opt_code_Os:
+	optimize_size = true;
+	optimize = true;
 	break;
 
       case opt_code_U:
@@ -220,6 +228,8 @@ void target_gcc::parse_command_line
     _register_builtin_macros(pp);
     if (optimize)
       pp.register_builtin_macro("__OPTIMIZE__", "1");
+    if (optimize_size)
+      pp.register_builtin_macro("__OPTIMIZE_SIZE__", "1");
   }
 
   for (const auto &m : macro_defs_and_undefs) {
