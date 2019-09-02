@@ -937,6 +937,12 @@ target_x86_64_gcc::_arch_get_opts() const noexcept
   return gcc_opts_i386;
 }
 
+void target_x86_64_gcc::
+_arch_handle_opt(const gcc_cmdline_parser::option * const o,
+		 const gcc_cmdline_parser::option * const table,
+		 const char *val, const bool negative)
+{}
+
 void target_x86_64_gcc::_arch_register_builtin_macros(preprocessor &pp) const
 {
   const std::initializer_list<std::pair<const char *, const char*>>

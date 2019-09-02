@@ -43,9 +43,18 @@ namespace klp
 		 const std::function<void(const std::string&)> &report_warning)
 	override;
 
+      const gcc_cmdline_parser::gcc_version&
+      get_gcc_version() const noexcept
+      { return _gcc_version; }
+
     private:
       virtual const gcc_cmdline_parser::option *
       _arch_get_opts() const noexcept = 0;
+
+      virtual void
+      _arch_handle_opt(const gcc_cmdline_parser::option * const o,
+		       const gcc_cmdline_parser::option * const table,
+		       const char *val, const bool negative) = 0;
 
       virtual void _arch_register_builtin_macros(preprocessor &pp) const = 0;
 

@@ -98,6 +98,9 @@ void target_gcc::parse_command_line
 
 	_base_file = val;
 	return;
+      } else if (table == arch_opts) {
+	this->_arch_handle_opt(o, table, val, negative);
+	return;
       }
 
       if (!std::strcmp(o->name, "include")) {
