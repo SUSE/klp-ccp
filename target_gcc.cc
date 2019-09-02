@@ -24,6 +24,22 @@
 
 using namespace klp::ccp;
 
+enum opt_code
+{
+  opt_code_unused = 0,
+  opt_code_D,
+  opt_code_I,
+  opt_code_O,
+  opt_code_Ofast,
+  opt_code_Og,
+  opt_code_Os,
+  opt_code_U,
+  opt_code_idirafter,
+  opt_code_include,
+  opt_code_iquote,
+  opt_code_isystem,
+  opt_code_undef,
+};
 
 static gcc_cmdline_parser::option gcc_opts_common[] = {
 	#include "gcc_cmdline_opts_common.cc"
@@ -95,7 +111,6 @@ void target_gcc::parse_command_line
 		  "' and '" + val + "'"
 		};
 	}
-
 	_base_file = val;
 	return;
       } else if (table == arch_opts) {
@@ -103,12 +118,15 @@ void target_gcc::parse_command_line
 	return;
       }
 
-      if (!std::strcmp(o->name, "include")) {
-	pre_includes.push_back(val);
-	return;
-      }
+      switch (o->code) {
+      case opt_code_unused:
+	break;
 
-      if (!std::strcmp(o->name, "I")) {
+      case opt_code_D:
+	macro_defs_and_undefs.emplace_back(macro_def_or_undef{false, val});
+	break;
+
+      case opt_code_I:
 	if (!std::strcmp(val, "-")) {
 	  include_dirs_quoted.insert
 	    (include_dirs_quoted.end(),
@@ -119,45 +137,44 @@ void target_gcc::parse_command_line
 	} else {
 	  include_dirs.push_back(val);
 	}
-	return;
-      }
+	break;
 
-      if (!std::strcmp(o->name, "iquote")) {
-	include_dirs_quoted.push_back(val);
-	return;
-      }
-
-      if (!std::strcmp(o->name, "isystem")) {
-	include_dirs_after.push_back(val);
-	return;
-      }
-
-      if (!std::strcmp(o->name, "idirafter")) {
-	include_dirs_after.push_back(val);
-	return;
-      }
-
-      if (!std::strcmp(o->name, "undef")) {
-	undef = true;
-	return;
-      }
-
-      if (!std::strcmp(o->name, "D")) {
-	macro_defs_and_undefs.emplace_back(macro_def_or_undef{false, val});
-	return;
-      }
-
-      if (!std::strcmp(o->name, "U")) {
-	macro_defs_and_undefs.emplace_back(macro_def_or_undef{true, val});
-	return;
-      }
-
-      if (!std::strcmp(o->name, "O")) {
+      case opt_code_O:
+	/* fall through */
+      case opt_code_Ofast:
+	/* fall through */
+      case opt_code_Og:
+	/* fall through */
+      case opt_code_Os:
 	if (val && !strcmp(val, "0"))
 	  optimize = false;
 	else
 	  optimize = true;
-	return;
+	break;
+
+      case opt_code_U:
+	macro_defs_and_undefs.emplace_back(macro_def_or_undef{true, val});
+	break;
+
+      case opt_code_idirafter:
+	include_dirs_after.push_back(val);
+	break;
+
+      case opt_code_include:
+	pre_includes.push_back(val);
+	break;
+
+      case opt_code_iquote:
+	include_dirs_quoted.push_back(val);
+	break;
+
+      case opt_code_isystem:
+	include_dirs_after.push_back(val);
+	break;
+
+      case opt_code_undef:
+	undef = true;
+	break;
       }
     };
 

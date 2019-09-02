@@ -27,6 +27,11 @@
 using namespace klp::ccp;
 using namespace klp::ccp::types;
 
+enum opt_code_i386
+{
+  opt_code_i386_unused = 0,
+};
+
 static gcc_cmdline_parser::option gcc_opts_i386[] = {
 	#include "gcc_cmdline_opts_i386.cc"
 	{ nullptr }

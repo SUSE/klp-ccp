@@ -87,6 +87,7 @@ namespace klp
 	};
 
 	const char *name;
+	int code;
 	unsigned int comp;
 	unsigned int arg;
 	bool reject_negative;

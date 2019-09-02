@@ -18,11 +18,13 @@
 
 {
   "###",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "-assemble",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -30,6 +32,7 @@
 },
 {
   "-compile",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -37,6 +40,7 @@
 },
 {
   "-coverage",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -44,6 +48,7 @@
 },
 {
   "-debug",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -51,6 +56,7 @@
 },
 {
   "-dump",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_separate,
   .reject_negative = false,
@@ -58,6 +64,7 @@
 },
 {
   "-dump=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = false,
@@ -65,6 +72,7 @@
 },
 {
   "-dumpbase",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_separate,
   .reject_negative = false,
@@ -72,6 +80,7 @@
 },
 {
   "-dumpdir",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_separate,
   .reject_negative = false,
@@ -79,6 +88,7 @@
 },
 {
   "-entry",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_separate,
   .reject_negative = false,
@@ -86,6 +96,7 @@
 },
 {
   "-entry=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = false,
@@ -93,6 +104,7 @@
 },
 {
   "-extra-warnings",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -100,6 +112,7 @@
 },
 {
   "-for-assembler",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_separate,
   .reject_negative = false,
@@ -107,6 +120,7 @@
 },
 {
   "-for-assembler=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined_or_missing,
   .reject_negative = false,
@@ -114,6 +128,7 @@
 },
 {
   "-for-linker",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_separate,
   .reject_negative = false,
@@ -121,6 +136,7 @@
 },
 {
   "-for-linker=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined_or_missing,
   .reject_negative = false,
@@ -128,6 +144,7 @@
 },
 {
   "-force-link",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_separate,
   .reject_negative = false,
@@ -135,6 +152,7 @@
 },
 {
   "-force-link=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = false,
@@ -142,18 +160,21 @@
 },
 {
   "-help",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "-help=",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_joined,
 },
 {
   "-language",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_separate,
   .reject_negative = false,
@@ -161,6 +182,7 @@
 },
 {
   "-language=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = false,
@@ -168,6 +190,7 @@
 },
 {
   "-library-directory",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_separate,
   .reject_negative = false,
@@ -175,6 +198,7 @@
 },
 {
   "-library-directory=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = false,
@@ -182,6 +206,7 @@
 },
 {
   "-no-canonical-prefixes",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -189,6 +214,7 @@
 },
 {
   "-no-standard-libraries",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -196,11 +222,13 @@
 },
 {
   "-no-sysroot-suffix",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "-no-warnings",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -208,6 +236,7 @@
 },
 {
   "-optimize",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -215,6 +244,7 @@
 },
 {
   "-output",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_separate,
@@ -223,6 +253,7 @@
 },
 {
   "-output=",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_joined,
@@ -231,11 +262,13 @@
 },
 {
   "-param",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_separate,
 },
 {
   "-param=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = false,
@@ -243,6 +276,7 @@
 },
 {
   "-pass-exit-codes",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -250,6 +284,7 @@
 },
 {
   "-pedantic",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -257,6 +292,7 @@
 },
 {
   "-pedantic-errors",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -264,6 +300,7 @@
 },
 {
   "-pie",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -271,6 +308,7 @@
 },
 {
   "-pipe",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -278,6 +316,7 @@
 },
 {
   "-prefix",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_separate,
   .reject_negative = false,
@@ -285,6 +324,7 @@
 },
 {
   "-prefix=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined_or_missing,
   .reject_negative = false,
@@ -292,6 +332,7 @@
 },
 {
   "-preprocess",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -299,6 +340,7 @@
 },
 {
   "-print-file-name",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_separate,
   .reject_negative = false,
@@ -306,6 +348,7 @@
 },
 {
   "-print-file-name=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined_or_missing,
   .reject_negative = false,
@@ -313,6 +356,7 @@
 },
 {
   "-print-libgcc-file-name",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -320,6 +364,7 @@
 },
 {
   "-print-multi-directory",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -327,6 +372,7 @@
 },
 {
   "-print-multi-lib",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -334,6 +380,7 @@
 },
 {
   "-print-multi-os-directory",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -341,6 +388,7 @@
 },
 {
   "-print-multiarch",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -348,6 +396,7 @@
 },
 {
   "-print-prog-name",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_separate,
   .reject_negative = false,
@@ -355,6 +404,7 @@
 },
 {
   "-print-prog-name=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined_or_missing,
   .reject_negative = false,
@@ -362,6 +412,7 @@
 },
 {
   "-print-search-dirs",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -369,6 +420,7 @@
 },
 {
   "-print-sysroot",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -376,6 +428,7 @@
 },
 {
   "-print-sysroot-headers-suffix",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -383,6 +436,7 @@
 },
 {
   "-profile",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -390,6 +444,7 @@
 },
 {
   "-save-temps",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -397,6 +452,7 @@
 },
 {
   "-shared",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -404,6 +460,7 @@
 },
 {
   "-specs",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_separate,
   .reject_negative = false,
@@ -411,6 +468,7 @@
 },
 {
   "-specs=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = false,
@@ -418,6 +476,7 @@
 },
 {
   "-static",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -425,6 +484,7 @@
 },
 {
   "-static-pie",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -433,6 +493,7 @@
 },
 {
   "-symbolic",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -440,6 +501,7 @@
 },
 {
   "-sysroot",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_separate,
   .reject_negative = false,
@@ -447,17 +509,20 @@
 },
 {
   "-sysroot=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined_or_missing,
 },
 {
   "-target-help",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "-time",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -465,6 +530,7 @@
 },
 {
   "-verbose",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -472,116 +538,138 @@
 },
 {
   "-version",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "B",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   (gcc_cmdline_parser::option::arg_joined |
    gcc_cmdline_parser::option::arg_separate),
 },
 {
   "E",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "L",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   (gcc_cmdline_parser::option::arg_joined |
    gcc_cmdline_parser::option::arg_separate),
 },
 {
   "N",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "O",
+  opt_code_O,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined_or_missing,
 },
 {
   "Ofast",
+  opt_code_Ofast,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Og",
+  opt_code_Og,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Os",
+  opt_code_Os,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Q",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Qn",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Qy",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "R",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   (gcc_cmdline_parser::option::arg_joined |
    gcc_cmdline_parser::option::arg_separate),
 },
 {
   "S",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "T",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   (gcc_cmdline_parser::option::arg_joined |
    gcc_cmdline_parser::option::arg_separate),
 },
 {
   "Tbss",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_separate,
 },
 {
   "Tbss=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined,
 },
 {
   "Tdata",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_separate,
 },
 {
   "Tdata=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined,
 },
 {
   "Ttext",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_separate,
 },
 {
   "Ttext=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined,
 },
 {
   "W",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -589,6 +677,7 @@
 },
 {
   "Wa,",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined_or_missing,
   .reject_negative = false,
@@ -598,6 +687,7 @@
 },
 {
   "Wa,",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined_or_missing,
   .reject_negative = true,
@@ -606,21 +696,25 @@
 },
 {
   "Waggregate-return",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Waggressive-loop-optimizations",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Warray-bounds",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Warray-bounds=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -629,6 +723,7 @@
 },
 {
   "Wattribute-alias",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -637,16 +732,19 @@
 },
 {
   "Wattributes",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wcast-align",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wcast-align=strict",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -655,57 +753,68 @@
 },
 {
   "Wcoverage-mismatch",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wcpp",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wdeprecated-declarations",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wdisabled-optimization",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Werror",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Werror=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
 },
 {
   "Wextra",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wfatal-errors",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wframe-larger-than=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "Wfree-nonheap-object",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Whsa",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -714,6 +823,7 @@
 },
 {
   "Wimplicit-fallthrough",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -722,6 +832,7 @@
 },
 {
   "Wimplicit-fallthrough=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -730,16 +841,19 @@
 },
 {
   "Winline",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Winvalid-memory-model",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wl,",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined_or_missing,
   .reject_negative = false,
@@ -749,6 +863,7 @@
 },
 {
   "Wl,",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined_or_missing,
   .reject_negative = true,
@@ -757,6 +872,7 @@
 },
 {
   "Wlarger-than-",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -764,12 +880,14 @@
 },
 {
   "Wlarger-than=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "Wlto-type-mismatch",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -778,11 +896,13 @@
 },
 {
   "Wmaybe-uninitialized",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wmissing-noreturn",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -790,6 +910,7 @@
 },
 {
   "Wnonnull-compare",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_none,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -798,6 +919,7 @@
 },
 {
   "Wnull-dereference",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -806,6 +928,7 @@
 },
 {
   "Wodr",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -814,11 +937,13 @@
 },
 {
   "Woverflow",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wp,",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined_or_missing,
   .reject_negative = false,
@@ -828,6 +953,7 @@
 },
 {
   "Wp,",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined_or_missing,
   .reject_negative = true,
@@ -836,21 +962,25 @@
 },
 {
   "Wpacked",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wpadded",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wpedantic",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wreturn-local-addr",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -859,11 +989,13 @@
 },
 {
   "Wshadow",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wshadow-compatible-local",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -872,6 +1004,7 @@
 },
 {
   "Wshadow-local",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -880,6 +1013,7 @@
 },
 {
   "Wshadow=compatible-local",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -888,6 +1022,7 @@
 },
 {
   "Wshadow=global",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -896,6 +1031,7 @@
 },
 {
   "Wshadow=local",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -904,39 +1040,46 @@
 },
 {
   "Wstack-protector",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wstack-usage=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "Wstrict-aliasing",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wstrict-aliasing=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "Wstrict-overflow",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wstrict-overflow=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "Wsuggest-attribute=cold",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -945,11 +1088,13 @@
 },
 {
   "Wsuggest-attribute=const",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wsuggest-attribute=malloc",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -958,16 +1103,19 @@
 },
 {
   "Wsuggest-attribute=noreturn",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wsuggest-attribute=pure",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wsuggest-final-methods",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -976,6 +1124,7 @@
 },
 {
   "Wsuggest-final-types",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -984,6 +1133,7 @@
 },
 {
   "Wswitch-unreachable",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -992,106 +1142,127 @@
 },
 {
   "Wsystem-headers",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wtrampolines",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wtype-limits",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wuninitialized",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wunreachable-code",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wunsafe-loop-optimizations",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wunused",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wunused-but-set-parameter",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wunused-but-set-variable",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wunused-function",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wunused-label",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wunused-parameter",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wunused-value",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wunused-variable",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wvector-operation-performance",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Xassembler",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_separate,
 },
 {
   "Xlinker",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_separate,
 },
 {
   "Xpreprocessor",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_separate,
 },
 {
   "Z",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "aux-info",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_separate,
 },
 {
   "aux-info=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = false,
@@ -1099,41 +1270,49 @@
 },
 {
   "auxbase",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_separate,
 },
 {
   "auxbase-strip",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_separate,
 },
 {
   "c",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "coverage",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "d",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
 },
 {
   "dumpbase",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_separate,
 },
 {
   "dumpdir",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_separate,
 },
 {
   "dumpfullversion",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1142,117 +1321,139 @@
 },
 {
   "dumpmachine",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "dumpspecs",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "dumpversion",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "e",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   (gcc_cmdline_parser::option::arg_joined |
    gcc_cmdline_parser::option::arg_separate),
 },
 {
   "export-dynamic",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fPIC",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fPIE",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fabi-version=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "faggressive-loop-optimizations",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "falign-functions",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "falign-functions=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "falign-jumps",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "falign-jumps=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "falign-labels",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "falign-labels=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "falign-loops",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "falign-loops=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fargument-alias",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fargument-noalias",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fargument-noalias-anything",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fargument-noalias-global",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fasan-shadow-offset=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -1261,21 +1462,25 @@
 },
 {
   "fassociative-math",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fasynchronous-unwind-tables",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fauto-inc-dec",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fauto-profile",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1284,6 +1489,7 @@
 },
 {
   "fauto-profile=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -1292,53 +1498,63 @@
 },
 {
   "fbounds-check",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fbranch-count-reg",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fbranch-probabilities",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fbranch-target-load-optimize",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fbranch-target-load-optimize2",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fbtr-bb-exclusive",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fcall-saved-",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fcall-used-",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fcaller-saves",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fcf-protection",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -1347,6 +1563,7 @@
 },
 {
   "fcf-protection=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -1355,11 +1572,13 @@
 },
 {
   "fcheck-data-deps",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fcheck-new",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1368,6 +1587,7 @@
 },
 {
   "fchecking",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1376,6 +1596,7 @@
 },
 {
   "fchecking=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -1384,6 +1605,7 @@
 },
 {
   "fcode-hoisting",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1392,21 +1614,25 @@
 },
 {
   "fcombine-stack-adjustments",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fcommon",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fcompare-debug",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fcompare-debug-second",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -1414,6 +1640,7 @@
 },
 {
   "fcompare-debug=",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_joined_or_missing,
@@ -1421,103 +1648,123 @@
 },
 {
   "fcompare-elim",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fconserve-stack",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fcprop-registers",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fcrossjumping",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fcse-follow-jumps",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fcse-skip-blocks",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fcx-fortran-rules",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fcx-limited-range",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fdata-sections",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fdbg-cnt-list",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fdbg-cnt=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fdce",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fdebug-prefix-map=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fdebug-types-section",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fdefer-pop",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fdelayed-branch",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fdelete-dead-exceptions",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fdelete-null-pointer-checks",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fdevirtualize",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fdevirtualize-at-ltrans",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1526,6 +1773,7 @@
 },
 {
   "fdevirtualize-speculatively",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1534,6 +1782,7 @@
 },
 {
   "fdiagnostics-color",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1542,6 +1791,7 @@
 },
 {
   "fdiagnostics-color=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -1551,6 +1801,7 @@
 },
 {
   "fdiagnostics-color=",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_driver |
    gcc_cmdline_parser::option::comp_common),
   gcc_cmdline_parser::option::arg_joined,
@@ -1560,6 +1811,7 @@
 },
 {
   "fdiagnostics-generate-patch",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1568,6 +1820,7 @@
 },
 {
   "fdiagnostics-parseable-fixits",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1576,57 +1829,67 @@
 },
 {
   "fdiagnostics-show-caret",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fdiagnostics-show-location=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fdiagnostics-show-option",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fdisable-",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fdse",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fdump-",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fdump-final-insns",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
 },
 {
   "fdump-final-insns=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fdump-go-spec=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fdump-internal-locations",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1635,88 +1898,105 @@
 },
 {
   "fdump-noaddr",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fdump-passes",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fdump-unnumbered",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fdump-unnumbered-links",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fdwarf2-cfi-asm",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fearly-inlining",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "feliminate-dwarf2-dups",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "feliminate-unused-debug-symbols",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "feliminate-unused-debug-types",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "femit-class-debug-always",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fenable-",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fexceptions",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fexcess-precision=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fexpensive-optimizations",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ffast-math",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ffat-lto-objects",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ffile-prefix-map=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -1725,38 +2005,45 @@
 },
 {
   "ffinite-math-only",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ffixed-",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "ffloat-store",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fforce-addr",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fforward-propagate",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ffp-contract=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "ffp-int-builtin-inexact",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1765,41 +2052,49 @@
 },
 {
   "ffunction-cse",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ffunction-sections",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fgcse",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fgcse-after-reload",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fgcse-las",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fgcse-lm",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fgcse-sm",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fgnat-encodings=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -1808,11 +2103,13 @@
 },
 {
   "fgnu-tm",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fgnu-unique",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1821,21 +2118,25 @@
 },
 {
   "fgraphite",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fgraphite-identity",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fguess-branch-probability",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fhelp",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -1844,6 +2145,7 @@
 },
 {
   "fhelp=",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_joined,
@@ -1852,56 +2154,67 @@
 },
 {
   "fhoist-adjacent-loads",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fident",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fif-conversion",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fif-conversion2",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "findirect-inlining",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "finhibit-size-directive",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "finline",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "finline-atomics",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "finline-functions",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "finline-functions-called-once",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "finline-limit-",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -1909,34 +2222,40 @@
 },
 {
   "finline-limit=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "finline-small-functions",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "finstrument-functions",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "finstrument-functions-exclude-file-list=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "finstrument-functions-exclude-function-list=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fipa-bit-cp",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1945,11 +2264,13 @@
 },
 {
   "fipa-cp",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fipa-cp-alignment",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1958,11 +2279,13 @@
 },
 {
   "fipa-cp-clone",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fipa-icf",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1971,6 +2294,7 @@
 },
 {
   "fipa-icf-functions",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1979,6 +2303,7 @@
 },
 {
   "fipa-icf-variables",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1987,26 +2312,31 @@
 },
 {
   "fipa-matrix-reorg",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fipa-profile",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fipa-pta",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fipa-pure-const",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fipa-ra",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2015,21 +2345,25 @@
 },
 {
   "fipa-reference",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fipa-sra",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fipa-struct-reorg",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fipa-vrp",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2038,44 +2372,52 @@
 },
 {
   "fira-algorithm=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fira-hoist-pressure",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fira-loop-pressure",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fira-region=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fira-share-save-slots",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fira-share-spill-slots",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fira-verbose=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fisolate-erroneous-paths-attribute",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2084,6 +2426,7 @@
 },
 {
   "fisolate-erroneous-paths-dereference",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2092,16 +2435,19 @@
 },
 {
   "fivopts",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fjump-tables",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fkeep-gc-roots-live",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2110,16 +2456,19 @@
 },
 {
   "fkeep-inline-functions",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fkeep-static-consts",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fkeep-static-functions",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2128,11 +2477,13 @@
 },
 {
   "fleading-underscore",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "flifetime-dse",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2141,6 +2492,7 @@
 },
 {
   "flifetime-dse=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -2149,6 +2501,7 @@
 },
 {
   "flimit-function-alignment",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2157,6 +2510,7 @@
 },
 {
   "flive-range-shrinkage",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2165,6 +2519,7 @@
 },
 {
   "floop-block",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2174,6 +2529,7 @@
 },
 {
   "floop-block",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2182,11 +2538,13 @@
 },
 {
   "floop-flatten",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "floop-interchange",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2196,6 +2554,7 @@
 },
 {
   "floop-interchange",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2205,6 +2564,7 @@
 },
 {
   "floop-interchange",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2213,21 +2573,25 @@
 },
 {
   "floop-nest-optimize",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "floop-optimize",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "floop-parallelize-all",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "floop-strip-mine",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2237,6 +2601,7 @@
 },
 {
   "floop-strip-mine",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2245,6 +2610,7 @@
 },
 {
   "floop-unroll-and-jam",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2254,6 +2620,7 @@
 },
 {
   "floop-unroll-and-jam",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2263,6 +2630,7 @@
 },
 {
   "floop-unroll-and-jam",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2271,6 +2639,7 @@
 },
 {
   "flra-remat",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2279,17 +2648,20 @@
 },
 {
   "flto",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "flto-compression-level=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "flto-odr-type-merging",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2298,6 +2670,7 @@
 },
 {
   "flto-partition=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -2306,6 +2679,7 @@
 },
 {
   "flto-partition=1to1",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2315,6 +2689,7 @@
 },
 {
   "flto-partition=balanced",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2324,6 +2699,7 @@
 },
 {
   "flto-partition=max",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2333,6 +2709,7 @@
 },
 {
   "flto-partition=none",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2342,11 +2719,13 @@
 },
 {
   "flto-report",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "flto-report-wpa",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2355,69 +2734,82 @@
 },
 {
   "flto=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fmath-errno",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fmax-errors=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fmem-report",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fmem-report-wpa",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fmerge-all-constants",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fmerge-constants",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fmerge-debug-strings",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fmessage-length=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fmodulo-sched",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fmodulo-sched-allow-regmoves",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fmove-loop-invariants",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fno-vect-cost-model",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -2427,11 +2819,13 @@
 },
 {
   "fnon-call-exceptions",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "foffload-abi=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -2440,6 +2834,7 @@
 },
 {
   "foffload=",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_joined,
@@ -2449,53 +2844,63 @@
 },
 {
   "fomit-frame-pointer",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fopt-info",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fopt-info-",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "foptimize-register-move",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "foptimize-sibling-calls",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "foptimize-strlen",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fpack-struct",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fpack-struct=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fpartial-inlining",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fpatchable-function-entry=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = false,
@@ -2504,26 +2909,31 @@
 },
 {
   "fpcc-struct-return",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fpeel-loops",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fpeephole",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fpeephole2",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fpermitted-flt-eval-methods=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -2532,16 +2942,19 @@
 },
 {
   "fpic",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fpie",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fplt",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2550,43 +2963,51 @@
 },
 {
   "fplugin-arg-",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fplugin=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fpost-ipa-mem-report",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fpre-ipa-mem-report",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fpredictive-commoning",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fprefetch-loop-arrays",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fprofile",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fprofile-abs-path",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2595,33 +3016,39 @@
 },
 {
   "fprofile-arcs",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fprofile-correction",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fprofile-dir=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fprofile-generate",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fprofile-generate=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fprofile-reorder-functions",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2630,11 +3057,13 @@
 },
 {
   "fprofile-report",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fprofile-update=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -2643,68 +3072,81 @@
 },
 {
   "fprofile-use",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fprofile-use=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fprofile-values",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "frandom-seed",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "frandom-seed=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "freciprocal-math",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "frecord-gcc-switches",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "free",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "freg-struct-return",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fregmove",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "frename-registers",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "freorder-blocks",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "freorder-blocks-algorithm=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -2713,16 +3155,19 @@
 },
 {
   "freorder-blocks-and-partition",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "freorder-functions",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "freport-bug",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -2732,26 +3177,31 @@
 },
 {
   "frerun-cse-after-loop",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "frerun-loop-opt",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "freschedule-modulo-scheduled-loops",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "frounding-math",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsanitize-address-use-after-scope",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -2761,6 +3211,7 @@
 },
 {
   "fsanitize-coverage=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = false,
@@ -2769,6 +3220,7 @@
 },
 {
   "fsanitize-coverage=trace-pc",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2778,6 +3230,7 @@
 },
 {
   "fsanitize-recover",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2786,6 +3239,7 @@
 },
 {
   "fsanitize-recover=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = false,
@@ -2794,6 +3248,7 @@
 },
 {
   "fsanitize-sections=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -2802,6 +3257,7 @@
 },
 {
   "fsanitize-undefined-trap-on-error",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2811,6 +3267,7 @@
 },
 {
   "fsanitize-undefined-trap-on-error",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -2820,6 +3277,7 @@
 },
 {
   "fsanitize=",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_joined,
@@ -2829,6 +3287,7 @@
 },
 {
   "fsanitize=address",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2838,6 +3297,7 @@
 },
 {
   "fsanitize=thread",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2847,99 +3307,118 @@
 },
 {
   "fsched-critical-path-heuristic",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsched-dep-count-heuristic",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsched-group-heuristic",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsched-interblock",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsched-last-insn-heuristic",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsched-pressure",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsched-rank-heuristic",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsched-spec",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsched-spec-insn-heuristic",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsched-spec-load",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsched-spec-load-dangerous",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsched-stalled-insns",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsched-stalled-insns-dep",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsched-stalled-insns-dep=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fsched-stalled-insns=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fsched-verbose=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fsched2-use-superblocks",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsched2-use-traces",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fschedule-fusion",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2948,51 +3427,61 @@
 },
 {
   "fschedule-insns",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fschedule-insns2",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsection-anchors",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsee",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsel-sched-pipelining",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsel-sched-pipelining-outer-loops",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsel-sched-reschedule-pipelined",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fselective-scheduling",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fselective-scheduling2",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fself-test=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = false,
@@ -3001,6 +3490,7 @@
 },
 {
   "fsemantic-interposition",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3009,16 +3499,19 @@
 },
 {
   "fshow-column",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fshrink-wrap",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fshrink-wrap-separate",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3027,16 +3520,19 @@
 },
 {
   "fsignaling-nans",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsigned-zeros",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsimd-cost-model=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -3045,16 +3541,19 @@
 },
 {
   "fsingle-precision-constant",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsplit-ivs-in-unroller",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsplit-loops",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3063,6 +3562,7 @@
 },
 {
   "fsplit-paths",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3071,16 +3571,19 @@
 },
 {
   "fsplit-stack",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsplit-wide-types",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fssa-backprop",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3089,6 +3592,7 @@
 },
 {
   "fssa-phiopt",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3097,6 +3601,7 @@
 },
 {
   "fstack-check",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3104,12 +3609,14 @@
 },
 {
   "fstack-check=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fstack-clash-protection",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3118,34 +3625,40 @@
 },
 {
   "fstack-limit",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fstack-limit-register=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fstack-limit-symbol=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fstack-protector",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fstack-protector-all",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
 },
 {
   "fstack-protector-explicit",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -3154,6 +3667,7 @@
 },
 {
   "fstack-protector-strong",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -3162,18 +3676,21 @@
 },
 {
   "fstack-reuse=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fstack-usage",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
 },
 {
   "fstdarg-opt",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3182,6 +3699,7 @@
 },
 {
   "fstore-merging",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3190,36 +3708,43 @@
 },
 {
   "fstrength-reduce",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fstrict-aliasing",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fstrict-overflow",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fstrict-volatile-bitfields",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsync-libcalls",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsyntax-only",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftarget-help",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -3228,21 +3753,25 @@
 },
 {
   "ftest-coverage",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fthread-jumps",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftime-report",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftime-report-details",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3251,22 +3780,26 @@
 },
 {
   "ftls-model=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "ftoplevel-reorder",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftracer",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftrampolines",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3275,117 +3808,140 @@
 },
 {
   "ftrapping-math",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftrapv",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-bit-ccp",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-builtin-call-dce",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-ccp",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-ch",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-coalesce-inlined-vars",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
 },
 {
   "ftree-coalesce-vars",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-copy-prop",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-copyrename",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-cselim",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-dce",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-dominator-opts",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-dse",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-forwprop",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-fre",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-loop-distribute-patterns",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-loop-distribution",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-loop-if-convert",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-loop-if-convert-stores",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-loop-im",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-loop-ivcanon",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-loop-linear",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3395,6 +3951,7 @@
 },
 {
   "ftree-loop-linear",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3403,11 +3960,13 @@
 },
 {
   "ftree-loop-optimize",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-loop-vectorize",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3416,118 +3975,141 @@
 },
 {
   "ftree-lrs",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-parallelize-loops=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "ftree-partial-pre",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-phiprop",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-pre",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-pta",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-reassoc",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-salias",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-scev-cprop",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-sink",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-slp-vectorize",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-slsr",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-sra",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-store-ccp",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-store-copy-prop",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-switch-conversion",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-tail-merge",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-ter",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-vect-loop-version",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-vectorize",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftree-vectorizer-verbose=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "ftree-vrp",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "funconstrained-commons",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3536,41 +4118,49 @@
 },
 {
   "funit-at-a-time",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "funroll-all-loops",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "funroll-loops",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "funsafe-loop-optimizations",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "funsafe-math-optimizations",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "funswitch-loops",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "funwind-tables",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fuse-ld=bfd",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3580,6 +4170,7 @@
 },
 {
   "fuse-ld=bfd",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -3589,6 +4180,7 @@
 },
 {
   "fuse-ld=gold",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3598,6 +4190,7 @@
 },
 {
   "fuse-ld=gold",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -3607,36 +4200,43 @@
 },
 {
   "fuse-linker-plugin",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fvar-tracking",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fvar-tracking-assignments",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fvar-tracking-assignments-toggle",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fvar-tracking-uninit",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fvariable-expansion-in-unroller",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fvect-cost-model",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3646,6 +4246,7 @@
 },
 {
   "fvect-cost-model",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -3655,6 +4256,7 @@
 },
 {
   "fvect-cost-model",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3663,6 +4265,7 @@
 },
 {
   "fvect-cost-model=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -3671,11 +4274,13 @@
 },
 {
   "fverbose-asm",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fversion",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -3684,17 +4289,20 @@
 },
 {
   "fvisibility=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
 },
 {
   "fvpt",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fvtable-verify=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -3703,6 +4311,7 @@
 },
 {
   "fvtv-counts",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3711,6 +4320,7 @@
 },
 {
   "fvtv-debug",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3719,21 +4329,25 @@
 },
 {
   "fweb",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fwhole-program",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fwrapv",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fwrapv-pointer",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3742,16 +4356,19 @@
 },
 {
   "fzee",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fzero-initialized-in-bss",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "g",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined_or_missing,
   .reject_negative = false,
@@ -3760,7 +4377,8 @@
   .max_gcc_version = {6, 5, std::numeric_limits<unsigned int>::max()},
 },
 {
- "g",
+  "g",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_joined_or_missing,
@@ -3770,7 +4388,8 @@
   .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
 },
 {
- "g",
+  "g",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_joined_or_missing,
@@ -3780,6 +4399,7 @@
 },
 {
   "gas-loc-support",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -3789,6 +4409,7 @@
 },
 {
   "gas-locview-support",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -3798,6 +4419,7 @@
 },
 {
   "gcoff",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined_or_missing,
   .reject_negative = false,
@@ -3807,6 +4429,7 @@
 },
 {
   "gcoff",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_joined_or_missing,
@@ -3817,6 +4440,7 @@
 },
 {
   "gcoff",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -3826,6 +4450,7 @@
 },
 {
   "gcoff1",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -3835,6 +4460,7 @@
 },
 {
   "gcoff2",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -3844,6 +4470,7 @@
 },
 {
   "gcoff3",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -3853,6 +4480,7 @@
 },
 {
   "gcolumn-info",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -3863,6 +4491,7 @@
 },
 {
   "gcolumn-info",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -3872,6 +4501,7 @@
 },
 {
   "gdwarf",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined_or_missing,
   .reject_negative = false,
@@ -3881,6 +4511,7 @@
 },
 {
   "gdwarf",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_joined_or_missing,
@@ -3890,6 +4521,7 @@
 },
 {
   "gdwarf-",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = false,
@@ -3899,6 +4531,7 @@
 },
 {
   "gdwarf-",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
    gcc_cmdline_parser::option::arg_joined,
@@ -3908,6 +4541,7 @@
 },
 {
   "ggdb",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined_or_missing,
   .reject_negative = false,
@@ -3917,6 +4551,7 @@
 },
 {
   "ggdb",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_joined_or_missing,
@@ -3926,6 +4561,7 @@
 },
 {
   "ggnu-pubnames",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3935,6 +4571,7 @@
 },
 {
   "ggnu-pubnames",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -3944,6 +4581,7 @@
 },
 {
   "ginline-points",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -3953,6 +4591,7 @@
 },
 {
   "ginternal-reset-location-views",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -3962,6 +4601,7 @@
 },
 {
   "gno-",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_none,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -3970,6 +4610,7 @@
 },
 {
   "gno-column-info",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -3980,6 +4621,7 @@
 },
 {
   "gno-pubnames",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -3989,6 +4631,7 @@
 },
 {
   "gno-pubnames",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3998,6 +4641,7 @@
 },
 {
   "gno-pubnames",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -4007,6 +4651,7 @@
 },
 {
   "gno-record-gcc-switches",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -4016,6 +4661,7 @@
 },
 {
   "gno-record-gcc-switches",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -4026,6 +4672,7 @@
 },
 {
   "gno-split-dwarf",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -4036,6 +4683,7 @@
 },
 {
   "gno-strict-dwarf",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -4045,6 +4693,7 @@
 },
 {
   "gno-strict-dwarf",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -4055,6 +4704,7 @@
 },
 {
   "gpubnames",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -4064,6 +4714,7 @@
 },
 {
   "gpubnames",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -4073,6 +4724,7 @@
 },
 {
   "gpubnames",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -4082,6 +4734,7 @@
 },
 {
   "grecord-gcc-switches",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -4091,6 +4744,7 @@
 },
 {
   "grecord-gcc-switches",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -4100,6 +4754,7 @@
 },
 {
   "gsplit-dwarf",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -4110,6 +4765,7 @@
 },
 {
   "gsplit-dwarf",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -4119,6 +4775,7 @@
 },
 {
   "gstabs",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined_or_missing,
   .reject_negative = false,
@@ -4128,6 +4785,7 @@
 },
 {
   "gstabs",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_joined_or_missing,
@@ -4137,6 +4795,7 @@
 },
 {
   "gstabs+",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined_or_missing,
   .reject_negative = false,
@@ -4146,6 +4805,7 @@
 },
 {
   "gstabs+",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_joined_or_missing,
@@ -4155,6 +4815,7 @@
 },
 {
   "gstatement-frontiers",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -4164,6 +4825,7 @@
 },
 {
   "gstrict-dwarf",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -4173,6 +4835,7 @@
 },
 {
   "gstrict-dwarf",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -4183,6 +4846,7 @@
 },
 {
   "gstrict-dwarf",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -4192,6 +4856,7 @@
 },
 {
   "gtoggle",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -4201,6 +4866,7 @@
 },
 {
   "gtoggle",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
    gcc_cmdline_parser::option::arg_none,
@@ -4210,6 +4876,7 @@
 },
 {
   "gvariable-location-views",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -4219,6 +4886,7 @@
 },
 {
   "gvariable-location-views=incompat5",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -4228,6 +4896,7 @@
 },
 {
   "gvms",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined_or_missing,
   .reject_negative = false,
@@ -4237,6 +4906,7 @@
 },
 {
   "gvms",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_joined_or_missing,
@@ -4246,6 +4916,7 @@
 },
 {
   "gxcoff",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined_or_missing,
   .reject_negative = false,
@@ -4255,6 +4926,7 @@
 },
 {
   "gxcoff",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_joined_or_missing,
@@ -4264,6 +4936,7 @@
 },
 {
   "gxcoff+",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined_or_missing,
   .reject_negative = false,
@@ -4273,6 +4946,7 @@
 },
 {
   "gxcoff+",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_joined_or_missing,
@@ -4282,6 +4956,7 @@
 },
 {
   "gz",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
@@ -4291,6 +4966,7 @@
 },
 {
   "gz=",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_joined,
@@ -4301,6 +4977,7 @@
 },
 {
   "gz=",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_joined,
@@ -4310,39 +4987,46 @@
 },
 {
   "h",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   (gcc_cmdline_parser::option::arg_joined |
    gcc_cmdline_parser::option::arg_separate),
 },
 {
   "imultiarch",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   (gcc_cmdline_parser::option::arg_joined |
    gcc_cmdline_parser::option::arg_separate),
 },
 {
   "iplugindir=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
 },
 {
   "l",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   (gcc_cmdline_parser::option::arg_joined |
    gcc_cmdline_parser::option::arg_separate),
 },
 {
   "n",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "no-canonical-prefixes",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "no-pie",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -4351,21 +5035,25 @@
 },
 {
   "nodefaultlibs",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "nostartfiles",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "nostdlib",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "o",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   (gcc_cmdline_parser::option::arg_joined |
@@ -4373,16 +5061,19 @@
 },
 {
   "p",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "pass-exit-codes",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "pedantic",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -4390,113 +5081,135 @@
 },
 {
   "pedantic-errors",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "pg",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "pie",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
 },
 {
   "pipe",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "print-file-name=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined_or_missing,
 },
 {
   "print-libgcc-file-name",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "print-multi-directory",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "print-multi-lib",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "print-multi-os-directory",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "print-multiarch",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "print-prog-name=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined_or_missing,
 },
 {
   "print-search-dirs",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "print-sysroot",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "print-sysroot-headers-suffix",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "quiet",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "r",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "s",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "save-temps",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "save-temps=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined,
 },
 {
   "shared",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
 },
 {
   "shared-libgcc",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "specs",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_separate,
   .reject_negative = false,
@@ -4504,36 +5217,43 @@
 },
 {
   "specs=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined,
 },
 {
   "static",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "static-libasan",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "static-libgcc",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "static-libgfortran",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "static-libgo",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "static-liblsan",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -4542,16 +5262,19 @@
 },
 {
   "static-libstdc++",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "static-libtsan",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "static-libubsan",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -4560,6 +5283,7 @@
 },
 {
   "static-pie",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -4568,64 +5292,76 @@
 },
 {
   "symbolic",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "t",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "time",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "time=",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_joined_or_missing,
 },
 {
   "u",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   (gcc_cmdline_parser::option::arg_joined |
    gcc_cmdline_parser::option::arg_separate),
 },
 {
   "undef",
+  opt_code_undef,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "v",
+  opt_code_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "version",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "w",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "wrapper",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_separate,
 },
 {
   "x",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   (gcc_cmdline_parser::option::arg_joined |
    gcc_cmdline_parser::option::arg_separate),
 },
 {
   "z",
+  opt_code_unused,
   gcc_cmdline_parser::option::comp_driver,
   (gcc_cmdline_parser::option::arg_joined |
    gcc_cmdline_parser::option::arg_separate),
