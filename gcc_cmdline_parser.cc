@@ -43,22 +43,23 @@ void gcc_cmdline_parser::register_table(const option * const table)
 
 void gcc_cmdline_parser::
 operator()(const int argc, const char *argv[],
-	   const std::function<void(const char *name,
+	   const std::function<void(const option *o,
+				    const option *table,
 				    const char *val,
-				    bool negative)> &callback) const
+				    const bool negative)> &callback) const
 {
   int optind = 0;
   while (optind < argc) {
     if (argv[optind][0] != '-') {
-      callback(nullptr, argv[optind], false);
+      callback(nullptr, nullptr, argv[optind], false);
       ++optind;
       continue;
     }
 
     bool negative = false;
     const char *cur_arg = argv[optind];
-    const option *o = nullptr;
-    o = _find_option(cur_arg + 1);
+    const option *o = nullptr, *t = nullptr;
+    std::tie(o, t) = _find_option(cur_arg + 1);
     if (!o &&
 	(cur_arg[1] == 'f' || cur_arg[1] == 'W' ||
 	 cur_arg[1] == 'm') &&
@@ -69,7 +70,7 @@ operator()(const int argc, const char *argv[],
       name.reserve(cur_arg_len - 1 - 3);
       name.push_back(cur_arg[1]);
       name.append(&cur_arg[5], cur_arg + cur_arg_len);
-      o = _find_option(name.c_str());
+      std::tie(o, t) = _find_option(name.c_str());
     }
 
     if (!o || (negative && o->reject_negative)) {
@@ -110,7 +111,7 @@ operator()(const int argc, const char *argv[],
 
     while (o->alias.name) {
       const option::alias_type a = o->alias;
-      o = _find_option(a.name);
+      std::tie(o, t) = _find_option(a.name);
       assert(o);
 
       if (a.neg_arg) {
@@ -128,7 +129,7 @@ operator()(const int argc, const char *argv[],
       }
     }
 
-    callback(o->name, cur_arg, negative);
+    callback(o, t, cur_arg, negative);
     ++optind;
   }
 }
@@ -181,22 +182,23 @@ gcc_cmdline_parser::_find_option(const char *s, const _table_type &table)
   return o;
 }
 
-const gcc_cmdline_parser::option*
+std::pair<const gcc_cmdline_parser::option*, const gcc_cmdline_parser::option*>
 gcc_cmdline_parser::_find_option(const char *s) const noexcept
 {
-  const option *o = nullptr;
+  const option *o = nullptr, *t = nullptr;
   std::size_t o_name_len = 0;
 
-  for (const auto &t : _tables) {
-    const option * const _o = _find_option(s, t);
+  for (const auto &_t : _tables) {
+    const option * const _o = _find_option(s, _t);
     if (_o) {
       const std::size_t _o_name_len = std::strlen(_o->name);
       if (_o_name_len > o_name_len) {
 	o = _o;
+	t = _t.first;
 	o_name_len = _o_name_len;
       }
     }
   }
 
-  return o;
+  return std::make_pair(o, t);
 }

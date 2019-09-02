@@ -85,8 +85,10 @@ void target_gcc::parse_command_line
   bool optimize = false;
 
   auto &&handle_opt =
-    [&](const char *name, const char *val, const bool negative) {
-      if (!name) {
+    [&](const gcc_cmdline_parser::option * const o,
+	const gcc_cmdline_parser::option * const table,
+	const char *val, const bool negative) {
+      if (!o) {
 	if (_base_file) {
 	  throw cmdline_except{
 		  std::string{"more than one input file: '"} + _base_file +
@@ -98,12 +100,12 @@ void target_gcc::parse_command_line
 	return;
       }
 
-      if (!std::strcmp(name, "include")) {
+      if (!std::strcmp(o->name, "include")) {
 	pre_includes.push_back(val);
 	return;
       }
 
-      if (!std::strcmp(name, "I")) {
+      if (!std::strcmp(o->name, "I")) {
 	if (!std::strcmp(val, "-")) {
 	  include_dirs_quoted.insert
 	    (include_dirs_quoted.end(),
@@ -117,37 +119,37 @@ void target_gcc::parse_command_line
 	return;
       }
 
-      if (!std::strcmp(name, "iquote")) {
+      if (!std::strcmp(o->name, "iquote")) {
 	include_dirs_quoted.push_back(val);
 	return;
       }
 
-      if (!std::strcmp(name, "isystem")) {
+      if (!std::strcmp(o->name, "isystem")) {
 	include_dirs_after.push_back(val);
 	return;
       }
 
-      if (!std::strcmp(name, "idirafter")) {
+      if (!std::strcmp(o->name, "idirafter")) {
 	include_dirs_after.push_back(val);
 	return;
       }
 
-      if (!std::strcmp(name, "undef")) {
+      if (!std::strcmp(o->name, "undef")) {
 	undef = true;
 	return;
       }
 
-      if (!std::strcmp(name, "D")) {
+      if (!std::strcmp(o->name, "D")) {
 	macro_defs_and_undefs.emplace_back(macro_def_or_undef{false, val});
 	return;
       }
 
-      if (!std::strcmp(name, "U")) {
+      if (!std::strcmp(o->name, "U")) {
 	macro_defs_and_undefs.emplace_back(macro_def_or_undef{true, val});
 	return;
       }
 
-      if (!std::strcmp(name, "O")) {
+      if (!std::strcmp(o->name, "O")) {
 	if (val && !strcmp(val, "0"))
 	  optimize = false;
 	else

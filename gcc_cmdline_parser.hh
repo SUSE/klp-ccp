@@ -101,9 +101,11 @@ namespace klp
       void register_table(const option * const table);
 
       void operator()(const int argc, const char *argv[],
-		      const std::function<void(const char *name,
+		      const std::function<void(const option *o,
+					       const option *table,
 					       const char *val,
-					       bool negative)> &callback) const;
+					       const bool negative)> &callback)
+	const;
 
     private:
       typedef std::pair<const option*, std::size_t> _table_type;
@@ -111,7 +113,8 @@ namespace klp
       const option* _find_option(const char *s, const _table_type &table)
 	const noexcept;
 
-      const option* _find_option(const char *s) const noexcept;
+      std::pair<const option*, const option*>
+      _find_option(const char *s) const noexcept;
 
       const gcc_version _version;
 
