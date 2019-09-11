@@ -223,7 +223,7 @@ Options:
 
 ## Known issues and limitations
 - klp-ccp is largely untested
-- klp-cpp hasn't support for directly operating on diffs yet.
+- klp-ccp hasn't support for directly operating on diffs yet.
 - You'll notice that a lot of `CONFIG_` defines get emitted into the
   resulting live patch source. That's because klp-ccp would currently
   pull in headers only if some declaration is needed from them --
