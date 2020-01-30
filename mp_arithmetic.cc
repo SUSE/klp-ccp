@@ -453,6 +453,37 @@ limbs limbs::operator+(const limbs &op) const
   return limbs(std::move(result));
 }
 
+limbs& limbs::operator+=(const limbs &op)
+{
+  const size_type min_n = std::min(size(), op.size());
+
+  bool carry = false;
+  for (size_type i = 0; i < min_n; ++i) {
+    const bool _carry = carry;
+    carry = _limbs[i].add(op[i]);
+    carry |= _limbs[i].add(_carry);
+  }
+
+  if (min_n < size()) {
+    for (size_type i = min_n; i < size(); ++i)
+      carry = _limbs[i].add(carry);
+
+  } else {
+    _limbs.reserve(op.size() + 1);
+    for (size_type i = min_n; i < op.size(); ++i) {
+      limb l = op[i];
+      carry = l.add(carry);
+      _limbs.emplace_back(l);
+    }
+
+  }
+
+  if (carry)
+    _limbs.emplace_back(carry);
+
+  return *this;
+}
+
 limbs limbs::operator-(const limbs &op) const
 {
   const size_type max_n = std::max(size(), op.size());

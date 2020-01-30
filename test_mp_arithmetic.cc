@@ -286,14 +286,24 @@ static int limbs_test2()
     return -2;
 
   const limbs l2{limb(1)};
-  const limbs s = l1 + l2;
-  if (s.size() != 3 ||
-      s[0] != limb(0) || s[1] != limb(0) || s[2] != limb(1))
+  const limbs s1 = l1 + l2;
+  if (s1.size() != 3 ||
+      s1[0] != limb(0) || s1[1] != limb(0) || s1[2] != limb(1))
     return -3;
 
-  const limbs d = s - l2;
-  if (d != l1)
+  const limbs d1 = s1 - l2;
+  if (d1 != l1)
     return -4;
+
+  // Verify that operator+=() produces the same outcome.
+  limbs s2 = l1;
+  s2 += limbs{};
+  if (s2 != l1)
+    return -5;
+  s2 += l2;
+  if (s2 != s1)
+    return -6;
+
 
   return 0;
 }

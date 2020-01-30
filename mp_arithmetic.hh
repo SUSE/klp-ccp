@@ -202,6 +202,7 @@ namespace klp
 
 	limbs complement() const;
 	limbs operator+(const limbs &op) const;
+	limbs& operator+=(const limbs &op);
 	limbs operator-(const limbs &op) const;
 	limbs operator*(const limbs &op) const;
 	limbs& operator*=(const limbs &op);
