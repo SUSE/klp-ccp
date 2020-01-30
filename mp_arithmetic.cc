@@ -1197,6 +1197,17 @@ void limbs::resize(const size_type n)
   _limbs.resize(n);
 }
 
+void limbs::shrink_to_fit()
+{
+  size_type n;
+  for (n = size(); n > 0; --n) {
+    if (_limbs[n - 1])
+      break;
+  }
+
+  _limbs.resize(n);
+}
+
 limbs::size_type limbs::fls() const noexcept
 {
   size_type n;

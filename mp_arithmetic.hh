@@ -244,6 +244,7 @@ namespace klp
 	void set_bits_below(const size_type pos, const bool value) noexcept;
 
 	void resize(const size_type n);
+	void shrink_to_fit();
 
 	size_type fls() const noexcept;
 	size_type ffs() const noexcept;

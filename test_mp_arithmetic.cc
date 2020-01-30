@@ -448,6 +448,7 @@ static int limbs_test7()
   limbs _l1{1};
   for (unsigned int m = 1; m <= max_n - 1; ++m) {
     _l1 = _l1 * b;
+    _l1.shrink_to_fit();
     const limbs l1 = _l1 - limbs{1};
 
     // First square. Verify that the outcome is correct and that
@@ -553,6 +554,7 @@ static int limbs_test8()
   limbs _l1{1};
   for (unsigned int m = 1; m <= max_m; ++m) {
     _l1 = _l1 * b;
+    _l1.shrink_to_fit();
     const limbs l1 = _l1 - limbs{1};
     for (unsigned int n = 1; n < limb::width; ++n) {
       const limb l2 = limb::mask(n);
