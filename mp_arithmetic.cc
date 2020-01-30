@@ -23,6 +23,8 @@
 
 using namespace klp::ccp::mpa;
 
+const unsigned int limb::width;
+
 unsigned int limb::fls() const noexcept
 {
   // Width must be a power of two
@@ -453,6 +455,47 @@ limbs limbs::operator+(const limbs &op) const
   return limbs(std::move(result));
 }
 
+limbs limbs::operator+(size_type op) const
+{
+  const std::size_t szt_width = std::numeric_limits<size_type>::digits;
+  const std::size_t szt_limb_mask =
+    (szt_width > limb::width ?
+     ((static_cast<std::size_t>(1) << limb::width) - 1) :
+     (~(static_cast<std::size_t>(0))));
+
+  _limbs_type result;
+  result.reserve(std::max(width_to_size(szt_width), size()) + 1);
+
+  bool carry = false;
+  for (size_type i = 0; i < size(); ++i) {
+    limb l{static_cast<limb::limb_type>(op & szt_limb_mask)};
+    if (szt_width > limb::width)
+      op >>= limb::width;
+    else
+      op = 0;
+    carry = l.add(carry);
+    carry |= l.add(_limbs[i]);
+    result.emplace_back(l);
+  }
+
+  while (op) {
+    assert(width_to_size(szt_width) > size());
+
+    limb l{static_cast<limb::limb_type>(op & szt_limb_mask)};
+    if (szt_width > limb::width)
+      op >>= limb::width;
+    else
+      op = 0;
+    carry = l.add(carry);
+    result.emplace_back(l);
+  }
+
+  if (carry)
+    result.emplace_back(carry);
+
+  return limbs(std::move(result));
+}
+
 limbs& limbs::operator+=(const limbs &op)
 {
   const size_type min_n = std::min(size(), op.size());
@@ -494,6 +537,43 @@ limbs& limbs::operator+=(const limb op)
   bool carry = _limbs[0].add(op);
   for (size_type i = 1; i < size(); ++i)
     carry = _limbs[i].add(carry);
+
+  if (carry)
+    _limbs.emplace_back(carry);
+
+  return *this;
+}
+
+limbs& limbs::operator+=(size_type op)
+{
+  const std::size_t szt_width = std::numeric_limits<size_type>::digits;
+  const std::size_t szt_limb_mask =
+    (szt_width > limb::width ?
+     ((static_cast<std::size_t>(1) << limb::width) - 1) :
+     (~(static_cast<std::size_t>(0))));
+
+  bool carry = false;
+  for (size_type i = 0; i < size(); ++i) {
+    limb l{static_cast<limb::limb_type>(op & szt_limb_mask)};
+    if (szt_width > limb::width)
+      op >>= limb::width;
+    else
+      op = 0;
+    carry = _limbs[i].add(carry);
+    carry |= _limbs[i].add(l);
+  }
+
+  while (op) {
+    assert(width_to_size(szt_width) > size());
+
+    limb l{static_cast<limb::limb_type>(op & szt_limb_mask)};
+    if (szt_width > limb::width)
+      op >>= limb::width;
+    else
+      op = 0;
+    carry = l.add(carry);
+    _limbs.emplace_back(l);
+  }
 
   if (carry)
     _limbs.emplace_back(carry);

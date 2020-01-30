@@ -17,6 +17,7 @@
  */
 
 #include <dejagnu.h>
+#include <cassert>
 #include "mp_arithmetic.hh"
 
 using namespace klp::ccp::mpa;
@@ -366,6 +367,77 @@ static int limbs_test5()
 
 static int limbs_test6()
 {
+  // Test limbs::operator+(size_type).
+  const unsigned int size_t_width =
+    std::numeric_limits<limbs::size_type>::digits;
+  for (unsigned int i = 1; i < 2 * limbs::width_to_size(size_t_width); ++i) {
+    limbs l1;
+    l1.resize(i);
+    const limbs::size_type l1_width = l1.width();
+    l1.set_bits_below(l1_width, true);
+
+    const limbs::size_type l2 = ~static_cast<limbs::size_type>(0);
+    const limbs s1 = l1 + l2;
+
+    const unsigned int min_width = std::min(size_t_width, i * limb::width);
+    const unsigned int max_width = std::max(size_t_width, i * limb::width);
+    if (s1.width() < max_width + 1)
+      return -1;
+
+    // Bit 0 shall be zero,
+    // Bits up t min_width (excluding) are all 1
+    // Bits from min_width to max_width (excluding) are all zero
+    // Bit at max_width is 1.
+    assert(max_width >= limb::width);
+    if (s1[0] != (limb::mask(std::min(limb::width, min_width)) & ~limb{1})) {
+      return -2;
+    }
+
+    if (min_width >= limb::width) {
+      for (unsigned int j = 1; (j + 1) * limb::width <= min_width; ++j) {
+	if (s1[j] != ~limb{0})
+	  return -3;
+      }
+
+      const unsigned int j = min_width / limb::width;
+      limb m = limb::mask(min_width - j * limb::width);
+      if (max_width < (j + 1) * limb::width) {
+	// The result's leading zero is also located in this limb.
+	m |= limb{1} << (max_width - j * limb::width);
+      }
+      if (s1[j] != m)
+	return -4;
+    }
+
+    for (unsigned int j = (min_width + limb::width - 1) / limb::width;
+	 (j + 1) * limb::width <= max_width; ++j) {
+      if (s1[j])
+	return -5;
+    }
+
+    const unsigned int j = max_width / limb::width;
+    // The case where min_width and max_width are in the same limb has
+    // been handled above.
+    if (min_width < j * limb::width) {
+      if (s1[j] != limb{1} << (max_width - j * limb::width))
+	return -6;
+    }
+
+    if (s1.is_any_set_at_or_above(max_width + 1))
+      return -7;
+
+    // Finally verify that operator+=() yields the same result.
+    limbs s2 = l1;
+    s2 += l2;
+    if (s2 != s1)
+      return -8;
+  }
+
+  return 0;
+}
+
+static int limbs_test7()
+{
   // Calculate
   //   (b^m - 1) (b^n - 1)
   // for various combinations of m and n.
@@ -468,7 +540,7 @@ static int limbs_test6()
   return 0;
 }
 
-static int limbs_test7()
+static int limbs_test8()
 {
   // Calculate
   //   (b^m - 1) (2^n - 1)
@@ -511,7 +583,7 @@ static int limbs_test7()
   return 0;
 }
 
-static int limbs_test8()
+static int limbs_test9()
 {
   for (limbs::size_type i = 0; i <= 3 * limb::width; ++i) {
     limbs dividend;
@@ -538,7 +610,7 @@ static int limbs_test8()
   return 0;
 }
 
-static int limbs_test9()
+static int limbs_test10()
 {
   const limbs l = limbs({~limb(0), limb(1), limb(1)}).lshift(limb::width + 1);
 
@@ -556,7 +628,7 @@ static int limbs_test9()
   return 0;
 }
 
-static int limbs_test10()
+static int limbs_test11()
 {
   const limbs l = limbs({~limb(0), ~limb(0)}).lshift(2 * limb::width);
 
@@ -569,7 +641,7 @@ static int limbs_test10()
   return 0;
 }
 
-static int limbs_test11()
+static int limbs_test12()
 {
   const limbs l = limbs({~limb(0), ~limb(0)}).lshift(0);
 
@@ -582,7 +654,7 @@ static int limbs_test11()
   return 0;
 }
 
-static int limbs_test12()
+static int limbs_test13()
 {
   const limbs l = limbs({1}).lshift(1);
 
@@ -592,7 +664,7 @@ static int limbs_test12()
   return 0;
 }
 
-static int limbs_test13()
+static int limbs_test14()
 {
   const limbs l =
     limbs({limb(1), ~limb(1), limb(1)}).rshift(limb::width + 1, true);
@@ -609,7 +681,7 @@ static int limbs_test13()
   return 0;
 }
 
-static int limbs_test14()
+static int limbs_test15()
 {
   const limbs l = limbs({0, 0}).rshift(2 * limb::width, true);
 
@@ -622,7 +694,7 @@ static int limbs_test14()
   return 0;
 }
 
-static int limbs_test15()
+static int limbs_test16()
 {
   const limbs l = limbs({3}).rshift(1, false);
 
@@ -632,7 +704,7 @@ static int limbs_test15()
   return 0;
 }
 
-static int limbs_test16()
+static int limbs_test17()
 {
   const limbs l = limbs({3}).rshift(1, true);
 
@@ -643,7 +715,7 @@ static int limbs_test16()
   return 0;
 }
 
-static int limbs_test17()
+static int limbs_test18()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -662,7 +734,7 @@ static int limbs_test17()
   return 0;
 }
 
-static int limbs_test18()
+static int limbs_test19()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -685,7 +757,7 @@ static int limbs_test18()
   return 0;
 }
 
-static int limbs_test19()
+static int limbs_test20()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -704,7 +776,7 @@ static int limbs_test19()
   return 0;
 }
 
-static int limbs_test20()
+static int limbs_test21()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -727,7 +799,7 @@ static int limbs_test20()
   return 0;
 }
 
-static int limbs_test21()
+static int limbs_test22()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -746,7 +818,7 @@ static int limbs_test21()
   return 0;
 }
 
-static int limbs_test22()
+static int limbs_test23()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -765,7 +837,7 @@ static int limbs_test22()
   return 0;
 }
 
-static int limbs_test23()
+static int limbs_test24()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -784,7 +856,7 @@ static int limbs_test23()
   return 0;
 }
 
-static int limbs_test24()
+static int limbs_test25()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -804,7 +876,7 @@ static int limbs_test24()
 }
 
 
-static int limbs_test25()
+static int limbs_test26()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -821,7 +893,7 @@ static int limbs_test25()
   return 0;
 }
 
-static int limbs_test26()
+static int limbs_test27()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -838,7 +910,7 @@ static int limbs_test26()
   return 0;
 }
 
-static int limbs_test27()
+static int limbs_test28()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -855,7 +927,7 @@ static int limbs_test27()
   return 0;
 }
 
-static int limbs_test28()
+static int limbs_test29()
 {
   limbs ls1;
   ls1.resize(1);
@@ -878,7 +950,7 @@ static int limbs_test28()
   return 0;
 }
 
-static int limbs_test29()
+static int limbs_test30()
 {
   limbs ls1;
   ls1.resize(1);
@@ -904,7 +976,7 @@ static int limbs_test29()
   return 0;
 }
 
-static int limbs_test30()
+static int limbs_test31()
 {
   limbs ls1;
   ls1.resize(1);
@@ -930,7 +1002,7 @@ static int limbs_test30()
   return 0;
 }
 
-static int limbs_test31()
+static int limbs_test32()
 {
   limbs ls1;
   ls1.resize(1);
@@ -950,7 +1022,7 @@ static int limbs_test31()
   return 0;
 }
 
-static int limbs_test32()
+static int limbs_test33()
 {
   limbs ls1;
   ls1.resize(1);
@@ -1030,6 +1102,7 @@ static const struct test_entry {
   TEST_ENTRY(limbs_test30),
   TEST_ENTRY(limbs_test31),
   TEST_ENTRY(limbs_test32),
+  TEST_ENTRY(limbs_test33),
   { NULL, NULL }
 };
 

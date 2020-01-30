@@ -83,6 +83,12 @@ namespace klp
 	  return *this;
 	}
 
+	limb& operator|=(const limb &op) noexcept
+	{
+	  _value |= op._value;
+	  return *this;
+	}
+
 	const limb operator<<(const std::size_t n) const noexcept
 	{
 	  return limb{_value << n};
@@ -207,8 +213,10 @@ namespace klp
 
 	limbs complement() const;
 	limbs operator+(const limbs &op) const;
+	limbs operator+(size_type op) const;
 	limbs& operator+=(const limbs &op);
 	limbs& operator+=(const limb op);
+	limbs& operator+=(size_type op);
 	limbs operator-(const limbs &op) const;
 	limbs& operator-=(const limb op);
 	limbs operator*(const limbs &op) const;
