@@ -484,6 +484,23 @@ limbs& limbs::operator+=(const limbs &op)
   return *this;
 }
 
+limbs& limbs::operator+=(const limb op)
+{
+  if (_limbs.empty()) {
+    _limbs.emplace_back(op);
+    return *this;
+  }
+
+  bool carry = _limbs[0].add(op);
+  for (size_type i = 1; i < size(); ++i)
+    carry = _limbs[i].add(carry);
+
+  if (carry)
+    _limbs.emplace_back(carry);
+
+  return *this;
+}
+
 limbs limbs::operator-(const limbs &op) const
 {
   const size_type max_n = std::max(size(), op.size());
@@ -510,6 +527,7 @@ limbs limbs::operator-(const limbs &op) const
     limb l = limb(0);
     borrow = l.sub(borrow);
     borrow |= l.sub(op[i]);
+    assert(borrow || !op[i]);
     result.emplace_back(l);
   }
 
@@ -517,6 +535,28 @@ limbs limbs::operator-(const limbs &op) const
     result.emplace_back(~limb(0));
 
   return limbs(std::move(result));
+}
+
+limbs& limbs::operator-=(const limb op)
+{
+  if (_limbs.empty()) {
+    _limbs.reserve(2);
+    limb l = limb(0);
+    const bool borrow = l.sub(op);
+    assert(borrow || !op);
+    _limbs.emplace_back(l);
+    if (borrow)
+      _limbs.emplace_back(~limb(0));
+  }
+
+  bool borrow = _limbs[0].sub(op);
+  for (size_type i = 1; i < size(); ++i)
+    borrow = _limbs[i].sub(borrow);
+
+  if (borrow)
+    _limbs.emplace_back(~limb(0));
+
+  return *this;
 }
 
 limbs limbs::operator*(const limbs &op) const
@@ -539,6 +579,26 @@ limbs limbs::operator*(const limbs &op) const
     }
     result.emplace_back(carry);
   }
+
+  return limbs(std::move(result));
+}
+
+limbs limbs::operator*(const limb op) const
+{
+  const size_type m = size();
+  _limbs_type result;
+  result.reserve(m + 1);
+
+  limb carry(0);
+  for (size_type i = 0; i < m; ++i) {
+    double_limb t = _limbs[i] * op;
+    bool t_high_overflow = t.add(carry);
+    assert(!t_high_overflow);
+    result.emplace_back(t.low());
+    carry = t.high();
+  }
+  if (carry)
+    result.emplace_back(carry);
 
   return limbs(std::move(result));
 }
@@ -626,6 +686,25 @@ limbs& limbs::operator*=(const limbs &op)
       _carry = _limbs[k].add(_carry);
     assert(!_carry);
   }
+
+  return *this;
+}
+
+limbs& limbs::operator*=(const limb op)
+{
+  const size_type m = size();
+
+  limb carry{0};
+  for (size_t i = 0; i < m; ++i) {
+    double_limb t = _limbs[i] * op;
+    bool t_high_overflow = t.add(carry);
+    assert(!t_high_overflow);
+    _limbs[i] = t.low();
+    carry = t.high();
+  }
+
+  if (carry)
+    _limbs.emplace_back(carry);
 
   return *this;
 }

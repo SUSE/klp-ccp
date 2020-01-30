@@ -93,6 +93,11 @@ namespace klp
 	  return limb{_value >> n};
 	}
 
+	const limb operator&(const limb &op) const noexcept
+	{
+	  return limb{_value & op._value};
+	}
+
 	const limb operator|(const limb &op) const noexcept
 	{
 	  return limb(_value | op._value);
@@ -203,9 +208,13 @@ namespace klp
 	limbs complement() const;
 	limbs operator+(const limbs &op) const;
 	limbs& operator+=(const limbs &op);
+	limbs& operator+=(const limb op);
 	limbs operator-(const limbs &op) const;
+	limbs& operator-=(const limb op);
 	limbs operator*(const limbs &op) const;
+	limbs operator*(const limb op) const;
 	limbs& operator*=(const limbs &op);
+	limbs& operator*=(const limb op);
 
 	std::pair<limbs, limbs>
 	operator/(const limbs &op) const;

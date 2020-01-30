@@ -300,10 +300,26 @@ static int limbs_test2()
   s2 += limbs{};
   if (s2 != l1)
     return -5;
+  s2 += limb{0};
+  if (s2 != l1)
+    return -6;
   s2 += l2;
   if (s2 != s1)
-    return -6;
+    return -7;
+  s2 = l1;
+  s2 += limb{1};
+  if (s2 != s1)
+    return -8;
 
+  // Verify that operator-=() produces the same outcome.
+  limbs d2 = l1;
+  d2 -= limb{0};
+  if (d2 != l1)
+    return -9;
+  d2 = s1;
+  d2 -= limb{1};
+  if (d2 != d1)
+    return -10;
 
   return 0;
 }
@@ -454,6 +470,49 @@ static int limbs_test6()
 
 static int limbs_test7()
 {
+  // Calculate
+  //   (b^m - 1) (2^n - 1)
+  // by means of limbs::operator*(limb) for various combinations of m
+  // and n, with n < limb::width.
+  // C.f. D. E. Knuth, 4.3.1 ("The classical algorithms").
+  const limbs b{0, 1};
+
+  static unsigned int max_m = 10;
+  limbs _l1{1};
+  for (unsigned int m = 1; m <= max_m; ++m) {
+    _l1 = _l1 * b;
+    const limbs l1 = _l1 - limbs{1};
+    for (unsigned int n = 1; n < limb::width; ++n) {
+      const limb l2 = limb::mask(n);
+
+      const limbs p1 = l1 * l2;
+      if (p1.size() < m + 1)
+	return -1;
+
+      if (p1[0] != (~limb::mask(n) | limb{1}))
+	return -2;
+
+      for (unsigned int j = 1; j < m; ++j) {
+	if (p1[j] != ~limb{0})
+	  return -3;
+      }
+
+      if (p1[m] != (limb::mask(n) & ~limb{1}))
+	return -4;
+
+      // Verify that operator*= yields the same result.
+      limbs p2 = l1;
+      p2 *= l2;
+      if (p2 != p1)
+	return -5;
+    }
+  }
+
+  return 0;
+}
+
+static int limbs_test8()
+{
   for (limbs::size_type i = 0; i <= 3 * limb::width; ++i) {
     limbs dividend;
     dividend.resize(limbs::width_to_size(i));
@@ -479,7 +538,7 @@ static int limbs_test7()
   return 0;
 }
 
-static int limbs_test8()
+static int limbs_test9()
 {
   const limbs l = limbs({~limb(0), limb(1), limb(1)}).lshift(limb::width + 1);
 
@@ -497,7 +556,7 @@ static int limbs_test8()
   return 0;
 }
 
-static int limbs_test9()
+static int limbs_test10()
 {
   const limbs l = limbs({~limb(0), ~limb(0)}).lshift(2 * limb::width);
 
@@ -510,7 +569,7 @@ static int limbs_test9()
   return 0;
 }
 
-static int limbs_test10()
+static int limbs_test11()
 {
   const limbs l = limbs({~limb(0), ~limb(0)}).lshift(0);
 
@@ -523,7 +582,7 @@ static int limbs_test10()
   return 0;
 }
 
-static int limbs_test11()
+static int limbs_test12()
 {
   const limbs l = limbs({1}).lshift(1);
 
@@ -533,7 +592,7 @@ static int limbs_test11()
   return 0;
 }
 
-static int limbs_test12()
+static int limbs_test13()
 {
   const limbs l =
     limbs({limb(1), ~limb(1), limb(1)}).rshift(limb::width + 1, true);
@@ -550,7 +609,7 @@ static int limbs_test12()
   return 0;
 }
 
-static int limbs_test13()
+static int limbs_test14()
 {
   const limbs l = limbs({0, 0}).rshift(2 * limb::width, true);
 
@@ -563,7 +622,7 @@ static int limbs_test13()
   return 0;
 }
 
-static int limbs_test14()
+static int limbs_test15()
 {
   const limbs l = limbs({3}).rshift(1, false);
 
@@ -573,7 +632,7 @@ static int limbs_test14()
   return 0;
 }
 
-static int limbs_test15()
+static int limbs_test16()
 {
   const limbs l = limbs({3}).rshift(1, true);
 
@@ -584,7 +643,7 @@ static int limbs_test15()
   return 0;
 }
 
-static int limbs_test16()
+static int limbs_test17()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -603,7 +662,7 @@ static int limbs_test16()
   return 0;
 }
 
-static int limbs_test17()
+static int limbs_test18()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -626,7 +685,7 @@ static int limbs_test17()
   return 0;
 }
 
-static int limbs_test18()
+static int limbs_test19()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -645,7 +704,7 @@ static int limbs_test18()
   return 0;
 }
 
-static int limbs_test19()
+static int limbs_test20()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -668,7 +727,7 @@ static int limbs_test19()
   return 0;
 }
 
-static int limbs_test20()
+static int limbs_test21()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -687,7 +746,7 @@ static int limbs_test20()
   return 0;
 }
 
-static int limbs_test21()
+static int limbs_test22()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -706,7 +765,7 @@ static int limbs_test21()
   return 0;
 }
 
-static int limbs_test22()
+static int limbs_test23()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -725,7 +784,7 @@ static int limbs_test22()
   return 0;
 }
 
-static int limbs_test23()
+static int limbs_test24()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -745,7 +804,7 @@ static int limbs_test23()
 }
 
 
-static int limbs_test24()
+static int limbs_test25()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -762,7 +821,7 @@ static int limbs_test24()
   return 0;
 }
 
-static int limbs_test25()
+static int limbs_test26()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -779,7 +838,7 @@ static int limbs_test25()
   return 0;
 }
 
-static int limbs_test26()
+static int limbs_test27()
 {
   for (limbs::size_type i = 0; i < 3 * limb::width; ++i) {
     limbs ls;
@@ -796,7 +855,7 @@ static int limbs_test26()
   return 0;
 }
 
-static int limbs_test27()
+static int limbs_test28()
 {
   limbs ls1;
   ls1.resize(1);
@@ -819,7 +878,7 @@ static int limbs_test27()
   return 0;
 }
 
-static int limbs_test28()
+static int limbs_test29()
 {
   limbs ls1;
   ls1.resize(1);
@@ -845,7 +904,7 @@ static int limbs_test28()
   return 0;
 }
 
-static int limbs_test29()
+static int limbs_test30()
 {
   limbs ls1;
   ls1.resize(1);
@@ -871,7 +930,7 @@ static int limbs_test29()
   return 0;
 }
 
-static int limbs_test30()
+static int limbs_test31()
 {
   limbs ls1;
   ls1.resize(1);
@@ -891,7 +950,7 @@ static int limbs_test30()
   return 0;
 }
 
-static int limbs_test31()
+static int limbs_test32()
 {
   limbs ls1;
   ls1.resize(1);
@@ -970,6 +1029,7 @@ static const struct test_entry {
   TEST_ENTRY(limbs_test29),
   TEST_ENTRY(limbs_test30),
   TEST_ENTRY(limbs_test31),
+  TEST_ENTRY(limbs_test32),
   { NULL, NULL }
 };
 
