@@ -170,6 +170,7 @@ namespace klp
 	limbs(const std::initializer_list<limb> &il);
 	explicit limbs(const size_type n);
 	limbs(const limbs &ls);
+	limbs(limbs &&ls) noexcept;
 
 	limbs& operator=(const limbs &rhs);
 
@@ -279,7 +280,7 @@ namespace klp
 	std::string to_string(const limb &base) const;
 
       private:
-	limbs(_limbs_type &&ls);
+	limbs(_limbs_type &&ls) noexcept;
 
 	_limbs_type _limbs;
       };

@@ -317,7 +317,11 @@ limbs::limbs(const limbs &ls)
   : _limbs(ls._limbs)
 {}
 
-limbs::limbs(_limbs_type &&ls)
+limbs::limbs(limbs &&ls) noexcept
+  : _limbs(std::move(ls._limbs))
+{}
+
+limbs::limbs(_limbs_type &&ls) noexcept
   : _limbs(std::move(ls))
 {}
 
