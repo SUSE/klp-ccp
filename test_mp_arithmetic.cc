@@ -352,6 +352,29 @@ static int limbs_test6()
     _l1 = _l1 * b;
     const limbs l1 = _l1 - limbs{1};
 
+    // First square. Verify that the outcome is correct and that
+    // operator*() and operator*=(*this) produce the same result.
+    limbs sq = l1;
+    sq *= sq;
+    if (sq != l1 * l1)
+      return -1;
+
+    if (sq[0] != limb(1))
+      return -2;
+
+    for (unsigned int j = 1; j < m; ++j) {
+      if (sq[j])
+	return -3;
+    }
+
+    if (sq[m] != ~limb(1))
+      return -4;
+
+    for (unsigned int j = m + 1; j < 2 * m; ++j) {
+      if (sq[j] != ~limb(0))
+	return -5;
+    }
+
     limbs _l2 = _l1;
     for (unsigned int n = m + 1; n <= max_n; ++n) {
       _l2 = _l2 * b;
@@ -360,35 +383,41 @@ static int limbs_test6()
       // Product, verify the known outcome.
       const limbs p = l1 * l2;
       if (p.size() < m + n - 1)
-	return -1;
+	return -6;
 
       if (p[0] != limb(1))
-	return -2;
+	return -7;
 
       for (unsigned int j = 1; j < m; ++j) {
 	if (p[j])
-	  return -3;
+	  return -8;
       }
 
       for (unsigned int j = m; j < n; ++j) {
 	if (p[j] != ~limb(0))
-	  return -4;
+	  return -9;
       }
 
       limb expected = ~limb(0);
       expected.sub(true);
       if (p[n] != expected)
-	return -5;
+	return -10;
 
       for (unsigned j = n + 1; j < m + n; ++j) {
 	if (p[j] != ~limb(0))
-	  return -6;
+	  return -11;
       }
 
       for (unsigned j = m + n + 1; j < p.size(); ++j) {
 	if (p[j])
-	  return -7;
+	  return -12;
       }
+
+      // Test that operator*=() yields the same result.
+      limbs _p = l1;
+      _p *= l2;
+      if (p != _p)
+	return -13;
 
       // Test the division
       const limbs rest{1};
@@ -397,16 +426,16 @@ static int limbs_test6()
       // (p + rest) / l2 should equal l1
       const auto &d1 = v / l2;
       if (d1.second != rest)
-	return -8;
+	return -14;
       if (d1.first != l1)
-	return -9;
+	return -15;
 
       // (p + rest) / l1 should equal l2
       const auto &d2 = v / l1;
       if (d2.second != rest)
-	return -10;
+	return -16;
       if (d2.first != l2)
-	return -11;
+	return -17;
     }
   }
 

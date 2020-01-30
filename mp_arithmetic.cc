@@ -512,6 +512,93 @@ limbs limbs::operator*(const limbs &op) const
   return limbs(std::move(result));
 }
 
+limbs& limbs::operator*=(const limbs &op)
+{
+  if (this == &op) {
+    // In-place squaring.
+    const size_type m = size();
+    _limbs.resize(2 * m);
+
+    for (size_type i = m; i > 0; --i) {
+      const limb l = _limbs[i - 1];
+      _limbs[i - 1] = limb{0};
+
+      limb carry_low(0);
+      bool carry_high = false;
+      for (size_type j = 0; j < i - 1; ++j) {
+	double_limb t = l * _limbs[j];
+	// Multiply by 2. Store the shifted out high bit first.
+	bool t_highbit = !!(t.high() >> (limb::width - 1));
+	t = double_limb{(t.high() << 1) | (t.low() >> (limb::width - 1)),
+			t.low() << 1};
+
+	bool t_high_overflow = t.add(carry_low);
+	assert(!t_high_overflow || !t_highbit);
+	t_highbit |= t_high_overflow;
+	t_high_overflow = t.add(_limbs[i - 1 + j]);
+	assert(!t_high_overflow || !t_highbit);
+	t_highbit |= t_high_overflow;
+
+	_limbs[i - 1 + j] = t.low();
+
+	carry_low = t.high();
+	carry_high = carry_low.add(carry_high);
+	assert(!carry_high || !t_highbit);
+	carry_high |= t_highbit;
+      }
+
+      double_limb t = l * l;
+      bool t_high_overflow = t.add(carry_low);
+      assert(!t_high_overflow);
+      t_high_overflow = t.add(_limbs[2 * i - 2]);
+      assert(!t_high_overflow);
+
+      _limbs[2 * i - 2] = t.low();
+
+      carry_low = t.high();
+      carry_high = carry_low.add(carry_high);
+
+      // Propagate the carry to high.
+      carry_low = limb{_limbs[2 * i - 1].add(carry_low)};
+      carry_high = carry_low.add(carry_high);
+      assert(!carry_high);
+      for (size_type k = 2 * i; carry_low && k < 2 * m; ++k)
+	carry_low = limb{_limbs[k].add(carry_low)};
+
+      assert(!carry_low);
+    }
+
+    return *this;
+  }
+
+  const size_type m = size();
+  const size_type n = op.size();
+  _limbs.resize(m + n);
+
+  for (size_type i = m; i > 0; --i) {
+    const limb l = _limbs[i - 1];
+    _limbs[i - 1] = limb{0};
+    limb carry(0);
+    for (size_type j = 0; j < n; ++j) {
+      double_limb t = l * op[j];
+      bool t_high_overflow = t.add(carry);
+      assert(!t_high_overflow);
+      t_high_overflow = t.add(_limbs[i - 1 + j]);
+      assert(!t_high_overflow);
+      _limbs[i - 1 + j] = t.low();
+      carry = t.high();
+    }
+
+    // Propagate the carry to high.
+    bool _carry = _limbs[i - 1 + n].add(carry);
+    for (size_type k = i + n; _carry && k < m + n; ++k)
+      _carry = _limbs[k].add(_carry);
+    assert(!_carry);
+  }
+
+  return *this;
+}
+
 std::pair<limbs, limbs>
 limbs::operator/(const limbs &divisor) const
 {

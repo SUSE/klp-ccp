@@ -83,6 +83,21 @@ namespace klp
 	  return *this;
 	}
 
+	const limb operator<<(const std::size_t n) const noexcept
+	{
+	  return limb{_value << n};
+	}
+
+	const limb operator>>(const std::size_t n) const noexcept
+	{
+	  return limb{_value >> n};
+	}
+
+	const limb operator|(const limb &op) const noexcept
+	{
+	  return limb(_value | op._value);
+	}
+
 	unsigned int fls() const noexcept;
 	unsigned int ffs() const noexcept;
 	unsigned int clz() const noexcept;
@@ -189,6 +204,7 @@ namespace klp
 	limbs operator+(const limbs &op) const;
 	limbs operator-(const limbs &op) const;
 	limbs operator*(const limbs &op) const;
+	limbs& operator*=(const limbs &op);
 
 	std::pair<limbs, limbs>
 	operator/(const limbs &op) const;
