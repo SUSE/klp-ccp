@@ -1096,6 +1096,135 @@ static int target_float_test38()
   return 0;
 }
 
+static int target_float_test39()
+{
+  auto &&create_max_float =
+    [](const mpa::limbs::size_type f_width,
+       const mpa::limbs::size_type e_width) {
+      mpa::limbs m;
+      m.resize(mpa::limbs::width_to_size(f_width));
+      m.set_bits_below(f_width, true);
+
+      mpa::limbs e;
+      e.resize(mpa::limbs::width_to_size(e_width));
+      // bias is 2^{e_width - 1} - 1;
+      e.set_bits_below(e_width - 1, true);
+      e = e - mpa::limbs::from_size_type(f_width - 1);
+
+      return target_float::from_base2_exp(f_width, e_width,
+					  std::move(m), std::move(e));
+    };
+
+  auto &&create_denorm_min_float =
+    [](const mpa::limbs::size_type f_width,
+       const mpa::limbs::size_type e_width) {
+      mpa::limbs m;
+      m.resize(mpa::limbs::width_to_size(f_width));
+      m.set_bit(0, true);
+
+      mpa::limbs e;
+      e.resize(mpa::limbs::width_to_size(e_width));
+      // bias is 2^{e_width - 1} - 1;
+      e.set_bits_below(e_width - 1, true);
+      e += f_width - 1;
+      e -= mpa::limb{1};
+      e = e.complement();
+
+      return target_float::from_base2_exp(f_width, e_width,
+					  std::move(m), std::move(e));
+    };
+
+  auto &&create_epsilon_float =
+    [](const mpa::limbs::size_type f_width,
+       const mpa::limbs::size_type e_width) {
+      mpa::limbs m;
+      m.resize(mpa::limbs::width_to_size(f_width));
+      m.set_bit(0, true);
+
+      mpa::limbs e = mpa::limbs::from_size_type(f_width - 1);
+      e.resize(mpa::limbs::width_to_size(e_width));
+      e = e.complement();
+
+      return target_float::from_base2_exp(f_width, e_width,
+					  std::move(m), std::move(e));
+    };
+
+  auto &&fmt_float =
+    [](const target_float &f, const std::size_t ndigits) {
+      std::string sf;
+      std::string se;
+
+      std::tie(sf, se) = f.to_decimal(ndigits);
+      if (!se.empty())
+	return sf + 'e' + se;
+      else
+	return sf;
+    };
+
+  // The strings below are identical to what GCC emits for
+  // __<TYPE>_MAX__, __<TYPE>_DENORM_MIN__ and __<TYPE>_EPSILON__ with
+  // the given combinations of significand and exponent width each.
+  static struct {
+    mpa::limbs::size_type f_width;
+    mpa::limbs::size_type e_width;
+    const char *expected_max;
+    const char *expected_denorm_min;
+    const char *expected_epsilon;
+  } tests[] = {
+    {
+      24, 8, // single precision
+      "3.40282346638528859811704183484516925e+38",
+      "1.40129846432481707092372958328991613e-45",
+      "1.19209289550781250000000000000000000e-7"
+    },
+    {
+      53, 11, // double precision
+      "1.79769313486231570814527423731704357e+308",
+      "4.94065645841246544176568792868221372e-324",
+      "2.22044604925031308084726333618164062e-16"
+    },
+    {
+      64, 15, // extended 80 bit precision
+      "1.18973149535723176502126385303097021e+4932",
+      "3.64519953188247460252840593361941982e-4951",
+      "1.08420217248550443400745280086994171e-19"
+    },
+    {
+      113, 15, // extended 128 bit precision
+      "1.18973149535723176508575932662800702e+4932",
+      "6.47517511943802511092443895822764655e-4966",
+      "1.92592994438723585305597794258492732e-34"
+    },
+    { 0, 0, NULL, NULL, NULL}
+  };
+
+  // GCC's __FLT128_DECIMAL_DIG__ equals 36 on x86_64 and it uses that
+  // for all floating point values, independent of the type.
+  const unsigned int ndigits = 36;
+
+  for (const auto *t = tests; t->f_width; ++t) {
+    if (fmt_float(create_max_float(t->f_width, t->e_width),
+		  ndigits) !=
+	t->expected_max) {
+      return -1;
+    }
+
+    if (fmt_float(create_denorm_min_float(t->f_width, t->e_width),
+		  ndigits) !=
+	t->expected_denorm_min) {
+      return -2;
+    }
+
+    if (fmt_float(create_epsilon_float(t->f_width, t->e_width),
+		  ndigits) !=
+	t->expected_epsilon) {
+      return -3;
+    }
+  }
+
+  return 0;
+}
+
 
 #define TEST_ENTRY(t)				\
   { #t, t }
@@ -1142,6 +1271,7 @@ static const struct test_entry {
   TEST_ENTRY(target_float_test36),
   TEST_ENTRY(target_float_test37),
   TEST_ENTRY(target_float_test38),
+  TEST_ENTRY(target_float_test39),
   { NULL, NULL }
 };
 

@@ -80,6 +80,9 @@ namespace klp
       bool is_inf() const noexcept;
       bool is_zero() const noexcept;
 
+      std::pair<std::string, std::string> to_decimal(const std::size_t digits)
+	const;
+
     private:
       target_float(const mpa::limbs::size_type f_width,
 		   const mpa::limbs::size_type e_width,

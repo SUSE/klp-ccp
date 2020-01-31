@@ -18,6 +18,7 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <tuple>
 #include "target_float.hh"
 #include "target_int.hh"
 
@@ -480,6 +481,496 @@ target_int target_float::to_int(const mpa::limbs::size_type prec,
   }
 
   return target_int(prec, is_signed, std::move(val));
+}
+
+std::pair<std::string, std::string>
+target_float::to_decimal(const std::size_t ndigits)const
+{
+  // Helpful references:
+  // - "How to print floating-point numbers accurately",
+  //   Guy L. Steele, John L. White,
+  //   https://doi.org/10.1145/93548.93559
+  // - GCC's real_to_decimal_for_mode().
+  if (is_zero()) {
+    return std::make_pair(std::string{_is_negative ? "-0.0" : "0.0"},
+			  std::string{});
+  } else if (is_inf()) {
+    return std::make_pair(std::string{_is_negative ? "-Inf" : "+Inf"},
+			  std::string{});
+  } else if (is_nan()) {
+    return std::make_pair(std::string{_is_negative ? "-SNaN" : "+SNaN"},
+			  std::string{});
+  }
+
+  struct scaled_mp_uint
+  {
+    scaled_mp_uint(mpa::limbs &&_m, const mpa::limbs &_shift,
+		   const mpa::limbs::size_type shift_increment)
+      : m(shift_increment ? _m.rshift(shift_increment, false) : std::move(_m)),
+	shift(std::move(_shift))
+    {
+      shift += shift_increment;
+      assert(m || !shift);
+    }
+
+    scaled_mp_uint()
+      : m(), shift()
+    {}
+
+    scaled_mp_uint(mpa::limbs &&_m, mpa::limbs &&_shift)
+      : scaled_mp_uint(std::move(_m), std::move(_shift), _m ? _m.ffs() - 1 : 0)
+    {}
+
+    scaled_mp_uint(const mpa::limbs &_m, mpa::limbs &&_shift)
+      : scaled_mp_uint(mpa::limbs{_m}, std::move(_shift))
+    {}
+
+    bool operator==(const scaled_mp_uint &rhs) const noexcept
+    {
+      return this->shift == rhs.shift && this->m == rhs.m;
+    }
+
+    bool operator<(const scaled_mp_uint &rhs) const
+    {
+      if (this->shift < rhs.shift) {
+	const mpa::limbs::size_type lhs_fls = this->m.fls();
+	const mpa::limbs::size_type rhs_fls = rhs.m.fls();
+
+	// rhs.shift != 0 => rhs.m.
+	assert(rhs.m);
+
+	if (lhs_fls <= rhs_fls)
+	  return true;
+
+	if (rhs.shift - this->shift >
+	    mpa::limbs::from_size_type(lhs_fls - rhs_fls)) {
+	  return true;
+	} else if (rhs.shift - this->shift <
+		   mpa::limbs::from_size_type(lhs_fls - rhs_fls)) {
+	  return false;
+	}
+
+	// Compare LHS' m against RHS' m shifted (virtually) to the
+	// left by lhs_fls - rhs_fls.
+	const mpa::limbs::size_type delta_limbs =
+		  (lhs_fls - rhs_fls) / mpa::limb::width;
+	const mpa::limbs::size_type delta_rem =
+		  (lhs_fls - rhs_fls) % mpa::limb::width;
+	mpa::limb next_lhs_limb_high{0};
+	for (mpa::limbs::size_type i = rhs.m.size(); i; --i) {
+	  const mpa::limb &rhs_limb = rhs.m[i - 1];
+
+	  mpa::limb lhs_limb = this->m[i - 1 + delta_limbs] >> delta_rem;
+	  lhs_limb |= next_lhs_limb_high;
+
+	  if (lhs_limb < rhs_limb)
+	    return true;
+	  if (lhs_limb > rhs_limb)
+	    return false;
+
+	  next_lhs_limb_high =
+	    ((this->m[i - 1 + delta_limbs] & mpa::limb::mask(delta_rem)) <<
+	     mpa::limb::width - delta_rem);
+	}
+
+	return false;
+
+      } else if (this->shift > rhs.shift) {
+	const mpa::limbs::size_type lhs_fls = this->m.fls();
+	const mpa::limbs::size_type rhs_fls = rhs.m.fls();
+
+	// this->shift != 0 => this->m.
+	assert(rhs.m);
+
+	if (lhs_fls >= rhs_fls)
+	  return false;
+
+	if (this->shift - rhs.shift >
+	    mpa::limbs::from_size_type(rhs_fls - lhs_fls)) {
+	  return false;
+	} else if (this->shift - rhs.shift <
+		   mpa::limbs::from_size_type(rhs_fls - lhs_fls)) {
+	  return true;
+	}
+
+	// Compare RHS' m against LHS' m shifted (virtually) to the
+	// left by rhs_fls - lhs_fls.
+	const mpa::limbs::size_type delta_limbs =
+		  (rhs_fls - lhs_fls) / mpa::limb::width;
+	const mpa::limbs::size_type delta_rem =
+		  (rhs_fls - lhs_fls) % mpa::limb::width;
+	mpa::limb next_rhs_limb_high{0};
+	for (mpa::limbs::size_type i = this->m.size(); i; --i) {
+	  const mpa::limb &lhs_limb = this->m[i - 1];
+
+	  mpa::limb rhs_limb = rhs.m[i - 1 + delta_limbs] >> delta_rem;
+	  rhs_limb |= next_rhs_limb_high;
+
+	  if (lhs_limb < rhs_limb)
+	    return true;
+	  if (lhs_limb > rhs_limb)
+	    return false;
+
+	  next_rhs_limb_high =
+	    ((rhs.m[i - 1 + delta_limbs] & mpa::limb::mask(delta_rem)) <<
+	     mpa::limb::width - delta_rem);
+	}
+
+	return false;
+
+      } else {
+	assert(this->shift == rhs.shift);
+	return this->m < rhs.m;
+
+      }
+    }
+
+    bool operator<=(const scaled_mp_uint &rhs)
+    {
+      return *this < rhs || *this == rhs;
+    }
+
+    void normalize()
+    {
+      // Shift of zero bits at the tail and increment
+      // the scale accordingly.
+      if (this->m.test_bit(0))
+	return;
+
+      const mpa::limbs::size_type ffs = this->m.ffs();
+
+      if (ffs <= 1)
+	return;
+
+      const mpa::limbs::size_type s = ffs - 1;
+      this->m = this->m.rshift(s, false);
+      this->shift += s;
+    }
+
+    void trunc(const mpa::limbs::size_type precision)
+    {
+      if (precision >= this->m.width())
+	return;
+
+      const mpa::limbs::size_type fls = this->m.fls();
+      if (fls <= precision)
+	return;
+
+      this->m = this->m.rshift(fls - precision, false);
+      this->shift += fls - precision;
+      this->normalize();
+      this->m.resize(mpa::limbs::width_to_size(precision));
+    }
+
+    scaled_mp_uint& operator*=(const scaled_mp_uint &op)
+    {
+      this->m *= op.m;
+      this->m.shrink_to_fit();
+      assert(this->m.test_bit(0));
+      this->shift = this->shift + op.shift;
+
+      return *this;
+    }
+
+    scaled_mp_uint operator*(const scaled_mp_uint &op) const
+    {
+      mpa::limbs _m = this->m * op.m;
+      _m.shrink_to_fit();
+      assert(_m.test_bit(0));
+      return scaled_mp_uint{std::move(_m), this->shift + op.shift, 0};
+    }
+
+    scaled_mp_uint operator*(const mpa::limb op) const
+    {
+      mpa::limbs _m = this->m * op;
+      _m.shrink_to_fit();
+      return scaled_mp_uint{std::move(_m), mpa::limbs{this->shift}};;
+    }
+
+    static scaled_mp_uint ten_to_pow2(const mpa::limbs::size_type n,
+				      const mpa::limbs::size_type precision)
+    {
+      scaled_mp_uint result{mpa::limbs::from_size_type(5),
+			    mpa::limbs::from_size_type(1),
+			    0};
+
+      for (mpa::limbs::size_type i = 0; i < n; ++i) {
+	result *= result;
+	result.trunc(precision);
+      }
+
+      return result;
+    }
+
+    mpa::limbs m;
+    mpa::limbs shift;
+  };
+
+
+  // Initialize r, s to integers such that this' value equals
+  // r/s * 2^(_e - _bias). Note that a factor of 2^(-(_f_width - 1))
+  // is implicit in the representation.
+  scaled_mp_uint r{_f, mpa::limbs::from_size_type(0)};
+  scaled_mp_uint s{mpa::limbs::from_size_type(1),
+		   mpa::limbs::from_size_type(_f_width - 1)};
+
+
+  // Absorb 2^(_e - _bias) into either r or s (depending on the sign),
+  // such that the fraction r/s equals this' value.
+  //
+  // Next, determine a (signed) integer k such that r/s / 10^k is in
+  // the range [1/10, 1).
+  // The final result will be (r/s / 10^k * 10) * 10^{k-1} with
+  // the first factor being represented as decimal fixed fraction.
+  //
+  // The factor of 1/10^k is actually multiplied into either of r or s
+  // again, so after the code below sets r/s <- r/s / 10^k.
+  //
+  // The tricky part is the performant calculation of 10^k because
+  // these can grow large: a IEEE 754 quadruple precision float
+  // (float128_t) has a maximum exponent of 2^14 - 1 == ~2kB while a
+  // hypothetical octuple precision float would have a maximum
+  // exponent of 2^18 - 1 == 32kB. Calculation of a corresponding 10^k
+  // is quadratic in that number and as we're mostly interested in
+  // formatting extremal floating point numbers (__FLT_MAX__,
+  // __FLT_DENORM_MIN__, __DBL_MAX__, etc.), this is worth optimizing.
+  //
+  // The approach chosen below is to use the method of repeated
+  // squaring while keeping only a certain number of msb bits together
+  // with a scaling power of two after each step. These truncations
+  // lead to an inexact result, obviously, but the number of msb bits
+  // to be kept at each step (mul_precision below) is chosen such that
+  // the internal identity requirement is still met. That is, the
+  // resulting decimal number is closer to the orignal floating point
+  // value than to any other floating point value of precision
+  // _f_width.
+
+  // GCC always formats its __FLT_MAX__, __FLT_DENORM_MIN__,
+  // __DBL_MAX__, etc. with ndigits set to the maximum required for
+  // any of its floating types. For a lossless (in the sense of the
+  // internal identity requirement) conversion, it is only required
+  // that 10^(ndigits - 1) > 2^_f_width. If ndigits is larger than
+  // that, increase mul_precision below by assuming a greater floating
+  // point precision (f_width) so that a string representation
+  // identical to that from GCC will be produced. Note that this
+  // excess precision is not needed for the correctness of the result,
+  // but only for compatibility with GCC.
+  mpa::limbs::size_type f_width = _f_width;
+  {
+    const unsigned int log2_10_mul = 54426;
+    const unsigned int log2_10_shift = 14;
+    const mpa::limbs::size_type min_f_width_from_digits =
+      (((ndigits - 2)* (log2_10_mul + 1) + (1u << log2_10_shift)) >>
+       log2_10_shift);
+    if (min_f_width_from_digits > f_width)
+      f_width = min_f_width_from_digits;
+  }
+
+  const unsigned int log10_2_mul = 19728;
+  const unsigned int log10_2_shift = 16;
+  mpa::limbs e2;
+  bool e2_is_negative;
+  mpa::limbs k;
+  if (_e >= _bias(_e_width)) {
+    e2_is_negative = false;
+    e2 = _e - _bias(_e_width);
+
+    r.shift = e2; // Now r/s equals *this in value.
+
+    // Calculate an upper bound on floor(log10(2) * (e2 + 1)) + 1
+    mpa::limbs k_max = e2 + 1;
+    k_max *= mpa::limb{(log10_2_mul + 1)};
+    k_max = k_max.rshift(log10_2_shift, false);
+    k_max += mpa::limb{1};
+
+    const mpa::limbs::size_type log2_k_max = k_max.fls() - 1;
+    const mpa::limbs::size_type mul_precision
+      = (log2_k_max + 1 + 2 * f_width + 8);
+    const scaled_mp_uint ten_times_r = r * mpa::limb{10};
+    for (mpa::limbs::size_type i = log2_k_max + 1; i > 0; --i) {
+      scaled_mp_uint _s =
+	s * scaled_mp_uint::ten_to_pow2(i - 1,  mul_precision);
+      if (_s <= ten_times_r) { // Keep r/s >= 1/10.
+	// Take it.
+	_s.trunc(mul_precision);
+	s = std::move(_s);
+
+	k.resize(mpa::limbs::width_to_size(i));
+	k.set_bit(i - 1, true);
+      }
+    }
+
+    assert(k);
+
+  } else {
+    e2_is_negative = true;
+    e2 = _bias(_e_width) - _e;
+
+    s.shift += e2; // Now r/s equals *this in value.
+
+    // Calculate an upper bound on floor(log10(2) * |e2|)
+    mpa::limbs k_max = e2;
+    k_max *= mpa::limb{(log10_2_mul + 1)};
+    k_max = k_max.rshift(log10_2_shift, false);
+
+    const mpa::limbs::size_type log2_k_max = k_max.fls() - 1;
+    const mpa::limbs::size_type mul_precision
+      = (log2_k_max + 1 + 2 * f_width + 7);
+    for (mpa::limbs::size_type i = log2_k_max + 1; i > 0; --i) {
+      scaled_mp_uint _r =
+	r * scaled_mp_uint::ten_to_pow2(i - 1,  mul_precision);
+      if (_r < s) { // Keep r/s < 1.
+	// Take it.
+	_r.trunc(mul_precision);
+	r = std::move(_r);
+
+	k.resize(mpa::limbs::width_to_size(i));
+	k.set_bit(i - 1, true);
+      }
+    }
+  }
+
+  if (r.shift >= s.shift) {
+    r.shift = r.shift - s.shift;
+    s.shift = mpa::limbs::from_size_type(0);
+
+    // Because r/s < 1, the scaling is now small enough
+    // to get moved into the the integer r.m.
+    assert(mpa::limbs::from_size_type(r.m.fls()) + r.shift <
+	   mpa::limbs::from_size_type(s.m.fls() + 1));
+    const mpa::limbs::size_type shift =
+      r.shift.to_type<mpa::limbs::size_type>();
+    r.m.resize(mpa::limbs::width_to_size(shift + r.m.fls()));
+    r.m = r.m.lshift(shift);
+    r.shift = mpa::limbs{};
+
+  } else {
+    s.shift = s.shift - r.shift;
+    r.shift = mpa::limbs::from_size_type(0);
+
+    // Because 1/2^4 < 1/10 <= r/s, the scaling is no
+    // small enough to get moved into the interger r.s.
+    assert(mpa::limbs::from_size_type(s.m.fls()) + s.shift <
+	   mpa::limbs::from_size_type(r.m.fls() + 4 + 1));
+    const mpa::limbs::size_type shift =
+      s.shift.to_type<mpa::limbs::size_type>();
+    s.m.resize(mpa::limbs::width_to_size(shift + s.m.fls()));
+    s.m = s.m.lshift(shift);
+    s.shift = mpa::limbs{};
+
+  }
+
+  // At this point 1/10 <= r/s < 1 and r.shift == s.shift == 0.
+  // Calculate the first digit.
+  unsigned char digit;
+  {
+    mpa::limbs _digit;
+    r.m *= mpa::limb{10};
+    r.m.shrink_to_fit();
+    std::tie(_digit, r.m) = r.m / s.m;
+    assert(_digit <= mpa::limbs::from_size_type(10));
+    digit = _digit.to_type<unsigned char>();
+  }
+
+  auto &&fmt_decimal_exp = [&]() -> std::string {
+    if (!k)
+      return std::string{};
+
+    if (!e2_is_negative)
+      return '+' + k.to_string(mpa::limb{10});
+    else
+      return '-' + k.to_string(mpa::limb{10});
+  };
+
+  auto &&fmt_decimal_one = [&]() {
+    std::string one;
+    one.reserve((_is_negative ? 1 : 0) + ndigits + 1);
+    if (_is_negative)
+      one.push_back('-');
+    one.push_back('1');
+    one.push_back('.');
+    one.insert(one.size(), ndigits - 1, '0');
+    return one;
+  };
+
+  if (digit == 10) {
+    // Approximation artifact due to the imprecision involved in
+    // calculating s.
+    assert(!e2_is_negative);
+    return std::make_pair(fmt_decimal_one(), fmt_decimal_exp());
+
+  } else if (!digit) {
+    // Approximation artifact due to the imprecision involved in
+    // calculating r.
+    assert(e2_is_negative);
+
+    k += mpa::limb{1};
+    return std::make_pair(fmt_decimal_one(), fmt_decimal_exp());
+  }
+
+
+  std::vector<unsigned char> digits;
+  digits.reserve(ndigits + 1);
+  //Put a place holder in case rounding will overflow.
+  digits.push_back(0);
+  digits.push_back(digit);
+
+  for (std::size_t i = 0; i < ndigits - 1; ++i) {
+    r.m *= mpa::limb{10};
+    r.m.shrink_to_fit();
+    mpa::limbs _digit;
+    std::tie(_digit, r.m) = r.m / s.m;
+    assert(_digit < mpa::limbs::from_size_type(10));
+    digit = _digit.to_type<unsigned char>();
+    digits.push_back(digit);
+  }
+
+  // Round the result at the last place by looking at the remainder.
+  r.m *= mpa::limb{2};
+  r.m.shrink_to_fit();
+  bool round_up = r.m > s.m;
+  if (round_up) {
+    bool carry = true;
+    for (auto it_digit = digits.rbegin(); it_digit != digits.rend();
+	 ++it_digit) {
+      *it_digit += carry;
+      carry = false;
+      if (*it_digit == 10) {
+	carry = true;
+	*it_digit = 0;
+      }
+    }
+
+    if (digits[0]) {
+      // Rounding overflowed. Note that this gives an extra factor of
+      // 10 and k correctly represents the to be printed decimal
+      // exponent.
+      return std::make_pair(fmt_decimal_one(), fmt_decimal_exp());
+    }
+  }
+
+  // The to be printed decimal exponent is one less than the
+  // calculated k. Note that for e2_is_negative, k stores the
+  // magnitude of the negative value.
+  if (!e2_is_negative) {
+    assert(k);
+    k -= mpa::limb{1};
+  } else {
+    k += mpa::limb{1};
+  }
+
+  std::string sf;
+  sf.reserve((_is_negative ? 1 : 0) + ndigits + 1);
+  if (_is_negative)
+    sf.push_back('-');
+
+  sf.push_back(digits[1] + '0');
+  sf.push_back('.');
+  for (std::size_t i = 1; i < ndigits; ++i) {
+    sf.push_back(digits[i + 1] + '0');
+  }
+
+  return std::make_pair(std::move(sf), fmt_decimal_exp());
 }
 
 void target_float::_assert_same_config(const target_float &op) const noexcept
