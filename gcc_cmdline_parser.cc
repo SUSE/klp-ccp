@@ -59,7 +59,7 @@ operator()(const int argc, const char *argv[],
     bool negative = false;
     const char *cur_arg = argv[optind];
     const option *o = nullptr, *t = nullptr;
-    std::tie(o, t) = _find_option(cur_arg + 1);
+    std::tie(o, t) = find_option(cur_arg + 1);
     if (!o &&
 	(cur_arg[1] == 'f' || cur_arg[1] == 'W' ||
 	 cur_arg[1] == 'm') &&
@@ -70,7 +70,7 @@ operator()(const int argc, const char *argv[],
       name.reserve(cur_arg_len - 1 - 3);
       name.push_back(cur_arg[1]);
       name.append(&cur_arg[5], cur_arg + cur_arg_len);
-      std::tie(o, t) = _find_option(name.c_str());
+      std::tie(o, t) = find_option(name.c_str());
     }
 
     if (!o || (negative && o->reject_negative)) {
@@ -111,7 +111,7 @@ operator()(const int argc, const char *argv[],
 
     while (o->alias.name) {
       const option::alias_type a = o->alias;
-      std::tie(o, t) = _find_option(a.name);
+      std::tie(o, t) = find_option(a.name);
       assert(o);
 
       if (a.neg_arg) {
@@ -134,7 +134,26 @@ operator()(const int argc, const char *argv[],
   }
 }
 
+std::pair<const gcc_cmdline_parser::option*, const gcc_cmdline_parser::option*>
+gcc_cmdline_parser::find_option(const char *s) const noexcept
+{
+  const option *o = nullptr, *t = nullptr;
+  std::size_t o_name_len = 0;
 
+  for (const auto &_t : _tables) {
+    const option * const _o = _find_option(s, _t);
+    if (_o) {
+      const std::size_t _o_name_len = std::strlen(_o->name);
+      if (_o_name_len > o_name_len) {
+	o = _o;
+	t = _t.first;
+	o_name_len = _o_name_len;
+      }
+    }
+  }
+
+  return std::make_pair(o, t);
+}
 
 const gcc_cmdline_parser::option*
 gcc_cmdline_parser::_find_option(const char *s, const _table_type &table)
@@ -180,25 +199,4 @@ gcc_cmdline_parser::_find_option(const char *s, const _table_type &table)
     return nullptr;
 
   return o;
-}
-
-std::pair<const gcc_cmdline_parser::option*, const gcc_cmdline_parser::option*>
-gcc_cmdline_parser::_find_option(const char *s) const noexcept
-{
-  const option *o = nullptr, *t = nullptr;
-  std::size_t o_name_len = 0;
-
-  for (const auto &_t : _tables) {
-    const option * const _o = _find_option(s, _t);
-    if (_o) {
-      const std::size_t _o_name_len = std::strlen(_o->name);
-      if (_o_name_len > o_name_len) {
-	o = _o;
-	t = _t.first;
-	o_name_len = _o_name_len;
-      }
-    }
-  }
-
-  return std::make_pair(o, t);
 }

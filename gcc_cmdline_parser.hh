@@ -108,14 +108,14 @@ namespace klp
 					       const bool negative)> &callback)
 	const;
 
+      std::pair<const option*, const option*>
+      find_option(const char *s) const noexcept;
+
     private:
       typedef std::pair<const option*, std::size_t> _table_type;
 
       const option* _find_option(const char *s, const _table_type &table)
 	const noexcept;
-
-      std::pair<const option*, const option*>
-      _find_option(const char *s) const noexcept;
 
       const gcc_version _version;
 
