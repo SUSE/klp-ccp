@@ -47,23 +47,78 @@ namespace klp
       get_gcc_version() const noexcept
       { return _gcc_version; }
 
+    protected:
+      struct opts_common
+      {
+	opts_common() noexcept;
+
+	void handle_opt(const gcc_cmdline_parser::option * const o,
+			const char *val, const bool negative,
+			const bool generated,
+			const gcc_cmdline_parser::gcc_version &ver);
+
+	std::string base_file;
+
+	bool optimize;
+	bool optimize_size;
+      };
+
+      struct opts_c_family
+      {
+	opts_c_family() noexcept;
+
+	void handle_opt(const gcc_cmdline_parser::option * const o,
+			const char *val, const bool negative,
+			const bool generated,
+			const gcc_cmdline_parser::gcc_version &ver);
+
+	std::vector<std::string> pre_includes;
+	std::vector<std::string> include_dirs;
+	std::vector<std::string> include_dirs_quoted;
+	std::vector<std::string> include_dirs_system;
+	std::vector<std::string> include_dirs_after;
+
+	struct macro_def_or_undef
+	{
+	  bool undef;
+	  std::string arg;
+	};
+	std::vector<macro_def_or_undef> macro_defs_and_undefs;
+
+	bool flag_undef;
+      };
+
     private:
       virtual const gcc_cmdline_parser::option *
-      _arch_get_opts() const noexcept = 0;
+      _arch_get_opt_table() const noexcept = 0;
 
       virtual void
       _arch_handle_opt(const gcc_cmdline_parser::option * const o,
-		       const gcc_cmdline_parser::option * const table,
-		       const char *val, const bool negative) = 0;
+		       const char *val, const bool negative,
+		       const bool generated) = 0;
 
       virtual void _arch_register_builtin_macros(preprocessor &pp) const = 0;
 
       static gcc_cmdline_parser::gcc_version
       _parse_version(const char * const version);
 
+      void _decode_options
+	(int argc, const char *argv[],
+	 const std::function<void(const std::string&)> &report_warning);
+
+      void
+      _handle_opt(const gcc_cmdline_parser::option * const opt_table,
+		  const gcc_cmdline_parser::option * const o,
+		  const char *val, const bool negative,
+		  const bool generated,
+		  const gcc_cmdline_parser::option &opt_table_arch);
+
       void _register_builtin_macros(preprocessor &pp) const;
 
       const gcc_cmdline_parser::gcc_version _gcc_version;
+
+      opts_common _opts_common;
+      opts_c_family _opts_c_family;
     };
   }
 }

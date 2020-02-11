@@ -41,19 +41,20 @@ enum opt_code
   opt_code_undef,
 };
 
-static gcc_cmdline_parser::option gcc_opts_common[] = {
+static gcc_cmdline_parser::option gcc_opt_table_common[] = {
 	#include "gcc_cmdline_opts_common.cc"
 	{ nullptr }
 };
 
-static gcc_cmdline_parser::option gcc_opts_c_family[] = {
+static gcc_cmdline_parser::option gcc_opt_table_c_family[] = {
 	#include "gcc_cmdline_opts_c_family.cc"
 	{ nullptr }
 };
 
 
 target_gcc::target_gcc(const char * const version)
-  : _gcc_version(_parse_version(version))
+  : _gcc_version(_parse_version(version)),
+    _opts_common(), _opts_c_family()
 {}
 
 target_gcc::~target_gcc() noexcept = default;
@@ -74,140 +75,23 @@ void target_gcc::parse_command_line
     return;
   }
 
-  gcc_cmdline_parser p{_gcc_version};
-  p.register_table(gcc_opts_common);
-  p.register_table(gcc_opts_c_family);
-  const gcc_cmdline_parser::option * const arch_opts = this->_arch_get_opts();
-  if (arch_opts)
-    p.register_table(arch_opts);
+  _decode_options(argc, argv, report_warning);
 
-  const char *_base_file = nullptr;
-  std::vector<const char *> pre_includes;
-
-  std::vector<const char *> include_dirs;
-  std::vector<const char *> include_dirs_quoted;
-  std::vector<const char *> include_dirs_system;
-  std::vector<const char *> include_dirs_after;
-
-  bool undef = false;
-
-  struct macro_def_or_undef
-  {
-    bool undef;
-    const char *arg;
-  };
-  std::vector<macro_def_or_undef> macro_defs_and_undefs;
-
-  bool optimize = false;
-  bool optimize_size = false;
-
-  auto &&handle_opt =
-    [&](const gcc_cmdline_parser::option * const o,
-	const gcc_cmdline_parser::option * const table,
-	const char *val, const bool negative) {
-      if (!o) {
-	if (_base_file) {
-	  throw cmdline_except{
-		  std::string{"more than one input file: '"} + _base_file +
-		  "' and '" + val + "'"
-		};
-	}
-	_base_file = val;
-	return;
-      } else if (table == arch_opts) {
-	this->_arch_handle_opt(o, table, val, negative);
-	return;
-      }
-
-      switch (o->code) {
-      case opt_code_unused:
-	break;
-
-      case opt_code_D:
-	macro_defs_and_undefs.emplace_back(macro_def_or_undef{false, val});
-	break;
-
-      case opt_code_I:
-	if (!std::strcmp(val, "-")) {
-	  include_dirs_quoted.insert
-	    (include_dirs_quoted.end(),
-	     std::make_move_iterator(include_dirs.begin()),
-	     std::make_move_iterator(include_dirs.end()));
-	  include_dirs.clear();
-	  include_dirs.shrink_to_fit();
-	} else {
-	  include_dirs.push_back(val);
-	}
-	break;
-
-      case opt_code_O:
-	optimize_size = false;
-	if (val && !strcmp(val, "0"))
-	  optimize = false;
-	else
-	  optimize = true;
-	break;
-
-      case opt_code_Ofast:
-      /* fall through */
-      case opt_code_Og:
-	optimize_size = false;
-	optimize = true;
-	break;
-
-      case opt_code_Os:
-	optimize_size = true;
-	optimize = true;
-	break;
-
-      case opt_code_U:
-	macro_defs_and_undefs.emplace_back(macro_def_or_undef{true, val});
-	break;
-
-      case opt_code_idirafter:
-	include_dirs_after.push_back(val);
-	break;
-
-      case opt_code_include:
-	pre_includes.push_back(val);
-	break;
-
-      case opt_code_iquote:
-	include_dirs_quoted.push_back(val);
-	break;
-
-      case opt_code_isystem:
-	include_dirs_after.push_back(val);
-	break;
-
-      case opt_code_undef:
-	undef = true;
-	break;
-      }
-    };
-
-  p(argc, argv, handle_opt);
-
-  if (!_base_file) {
-    throw cmdline_except{"no input file"};
-  }
-
-  for (const auto dir : include_dirs_quoted)
+  for (const auto dir : _opts_c_family.include_dirs_quoted)
     hr.append_search_dir_quoted(dir);
 
-  for (const auto dir : include_dirs)
+  for (const auto dir : _opts_c_family.include_dirs)
     hr.append_search_dir(dir);
 
-  for (const auto dir : include_dirs_system)
+  for (const auto dir : _opts_c_family.include_dirs_system)
     hr.append_search_dir(dir);
 
-  for (const auto dir : include_dirs_after)
+  for (const auto dir : _opts_c_family.include_dirs_after)
     hr.append_search_dir(dir);
 
-  const std::string base_file{_base_file};
-
-  for (const auto i : pre_includes) {
-    std::string resolved = hr.resolve(i, base_file, header_resolver::cwd);
+  for (const auto i : _opts_c_family.pre_includes) {
+    std::string resolved = hr.resolve(i, _opts_common.base_file,
+				      header_resolver::cwd);
     if (resolved.empty()) {
       throw cmdline_except{
 	      std::string{"file '"} + i + "' not found"
@@ -217,22 +101,22 @@ void target_gcc::parse_command_line
     pp.add_root_source(resolved, true);
   }
 
-  pp.add_root_source(base_file, false);
-  pp.set_base_file(base_file);
+  pp.add_root_source(_opts_common.base_file, false);
+  pp.set_base_file(_opts_common.base_file);
 
   pp.register_builtin_macro("__STDC__", "1");
   pp.register_builtin_macro("__STDC_HOSTED__", "1");
   pp.register_builtin_macro("__STDC_VERSION__", "199901L");
 
-  if (!undef) {
+  if (!_opts_c_family.flag_undef) {
     _register_builtin_macros(pp);
-    if (optimize)
+    if (_opts_common.optimize)
       pp.register_builtin_macro("__OPTIMIZE__", "1");
-    if (optimize_size)
+    if (_opts_common.optimize_size)
       pp.register_builtin_macro("__OPTIMIZE_SIZE__", "1");
   }
 
-  for (const auto &m : macro_defs_and_undefs) {
+  for (const auto &m : _opts_c_family.macro_defs_and_undefs) {
     if (!m.undef) {
       const auto &_report_warning =
 	[&](const std::string &msg) {
@@ -240,8 +124,8 @@ void target_gcc::parse_command_line
 			 m.arg + "': " + msg);
 	};
 
-      const char * const repl = std::strchr(m.arg, '=');
-      if (!repl) {
+      const std::string::size_type repl_pos = m.arg.find('=');
+      if (repl_pos == std::string::npos) {
 	try {
 	  pp.register_predefined_macro(m.arg, "1", _report_warning);
 	} catch (const pp_except &e) {
@@ -252,9 +136,12 @@ void target_gcc::parse_command_line
 	}
 
       } else {
-	const std::string signature{m.arg, repl};
+	const std::string signature{m.arg.cbegin(),
+				    m.arg.cbegin() + repl_pos};
+	const std::string repl{m.arg.cbegin() + repl_pos + 1,
+			       m.arg.cend()};
 	try {
-	  pp.register_predefined_macro(signature, repl + 1, _report_warning);
+	  pp.register_predefined_macro(signature, repl, _report_warning);
 	} catch (const pp_except &e) {
 	  throw cmdline_except{
 		  std::string{"failed to parse predefined macro '"} +
@@ -279,6 +166,152 @@ void target_gcc::parse_command_line
 	      };
       }
     }
+  }
+}
+
+void target_gcc::
+_decode_options(int argc, const char *argv[],
+		const std::function<void(const std::string&)> &report_warning)
+{
+  gcc_cmdline_parser p{_gcc_version};
+  p.register_table(gcc_opt_table_common);
+  p.register_table(gcc_opt_table_c_family);
+  const gcc_cmdline_parser::option * const opt_table_arch =
+    this->_arch_get_opt_table();
+  if (opt_table_arch)
+    p.register_table(opt_table_arch);
+
+  p(argc, argv, std::bind(&target_gcc::_handle_opt, this,
+			  std::placeholders::_2,
+			  std::placeholders::_1,
+			  std::placeholders::_3,
+			  std::placeholders::_4,
+			  false, *opt_table_arch));
+
+  if (_opts_common.base_file.empty()) {
+    throw cmdline_except{"no input file"};
+  }
+}
+
+void target_gcc::
+_handle_opt(const gcc_cmdline_parser::option * const opt_table,
+	    const gcc_cmdline_parser::option * const o,
+	    const char *val, const bool negative,
+	    const bool generated,
+	    const gcc_cmdline_parser::option &opt_table_arch)
+{
+  if (!o || opt_table == gcc_opt_table_common) {
+    _opts_common.handle_opt(o, val, negative, generated, _gcc_version);
+  } else if (opt_table == gcc_opt_table_c_family) {
+    _opts_c_family.handle_opt(o, val, negative, generated, _gcc_version);
+  } else {
+    assert(opt_table == &opt_table_arch);
+    this->_arch_handle_opt(o, val, negative, generated);
+  }
+}
+
+target_gcc::opts_common::opts_common() noexcept
+  : optimize(false), optimize_size(false)
+{}
+
+void target_gcc::opts_common::
+handle_opt(const gcc_cmdline_parser::option * const o,
+	   const char *val, const bool negative,
+	   const bool generated,
+	   const gcc_cmdline_parser::gcc_version &ver)
+{
+  if (!o) {
+    if (!base_file.empty()) {
+      throw cmdline_except{
+	std::string{"more than one input file: '"} +
+		    base_file + "' and '" + val + "'"
+		   };
+    }
+
+    base_file = val;
+    return;
+  }
+
+  switch (o->code) {
+  case opt_code_unused:
+    break;
+
+  case opt_code_O:
+    optimize_size = false;
+    if (val && !strcmp(val, "0"))
+      optimize = false;
+    else
+      optimize = true;
+    break;
+
+  case opt_code_Ofast:
+    /* fall through */
+  case opt_code_Og:
+    optimize_size = false;
+    optimize = true;
+    break;
+
+  case opt_code_Os:
+    optimize_size = true;
+    optimize = true;
+    break;
+  }
+}
+
+target_gcc::opts_c_family::opts_c_family() noexcept
+  : flag_undef(false)
+{}
+
+void target_gcc::
+opts_c_family::handle_opt(const gcc_cmdline_parser::option * const o,
+			  const char *val, const bool negative,
+			  const bool generated,
+			  const gcc_cmdline_parser::gcc_version &ver)
+{
+  switch (o->code) {
+  case opt_code_unused:
+    break;
+
+  case opt_code_D:
+    macro_defs_and_undefs.emplace_back(macro_def_or_undef{false, val});
+    break;
+
+  case opt_code_I:
+    if (!std::strcmp(val, "-")) {
+      include_dirs_quoted.insert
+	(include_dirs_quoted.end(),
+	 std::make_move_iterator(include_dirs.begin()),
+	 std::make_move_iterator(include_dirs.end()));
+      include_dirs.clear();
+      include_dirs.shrink_to_fit();
+    } else {
+      include_dirs.push_back(val);
+    }
+    break;
+
+  case opt_code_U:
+    macro_defs_and_undefs.emplace_back(macro_def_or_undef{true, val});
+    break;
+
+  case opt_code_idirafter:
+    include_dirs_after.push_back(val);
+    break;
+
+  case opt_code_include:
+    pre_includes.push_back(val);
+    break;
+
+  case opt_code_iquote:
+    include_dirs_quoted.push_back(val);
+    break;
+
+  case opt_code_isystem:
+    include_dirs_after.push_back(val);
+    break;
+
+  case opt_code_undef:
+    flag_undef = true;
+    break;
   }
 }
 

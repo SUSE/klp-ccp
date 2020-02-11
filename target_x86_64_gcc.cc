@@ -937,15 +937,15 @@ bool target_x86_64_gcc::is_pid_t_signed() const noexcept
 }
 
 const gcc_cmdline_parser::option *
-target_x86_64_gcc::_arch_get_opts() const noexcept
+target_x86_64_gcc::_arch_get_opt_table() const noexcept
 {
   return gcc_opts_i386;
 }
 
 void target_x86_64_gcc::
 _arch_handle_opt(const gcc_cmdline_parser::option * const o,
-		 const gcc_cmdline_parser::option * const table,
-		 const char *val, const bool negative)
+		 const char *val, const bool negative,
+		 const bool generated)
 {}
 
 void target_x86_64_gcc::_arch_register_builtin_macros(preprocessor &pp) const
