@@ -1399,7 +1399,7 @@
 },
 {
   "fabi-version=",
-  opt_code_common_unused,
+  opt_code_common_fabi_version,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,

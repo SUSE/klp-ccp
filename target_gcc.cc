@@ -48,6 +48,8 @@ enum opt_code_common
   opt_code_common_ffp_contract,
   opt_code_common_fpermitted_flt_eval_methods,
   opt_code_common_fsingle_precision_constant,
+
+  opt_code_common_fabi_version,
 };
 
 static gcc_cmdline_parser::option gcc_opt_table_common[] = {
@@ -108,7 +110,7 @@ static gcc_cmdline_parser::option gcc_opt_table_c_family[] = {
 
 target_gcc::target_gcc(const char * const version)
   : _gcc_version(_parse_version(version)),
-    _opts_common(), _opts_c_family()
+    _opts_common(_gcc_version), _opts_c_family()
 {}
 
 target_gcc::~target_gcc() noexcept = default;
@@ -836,7 +838,7 @@ void target_gcc::_process_options()
   // This corresponds to GCC's process_options().
   _c_lang_post_options();
   this->_arch_option_override();
-  _opts_common.process_options();
+  _opts_common.process_options(_gcc_version);
   _opts_c_family.process_options();
 }
 
@@ -847,7 +849,8 @@ void target_gcc::_c_lang_post_options()
   _opts_c_family.c_lang_post_options();
 }
 
-target_gcc::opts_common::opts_common() noexcept
+target_gcc::opts_common::opts_common(const gcc_cmdline_parser::gcc_version &ver)
+  noexcept
   : optimize(0), optimize_debug(false), optimize_fast(false),
     optimize_size(false), flag_associative_math(false),
     flag_excess_precision(excess_precision::ep_default),
@@ -859,8 +862,15 @@ target_gcc::opts_common::opts_common() noexcept
     flag_fp_contract_mode_set(false),
     flag_permitted_flt_eval_methods(permitted_flt_eval_methods::pfem_default),
     flag_permitted_flt_eval_methods_set(false),
-    flag_single_precision_constant(false)
-{}
+    flag_single_precision_constant(false), flag_abi_version(0)
+{
+  using gcc_version = gcc_cmdline_parser::gcc_version;
+
+  if (!(gcc_version{5, 1, 0} <= ver)) {
+    // GCC 4.8.x and 4.9.x used to initialize flag_abi_version to 2.
+    flag_abi_version = 2;
+  }
+}
 
 void target_gcc::opts_common::init_options_struct() noexcept
 {
@@ -994,6 +1004,22 @@ handle_opt(const gcc_cmdline_parser::option * const o,
   case opt_code_common_fsingle_precision_constant:
     flag_single_precision_constant = !negative;
     break;
+
+  case opt_code_common_fabi_version:
+    {
+      std::size_t endpos;
+      int _abi_version = -1;
+
+      try {
+	_abi_version = std::stoi(std::string{val}, &endpos);
+      } catch (...) {}
+
+      if (_abi_version < 0 || val[endpos] != '\0')
+	throw cmdline_except{"invalid argument to -fabi-version"};
+
+      flag_abi_version = static_cast<unsigned int>(_abi_version);
+    }
+    break;
   }
 }
 
@@ -1038,12 +1064,51 @@ c_lang_post_options(const gcc_cmdline_parser::gcc_version &ver,
       flag_permitted_flt_eval_methods = permitted_flt_eval_methods::pfem_c11;
     }
   }
+
+  if (gcc_version{8, 2, 0} <= ver) {
+    const unsigned int latest_abi_version = 13;
+
+    if (!flag_abi_version || flag_abi_version > latest_abi_version)
+      flag_abi_version = latest_abi_version;
+
+  } else if (gcc_version{8, 1, 0} <= ver) {
+    if (!flag_abi_version)
+      flag_abi_version = 12;
+
+  } else if (gcc_version{7, 1, 0} <= ver) {
+    if (!flag_abi_version)
+      flag_abi_version = 11;
+
+  } else if (gcc_version{6, 1, 0} <= ver) {
+    if (!flag_abi_version)
+      flag_abi_version = 10;
+
+  } else if (gcc_version{5, 2, 0} <= ver) {
+    if (!flag_abi_version)
+      flag_abi_version = 9;
+
+  } else if (gcc_version{5, 1, 0} <= ver) {
+    if (!flag_abi_version)
+      flag_abi_version = 8;
+  } else {
+    // For GCC versions <= 4.9, leave a flag_abi_version == 0 as is.
+    // Note that for these, flag_abi_version is initialized with '2',
+    // hence the user would have to set a zero value
+    // explicitly. Preprocessor defines are special cased on
+    // flag_abi_version == 0 for these GCC versions.
+  }
 }
 
-void target_gcc::opts_common::process_options()
+void target_gcc::opts_common::
+process_options(const gcc_cmdline_parser::gcc_version &ver)
 {
   // This gets called from target_gcc::_process_options() which
   // corresponds to GCC's process_options().
+  using gcc_version = gcc_cmdline_parser::gcc_version;
+
+  if (flag_abi_version == 1 && gcc_version{5, 1, 0} <= ver)
+    throw cmdline_except{"-fabi_version=1 only supported for gcc < 5.1.0"};
+
   if (flag_signaling_nans)
     flag_trapping_math = true;
 

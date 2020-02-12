@@ -52,7 +52,7 @@ namespace klp
 
       struct opts_common
       {
-	opts_common() noexcept;
+	opts_common(const gcc_cmdline_parser::gcc_version &ver) noexcept;
 
 	void init_options_struct() noexcept;
 	void c_lang_init_options_struct() noexcept;
@@ -69,7 +69,7 @@ namespace klp
 				 const opts_c_family &c_opts)
 	  noexcept;
 
-	void process_options();
+	void process_options(const gcc_cmdline_parser::gcc_version &ver);
 
 	std::string base_file;
 
@@ -115,6 +115,8 @@ namespace klp
 	bool flag_permitted_flt_eval_methods_set;
 
 	bool flag_single_precision_constant;
+
+	unsigned int flag_abi_version;
 
       private:
 	void _set_unsafe_math_optimizations_flags(const bool set) noexcept;
