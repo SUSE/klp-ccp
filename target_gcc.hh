@@ -52,14 +52,26 @@ namespace klp
       {
 	opts_common() noexcept;
 
+	void init_options_struct() noexcept;
+	void c_lang_init_options_struct() noexcept;
+	void c_lang_init_options() noexcept;
+
 	void handle_opt(const gcc_cmdline_parser::option * const o,
 			const char *val, const bool negative,
 			const bool generated,
 			const gcc_cmdline_parser::gcc_version &ver);
 
+	void finish_options() noexcept;
+
+	void c_lang_post_options() noexcept;
+
+	void process_options();
+
 	std::string base_file;
 
-	bool optimize;
+	unsigned int optimize;
+	bool optimize_debug;
+	bool optimize_fast;
 	bool optimize_size;
       };
 
@@ -67,10 +79,20 @@ namespace klp
       {
 	opts_c_family() noexcept;
 
+	void init_options_struct() noexcept;
+	void c_lang_init_options_struct() noexcept;
+	void c_lang_init_options() noexcept;
+
 	void handle_opt(const gcc_cmdline_parser::option * const o,
 			const char *val, const bool negative,
 			const bool generated,
 			const gcc_cmdline_parser::gcc_version &ver);
+
+	void finish_options() noexcept;
+
+	void c_lang_post_options();
+
+	void process_options() noexcept;
 
 	std::vector<std::string> pre_includes;
 	std::vector<std::string> include_dirs;
@@ -92,19 +114,31 @@ namespace klp
       virtual const gcc_cmdline_parser::option *
       _arch_get_opt_table() const noexcept = 0;
 
+      virtual void _arch_option_init_struct() = 0;
+
       virtual void
       _arch_handle_opt(const gcc_cmdline_parser::option * const o,
 		       const char *val, const bool negative,
 		       const bool generated) = 0;
+
+
+      virtual void _arch_option_override() = 0;
 
       virtual void _arch_register_builtin_macros(preprocessor &pp) const = 0;
 
       static gcc_cmdline_parser::gcc_version
       _parse_version(const char * const version);
 
+      void _init_options_struct() noexcept;
+      void _c_lang_init_options_struct() noexcept;
+      void _c_lang_init_options() noexcept;
+
       void _decode_options
 	(int argc, const char *argv[],
 	 const std::function<void(const std::string&)> &report_warning);
+
+      void _default_options_optimization
+	(const gcc_cmdline_parser::decoded_opts_type &decoded_opts);
 
       void
       _handle_opt(const gcc_cmdline_parser::option * const opt_table,
@@ -112,6 +146,10 @@ namespace klp
 		  const char *val, const bool negative,
 		  const bool generated,
 		  const gcc_cmdline_parser::option &opt_table_arch);
+
+      void _finish_options();
+      void _process_options();
+      void _c_lang_post_options();
 
       void _register_builtin_macros(preprocessor &pp) const;
 

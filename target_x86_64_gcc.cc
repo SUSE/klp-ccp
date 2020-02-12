@@ -942,11 +942,21 @@ target_x86_64_gcc::_arch_get_opt_table() const noexcept
   return gcc_opts_i386;
 }
 
+void target_x86_64_gcc::_arch_option_init_struct()
+{
+  // This corresponds to GCC's ix86_option_init_struct().
+}
+
 void target_x86_64_gcc::
 _arch_handle_opt(const gcc_cmdline_parser::option * const o,
 		 const char *val, const bool negative,
 		 const bool generated)
 {}
+
+void target_x86_64_gcc::_arch_option_override()
+{
+  // This corresponds to GCC's ix86_option_override().
+}
 
 void target_x86_64_gcc::_arch_register_builtin_macros(preprocessor &pp) const
 {

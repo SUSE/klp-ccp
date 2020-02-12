@@ -82,7 +82,11 @@ void target_gcc::parse_command_line
     return;
   }
 
+  _init_options_struct();
+  _c_lang_init_options_struct();
+  _c_lang_init_options();
   _decode_options(argc, argv, report_warning);
+  _process_options();
 
   for (const auto dir : _opts_c_family.include_dirs_quoted)
     hr.append_search_dir_quoted(dir);
@@ -176,6 +180,29 @@ void target_gcc::parse_command_line
   }
 }
 
+void target_gcc::_init_options_struct() noexcept
+{
+  // This corresponds to GCC's language agnostic
+  // init_options_struct().
+  _opts_common.init_options_struct();
+  _opts_c_family.init_options_struct();
+  this->_arch_option_init_struct();
+}
+
+void target_gcc::_c_lang_init_options_struct() noexcept
+{
+  // This corresponds to GCC's c_common_init_options_struct()
+  _opts_common.c_lang_init_options_struct();
+  _opts_c_family.c_lang_init_options_struct();
+}
+
+void target_gcc::_c_lang_init_options() noexcept
+{
+  // Thist corresponds to GCC's c_common_init().
+  _opts_common.c_lang_init_options_struct();
+  _opts_c_family.c_lang_init_options();
+}
+
 void target_gcc::
 _decode_options(int argc, const char *argv[],
 		const std::function<void(const std::string&)> &report_warning)
@@ -189,12 +216,73 @@ _decode_options(int argc, const char *argv[],
     p.register_table(opt_table_arch);
 
   const gcc_cmdline_parser::decoded_opts_type decoded_opts{p(argc, argv)};
+
+  _default_options_optimization(decoded_opts);
+
   for (const auto &decoded_opt : decoded_opts)
     _handle_opt(decoded_opt.table, decoded_opt.o, decoded_opt.val,
 		decoded_opt.negative, false, *opt_table_arch);
 
   if (_opts_common.base_file.empty()) {
     throw cmdline_except{"no input file"};
+  }
+  _finish_options();
+}
+
+void target_gcc::_default_options_optimization
+	(const gcc_cmdline_parser::decoded_opts_type &decoded_opts)
+{
+  // This corresponds to GCC's default_options_optimization().
+  // Pre-scan for the optimization options as these imply default
+  // settings, c.f. GCC's default_options_optimization().
+  for (const auto &decoded_opt : decoded_opts) {
+    if (decoded_opt.table == gcc_opt_table_common) {
+      switch (decoded_opt.o->code) {
+      case opt_code_common_O:
+	_opts_common.optimize_size = false;
+	_opts_common.optimize_fast = false;
+	_opts_common.optimize_debug = false;
+	if (!decoded_opt.val) {
+	  _opts_common.optimize = 1;
+	} else {
+	  int _optimize = -1;
+	  std::size_t endpos;
+
+	  try {
+	    _optimize = std::stoi(std::string{decoded_opt.val}, &endpos);
+	  } catch (...) {}
+
+	  if (_optimize < 0 || decoded_opt.val[endpos] != '\0')
+	    throw cmdline_except{"invalid argument to -O"};
+	  else if (_optimize > 255)
+	    _optimize = 255;
+
+	  _opts_common.optimize = static_cast<unsigned int>(_optimize);
+	}
+	break;
+
+      case opt_code_common_Ofast:
+	_opts_common.optimize_size = false;
+	_opts_common.optimize = 3;
+	_opts_common.optimize_fast = true;
+	_opts_common.optimize_debug = false;
+	break;
+
+      case opt_code_common_Og:
+	_opts_common.optimize_size = false;
+	_opts_common.optimize = 1;
+	_opts_common.optimize_fast = false;
+	_opts_common.optimize_debug = true;;
+	break;
+
+      case opt_code_common_Os:
+	_opts_common.optimize_size = true;
+	_opts_common.optimize = 2;
+	_opts_common.optimize_fast = false;
+	_opts_common.optimize_debug = false;
+	break;
+      }
+    }
   }
 }
 
@@ -215,9 +303,51 @@ _handle_opt(const gcc_cmdline_parser::option * const opt_table,
   }
 }
 
+void target_gcc::_finish_options()
+{
+  // This corresponds to GCC's finish_options().
+  _opts_common.finish_options();
+  _opts_c_family.finish_options();
+}
+
+void target_gcc::_process_options()
+{
+  // This corresponds to GCC's process_options().
+  _c_lang_post_options();
+  this->_arch_option_override();
+  _opts_common.process_options();
+  _opts_c_family.process_options();
+}
+
+void target_gcc::_c_lang_post_options()
+{
+  // This corresponds to GCC's c_common_post_options().
+  _opts_common.c_lang_post_options();
+  _opts_c_family.c_lang_post_options();
+}
+
 target_gcc::opts_common::opts_common() noexcept
-  : optimize(false), optimize_size(false)
+  : optimize(0), optimize_debug(false), optimize_fast(false),
+    optimize_size(false)
 {}
+
+void target_gcc::opts_common::init_options_struct() noexcept
+{
+  // This gets called from target_gcc::_init_options_struct() which
+  // corresponds to GCC's language agnostic init_options_struct().
+}
+
+void target_gcc::opts_common::c_lang_init_options_struct() noexcept
+{
+  // This gets called from target_gcc::_c_lang_init_options_struct()
+  // which corresponds to GCC's c_common_init_options_struct().
+}
+
+void target_gcc::opts_common::c_lang_init_options() noexcept
+{
+  // This gets called from target_gcc::_c_lang_init_options()
+  // which corresponds to GCC's c_common_init_options().
+}
 
 void target_gcc::opts_common::
 handle_opt(const gcc_cmdline_parser::option * const o,
@@ -242,30 +372,63 @@ handle_opt(const gcc_cmdline_parser::option * const o,
     break;
 
   case opt_code_common_O:
-    optimize_size = false;
-    if (val && !strcmp(val, "0"))
-      optimize = false;
-    else
-      optimize = true;
+    // Handled in pre-scan
     break;
 
   case opt_code_common_Ofast:
-    /* fall through */
+    // Handled in pre-scan
+    break;
+
   case opt_code_common_Og:
-    optimize_size = false;
-    optimize = true;
+    // Handled in pre-scan
     break;
 
   case opt_code_common_Os:
-    optimize_size = true;
-    optimize = true;
+    // Handled in pre-scan
     break;
   }
 }
 
+void target_gcc::opts_common::finish_options() noexcept
+{
+  // This gets called from target_gcc::_finish_options() which
+  // corresponds to GCC's finish_options().
+}
+
+void target_gcc::opts_common::c_lang_post_options() noexcept
+{
+  // This gets called from target_gcc::_c_lang_post_options() which
+  // corresponds to GCC's c_common_post_options().
+}
+
+void target_gcc::opts_common::process_options()
+{
+  // This gets called from target_gcc::_process_options() which
+  // corresponds to GCC's process_options().
+}
+
+
 target_gcc::opts_c_family::opts_c_family() noexcept
   : flag_undef(false)
 {}
+
+void target_gcc::opts_c_family::init_options_struct() noexcept
+{
+  // This gets called from target_gcc::_init_options_struct() which
+  // corresponds to GCC's language agnostic init_options_struct().
+}
+
+void target_gcc::opts_c_family::c_lang_init_options_struct() noexcept
+{
+  // This gets called from target_gcc::_c_lang_init_options_struct()
+  // which corresponds to GCC's c_common_init_options_struct().
+}
+
+void target_gcc::opts_c_family::c_lang_init_options() noexcept
+{
+  // This gets called from target_gcc::_c_lang_init_options() which
+  // corresponds to GCC's c_common_init_options().
+}
 
 void target_gcc::
 opts_c_family::handle_opt(const gcc_cmdline_parser::option * const o,
@@ -319,6 +482,25 @@ opts_c_family::handle_opt(const gcc_cmdline_parser::option * const o,
     break;
   }
 }
+
+void target_gcc::opts_c_family::finish_options() noexcept
+{
+  // This gets called from target_gcc::_finish_options() which
+  // corresponds to GCC's finish_options().
+}
+
+void target_gcc::opts_c_family::c_lang_post_options()
+{
+  // This gets called from target_gcc::_c_lang_post_options() which
+  // corresponds to GCC's c_common_post_options().
+}
+
+void target_gcc::opts_c_family::process_options() noexcept
+{
+  // This gets called from target_gcc::_process_options() which
+  // corresponds to GCC's process_options().
+}
+
 
 gcc_cmdline_parser::gcc_version
 target_gcc::_parse_version(const char * const version)
