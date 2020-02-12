@@ -188,12 +188,10 @@ _decode_options(int argc, const char *argv[],
   if (opt_table_arch)
     p.register_table(opt_table_arch);
 
-  p(argc, argv, std::bind(&target_gcc::_handle_opt, this,
-			  std::placeholders::_2,
-			  std::placeholders::_1,
-			  std::placeholders::_3,
-			  std::placeholders::_4,
-			  false, *opt_table_arch));
+  const gcc_cmdline_parser::decoded_opts_type decoded_opts{p(argc, argv)};
+  for (const auto &decoded_opt : decoded_opts)
+    _handle_opt(decoded_opt.table, decoded_opt.o, decoded_opt.val,
+		decoded_opt.negative, false, *opt_table_arch);
 
   if (_opts_common.base_file.empty()) {
     throw cmdline_except{"no input file"};

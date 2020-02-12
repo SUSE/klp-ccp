@@ -30,6 +30,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
   .alias = {},
+  .negative = "m32",
   .min_gcc_version = {4, 9, 0},
 },
 {
@@ -38,6 +39,8 @@
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
+  .alias = {},
+  .negative = "m64",
 },
 {
   "m3dnow",
@@ -57,6 +60,8 @@
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
+  .alias = {},
+  .negative = "mx32",
 },
 {
   "m80387",
@@ -122,6 +127,7 @@
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {5, 1, 0},
 },
 {
@@ -164,6 +170,8 @@
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
+  .alias = {},
+  .negative = "march="
 },
 {
   "masm=",
@@ -203,6 +211,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {7, 1, 0},
 },
 {
@@ -212,6 +221,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {7, 1, 0},
 },
 {
@@ -221,6 +231,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {8, 1, 0},
 },
 {
@@ -230,6 +241,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {5, 1, 0},
 },
 {
@@ -239,6 +251,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {4, 9, 0},
 },
 {
@@ -248,6 +261,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {5, 1, 0},
 },
 {
@@ -257,6 +271,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {4, 9, 0},
 },
 {
@@ -266,6 +281,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {4, 9, 0},
 },
 {
@@ -275,6 +291,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {5, 1, 0},
 },
 {
@@ -284,6 +301,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {4, 9, 0},
 },
 {
@@ -293,6 +311,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {5, 1, 0},
 },
 {
@@ -302,6 +321,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {8, 1, 0},
 },
 {
@@ -311,6 +331,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {5, 1, 0},
 },
 {
@@ -326,6 +347,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {7, 1, 0},
 },
 {
@@ -354,6 +376,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {8, 1, 0},
 },
 {
@@ -363,6 +386,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {8, 1, 0},
 },
 {
@@ -378,6 +402,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {9, 1, 0},
 },
 {
@@ -387,6 +412,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {5, 1, 0},
 },
 {
@@ -396,6 +422,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {5, 1, 0},
 },
 {
@@ -405,6 +432,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {6, 1, 0},
 },
 {
@@ -448,6 +476,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {4, 9, 0},
 },
 {
@@ -476,6 +505,7 @@
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {9, 1, 0},
 },
 {
@@ -485,6 +515,7 @@
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {9, 1, 0},
 },
 {
@@ -512,6 +543,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {8, 1, 0},
 },
 {
@@ -540,6 +572,7 @@
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {6, 5, 0},
   .max_gcc_version = {6, 5, std::numeric_limits<unsigned int>::max()},
 },
@@ -550,6 +583,7 @@
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {7, 3, 0},
 },
 {
@@ -565,6 +599,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {7, 1, 0},
 },
 {
@@ -574,6 +609,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {8, 1, 0},
 },
 {
@@ -596,6 +632,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {6, 1, 0},
 },
 {
@@ -618,6 +655,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {6, 5, 0},
   .max_gcc_version = {6, 5, std::numeric_limits<unsigned int>::max()},
 },
@@ -628,6 +666,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {7, 3, 0},
 },
 {
@@ -637,6 +676,7 @@
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {6, 5, 0},
   .max_gcc_version = {6, 5, std::numeric_limits<unsigned int>::max()},
 },
@@ -647,6 +687,7 @@
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {7, 3, 0},
 },
 {
@@ -668,6 +709,7 @@
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {9, 1, 0},
 },
 {
@@ -692,6 +734,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
   .alias = {},
+  .negative = "mlong-double-80",
   .min_gcc_version = {4, 9, 0},
 },
 {
@@ -700,6 +743,20 @@
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
+  .alias = {},
+  .negative = "mlong-double-80",
+  .min_gcc_version = {},
+  .max_gcc_version = {4, 8, 5},
+},
+{
+  "mlong-double-64",
+  opt_code_i386_unused,
+  gcc_cmdline_parser::option::comp_target,
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = true,
+  .alias = {},
+  .negative = "mlong-double-128",
+  .min_gcc_version = {4, 9, 0},
 },
 {
   "mlong-double-80",
@@ -707,6 +764,8 @@
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
+  .alias = {},
+  .negative = "mlong-double-64",
 },
 {
   "mlwp",
@@ -727,6 +786,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {9, 1, 0},
 },
 {
@@ -736,6 +796,7 @@
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {4, 9, 0},
 },
 {
@@ -745,6 +806,7 @@
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {4, 9, 0},
 },
 {
@@ -754,6 +816,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {6, 1, 0},
 },
 {
@@ -775,6 +838,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {8, 1, 0},
 },
 {
@@ -784,6 +848,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {8, 1, 0},
 },
 {
@@ -793,6 +858,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {5, 1, 0},
 },
 {
@@ -808,6 +874,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {5, 2, 0},
 },
 {
@@ -824,6 +891,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {4, 9, 0},
 },
 {
@@ -861,6 +929,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {5, 1, 0},
 },
 {
@@ -903,6 +972,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {5, 1, 0},
 },
 {
@@ -912,6 +982,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {8, 1, 0},
 },
 {
@@ -921,6 +992,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {6, 1, 0},
 },
 {
@@ -936,6 +1008,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {},
   .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
 },
@@ -946,6 +1019,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = { "mprefer-vector-width=", "128", "256" },
+  .negative = nullptr,
   .min_gcc_version = {8, 1, 0},
 },
 {
@@ -955,6 +1029,7 @@
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {8, 1, 0},
 },
 {
@@ -971,6 +1046,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {4, 9, 0},
 },
 {
@@ -986,6 +1062,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {9, 1, 0},
 },
 {
@@ -1001,6 +1078,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {7, 1, 0},
 },
 {
@@ -1035,6 +1113,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {5, 1, 0},
 },
 {
@@ -1044,6 +1123,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {9, 1, 0},
 },
 {
@@ -1085,6 +1165,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {7, 1, 0},
 },
 {
@@ -1094,6 +1175,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {4, 9, 0},
 },
 {
@@ -1103,6 +1185,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {8, 1, 0},
 },
 {
@@ -1112,6 +1195,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {5, 1, 0},
 },
 {
@@ -1203,6 +1287,7 @@
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {8, 1, 0},
 },
 {
@@ -1212,6 +1297,7 @@
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {8, 1, 0},
 },
 {
@@ -1221,6 +1307,7 @@
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {8, 1, 0},
 },
 {
@@ -1230,6 +1317,7 @@
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {4, 9, 0},
 },
 {
@@ -1252,6 +1340,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {6, 1, 0},
 },
 {
@@ -1280,6 +1369,7 @@
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {4, 9, 0},
 },
 {
@@ -1288,6 +1378,8 @@
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
+  .alias = {},
+  .negative = "mtune="
 },
 {
   "mvaes",
@@ -1296,6 +1388,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {8, 1, 0},
 },
 {
@@ -1318,6 +1411,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {8, 1, 0},
 },
 {
@@ -1333,6 +1427,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {9, 1, 0},
 },
 {
@@ -1347,6 +1442,20 @@
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
+  .alias = {},
+  .negative = "m32",
+  .min_gcc_version = {},
+  .max_gcc_version = {4, 8, 5},
+},
+{
+  "mx32",
+  opt_code_i386_unused,
+  gcc_cmdline_parser::option::comp_target,
+  gcc_cmdline_parser::option::arg_none,
+  .reject_negative = true,
+  .alias = {},
+  .negative = "m16",
+  .min_gcc_version = {4, 9, 0},
 },
 {
   "mxop",
@@ -1367,6 +1476,7 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {5, 1, 0},
 },
 {
@@ -1382,5 +1492,6 @@
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
   .alias = {},
+  .negative = nullptr,
   .min_gcc_version = {5, 1, 0},
 },

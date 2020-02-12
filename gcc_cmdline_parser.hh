@@ -92,6 +92,7 @@ namespace klp
 	unsigned int arg;
 	bool reject_negative;
 	alias_type alias;
+	const char *negative;
 
 	gcc_version min_gcc_version;
 	gcc_version max_gcc_version;
@@ -101,12 +102,22 @@ namespace klp
 
       void register_table(const option * const table);
 
-      void operator()(const int argc, const char *argv[],
-		      const std::function<void(const option *o,
-					       const option *table,
-					       const char *val,
-					       const bool negative)> &callback)
-	const;
+      struct decoded_opt
+      {
+	decoded_opt(const option *_o, const option *_t, const char *_val,
+		    const bool _negative) noexcept
+	  : o(_o), table(_t), val(_val), negative(_negative)
+	{}
+
+	const option *o;
+	const option *table;
+	const char *val;
+	bool negative;
+      };
+
+      typedef std::vector<decoded_opt> decoded_opts_type;
+
+      decoded_opts_type operator()(const int argc, const char *argv[]) const;
 
       std::pair<const option*, const option*>
       find_option(const char *s) const noexcept;

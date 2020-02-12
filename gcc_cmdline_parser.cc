@@ -41,17 +41,51 @@ void gcc_cmdline_parser::register_table(const option * const table)
   _tables.push_back(std::make_pair(table, nentries));
 }
 
-void gcc_cmdline_parser::
-operator()(const int argc, const char *argv[],
-	   const std::function<void(const option *o,
-				    const option *table,
-				    const char *val,
-				    const bool negative)> &callback) const
+gcc_cmdline_parser::decoded_opts_type
+gcc_cmdline_parser::operator()(const int argc, const char *argv[]) const
 {
+
+  decoded_opts_type decoded_opts;
+
+  auto &&prune_conflicting_opts =
+    [&](const option &o) {
+    if (!o.negative)
+      return;
+
+    // GCC options can have a "Negative" property for specifying
+    // superseded options effectively to be removed from the command
+    // line. The Negative property is propagated in that it forms
+    // chains (including circles) of conflicting options. First collect
+    // a list of options conflicing with the given one.
+    std::vector<std::string> conflicts;
+    const char *n = o.negative;
+    while (n &&
+	   (std::find(conflicts.cbegin(), conflicts.cend(), std::string{n}) ==
+	    conflicts.cend())) {
+      conflicts.emplace_back(n);
+      const option * const o = find_option(n).first;
+      assert(o);
+      n = o->negative;
+    }
+
+    // And purge all conflicting options from the command line
+    // assembled so far.
+    auto it = decoded_opts.begin();
+    while (it != decoded_opts.end()) {
+      if (it->o &&
+	  std::find(conflicts.cbegin(), conflicts.cend(),
+		    std::string{it->o->name}) != conflicts.cend()) {
+	it = decoded_opts.erase(it);
+      } else {
+	++it;
+      }
+    }
+  };
+
   int optind = 0;
   while (optind < argc) {
     if (argv[optind][0] != '-') {
-      callback(nullptr, nullptr, argv[optind], false);
+      decoded_opts.emplace_back(nullptr, nullptr, argv[optind], false);
       ++optind;
       continue;
     }
@@ -110,6 +144,8 @@ operator()(const int argc, const char *argv[],
     }
 
     while (o->alias.name) {
+      prune_conflicting_opts(*o);
+
       const option::alias_type a = o->alias;
       std::tie(o, t) = find_option(a.name);
       assert(o);
@@ -129,9 +165,12 @@ operator()(const int argc, const char *argv[],
       }
     }
 
-    callback(o, t, cur_arg, negative);
+    prune_conflicting_opts(*o);
+    decoded_opts.emplace_back(o, t, cur_arg, negative);
     ++optind;
   }
+
+  return decoded_opts;
 }
 
 std::pair<const gcc_cmdline_parser::option*, const gcc_cmdline_parser::option*>
