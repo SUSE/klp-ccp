@@ -24,26 +24,33 @@
 
 using namespace klp::ccp;
 
-enum opt_code
+enum opt_code_common
 {
-  opt_code_unused = 0,
-  opt_code_D,
-  opt_code_I,
-  opt_code_O,
-  opt_code_Ofast,
-  opt_code_Og,
-  opt_code_Os,
-  opt_code_U,
-  opt_code_idirafter,
-  opt_code_include,
-  opt_code_iquote,
-  opt_code_isystem,
-  opt_code_undef,
+  opt_code_common_unused = 0,
+
+  opt_code_common_O,
+  opt_code_common_Ofast,
+  opt_code_common_Og,
+  opt_code_common_Os,
 };
 
 static gcc_cmdline_parser::option gcc_opt_table_common[] = {
 	#include "gcc_cmdline_opts_common.cc"
 	{ nullptr }
+};
+
+enum opt_code_c_family
+{
+  opt_code_c_family_unused = 0,
+
+  opt_code_c_family_D,
+  opt_code_c_family_I,
+  opt_code_c_family_U,
+  opt_code_c_family_idirafter,
+  opt_code_c_family_include,
+  opt_code_c_family_iquote,
+  opt_code_c_family_isystem,
+  opt_code_c_family_undef,
 };
 
 static gcc_cmdline_parser::option gcc_opt_table_c_family[] = {
@@ -233,10 +240,10 @@ handle_opt(const gcc_cmdline_parser::option * const o,
   }
 
   switch (o->code) {
-  case opt_code_unused:
+  case opt_code_common_unused:
     break;
 
-  case opt_code_O:
+  case opt_code_common_O:
     optimize_size = false;
     if (val && !strcmp(val, "0"))
       optimize = false;
@@ -244,14 +251,14 @@ handle_opt(const gcc_cmdline_parser::option * const o,
       optimize = true;
     break;
 
-  case opt_code_Ofast:
+  case opt_code_common_Ofast:
     /* fall through */
-  case opt_code_Og:
+  case opt_code_common_Og:
     optimize_size = false;
     optimize = true;
     break;
 
-  case opt_code_Os:
+  case opt_code_common_Os:
     optimize_size = true;
     optimize = true;
     break;
@@ -269,14 +276,14 @@ opts_c_family::handle_opt(const gcc_cmdline_parser::option * const o,
 			  const gcc_cmdline_parser::gcc_version &ver)
 {
   switch (o->code) {
-  case opt_code_unused:
+  case opt_code_c_family_unused:
     break;
 
-  case opt_code_D:
+  case opt_code_c_family_D:
     macro_defs_and_undefs.emplace_back(macro_def_or_undef{false, val});
     break;
 
-  case opt_code_I:
+  case opt_code_c_family_I:
     if (!std::strcmp(val, "-")) {
       include_dirs_quoted.insert
 	(include_dirs_quoted.end(),
@@ -289,27 +296,27 @@ opts_c_family::handle_opt(const gcc_cmdline_parser::option * const o,
     }
     break;
 
-  case opt_code_U:
+  case opt_code_c_family_U:
     macro_defs_and_undefs.emplace_back(macro_def_or_undef{true, val});
     break;
 
-  case opt_code_idirafter:
+  case opt_code_c_family_idirafter:
     include_dirs_after.push_back(val);
     break;
 
-  case opt_code_include:
+  case opt_code_c_family_include:
     pre_includes.push_back(val);
     break;
 
-  case opt_code_iquote:
+  case opt_code_c_family_iquote:
     include_dirs_quoted.push_back(val);
     break;
 
-  case opt_code_isystem:
+  case opt_code_c_family_isystem:
     include_dirs_after.push_back(val);
     break;
 
-  case opt_code_undef:
+  case opt_code_c_family_undef:
     flag_undef = true;
     break;
   }

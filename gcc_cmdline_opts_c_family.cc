@@ -18,7 +18,7 @@
 
 {
   "-all-warnings",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -29,7 +29,7 @@
 },
 {
   "-ansi",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -40,7 +40,7 @@
 },
 {
   "-assert",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -51,7 +51,7 @@
 },
 {
   "-assert=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -62,7 +62,7 @@
 },
 {
   "-comments",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -73,7 +73,7 @@
 },
 {
   "-comments-in-macros",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -84,7 +84,7 @@
 },
 {
   "-define-macro",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -95,7 +95,7 @@
 },
 {
   "-define-macro=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -106,7 +106,7 @@
 },
 {
   "-dependencies",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -117,7 +117,7 @@
 },
 {
   "-dump",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -128,7 +128,7 @@
 },
 {
   "-dump=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -139,7 +139,7 @@
 },
 {
   "-imacros",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -150,7 +150,7 @@
 },
 {
   "-imacros=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -161,7 +161,7 @@
 },
 {
   "-include",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -172,7 +172,7 @@
 },
 {
   "-include-barrier",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -183,7 +183,7 @@
 },
 {
   "-include-directory",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -194,7 +194,7 @@
 },
 {
   "-include-directory-after",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -205,7 +205,7 @@
 },
 {
   "-include-directory-after=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -216,7 +216,7 @@
 },
 {
   "-include-directory=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -227,7 +227,7 @@
 },
 {
   "-include-prefix",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -238,7 +238,7 @@
 },
 {
   "-include-prefix=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -249,7 +249,7 @@
 },
 {
   "-include-with-prefix",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -260,7 +260,7 @@
 },
 {
   "-include-with-prefix-after",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -271,7 +271,7 @@
 },
 {
   "-include-with-prefix-after=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -282,7 +282,7 @@
 },
 {
   "-include-with-prefix-before",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -293,7 +293,7 @@
 },
 {
   "-include-with-prefix-before=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -304,7 +304,7 @@
 },
 {
   "-include-with-prefix=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -315,7 +315,7 @@
 },
 {
   "-include=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -326,7 +326,7 @@
 },
 {
   "-no-integrated-cpp",
-  opt_code_unused,
+  opt_code_c_family_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -334,7 +334,7 @@
 },
 {
   "-no-line-commands",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -345,7 +345,7 @@
 },
 {
   "-no-standard-includes",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -356,7 +356,7 @@
 },
 {
   "-no-warnings",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -367,7 +367,7 @@
 },
 {
   "-output",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -378,7 +378,7 @@
 },
 {
   "-output-pch=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -388,7 +388,7 @@
 },
 {
   "-output=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -399,7 +399,7 @@
 },
 {
   "-pedantic",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -410,7 +410,7 @@
 },
 {
   "-preprocess",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -421,7 +421,7 @@
 },
 {
   "-print-missing-file-dependencies",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -432,7 +432,7 @@
 },
 {
   "-trace-includes",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -443,7 +443,7 @@
 },
 {
   "-traditional",
-  opt_code_unused,
+  opt_code_c_family_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -451,7 +451,7 @@
 },
 {
   "-traditional-cpp",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -462,7 +462,7 @@
 },
 {
   "-trigraphs",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -473,7 +473,7 @@
 },
 {
   "-undefine-macro",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -484,7 +484,7 @@
 },
 {
   "-undefine-macro=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -495,7 +495,7 @@
 },
 {
   "-user-dependencies",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -506,7 +506,7 @@
 },
 {
   "-verbose",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
@@ -518,7 +518,7 @@
 },
 {
   "-write-dependencies",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -529,7 +529,7 @@
 },
 {
   "-write-user-dependencies",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -540,7 +540,7 @@
 },
 {
   "A",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -550,7 +550,7 @@
 },
 {
   "C",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -559,7 +559,7 @@
 },
 {
   "CC",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -568,7 +568,7 @@
 },
 {
   "D",
-  opt_code_D,
+  opt_code_c_family_D,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -578,7 +578,7 @@
 },
 {
   "E",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -587,7 +587,7 @@
 },
 {
   "F",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_driver |
    gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
@@ -598,7 +598,7 @@
 },
 {
   "H",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -607,7 +607,7 @@
 },
 {
   "I",
-  opt_code_I,
+  opt_code_c_family_I,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -617,7 +617,7 @@
 },
 {
   "M",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -626,7 +626,7 @@
 },
 {
   "MD",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -635,7 +635,7 @@
 },
 {
   "MF",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -645,7 +645,7 @@
 },
 {
   "MG",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -654,7 +654,7 @@
 },
 {
   "MM",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -663,7 +663,7 @@
 },
 {
   "MMD",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -672,7 +672,7 @@
 },
 {
   "MP",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -681,7 +681,7 @@
 },
 {
   "MQ",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -691,7 +691,7 @@
 },
 {
   "MT",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -701,7 +701,7 @@
 },
 {
   "P",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -710,7 +710,7 @@
 },
 {
   "U",
-  opt_code_U,
+  opt_code_c_family_U,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -720,7 +720,7 @@
 },
 {
   "Wabi",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -729,14 +729,14 @@
 },
 {
   "Wabi-tag",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wabi=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -748,7 +748,7 @@
 },
 {
   "Wabsolute-value",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -758,7 +758,7 @@
 },
 {
   "Waddress",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -767,7 +767,7 @@
 },
 {
   "Waddress-of-packed-member",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -779,7 +779,7 @@
 },
 {
   "Waligned-new",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -789,7 +789,7 @@
 },
 {
   "Waligned-new=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
@@ -799,7 +799,7 @@
 },
 {
   "Wall",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -808,7 +808,7 @@
 },
 {
   "Walloc-size-larger-than=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -820,7 +820,7 @@
 },
 {
   "Walloc-zero",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -832,7 +832,7 @@
 },
 {
   "Walloca",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -844,7 +844,7 @@
 },
 {
   "Walloca-larger-than=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -857,7 +857,7 @@
 },
 {
   "Walloca-larger-than=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -869,7 +869,7 @@
 },
 {
   "Warray-bounds",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -878,7 +878,7 @@
 },
 {
   "Warray-bounds=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   gcc_cmdline_parser::option::comp_none,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -887,21 +887,21 @@
 },
 {
   "Wassign-intercept",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wbad-function-cast",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wbool-compare",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -913,7 +913,7 @@
 },
 {
   "Wbool-operation",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -925,7 +925,7 @@
 },
 {
   "Wbuiltin-declaration-mismatch",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -937,7 +937,7 @@
 },
 {
   "Wbuiltin-macro-redefined",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -946,14 +946,14 @@
 },
 {
   "Wc++-compat",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wc++0x-compat",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -964,7 +964,7 @@
 },
 {
   "Wc++0x-compat",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -974,7 +974,7 @@
 },
 {
   "Wc++11-compat",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -985,7 +985,7 @@
 },
 {
   "Wc++11-compat",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -995,7 +995,7 @@
 },
 {
   "Wc++14-compat",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -1005,7 +1005,7 @@
 },
 {
   "Wc++17-compat",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -1016,7 +1016,7 @@
 },
 {
   "Wc++17-compat",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -1026,7 +1026,7 @@
 },
 {
   "Wc++1z-compat",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -1037,7 +1037,7 @@
 },
 {
   "Wc++1z-compat",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -1047,7 +1047,7 @@
 },
 {
   "Wc11-c2x-compat",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -1057,7 +1057,7 @@
 },
 {
   "Wc90-c99-compat",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -1067,7 +1067,7 @@
 },
 {
   "Wc99-c11-compat",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -1077,7 +1077,7 @@
 },
 {
   "Wcast-function-type",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1089,7 +1089,7 @@
 },
 {
   "Wcast-qual",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1098,7 +1098,7 @@
 },
 {
   "Wcatch-value",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -1108,7 +1108,7 @@
 },
 {
   "Wcatch-value=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
@@ -1118,7 +1118,7 @@
 },
 {
   "Wchar-subscripts",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1127,7 +1127,7 @@
 },
 {
   "Wchkp",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1139,7 +1139,7 @@
 },
 {
   "Wclass-conversion",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -1149,7 +1149,7 @@
 },
 {
   "Wclass-memaccess",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -1159,7 +1159,7 @@
 },
 {
   "Wclobbered",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1168,7 +1168,7 @@
 },
 {
   "Wcomment",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1177,7 +1177,7 @@
 },
 {
   "Wcomments",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1188,7 +1188,7 @@
 },
 {
   "Wconditionally-supported",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -1198,7 +1198,7 @@
 },
 {
   "Wconversion",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1207,14 +1207,14 @@
 },
 {
   "Wconversion-null",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wcpp",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1226,14 +1226,14 @@
 },
 {
   "Wctor-dtor-privacy",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wdangling-else",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1245,7 +1245,7 @@
 },
 {
   "Wdate-time",
-  opt_code_unused,
+  opt_code_c_family_unused,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1255,7 +1255,7 @@
 },
 {
   "Wdate-time",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1267,14 +1267,14 @@
 },
 {
   "Wdeclaration-after-statement",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wdelete-incomplete",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -1284,14 +1284,14 @@
 },
 {
   "Wdelete-non-virtual-dtor",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wdeprecated",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objc |
@@ -1300,7 +1300,7 @@
 },
 {
   "Wdeprecated-copy",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -1310,7 +1310,7 @@
 },
 {
   "Wdeprecated-copy-dtor",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -1320,7 +1320,7 @@
 },
 {
   "Wdesignated-init",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -1330,7 +1330,7 @@
 },
 {
   "Wdiscarded-array-qualifiers",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -1340,7 +1340,7 @@
 },
 {
   "Wdiscarded-qualifiers",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -1350,7 +1350,7 @@
 },
 {
   "Wdiv-by-zero",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1359,7 +1359,7 @@
 },
 {
   "Wdouble-promotion",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1368,7 +1368,7 @@
 },
 {
   "Wduplicate-decl-specifier",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -1378,7 +1378,7 @@
 },
 {
   "Wduplicated-branches",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1390,7 +1390,7 @@
 },
 {
   "Wduplicated-cond",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1402,14 +1402,14 @@
 },
 {
   "Weffc++",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wempty-body",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1418,7 +1418,7 @@
 },
 {
   "Wendif-labels",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1427,7 +1427,7 @@
 },
 {
   "Wenum-compare",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1436,7 +1436,7 @@
 },
 {
   "Werror",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1445,7 +1445,7 @@
 },
 {
   "Werror-implicit-function-declaration",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -1454,7 +1454,7 @@
 },
 {
   "Wexpansion-to-defined",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1466,7 +1466,7 @@
 },
 {
   "Wextra",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1478,7 +1478,7 @@
 },
 {
   "Wextra-semi",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -1488,7 +1488,7 @@
 },
 {
   "Wfloat-conversion",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1500,7 +1500,7 @@
 },
 {
   "Wfloat-equal",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1509,7 +1509,7 @@
 },
 {
   "Wformat",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1520,7 +1520,7 @@
 },
 {
   "Wformat-contains-nul",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1529,7 +1529,7 @@
 },
 {
   "Wformat-extra-args",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1538,7 +1538,7 @@
 },
 {
   "Wformat-nonliteral",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1547,7 +1547,7 @@
 },
 {
   "Wformat-overflow",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1559,7 +1559,7 @@
 },
 {
   "Wformat-overflow=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1571,7 +1571,7 @@
 },
 {
   "Wformat-security",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1580,7 +1580,7 @@
 },
 {
   "Wformat-signedness",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1592,7 +1592,7 @@
 },
 {
   "Wformat-truncation",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1604,7 +1604,7 @@
 },
 {
   "Wformat-truncation=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1616,7 +1616,7 @@
 },
 {
   "Wformat-y2k",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1625,7 +1625,7 @@
 },
 {
   "Wformat-zero-length",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1634,7 +1634,7 @@
 },
 {
   "Wformat=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1644,7 +1644,7 @@
 },
 {
   "Wframe-address",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1656,7 +1656,7 @@
 },
 {
   "Wif-not-aligned",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1668,7 +1668,7 @@
 },
 {
   "Wignored-attributes",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_cxx),
   gcc_cmdline_parser::option::arg_none,
@@ -1678,21 +1678,21 @@
 },
 {
   "Wignored-qualifiers",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_cxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wimplicit",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wimplicit-fallthrough=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   gcc_cmdline_parser::option::comp_none,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1701,21 +1701,21 @@
 },
 {
   "Wimplicit-function-declaration",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wimplicit-int",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wimport",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1724,7 +1724,7 @@
 },
 {
   "Wincompatible-pointer-types",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -1734,14 +1734,14 @@
 },
 {
   "Winherited-variadic-ctor",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Winit-list-lifetime",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -1751,7 +1751,7 @@
 },
 {
   "Winit-self",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1760,7 +1760,7 @@
 },
 {
   "Wint-conversion",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -1770,7 +1770,7 @@
 },
 {
   "Wint-in-bool-context",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1782,7 +1782,7 @@
 },
 {
   "Wint-to-pointer-cast",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1791,14 +1791,14 @@
 },
 {
   "Winvalid-offsetof",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Winvalid-pch",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1807,21 +1807,21 @@
 },
 {
   "Wjump-misses-init",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wliteral-suffix",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wlogical-not-parentheses",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1833,7 +1833,7 @@
 },
 {
   "Wlogical-op",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1842,7 +1842,7 @@
 },
 {
   "Wlong-long",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1851,7 +1851,7 @@
 },
 {
   "Wmain",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1860,7 +1860,7 @@
 },
 {
   "Wmaybe-uninitialized",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1869,7 +1869,7 @@
 },
 {
   "Wmemset-elt-size",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1881,7 +1881,7 @@
 },
 {
   "Wmemset-transposed-args",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1893,7 +1893,7 @@
 },
 {
   "Wmisleading-indentation",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_common),
@@ -1904,7 +1904,7 @@
 },
 {
   "Wmissing-attributes",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1916,7 +1916,7 @@
 },
 {
   "Wmissing-braces",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1925,7 +1925,7 @@
 },
 {
   "Wmissing-declarations",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1934,7 +1934,7 @@
 },
 {
   "Wmissing-field-initializers",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1943,7 +1943,7 @@
 },
 {
   "Wmissing-format-attribute",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1954,7 +1954,7 @@
 },
 {
   "Wmissing-include-dirs",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1963,21 +1963,21 @@
 },
 {
   "Wmissing-parameter-type",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wmissing-prototypes",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wmudflap",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1986,7 +1986,7 @@
 },
 {
   "Wmultichar",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -1995,7 +1995,7 @@
 },
 {
   "Wmultiple-inheritance",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -2005,7 +2005,7 @@
 },
 {
   "Wmultistatement-macros",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2017,7 +2017,7 @@
 },
 {
   "Wnamespaces",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -2027,7 +2027,7 @@
 },
 {
   "Wnarrowing",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2040,14 +2040,14 @@
 },
 {
   "Wnested-externs",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wno-alloc-size-larger-than",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2059,7 +2059,7 @@
 },
 {
   "Wno-alloca-larger-than",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2071,7 +2071,7 @@
 },
 {
   "Wno-vla-larger-than",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2083,14 +2083,14 @@
 },
 {
   "Wnoexcept",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wnoexcept-type",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -2100,21 +2100,21 @@
 },
 {
   "Wnon-template-friend",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wnon-virtual-dtor",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wnonnull",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2123,7 +2123,7 @@
 },
 {
   "Wnonnull-compare",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2135,7 +2135,7 @@
 },
 {
   "Wnormalized",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2147,7 +2147,7 @@
 },
 {
   "Wnormalized=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2160,7 +2160,7 @@
 },
 {
   "Wnormalized=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2172,28 +2172,28 @@
 },
 {
   "Wold-style-cast",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wold-style-declaration",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wold-style-definition",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wopenmp-simd",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_cxx),
   gcc_cmdline_parser::option::arg_none,
@@ -2203,7 +2203,7 @@
 },
 {
   "Woverlength-strings",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2212,21 +2212,21 @@
 },
 {
   "Woverloaded-virtual",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Woverride-init",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Woverride-init-side-effects",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -2236,7 +2236,7 @@
 },
 {
   "Wpacked-bitfield-compat",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2245,7 +2245,7 @@
 },
 {
   "Wpacked-not-aligned",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2257,7 +2257,7 @@
 },
 {
   "Wparentheses",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2266,7 +2266,7 @@
 },
 {
   "Wpedantic",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2275,7 +2275,7 @@
 },
 {
   "Wpessimizing-move",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -2285,7 +2285,7 @@
 },
 {
   "Wplacement-new",
-  opt_code_unused,
+  opt_code_c_family_unused,
   gcc_cmdline_parser::option::comp_cxx,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -2294,7 +2294,7 @@
 },
 {
   "Wplacement-new=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   gcc_cmdline_parser::option::comp_cxx,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -2303,14 +2303,14 @@
 },
 {
   "Wpmf-conversions",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wpointer-arith",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2319,7 +2319,7 @@
 },
 {
   "Wpointer-compare",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2331,21 +2331,21 @@
 },
 {
   "Wpointer-sign",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wpointer-to-int-cast",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wpragmas",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2354,7 +2354,7 @@
 },
 {
   "Wprio-ctor-dtor",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2366,21 +2366,21 @@
 },
 {
   "Wproperty-assign-default",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wprotocol",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wpsabi",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2389,7 +2389,7 @@
 },
 {
   "Wredundant-decls",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2398,7 +2398,7 @@
 },
 {
   "Wredundant-move",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -2408,7 +2408,7 @@
 },
 {
   "Wregister",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -2418,14 +2418,14 @@
 },
 {
   "Wreorder",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wrestrict",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2437,7 +2437,7 @@
 },
 {
   "Wreturn-local-addr",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2450,7 +2450,7 @@
 },
 {
   "Wreturn-type",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2459,7 +2459,7 @@
 },
 {
   "Wscalar-storage-order",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2471,14 +2471,14 @@
 },
 {
   "Wselector",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wsequence-point",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2487,7 +2487,7 @@
 },
 {
   "Wshadow-ivar",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -2497,7 +2497,7 @@
 },
 {
   "Wshift-count-negative",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2509,7 +2509,7 @@
 },
 {
   "Wshift-count-overflow",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2521,7 +2521,7 @@
 },
 {
   "Wshift-negative-value",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2533,7 +2533,7 @@
 },
 {
   "Wshift-overflow",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2545,7 +2545,7 @@
 },
 {
   "Wshift-overflow=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2557,7 +2557,7 @@
 },
 {
   "Wsign-compare",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2566,7 +2566,7 @@
 },
 {
   "Wsign-conversion",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2575,14 +2575,14 @@
 },
 {
   "Wsign-promo",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wsized-deallocation",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -2592,7 +2592,7 @@
 },
 {
   "Wsizeof-array-argument",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2604,7 +2604,7 @@
 },
 {
   "Wsizeof-pointer-div",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2616,7 +2616,7 @@
 },
 {
   "Wsizeof-pointer-memaccess",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2625,7 +2625,7 @@
 },
 {
   "Wstrict-aliasing=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2634,14 +2634,14 @@
 },
 {
   "Wstrict-null-sentinel",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wstrict-overflow=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2650,21 +2650,21 @@
 },
 {
   "Wstrict-prototypes",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wstrict-selector-match",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wstringop-overflow",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2676,7 +2676,7 @@
 },
 {
   "Wstringop-overflow=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2688,7 +2688,7 @@
 },
 {
   "Wstringop-truncation",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2700,7 +2700,7 @@
 },
 {
   "Wsubobject-linkage",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -2710,7 +2710,7 @@
 },
 {
   "Wsuggest-attribute=format",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2719,7 +2719,7 @@
 },
 {
   "Wsuggest-override",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -2729,7 +2729,7 @@
 },
 {
   "Wswitch",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2738,7 +2738,7 @@
 },
 {
   "Wswitch-bool",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2750,7 +2750,7 @@
 },
 {
   "Wswitch-default",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2759,7 +2759,7 @@
 },
 {
   "Wswitch-enum",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2768,21 +2768,21 @@
 },
 {
   "Wsync-nand",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_cxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wsynth",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wsystem-headers",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2791,7 +2791,7 @@
 },
 {
   "Wtautological-compare",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2803,7 +2803,7 @@
 },
 {
   "Wtemplates",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -2813,7 +2813,7 @@
 },
 {
   "Wterminate",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -2823,21 +2823,21 @@
 },
 {
   "Wtraditional",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wtraditional-conversion",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wtrigraphs",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2846,14 +2846,14 @@
 },
 {
   "Wundeclared-selector",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wundef",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2862,7 +2862,7 @@
 },
 {
   "Wuninitialized",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2871,7 +2871,7 @@
 },
 {
   "Wunknown-pragmas",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2880,14 +2880,14 @@
 },
 {
   "Wunsuffixed-float-constants",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wunused",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2896,7 +2896,7 @@
 },
 {
   "Wunused-const-variable",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2908,7 +2908,7 @@
 },
 {
   "Wunused-const-variable=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2920,7 +2920,7 @@
 },
 {
   "Wunused-local-typedefs",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2929,7 +2929,7 @@
 },
 {
   "Wunused-macros",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2938,7 +2938,7 @@
 },
 {
   "Wunused-result",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2947,7 +2947,7 @@
 },
 {
   "Wunused-variable",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2959,14 +2959,14 @@
 },
 {
   "Wuseless-cast",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wvarargs",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2975,7 +2975,7 @@
 },
 {
   "Wvariadic-macros",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -2984,7 +2984,7 @@
 },
 {
   "Wvirtual-inheritance",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -2994,14 +2994,14 @@
 },
 {
   "Wvirtual-move-assign",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "Wvla",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3010,7 +3010,7 @@
 },
 {
   "Wvla-larger-than=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3023,7 +3023,7 @@
 },
 {
   "Wvla-larger-than=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3035,7 +3035,7 @@
 },
 {
   "Wvolatile-register-var",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3044,7 +3044,7 @@
 },
 {
   "Wwrite-strings",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3053,14 +3053,14 @@
 },
 {
   "Wzero-as-null-pointer-constant",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ansi",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3069,7 +3069,7 @@
 },
 {
   "d",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3078,7 +3078,7 @@
 },
 {
   "fabi-compat-version=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
@@ -3088,14 +3088,14 @@
 },
 {
   "faccess-control",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fada-spec-parent=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3105,7 +3105,7 @@
 },
 {
   "faligned-new",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -3115,7 +3115,7 @@
 },
 {
   "faligned-new=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
@@ -3125,28 +3125,28 @@
 },
 {
   "fall-virtual",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fallow-parameterless-variadic-functions",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "falt-external-templates",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fasm",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3155,7 +3155,7 @@
 },
 {
   "fbuilding-libgcc",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3164,7 +3164,7 @@
 },
 {
   "fbuiltin",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3173,7 +3173,7 @@
 },
 {
   "fbuiltin-",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3182,7 +3182,7 @@
 },
 {
   "fcanonical-system-headers",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3191,7 +3191,7 @@
 },
 {
   "fchar8_t",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -3201,7 +3201,7 @@
 },
 {
   "fcheck-new",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -3212,7 +3212,7 @@
 },
 {
   "fcheck-pointer-bounds",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3224,7 +3224,7 @@
 },
 {
   "fchkp-check-incomplete-type",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3236,7 +3236,7 @@
 },
 {
   "fchkp-check-read",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3248,7 +3248,7 @@
 },
 {
   "fchkp-check-write",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3260,7 +3260,7 @@
 },
 {
   "fchkp-first-field-has-own-bounds",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3272,7 +3272,7 @@
 },
 {
   "fchkp-flexible-struct-trailing-arrays",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3284,7 +3284,7 @@
 },
 {
   "fchkp-instrument-calls",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3296,7 +3296,7 @@
 },
 {
   "fchkp-instrument-marked-only",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3308,7 +3308,7 @@
 },
 {
   "fchkp-narrow-bounds",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3320,7 +3320,7 @@
 },
 {
   "fchkp-narrow-to-innermost-array",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3332,7 +3332,7 @@
 },
 {
   "fchkp-optimize",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3344,7 +3344,7 @@
 },
 {
   "fchkp-store-bounds",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3356,7 +3356,7 @@
 },
 {
   "fchkp-treat-zero-dynamic-size-as-infinite",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3368,7 +3368,7 @@
 },
 {
   "fchkp-use-fast-string-functions",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3380,7 +3380,7 @@
 },
 {
   "fchkp-use-nochk-string-functions",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3392,7 +3392,7 @@
 },
 {
   "fchkp-use-static-bounds",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3404,7 +3404,7 @@
 },
 {
   "fchkp-use-static-const-bounds",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3416,7 +3416,7 @@
 },
 {
   "fchkp-use-wrappers",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3428,7 +3428,7 @@
 },
 {
   "fchkp-zero-input-bounds-for-main",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3440,7 +3440,7 @@
 },
 {
   "fcilkplus",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3452,7 +3452,7 @@
 },
 {
   "fcond-mismatch",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3461,21 +3461,21 @@
 },
 {
   "fconserve-space",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fconstant-string-class=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
 },
 {
   "fconstexpr-depth=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
@@ -3483,7 +3483,7 @@
 },
 {
   "fconstexpr-ops-limit=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
@@ -3493,7 +3493,7 @@
 },
 {
   "fdebug-cpp",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3502,7 +3502,7 @@
 },
 {
   "fdeclone-ctor-dtor",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -3517,14 +3517,14 @@
 },
 {
   "fdefault-inline",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fdiagnostics-show-template-tree",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -3534,7 +3534,7 @@
 },
 {
   "fdirectives-only",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3543,7 +3543,7 @@
 },
 {
   "fdollars-in-identifiers",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3552,7 +3552,7 @@
 },
 {
   "fdump-ada-spec",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3562,7 +3562,7 @@
 },
 {
   "fdump-ada-spec-slim",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3572,14 +3572,14 @@
 },
 {
   "felide-constructors",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "felide-type",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -3589,7 +3589,7 @@
 },
 {
   "femit-struct-debug-baseonly",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3598,7 +3598,7 @@
 },
 {
   "femit-struct-debug-detailed=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3607,7 +3607,7 @@
 },
 {
   "femit-struct-debug-reduced",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3616,21 +3616,21 @@
 },
 {
   "fenforce-eh-specs",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fenum-int-equiv",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fexec-charset=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3640,14 +3640,14 @@
 },
 {
   "fext-numeric-literals",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fextended-identifiers",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3656,28 +3656,28 @@
 },
 {
   "fextern-tls-init",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fexternal-templates",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ffor-scope",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ffreestanding",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3686,14 +3686,14 @@
 },
 {
   "ffriend-injection",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fgimple",
-  opt_code_unused,
+  opt_code_c_family_unused,
   gcc_cmdline_parser::option::comp_c,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3702,14 +3702,14 @@
 },
 {
   "fgnu-keywords",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fgnu-runtime",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -3717,21 +3717,21 @@
 },
 {
   "fgnu89-inline",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fguiding-decls",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fhandle-exceptions",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -3740,49 +3740,49 @@
 },
 {
   "fhonor-std",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fhosted",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fhuge-objects",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fimplement-inlines",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fimplicit-inline-templates",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fimplicit-templates",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "finput-charset=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3792,7 +3792,7 @@
 },
 {
   "fivar-visibility=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
@@ -3802,7 +3802,7 @@
 },
 {
   "fkeep-inline-dllexport",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objc |
@@ -3811,14 +3811,14 @@
 },
 {
   "flabels-ok",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "flax-vector-conversions",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3827,7 +3827,7 @@
 },
 {
   "flocal-ivars",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -3837,7 +3837,7 @@
 },
 {
   "fmacro-prefix-map=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3849,7 +3849,7 @@
 },
 {
   "fms-extensions",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3858,7 +3858,7 @@
 },
 {
   "fmudflap",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3871,7 +3871,7 @@
 },
 {
   "fmudflap",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3883,7 +3883,7 @@
 },
 {
   "fmudflapir",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3896,7 +3896,7 @@
 },
 {
   "fmudflapir",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3908,7 +3908,7 @@
 },
 {
   "fmudflapth",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3921,7 +3921,7 @@
 },
 {
   "fmudflapth",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3934,21 +3934,21 @@
 },
 {
   "fname-mangling-version-",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
 },
 {
   "fnew-abi",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fnew-inheriting-ctors",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -3958,7 +3958,7 @@
 },
 {
   "fnew-ttp-matching",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -3968,7 +3968,7 @@
 },
 {
   "fnext-runtime",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -3976,35 +3976,35 @@
 },
 {
   "fnil-receivers",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fnonansi-builtins",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fnonnull-objects",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fnothrow-opt",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fobjc-abi-version=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
@@ -4012,55 +4012,55 @@
 },
 {
   "fobjc-call-cxx-cdtors",
-  opt_code_unused,
+  opt_code_c_family_unused,
   gcc_cmdline_parser::option::comp_objcxx,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fobjc-direct-dispatch",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fobjc-exceptions",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fobjc-gc",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fobjc-nilcheck",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fobjc-sjlj-exceptions",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fobjc-std=objc1",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fopenacc",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4072,7 +4072,7 @@
 },
 {
   "fopenacc-dim=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4084,7 +4084,7 @@
 },
 {
   "fopenmp",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4093,7 +4093,7 @@
 },
 {
   "fopenmp-simd",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4105,21 +4105,21 @@
 },
 {
   "foperator-names",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "foptional-diags",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fpch-deps",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4128,7 +4128,7 @@
 },
 {
   "fpch-preprocess",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4137,21 +4137,21 @@
 },
 {
   "fpermissive",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fplan9-extensions",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fpreprocessed",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4160,14 +4160,14 @@
 },
 {
   "fpretty-templates",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fprintf-return-value",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4179,28 +4179,28 @@
 },
 {
   "freplace-objc-classes",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "frepo",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "frtti",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fshort-double",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4213,7 +4213,7 @@
 },
 {
   "fshort-enums",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4222,7 +4222,7 @@
 },
 {
   "fshort-wchar",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4231,7 +4231,7 @@
 },
 {
   "fsigned-bitfields",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4240,7 +4240,7 @@
 },
 {
   "fsigned-char",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4249,7 +4249,7 @@
 },
 {
   "fsized-deallocation",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4259,14 +4259,14 @@
 },
 {
   "fsquangle",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsso-struct=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_joined,
@@ -4277,7 +4277,7 @@
 },
 {
   "fsso-struct=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_joined,
@@ -4287,28 +4287,28 @@
 },
 {
   "fstats",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fstrict-enums",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fstrict-prototype",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fstrong-eval-order",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx |
    gcc_cmdline_parser::option::comp_common),
@@ -4319,7 +4319,7 @@
 },
 {
   "fstrong-eval-order=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx |
    gcc_cmdline_parser::option::comp_common),
@@ -4330,7 +4330,7 @@
 },
 {
   "ftabstop=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4340,7 +4340,7 @@
 },
 {
   "ftemplate-backtrace-limit=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
@@ -4348,7 +4348,7 @@
 },
 {
   "ftemplate-depth-",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
@@ -4357,7 +4357,7 @@
 },
 {
   "ftemplate-depth=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_joined,
@@ -4365,21 +4365,21 @@
 },
 {
   "fthis-is-variable",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fthreadsafe-statics",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "ftrack-macro-expansion",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4389,7 +4389,7 @@
 },
 {
   "ftrack-macro-expansion=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4399,7 +4399,7 @@
 },
 {
   "funsigned-bitfields",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4408,7 +4408,7 @@
 },
 {
   "funsigned-char",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4417,56 +4417,56 @@
 },
 {
   "fuse-cxa-atexit",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fuse-cxa-get-exception-ptr",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fvisibility-inlines-hidden",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fvisibility-ms-compat",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fvtable-gc",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fvtable-thunks",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fweak",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fwide-exec-charset=",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4476,7 +4476,7 @@
 },
 {
   "fworking-directory",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4485,21 +4485,21 @@
 },
 {
   "fxref",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fzero-link",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "gen-decls",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx |
    gcc_cmdline_parser::option::comp_driver),
@@ -4511,7 +4511,7 @@
 },
 {
   "gen-decls",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4521,7 +4521,7 @@
 },
 {
   "idirafter",
-  opt_code_idirafter,
+  opt_code_c_family_idirafter,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4531,7 +4531,7 @@
 },
 {
   "imacros",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4541,7 +4541,7 @@
 },
 {
   "imultilib",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4551,7 +4551,7 @@
 },
 {
   "include",
-  opt_code_include,
+  opt_code_c_family_include,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4561,7 +4561,7 @@
 },
 {
   "iprefix",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4571,7 +4571,7 @@
 },
 {
   "iquote",
-  opt_code_iquote,
+  opt_code_c_family_iquote,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4581,7 +4581,7 @@
 },
 {
   "isysroot",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4591,7 +4591,7 @@
 },
 {
   "isystem",
-  opt_code_isystem,
+  opt_code_c_family_isystem,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4601,7 +4601,7 @@
 },
 {
   "iwithprefix",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4611,7 +4611,7 @@
 },
 {
   "iwithprefixbefore",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4621,19 +4621,19 @@
 },
 {
   "lang-asm",
-  opt_code_unused,
+  opt_code_c_family_unused,
   gcc_cmdline_parser::option::comp_c,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "no-integrated-cpp",
-  opt_code_unused,
+  opt_code_c_family_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "nostdinc",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4642,14 +4642,14 @@
 },
 {
   "nostdinc++",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "o",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4659,7 +4659,7 @@
 },
 {
   "pedantic",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4670,14 +4670,14 @@
 },
 {
   "print-objc-runtime-info",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "remap",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4686,7 +4686,7 @@
 },
 {
   "static-libmpx",
-  opt_code_unused,
+  opt_code_c_family_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -4695,7 +4695,7 @@
 },
 {
   "static-libmpxwrappers",
-  opt_code_unused,
+  opt_code_c_family_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -4704,7 +4704,7 @@
 },
 {
   "std=c++03",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4713,7 +4713,7 @@
 },
 {
   "std=c++0x",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4722,14 +4722,14 @@
 },
 {
   "std=c++11",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "std=c++14",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4740,7 +4740,7 @@
 },
 {
   "std=c++14",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4750,7 +4750,7 @@
 },
 {
   "std=c++17",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4761,7 +4761,7 @@
 },
 {
   "std=c++17",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4771,7 +4771,7 @@
 },
 {
   "std=c++1y",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4782,7 +4782,7 @@
 },
 {
   "std=c++1y",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4792,7 +4792,7 @@
 },
 {
   "std=c++1z",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4803,7 +4803,7 @@
 },
 {
   "std=c++1z",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4813,7 +4813,7 @@
 },
 {
   "std=c++2a",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4823,21 +4823,21 @@
 },
 {
   "std=c++98",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "std=c11",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "std=c17",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -4847,7 +4847,7 @@
 },
 {
   "std=c18",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -4857,7 +4857,7 @@
 },
 {
   "std=c1x",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -4866,7 +4866,7 @@
 },
 {
   "std=c2x",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -4876,7 +4876,7 @@
 },
 {
   "std=c89",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -4885,21 +4885,21 @@
 },
 {
   "std=c90",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "std=c99",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "std=c9x",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -4908,7 +4908,7 @@
 },
 {
   "std=gnu++03",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4917,7 +4917,7 @@
 },
 {
   "std=gnu++0x",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4926,14 +4926,14 @@
 },
 {
   "std=gnu++11",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "std=gnu++14",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4944,7 +4944,7 @@
 },
 {
   "std=gnu++14",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4954,7 +4954,7 @@
 },
 {
   "std=gnu++17",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4965,7 +4965,7 @@
 },
 {
   "std=gnu++17",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4975,7 +4975,7 @@
 },
 {
   "std=gnu++1y",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4986,7 +4986,7 @@
 },
 {
   "std=gnu++1y",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4996,7 +4996,7 @@
 },
 {
   "std=gnu++1z",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -5007,7 +5007,7 @@
 },
 {
   "std=gnu++1z",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -5017,7 +5017,7 @@
 },
 {
   "std=gnu++2a",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -5027,21 +5027,21 @@
 },
 {
   "std=gnu++98",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "std=gnu11",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "std=gnu17",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -5051,7 +5051,7 @@
 },
 {
   "std=gnu18",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -5061,7 +5061,7 @@
 },
 {
   "std=gnu1x",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -5070,7 +5070,7 @@
 },
 {
   "std=gnu2x",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -5080,7 +5080,7 @@
 },
 {
   "std=gnu89",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -5089,21 +5089,21 @@
 },
 {
   "std=gnu90",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "std=gnu99",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "std=gnu9x",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -5112,7 +5112,7 @@
 },
 {
   "std=iso9899:1990",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -5121,14 +5121,14 @@
 },
 {
   "std=iso9899:199409",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "std=iso9899:1999",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -5137,7 +5137,7 @@
 },
 {
   "std=iso9899:199x",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -5146,7 +5146,7 @@
 },
 {
   "std=iso9899:2011",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -5155,7 +5155,7 @@
 },
 {
   "std=iso9899:2017",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -5165,7 +5165,7 @@
 },
 {
   "std=iso9899:2018",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -5175,13 +5175,13 @@
 },
 {
   "traditional",
-  opt_code_unused,
+  opt_code_c_family_unused,
   gcc_cmdline_parser::option::comp_driver,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "traditional-cpp",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -5190,7 +5190,7 @@
 },
 {
   "trigraphs",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -5199,7 +5199,7 @@
 },
 {
   "undef",
-  opt_code_unused,
+  opt_code_c_family_undef,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -5208,7 +5208,7 @@
 },
 {
   "v",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -5217,7 +5217,7 @@
 },
 {
   "w",
-  opt_code_unused,
+  opt_code_c_family_unused,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
