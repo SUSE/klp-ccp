@@ -123,6 +123,9 @@ namespace klp
       virtual const gcc_cmdline_parser::option *
       _arch_get_opt_table() const noexcept override;
 
+      virtual const default_option&
+      _arch_get_option_optimization_table() const noexcept override;
+
       virtual void _arch_option_init_struct() override;
 
       virtual void

@@ -217,7 +217,7 @@ _decode_options(int argc, const char *argv[],
 
   const gcc_cmdline_parser::decoded_opts_type decoded_opts{p(argc, argv)};
 
-  _default_options_optimization(decoded_opts);
+  _default_options_optimization(decoded_opts, p, *opt_table_arch);
 
   for (const auto &decoded_opt : decoded_opts)
     _handle_opt(decoded_opt.table, decoded_opt.o, decoded_opt.val,
@@ -230,7 +230,9 @@ _decode_options(int argc, const char *argv[],
 }
 
 void target_gcc::_default_options_optimization
-	(const gcc_cmdline_parser::decoded_opts_type &decoded_opts)
+	(const gcc_cmdline_parser::decoded_opts_type &decoded_opts,
+	 const gcc_cmdline_parser &p,
+	 const gcc_cmdline_parser::option &opt_table_arch)
 {
   // This corresponds to GCC's default_options_optimization().
   // Pre-scan for the optimization options as these imply default
@@ -282,6 +284,478 @@ void target_gcc::_default_options_optimization
 	_opts_common.optimize_debug = false;
 	break;
       }
+    }
+  }
+
+  static const default_option default_options_table[] = {
+    {
+      default_option::opt_levels_1_plus, "fcombine-stack-adjustments",
+      nullptr, false
+    },
+    { default_option::opt_levels_1_plus, "fcompare-elim", nullptr, false },
+    { default_option::opt_levels_1_plus, "fcprop-registers", nullptr, false },
+    { default_option::opt_levels_1_plus, "fdefer-pop", nullptr, false },
+    { default_option::opt_levels_1_plus, "fforward-propagate", nullptr, false },
+    {
+      default_option::opt_levels_1_plus, "fguess-branch-probability",
+      nullptr, false
+    },
+    { default_option::opt_levels_1_plus, "fipa-profile", nullptr, false },
+    { default_option::opt_levels_1_plus, "fipa-pure-const", nullptr, false },
+    { default_option::opt_levels_1_plus, "fipa-reference", nullptr, false },
+    {
+      default_option::opt_levels_1_plus, "fipa-reference-addressable",
+      nullptr, false,
+      .min_gcc_version = {9, 1, 0},
+    },
+    { default_option::opt_levels_1_plus, "fmerge-constants", nullptr, false },
+    {
+      default_option::opt_levels_1_plus, "fomit-frame-pointer", nullptr, false,
+      .min_gcc_version = {8, 1, 0},
+    },
+    {
+      default_option::opt_levels_2_plus, "freorder-blocks", nullptr, false,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {5, 5, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      default_option::opt_levels_1_plus, "freorder-blocks", nullptr, false,
+      .min_gcc_version = {6, 1, 0},
+    },
+    { default_option::opt_levels_1_plus, "fshrink-wrap", nullptr, false },
+    { default_option::opt_levels_1_plus, "fsplit-wide-types", nullptr, false },
+    {
+      default_option::opt_levels_2_plus, "ftree-builtin-call-dce",
+      nullptr, false,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {5, 5, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      default_option::opt_levels_1_plus, "ftree-builtin-call-dce",
+      nullptr, false,
+      .min_gcc_version = {6, 1, 0},
+    },
+    { default_option::opt_levels_1_plus, "ftree-ccp", nullptr, false },
+    { default_option::opt_levels_1_plus, "ftree-ch", nullptr, false },
+    {
+      default_option::opt_levels_1_plus, "ftree-coalesce-vars", nullptr, false,
+      .min_gcc_version = {6, 1, 0},
+    },
+    { default_option::opt_levels_1_plus, "ftree-copy-prop", nullptr, false },
+    {
+      default_option::opt_levels_1_plus, "ftree-copy-rename", nullptr, false,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {5, 5, std::numeric_limits<unsigned int>::max()},
+    },
+    { default_option::opt_levels_1_plus, "ftree-dce", nullptr, false },
+    {
+      default_option::opt_levels_1_plus, "ftree-dominator-opts", nullptr, false
+    },
+    { default_option::opt_levels_1_plus, "ftree-dse", nullptr, false },
+    { default_option::opt_levels_1_plus, "ftree-fre", nullptr, false },
+    { default_option::opt_levels_1_plus, "ftree-sink", nullptr, false },
+    { default_option::opt_levels_1_plus, "ftree-slsr", nullptr, false },
+    { default_option::opt_levels_1_plus, "ftree-ter", nullptr, false },
+    {
+      default_option::opt_levels_1_plus_not_debug, "fbranch-count-reg",
+      nullptr, false,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      default_option::opt_levels_1_plus, "fif-conversion",
+      nullptr, false,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 2},
+    },
+    {
+      default_option::opt_levels_1_plus_not_debug, "fif-conversion",
+      nullptr, false,
+      .min_gcc_version = {4, 8, 3},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      default_option::opt_levels_1_plus, "fif-conversion",
+      nullptr, false,
+      .min_gcc_version = {4, 9, 0},
+      .max_gcc_version = {4, 9, 0},
+    },
+    {
+      default_option::opt_levels_1_plus_not_debug, "fif-conversion",
+      nullptr, false,
+      .min_gcc_version = {4, 9, 1},
+    },
+    {
+      default_option::opt_levels_1_plus, "fif-conversion2",
+      nullptr, false,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 2},
+    },
+    {
+      default_option::opt_levels_1_plus_not_debug, "fif-conversion2",
+      nullptr, false,
+      .min_gcc_version = {4, 8, 3},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      default_option::opt_levels_1_plus, "fif-conversion2",
+      nullptr, false,
+      .min_gcc_version = {4, 9, 0},
+      .max_gcc_version = {4, 9, 0},
+    },
+    {
+      default_option::opt_levels_1_plus_not_debug, "fif-conversion2",
+      nullptr, false,
+      .min_gcc_version = {4, 9, 1},
+    },
+    {
+      default_option::opt_levels_1_plus_not_debug,
+      "finline-functions-called-once", nullptr, false
+    },
+    {
+      default_option::opt_levels_1_plus_not_debug, "fmove-loop-invariants",
+      nullptr, false,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      default_option::opt_levels_1_plus_not_debug, "fssa-phiopt",
+      nullptr, false,
+      .min_gcc_version = {5, 1, 0},
+    },
+    {
+      default_option::opt_levels_1_plus, "ftree-bit-ccp",
+      nullptr, false,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 9, 4},
+    },
+    {
+      default_option::opt_levels_1_plus_not_debug, "ftree-bit-ccp",
+      nullptr, false,
+      .min_gcc_version = {5, 1, 0},
+    },
+    {
+      default_option::opt_levels_1_plus_not_debug, "ftree-sra",
+      nullptr, false
+    },
+    {
+      default_option::opt_levels_1_plus_not_debug, "ftree-pta", nullptr, false,
+      .min_gcc_version = {4, 9, 0},
+    },
+    { default_option::opt_levels_2_plus, "fcaller-saves", nullptr, false },
+    {
+      default_option::opt_levels_2_plus, "fcode-hoisting", nullptr, false,
+      .min_gcc_version = {7, 1, 0},
+    },
+    { default_option::opt_levels_2_plus, "fcrossjumping", nullptr, false },
+    { default_option::opt_levels_2_plus, "fcse-follow-jumps", nullptr, false },
+    { default_option::opt_levels_2_plus, "fdevirtualize", nullptr, false },
+    {
+      default_option::opt_levels_2_plus, "fdevirtualize-speculatively",
+      nullptr, false,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      default_option::opt_levels_2_plus, "fexpensive-optimizations",
+      nullptr, false
+    },
+    { default_option::opt_levels_2_plus, "fgcse", nullptr, false },
+    {
+      default_option::opt_levels_2_plus, "fhoist-adjacent-loads",
+      nullptr, false
+    },
+    { default_option::opt_levels_2_plus, "findirect-inlining", nullptr, false },
+    {
+      default_option::opt_levels_2_plus, "finline-small-functions",
+      nullptr, false
+    },
+    {
+      default_option::opt_levels_2_plus, "fipa-bit-cp", nullptr, false,
+      .min_gcc_version = {7, 1, 0},
+    },
+    { default_option::opt_levels_2_plus, "fipa-cp", nullptr, false },
+    {
+      default_option::opt_levels_2_plus, "fipa-cp-alignment", nullptr, false,
+      .min_gcc_version = {5, 1, 0},
+      .max_gcc_version = {6, 5, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      default_option::opt_levels_2_plus, "fipa-icf", nullptr, false,
+      .min_gcc_version = {5, 1, 0},
+    },
+    {
+      default_option::opt_levels_2_plus, "fipa-ra", nullptr, false,
+      .min_gcc_version = {5, 1, 0},
+    },
+    { default_option::opt_levels_2_plus, "fipa-sra", nullptr, false },
+    {
+      default_option::opt_levels_2_plus, "fipa-vrp", nullptr, false,
+      .min_gcc_version = {7, 1, 0},
+    },
+    {
+      default_option::opt_levels_2_plus, "fisolate-erroneous-paths-dereference",
+      nullptr, false,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      default_option::opt_levels_2_plus, "flra-remat", nullptr, false,
+      .min_gcc_version = {5, 1, 0},
+    },
+    {
+      default_option::opt_levels_2_plus, "foptimize-sibling_calls",
+      nullptr, false
+    },
+    { default_option::opt_levels_2_plus, "fpartial-inlining", nullptr, false },
+    { default_option::opt_levels_2_plus, "fpeephole2", nullptr, false },
+    {
+      default_option::opt_levels_2_plus, "fregmove", nullptr, false,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    { default_option::opt_levels_2_plus, "freorder-functions", nullptr, false },
+    {
+      default_option::opt_levels_2_plus, "frerun-cse-after-loop", nullptr, false
+    },
+    { default_option::opt_levels_2_plus, "fschedule-insns2", nullptr, false },
+    { default_option::opt_levels_2_plus, "fstrict-aliasing", nullptr, false },
+    {
+      default_option::opt_levels_2_plus, "fstrict-overflow", nullptr, false,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      default_option::opt_levels_2_plus, "fstore-merging", nullptr, false,
+      .min_gcc_version = {7, 1, std::numeric_limits<unsigned int>::max()},
+    },
+    { default_option::opt_levels_2_plus, "fthread-jumps", nullptr, false },
+    { default_option::opt_levels_2_plus, "ftree-pre", nullptr, false },
+    {
+      default_option::opt_levels_2_plus, "ftree-switch-conversion",
+      nullptr, false
+    },
+    { default_option::opt_levels_2_plus, "ftree-tail-merge", nullptr, false },
+    { default_option::opt_levels_2_plus, "ftree-vrp", nullptr, false },
+    {
+      default_option::opt_levels_2_plus, "fvect-cost-model", "cheap", false,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      default_option::opt_levels_2_plus, "falign-functions",
+      nullptr, false,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {8, 3, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      default_option::opt_levels_2_plus_speed_only, "falign-functions",
+      nullptr, false,
+      .min_gcc_version = {9, 1, 0},
+    },
+    {
+      default_option::opt_levels_2_plus, "falign-jumps",
+      nullptr, false,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {8, 3, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      default_option::opt_levels_2_plus_speed_only, "falign-jumps",
+      nullptr, false,
+      .min_gcc_version = {9, 1, 0},
+    },
+    {
+      default_option::opt_levels_2_plus, "falign-labels",
+      nullptr, false,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {8, 3, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      default_option::opt_levels_2_plus_speed_only, "falign-labels",
+      nullptr, false,
+      .min_gcc_version = {9, 1, 0},
+    },
+    {
+      default_option::opt_levels_2_plus, "falign-loops",
+      nullptr, false,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {8, 3, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      default_option::opt_levels_2_plus_speed_only, "falign-loops",
+      nullptr, false,
+      .min_gcc_version = {9, 1, 0},
+    },
+    {
+      default_option::opt_levels_2_plus_speed_only, "foptimize-strlen",
+      nullptr, false
+    },
+    {
+      default_option::opt_levels_2_plus_speed_only, "freorder-blocks-algorithm",
+      "stc", false,
+      .min_gcc_version = {6, 1, 0},
+    },
+    {
+      default_option::opt_levels_2_plus_speed_only, "fschedule-insns",
+      nullptr, false
+    },
+    {
+      default_option::opt_levels_3_plus_and_size, "finline-functions",
+      nullptr, false
+    },
+    { default_option::opt_levels_3_plus, "fgcse-after-reload", nullptr, false },
+    { default_option::opt_levels_3_plus, "fipa-cp-clone", nullptr, false },
+    {
+      default_option::opt_levels_3_plus, "floop-interchange", nullptr, false,
+      .min_gcc_version = {8, 1, 0},
+    },
+    {
+      default_option::opt_levels_3_plus, "floop-unroll-and-jam", nullptr, false,
+      .min_gcc_version = {8, 1, 0},
+    },
+    {
+      default_option::opt_levels_3_plus, "fpeel-loops", nullptr, false,
+      .min_gcc_version = {7, 1, 0},
+    },
+    {
+      default_option::opt_levels_3_plus, "fpredictive-commoning", nullptr, false
+    },
+    {
+      default_option::opt_levels_3_plus, "fsplit-loops", nullptr, false,
+      .min_gcc_version = {7, 1, 0},
+    },
+    {
+      default_option::opt_levels_3_plus, "fsplit-paths", nullptr, false,
+      .min_gcc_version = {6, 1, 0},
+    },
+    {
+      default_option::opt_levels_3_plus, "ftree-loop-distribute-patterns",
+      nullptr, false
+    },
+    {
+      default_option::opt_levels_3_plus, "ftree-loop-distribution",
+      nullptr, false,
+      .min_gcc_version = {8, 1, 0},
+    },
+    {
+      default_option::opt_levels_3_plus, "ftree-loop-vectorize", nullptr, false,
+      .min_gcc_version = {4, 9, 0},
+    },
+    { default_option::opt_levels_3_plus, "ftree-partial-pre", nullptr, false },
+    {
+      default_option::opt_levels_3_plus, "ftree-slp-vectorize", nullptr, false,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      default_option::opt_levels_3_plus, "ftree-vectorize", nullptr, false,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    { default_option::opt_levels_3_plus, "funswitch-loops", nullptr, false },
+    {
+      default_option::opt_levels_3_plus, "fvect-cost-model", nullptr, false,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      default_option::opt_levels_3_plus, "fvect-cost-model", "dynamic", false,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      default_option::opt_levels_3_plus, "fversion-loops-for-strides",
+      nullptr, false,
+      .min_gcc_version = {9, 1, 0},
+    },
+    { default_option::opt_levels_fast, "ffast-math", nullptr, false },
+
+    { default_option::opt_levels_none }
+  };
+
+  _maybe_default_options(*default_options_table, p, opt_table_arch);
+  _maybe_default_options(this->_arch_get_option_optimization_table(), p,
+			 opt_table_arch);
+}
+
+void target_gcc::
+_maybe_default_options(const struct default_option &table,
+		       const gcc_cmdline_parser &p,
+		       const gcc_cmdline_parser::option &opt_table_arch)
+{
+  for (const default_option *default_opt = &table;
+       default_opt->levels != default_option::opt_levels_none; ++default_opt) {
+    if (!(default_opt->min_gcc_version <= _gcc_version &&
+	  _gcc_version <= default_opt->max_gcc_version)) {
+      continue;
+    }
+
+    const gcc_cmdline_parser::option *o;
+    const gcc_cmdline_parser::option *t;
+    std::tie(o, t) = p.find_option(default_opt->name);
+    assert(o);
+
+    const unsigned int level = _opts_common.optimize;
+    const bool size = _opts_common.optimize_size;
+    const bool fast = _opts_common.optimize_fast;
+    const bool debug = _opts_common.optimize_debug;
+
+    bool enabled = false;
+    switch (default_opt->levels) {
+    case default_option::opt_levels_none:
+      assert(0);
+      __builtin_unreachable();
+      break;
+
+    case default_option::opt_levels_all:
+      enabled = true;
+      break;
+
+    case default_option::opt_levels_0_only:
+      enabled = (level == 0);
+      break;
+
+    case default_option::opt_levels_1_plus:
+      enabled = (level >= 1);
+      break;
+
+    case default_option::opt_levels_1_plus_speed_only:
+      enabled = (level >= 1 && !size && !debug);
+      break;
+
+    case default_option::opt_levels_1_plus_not_debug:
+      enabled = (level >= 1 && !debug);
+      break;
+
+    case default_option::opt_levels_2_plus:
+      enabled = (level >= 2);
+      break;
+
+    case default_option::opt_levels_2_plus_speed_only:
+      enabled = (level >= 2 && !size && !debug);
+      break;
+
+    case default_option::opt_levels_3_plus:
+      enabled = (level >= 3);
+      break;
+
+    case default_option::opt_levels_3_plus_and_size:
+      enabled = (level >=3 || size);
+      break;
+
+    case default_option::opt_levels_size:
+      enabled = size;
+      break;
+
+    case default_option::opt_levels_fast:
+      enabled = fast;
+      break;
+    }
+
+    if (enabled) {
+      assert (!default_opt->negative || !o->reject_negative);
+      _handle_opt(t, o, default_opt->val, default_opt->negative,
+		  true, opt_table_arch);
+    } else if (!default_opt->val && !o->reject_negative) {
+      _handle_opt(t, o, nullptr, !default_opt->negative, true,
+		  opt_table_arch);
+    } else {
+      // For our purposes default_opt->val should imply
+      // o->reject_negative.
+      assert(o->reject_negative);
     }
   }
 }

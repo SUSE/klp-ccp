@@ -942,6 +942,29 @@ target_x86_64_gcc::_arch_get_opt_table() const noexcept
   return gcc_opts_i386;
 }
 
+const target_gcc::default_option&
+target_x86_64_gcc::_arch_get_option_optimization_table() const noexcept
+{
+  static const default_option default_options_table[] = {
+    { default_option::opt_levels_2_plus, "free", nullptr, false },
+    {
+      default_option::opt_levels_2_plus, "freorder-blocks-and-partition",
+      nullptr, false,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      default_option::opt_levels_2_plus, "freorder-blocks-algorithm", "stc",
+      false,
+      .min_gcc_version = {6, 1, 0},
+    },
+    { default_option::opt_levels_all, "fschedule-insns", nullptr, true },
+
+    { default_option::opt_levels_none }
+  };
+
+  return *default_options_table;
+}
+
 void target_x86_64_gcc::_arch_option_init_struct()
 {
   // This corresponds to GCC's ix86_option_init_struct().

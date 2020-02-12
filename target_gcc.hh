@@ -110,9 +110,38 @@ namespace klp
 	bool flag_undef;
       };
 
+      struct default_option
+      {
+	enum opt_levels
+	{
+	  opt_levels_none,
+	  opt_levels_all,
+	  opt_levels_0_only,
+	  opt_levels_1_plus,
+	  opt_levels_1_plus_speed_only,
+	  opt_levels_1_plus_not_debug,
+	  opt_levels_2_plus,
+	  opt_levels_2_plus_speed_only,
+	  opt_levels_3_plus,
+	  opt_levels_3_plus_and_size,
+	  opt_levels_size,
+	  opt_levels_fast,
+	};
+
+	opt_levels levels;
+	const char *name;
+	const char *val;
+	bool negative;
+	gcc_cmdline_parser::gcc_version min_gcc_version;
+	gcc_cmdline_parser::gcc_version max_gcc_version;
+      };
+
     private:
       virtual const gcc_cmdline_parser::option *
       _arch_get_opt_table() const noexcept = 0;
+
+      virtual const default_option&
+      _arch_get_option_optimization_table() const noexcept = 0;
 
       virtual void _arch_option_init_struct() = 0;
 
@@ -138,7 +167,14 @@ namespace klp
 	 const std::function<void(const std::string&)> &report_warning);
 
       void _default_options_optimization
-	(const gcc_cmdline_parser::decoded_opts_type &decoded_opts);
+	(const gcc_cmdline_parser::decoded_opts_type &decoded_opts,
+	 const gcc_cmdline_parser &p,
+	 const gcc_cmdline_parser::option &opt_table_arch);
+
+      void _maybe_default_options
+	(const struct default_option &table,
+	 const gcc_cmdline_parser &p,
+	 const gcc_cmdline_parser::option &opt_table_arch);
 
       void
       _handle_opt(const gcc_cmdline_parser::option * const opt_table,
