@@ -3177,7 +3177,7 @@
 },
 {
   "ansi",
-  opt_code_c_family_unused,
+  opt_code_c_family_ansi,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4894,7 +4894,7 @@
 },
 {
   "std=c++11",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_cxx11,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4913,7 +4913,7 @@
 },
 {
   "std=c++14",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_cxx14,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4936,7 +4936,7 @@
 },
 {
   "std=c++17",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_cxx17,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4947,7 +4947,7 @@
 },
 {
   "std=c++1y",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_cxx1y,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4970,7 +4970,7 @@
 },
 {
   "std=c++1z",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_cxx1z,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -4993,7 +4993,7 @@
 },
 {
   "std=c++2a",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_cxx2a,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -5004,21 +5004,21 @@
 },
 {
   "std=c++98",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_cxx98,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "std=c11",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_c11,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "std=c17",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_c17,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -5049,7 +5049,7 @@
 },
 {
   "std=c2x",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_c2x,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -5069,14 +5069,14 @@
 },
 {
   "std=c90",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_c90,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "std=c99",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_c99,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -5110,7 +5110,7 @@
 },
 {
   "std=gnu++11",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_gnuxx11,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -5129,7 +5129,7 @@
 },
 {
   "std=gnu++14",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_gnuxx14,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -5152,7 +5152,7 @@
 },
 {
   "std=gnu++17",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_gnuxx17,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -5163,7 +5163,7 @@
 },
 {
   "std=gnu++1y",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_gnuxx1y,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -5186,7 +5186,7 @@
 },
 {
   "std=gnu++1z",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_gnuxx1z,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -5209,7 +5209,7 @@
 },
 {
   "std=gnu++2a",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_gnuxx2a,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
@@ -5220,21 +5220,21 @@
 },
 {
   "std=gnu++98",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_gnuxx98,
   (gcc_cmdline_parser::option::comp_cxx |
    gcc_cmdline_parser::option::comp_objcxx),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "std=gnu11",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_gnu11,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "std=gnu17",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_gnu17,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -5265,7 +5265,7 @@
 },
 {
   "std=gnu2x",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_gnu2x,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -5285,14 +5285,14 @@
 },
 {
   "std=gnu90",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_gnu90,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "std=gnu99",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_gnu99,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
@@ -5317,7 +5317,7 @@
 },
 {
   "std=iso9899:199409",
-  opt_code_c_family_unused,
+  opt_code_c_family_std_iso9899_199409,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,

@@ -81,7 +81,8 @@ namespace klp
 
 	void init_options_struct() noexcept;
 	void c_lang_init_options_struct() noexcept;
-	void c_lang_init_options() noexcept;
+	void c_lang_init_options(const gcc_cmdline_parser::gcc_version &ver)
+	  noexcept;
 
 	void handle_opt(const gcc_cmdline_parser::option * const o,
 			const char *val, const bool negative,
@@ -93,6 +94,9 @@ namespace klp
 	void c_lang_post_options();
 
 	void process_options() noexcept;
+
+	bool is_iso() const noexcept;
+	bool is_std_geq_c99() const noexcept;
 
 	std::vector<std::string> pre_includes;
 	std::vector<std::string> include_dirs;
@@ -108,6 +112,30 @@ namespace klp
 	std::vector<macro_def_or_undef> macro_defs_and_undefs;
 
 	bool flag_undef;
+
+	enum class c_lang_kind
+	{
+	  clk_stdc89,
+	  clk_stdc94,
+	  clk_stdc99,
+	  clk_stdc11,
+	  clk_stdc17,
+	  clk_stdc2x,
+	  clk_gnuc89,
+	  clk_gnuc99,
+	  clk_gnuc11,
+	  clk_gnuc17,
+	  clk_gnuc2x,
+	};
+
+	c_lang_kind c_std;
+
+      private:
+	void _set_std_c89(const bool c94, const bool iso) noexcept;
+	void _set_std_c99(const bool iso) noexcept;
+	void _set_std_c11(const bool iso) noexcept;
+	void _set_std_c17(const bool iso) noexcept;
+	void _set_std_c2x(const bool iso) noexcept;
       };
 
       struct default_option

@@ -51,6 +51,37 @@ enum opt_code_c_family
   opt_code_c_family_iquote,
   opt_code_c_family_isystem,
   opt_code_c_family_undef,
+
+  opt_code_c_family_ansi,
+
+  opt_code_c_family_std_c90,
+  opt_code_c_family_std_iso9899_199409,
+  opt_code_c_family_std_c99,
+  opt_code_c_family_std_c11,
+  opt_code_c_family_std_c17,
+  opt_code_c_family_std_c2x,
+
+  opt_code_c_family_std_gnu90,
+  opt_code_c_family_std_gnu99,
+  opt_code_c_family_std_gnu11,
+  opt_code_c_family_std_gnu17,
+  opt_code_c_family_std_gnu2x,
+
+  opt_code_c_family_std_cxx98,
+  opt_code_c_family_std_cxx11,
+  opt_code_c_family_std_cxx14,
+  opt_code_c_family_std_cxx17,
+  opt_code_c_family_std_cxx1y,
+  opt_code_c_family_std_cxx1z,
+  opt_code_c_family_std_cxx2a,
+
+  opt_code_c_family_std_gnuxx98,
+  opt_code_c_family_std_gnuxx11,
+  opt_code_c_family_std_gnuxx14,
+  opt_code_c_family_std_gnuxx17,
+  opt_code_c_family_std_gnuxx1y,
+  opt_code_c_family_std_gnuxx1z,
+  opt_code_c_family_std_gnuxx2a,
 };
 
 static gcc_cmdline_parser::option gcc_opt_table_c_family[] = {
@@ -200,7 +231,7 @@ void target_gcc::_c_lang_init_options() noexcept
 {
   // Thist corresponds to GCC's c_common_init().
   _opts_common.c_lang_init_options_struct();
-  _opts_c_family.c_lang_init_options();
+  _opts_c_family.c_lang_init_options(_gcc_version);
 }
 
 void target_gcc::
@@ -883,7 +914,7 @@ void target_gcc::opts_common::process_options()
 
 
 target_gcc::opts_c_family::opts_c_family() noexcept
-  : flag_undef(false)
+  : flag_undef(false), c_std(c_lang_kind::clk_gnuc89)
 {}
 
 void target_gcc::opts_c_family::init_options_struct() noexcept
@@ -898,10 +929,20 @@ void target_gcc::opts_c_family::c_lang_init_options_struct() noexcept
   // which corresponds to GCC's c_common_init_options_struct().
 }
 
-void target_gcc::opts_c_family::c_lang_init_options() noexcept
+void target_gcc::opts_c_family::
+c_lang_init_options(const gcc_cmdline_parser::gcc_version &ver)
+  noexcept
 {
   // This gets called from target_gcc::_c_lang_init_options() which
   // corresponds to GCC's c_common_init_options().
+  using gcc_version = gcc_cmdline_parser::gcc_version;
+
+  if (gcc_version{8, 1, 0} <= ver)
+    _set_std_c17(false);
+  else if (gcc_version{5, 1, 0} <= ver)
+    _set_std_c11(false);
+  else
+    _set_std_c89(false, false);
 }
 
 void target_gcc::
@@ -954,6 +995,84 @@ opts_c_family::handle_opt(const gcc_cmdline_parser::option * const o,
   case opt_code_c_family_undef:
     flag_undef = true;
     break;
+
+  case opt_code_c_family_ansi:
+    _set_std_c89(false, true);
+    break;
+
+  case opt_code_c_family_std_c90:
+    _set_std_c89(false, true);
+    break;
+
+  case opt_code_c_family_std_iso9899_199409:
+    _set_std_c89(true, true);
+    break;
+
+  case opt_code_c_family_std_c99:
+    _set_std_c99(true);
+    break;
+
+  case opt_code_c_family_std_c11:
+    _set_std_c11(true);
+    break;
+
+  case opt_code_c_family_std_c17:
+    _set_std_c17(true);
+    break;
+
+  case opt_code_c_family_std_c2x:
+    _set_std_c2x(true);
+    break;
+
+  case opt_code_c_family_std_gnu90:
+    _set_std_c89(false, false);
+    break;
+
+  case opt_code_c_family_std_gnu99:
+    _set_std_c99(false);
+    break;
+
+  case opt_code_c_family_std_gnu11:
+    _set_std_c11(false);
+    break;
+
+  case opt_code_c_family_std_gnu17:
+    _set_std_c17(false);
+    break;
+
+  case opt_code_c_family_std_gnu2x:
+    _set_std_c2x(false);
+    break;
+
+  case opt_code_c_family_std_cxx98:
+    /* fall through */
+  case opt_code_c_family_std_cxx11:
+    /* fall through */
+  case opt_code_c_family_std_cxx14:
+    /* fall through */
+  case opt_code_c_family_std_cxx17:
+    /* fall through */
+  case opt_code_c_family_std_cxx1y:
+    /* fall through */
+  case opt_code_c_family_std_cxx1z:
+    /* fall through */
+  case opt_code_c_family_std_cxx2a:
+    /* fall through */
+  case opt_code_c_family_std_gnuxx98:
+    /* fall through */
+  case opt_code_c_family_std_gnuxx11:
+    /* fall through */
+  case opt_code_c_family_std_gnuxx14:
+    /* fall through */
+  case opt_code_c_family_std_gnuxx17:
+    /* fall through */
+  case opt_code_c_family_std_gnuxx1y:
+    /* fall through */
+  case opt_code_c_family_std_gnuxx1z:
+    /* fall through */
+  case opt_code_c_family_std_gnuxx2a:
+    throw cmdline_except{"C++ standards not supported"};
+    break;
   }
 }
 
@@ -975,6 +1094,95 @@ void target_gcc::opts_c_family::process_options() noexcept
   // corresponds to GCC's process_options().
 }
 
+bool target_gcc::opts_c_family::is_iso() const noexcept
+{
+  switch (c_std) {
+  case c_lang_kind::clk_stdc89:
+    /* fall through */
+  case c_lang_kind::clk_stdc94:
+    /* fall through */
+  case c_lang_kind::clk_stdc99:
+    /* fall through */
+  case c_lang_kind::clk_stdc11:
+    /* fall through */
+  case c_lang_kind::clk_stdc17:
+    /* fall through */
+  case c_lang_kind::clk_stdc2x:
+    return true;
+
+  case c_lang_kind::clk_gnuc89:
+    /* fall through */
+  case c_lang_kind::clk_gnuc99:
+    /* fall through */
+  case c_lang_kind::clk_gnuc11:
+    /* fall through */
+  case c_lang_kind::clk_gnuc17:
+    /* fall through */
+  case c_lang_kind::clk_gnuc2x:
+    return false;
+  }
+}
+
+bool target_gcc::opts_c_family::is_std_geq_c99() const noexcept
+{
+  switch (c_std) {
+  case c_lang_kind::clk_stdc89:
+    /* fall through */
+  case c_lang_kind::clk_gnuc89:
+    /* fall through */
+    return false;
+
+  case c_lang_kind::clk_stdc94:
+    /* fall through */
+  case c_lang_kind::clk_stdc99:
+    /* fall through */
+  case c_lang_kind::clk_stdc11:
+    /* fall through */
+  case c_lang_kind::clk_stdc17:
+    /* fall through */
+  case c_lang_kind::clk_stdc2x:
+    /* fall through */
+  case c_lang_kind::clk_gnuc99:
+    /* fall through */
+  case c_lang_kind::clk_gnuc11:
+    /* fall through */
+  case c_lang_kind::clk_gnuc17:
+    /* fall through */
+  case c_lang_kind::clk_gnuc2x:
+    return true;
+  }
+}
+
+void target_gcc::opts_c_family::_set_std_c89(const bool c94, const bool iso)
+  noexcept
+{
+  if (c94) {
+    c_std = c_lang_kind::clk_stdc94;
+    return;
+  }
+
+  c_std = iso ? c_lang_kind::clk_stdc89 : c_lang_kind::clk_gnuc89;
+}
+
+void target_gcc::opts_c_family::_set_std_c99(const bool iso) noexcept
+{
+  c_std = iso ? c_lang_kind::clk_stdc99 : c_lang_kind::clk_gnuc99;
+}
+
+void target_gcc::opts_c_family::_set_std_c11(const bool iso) noexcept
+{
+  c_std = iso ? c_lang_kind::clk_stdc11 : c_lang_kind::clk_gnuc11;
+}
+
+void target_gcc::opts_c_family::_set_std_c17(const bool iso) noexcept
+{
+  c_std = iso ? c_lang_kind::clk_stdc17 : c_lang_kind::clk_gnuc17;
+}
+
+void target_gcc::opts_c_family::_set_std_c2x(const bool iso) noexcept
+{
+  c_std = iso ? c_lang_kind::clk_stdc2x : c_lang_kind::clk_gnuc2x;
+}
 
 gcc_cmdline_parser::gcc_version
 target_gcc::_parse_version(const char * const version)
