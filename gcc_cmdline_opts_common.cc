@@ -1498,7 +1498,7 @@
 },
 {
   "fassociative-math",
-  opt_code_common_unused,
+  opt_code_common_fassociative_math,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -2023,7 +2023,7 @@
 },
 {
   "fexcess-precision=",
-  opt_code_common_unused,
+  opt_code_common_fexcess_precision,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -2036,7 +2036,7 @@
 },
 {
   "ffast-math",
-  opt_code_common_unused,
+  opt_code_common_ffast_math,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -2058,7 +2058,7 @@
 },
 {
   "ffinite-math-only",
-  opt_code_common_unused,
+  opt_code_common_ffinite_math_only,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -2089,7 +2089,7 @@
 },
 {
   "ffp-contract=",
-  opt_code_common_unused,
+  opt_code_common_ffp_contract,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -2830,7 +2830,7 @@
 },
 {
   "fmath-errno",
-  opt_code_common_unused,
+  opt_code_common_fmath_errno,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -3026,7 +3026,7 @@
 },
 {
   "fpermitted-flt-eval-methods=",
-  opt_code_common_unused,
+  opt_code_common_fpermitted_flt_eval_methods,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -3208,7 +3208,7 @@
 },
 {
   "freciprocal-math",
-  opt_code_common_unused,
+  opt_code_common_freciprocal_math,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -3641,13 +3641,13 @@
 },
 {
   "fsignaling-nans",
-  opt_code_common_unused,
+  opt_code_common_fsignaling_nans,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fsigned-zeros",
-  opt_code_common_unused,
+  opt_code_common_fsigned_zeros,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -3663,7 +3663,7 @@
 },
 {
   "fsingle-precision-constant",
-  opt_code_common_unused,
+  opt_code_common_fsingle_precision_constant,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -3941,7 +3941,7 @@
 },
 {
   "ftrapping-math",
-  opt_code_common_unused,
+  opt_code_common_ftrapping_math,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -4279,7 +4279,7 @@
 },
 {
   "funsafe-math-optimizations",
-  opt_code_common_unused,
+  opt_code_common_funsafe_math_optimizations,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },

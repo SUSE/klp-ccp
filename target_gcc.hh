@@ -48,6 +48,8 @@ namespace klp
       { return _gcc_version; }
 
     protected:
+      struct opts_c_family;
+
       struct opts_common
       {
 	opts_common() noexcept;
@@ -63,7 +65,9 @@ namespace klp
 
 	void finish_options() noexcept;
 
-	void c_lang_post_options() noexcept;
+	void c_lang_post_options(const gcc_cmdline_parser::gcc_version &ver,
+				 const opts_c_family &c_opts)
+	  noexcept;
 
 	void process_options();
 
@@ -73,6 +77,48 @@ namespace klp
 	bool optimize_debug;
 	bool optimize_fast;
 	bool optimize_size;
+
+	enum class excess_precision
+	{
+	  ep_default,
+	  ep_fast,
+	  ep_standard,
+	};
+
+	bool flag_associative_math;
+	excess_precision flag_excess_precision;
+	bool flag_finite_math_only;
+	bool flag_errno_math;
+	bool flag_reciprocal_math;
+	bool flag_signaling_nans;
+	bool flag_signed_zeros;
+	bool flag_trapping_math;
+	bool flag_unsafe_math_optimizations;
+
+	bool fast_math_flags_set_p() const noexcept;
+
+	enum class fp_contract_mode
+	{
+	  fcm_off,
+	  fcm_fast,
+	};
+	fp_contract_mode flag_fp_contract_mode;
+	bool flag_fp_contract_mode_set;
+
+	enum class permitted_flt_eval_methods
+	{
+	  pfem_default,
+	  pfem_c11,
+	  pfem_ts_18661
+	};
+	permitted_flt_eval_methods flag_permitted_flt_eval_methods;
+	bool flag_permitted_flt_eval_methods_set;
+
+	bool flag_single_precision_constant;
+
+      private:
+	void _set_unsafe_math_optimizations_flags(const bool set) noexcept;
+	void _set_fast_math_flags(const bool set) noexcept;
       };
 
       struct opts_c_family

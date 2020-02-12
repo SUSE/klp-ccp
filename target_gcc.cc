@@ -32,6 +32,22 @@ enum opt_code_common
   opt_code_common_Ofast,
   opt_code_common_Og,
   opt_code_common_Os,
+
+  opt_code_common_fassociative_math,
+  opt_code_common_fexcess_precision,
+  opt_code_common_ffinite_math_only,
+  opt_code_common_fmath_errno,
+  opt_code_common_freciprocal_math,
+  opt_code_common_fsignaling_nans,
+  opt_code_common_fsigned_zeros,
+  opt_code_common_ftrapping_math,
+
+  opt_code_common_funsafe_math_optimizations,
+  opt_code_common_ffast_math,
+
+  opt_code_common_ffp_contract,
+  opt_code_common_fpermitted_flt_eval_methods,
+  opt_code_common_fsingle_precision_constant,
 };
 
 static gcc_cmdline_parser::option gcc_opt_table_common[] = {
@@ -827,13 +843,23 @@ void target_gcc::_process_options()
 void target_gcc::_c_lang_post_options()
 {
   // This corresponds to GCC's c_common_post_options().
-  _opts_common.c_lang_post_options();
+  _opts_common.c_lang_post_options(_gcc_version, _opts_c_family);
   _opts_c_family.c_lang_post_options();
 }
 
 target_gcc::opts_common::opts_common() noexcept
   : optimize(0), optimize_debug(false), optimize_fast(false),
-    optimize_size(false)
+    optimize_size(false), flag_associative_math(false),
+    flag_excess_precision(excess_precision::ep_default),
+    flag_finite_math_only(false), flag_errno_math(true),
+    flag_reciprocal_math(false), flag_signaling_nans(false),
+    flag_signed_zeros(true), flag_trapping_math(true),
+    flag_unsafe_math_optimizations(false),
+    flag_fp_contract_mode(fp_contract_mode::fcm_fast),
+    flag_fp_contract_mode_set(false),
+    flag_permitted_flt_eval_methods(permitted_flt_eval_methods::pfem_default),
+    flag_permitted_flt_eval_methods_set(false),
+    flag_single_precision_constant(false)
 {}
 
 void target_gcc::opts_common::init_options_struct() noexcept
@@ -891,6 +917,83 @@ handle_opt(const gcc_cmdline_parser::option * const o,
   case opt_code_common_Os:
     // Handled in pre-scan
     break;
+
+  case opt_code_common_fassociative_math:
+    flag_associative_math = !negative;
+    break;
+
+  case opt_code_common_fexcess_precision:
+    assert(val);
+    if (!std::strcmp(val, "standard")) {
+      flag_excess_precision = excess_precision::ep_standard;
+    } else if (!std::strcmp(val, "fast")) {
+      flag_excess_precision = excess_precision::ep_fast;
+    } else {
+      throw cmdline_except{"invalid parameter for -fexcess-precision"};
+    }
+    break;
+
+  case opt_code_common_ffinite_math_only:
+    flag_finite_math_only = !negative;
+    break;
+
+  case opt_code_common_fmath_errno:
+    flag_errno_math = !negative;
+    break;
+
+  case opt_code_common_freciprocal_math:
+    flag_reciprocal_math = !negative;
+    break;
+
+  case opt_code_common_fsignaling_nans:
+    flag_signaling_nans = !negative;
+    break;
+
+  case opt_code_common_fsigned_zeros:
+    flag_signed_zeros = !negative;
+    break;
+
+  case opt_code_common_ftrapping_math:
+    flag_trapping_math = !negative;
+    break;
+
+  case opt_code_common_funsafe_math_optimizations:
+    flag_unsafe_math_optimizations = !negative;
+    _set_unsafe_math_optimizations_flags(!negative);
+    break;
+
+  case opt_code_common_ffast_math:
+    _set_fast_math_flags(!negative);
+    break;
+
+  case opt_code_common_ffp_contract:
+    if (!std::strcmp(val, "off") || !std::strcmp(val, "on")) {
+      flag_fp_contract_mode = fp_contract_mode::fcm_off;
+    } else if (!std::strcmp(val, "fast")) {
+      flag_fp_contract_mode = fp_contract_mode::fcm_fast;
+    } else {
+      throw cmdline_except{"invalid value for -ffp-contract"};
+    }
+    if (!generated)
+      flag_fp_contract_mode_set = true;
+    break;
+
+  case opt_code_common_fpermitted_flt_eval_methods:
+    if (!std::strcmp(val, "c11")) {
+      flag_permitted_flt_eval_methods = permitted_flt_eval_methods::pfem_c11;
+    } else if (!std::strcmp(val, "ts-18661-3")) {
+      flag_permitted_flt_eval_methods =
+	permitted_flt_eval_methods::pfem_ts_18661;
+    } else {
+      throw cmdline_except{"invalid value for -fpermitted-flt-eval-methods"};
+    }
+    if (!generated)
+      flag_permitted_flt_eval_methods_set = true;
+    break;
+
+  case opt_code_common_fsingle_precision_constant:
+    flag_single_precision_constant = !negative;
+    break;
   }
 }
 
@@ -900,16 +1003,86 @@ void target_gcc::opts_common::finish_options() noexcept
   // corresponds to GCC's finish_options().
 }
 
-void target_gcc::opts_common::c_lang_post_options() noexcept
+void target_gcc::opts_common::
+c_lang_post_options(const gcc_cmdline_parser::gcc_version &ver,
+		    const opts_c_family &c_opts)
+  noexcept
 {
   // This gets called from target_gcc::_c_lang_post_options() which
   // corresponds to GCC's c_common_post_options().
+  using gcc_version = gcc_cmdline_parser::gcc_version;
+
+  if (flag_excess_precision == excess_precision::ep_default) {
+    if (c_opts.is_iso())
+      flag_excess_precision = excess_precision::ep_standard;
+    else
+      flag_excess_precision = excess_precision::ep_fast;
+  }
+
+  if (gcc_version{4, 9, 0} <= ver) {
+    if (c_opts.is_iso() &&
+	!flag_fp_contract_mode_set &&
+	!flag_unsafe_math_optimizations) {
+      flag_fp_contract_mode = fp_contract_mode::fcm_off;
+    }
+  }
+
+  // This code exists as of GCC 7.1.0. Before that, the
+  // flag_permitted_flt_eval_methods variable hadn't existed.
+  if (gcc_version{7, 1, 0} <= ver) {
+    if (!c_opts.is_iso() &&
+	!flag_permitted_flt_eval_methods_set) {
+      flag_permitted_flt_eval_methods =
+	permitted_flt_eval_methods::pfem_ts_18661;
+    } else {
+      flag_permitted_flt_eval_methods = permitted_flt_eval_methods::pfem_c11;
+    }
+  }
 }
 
 void target_gcc::opts_common::process_options()
 {
   // This gets called from target_gcc::_process_options() which
   // corresponds to GCC's process_options().
+  if (flag_signaling_nans)
+    flag_trapping_math = true;
+
+  if (flag_associative_math && (flag_trapping_math || flag_signed_zeros))
+    flag_associative_math = false;
+}
+
+bool target_gcc::opts_common::fast_math_flags_set_p() const noexcept
+{
+  return (!flag_trapping_math &&
+	  flag_unsafe_math_optimizations &&
+	  flag_finite_math_only &&
+	  !flag_signed_zeros &&
+	  !flag_errno_math &&
+	  flag_excess_precision == excess_precision::ep_fast);
+}
+
+void
+target_gcc::opts_common::_set_unsafe_math_optimizations_flags(const bool set)
+  noexcept
+{
+  flag_trapping_math = !set;
+  flag_signed_zeros = !set;
+  flag_associative_math = !set;
+  flag_reciprocal_math = !set;
+}
+
+void target_gcc::opts_common::_set_fast_math_flags(const bool set) noexcept
+{
+  flag_unsafe_math_optimizations = set;
+  _set_unsafe_math_optimizations_flags(set);
+
+  flag_finite_math_only = set;
+  flag_errno_math = !set;
+
+  if (set) {
+    flag_excess_precision = excess_precision::ep_fast;
+    flag_signaling_nans = false;
+  }
 }
 
 
