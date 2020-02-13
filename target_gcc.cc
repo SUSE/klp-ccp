@@ -57,6 +57,8 @@ enum opt_code_common
   opt_code_common_fPIE,
   opt_code_common_fpic,
   opt_code_common_fpie,
+
+  opt_code_common_fexceptions,
 };
 
 static gcc_cmdline_parser::option gcc_opt_table_common[] = {
@@ -873,7 +875,8 @@ target_gcc::opts_common::opts_common(const gcc_cmdline_parser::gcc_version &ver)
     flag_single_precision_constant(false),
     flag_abi_version(0), flag_leading_underscore(-1),
     flag_no_inline(false),
-    flag_pic(-1), flag_pie(-1)
+    flag_pic(-1), flag_pie(-1),
+    flag_exceptions(false)
 {
   using gcc_version = gcc_cmdline_parser::gcc_version;
 
@@ -893,6 +896,7 @@ void target_gcc::opts_common::c_lang_init_options_struct() noexcept
 {
   // This gets called from target_gcc::_c_lang_init_options_struct()
   // which corresponds to GCC's c_common_init_options_struct().
+  flag_exceptions = false;
 }
 
 void target_gcc::opts_common::c_lang_init_options() noexcept
@@ -1066,6 +1070,10 @@ handle_opt(const gcc_cmdline_parser::option * const o,
       flag_pie = 1;
     else
       flag_pie = 0;
+    break;
+
+  case opt_code_common_fexceptions:
+    flag_exceptions = !negative;
     break;
   }
 }
