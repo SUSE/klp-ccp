@@ -157,7 +157,123 @@ namespace klp
 	void option_override();
 
       private:
+	enum isa_flag
+	{
+	  isa_flag_3dnow,
+	  isa_flag_3dnow_a,
+	  isa_flag_64bit,
+	  isa_flag_abi_64,
+	  isa_flag_abi_x32,
+	  isa_flag_abm,
+	  isa_flag_adx,
+	  isa_flag_aes,
+	  isa_flag_avx,
+	  isa_flag_avx2,
+	  isa_flag_avx5124fmaps,
+	  isa_flag_avx5124vnniw,
+	  isa_flag_avx512bitalg,
+	  isa_flag_avx512bw,
+	  isa_flag_avx512cd,
+	  isa_flag_avx512dq,
+	  isa_flag_avx512er,
+	  isa_flag_avx512f,
+	  isa_flag_avx512ifma,
+	  isa_flag_avx512pf,
+	  isa_flag_avx512vbmi,
+	  isa_flag_avx512vbmi2,
+	  isa_flag_avx512vl,
+	  isa_flag_avx512vnni,
+	  isa_flag_avx512vpopcntdq,
+	  isa_flag_bmi,
+	  isa_flag_bmi2,
+	  isa_flag_cldemote,
+	  isa_flag_clflushopt,
+	  isa_flag_clwb,
+	  isa_flag_clzero,
+	  isa_flag_code16,
+	  isa_flag_crc32,
+	  isa_flag_cx16,
+	  isa_flag_f16c,
+	  isa_flag_fma,
+	  isa_flag_fma4,
+	  isa_flag_fsgsbase,
+	  isa_flag_fxsr,
+	  isa_flag_gfni,
+	  isa_flag_hle,
+	  isa_flag_lwp,
+	  isa_flag_lzcnt,
+	  isa_flag_mmx,
+	  isa_flag_movbe,
+	  isa_flag_movdir64b,
+	  isa_flag_movdiri,
+	  isa_flag_mwaitx,
+	  isa_flag_mpx,
+	  isa_flag_pclmul,
+	  isa_flag_pcommit,
+	  isa_flag_pconfig,
+	  isa_flag_pku,
+	  isa_flag_popcnt,
+	  isa_flag_prefetchwt1,
+	  isa_flag_prfchw,
+	  isa_flag_ptwrite,
+	  isa_flag_rdpid,
+	  isa_flag_rdrnd,
+	  isa_flag_rdseed,
+	  isa_flag_rtm,
+	  isa_flag_sahf,
+	  isa_flag_sgx,
+	  isa_flag_sha,
+	  isa_flag_shstk,
+	  isa_flag_sse,
+	  isa_flag_sse2,
+	  isa_flag_sse3,
+	  isa_flag_sse4_1,
+	  isa_flag_sse4_2,
+	  isa_flag_sse4a,
+	  isa_flag_ssse3,
+	  isa_flag_tbm,
+	  isa_flag_vaes,
+	  isa_flag_vpclmulqdq,
+	  isa_flag_waitpkg,
+	  isa_flag_wbnoinvd,
+	  isa_flag_xop,
+	  isa_flag_xsave,
+	  isa_flag_xsavec,
+	  isa_flag_xsaveopt,
+	  isa_flag_xsaves,
+
+	  _isa_flag_max,
+	};
+
+	typedef std::bitset<_isa_flag_max> _isa_flags_type;
+
+	static _isa_flags_type
+	_init_valid_isa_flags(const gcc_cmdline_parser::gcc_version &ver);
+
+	template <isa_flag b>
+	void __set_isa_flag(_isa_flags_type &flags) const noexcept;
+
+	template <isa_flag b>
+	void _set_isa_flag_explicit() noexcept;
+
+	template <isa_flag b>
+	void __unset_isa_flag(_isa_flags_type &flags, const bool set)
+	  const noexcept;
+
+	template <isa_flag b>
+	void _unset_isa_flag_explicit() noexcept;
+
+	template <isa_flag b>
+	void _set_isa_flag_user(const bool value, const bool generated)
+	  noexcept;
+
+
 	target_x86_64_gcc &_t;
+
+	const _isa_flags_type _valid_isa_flags;
+	_isa_flags_type _isa_flags;
+	_isa_flags_type _isa_flags_explicit;
+	_isa_flags_type _isa_flags_set;
 
 	struct _pta;
 

@@ -32,8 +32,95 @@ enum opt_code_i386
 {
   opt_code_i386_unused = 0,
 
+  opt_code_i386_m16,
+  opt_code_i386_m32,
+  opt_code_i386_m64,
+  opt_code_i386_mx32,
+
+  opt_code_i386_m3dnow,
+  opt_code_i386_m3dnowa,
+  opt_code_i386_mabm,
+  opt_code_i386_madx,
+  opt_code_i386_maes,
   opt_code_i386_march,
+  opt_code_i386_mavx,
+  opt_code_i386_mavx2,
+  opt_code_i386_mavx5124fmaps,
+  opt_code_i386_mavx5124vnniw,
+  opt_code_i386_mavx512bitalg,
+  opt_code_i386_mavx512bw,
+  opt_code_i386_mavx512cd,
+  opt_code_i386_mavx512dq,
+  opt_code_i386_mavx512er,
+  opt_code_i386_mavx512f,
+  opt_code_i386_mavx512ifma,
+  opt_code_i386_mavx512pf,
+  opt_code_i386_mavx512vbmi,
+  opt_code_i386_mavx512vbmi2,
+  opt_code_i386_mavx512vl,
+  opt_code_i386_mavx512vnni,
+  opt_code_i386_mavx512vpopcntdq,
+  opt_code_i386_mbmi,
+  opt_code_i386_mbmi2,
+  opt_code_i386_mcldemote,
+  opt_code_i386_mclflushopt,
+  opt_code_i386_mclwb,
+  opt_code_i386_mclzero,
+  opt_code_i386_mcrc32,
+  opt_code_i386_mcx16,
+  opt_code_i386_mf16c,
+  opt_code_i386_mfma,
+  opt_code_i386_mfma4,
+  opt_code_i386_mfsgsbase,
+  opt_code_i386_mfxsr,
+  opt_code_i386_mgeneral_regs_only,
+  opt_code_i386_mgfni,
+  opt_code_i386_mhle,
+  opt_code_i386_mlwp,
+  opt_code_i386_mlzcnt,
+  opt_code_i386_mmmx,
+  opt_code_i386_mmovbe,
+  opt_code_i386_mmovdir64b,
+  opt_code_i386_mmovdiri,
+  opt_code_i386_mmpx,
+  opt_code_i386_mmwaitx,
+  opt_code_i386_mno_sse4,
+  opt_code_i386_mpclmul,
+  opt_code_i386_mpcommit,
+  opt_code_i386_mpconfig,
+  opt_code_i386_mpku,
+  opt_code_i386_mpopcnt,
+  opt_code_i386_mprefetchwt1,
+  opt_code_i386_mprfchw,
+  opt_code_i386_mptwrite,
+  opt_code_i386_mrdpid,
+  opt_code_i386_mrdrnd,
+  opt_code_i386_mrdseed,
+  opt_code_i386_mrtm,
+  opt_code_i386_msahf,
+  opt_code_i386_msgx,
+  opt_code_i386_msha,
+  opt_code_i386_mshstk,
+  opt_code_i386_msse,
+  opt_code_i386_msse2,
+  opt_code_i386_msse3,
+  opt_code_i386_msse4,
+  opt_code_i386_msse4_1,
+  opt_code_i386_msse4_2,
+  opt_code_i386_msse4a,
+  opt_code_i386_mssse3,
+  opt_code_i386_mtbm,
   opt_code_i386_mtune,
+  opt_code_i386_mvaes,
+  opt_code_i386_mvzeroupper,
+  opt_code_i386_mvpclmulqdq,
+  opt_code_i386_mwaitpkg,
+  opt_code_i386_mwbnoinvd,
+  opt_code_i386_mxop,
+  opt_code_i386_mxsave,
+  opt_code_i386_mxsavec,
+  opt_code_i386_mxsaveopt,
+  opt_code_i386_mxsaves,
 };
 
 static gcc_cmdline_parser::option gcc_opt_table_i386[] = {
@@ -1090,13 +1177,673 @@ void target_x86_64_gcc::_arch_register_builtin_macros(preprocessor &pp) const
 target_x86_64_gcc::opts_x86::
 opts_x86(target_x86_64_gcc &t) noexcept
   : _t(t),
+    _valid_isa_flags(_init_valid_isa_flags(t.get_gcc_version())),
     _arch(nullptr), _tune(nullptr)
 {
+  // GCC's ix86_isa_flags is initialized with
+  // TARGET_64BIT_DEFAULT | TARGET_SUBTARGET_ISA_DEFAULT.
+  __set_isa_flag<isa_flag_64bit>(_isa_flags);
+  __set_isa_flag<isa_flag_abi_64>(_isa_flags);
 }
 
 void target_x86_64_gcc::opts_x86::option_init_struct() noexcept
 {
 
+}
+
+target_x86_64_gcc::opts_x86::_isa_flags_type target_x86_64_gcc::opts_x86::
+_init_valid_isa_flags(const gcc_cmdline_parser::gcc_version &ver)
+{
+  _isa_flags_type flags;
+  flags.set();
+
+  using gcc_version = gcc_cmdline_parser::gcc_version;
+
+  if (ver < gcc_version{4, 9, 0}) {
+    flags.reset(isa_flag_code16);
+    flags.reset(isa_flag_avx512cd);
+    flags.reset(isa_flag_avx512er);
+    flags.reset(isa_flag_avx512f);
+    flags.reset(isa_flag_avx512pf);
+    flags.reset(isa_flag_prefetchwt1);
+    flags.reset(isa_flag_sha);
+  }
+
+  if (ver < gcc_version{5, 1, 0}) {
+    flags.reset(isa_flag_avx512bw);
+    flags.reset(isa_flag_avx512dq);
+    flags.reset(isa_flag_avx512ifma);
+    flags.reset(isa_flag_avx512vbmi);
+    flags.reset(isa_flag_avx512vl);
+    flags.reset(isa_flag_clflushopt);
+    flags.reset(isa_flag_clwb);
+    flags.reset(isa_flag_mpx);
+    flags.reset(isa_flag_pcommit);
+    flags.reset(isa_flag_xsavec);
+    flags.reset(isa_flag_xsaves);
+  }
+
+  if (ver < gcc_version{5, 2, 0})
+    flags.reset(isa_flag_mwaitx);
+
+  if (ver.maj == 5 &&
+      gcc_version{5, 4, std::numeric_limits<unsigned int>::max()} < ver)
+    flags.reset(isa_flag_pcommit);
+
+  if (ver < gcc_version{6, 1, 0}) {
+    flags.reset(isa_flag_clzero);
+    flags.reset(isa_flag_pku);
+  }
+
+  if (gcc_version{6, 2, std::numeric_limits<unsigned int>::max()} < ver)
+    flags.reset(isa_flag_pcommit);
+
+  if (ver < gcc_version{7, 1, 0}) {
+    flags.reset(isa_flag_avx5124fmaps);
+    flags.reset(isa_flag_avx5124vnniw);
+    flags.reset(isa_flag_avx512vpopcntdq);
+    flags.reset(isa_flag_rdpid);
+    flags.reset(isa_flag_sgx);
+  }
+
+  if (ver < gcc_version{8, 1, 0}) {
+    flags.reset(isa_flag_avx512bitalg);
+    flags.reset(isa_flag_avx512vbmi2);
+    flags.reset(isa_flag_avx512vnni);
+    flags.reset(isa_flag_gfni);
+    flags.reset(isa_flag_movdir64b);
+    flags.reset(isa_flag_movdiri);
+    flags.reset(isa_flag_pconfig);
+    flags.reset(isa_flag_shstk);
+    flags.reset(isa_flag_vaes);
+    flags.reset(isa_flag_vpclmulqdq);
+    flags.reset(isa_flag_wbnoinvd);
+  }
+
+  if (ver < gcc_version{9, 1, 0}) {
+    flags.reset(isa_flag_cldemote);
+    flags.reset(isa_flag_ptwrite);
+    flags.reset(isa_flag_waitpkg);
+  } else {
+    flags.reset(isa_flag_mpx);
+  }
+
+  return flags;
+}
+
+// The following mimic the OPTION_MASK_ISA_<FOO>_SET #defines from the
+// GCC sources.
+template <target_x86_64_gcc::opts_x86::isa_flag b>
+void target_x86_64_gcc::opts_x86::__set_isa_flag(_isa_flags_type &flags)
+  const noexcept
+{
+  assert(_valid_isa_flags.test(b));
+  flags.set(b);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_3dnow>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_3dnow));
+  flags.set(isa_flag_3dnow);
+  __set_isa_flag<isa_flag_mmx>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_3dnow_a>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_3dnow_a));
+  flags.set(isa_flag_3dnow_a);
+  __set_isa_flag<isa_flag_3dnow>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_abm>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_abm));
+  flags.set(isa_flag_abm);
+  __set_isa_flag<isa_flag_popcnt>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_sse2>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_sse2));
+  flags.set(isa_flag_sse2);
+  __set_isa_flag<isa_flag_sse>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_aes>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_aes));
+  flags.set(isa_flag_aes);
+  __set_isa_flag<isa_flag_sse2>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_sse3>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_sse3));
+  flags.set(isa_flag_sse3);
+  __set_isa_flag<isa_flag_sse2>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_ssse3>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_ssse3));
+  flags.set(isa_flag_ssse3);
+  __set_isa_flag<isa_flag_sse3>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_sse4_1>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_sse4_1));
+  flags.set(isa_flag_sse4_1);
+  __set_isa_flag<isa_flag_ssse3>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_sse4_2>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_sse4_2));
+  flags.set(isa_flag_sse4_2);
+  __set_isa_flag<isa_flag_sse4_1>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_avx>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_avx));
+  flags.set(isa_flag_avx);
+  __set_isa_flag<isa_flag_sse4_2>(flags);
+  __set_isa_flag<isa_flag_xsave>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_avx2>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_avx2));
+  flags.set(isa_flag_avx2);
+  __set_isa_flag<isa_flag_avx>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_avx512f>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_avx512f));
+  flags.set(isa_flag_avx512f);
+  __set_isa_flag<isa_flag_avx2>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_avx512bitalg>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_avx512bitalg));
+  flags.set(isa_flag_avx512bitalg);
+  __set_isa_flag<isa_flag_avx512f>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_avx512bw>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_avx512bw));
+  flags.set(isa_flag_avx512bw);
+  __set_isa_flag<isa_flag_avx512f>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_avx512cd>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_avx512cd));
+  flags.set(isa_flag_avx512cd);
+  __set_isa_flag<isa_flag_avx512f>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_avx512dq>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_avx512dq));
+  flags.set(isa_flag_avx512dq);
+  __set_isa_flag<isa_flag_avx512f>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_avx512er>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_avx512er));
+  flags.set(isa_flag_avx512er);
+  __set_isa_flag<isa_flag_avx512f>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_avx512ifma>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_avx512ifma));
+  flags.set(isa_flag_avx512ifma);
+  __set_isa_flag<isa_flag_avx512f>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_avx512pf>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_avx512pf));
+  flags.set(isa_flag_avx512pf);
+  __set_isa_flag<isa_flag_avx512f>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_avx512vbmi>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_avx512vbmi));
+  flags.set(isa_flag_avx512vbmi);
+  __set_isa_flag<isa_flag_avx512bw>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_avx512vbmi2>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_avx512vbmi2));
+  flags.set(isa_flag_avx512vbmi2);
+  __set_isa_flag<isa_flag_avx512f>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_avx512vl>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_avx512vl));
+  flags.set(isa_flag_avx512vl);
+  __set_isa_flag<isa_flag_avx512f>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_avx512vnni>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_avx512vnni));
+  flags.set(isa_flag_avx512vnni);
+  __set_isa_flag<isa_flag_avx512f>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_avx512vpopcntdq>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_avx512vpopcntdq));
+  flags.set(isa_flag_avx512vpopcntdq);
+  __set_isa_flag<isa_flag_avx512f>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_f16c>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_f16c));
+  flags.set(isa_flag_f16c);
+  __set_isa_flag<isa_flag_avx>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_fma>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_fma));
+  flags.set(isa_flag_fma);
+  __set_isa_flag<isa_flag_avx>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_sse4a>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_sse4a));
+  flags.set(isa_flag_sse4a);
+  __set_isa_flag<isa_flag_sse3>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_fma4>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_fma4));
+  flags.set(isa_flag_fma4);
+  __set_isa_flag<isa_flag_sse4a>(flags);
+  __set_isa_flag<isa_flag_avx>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_pclmul>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_pclmul));
+  flags.set(isa_flag_pclmul);
+  __set_isa_flag<isa_flag_sse2>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_sha>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_sha));
+  flags.set(isa_flag_sha);
+  __set_isa_flag<isa_flag_sse2>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_xop>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_xop));
+  flags.set(isa_flag_xop);
+  __set_isa_flag<isa_flag_fma4>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_xsavec>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_xsavec));
+  flags.set(isa_flag_xsavec);
+  __set_isa_flag<isa_flag_xsave>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_xsaveopt>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_xsaveopt));
+  flags.set(isa_flag_xsaveopt);
+  __set_isa_flag<isa_flag_xsave>(flags);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__set_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_xsaves>
+			(_isa_flags_type &flags) const noexcept
+{
+  assert(_valid_isa_flags.test(isa_flag_xsaves));
+  flags.set(isa_flag_xsaves);
+  __set_isa_flag<isa_flag_xsave>(flags);
+}
+
+template <target_x86_64_gcc::opts_x86::isa_flag b>
+void target_x86_64_gcc::opts_x86::_set_isa_flag_explicit() noexcept
+{
+  assert(_valid_isa_flags.test(b));
+  __set_isa_flag<b>(_isa_flags);
+  // Record that the given flag had been set explicitly.
+  __set_isa_flag<b>(_isa_flags_explicit);
+}
+
+// The following mimic the OPTION_MASK_ISA_<FOO>_UNSET #defines from the
+// GCC sources.
+template <target_x86_64_gcc::opts_x86::isa_flag b>
+void target_x86_64_gcc::opts_x86::__unset_isa_flag(_isa_flags_type &flags,
+						   const bool set)
+  const noexcept
+{
+  flags.set(b, set);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__unset_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_3dnow>
+			(_isa_flags_type &flags, const bool set) const noexcept
+{
+  flags.set(isa_flag_3dnow, set);
+  __unset_isa_flag<isa_flag_3dnow_a>(flags, set);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__unset_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_avx512bw>
+			(_isa_flags_type &flags, const bool set) const noexcept
+{
+  flags.set(isa_flag_avx512bw, set);
+  __unset_isa_flag<isa_flag_avx512vbmi>(flags, set);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__unset_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_avx512f>
+			(_isa_flags_type &flags, const bool set) const noexcept
+{
+  flags.set(isa_flag_avx512f, set);
+  __unset_isa_flag<isa_flag_avx512bitalg>(flags, set);
+  __unset_isa_flag<isa_flag_avx512cd>(flags, set);
+  __unset_isa_flag<isa_flag_avx512dq>(flags, set);
+  __unset_isa_flag<isa_flag_avx512er>(flags, set);
+  __unset_isa_flag<isa_flag_avx512ifma>(flags, set);
+  __unset_isa_flag<isa_flag_avx512pf>(flags, set);
+  __unset_isa_flag<isa_flag_avx512vbmi2>(flags, set);
+  __unset_isa_flag<isa_flag_avx512vnni>(flags, set);
+  __unset_isa_flag<isa_flag_avx512vl>(flags, set);
+
+  using gcc_version = gcc_cmdline_parser::gcc_version;
+  if (gcc_version{8, 1, 0} <= _t.get_gcc_version()) {
+    // OPTION_MASK_ISA_AVX5124FMAPS, OPTION_MASK_ISA_AVX5124VNNIW and
+    // OPTION_MASK_ISA_AVX512VPOPCNTDQ have been added with GCC
+    // 7.1.0. However, they only became part of
+    // OPTION_MASK_ISA_AVX512F_UNSET with GCC 8.1.0. Before that
+    // version, they got explicly cleared as part of-mno-avx512f
+    // option handling. Adding these flags to
+    // OPTION_MASK_ISA_AVX512F_UNSET also covers the -mno-avx2,
+    // -mno-avx, ..., -mno-sse cases as well.
+    __unset_isa_flag<isa_flag_avx5124fmaps>(flags, set);
+    __unset_isa_flag<isa_flag_avx5124vnniw>(flags, set);
+    __unset_isa_flag<isa_flag_avx512vpopcntdq>(flags, set);
+  }
+
+  if (gcc_version{9, 1, 0} <= _t.get_gcc_version()) {
+    // This had been missing from OPTION_MASK_ISA_AVX512F_UNSET until
+    // GCC 9.1.0.
+    __unset_isa_flag<isa_flag_avx512ifma>(flags, set);
+  }
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__unset_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_avx2>
+			(_isa_flags_type &flags, const bool set) const noexcept
+{
+  flags.set(isa_flag_avx2, set);
+  __unset_isa_flag<isa_flag_avx512f>(flags, set);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__unset_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_fma4>
+			(_isa_flags_type &flags, const bool set) const noexcept
+{
+  flags.set(isa_flag_fma4, set);
+  __unset_isa_flag<isa_flag_xop>(flags, set);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__unset_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_xsave>
+			(_isa_flags_type &flags, const bool set) const noexcept
+{
+  using gcc_version = gcc_cmdline_parser::gcc_version;
+
+  flags.set(isa_flag_xsave, set);
+  __unset_isa_flag<isa_flag_xsaveopt>(flags, set);
+
+  if (gcc_version{8, 2, 0} <= _t.get_gcc_version()) {
+    // These had been added to OPTION_MASK_ISA_XSAVE_UNSET with GCC
+    // 8.2.0 only.
+    __unset_isa_flag<isa_flag_xsavec>(flags, set);
+    __unset_isa_flag<isa_flag_xsaves>(flags, set);
+  }
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__unset_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_avx>
+			(_isa_flags_type &flags, const bool set) const noexcept
+{
+  flags.set(isa_flag_avx, set);
+  __unset_isa_flag<isa_flag_avx2>(flags, set);
+  __unset_isa_flag<isa_flag_f16c>(flags, set);
+  __unset_isa_flag<isa_flag_fma>(flags, set);
+  __unset_isa_flag<isa_flag_fma4>(flags, set);
+  __unset_isa_flag<isa_flag_xsave>(flags, set);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__unset_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_mmx>
+			(_isa_flags_type &flags, const bool set) const noexcept
+{
+  flags.set(isa_flag_mmx, set);
+  __unset_isa_flag<isa_flag_3dnow>(flags, set);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__unset_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_sse4_2>
+			(_isa_flags_type &flags, const bool set) const noexcept
+{
+  flags.set(isa_flag_sse4_2, set);
+  __unset_isa_flag<isa_flag_avx>(flags, set);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__unset_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_sse4_1>
+			(_isa_flags_type &flags, const bool set) const noexcept
+{
+  flags.set(isa_flag_sse4_1, set);
+  __unset_isa_flag<isa_flag_sse4_2>(flags, set);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__unset_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_sse4a>
+			(_isa_flags_type &flags, const bool set) const noexcept
+{
+  flags.set(isa_flag_sse4a, set);
+  __unset_isa_flag<isa_flag_fma4>(flags, set);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__unset_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_ssse3>
+			(_isa_flags_type &flags, const bool set) const noexcept
+{
+  flags.set(isa_flag_ssse3, set);
+  __unset_isa_flag<isa_flag_sse4_1>(flags, set);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__unset_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_sse3>
+			(_isa_flags_type &flags, const bool set) const noexcept
+{
+  flags.set(isa_flag_sse3, set);
+  __unset_isa_flag<isa_flag_sse4a>(flags, set);
+  __unset_isa_flag<isa_flag_ssse3>(flags, set);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__unset_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_sse2>
+			(_isa_flags_type &flags, const bool set) const noexcept
+{
+  flags.set(isa_flag_sse2, set);
+  __unset_isa_flag<isa_flag_sse3>(flags, set);
+}
+
+template <>
+void target_x86_64_gcc::opts_x86::
+__unset_isa_flag<target_x86_64_gcc::opts_x86::isa_flag_sse>
+			(_isa_flags_type &flags, const bool set) const noexcept
+{
+  flags.set(isa_flag_sse, set);
+  __unset_isa_flag<isa_flag_sse2>(flags, set);
+}
+
+template <target_x86_64_gcc::opts_x86::isa_flag b>
+void target_x86_64_gcc::opts_x86::_unset_isa_flag_explicit() noexcept
+{
+  __unset_isa_flag<b>(_isa_flags, false);
+  // Record that the given flag had been unset explicitly.
+  __unset_isa_flag<b>(_isa_flags_explicit, true);
+  _isa_flags_explicit &= _valid_isa_flags;
+}
+
+template <target_x86_64_gcc::opts_x86::isa_flag b>
+void target_x86_64_gcc::opts_x86::_set_isa_flag_user(const bool value,
+						     const bool generated)
+  noexcept
+{
+  if (!_valid_isa_flags.test(b))
+    return;
+
+  if (!generated)
+    _isa_flags_set.set(b, true);
+
+  if (value)
+    _set_isa_flag_explicit<b>();
+  else
+    _unset_isa_flag_explicit<b>();
 }
 
 struct target_x86_64_gcc::opts_x86::_pta
@@ -2529,10 +3276,62 @@ handle_opt(const gcc_cmdline_parser::option * const o,
 	   const char *val, const bool negative,
 	   const bool generated)
 {
+  using gcc_version = gcc_cmdline_parser::gcc_version;
+
   assert(o);
 
   switch (o->code) {
   case opt_code_i386_unused:
+    break;
+
+  case opt_code_i386_m16:
+    if (!generated)
+      __set_isa_flag<isa_flag_code16>(_isa_flags_set);
+    __set_isa_flag<isa_flag_code16>(_isa_flags);
+    break;
+
+  case opt_code_i386_m32:
+    if (!generated)
+      __set_isa_flag<isa_flag_64bit>(_isa_flags_set);
+    __unset_isa_flag<isa_flag_64bit>(_isa_flags, false);
+    break;
+
+  case opt_code_i386_m64:
+    if (!generated)
+      __set_isa_flag<isa_flag_abi_64>(_isa_flags_set);
+    __set_isa_flag<isa_flag_abi_64>(_isa_flags);
+    break;
+
+  case opt_code_i386_mx32:
+    if (!generated)
+      __set_isa_flag<isa_flag_abi_x32>(_isa_flags_set);
+    __set_isa_flag<isa_flag_abi_x32>(_isa_flags);
+    break;
+
+  case opt_code_i386_m3dnow:
+    _set_isa_flag_user<isa_flag_3dnow>(!negative, generated);
+    break;
+
+  case opt_code_i386_m3dnowa:
+    if (_t.get_gcc_version() < gcc_version{7, 1, 0}) {
+      // Before GCC 7.1.0, ix86_handle_option() used to return false
+      // for this one, resulting in an "unrecognized option" error
+      // reported from GCC's from read_cmdline_option().
+      throw cmdline_except{"unrecognized gcc option '-m3dnowa'"};
+    }
+    _set_isa_flag_user<isa_flag_3dnow_a>(!negative, generated);
+    break;
+
+  case opt_code_i386_mabm:
+    _set_isa_flag_user<isa_flag_abm>(!negative, generated);
+    break;
+
+  case opt_code_i386_madx:
+    _set_isa_flag_user<isa_flag_adx>(!negative, generated);
+    break;
+
+  case opt_code_i386_maes:
+    _set_isa_flag_user<isa_flag_aes>(!negative, generated);
     break;
 
   case opt_code_i386_march:
@@ -2541,11 +3340,358 @@ handle_opt(const gcc_cmdline_parser::option * const o,
     _arch_string = val;
     break;
 
+  case opt_code_i386_mavx:
+    _set_isa_flag_user<isa_flag_avx>(!negative, generated);
+    break;
+
+  case opt_code_i386_mavx2:
+    _set_isa_flag_user<isa_flag_avx2>(!negative, generated);
+    break;
+
+  case opt_code_i386_mavx5124fmaps:
+    _set_isa_flag_user<isa_flag_avx5124fmaps>(!negative, generated);
+    if (!negative)
+      _set_isa_flag_explicit<isa_flag_avx512f>();
+    break;
+
+  case opt_code_i386_mavx5124vnniw:
+    _set_isa_flag_user<isa_flag_avx5124vnniw>(!negative, generated);
+    if (!negative)
+      _set_isa_flag_explicit<isa_flag_avx512f>();
+    break;
+
+  case opt_code_i386_mavx512bitalg:
+    _set_isa_flag_user<isa_flag_avx512bitalg>(!negative, generated);
+    break;
+
+  case opt_code_i386_mavx512bw:
+    _set_isa_flag_user<isa_flag_avx512bw>(!negative, generated);
+    break;
+
+  case opt_code_i386_mavx512cd:
+    _set_isa_flag_user<isa_flag_avx512cd>(!negative, generated);
+    break;
+
+  case opt_code_i386_mavx512dq:
+    _set_isa_flag_user<isa_flag_avx512dq>(!negative, generated);
+    break;
+
+  case opt_code_i386_mavx512er:
+    _set_isa_flag_user<isa_flag_avx512er>(!negative, generated);
+    break;
+
+  case opt_code_i386_mavx512f:
+    _set_isa_flag_user<isa_flag_avx512f>(!negative, generated);
+
+    if (negative && _t.get_gcc_version() < gcc_version{8, 1, 0}) {
+      // C.f. the comment in the
+      // __unset_isa_flag<isa_flag_avx512f>() specialization.
+      _unset_isa_flag_explicit<isa_flag_avx5124fmaps>();
+      _unset_isa_flag_explicit<isa_flag_avx5124vnniw>();
+      _unset_isa_flag_explicit<isa_flag_avx512vpopcntdq>();
+    }
+    break;
+
+  case opt_code_i386_mavx512ifma:
+    _set_isa_flag_user<isa_flag_avx512ifma>(!negative, generated);
+    break;
+
+  case opt_code_i386_mavx512pf:
+    _set_isa_flag_user<isa_flag_avx512pf>(!negative, generated);
+    break;
+
+  case opt_code_i386_mavx512vbmi:
+    _set_isa_flag_user<isa_flag_avx512vbmi>(!negative, generated);
+    break;
+
+  case opt_code_i386_mavx512vbmi2:
+    _set_isa_flag_user<isa_flag_avx512vbmi2>(!negative, generated);
+    break;
+
+  case opt_code_i386_mavx512vl:
+    _set_isa_flag_user<isa_flag_avx512vl>(!negative, generated);
+    break;
+
+  case opt_code_i386_mavx512vnni:
+    _set_isa_flag_user<isa_flag_avx512vnni>(!negative, generated);
+    break;
+
+  case opt_code_i386_mavx512vpopcntdq:
+    _set_isa_flag_user<isa_flag_avx512vpopcntdq>(!negative, generated);
+    break;
+
+  case opt_code_i386_mbmi:
+    _set_isa_flag_user<isa_flag_bmi>(!negative, generated);
+    break;
+
+  case opt_code_i386_mbmi2:
+    _set_isa_flag_user<isa_flag_bmi2>(!negative, generated);
+    break;
+
+  case opt_code_i386_mcldemote:
+    _set_isa_flag_user<isa_flag_cldemote>(!negative, generated);
+    break;
+
+  case opt_code_i386_mclflushopt:
+    _set_isa_flag_user<isa_flag_clflushopt>(!negative, generated);
+    break;
+
+  case opt_code_i386_mclwb:
+    _set_isa_flag_user<isa_flag_clwb>(!negative, generated);
+    break;
+
+  case opt_code_i386_mclzero:
+    _set_isa_flag_user<isa_flag_clzero>(!negative, generated);
+    break;
+
+  case opt_code_i386_mcrc32:
+    _set_isa_flag_user<isa_flag_crc32>(!negative, generated);
+    break;
+
+  case opt_code_i386_mcx16:
+    _set_isa_flag_user<isa_flag_cx16>(!negative, generated);
+    break;
+
+  case opt_code_i386_mf16c:
+    _set_isa_flag_user<isa_flag_f16c>(!negative, generated);
+    break;
+
+  case opt_code_i386_mfma:
+    _set_isa_flag_user<isa_flag_fma>(!negative, generated);
+    break;
+
+  case opt_code_i386_mfma4:
+    _set_isa_flag_user<isa_flag_fma4>(!negative, generated);
+    break;
+
+  case opt_code_i386_mfsgsbase:
+    _set_isa_flag_user<isa_flag_fsgsbase>(!negative, generated);
+    break;
+
+  case opt_code_i386_mfxsr:
+    _set_isa_flag_user<isa_flag_fxsr>(!negative, generated);
+    break;
+
+  case opt_code_i386_mgeneral_regs_only:
+    assert(!negative);
+    _unset_isa_flag_explicit<isa_flag_mmx>();
+    _unset_isa_flag_explicit<isa_flag_sse>();
+    // MPX support had been available only between GCC versions >=
+    // 5.1.0 and < 9.1.0. _valid_isa_flags masking will handle it.
+    _unset_isa_flag_explicit<isa_flag_mpx>();
+    break;
+
+  case opt_code_i386_mgfni:
+    _set_isa_flag_user<isa_flag_gfni>(!negative, generated);
+    break;
+
+  case opt_code_i386_mhle:
+    // GCC's ix86_handle_option() never handled -mhle explictly. As a
+    // result, _isa_flags_explicit had never been set for this option.
+    if (_valid_isa_flags.test(isa_flag_hle)) {
+      if (!generated)
+	_isa_flags_set.set(isa_flag_hle, true);
+      _isa_flags.set(isa_flag_hle, !negative);
+    }
+    break;
+
+  case opt_code_i386_mlwp:
+    _set_isa_flag_user<isa_flag_lwp>(!negative, generated);
+    break;
+
+  case opt_code_i386_mlzcnt:
+    // Before GCC 4.9.0, -mlzcnt had not been handled explictly in
+    // ix86_handle_option(). As a consequence, _isa_flags_explicit had
+    // not been set.
+    if (gcc_version{4, 9, 0} <= _t.get_gcc_version()) {
+      _set_isa_flag_user<isa_flag_lzcnt>(!negative, generated);
+    } else {
+      // Only set _isa_flags and _isa_flags_set.
+      assert(_valid_isa_flags.test(isa_flag_lzcnt));
+      if (!generated)
+	_isa_flags_set.set(isa_flag_lzcnt, true);
+      _isa_flags.set(isa_flag_lzcnt, !negative);
+    }
+    break;
+
+  case opt_code_i386_mmmx:
+    _set_isa_flag_user<isa_flag_mmx>(!negative, generated);
+    break;
+
+  case opt_code_i386_mmovbe:
+    _set_isa_flag_user<isa_flag_movbe>(!negative, generated);
+    break;
+
+  case opt_code_i386_mmovdir64b:
+    _set_isa_flag_user<isa_flag_movdir64b>(!negative, generated);
+    break;
+
+  case opt_code_i386_mmovdiri:
+    _set_isa_flag_user<isa_flag_movdiri>(!negative, generated);
+    break;
+
+  case opt_code_i386_mmpx:
+    // GCC's ix86_handle_option() never handled -mmpx explictly. As a
+    // result, _isa_flags_explicit had never been set for this option
+    // (which doesn't matter anyway, because PTA_MPX had never been
+    //  set for any processor and -mmpx has been deprecated with GCC 9.1.0).
+    if (_valid_isa_flags.test(isa_flag_mpx)) {
+      if (!generated)
+	_isa_flags_set.set(isa_flag_mpx, true);
+      _isa_flags.set(isa_flag_mpx, !negative);
+    }
+    break;
+
+  case opt_code_i386_mmwaitx:
+    _set_isa_flag_user<isa_flag_mwaitx>(!negative, generated);
+    break;
+
+  case opt_code_i386_mno_sse4:
+    assert(!negative);
+    _set_isa_flag_user<isa_flag_sse4_1>(false, generated);
+    break;
+
+  case opt_code_i386_mpclmul:
+    _set_isa_flag_user<isa_flag_pclmul>(!negative, generated);
+    break;
+
+  case opt_code_i386_mpku:
+    _set_isa_flag_user<isa_flag_pku>(!negative, generated);
+    break;
+
+  case opt_code_i386_mpcommit:
+    _set_isa_flag_user<isa_flag_pcommit>(!negative, generated);
+    break;
+
+  case opt_code_i386_mpconfig:
+    _set_isa_flag_user<isa_flag_pconfig>(!negative, generated);
+    break;
+
+  case opt_code_i386_mpopcnt:
+    _set_isa_flag_user<isa_flag_popcnt>(!negative, generated);
+    break;
+
+  case opt_code_i386_mprefetchwt1:
+    _set_isa_flag_user<isa_flag_prefetchwt1>(!negative, generated);
+    break;
+
+  case opt_code_i386_mprfchw:
+    _set_isa_flag_user<isa_flag_prfchw>(!negative, generated);
+    break;
+
+  case opt_code_i386_mptwrite:
+    _set_isa_flag_user<isa_flag_ptwrite>(!negative, generated);
+    break;
+
+  case opt_code_i386_mrdpid:
+    _set_isa_flag_user<isa_flag_rdpid>(!negative, generated);
+    break;
+
+  case opt_code_i386_mrdrnd:
+    _set_isa_flag_user<isa_flag_rdrnd>(!negative, generated);
+    break;
+
+  case opt_code_i386_mrdseed:
+    _set_isa_flag_user<isa_flag_rdseed>(!negative, generated);
+    break;
+
+  case opt_code_i386_mrtm:
+    _set_isa_flag_user<isa_flag_rtm>(!negative, generated);
+    break;
+
+  case opt_code_i386_msgx:
+    _set_isa_flag_user<isa_flag_sgx>(!negative, generated);
+    break;
+
+  case opt_code_i386_msha:
+    _set_isa_flag_user<isa_flag_sha>(!negative, generated);
+    break;
+
+  case opt_code_i386_msahf:
+    _set_isa_flag_user<isa_flag_sahf>(!negative, generated);
+    break;
+
+  case opt_code_i386_mshstk:
+    _set_isa_flag_user<isa_flag_shstk>(!negative, generated);
+    break;
+
+  case opt_code_i386_msse:
+    _set_isa_flag_user<isa_flag_sse>(!negative, generated);
+    break;
+
+  case opt_code_i386_msse2:
+    _set_isa_flag_user<isa_flag_sse2>(!negative, generated);
+    break;
+
+  case opt_code_i386_msse3:
+    _set_isa_flag_user<isa_flag_sse3>(!negative, generated);
+    break;
+
+  case opt_code_i386_msse4:
+    assert(!negative);
+    _set_isa_flag_user<isa_flag_sse4_2>(true, generated);
+    break;
+
+  case opt_code_i386_msse4_1:
+    _set_isa_flag_user<isa_flag_sse4_1>(!negative, generated);
+    break;
+
+  case opt_code_i386_msse4_2:
+    _set_isa_flag_user<isa_flag_sse4_2>(!negative, generated);
+    break;
+
+  case opt_code_i386_msse4a:
+    _set_isa_flag_user<isa_flag_sse4a>(!negative, generated);
+    break;
+
+  case opt_code_i386_mssse3:
+    _set_isa_flag_user<isa_flag_ssse3>(!negative, generated);
+    break;
+
+  case opt_code_i386_mtbm:
+    _set_isa_flag_user<isa_flag_tbm>(!negative, generated);
+    break;
 
   case opt_code_i386_mtune:
     assert(val);
     assert(!generated);
     _tune_string = val;
+    break;
+
+  case opt_code_i386_mvaes:
+    _set_isa_flag_user<isa_flag_vaes>(!negative, generated);
+    break;
+
+  case opt_code_i386_mvpclmulqdq:
+    _set_isa_flag_user<isa_flag_vpclmulqdq>(!negative, generated);
+    break;
+
+  case opt_code_i386_mwaitpkg:
+    _set_isa_flag_user<isa_flag_waitpkg>(!negative, generated);
+    break;
+
+  case opt_code_i386_mwbnoinvd:
+    _set_isa_flag_user<isa_flag_wbnoinvd>(!negative, generated);
+    break;
+
+  case opt_code_i386_mxop:
+    _set_isa_flag_user<isa_flag_xop>(!negative, generated);
+    break;
+
+  case opt_code_i386_mxsave:
+    _set_isa_flag_user<isa_flag_xsave>(!negative, generated);
+    break;
+
+  case opt_code_i386_mxsavec:
+    _set_isa_flag_user<isa_flag_xsavec>(!negative, generated);
+    break;
+
+  case opt_code_i386_mxsaveopt:
+    _set_isa_flag_user<isa_flag_xsaveopt>(!negative, generated);
+    break;
+
+  case opt_code_i386_mxsaves:
+    _set_isa_flag_user<isa_flag_xsaves>(!negative, generated);
     break;
   }
 }
@@ -2556,6 +3702,28 @@ void target_x86_64_gcc::opts_x86::option_override()
 
   // This mimics GCC's ix86_option_override_internal for a biarch
   // compiler defaulting to 64bit ABI.
+  if (!_isa_flags.test(isa_flag_64bit)) {
+    _isa_flags.reset(isa_flag_abi_64);
+    _isa_flags.reset(isa_flag_abi_x32);
+
+  } else {
+    if (_isa_flags.test(isa_flag_abi_x32))
+      _isa_flags.reset(isa_flag_abi_64);
+    }
+  }
+
+  if (_isa_flags.test(isa_flag_abi_x32)) {
+    _isa_flags.set(isa_flag_64bit);
+    _isa_flags.reset(isa_flag_abi_64);
+  } else if (_isa_flags.test(isa_flag_code16)) {
+    _isa_flags.reset(isa_flag_64bit);
+    _isa_flags.reset(isa_flag_abi_x32);
+    _isa_flags.reset(isa_flag_abi_64);
+  } else if (_isa_flags.test(isa_flag_abi_64)) {
+    _isa_flags.set(isa_flag_64bit);
+    _isa_flags.reset(isa_flag_abi_x32);
+  }
+
   const gcc_version &ver = _t.get_gcc_version();
   bool tune_defaulted = false;
   bool tune_specified = false;
@@ -2575,7 +3743,10 @@ void target_x86_64_gcc::opts_x86::option_override()
       if (_tune_string == "generic" ||
 	  _tune_string == "x86-64" ||
 	  _tune_string == "i686") {
-	_tune_string = "generic64";
+	if (_isa_flags.test(isa_flag_64bit))
+	  _tune_string = "generic64";
+	else
+	  _tune_string = "generic32";
       }
     }
 
@@ -2586,7 +3757,10 @@ void target_x86_64_gcc::opts_x86::option_override()
     if (ver < gcc_version{4, 9, 0}) {
       if (_tune_string == "generic" ||
 	  _tune_string == "i686") {
-	_tune_string = "generic64";
+	if (_isa_flags.test(isa_flag_64bit))
+	  _tune_string = "generic64";
+	else
+	  _tune_string = "generic32";
 
       } else if (_tune_string == "generic64" ||
 		 _tune_string == "generic32") {
@@ -2599,7 +3773,7 @@ void target_x86_64_gcc::opts_x86::option_override()
 
   bool arch_specified = false;
   if (_arch_string.empty()) {
-    _arch_string = "x86-64";
+    _arch_string = _isa_flags.test(isa_flag_64bit) ? "x86-64" : "i386";
   } else {
     arch_specified = true;
   }
@@ -2621,6 +3795,162 @@ void target_x86_64_gcc::opts_x86::option_override()
     };
   } else if (!std::strcmp(_arch->name, "intel")) {
     throw cmdline_except{"\"intel\" CPU can be used only for -mtune switch"};
+  } else if (_isa_flags.test(isa_flag_64bit) &&
+	     !(pta_flags.test(_pta::pta_flag_64bit))) {
+    throw cmdline_except{"selected CPU doesn't support x86-64 instruction set"};
+  }
+
+  auto &&set_isa_flag_from_pta =
+    [&](const target_x86_64_gcc::opts_x86::isa_flag b) {
+      if (_valid_isa_flags.test(b) && !_isa_flags_explicit.test(b))
+	_isa_flags.set(b);
+    };
+  if (pta_flags.test(_pta::pta_flag_mmx))
+    set_isa_flag_from_pta(isa_flag_mmx);
+  if (pta_flags.test(_pta::pta_flag_3dnow))
+    set_isa_flag_from_pta(isa_flag_3dnow);
+  if (pta_flags.test(_pta::pta_flag_3dnow_a))
+    set_isa_flag_from_pta(isa_flag_3dnow_a);
+  if (pta_flags.test(_pta::pta_flag_sse))
+    set_isa_flag_from_pta(isa_flag_sse);
+  if (pta_flags.test(_pta::pta_flag_sse2))
+    set_isa_flag_from_pta(isa_flag_sse2);
+  if (pta_flags.test(_pta::pta_flag_sse3))
+    set_isa_flag_from_pta(isa_flag_sse3);
+  if (pta_flags.test(_pta::pta_flag_ssse3))
+    set_isa_flag_from_pta(isa_flag_ssse3);
+  if (pta_flags.test(_pta::pta_flag_sse4_1))
+    set_isa_flag_from_pta(isa_flag_sse4_1);
+  if (pta_flags.test(_pta::pta_flag_sse4_2))
+    set_isa_flag_from_pta(isa_flag_sse4_2);
+  if (pta_flags.test(_pta::pta_flag_avx))
+    set_isa_flag_from_pta(isa_flag_avx);
+  if (pta_flags.test(_pta::pta_flag_avx2))
+    set_isa_flag_from_pta(isa_flag_avx2);
+  if (pta_flags.test(_pta::pta_flag_fma))
+    set_isa_flag_from_pta(isa_flag_fma);
+  if (pta_flags.test(_pta::pta_flag_sse4a))
+    set_isa_flag_from_pta(isa_flag_sse4a);
+  if (pta_flags.test(_pta::pta_flag_fma4))
+    set_isa_flag_from_pta(isa_flag_fma4);
+  if (pta_flags.test(_pta::pta_flag_xop))
+    set_isa_flag_from_pta(isa_flag_xop);
+  if (pta_flags.test(_pta::pta_flag_lwp))
+    set_isa_flag_from_pta(isa_flag_lwp);
+  if (pta_flags.test(_pta::pta_flag_abm))
+    set_isa_flag_from_pta(isa_flag_abm);
+  if (pta_flags.test(_pta::pta_flag_bmi))
+    set_isa_flag_from_pta(isa_flag_bmi);
+  if (pta_flags.test(_pta::pta_flag_lzcnt) ||
+      pta_flags.test(_pta::pta_flag_abm)) {
+    set_isa_flag_from_pta(isa_flag_lzcnt);
+  }
+  if (pta_flags.test(_pta::pta_flag_tbm))
+    set_isa_flag_from_pta(isa_flag_tbm);
+  if (pta_flags.test(_pta::pta_flag_bmi2))
+    set_isa_flag_from_pta(isa_flag_bmi2);
+  if (pta_flags.test(_pta::pta_flag_cx16))
+    set_isa_flag_from_pta(isa_flag_cx16);
+  if (pta_flags.test(_pta::pta_flag_popcnt) ||
+      pta_flags.test(_pta::pta_flag_abm)) {
+    set_isa_flag_from_pta(isa_flag_popcnt);
+  }
+  if (_isa_flags.test(isa_flag_64bit) ||
+      pta_flags.test(_pta::pta_flag_no_sahf)) {
+    set_isa_flag_from_pta(isa_flag_sahf);
+  }
+  if (pta_flags.test(_pta::pta_flag_movbe))
+    set_isa_flag_from_pta(isa_flag_movbe);
+  if (pta_flags.test(_pta::pta_flag_aes))
+    set_isa_flag_from_pta(isa_flag_aes);
+  if (pta_flags.test(_pta::pta_flag_sha))
+    set_isa_flag_from_pta(isa_flag_sha);
+  if (pta_flags.test(_pta::pta_flag_pclmul))
+    set_isa_flag_from_pta(isa_flag_pclmul);
+  if (pta_flags.test(_pta::pta_flag_fsgsbase))
+    set_isa_flag_from_pta(isa_flag_fsgsbase);
+  if (pta_flags.test(_pta::pta_flag_rdrnd))
+    set_isa_flag_from_pta(isa_flag_rdrnd);
+  if (pta_flags.test(_pta::pta_flag_f16c))
+    set_isa_flag_from_pta(isa_flag_f16c);
+  if (pta_flags.test(_pta::pta_flag_rtm))
+    set_isa_flag_from_pta(isa_flag_rtm);
+  if (pta_flags.test(_pta::pta_flag_hle))
+    set_isa_flag_from_pta(isa_flag_hle);
+  if (pta_flags.test(_pta::pta_flag_prfchw))
+    set_isa_flag_from_pta(isa_flag_prfchw);
+  if (pta_flags.test(_pta::pta_flag_rdseed))
+    set_isa_flag_from_pta(isa_flag_rdseed);
+  if (pta_flags.test(_pta::pta_flag_adx))
+    set_isa_flag_from_pta(isa_flag_adx);
+  if (pta_flags.test(_pta::pta_flag_fxsr))
+    set_isa_flag_from_pta(isa_flag_fxsr);
+  if (pta_flags.test(_pta::pta_flag_xsave))
+    set_isa_flag_from_pta(isa_flag_xsave);
+  if (pta_flags.test(_pta::pta_flag_xsaveopt))
+    set_isa_flag_from_pta(isa_flag_xsaveopt);
+  if (pta_flags.test(_pta::pta_flag_avx512f))
+    set_isa_flag_from_pta(isa_flag_avx512f);
+  if (pta_flags.test(_pta::pta_flag_avx512er))
+    set_isa_flag_from_pta(isa_flag_avx512er);
+  if (pta_flags.test(_pta::pta_flag_avx512pf))
+    set_isa_flag_from_pta(isa_flag_avx512pf);
+  if (pta_flags.test(_pta::pta_flag_avx512cd))
+    set_isa_flag_from_pta(isa_flag_avx512cd);
+  if (pta_flags.test(_pta::pta_flag_prefetchwt1))
+    set_isa_flag_from_pta(isa_flag_prefetchwt1);
+  if (pta_flags.test(_pta::pta_flag_clwb))
+    set_isa_flag_from_pta(isa_flag_clwb);
+  if (pta_flags.test(_pta::pta_flag_clflushopt))
+    set_isa_flag_from_pta(isa_flag_clflushopt);
+  if (pta_flags.test(_pta::pta_flag_clzero))
+    set_isa_flag_from_pta(isa_flag_clzero);
+  if (pta_flags.test(_pta::pta_flag_xsavec))
+    set_isa_flag_from_pta(isa_flag_xsavec);
+  if (pta_flags.test(_pta::pta_flag_xsaves))
+    set_isa_flag_from_pta(isa_flag_xsaves);
+  if (pta_flags.test(_pta::pta_flag_avx512dq))
+    set_isa_flag_from_pta(isa_flag_avx512dq);
+  if (pta_flags.test(_pta::pta_flag_avx512bw))
+    set_isa_flag_from_pta(isa_flag_avx512bw);
+  if (pta_flags.test(_pta::pta_flag_avx512vl))
+    set_isa_flag_from_pta(isa_flag_avx512vl);
+  if (pta_flags.test(_pta::pta_flag_avx512vbmi))
+    set_isa_flag_from_pta(isa_flag_avx512vbmi);
+  if (pta_flags.test(_pta::pta_flag_avx512ifma))
+    set_isa_flag_from_pta(isa_flag_avx512ifma);
+  if (pta_flags.test(_pta::pta_flag_avx512vnni))
+    set_isa_flag_from_pta(isa_flag_avx512vnni);
+  if (pta_flags.test(_pta::pta_flag_gfni))
+    set_isa_flag_from_pta(isa_flag_gfni);
+  if (pta_flags.test(_pta::pta_flag_avx512vbmi2))
+    set_isa_flag_from_pta(isa_flag_avx512vbmi2);
+  if (pta_flags.test(_pta::pta_flag_vpclmulqdq))
+    set_isa_flag_from_pta(isa_flag_vpclmulqdq);
+  if (pta_flags.test(_pta::pta_flag_avx512bitalg))
+    set_isa_flag_from_pta(isa_flag_avx512bitalg);
+  if (pta_flags.test(_pta::pta_flag_avx5124vnniw))
+    set_isa_flag_from_pta(isa_flag_avx5124vnniw);
+  if (pta_flags.test(_pta::pta_flag_avx5124fmaps))
+    set_isa_flag_from_pta(isa_flag_avx5124fmaps);
+  if (pta_flags.test(_pta::pta_flag_avx512vpopcntdq))
+    set_isa_flag_from_pta(isa_flag_avx512vpopcntdq);
+  if (pta_flags.test(_pta::pta_flag_sgx))
+    set_isa_flag_from_pta(isa_flag_sgx);
+  if (pta_flags.test(_pta::pta_flag_vaes))
+    set_isa_flag_from_pta(isa_flag_vaes);
+  if (pta_flags.test(_pta::pta_flag_rdpid))
+    set_isa_flag_from_pta(isa_flag_rdpid);
+  if (pta_flags.test(_pta::pta_flag_pconfig))
+    set_isa_flag_from_pta(isa_flag_pconfig);
+  if (pta_flags.test(_pta::pta_flag_wbnoinvd))
+    set_isa_flag_from_pta(isa_flag_wbnoinvd);
+  if (pta_flags.test(_pta::pta_flag_ptwrite))
+    set_isa_flag_from_pta(isa_flag_ptwrite);
+  if (pta_flags.test(_pta::pta_flag_mwaitx))
+    set_isa_flag_from_pta(isa_flag_mwaitx);
+  if (pta_flags.test(_pta::pta_flag_pku))
+    set_isa_flag_from_pta(isa_flag_pku);
   }
 
   _tune = _pta::lookup(_tune_string.c_str(), ver);
@@ -2630,4 +3960,68 @@ void target_x86_64_gcc::opts_x86::option_override()
 
   _pta::pta_flags_type tune_pta_flags;
   _tune->apply_flags(tune_pta_flags, ver);
+  if (_isa_flags.test(isa_flag_64bit) &&
+      !(tune_pta_flags.test(_pta::pta_flag_64bit))) {
+    throw cmdline_except{"selected CPU doesn't support x86-64 instruction set"};
+  }
+
+  if (_isa_flags.test(isa_flag_64bit)) {
+    if (!arch_specified) {
+      // Set GCC's TARGET_SUBTARGET64_ISA_DEFAULT flags if not explicitly
+      // disabled.
+      if (!_isa_flags_explicit.test(isa_flag_mmx))
+	__set_isa_flag<isa_flag_mmx>(_isa_flags);
+      if (!_isa_flags_explicit.test(isa_flag_sse))
+	__set_isa_flag<isa_flag_sse>(_isa_flags);
+      if (!_isa_flags_explicit.test(isa_flag_sse2))
+	__set_isa_flag<isa_flag_sse2>(_isa_flags);
+    }
+
+  } else {
+    // GCC's default TARGET_SUBTARGET32_ISA_DEFAULT flags are empty.
+  }
+
+  if (_isa_flags.test(isa_flag_sse)) {
+    if (!_isa_flags_explicit.test(isa_flag_mmx))
+      _isa_flags.set(isa_flag_mmx);
+  }
+
+  if (gcc_version{4, 8, 0} < ver && ver <= gcc_version{4, 8, 5}) {
+    if (_isa_flags.test(isa_flag_3dnow)) {
+      if (!_isa_flags_explicit.test(isa_flag_prfchw))
+	_isa_flags.set(isa_flag_prfchw);
+    }
+  } else if (ver <=
+	     gcc_version{6, 2, std::numeric_limits<unsigned int>::max()}) {
+    if (_isa_flags.test(isa_flag_3dnow) ||
+	_isa_flags.test(isa_flag_prefetchwt1)) {
+      if (!_isa_flags_explicit.test(isa_flag_prfchw))
+	_isa_flags.set(isa_flag_prfchw);
+    }
+  }
+
+  if (_isa_flags.test(isa_flag_sse4_2) || _isa_flags.test(isa_flag_abm)) {
+    if (!_isa_flags_explicit.test(isa_flag_popcnt))
+      _isa_flags.set(isa_flag_popcnt);
+  }
+
+  if (_isa_flags.test(isa_flag_abm)) {
+    if (!_isa_flags_explicit.test(isa_flag_lzcnt))
+      _isa_flags.set(isa_flag_lzcnt);
+  }
+
+  if ((gcc_version{5, 5, 0} <= ver &&
+       ver <= gcc_version{5, 5, std::numeric_limits<unsigned int>::max()}) ||
+      (gcc_version{6, 5, 0} <= ver &&
+       ver <= gcc_version{6, 5, std::numeric_limits<unsigned int>::max()}) ||
+      gcc_version{7, 2, 0} <= ver) {
+    if (_isa_flags.test(isa_flag_code16)) {
+      if (!_isa_flags_explicit.test(isa_flag_bmi))
+	_isa_flags.reset(isa_flag_bmi);
+      if (!_isa_flags_explicit.test(isa_flag_bmi2))
+	_isa_flags.reset(isa_flag_bmi2);
+      if (!_isa_flags_explicit.test(isa_flag_tbm))
+	_isa_flags.reset(isa_flag_tbm);
+    }
+  }
 }

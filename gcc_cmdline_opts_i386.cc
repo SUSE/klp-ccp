@@ -25,7 +25,7 @@
 },
 {
   "m16",
-  opt_code_i386_unused,
+  opt_code_i386_m16,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -35,7 +35,7 @@
 },
 {
   "m32",
-  opt_code_i386_unused,
+  opt_code_i386_m32,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -44,19 +44,19 @@
 },
 {
   "m3dnow",
-  opt_code_i386_unused,
+  opt_code_i386_m3dnow,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "m3dnowa",
-  opt_code_i386_unused,
+  opt_code_i386_m3dnowa,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "m64",
-  opt_code_i386_unused,
+  opt_code_i386_m64,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -91,7 +91,7 @@
 },
 {
   "mabm",
-  opt_code_i386_unused,
+  opt_code_i386_mabm,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -110,13 +110,13 @@
 },
 {
   "madx",
-  opt_code_i386_unused,
+  opt_code_i386_madx,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "maes",
-  opt_code_i386_unused,
+  opt_code_i386_maes,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -182,13 +182,13 @@
 },
 {
   "mavx",
-  opt_code_i386_unused,
+  opt_code_i386_mavx,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "mavx2",
-  opt_code_i386_unused,
+  opt_code_i386_mavx2,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -206,7 +206,7 @@
 },
 {
   "mavx5124fmaps",
-  opt_code_i386_unused,
+  opt_code_i386_mavx5124fmaps,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -216,7 +216,7 @@
 },
 {
   "mavx5124vnniw",
-  opt_code_i386_unused,
+  opt_code_i386_mavx5124vnniw,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -226,7 +226,7 @@
 },
 {
   "mavx512bitalg",
-  opt_code_i386_unused,
+  opt_code_i386_mavx512bitalg,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -236,7 +236,7 @@
 },
 {
   "mavx512bw",
-  opt_code_i386_unused,
+  opt_code_i386_mavx512bw,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -246,7 +246,7 @@
 },
 {
   "mavx512cd",
-  opt_code_i386_unused,
+  opt_code_i386_mavx512cd,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -256,7 +256,7 @@
 },
 {
   "mavx512dq",
-  opt_code_i386_unused,
+  opt_code_i386_mavx512dq,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -266,7 +266,7 @@
 },
 {
   "mavx512er",
-  opt_code_i386_unused,
+  opt_code_i386_mavx512er,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -276,7 +276,7 @@
 },
 {
   "mavx512f",
-  opt_code_i386_unused,
+  opt_code_i386_mavx512f,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -286,7 +286,7 @@
 },
 {
   "mavx512ifma",
-  opt_code_i386_unused,
+  opt_code_i386_mavx512ifma,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -296,7 +296,7 @@
 },
 {
   "mavx512pf",
-  opt_code_i386_unused,
+  opt_code_i386_mavx512pf,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -306,7 +306,7 @@
 },
 {
   "mavx512vbmi",
-  opt_code_i386_unused,
+  opt_code_i386_mavx512vbmi,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -316,7 +316,7 @@
 },
 {
   "mavx512vbmi2",
-  opt_code_i386_unused,
+  opt_code_i386_mavx512vbmi2,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -326,7 +326,7 @@
 },
 {
   "mavx512vl",
-  opt_code_i386_unused,
+  opt_code_i386_mavx512vl,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -336,13 +336,13 @@
 },
 {
   "mavx512vnni",
-  opt_code_i386_unused,
+  opt_code_i386_mavx512vnni,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "mavx512vpopcntdq",
-  opt_code_i386_unused,
+  opt_code_i386_mavx512vpopcntdq,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -352,13 +352,13 @@
 },
 {
   "mbmi",
-  opt_code_i386_unused,
+  opt_code_i386_mbmi,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "mbmi2",
-  opt_code_i386_unused,
+  opt_code_i386_mbmi2,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -397,7 +397,7 @@
 },
 {
   "mcldemote",
-  opt_code_i386_unused,
+  opt_code_i386_mcldemote,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -407,7 +407,7 @@
 },
 {
   "mclflushopt",
-  opt_code_i386_unused,
+  opt_code_i386_mclflushopt,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -417,7 +417,7 @@
 },
 {
   "mclwb",
-  opt_code_i386_unused,
+  opt_code_i386_mclwb,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -427,7 +427,7 @@
 },
 {
   "mclzero",
-  opt_code_i386_unused,
+  opt_code_i386_mclzero,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -452,13 +452,13 @@
 },
 {
   "mcrc32",
-  opt_code_i386_unused,
+  opt_code_i386_mcrc32,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "mcx16",
-  opt_code_i386_unused,
+  opt_code_i386_mcx16,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -481,7 +481,7 @@
 },
 {
   "mf16c",
-  opt_code_i386_unused,
+  opt_code_i386_mf16c,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -520,13 +520,13 @@
 },
 {
   "mfma",
-  opt_code_i386_unused,
+  opt_code_i386_mfma,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "mfma4",
-  opt_code_i386_unused,
+  opt_code_i386_mfma4,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -561,7 +561,7 @@
 },
 {
   "mfsgsbase",
-  opt_code_i386_unused,
+  opt_code_i386_mfsgsbase,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -588,13 +588,13 @@
 },
 {
   "mfxsr",
-  opt_code_i386_unused,
+  opt_code_i386_mfxsr,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "mgeneral-regs-only",
-  opt_code_i386_unused,
+  opt_code_i386_mgeneral_regs_only,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -604,7 +604,7 @@
 },
 {
   "mgfni",
-  opt_code_i386_unused,
+  opt_code_i386_mgfni,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -621,7 +621,7 @@
 },
 {
   "mhle",
-  opt_code_i386_unused,
+  opt_code_i386_mhle,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -769,13 +769,13 @@
 },
 {
   "mlwp",
-  opt_code_i386_unused,
+  opt_code_i386_mlwp,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "mlzcnt",
-  opt_code_i386_unused,
+  opt_code_i386_mlzcnt,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -821,19 +821,19 @@
 },
 {
   "mmmx",
-  opt_code_i386_unused,
+  opt_code_i386_mmmx,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "mmovbe",
-  opt_code_i386_unused,
+  opt_code_i386_mmovbe,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "mmovdir64b",
-  opt_code_i386_unused,
+  opt_code_i386_mmovdir64b,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -843,7 +843,7 @@
 },
 {
   "mmovdiri",
-  opt_code_i386_unused,
+  opt_code_i386_mmovdiri,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -853,7 +853,7 @@
 },
 {
   "mmpx",
-  opt_code_i386_unused,
+  opt_code_i386_mmpx,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -869,7 +869,7 @@
 },
 {
   "mmwaitx",
-  opt_code_i386_unused,
+  opt_code_i386_mmwaitx,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -917,7 +917,7 @@
 },
 {
   "mno-sse4",
-  opt_code_i386_unused,
+  opt_code_i386_mno_sse4,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -961,13 +961,13 @@
 },
 {
   "mpclmul",
-  opt_code_i386_unused,
+  opt_code_i386_mpclmul,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "mpcommit",
-  opt_code_i386_unused,
+  opt_code_i386_mpcommit,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -977,7 +977,7 @@
 },
 {
   "mpconfig",
-  opt_code_i386_unused,
+  opt_code_i386_mpconfig,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -987,7 +987,7 @@
 },
 {
   "mpku",
-  opt_code_i386_unused,
+  opt_code_i386_mpku,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -997,7 +997,7 @@
 },
 {
   "mpopcnt",
-  opt_code_i386_unused,
+  opt_code_i386_mpopcnt,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -1041,7 +1041,7 @@
 },
 {
   "mprefetchwt1",
-  opt_code_i386_unused,
+  opt_code_i386_mprefetchwt1,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1051,13 +1051,13 @@
 },
 {
   "mprfchw",
-  opt_code_i386_unused,
+  opt_code_i386_mprfchw,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "mptwrite",
-  opt_code_i386_unused,
+  opt_code_i386_mptwrite,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1073,7 +1073,7 @@
 },
 {
   "mrdpid",
-  opt_code_i386_unused,
+  opt_code_i386_mrdpid,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1083,13 +1083,13 @@
 },
 {
   "mrdrnd",
-  opt_code_i386_unused,
+  opt_code_i386_mrdrnd,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "mrdseed",
-  opt_code_i386_unused,
+  opt_code_i386_mrdseed,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -1148,19 +1148,19 @@
 },
 {
   "mrtm",
-  opt_code_i386_unused,
+  opt_code_i386_mrtm,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "msahf",
-  opt_code_i386_unused,
+  opt_code_i386_msahf,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "msgx",
-  opt_code_i386_unused,
+  opt_code_i386_msgx,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1170,7 +1170,7 @@
 },
 {
   "msha",
-  opt_code_i386_unused,
+  opt_code_i386_msha,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1180,7 +1180,7 @@
 },
 {
   "mshstk",
-  opt_code_i386_unused,
+  opt_code_i386_mshstk,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1206,13 +1206,13 @@
 },
 {
   "msse",
-  opt_code_i386_unused,
+  opt_code_i386_msse,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "msse2",
-  opt_code_i386_unused,
+  opt_code_i386_msse2,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -1224,32 +1224,32 @@
 },
 {
   "msse3",
-  opt_code_i386_unused,
+  opt_code_i386_msse3,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "msse4",
-  opt_code_i386_unused,
+  opt_code_i386_msse4,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
 },
 {
   "msse4.1",
-  opt_code_i386_unused,
+  opt_code_i386_msse4_1,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "msse4.2",
-  opt_code_i386_unused,
+  opt_code_i386_msse4_2,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "msse4a",
-  opt_code_i386_unused,
+  opt_code_i386_msse4a,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -1270,7 +1270,7 @@
 },
 {
   "mssse3",
-  opt_code_i386_unused,
+  opt_code_i386_mssse3,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -1345,7 +1345,7 @@
 },
 {
   "mtbm",
-  opt_code_i386_unused,
+  opt_code_i386_mtbm,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -1383,7 +1383,7 @@
 },
 {
   "mvaes",
-  opt_code_i386_unused,
+  opt_code_i386_mvaes,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1406,7 +1406,7 @@
 },
 {
   "mvpclmulqdq",
-  opt_code_i386_unused,
+  opt_code_i386_mvpclmulqdq,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1422,7 +1422,7 @@
 },
 {
   "mwaitpkg",
-  opt_code_i386_unused,
+  opt_code_i386_mwaitpkg,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1432,13 +1432,13 @@
 },
 {
   "mwbnoinvd",
-  opt_code_i386_unused,
+  opt_code_i386_mwbnoinvd,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "mx32",
-  opt_code_i386_unused,
+  opt_code_i386_mx32,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -1449,7 +1449,7 @@
 },
 {
   "mx32",
-  opt_code_i386_unused,
+  opt_code_i386_mx32,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -1459,19 +1459,19 @@
 },
 {
   "mxop",
-  opt_code_i386_unused,
+  opt_code_i386_mxop,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "mxsave",
-  opt_code_i386_unused,
+  opt_code_i386_mxsave,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "mxsavec",
-  opt_code_i386_unused,
+  opt_code_i386_mxsavec,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1481,13 +1481,13 @@
 },
 {
   "mxsaveopt",
-  opt_code_i386_unused,
+  opt_code_i386_mxsaveopt,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "mxsaves",
-  opt_code_i386_unused,
+  opt_code_i386_mxsaves,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
