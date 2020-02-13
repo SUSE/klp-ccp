@@ -119,6 +119,9 @@ namespace klp
       virtual bool is_pid_t_signed() const noexcept override;
 
     private:
+      static types::std_int_type::kind
+      _width_to_int_kind(const mpa::limbs::size_type w) noexcept;
+
       virtual const gcc_cmdline_parser::option *
       _arch_get_opt_table() const noexcept override;
 
@@ -139,8 +142,25 @@ namespace klp
       virtual void _arch_register_builtin_macros(preprocessor &pp)
 	const override;
 
-      static types::std_int_type::kind
-      _width_to_int_kind(const mpa::limbs::size_type w) noexcept;
+      struct opts_x86
+      {
+      public:
+	opts_x86(target_x86_64_gcc &t) noexcept;
+
+	void option_init_struct() noexcept;
+
+	void handle_opt(const gcc_cmdline_parser::option * const o,
+			const char *val, const bool negative,
+			const bool generated);
+
+	void option_override();
+
+      private:
+	target_x86_64_gcc &_t;
+
+      };
+
+      opts_x86 _opts_x86;
 
       builtin_typedef::factories _builtin_typedefs;
     };

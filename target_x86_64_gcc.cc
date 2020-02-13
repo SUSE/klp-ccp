@@ -32,7 +32,7 @@ enum opt_code_i386
   opt_code_i386_unused = 0,
 };
 
-static gcc_cmdline_parser::option gcc_opts_i386[] = {
+static gcc_cmdline_parser::option gcc_opt_table_i386[] = {
 	#include "gcc_cmdline_opts_i386.cc"
 	{ nullptr }
 };
@@ -132,7 +132,7 @@ _builtin_typedef__int128::_create(const bool is_signed)
 
 
 target_x86_64_gcc::target_x86_64_gcc(const char * const version)
-  : target_gcc(version)
+  : target_gcc(version), _opts_x86(*this)
 {
   _builtin_typedefs.emplace_back("__builtin_va_list",
 				 _builtin_typedef_va_list::create);
@@ -931,10 +931,35 @@ bool target_x86_64_gcc::is_pid_t_signed() const noexcept
   return true;
 }
 
+types::std_int_type::kind
+target_x86_64_gcc::_width_to_int_kind(const mpa::limbs::size_type w) noexcept
+{
+  switch (w) {
+  case 8:
+    return types::std_int_type::kind::k_char;
+
+  case 16:
+    return types::std_int_type::kind::k_short;
+
+  case 32:
+    return types::std_int_type::kind::k_int;
+
+  case 64:
+    return types::std_int_type::kind::k_long;
+
+  case 128:
+    return types::std_int_type::kind::k_int128;
+
+  default:
+    assert(0);
+    __builtin_unreachable();
+  };
+}
+
 const gcc_cmdline_parser::option *
 target_x86_64_gcc::_arch_get_opt_table() const noexcept
 {
-  return gcc_opts_i386;
+  return gcc_opt_table_i386;
 }
 
 const target_gcc::default_option&
@@ -968,17 +993,21 @@ bool target_x86_64_gcc::_arch_default_char_is_signed() const noexcept
 void target_x86_64_gcc::_arch_option_init_struct()
 {
   // This corresponds to GCC's ix86_option_init_struct().
+  _opts_x86.option_init_struct();
 }
 
-void target_x86_64_gcc::
-_arch_handle_opt(const gcc_cmdline_parser::option * const o,
-		 const char *val, const bool negative,
-		 const bool generated)
-{}
+void
+target_x86_64_gcc::_arch_handle_opt(const gcc_cmdline_parser::option * const o,
+				    const char *val, const bool negative,
+				    const bool generated)
+{
+  _opts_x86.handle_opt(o, val, negative, generated);
+}
 
 void target_x86_64_gcc::_arch_option_override()
 {
   // This corresponds to GCC's ix86_option_override().
+  _opts_x86.option_override();
 }
 
 void target_x86_64_gcc::_arch_register_builtin_macros(preprocessor &pp) const
@@ -1053,27 +1082,34 @@ void target_x86_64_gcc::_arch_register_builtin_macros(preprocessor &pp) const
     pp.register_builtin_macro(bom.first, bom.second);
 }
 
-types::std_int_type::kind
-target_x86_64_gcc::_width_to_int_kind(const mpa::limbs::size_type w) noexcept
+
+target_x86_64_gcc::opts_x86::
+opts_x86(target_x86_64_gcc &t) noexcept
+  : _t(t)
 {
-  switch (w) {
-  case 8:
-    return types::std_int_type::kind::k_char;
+}
 
-  case 16:
-    return types::std_int_type::kind::k_short;
+void target_x86_64_gcc::opts_x86::option_init_struct() noexcept
+{
 
-  case 32:
-    return types::std_int_type::kind::k_int;
+}
 
-  case 64:
-    return types::std_int_type::kind::k_long;
 
-  case 128:
-    return types::std_int_type::kind::k_int128;
+void target_x86_64_gcc::opts_x86::
+handle_opt(const gcc_cmdline_parser::option * const o,
+	   const char *val, const bool negative,
+	   const bool generated)
+{
+  assert(o);
 
-  default:
-    assert(0);
-    __builtin_unreachable();
-  };
+  switch (o->code) {
+  case opt_code_i386_unused:
+    break;
+  }
+}
+
+void target_x86_64_gcc::opts_x86::option_override()
+{
+  // This mimics GCC's ix86_option_override_internal for a biarch
+  // compiler defaulting to 64bit ABI.
 }
