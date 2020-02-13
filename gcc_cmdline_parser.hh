@@ -41,6 +41,13 @@ namespace klp
 	  : maj(_maj), min(_min), patchlevel(_patchlevel)
 	{}
 
+	constexpr bool operator==(const gcc_version &v) const noexcept
+	{
+	  return (this->maj == v.maj &&
+		  this->min == v.min &&
+		  this->patchlevel == v.patchlevel);
+	}
+
 	constexpr bool operator<=(const gcc_version &v) const noexcept
 	{
 	  return (((!this->maj && !this->min && !this->patchlevel) ||
@@ -50,6 +57,15 @@ namespace klp
 		    (this->min < v.min ? true :
 		     this->min > v.min ? false :
 		     this->patchlevel <= v.patchlevel))));
+	}
+
+	constexpr bool operator<(const gcc_version &v) const noexcept
+	{
+	  return (this->maj < v.maj ? true :
+		  (this->maj > v.maj ? false :
+		   (this->min < v.min ? true :
+		    this->min > v.min ? false :
+		    this->patchlevel < v.patchlevel)));
 	}
 
 	unsigned int maj;
