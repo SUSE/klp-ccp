@@ -140,16 +140,6 @@ void target_gcc::parse_command_line
 		 preprocessor &pp,
 		 const std::function<void(const std::string&)> &report_warning)
 {
-  if (!argv) {
-    // This only happens for the testsuite programs. Provide a
-    // default set of #defines.
-    pp.register_builtin_macro("__STDC__", "1");
-    pp.register_builtin_macro("__STDC_HOSTED__", "1");
-    pp.register_builtin_macro("__STDC_VERSION__", "199901L");
-    _register_builtin_macros(pp);
-    return;
-  }
-
   _init_options_struct();
   _c_lang_init_options_struct();
   _c_lang_init_options();

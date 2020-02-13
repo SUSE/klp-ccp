@@ -20,6 +20,7 @@
 #include <getopt.h>
 #include "gnuc_parser_driver.hh"
 #include "header_resolver.hh"
+#include "cmdline_except.hh"
 #include "pp_except.hh"
 #include "parse_except.hh"
 #include "semantic_except.hh"
@@ -49,14 +50,6 @@ static void print_usage()
 int main(int argc, char* argv[])
 {
   int r = 0;
-  header_resolver hr;
-  target_x86_64_gcc tgt{"4.8.5"};
-  preprocessor p{hr, tgt};
-  tgt.parse_command_line(0, nullptr, hr, p,
-			 [](const std::string&) {
-			   assert(0);
-			   __builtin_unreachable();
-			 });
   std::vector<const char*> pre_includes;
 
   while(true) {
@@ -85,21 +78,29 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  const std::string base_file{argv[optind]};
+  std::vector<const char*> gcc_argv;
+  const char include_argv_str[] = "-include";
+  for (const auto &pi : pre_includes) {
+    gcc_argv.push_back(include_argv_str);
+    gcc_argv.push_back(pi);
+  }
+  gcc_argv.push_back(argv[optind]);
 
-  for (const auto i : pre_includes) {
-    const std::string resolved = hr.resolve(i, base_file,
-					    header_resolver::cwd);
-    if (resolved.empty()) {
-      std::cerr << "error: " << i << " not found";
-      return 1;
-    }
-
-    p.add_root_source(resolved, true);
+  header_resolver hr;
+  target_x86_64_gcc tgt{"4.8.5"};
+  preprocessor p{hr, tgt};
+  try {
+    tgt.parse_command_line(gcc_argv.size(), &gcc_argv[0], hr, p,
+			   [](const std::string&) {
+			     assert(0);
+			     __builtin_unreachable();
+			   });
+  } catch (const cmdline_except &e) {
+    std::cerr << "internal compiler command line error: "
+	      << e.what() << std::endl;
+    return 1;
   }
 
-  p.add_root_source(base_file, false);
-  p.set_base_file(base_file);
   yy::gnuc_parser_driver pd{std::move(p), tgt};
 
   try {

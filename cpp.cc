@@ -18,6 +18,7 @@
 
 #include <iostream>
 #include "preprocessor.hh"
+#include "cmdline_except.hh"
 #include "pp_except.hh"
 #include "parse_except.hh"
 #include "semantic_except.hh"
@@ -35,13 +36,17 @@ int main(int argc, char* argv[])
   header_resolver hr;
   target_x86_64_gcc tgt{"4.8.5"};
   preprocessor p{hr, tgt};
-  tgt.parse_command_line(0, nullptr, hr, p,
-			 [](const std::string&) {
-			   assert(0);
-			   __builtin_unreachable();
-			 });
-  p.add_root_source(argv[1], false);
-  p.set_base_file(argv[1]);
+  try {
+    tgt.parse_command_line(1, const_cast<const char**>(&argv[1]), hr, p,
+			   [](const std::string&) {
+			     assert(0);
+			     __builtin_unreachable();
+			   });
+  } catch (const cmdline_except &e) {
+    std::cerr << "internal compiler command line error: "
+	      << e.what() << std::endl;
+    return 1;
+  }
 
   const pp_tokens &tokens = p.get_result().get_pp_tokens();
   while(true) {
