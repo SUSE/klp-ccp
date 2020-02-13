@@ -118,6 +118,7 @@ namespace klp
 
 	unsigned int flag_abi_version;
 	int flag_leading_underscore;
+	bool flag_no_inline;
 
       private:
 	void _set_unsafe_math_optimizations_flags(const bool set) noexcept;
@@ -178,6 +179,8 @@ namespace klp
 	};
 
 	c_lang_kind c_std;
+
+	int flag_gnu89_inline;
 
       private:
 	void _set_std_c89(const bool c94, const bool iso) noexcept;

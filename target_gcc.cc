@@ -51,6 +51,7 @@ enum opt_code_common
 
   opt_code_common_fabi_version,
   opt_code_common_fleading_underscore,
+  opt_code_common_finline,
 };
 
 static gcc_cmdline_parser::option gcc_opt_table_common[] = {
@@ -70,6 +71,7 @@ enum opt_code_c_family
   opt_code_c_family_iquote,
   opt_code_c_family_isystem,
   opt_code_c_family_undef,
+  opt_code_c_family_fgnu89_inline,
 
   opt_code_c_family_ansi,
 
@@ -864,7 +866,8 @@ target_gcc::opts_common::opts_common(const gcc_cmdline_parser::gcc_version &ver)
     flag_permitted_flt_eval_methods(permitted_flt_eval_methods::pfem_default),
     flag_permitted_flt_eval_methods_set(false),
     flag_single_precision_constant(false),
-    flag_abi_version(0), flag_leading_underscore(-1)
+    flag_abi_version(0), flag_leading_underscore(-1),
+    flag_no_inline(false)
 {
   using gcc_version = gcc_cmdline_parser::gcc_version;
 
@@ -1026,6 +1029,10 @@ handle_opt(const gcc_cmdline_parser::option * const o,
   case opt_code_common_fleading_underscore:
     flag_leading_underscore = !negative;
     break;
+
+  case opt_code_common_finline:
+    flag_no_inline = negative;
+    break;
   }
 }
 
@@ -1033,6 +1040,9 @@ void target_gcc::opts_common::finish_options() noexcept
 {
   // This gets called from target_gcc::_finish_options() which
   // corresponds to GCC's finish_options().
+
+  if (optimize == 0)
+    flag_no_inline = true;
 }
 
 void target_gcc::opts_common::
@@ -1158,7 +1168,8 @@ void target_gcc::opts_common::_set_fast_math_flags(const bool set) noexcept
 
 
 target_gcc::opts_c_family::opts_c_family() noexcept
-  : flag_undef(false), c_std(c_lang_kind::clk_gnuc89)
+  : flag_undef(false), c_std(c_lang_kind::clk_gnuc89),
+    flag_gnu89_inline(-1)
 {}
 
 void target_gcc::opts_c_family::init_options_struct() noexcept
@@ -1238,6 +1249,10 @@ opts_c_family::handle_opt(const gcc_cmdline_parser::option * const o,
 
   case opt_code_c_family_undef:
     flag_undef = true;
+    break;
+
+  case opt_code_c_family_fgnu89_inline:
+    flag_undef = !negative;
     break;
 
   case opt_code_c_family_ansi:
@@ -1330,6 +1345,13 @@ void target_gcc::opts_c_family::c_lang_post_options()
 {
   // This gets called from target_gcc::_c_lang_post_options() which
   // corresponds to GCC's c_common_post_options().
+  if (flag_gnu89_inline == -1) {
+    flag_gnu89_inline = !this->is_std_geq_c99();
+  } else if (!flag_gnu89_inline && !this->is_std_geq_c99()) {
+    throw cmdline_except{
+      "-fno-gnu89-inline is only supported in GNU99 or C99 mode"
+    };
+  }
 }
 
 void target_gcc::opts_c_family::process_options() noexcept

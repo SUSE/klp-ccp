@@ -3864,7 +3864,7 @@
 },
 {
   "fgnu89-inline",
-  opt_code_c_family_unused,
+  opt_code_c_family_fgnu89_inline,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
