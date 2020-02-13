@@ -19,6 +19,7 @@
 #ifndef TARGET_GCC_HH
 #define TARGET_GCC_HH
 
+#include <bitset>
 #include "target.hh"
 #include "gcc_cmdline_parser.hh"
 #include "preprocessor.hh"
@@ -127,7 +128,46 @@ namespace klp
 
 	int flag_stack_protect;
 
+	enum sanitizer_flags_bit
+	{
+	  sanitizer_flags_bit_address,
+	  sanitizer_flags_bit_user_address,
+	  sanitizer_flags_bit_kernel_address,
+	  sanitizer_flags_bit_thread,
+	  sanitizer_flags_bit_leak,
+	  sanitizer_flags_bit_shift_base,
+	  sanitizer_flags_bit_shift_exponent,
+	  sanitizer_flags_bit_divide,
+	  sanitizer_flags_bit_unreachable,
+	  sanitizer_flags_bit_vla,
+	  sanitizer_flags_bit_null,
+	  sanitizer_flags_bit_return,
+	  sanitizer_flags_bit_si_overflow,
+	  sanitizer_flags_bit_bool,
+	  sanitizer_flags_bit_enum,
+	  sanitizer_flags_bit_float_divide,
+	  sanitizer_flags_bit_float_cast,
+	  sanitizer_flags_bit_bounds,
+	  sanitizer_flags_bit_alignment,
+	  sanitizer_flags_bit_nonnull_attribute,
+	  sanitizer_flags_bit_returns_nonnull_attribute,
+	  sanitizer_flags_bit_object_size,
+	  sanitizer_flags_bit_vptr,
+	  sanitizer_flags_bit_bounds_strict,
+	  sanitizer_flags_bit_pointer_overflow,
+	  sanitizer_flags_bit_builtin,
+	  sanitizer_flags_bit_pointer_compare,
+	  sanitizer_flags_bit_pointer_subtract,
+
+	  _sanitizer_flags_bit_max,
+	};
+
+	typedef std::bitset<_sanitizer_flags_bit_max> sanitizer_flags_type;
+	sanitizer_flags_type flag_sanitize;
+
       private:
+	struct _sanitizer_opts_impl;
+
 	void _set_unsafe_math_optimizations_flags(const bool set) noexcept;
 	void _set_fast_math_flags(const bool set) noexcept;
       };

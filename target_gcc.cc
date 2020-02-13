@@ -64,6 +64,10 @@ enum opt_code_common
   opt_code_common_fstack_protector_all,
   opt_code_common_fstack_protector_explicit,
   opt_code_common_fstack_protector_strong,
+
+  opt_code_common_fsanitize,
+  opt_code_common_fsanitize_address,
+  opt_code_common_fsanitize_thread,
 };
 
 static gcc_cmdline_parser::option gcc_opt_table_common[] = {
@@ -911,6 +915,335 @@ void target_gcc::opts_common::c_lang_init_options() noexcept
   // which corresponds to GCC's c_common_init_options().
 }
 
+struct target_gcc::opts_common::_sanitizer_opts_impl
+{
+private:
+  template<sanitizer_flags_bit... bits>
+  struct __flags_set;
+
+  template<sanitizer_flags_bit bit>
+  struct __flags_set<bit>
+  {
+    static void set(sanitizer_flags_type &flags, const bool value) noexcept
+    {
+      flags.set(bit, value);
+    }
+  };
+
+  template<sanitizer_flags_bit bit, sanitizer_flags_bit... bits>
+  struct __flags_set<bit, bits...>
+  {
+    static void set(sanitizer_flags_type &flags, const bool value) noexcept
+    {
+      flags.set(bit, value);
+      __flags_set<bits...>::set(flags, value);
+    }
+  };
+
+  template<typename base_flags_set, sanitizer_flags_bit... bits>
+  struct _flags_set
+  {
+    static void set(sanitizer_flags_type &flags, const bool value) noexcept
+    {
+      base_flags_set::set(flags, value);
+      __flags_set<bits...>::set(flags, value);
+    }
+  };
+
+  using _flags_set_shift =
+    __flags_set<sanitizer_flags_bit_shift_base,
+		sanitizer_flags_bit_shift_exponent>;
+
+  using _flags_set_undefined =
+    _flags_set<_flags_set_shift,
+	       sanitizer_flags_bit_divide,
+	       sanitizer_flags_bit_unreachable,
+	       sanitizer_flags_bit_vla,
+	       sanitizer_flags_bit_null,
+	       sanitizer_flags_bit_return,
+	       sanitizer_flags_bit_si_overflow,
+	       sanitizer_flags_bit_bool,
+	       sanitizer_flags_bit_enum,
+	       sanitizer_flags_bit_bounds,
+	       sanitizer_flags_bit_alignment,
+	       sanitizer_flags_bit_nonnull_attribute,
+	       sanitizer_flags_bit_returns_nonnull_attribute,
+	       sanitizer_flags_bit_object_size,
+	       sanitizer_flags_bit_vptr,
+	       sanitizer_flags_bit_pointer_overflow,
+	       sanitizer_flags_bit_builtin>;
+
+  using gcc_version = gcc_cmdline_parser::gcc_version;
+
+  static sanitizer_flags_type _get_valid_flags(const gcc_version &ver) noexcept;
+
+  struct _table_entry
+  {
+    const char *name;
+    void (*set_flags)(sanitizer_flags_type&, const bool);
+    gcc_version min_gcc_version;
+  };
+
+  static const _table_entry _table[];
+
+public:
+  static void parse_and_apply_list(const char *list,
+				   sanitizer_flags_type &flags,
+				   const bool negative,
+				   const gcc_version &ver);
+
+};
+
+target_gcc::opts_common::sanitizer_flags_type
+target_gcc::opts_common::_sanitizer_opts_impl::
+_get_valid_flags(const gcc_version &ver) noexcept
+{
+  sanitizer_flags_type valid_flags;
+
+  valid_flags.set(sanitizer_flags_bit_address);
+  valid_flags.set(sanitizer_flags_bit_thread);
+
+  if (gcc_version{4, 9, 0} <= ver) {
+    valid_flags.set(sanitizer_flags_bit_leak);
+    valid_flags.set(sanitizer_flags_bit_shift_base);
+    valid_flags.set(sanitizer_flags_bit_shift_exponent);
+    valid_flags.set(sanitizer_flags_bit_divide);
+    valid_flags.set(sanitizer_flags_bit_unreachable);
+    valid_flags.set(sanitizer_flags_bit_vla);
+    valid_flags.set(sanitizer_flags_bit_null);
+    valid_flags.set(sanitizer_flags_bit_return);
+    valid_flags.set(sanitizer_flags_bit_si_overflow);
+    valid_flags.set(sanitizer_flags_bit_bool);
+    valid_flags.set(sanitizer_flags_bit_enum);
+  }
+
+  if (gcc_version{5, 1, 0} <= ver) {
+    valid_flags.set(sanitizer_flags_bit_user_address);
+    valid_flags.set(sanitizer_flags_bit_kernel_address);
+    valid_flags.set(sanitizer_flags_bit_float_divide);
+    valid_flags.set(sanitizer_flags_bit_float_cast);
+    valid_flags.set(sanitizer_flags_bit_bounds);
+    valid_flags.set(sanitizer_flags_bit_alignment);
+    valid_flags.set(sanitizer_flags_bit_nonnull_attribute);
+    valid_flags.set(sanitizer_flags_bit_returns_nonnull_attribute);
+    valid_flags.set(sanitizer_flags_bit_object_size);
+    valid_flags.set(sanitizer_flags_bit_vptr);
+  }
+
+  if (gcc_version{6, 1, 0} <= ver) {
+    valid_flags.set(sanitizer_flags_bit_bounds_strict);
+  }
+
+  if (gcc_version{8, 1, 0} <= ver) {
+    valid_flags.set(sanitizer_flags_bit_pointer_overflow);
+    valid_flags.set(sanitizer_flags_bit_builtin);
+    valid_flags.set(sanitizer_flags_bit_pointer_compare);
+    valid_flags.set(sanitizer_flags_bit_pointer_subtract);
+  }
+
+  return valid_flags;
+}
+
+const target_gcc::opts_common::_sanitizer_opts_impl::_table_entry
+target_gcc::opts_common::_sanitizer_opts_impl::_table[] = {
+  {
+    "address",
+    __flags_set<sanitizer_flags_bit_address,
+		  sanitizer_flags_bit_user_address>::set,
+  },
+  {
+    "kernel-address",
+    __flags_set<sanitizer_flags_bit_address,
+		  sanitizer_flags_bit_kernel_address>::set,
+    .min_gcc_version = {5, 1, 0},
+  },
+  {
+    "pointer-compare",
+    __flags_set<sanitizer_flags_bit_pointer_compare>::set,
+    .min_gcc_version = {8, 1, 0},
+  },
+  {
+    "pointer-subtract",
+    __flags_set<sanitizer_flags_bit_pointer_subtract>::set,
+    .min_gcc_version = {8, 1, 0},
+  },
+  {
+    "thread",
+    __flags_set<sanitizer_flags_bit_thread>::set,
+  },
+  {
+    "leak",
+    __flags_set<sanitizer_flags_bit_leak>::set,
+    .min_gcc_version = {4, 9, 0},
+  },
+  {
+    "shift",
+    _flags_set_shift::set,
+    .min_gcc_version = {4, 9, 0},
+  },
+  {
+    "shift-base",
+    __flags_set<sanitizer_flags_bit_shift_base>::set,
+    .min_gcc_version = {7, 1, 0},
+  },
+  {
+    "shift-exponent",
+    __flags_set<sanitizer_flags_bit_shift_exponent>::set,
+    .min_gcc_version = {7, 1, 0},
+  },
+  {
+    "integer-divide-by-zero",
+    __flags_set<sanitizer_flags_bit_divide>::set,
+   .min_gcc_version = {4, 9, 0},
+   },
+  {
+    "undefined",
+    _flags_set_undefined::set,
+    .min_gcc_version = {4, 9, 0},
+  },
+  {
+    "unreachable",
+    __flags_set<sanitizer_flags_bit_unreachable>::set,
+    .min_gcc_version = {4, 9, 0},
+  },
+  {
+    "vla-bound",
+    __flags_set<sanitizer_flags_bit_vla>::set,
+    .min_gcc_version = {4, 9, 0},
+  },
+  {
+    "return",
+    __flags_set<sanitizer_flags_bit_return>::set,
+    .min_gcc_version = {4, 9, 0},
+  },
+  {
+    "null",
+    __flags_set<sanitizer_flags_bit_null>::set,
+    .min_gcc_version = {4, 9, 0},
+  },
+  {
+    "signed-integer-overflow",
+    __flags_set<sanitizer_flags_bit_si_overflow>::set,
+    .min_gcc_version = {4, 9, 0},
+  },
+  {
+    "bool",
+    __flags_set<sanitizer_flags_bit_bool>::set,
+    .min_gcc_version = {4, 9, 0},
+  },
+  {
+    "enum",
+    __flags_set<sanitizer_flags_bit_enum>::set,
+    .min_gcc_version = {4, 9, 0},
+  },
+  {
+    "float-divide-by-zero",
+    __flags_set<sanitizer_flags_bit_float_divide>::set,
+    .min_gcc_version = {5, 1, 0},
+  },
+  {
+    "float-cast-overflow",
+    __flags_set<sanitizer_flags_bit_float_cast>::set,
+    .min_gcc_version = {5, 1, 0},
+  },
+  {
+    "bounds",
+    __flags_set<sanitizer_flags_bit_bounds>::set,
+    .min_gcc_version = {5, 1, 0},
+  },
+  {
+    "bounds-strict",
+    __flags_set<sanitizer_flags_bit_bounds,
+		  sanitizer_flags_bit_bounds_strict>::set,
+    .min_gcc_version = {6, 1, 0},
+  },
+  {
+    "alignment",
+    __flags_set<sanitizer_flags_bit_alignment>::set,
+    .min_gcc_version = {5, 1, 0},
+  },
+  {
+    "nonnull-attribute",
+    __flags_set<sanitizer_flags_bit_nonnull_attribute>::set,
+    .min_gcc_version = {5, 1, 0},
+  },
+  {
+    "returns-nonnull-attribute",
+    __flags_set<sanitizer_flags_bit_returns_nonnull_attribute>::set,
+    .min_gcc_version = {5, 1, 0},
+  },
+  {
+    "object-size",
+    __flags_set<sanitizer_flags_bit_object_size>::set,
+    .min_gcc_version = {5, 1, 0},
+  },
+  {
+    "vptr",
+    __flags_set<sanitizer_flags_bit_vptr>::set,
+    .min_gcc_version = {5, 1, 0},
+  },
+  {
+    "pointer-overflow",
+    __flags_set<sanitizer_flags_bit_pointer_overflow>::set,
+    .min_gcc_version = {8, 1, 0},
+  },
+  {
+    "builtin",
+    __flags_set<sanitizer_flags_bit_builtin>::set,
+    .min_gcc_version = {8, 1, 0},
+  },
+  { nullptr }
+};
+
+void target_gcc::opts_common::_sanitizer_opts_impl::
+parse_and_apply_list(const char *list,
+		     sanitizer_flags_type &flags,
+		     const bool negative,
+		     const gcc_version &ver)
+{
+  const char *p = list;
+
+  while (*p) {
+    const char *cur_end;
+
+    cur_end = std::strchr(p, ',');
+    if (!cur_end)
+      cur_end = p + std::strlen(p);
+
+    const std::size_t len = cur_end - p;
+
+    // "all" is special and hasn't got a table entry, treat it explicitly
+    if (len == sizeof("all") && std::equal(p, cur_end, "all")) {
+      if (!negative)
+	throw cmdline_except{"-fsanitize=all option is not valid"};
+      else
+	flags.reset();
+
+    } else {
+      const auto *entry = _table;
+      while (entry->name &&
+	     (std::strlen(entry->name) != len ||
+	      !std::equal(p, cur_end, entry->name) ||
+	      !(entry->min_gcc_version <= ver))) {
+	++entry;
+      }
+
+      if (!entry->name) {
+	throw cmdline_except{
+	  "unrecognized argument \"" + std::string{p, cur_end} +
+	  "\"to -fsanitize"
+	};
+      }
+
+      entry->set_flags(flags, !negative);
+    }
+
+    p = cur_end + 1;
+  }
+
+  flags &= _get_valid_flags(ver);
+}
+
 void target_gcc::opts_common::
 handle_opt(const gcc_cmdline_parser::option * const o,
 	   const char *val, const bool negative,
@@ -1096,6 +1429,19 @@ handle_opt(const gcc_cmdline_parser::option * const o,
 
   case opt_code_common_fstack_protector_strong:
     flag_stack_protect = 4;
+    break;
+
+  case opt_code_common_fsanitize:
+    _sanitizer_opts_impl::parse_and_apply_list(val, flag_sanitize,
+					       negative, ver);
+    break;
+
+  case opt_code_common_fsanitize_address:
+    flag_sanitize.set(sanitizer_flags_bit_address, !negative);
+    break;
+
+  case opt_code_common_fsanitize_thread:
+    flag_sanitize.set(sanitizer_flags_bit_thread, !negative);
     break;
   }
 }

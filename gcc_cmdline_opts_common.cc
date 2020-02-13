@@ -3391,7 +3391,7 @@
 },
 {
   "fsanitize=",
-  opt_code_common_unused,
+  opt_code_common_fsanitize,
   (gcc_cmdline_parser::option::comp_common |
    gcc_cmdline_parser::option::comp_driver),
   gcc_cmdline_parser::option::arg_joined,
@@ -3402,7 +3402,7 @@
 },
 {
   "fsanitize=address",
-  opt_code_common_unused,
+  opt_code_common_fsanitize_address,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3413,7 +3413,7 @@
 },
 {
   "fsanitize=thread",
-  opt_code_common_unused,
+  opt_code_common_fsanitize_thread,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
