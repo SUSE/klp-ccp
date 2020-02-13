@@ -52,6 +52,11 @@ enum opt_code_common
   opt_code_common_fabi_version,
   opt_code_common_fleading_underscore,
   opt_code_common_finline,
+
+  opt_code_common_fPIC,
+  opt_code_common_fPIE,
+  opt_code_common_fpic,
+  opt_code_common_fpie,
 };
 
 static gcc_cmdline_parser::option gcc_opt_table_common[] = {
@@ -867,7 +872,8 @@ target_gcc::opts_common::opts_common(const gcc_cmdline_parser::gcc_version &ver)
     flag_permitted_flt_eval_methods_set(false),
     flag_single_precision_constant(false),
     flag_abi_version(0), flag_leading_underscore(-1),
-    flag_no_inline(false)
+    flag_no_inline(false),
+    flag_pic(-1), flag_pie(-1)
 {
   using gcc_version = gcc_cmdline_parser::gcc_version;
 
@@ -1033,6 +1039,34 @@ handle_opt(const gcc_cmdline_parser::option * const o,
   case opt_code_common_finline:
     flag_no_inline = negative;
     break;
+
+  case opt_code_common_fPIC:
+    if (!negative)
+      flag_pic = 2;
+    else
+      flag_pic = 0;
+    break;
+
+  case opt_code_common_fPIE:
+    if (!negative)
+      flag_pie = 2;
+    else
+      flag_pie = 0;
+    break;
+
+  case opt_code_common_fpic:
+    if (!negative)
+      flag_pic = 1;
+    else
+      flag_pic = 0;
+    break;
+
+  case opt_code_common_fpie:
+    if (!negative)
+      flag_pie = 1;
+    else
+      flag_pie = 0;
+    break;
   }
 }
 
@@ -1040,6 +1074,21 @@ void target_gcc::opts_common::finish_options() noexcept
 {
   // This gets called from target_gcc::_finish_options() which
   // corresponds to GCC's finish_options().
+
+  // The code for defaulting flag_pie and flag_pic has been introduced
+  // with GCC 6.1.0. Before that, both had been initialized to 0
+  // (rather than -1), so there's no change in functionality here.
+  if (flag_pie == -1) {
+    if (flag_pic == -1)
+      flag_pie = 0;  // Assume GCC's DEFAULT_FLAG_PIE == 0
+    else
+      flag_pie = 0;
+  }
+
+  if (flag_pie)
+    flag_pic = flag_pie;
+  else if (flag_pic == -1)
+    flag_pic = 0;
 
   if (optimize == 0)
     flag_no_inline = true;

@@ -1381,7 +1381,7 @@
 },
 {
   "fPIC",
-  opt_code_common_unused,
+  opt_code_common_fPIC,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1390,7 +1390,7 @@
 },
 {
   "fPIE",
-  opt_code_common_unused,
+  opt_code_common_fPIE,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3036,7 +3036,7 @@
 },
 {
   "fpic",
-  opt_code_common_unused,
+  opt_code_common_fpic,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -3045,7 +3045,7 @@
 },
 {
   "fpie",
-  opt_code_common_unused,
+  opt_code_common_fpie,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,

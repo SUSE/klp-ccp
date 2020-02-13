@@ -120,6 +120,9 @@ namespace klp
 	int flag_leading_underscore;
 	bool flag_no_inline;
 
+	int flag_pic;
+	int flag_pie;
+
       private:
 	void _set_unsafe_math_optimizations_flags(const bool set) noexcept;
 	void _set_fast_math_flags(const bool set) noexcept;
