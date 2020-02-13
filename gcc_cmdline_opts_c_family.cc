@@ -3823,7 +3823,7 @@
 },
 {
   "ffreestanding",
-  opt_code_c_family_unused,
+  opt_code_c_family_ffreestanding,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -3894,7 +3894,7 @@
 },
 {
   "fhosted",
-  opt_code_c_family_unused,
+  opt_code_c_family_fhosted,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc),
   gcc_cmdline_parser::option::arg_none,
