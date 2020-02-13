@@ -117,6 +117,7 @@ namespace klp
 	bool flag_single_precision_constant;
 
 	unsigned int flag_abi_version;
+	int flag_leading_underscore;
 
       private:
 	void _set_unsafe_math_optimizations_flags(const bool set) noexcept;

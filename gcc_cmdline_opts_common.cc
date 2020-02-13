@@ -2544,7 +2544,7 @@
 },
 {
   "fleading-underscore",
-  opt_code_common_unused,
+  opt_code_common_fleading_underscore,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },

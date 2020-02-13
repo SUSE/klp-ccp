@@ -50,6 +50,7 @@ enum opt_code_common
   opt_code_common_fsingle_precision_constant,
 
   opt_code_common_fabi_version,
+  opt_code_common_fleading_underscore,
 };
 
 static gcc_cmdline_parser::option gcc_opt_table_common[] = {
@@ -862,7 +863,8 @@ target_gcc::opts_common::opts_common(const gcc_cmdline_parser::gcc_version &ver)
     flag_fp_contract_mode_set(false),
     flag_permitted_flt_eval_methods(permitted_flt_eval_methods::pfem_default),
     flag_permitted_flt_eval_methods_set(false),
-    flag_single_precision_constant(false), flag_abi_version(0)
+    flag_single_precision_constant(false),
+    flag_abi_version(0), flag_leading_underscore(-1)
 {
   using gcc_version = gcc_cmdline_parser::gcc_version;
 
@@ -1019,6 +1021,10 @@ handle_opt(const gcc_cmdline_parser::option * const o,
 
       flag_abi_version = static_cast<unsigned int>(_abi_version);
     }
+    break;
+
+  case opt_code_common_fleading_underscore:
+    flag_leading_underscore = !negative;
     break;
   }
 }
