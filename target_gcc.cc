@@ -411,7 +411,7 @@ void target_gcc::_default_options_optimization
     },
     { default_option::opt_levels_1_plus, "ftree-copy-prop", nullptr, false },
     {
-      default_option::opt_levels_1_plus, "ftree-copy-rename", nullptr, false,
+      default_option::opt_levels_1_plus, "ftree-copyrename", nullptr, false,
       .min_gcc_version = {0, 0, 0},
       .max_gcc_version = {5, 5, std::numeric_limits<unsigned int>::max()},
     },
@@ -568,7 +568,7 @@ void target_gcc::_default_options_optimization
       .min_gcc_version = {5, 1, 0},
     },
     {
-      default_option::opt_levels_2_plus, "foptimize-sibling_calls",
+      default_option::opt_levels_2_plus, "foptimize-sibling-calls",
       nullptr, false
     },
     { default_option::opt_levels_2_plus, "fpartial-inlining", nullptr, false },
