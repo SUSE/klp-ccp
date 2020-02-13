@@ -166,7 +166,7 @@
 },
 {
   "march=",
-  opt_code_i386_unused,
+  opt_code_i386_march,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,
@@ -1374,7 +1374,7 @@
 },
 {
   "mtune=",
-  opt_code_i386_unused,
+  opt_code_i386_mtune,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,

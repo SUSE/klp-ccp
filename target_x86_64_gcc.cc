@@ -22,6 +22,7 @@
 #include "ast.hh"
 #include "semantic_except.hh"
 #include "preprocessor.hh"
+#include "cmdline_except.hh"
 #include "target_x86_64_gcc.hh"
 
 using namespace klp::ccp;
@@ -30,6 +31,9 @@ using namespace klp::ccp::types;
 enum opt_code_i386
 {
   opt_code_i386_unused = 0,
+
+  opt_code_i386_march,
+  opt_code_i386_mtune,
 };
 
 static gcc_cmdline_parser::option gcc_opt_table_i386[] = {
@@ -1085,7 +1089,8 @@ void target_x86_64_gcc::_arch_register_builtin_macros(preprocessor &pp) const
 
 target_x86_64_gcc::opts_x86::
 opts_x86(target_x86_64_gcc &t) noexcept
-  : _t(t)
+  : _t(t),
+    _arch(nullptr), _tune(nullptr)
 {
 }
 
@@ -1094,6 +1099,1430 @@ void target_x86_64_gcc::opts_x86::option_init_struct() noexcept
 
 }
 
+struct target_x86_64_gcc::opts_x86::_pta
+{
+  // These correspond to the PTA_<FOO> bits from the GCC sources.
+  enum pta_flag
+  {
+    pta_flag_3dnow,
+    pta_flag_3dnow_a,
+    pta_flag_64bit,
+    pta_flag_abm,
+    pta_flag_adx,
+    pta_flag_aes,
+    pta_flag_avx,
+    pta_flag_avx2,
+    pta_flag_avx5124fmaps,
+    pta_flag_avx5124vnniw,
+    pta_flag_avx512bitalg,
+    pta_flag_avx512bw,
+    pta_flag_avx512cd,
+    pta_flag_avx512dq,
+    pta_flag_avx512er,
+    pta_flag_avx512f,
+    pta_flag_avx512ifma,
+    pta_flag_avx512pf,
+    pta_flag_avx512vbmi,
+    pta_flag_avx512vbmi2,
+    pta_flag_avx512vl,
+    pta_flag_avx512vnni,
+    pta_flag_avx512vpopcntdq,
+    pta_flag_bmi,
+    pta_flag_bmi2,
+    pta_flag_clflushopt,
+    pta_flag_clwb,
+    pta_flag_clzero,
+    pta_flag_cx16,
+    pta_flag_f16c,
+    pta_flag_fma,
+    pta_flag_fma4,
+    pta_flag_fsgsbase,
+    pta_flag_fxsr,
+    pta_flag_gfni,
+    pta_flag_hle,
+    pta_flag_lwp,
+    pta_flag_lzcnt,
+    pta_flag_mmx,
+    pta_flag_movbe,
+    pta_flag_mwaitx,
+    pta_flag_no_80387,
+    pta_flag_no_sahf,
+    pta_flag_pclmul,
+    pta_flag_pconfig,
+    pta_flag_pku,
+    pta_flag_popcnt,
+    pta_flag_prefetchwt1,
+    pta_flag_prefetch_sse,
+    pta_flag_prfchw,
+    pta_flag_ptwrite,
+    pta_flag_rdpid,
+    pta_flag_rdrnd,
+    pta_flag_rdseed,
+    pta_flag_rtm,
+    pta_flag_sgx,
+    pta_flag_sha,
+    pta_flag_sse,
+    pta_flag_sse2,
+    pta_flag_sse3,
+    pta_flag_sse4a,
+    pta_flag_sse4_1,
+    pta_flag_sse4_2,
+    pta_flag_ssse3,
+    pta_flag_tbm,
+    pta_flag_vaes,
+    pta_flag_vpclmulqdq,
+    pta_flag_waitpkg,
+    pta_flag_wbnoinvd,
+    pta_flag_xop,
+    pta_flag_xsave,
+    pta_flag_xsavec,
+    pta_flag_xsaveopt,
+    pta_flag_xsaves,
+
+    _pta_flag_max,
+  };
+
+  using gcc_version = gcc_cmdline_parser::gcc_version;
+
+  typedef std::bitset<_pta_flag_max> pta_flags_type;
+
+  typedef void(*apply_flags_type)(pta_flags_type &flags,
+				  const gcc_version &ver);
+
+  enum processor_type
+  {
+    processor_generic = 0,
+    processor_generic32,
+    processor_generic64,
+    processor_i386,
+    processor_i486,
+    processor_pentium,
+    processor_lakemont,
+    processor_pentiumpro,
+    processor_pentium4,
+    processor_nocona,
+    processor_core2,
+    processor_corei7,
+    processor_nehalem,
+    processor_sandybridge,
+    processor_haswell,
+    processor_atom,
+    processor_bonnell,
+    processor_silvermont,
+    processor_goldmont,
+    processor_goldmont_plus,
+    processor_tremont,
+    processor_knl,
+    processor_knm,
+    processor_skylake,
+    processor_skylake_avx512,
+    processor_cannonlake,
+    processor_icelake_client,
+    processor_icelake_server,
+    processor_cascadelake,
+    processor_intel,
+    processor_geode,
+    processor_k6,
+    processor_athlon,
+    processor_k8,
+    processor_amdfam10,
+    processor_bdver1,
+    processor_bdver2,
+    processor_bdver3,
+    processor_bdver4,
+    processor_btver1,
+    processor_btver2,
+    processor_znver1,
+    processor_znver2,
+
+    _processor_max
+  };
+
+  const char * const name;
+  const processor_type processor;
+  const apply_flags_type apply_flags;
+  const gcc_version min_gcc_version;
+  const gcc_version max_gcc_version;
+
+  static const struct _pta*
+  lookup(const char * const name, const gcc_version &ver)
+    noexcept;
+
+private:
+  template<pta_flag... bits>
+  struct __flags_set;
+
+  template<pta_flag bit, pta_flag... bits>
+  struct __flags_set<bit, bits...>
+  {
+    static void apply(pta_flags_type &flags, const gcc_version &ver) noexcept
+    {
+      flags.set(bit);
+      __flags_set<bits...>::apply(flags, ver);
+    }
+  };
+
+  template<typename base_flags_set, pta_flag... bits>
+  struct _flags_set
+  {
+    static void apply(pta_flags_type &flags, const gcc_version &ver) noexcept
+    {
+      base_flags_set::apply(flags, ver);
+      __flags_set<bits...>::apply(flags, ver);
+    }
+  };
+};
+
+template<>
+struct target_x86_64_gcc::opts_x86::_pta::__flags_set<>
+{
+  static void apply(pta_flags_type &flags, const gcc_version &ver) noexcept
+  {}
+};
+
+const target_x86_64_gcc::opts_x86::_pta*
+target_x86_64_gcc::opts_x86::_pta::
+lookup(const char * const name, const gcc_version &ver)
+  noexcept
+{
+  using flags_set_core2 =
+    __flags_set<pta_flag_64bit, pta_flag_mmx,
+		pta_flag_sse, pta_flag_sse2,
+		pta_flag_sse3, pta_flag_ssse3,
+		pta_flag_cx16, pta_flag_fxsr>;
+  using flags_set_nehalem =
+    _flags_set<flags_set_core2,
+	       pta_flag_sse4_1, pta_flag_sse4_2,
+	       pta_flag_popcnt>;
+
+  struct flags_set_westmere
+  {
+    static void apply(pta_flags_type &flags, const gcc_version &ver)
+    {
+      _flags_set<flags_set_nehalem, pta_flag_pclmul>::apply(flags, ver);
+
+      if (!(gcc_version{9, 1, 0} <= ver))
+	__flags_set<pta_flag_aes>::apply(flags, ver);
+    }
+  };
+
+  using flags_set_sandybridge =
+    _flags_set<flags_set_westmere,
+	       pta_flag_avx, pta_flag_xsave,
+	       pta_flag_xsaveopt>;
+  using flags_set_ivybridge =
+    _flags_set<flags_set_sandybridge,
+	       pta_flag_fsgsbase, pta_flag_rdrnd,
+	       pta_flag_f16c>;
+
+  struct flags_set_haswell
+  {
+    static void apply(pta_flags_type &flags, const gcc_version &ver)
+    {
+      _flags_set<flags_set_ivybridge,
+		 pta_flag_avx2, pta_flag_bmi,
+		 pta_flag_bmi2, pta_flag_lzcnt,
+		 pta_flag_fma, pta_flag_movbe,
+		 pta_flag_hle>::apply(flags, ver);
+      if (ver == gcc_version{4, 9, 0})
+	__flags_set<pta_flag_rtm>::apply(flags, ver);
+    }
+  };
+
+  using flags_set_broadwell =
+    _flags_set<flags_set_haswell,
+	       pta_flag_adx, pta_flag_prfchw,
+	       pta_flag_rdseed>;
+
+  struct flags_set_skylake
+  {
+    static void apply(pta_flags_type &flags, const gcc_version &ver)
+    {
+      _flags_set<flags_set_broadwell,
+		 pta_flag_clflushopt, pta_flag_xsavec,
+		 pta_flag_xsaves>::apply(flags, ver);
+      if (gcc_version{8, 1, 0} <= ver)
+	__flags_set<pta_flag_sgx>::apply(flags, ver);
+      if (gcc_version{9, 1, 0} <= ver)
+	__flags_set<pta_flag_aes>::apply(flags, ver);
+    }
+  };
+
+  struct flags_set_skylake_avx512
+  {
+    static void apply(pta_flags_type &flags, const gcc_version &ver)
+    {
+      _flags_set<flags_set_skylake,
+		 pta_flag_avx512f, pta_flag_avx512cd,
+		 pta_flag_avx512vl, pta_flag_avx512bw,
+		 pta_flag_avx512dq, pta_flag_pku>::apply(flags, ver);
+      if (gcc_version{8, 1, 0} <= ver)
+	__flags_set<pta_flag_clwb>::apply(flags, ver);
+    }
+  };
+
+  using flags_set_cascadelake =
+    _flags_set<flags_set_skylake_avx512,
+	       pta_flag_avx512vnni>;
+  using flags_set_cannonlake =
+    _flags_set<flags_set_skylake,
+	       pta_flag_avx512f, pta_flag_avx512cd,
+	       pta_flag_avx512vl, pta_flag_avx512bw,
+	       pta_flag_avx512dq, pta_flag_pku,
+	       pta_flag_avx512vbmi, pta_flag_avx512ifma,
+	       pta_flag_sha>;
+  using flags_set_icelake_client =
+    _flags_set<flags_set_cannonlake,
+	       pta_flag_avx512vnni, pta_flag_gfni,
+	       pta_flag_vaes, pta_flag_avx512vbmi2,
+	       pta_flag_vpclmulqdq, pta_flag_avx512bitalg,
+	       pta_flag_rdpid, pta_flag_clwb>;
+  using flags_set_icelake_server =
+    _flags_set<flags_set_icelake_client,
+	       pta_flag_pconfig, pta_flag_wbnoinvd>;
+  using flags_set_knl =
+    _flags_set<flags_set_broadwell,
+	       pta_flag_avx512pf, pta_flag_avx512er,
+	       pta_flag_avx512f, pta_flag_avx512cd>;
+  using flags_set_bonnell =
+    _flags_set<flags_set_core2, pta_flag_movbe>;
+
+  struct flags_set_silvermont
+  {
+    static void apply(pta_flags_type &flags, const gcc_version &ver)
+    {
+      _flags_set<flags_set_westmere, pta_flag_movbe>::apply(flags, ver);
+      if (gcc_version{8, 1, 0} <= ver)
+	__flags_set<pta_flag_rdrnd>::apply(flags, ver);
+    }
+  };
+
+  using flags_set_goldmont =
+    _flags_set<flags_set_silvermont,
+	       pta_flag_aes, pta_flag_sha,
+	       pta_flag_xsave, pta_flag_rdseed,
+	       pta_flag_xsavec, pta_flag_xsaves,
+	       pta_flag_clflushopt, pta_flag_xsaveopt,
+	       pta_flag_fsgsbase>;
+  using flags_set_goldmont_plus =
+    _flags_set<flags_set_goldmont,
+	       pta_flag_rdpid, pta_flag_sgx,
+	       pta_flag_ptwrite>;
+  using flags_set_tremont =
+    _flags_set<flags_set_goldmont_plus,
+	       pta_flag_clwb, pta_flag_gfni>;
+  using flags_set_knm =
+    _flags_set<flags_set_knl,
+	       pta_flag_avx5124vnniw, pta_flag_avx5124fmaps,
+	       pta_flag_avx512vpopcntdq>;
+
+  // This corresponds to the processor_alias_table from the GCC
+  // sources.
+  static const _pta processor_alias_table[] = {
+    { "i386", processor_i386, __flags_set<>::apply },
+    { "i486", processor_i486, __flags_set<>::apply },
+    { "i586", processor_pentium, __flags_set<>::apply },
+    { "pentium", processor_pentium, __flags_set<>::apply },
+    {
+      "lakemont", processor_lakemont,
+      __flags_set<pta_flag_no_80387>::apply,
+      .min_gcc_version = {6, 1, 0},
+    },
+    {
+      "pentium-mmx", processor_pentium,
+      __flags_set<pta_flag_mmx>::apply
+    },
+    {
+      "winchip-c6", processor_i486,
+      __flags_set<pta_flag_mmx>::apply
+    },
+    {
+      "winchip2", processor_i486,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 0},
+    },
+    {
+      "winchip2", processor_i486,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow,
+		  pta_flag_prfchw>::apply,
+      .min_gcc_version = {4, 8, 1},
+      .max_gcc_version = {6, 2, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      "winchip2", processor_i486,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow>::apply,
+      .min_gcc_version = {6, 3, 0},
+    },
+    {
+      "c3", processor_i486,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 0},
+    },
+    {
+      "c3", processor_i486,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow,
+		  pta_flag_prfchw>::apply,
+      .min_gcc_version = {4, 8, 1},
+      .max_gcc_version = {6, 2, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      "c3", processor_i486,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow>::apply,
+      .min_gcc_version = {6, 3, 0},
+    },
+    {
+      "samuel-2", processor_i486,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow>::apply,
+      .min_gcc_version = {7, 1, 0},
+    },
+    {
+      "c3-2", processor_pentiumpro,
+      __flags_set<pta_flag_mmx, pta_flag_sse>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 0},
+    },
+    {
+      "c3-2", processor_pentiumpro,
+      __flags_set<pta_flag_mmx, pta_flag_sse,
+		  pta_flag_fxsr>::apply,
+      .min_gcc_version = {4, 8, 1},
+    },
+    {
+      "nehemiah", processor_pentiumpro,
+      __flags_set<pta_flag_mmx, pta_flag_sse,
+		  pta_flag_fxsr>::apply,
+      .min_gcc_version = {7, 1, 0},
+    },
+    {
+      "c7", processor_pentiumpro,
+      __flags_set<pta_flag_mmx, pta_flag_sse,
+		  pta_flag_sse2, pta_flag_sse3,
+		  pta_flag_fxsr>::apply,
+      .min_gcc_version = {7, 1, 0},
+    },
+    {
+      "esther", processor_pentiumpro,
+      __flags_set<pta_flag_mmx, pta_flag_sse,
+		  pta_flag_sse2, pta_flag_sse3,
+		  pta_flag_fxsr>::apply,
+      .min_gcc_version = {7, 1, 0},
+    },
+    { "i686", processor_pentiumpro, __flags_set<>::apply },
+    { "pentiumpro", processor_pentiumpro, __flags_set<>::apply },
+    {
+      "pentium2", processor_pentiumpro,
+      __flags_set<pta_flag_mmx, pta_flag_fxsr>::apply
+    },
+    {
+      "pentium3", processor_pentiumpro,
+      __flags_set<pta_flag_mmx, pta_flag_sse,
+		  pta_flag_fxsr>::apply
+    },
+    {
+      "pentium3m", processor_pentiumpro,
+      __flags_set<pta_flag_mmx, pta_flag_sse,
+		  pta_flag_fxsr>::apply
+    },
+    {
+      "pentium-m", processor_pentiumpro,
+      __flags_set<pta_flag_mmx, pta_flag_sse,
+		  pta_flag_sse2, pta_flag_fxsr>::apply
+    },
+    {
+      "pentium4", processor_pentium4,
+      __flags_set<pta_flag_mmx, pta_flag_sse,
+		  pta_flag_sse2, pta_flag_fxsr>::apply
+    },
+    {
+      "pentium4m", processor_pentium4,
+      __flags_set<pta_flag_mmx, pta_flag_sse,
+		  pta_flag_sse2, pta_flag_fxsr>::apply
+    },
+    {
+      "prescott", processor_nocona,
+      __flags_set<pta_flag_mmx, pta_flag_sse,
+		  pta_flag_sse2, pta_flag_sse3,
+		  pta_flag_fxsr>::apply
+    },
+    {
+      "nocona", processor_nocona,
+      __flags_set<pta_flag_mmx, pta_flag_sse,
+		  pta_flag_sse2, pta_flag_sse3,
+		  pta_flag_cx16, pta_flag_no_sahf,
+		  pta_flag_fxsr>::apply
+    },
+    {
+      "core2", processor_core2,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_ssse3,
+		  pta_flag_cx16, pta_flag_fxsr>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      "core2", processor_core2, flags_set_core2::apply,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      "nehalem", processor_core2, flags_set_nehalem::apply,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      "corei7", processor_corei7,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_ssse3,
+		  pta_flag_sse4_1, pta_flag_sse4_2,
+		  pta_flag_cx16, pta_flag_fxsr>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 0},
+    },
+    {
+      "corei7", processor_corei7,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_ssse3,
+		  pta_flag_sse4_1, pta_flag_sse4_2,
+		  pta_flag_cx16, pta_flag_popcnt,
+		  pta_flag_fxsr>::apply,
+      .min_gcc_version = {4, 8, 1},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      "corei7", processor_nehalem, flags_set_nehalem::apply,
+      .min_gcc_version = {4, 9, 0}
+    },
+    {
+      "westmere", processor_nehalem, flags_set_westmere::apply,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      "sandybridge", processor_sandybridge,
+      flags_set_sandybridge::apply,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      "corei7-avx", processor_corei7,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_ssse3,
+		  pta_flag_sse4_1, pta_flag_sse4_2,
+		  pta_flag_avx, pta_flag_cx16,
+		  pta_flag_popcnt, pta_flag_aes,
+		  pta_flag_pclmul, pta_flag_fxsr,
+		  pta_flag_xsave, pta_flag_xsaveopt>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 5}
+    },
+    {
+      "corei7-avx", processor_nehalem,
+      flags_set_sandybridge::apply,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      "ivybridge", processor_sandybridge, flags_set_ivybridge::apply,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      "core-avx-i", processor_corei7,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_ssse3,
+		  pta_flag_sse4_1, pta_flag_sse4_2,
+		  pta_flag_avx, pta_flag_cx16,
+		  pta_flag_popcnt, pta_flag_aes,
+		  pta_flag_pclmul, pta_flag_fsgsbase,
+		  pta_flag_rdrnd, pta_flag_f16c,
+		  pta_flag_fxsr, pta_flag_xsave,
+		  pta_flag_xsaveopt>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      "core-avx-i", processor_sandybridge, flags_set_ivybridge::apply,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      "haswell", processor_haswell, flags_set_haswell::apply,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      "core-avx2", processor_haswell,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_ssse3,
+		  pta_flag_sse4_1, pta_flag_sse4_2,
+		  pta_flag_avx, pta_flag_avx2,
+		  pta_flag_cx16, pta_flag_popcnt,
+		  pta_flag_aes, pta_flag_pclmul,
+		  pta_flag_fsgsbase, pta_flag_rdrnd,
+		  pta_flag_f16c, pta_flag_bmi,
+		  pta_flag_bmi2, pta_flag_lzcnt,
+		  pta_flag_fma, pta_flag_movbe,
+		  pta_flag_rtm, pta_flag_hle,
+		  pta_flag_fxsr, pta_flag_xsave,
+		  pta_flag_xsaveopt>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 2},
+    },
+    {
+      "core-avx2", processor_haswell,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_ssse3,
+		  pta_flag_sse4_1, pta_flag_sse4_2,
+		  pta_flag_avx, pta_flag_avx2,
+		  pta_flag_cx16, pta_flag_popcnt,
+		  pta_flag_aes, pta_flag_pclmul,
+		  pta_flag_fsgsbase, pta_flag_rdrnd,
+		  pta_flag_f16c, pta_flag_bmi,
+		  pta_flag_bmi2, pta_flag_lzcnt,
+		  pta_flag_fma, pta_flag_movbe,
+		  pta_flag_hle, pta_flag_fxsr,
+		  pta_flag_xsave, pta_flag_xsaveopt>::apply,
+      .min_gcc_version = {4, 8, 3},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      "core-avx2", processor_haswell, flags_set_haswell::apply,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      "broadwell", processor_haswell, flags_set_broadwell::apply,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      "skylake", processor_haswell, flags_set_skylake::apply,
+      .min_gcc_version = {6, 1, 0},
+      .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      "skylake", processor_skylake, flags_set_skylake::apply,
+      .min_gcc_version = {8, 1, 0},
+    },
+    {
+      "skylake-avx512", processor_haswell,
+      flags_set_skylake_avx512::apply,
+      .min_gcc_version = {6, 1, 0},
+      .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      "skylake-avx512", processor_skylake_avx512,
+      flags_set_skylake_avx512::apply,
+      .min_gcc_version = {8, 1, 0},
+    },
+    {
+      "cannonlake", processor_cannonlake, flags_set_cannonlake::apply,
+      .min_gcc_version = {8, 1, 0},
+    },
+    {
+      "icelake-client", processor_icelake_client,
+      flags_set_icelake_client::apply,
+      .min_gcc_version = {8, 1, 0},
+    },
+    {
+      "icelake-server", processor_icelake_server,
+      flags_set_icelake_server::apply,
+      .min_gcc_version = {8, 1, 0},
+    },
+    {
+      "cascadelake", processor_cascadelake,
+      flags_set_cascadelake::apply,
+      .min_gcc_version = {9, 1, 0},
+    },
+    {
+      "bonnell", processor_bonnell, flags_set_bonnell::apply,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      "atom", processor_atom,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_ssse3,
+		  pta_flag_cx16, pta_flag_movbe,
+		  pta_flag_fxsr>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      "atom", processor_bonnell, flags_set_bonnell::apply,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      "silvermont", processor_silvermont, flags_set_silvermont::apply,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      "slm", processor_silvermont, flags_set_silvermont::apply,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      "goldmont", processor_goldmont, flags_set_goldmont::apply,
+      .min_gcc_version = {9, 1, 0},
+    },
+    {
+      "goldmont-plus", processor_goldmont_plus,
+      flags_set_goldmont_plus::apply,
+      .min_gcc_version = {9, 1, 0},
+    },
+    {
+      "tremont", processor_tremont, flags_set_tremont::apply,
+      .min_gcc_version = {9, 1, 0},
+    },
+    {
+      "knl", processor_knl, flags_set_knl::apply,
+      .min_gcc_version = {5, 1, 0},
+    },
+    {
+      "knm", processor_knm, flags_set_knm::apply,
+      .min_gcc_version = {8, 1, 0},
+    },
+    {
+      "intel", processor_intel, flags_set_nehalem::apply,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      "geode", processor_geode,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow,
+		  pta_flag_3dnow_a, pta_flag_prefetch_sse>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 0},
+    },
+    {
+      "geode", processor_geode,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow,
+		  pta_flag_3dnow_a, pta_flag_prefetch_sse,
+		  pta_flag_prfchw>::apply,
+      .min_gcc_version = {4, 8, 1},
+      .max_gcc_version = {6, 2, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      "geode", processor_geode,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow,
+		  pta_flag_3dnow_a, pta_flag_prefetch_sse>::apply,
+      .min_gcc_version = {6, 3, 0},
+    },
+    { "k6", processor_k6, __flags_set<pta_flag_mmx>::apply },
+    {
+      "k6-2", processor_k6,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 0},
+    },
+    {
+      "k6-2", processor_k6,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow,
+		  pta_flag_prfchw>::apply,
+      .min_gcc_version = {4, 8, 1},
+      .max_gcc_version = {6, 2, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      "k6-2", processor_k6,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow>::apply,
+      .min_gcc_version = {6, 3, 0},
+    },
+    {
+      "k6-3", processor_k6,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 0},
+    },
+    {
+      "k6-3", processor_k6,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow,
+		  pta_flag_prfchw>::apply,
+      .min_gcc_version = {4, 8, 1},
+      .max_gcc_version = {6, 2, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      "k6-3", processor_k6,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow>::apply,
+      .min_gcc_version = {6, 3, 0},
+    },
+    {
+      "athlon", processor_athlon,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow,
+		  pta_flag_3dnow_a, pta_flag_prefetch_sse>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 0},
+    },
+    {
+      "athlon", processor_athlon,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow,
+		  pta_flag_3dnow_a, pta_flag_prefetch_sse,
+		  pta_flag_prfchw>::apply,
+      .min_gcc_version = {4, 8, 1},
+      .max_gcc_version = {6, 2, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      "athlon", processor_athlon,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow,
+		  pta_flag_3dnow_a, pta_flag_prefetch_sse>::apply,
+      .min_gcc_version = {6, 3, 0},
+    },
+    {
+      "athlon-tbird", processor_athlon,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow,
+		  pta_flag_3dnow_a, pta_flag_prefetch_sse>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 0},
+    },
+    {
+      "athlon-tbird", processor_athlon,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow,
+		  pta_flag_3dnow_a, pta_flag_prefetch_sse,
+		  pta_flag_prfchw>::apply,
+      .min_gcc_version = {4, 8, 1},
+      .max_gcc_version = {6, 2, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      "athlon-tbird", processor_athlon,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow,
+		  pta_flag_3dnow_a, pta_flag_prefetch_sse>::apply,
+      .min_gcc_version = {6, 3, 0},
+    },
+    {
+      "athlon-4", processor_athlon,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow,
+		  pta_flag_3dnow_a, pta_flag_sse>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 0},
+    },
+    {
+      "athlon-4", processor_athlon,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow,
+		  pta_flag_3dnow_a, pta_flag_sse,
+		  pta_flag_prfchw, pta_flag_fxsr>::apply,
+      .min_gcc_version = {4, 8, 1},
+      .max_gcc_version = {6, 2, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      "athlon-4", processor_athlon,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow,
+		  pta_flag_3dnow_a, pta_flag_sse,
+		  pta_flag_fxsr>::apply,
+      .min_gcc_version = {6, 3, 0},
+    },
+    {
+      "athlon-xp", processor_athlon,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow,
+		  pta_flag_3dnow_a, pta_flag_sse>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 0},
+    },
+    {
+      "athlon-xp", processor_athlon,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow,
+		  pta_flag_3dnow_a, pta_flag_sse,
+		  pta_flag_prfchw, pta_flag_fxsr>::apply,
+      .min_gcc_version = {4, 8, 1},
+      .max_gcc_version = {6, 2, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      "athlon-xp", processor_athlon,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow,
+		  pta_flag_3dnow_a, pta_flag_sse,
+		  pta_flag_fxsr>::apply,
+      .min_gcc_version = {6, 3, 0},
+    },
+    {
+      "athlon-mp", processor_athlon,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow,
+		  pta_flag_3dnow_a, pta_flag_sse>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 0},
+    },
+    {
+      "athlon-mp", processor_athlon,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow,
+		  pta_flag_3dnow_a, pta_flag_sse,
+		  pta_flag_prfchw, pta_flag_fxsr>::apply,
+      .min_gcc_version = {4, 8, 1},
+      .max_gcc_version = {6, 2, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      "athlon-mp", processor_athlon,
+      __flags_set<pta_flag_mmx, pta_flag_3dnow,
+		  pta_flag_3dnow_a, pta_flag_sse,
+		  pta_flag_fxsr>::apply,
+      .min_gcc_version = {6, 3, 0},
+    },
+    {
+      "x86-64", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_no_sahf>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 0},
+    },
+    {
+      "x86-64", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_no_sahf, pta_flag_fxsr>::apply,
+      .min_gcc_version = {4, 8, 1},
+    },
+    {
+      "eden-x2", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_fxsr>::apply,
+      .min_gcc_version = {7, 1, 0},
+    },
+    {
+      "nano", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_ssse3,
+		  pta_flag_fxsr>::apply,
+      .min_gcc_version = {7, 1, 0},
+    },
+    {
+      "nano-1000", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_ssse3,
+		  pta_flag_fxsr>::apply,
+      .min_gcc_version = {7, 1, 0},
+    },
+    {
+      "nano-2000", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_ssse3,
+		  pta_flag_fxsr>::apply,
+      .min_gcc_version = {7, 1, 0},
+    },
+    {
+      "nano-3000", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_ssse3,
+		  pta_flag_sse4_1, pta_flag_fxsr>::apply,
+      .min_gcc_version = {7, 1, 0},
+    },
+    {
+      "nano-x2", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_ssse3,
+		  pta_flag_sse4_1, pta_flag_fxsr>::apply,
+      .min_gcc_version = {7, 1, 0},
+    },
+    {
+      "eden-x4", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_ssse3,
+		  pta_flag_sse4_1, pta_flag_fxsr>::apply,
+      .min_gcc_version = {7, 1, 0},
+    },
+    {
+      "nano-x4", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_ssse3,
+		  pta_flag_sse4_1, pta_flag_fxsr>::apply,
+      .min_gcc_version = {7, 1, 0},
+    },
+    {
+      "k8", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_no_sahf>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 0},
+    },
+    {
+      "k8", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_no_sahf, pta_flag_prfchw,
+		  pta_flag_fxsr>::apply,
+      .min_gcc_version = {4, 8, 1},
+      .max_gcc_version = {6, 2, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      "k8", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_no_sahf, pta_flag_fxsr>::apply,
+      .min_gcc_version = {6, 3, 0},
+    },
+    {
+      "k8-sse3", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_no_sahf>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 0},
+    },
+    {
+      "k8-sse3", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_no_sahf,
+		  pta_flag_prfchw, pta_flag_fxsr>::apply,
+      .min_gcc_version = {4, 8, 1},
+      .max_gcc_version = {6, 2, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      "k8-sse3", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_no_sahf,
+		  pta_flag_fxsr>::apply,
+      .min_gcc_version = {6, 3, 0},
+    },
+    {
+      "opteron", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_no_sahf>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 0},
+    },
+    {
+      "opteron", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_no_sahf, pta_flag_prfchw,
+		  pta_flag_fxsr>::apply,
+      .min_gcc_version = {4, 8, 1},
+      .max_gcc_version = {6, 2, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      "opteron", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_no_sahf, pta_flag_fxsr>::apply,
+      .min_gcc_version = {6, 3, 0},
+    },
+    {
+      "opteron-sse3", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_no_sahf>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 0},
+    },
+    {
+      "opteron-sse3", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_no_sahf,
+		  pta_flag_prfchw, pta_flag_fxsr>::apply,
+      .min_gcc_version = {4, 8, 1},
+      .max_gcc_version = {6, 2, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      "opteron-sse3", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_no_sahf,
+		  pta_flag_fxsr>::apply,
+      .min_gcc_version = {6, 3, 0},
+    },
+    {
+      "athlon64", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_no_sahf>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 0},
+    },
+    {
+      "athlon64", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_no_sahf, pta_flag_prfchw,
+		  pta_flag_fxsr>::apply,
+      .min_gcc_version = {4, 8, 1},
+      .max_gcc_version = {6, 2, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      "athlon64", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_no_sahf, pta_flag_fxsr>::apply,
+      .min_gcc_version = {6, 3, 0},
+    },
+    {
+      "athlon64-sse3", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_no_sahf>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 0},
+    },
+    {
+      "athlon64-sse3", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_no_sahf,
+		  pta_flag_prfchw, pta_flag_fxsr>::apply,
+      .min_gcc_version = {4, 8, 1},
+      .max_gcc_version = {6, 2, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      "athlon64-sse3", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_no_sahf,
+		  pta_flag_fxsr>::apply,
+      .min_gcc_version = {6, 3, 0},
+    },
+    {
+      "athlon-fx", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_no_sahf>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 0},
+    },
+    {
+      "athlon-fx", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_no_sahf, pta_flag_prfchw,
+		  pta_flag_fxsr>::apply,
+      .min_gcc_version = {4, 8, 1},
+      .max_gcc_version = {6, 2, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      "athlon-fx", processor_k8,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_no_sahf, pta_flag_fxsr>::apply,
+      .min_gcc_version = {6, 3, 0},
+    },
+    {
+      "amdfam10", processor_amdfam10,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_sse4a,
+		  pta_flag_cx16, pta_flag_abm>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 0},
+    },
+    {
+      "amdfam10", processor_amdfam10,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_sse4a,
+		  pta_flag_cx16, pta_flag_abm,
+		  pta_flag_prfchw, pta_flag_fxsr>::apply,
+      .min_gcc_version = {4, 8, 1},
+    },
+    {
+      "barcelona", processor_amdfam10,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_sse4a,
+		  pta_flag_cx16, pta_flag_abm>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 0},
+    },
+    {
+      "barcelona", processor_amdfam10,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_3dnow, pta_flag_3dnow_a,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_sse4a,
+		  pta_flag_cx16, pta_flag_abm,
+		  pta_flag_prfchw, pta_flag_fxsr>::apply,
+      .min_gcc_version = {4, 8, 1},
+    },
+    {
+      "bdver1", processor_bdver1,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_sse4a,
+		  pta_flag_cx16, pta_flag_abm,
+		  pta_flag_ssse3, pta_flag_sse4_1,
+		  pta_flag_sse4_2, pta_flag_aes,
+		  pta_flag_pclmul, pta_flag_avx,
+		  pta_flag_fma4, pta_flag_xop,
+		  pta_flag_lwp, pta_flag_prfchw,
+		  pta_flag_fxsr, pta_flag_xsave>::apply
+    },
+    {
+      "bdver2", processor_bdver2,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_sse4a,
+		  pta_flag_cx16, pta_flag_abm,
+		  pta_flag_ssse3, pta_flag_sse4_1,
+		  pta_flag_sse4_2, pta_flag_aes,
+		  pta_flag_pclmul, pta_flag_avx,
+		  pta_flag_fma4, pta_flag_xop,
+		  pta_flag_lwp, pta_flag_bmi,
+		  pta_flag_tbm, pta_flag_f16c,
+		  pta_flag_fma, pta_flag_prfchw,
+		  pta_flag_fxsr, pta_flag_xsave>::apply
+    },
+    {
+      "bdver3", processor_bdver3,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_sse4a,
+		  pta_flag_cx16, pta_flag_abm,
+		  pta_flag_ssse3, pta_flag_sse4_1,
+		  pta_flag_sse4_2, pta_flag_aes,
+		  pta_flag_pclmul, pta_flag_avx,
+		  pta_flag_xop, pta_flag_lwp,
+		  pta_flag_bmi, pta_flag_tbm,
+		  pta_flag_f16c, pta_flag_fma,
+		  pta_flag_prfchw, pta_flag_fxsr,
+      pta_flag_xsave, pta_flag_xsaveopt>::apply,
+      .min_gcc_version = {4, 8, 0},
+      .max_gcc_version = {4, 8, 2},
+    },
+    {
+      "bdver3", processor_bdver3,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_sse4a,
+		  pta_flag_cx16, pta_flag_abm,
+		  pta_flag_ssse3, pta_flag_sse4_1,
+		  pta_flag_sse4_2, pta_flag_aes,
+		  pta_flag_pclmul, pta_flag_avx,
+		  pta_flag_fma4, pta_flag_xop,
+		  pta_flag_lwp, pta_flag_bmi,
+		  pta_flag_tbm, pta_flag_f16c,
+		  pta_flag_fma, pta_flag_prfchw,
+		  pta_flag_fxsr, pta_flag_xsave,
+		  pta_flag_xsaveopt>::apply,
+      .min_gcc_version = {4, 8, 3},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      "bdver3", processor_bdver3,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_sse4a,
+		  pta_flag_cx16, pta_flag_abm,
+		  pta_flag_ssse3, pta_flag_sse4_1,
+		  pta_flag_sse4_2, pta_flag_aes,
+		  pta_flag_pclmul, pta_flag_avx,
+		  pta_flag_fma4, pta_flag_xop,
+		  pta_flag_lwp, pta_flag_bmi,
+		  pta_flag_tbm, pta_flag_f16c,
+		  pta_flag_fma, pta_flag_prfchw,
+		  pta_flag_fxsr, pta_flag_xsave,
+		  pta_flag_xsaveopt, pta_flag_fsgsbase>::apply,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      "bdver4", processor_bdver4,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_sse4a,
+		  pta_flag_cx16, pta_flag_abm,
+		  pta_flag_ssse3, pta_flag_sse4_1,
+		  pta_flag_sse4_2, pta_flag_aes,
+		  pta_flag_pclmul, pta_flag_avx,
+		  pta_flag_avx2, pta_flag_fma4,
+		  pta_flag_xop, pta_flag_lwp,
+		  pta_flag_bmi, pta_flag_bmi2,
+		  pta_flag_tbm, pta_flag_f16c,
+		  pta_flag_fma, pta_flag_prfchw,
+		  pta_flag_fxsr, pta_flag_xsave,
+		  pta_flag_xsaveopt, pta_flag_fsgsbase>::apply,
+      .min_gcc_version = {4, 9, 0},
+      .max_gcc_version = {4, 9, 1},
+    },
+    {
+      "bdver4", processor_bdver4,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_sse4a,
+		  pta_flag_cx16, pta_flag_abm,
+		  pta_flag_ssse3, pta_flag_sse4_1,
+		  pta_flag_sse4_2, pta_flag_aes,
+		  pta_flag_pclmul, pta_flag_avx,
+		  pta_flag_avx2, pta_flag_fma4,
+		  pta_flag_xop, pta_flag_lwp,
+		  pta_flag_bmi, pta_flag_bmi2,
+		  pta_flag_tbm, pta_flag_f16c,
+		  pta_flag_fma, pta_flag_prfchw,
+		  pta_flag_fxsr, pta_flag_xsave,
+		  pta_flag_xsaveopt, pta_flag_fsgsbase,
+		  pta_flag_rdrnd, pta_flag_movbe>::apply,
+      .min_gcc_version = {4, 9, 2},
+      .max_gcc_version = {5, 1, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      "bdver4", processor_bdver4,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_sse4a,
+		  pta_flag_cx16, pta_flag_abm,
+		  pta_flag_ssse3, pta_flag_sse4_1,
+		  pta_flag_sse4_2, pta_flag_aes,
+		  pta_flag_pclmul, pta_flag_avx,
+		  pta_flag_avx2, pta_flag_fma4,
+		  pta_flag_xop, pta_flag_lwp,
+		  pta_flag_bmi, pta_flag_bmi2,
+		  pta_flag_tbm, pta_flag_f16c,
+		  pta_flag_fma, pta_flag_prfchw,
+		  pta_flag_fxsr, pta_flag_xsave,
+		  pta_flag_xsaveopt, pta_flag_fsgsbase,
+		  pta_flag_rdrnd, pta_flag_movbe,
+		  pta_flag_mwaitx>::apply,
+      .min_gcc_version = {5, 2, 0},
+    },
+    {
+      "znver1", processor_znver1,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_sse4a,
+		  pta_flag_cx16, pta_flag_abm,
+		  pta_flag_ssse3, pta_flag_sse4_1,
+		  pta_flag_sse4_2, pta_flag_aes,
+		  pta_flag_pclmul, pta_flag_avx,
+		  pta_flag_avx2, pta_flag_bmi,
+		  pta_flag_bmi2, pta_flag_f16c,
+		  pta_flag_fma, pta_flag_prfchw,
+		  pta_flag_fxsr, pta_flag_xsave,
+		  pta_flag_xsaveopt, pta_flag_fsgsbase,
+		  pta_flag_rdrnd, pta_flag_movbe,
+		  pta_flag_movbe, pta_flag_mwaitx,
+		  pta_flag_adx, pta_flag_rdseed,
+		  pta_flag_clzero, pta_flag_clflushopt,
+		  pta_flag_xsavec, pta_flag_xsaves,
+		  pta_flag_sha, pta_flag_lzcnt,
+		  pta_flag_popcnt>::apply,
+      .min_gcc_version = {6, 1, 0},
+    },
+    {
+      "znver2", processor_znver1,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_sse4a,
+		  pta_flag_cx16, pta_flag_abm,
+		  pta_flag_ssse3, pta_flag_sse4_1,
+		  pta_flag_sse4_2, pta_flag_aes,
+		  pta_flag_pclmul, pta_flag_avx,
+		  pta_flag_avx2, pta_flag_bmi,
+		  pta_flag_bmi2, pta_flag_f16c,
+		  pta_flag_fma, pta_flag_prfchw,
+		  pta_flag_fxsr, pta_flag_xsave,
+		  pta_flag_xsaveopt, pta_flag_fsgsbase,
+		  pta_flag_rdrnd, pta_flag_movbe,
+		  pta_flag_movbe, pta_flag_mwaitx,
+		  pta_flag_adx, pta_flag_rdseed,
+		  pta_flag_clzero, pta_flag_clflushopt,
+		  pta_flag_xsavec, pta_flag_xsaves,
+		  pta_flag_sha, pta_flag_lzcnt,
+		  pta_flag_popcnt, pta_flag_clwb,
+		  pta_flag_rdpid, pta_flag_wbnoinvd>::apply,
+      .min_gcc_version = {9, 1, 0},
+      .max_gcc_version = {9, 1, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      "znver2", processor_znver2,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_sse4a,
+		  pta_flag_cx16, pta_flag_abm,
+		  pta_flag_ssse3, pta_flag_sse4_1,
+		  pta_flag_sse4_2, pta_flag_aes,
+		  pta_flag_pclmul, pta_flag_avx,
+		  pta_flag_avx2, pta_flag_bmi,
+		  pta_flag_bmi2, pta_flag_f16c,
+		  pta_flag_fma, pta_flag_prfchw,
+		  pta_flag_fxsr, pta_flag_xsave,
+		  pta_flag_xsaveopt, pta_flag_fsgsbase,
+		  pta_flag_rdrnd, pta_flag_movbe,
+		  pta_flag_movbe, pta_flag_mwaitx,
+		  pta_flag_adx, pta_flag_rdseed,
+		  pta_flag_clzero, pta_flag_clflushopt,
+		  pta_flag_xsavec, pta_flag_xsaves,
+		  pta_flag_sha, pta_flag_lzcnt,
+		  pta_flag_popcnt, pta_flag_clwb,
+		  pta_flag_rdpid, pta_flag_wbnoinvd>::apply,
+      .min_gcc_version = {9, 2, 0},
+    },
+    {
+      "btver1", processor_btver1,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_ssse3,
+		  pta_flag_sse4a, pta_flag_abm,
+		  pta_flag_cx16, pta_flag_prfchw,
+		  pta_flag_fxsr, pta_flag_xsave>::apply
+    },
+    {
+      "btver2", processor_btver2,
+      __flags_set<pta_flag_64bit, pta_flag_mmx,
+		  pta_flag_sse, pta_flag_sse2,
+		  pta_flag_sse3, pta_flag_ssse3,
+		  pta_flag_sse4a, pta_flag_abm,
+		  pta_flag_cx16, pta_flag_sse4_1,
+		  pta_flag_sse4_2, pta_flag_aes,
+		  pta_flag_pclmul, pta_flag_avx,
+		  pta_flag_bmi, pta_flag_f16c,
+		  pta_flag_movbe, pta_flag_prfchw,
+		  pta_flag_fxsr, pta_flag_xsave,
+		  pta_flag_xsaveopt>::apply
+    },
+    {
+      "generic", processor_generic,
+      __flags_set<pta_flag_64bit, pta_flag_hle>::apply,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      "generic32", processor_generic32,
+      __flags_set<pta_flag_hle>::apply,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      "generic64", processor_generic64,
+      __flags_set<pta_flag_64bit, pta_flag_hle>::apply,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    { nullptr },
+  };
+
+  for (const _pta *r = processor_alias_table; r->name; ++r) {
+    if (!std::strcmp(r->name, name) &&
+	r->min_gcc_version <= ver && ver <= r->max_gcc_version) {
+      return r;
+    }
+  }
+
+  return nullptr;
+}
 
 void target_x86_64_gcc::opts_x86::
 handle_opt(const gcc_cmdline_parser::option * const o,
@@ -1105,11 +2534,100 @@ handle_opt(const gcc_cmdline_parser::option * const o,
   switch (o->code) {
   case opt_code_i386_unused:
     break;
+
+  case opt_code_i386_march:
+    assert(val);
+    assert(!generated);
+    _arch_string = val;
+    break;
+
+
+  case opt_code_i386_mtune:
+    assert(val);
+    assert(!generated);
+    _tune_string = val;
+    break;
   }
 }
 
 void target_x86_64_gcc::opts_x86::option_override()
 {
+  using gcc_version = gcc_cmdline_parser::gcc_version;
+
   // This mimics GCC's ix86_option_override_internal for a biarch
   // compiler defaulting to 64bit ABI.
+  const gcc_version &ver = _t.get_gcc_version();
+  bool tune_defaulted = false;
+  bool tune_specified = false;
+  if (_tune_string.empty()) {
+    if (!_arch_string.empty()) {
+      _tune_string = _arch_string;
+    } else {
+      _tune_string = "generic";
+      tune_defaulted = true;
+    }
+
+    // This changed after GCC 4.8.5
+    if (gcc_version{4, 9, 0} <= ver) {
+      if (_tune_string == "x86-64")
+	_tune_string = "generic";
+    } else {
+      if (_tune_string == "generic" ||
+	  _tune_string == "x86-64" ||
+	  _tune_string == "i686") {
+	_tune_string = "generic64";
+      }
+    }
+
+  } else {
+    tune_specified = true;
+
+    // This has changed after GCC 4.8.5
+    if (ver < gcc_version{4, 9, 0}) {
+      if (_tune_string == "generic" ||
+	  _tune_string == "i686") {
+	_tune_string = "generic64";
+
+      } else if (_tune_string == "generic64" ||
+		 _tune_string == "generic32") {
+	throw cmdline_except{
+	  "bad value (" + _tune_string + ") + for -mtune switch"
+	};
+      }
+    }
+  }
+
+  bool arch_specified = false;
+  if (_arch_string.empty()) {
+    _arch_string = "x86-64";
+  } else {
+    arch_specified = true;
+  }
+
+  _arch = _pta::lookup(_arch_string.c_str(), ver);
+  if (!_arch) {
+    throw cmdline_except{"unrecognized value for -march"};
+  }
+
+  _pta::pta_flags_type pta_flags;
+  _arch->apply_flags(pta_flags, ver);
+  if (!std::strcmp(_arch->name, "generic")) {
+    throw cmdline_except{"\"generic\" CPU can be used only for -mtune switch"};
+  } else if (!std::strcmp(_arch->name, "generic32") ||
+	     !std::strcmp(_arch->name, "generic64")) {
+    // Note that this can happen only with GCC <= 4.8.5
+    throw cmdline_except{
+      "bad value (" + _arch_string + ") + for -march switch"
+    };
+  } else if (!std::strcmp(_arch->name, "intel")) {
+    throw cmdline_except{"\"intel\" CPU can be used only for -mtune switch"};
+  }
+
+  _tune = _pta::lookup(_tune_string.c_str(), ver);
+  if (!_tune) {
+    throw cmdline_except{"unrecognized value for -mtune"};
+  }
+
+  _pta::pta_flags_type tune_pta_flags;
+  _tune->apply_flags(tune_pta_flags, ver);
 }

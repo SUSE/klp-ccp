@@ -19,6 +19,7 @@
 #ifndef TARGET_X86_64_GCC_HH
 #define TARGET_X86_64_GCC_HH
 
+#include <bitset>
 #include "target_gcc.hh"
 #include "gcc_cmdline_parser.hh"
 
@@ -158,6 +159,12 @@ namespace klp
       private:
 	target_x86_64_gcc &_t;
 
+	struct _pta;
+
+	const _pta *_arch;
+	const _pta *_tune;
+	std::string _arch_string;
+	std::string _tune_string;
       };
 
       opts_x86 _opts_x86;
