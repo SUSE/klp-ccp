@@ -36,7 +36,6 @@ namespace klp
       virtual const builtin_typedef::factories&
       get_builtin_typedefs() const noexcept override;
 
-      virtual bool is_char_signed() const noexcept override;
       virtual bool is_wchar_signed() const noexcept override;
 
       virtual bool is_bitfield_default_signed() const noexcept override;
@@ -125,6 +124,8 @@ namespace klp
 
       virtual const default_option&
       _arch_get_option_optimization_table() const noexcept override;
+
+      virtual bool _arch_default_char_is_signed() const noexcept override;
 
       virtual void _arch_option_init_struct() override;
 

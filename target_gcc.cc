@@ -88,6 +88,8 @@ enum opt_code_c_family
   opt_code_c_family_isystem,
   opt_code_c_family_undef,
   opt_code_c_family_fgnu89_inline,
+  opt_code_c_family_fsigned_char,
+  opt_code_c_family_funsigned_char,
 
   opt_code_c_family_ansi,
 
@@ -238,12 +240,17 @@ void target_gcc::parse_command_line
   }
 }
 
+bool target_gcc::is_char_signed() const noexcept
+{
+  return _opts_c_family.flag_signed_char;
+}
+
 void target_gcc::_init_options_struct() noexcept
 {
   // This corresponds to GCC's language agnostic
   // init_options_struct().
   _opts_common.init_options_struct();
-  _opts_c_family.init_options_struct();
+  _opts_c_family.init_options_struct(*this);
   this->_arch_option_init_struct();
 }
 
@@ -1590,13 +1597,15 @@ void target_gcc::opts_common::_set_fast_math_flags(const bool set) noexcept
 
 target_gcc::opts_c_family::opts_c_family() noexcept
   : flag_undef(false), c_std(c_lang_kind::clk_gnuc89),
-    flag_gnu89_inline(-1)
+    flag_gnu89_inline(-1), flag_signed_char(false)
 {}
 
-void target_gcc::opts_c_family::init_options_struct() noexcept
+void target_gcc::opts_c_family::init_options_struct(const target_gcc &target)
+  noexcept
 {
   // This gets called from target_gcc::_init_options_struct() which
   // corresponds to GCC's language agnostic init_options_struct().
+  flag_signed_char = target._arch_default_char_is_signed();
 }
 
 void target_gcc::opts_c_family::c_lang_init_options_struct() noexcept
@@ -1674,6 +1683,14 @@ opts_c_family::handle_opt(const gcc_cmdline_parser::option * const o,
 
   case opt_code_c_family_fgnu89_inline:
     flag_undef = !negative;
+    break;
+
+  case opt_code_c_family_fsigned_char:
+    flag_signed_char = !negative;
+    break;
+
+  case opt_code_c_family_funsigned_char:
+    flag_signed_char = negative;
     break;
 
   case opt_code_c_family_ansi:

@@ -4403,7 +4403,7 @@
 },
 {
   "fsigned-char",
-  opt_code_c_family_unused,
+  opt_code_c_family_fsigned_char,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4576,7 +4576,7 @@
 },
 {
   "funsigned-char",
-  opt_code_c_family_unused,
+  opt_code_c_family_funsigned_char,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |

@@ -48,6 +48,8 @@ namespace klp
       get_gcc_version() const noexcept
       { return _gcc_version; }
 
+      virtual bool is_char_signed() const noexcept final;
+
     protected:
       struct opts_c_family;
 
@@ -176,7 +178,7 @@ namespace klp
       {
 	opts_c_family() noexcept;
 
-	void init_options_struct() noexcept;
+	void init_options_struct(const target_gcc &target) noexcept;
 	void c_lang_init_options_struct() noexcept;
 	void c_lang_init_options(const gcc_cmdline_parser::gcc_version &ver)
 	  noexcept;
@@ -228,6 +230,7 @@ namespace klp
 	c_lang_kind c_std;
 
 	int flag_gnu89_inline;
+	bool flag_signed_char;
 
       private:
 	void _set_std_c89(const bool c94, const bool iso) noexcept;
@@ -269,6 +272,8 @@ namespace klp
 
       virtual const default_option&
       _arch_get_option_optimization_table() const noexcept = 0;
+
+      virtual bool _arch_default_char_is_signed() const noexcept = 0;
 
       virtual void _arch_option_init_struct() = 0;
 

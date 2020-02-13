@@ -150,11 +150,6 @@ const builtin_typedef::factories& target_x86_64_gcc::get_builtin_typedefs()
   return _builtin_typedefs;
 }
 
-bool target_x86_64_gcc::is_char_signed() const noexcept
-{
-  return true;
-}
-
 bool target_x86_64_gcc::is_wchar_signed() const noexcept
 {
   return true;
@@ -963,6 +958,11 @@ target_x86_64_gcc::_arch_get_option_optimization_table() const noexcept
   };
 
   return *default_options_table;
+}
+
+bool target_x86_64_gcc::_arch_default_char_is_signed() const noexcept
+{
+  return true;
 }
 
 void target_x86_64_gcc::_arch_option_init_struct()
