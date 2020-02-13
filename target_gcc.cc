@@ -90,6 +90,8 @@ enum opt_code_c_family
   opt_code_c_family_fgnu89_inline,
   opt_code_c_family_fsigned_char,
   opt_code_c_family_funsigned_char,
+  opt_code_c_family_fopenacc,
+  opt_code_c_family_fopenmp,
 
   opt_code_c_family_ansi,
 
@@ -1597,7 +1599,8 @@ void target_gcc::opts_common::_set_fast_math_flags(const bool set) noexcept
 
 target_gcc::opts_c_family::opts_c_family() noexcept
   : flag_undef(false), c_std(c_lang_kind::clk_gnuc89),
-    flag_gnu89_inline(-1), flag_signed_char(false)
+    flag_gnu89_inline(-1), flag_signed_char(false),
+    flag_openacc(false), flag_openmp(false)
 {}
 
 void target_gcc::opts_c_family::init_options_struct(const target_gcc &target)
@@ -1692,6 +1695,14 @@ opts_c_family::handle_opt(const gcc_cmdline_parser::option * const o,
   case opt_code_c_family_funsigned_char:
     flag_signed_char = negative;
     break;
+
+  case opt_code_c_family_fopenacc:
+    flag_openacc = !negative;
+    break;
+
+  case opt_code_c_family_fopenmp:
+   flag_openmp = !negative;
+   break;
 
   case opt_code_c_family_ansi:
     _set_std_c89(false, true);

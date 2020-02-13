@@ -232,6 +232,9 @@ namespace klp
 	int flag_gnu89_inline;
 	bool flag_signed_char;
 
+	bool flag_openacc;
+	bool flag_openmp;
+
       private:
 	void _set_std_c89(const bool c94, const bool iso) noexcept;
 	void _set_std_c99(const bool iso) noexcept;

@@ -4218,7 +4218,7 @@
 },
 {
   "fopenacc",
-  opt_code_c_family_unused,
+  opt_code_c_family_fopenacc,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
@@ -4244,7 +4244,7 @@
 },
 {
   "fopenmp",
-  opt_code_c_family_unused,
+  opt_code_c_family_fopenmp,
   (gcc_cmdline_parser::option::comp_c |
    gcc_cmdline_parser::option::comp_objc |
    gcc_cmdline_parser::option::comp_cxx |
