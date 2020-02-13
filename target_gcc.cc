@@ -59,6 +59,11 @@ enum opt_code_common
   opt_code_common_fpie,
 
   opt_code_common_fexceptions,
+
+  opt_code_common_fstack_protector,
+  opt_code_common_fstack_protector_all,
+  opt_code_common_fstack_protector_explicit,
+  opt_code_common_fstack_protector_strong,
 };
 
 static gcc_cmdline_parser::option gcc_opt_table_common[] = {
@@ -876,7 +881,8 @@ target_gcc::opts_common::opts_common(const gcc_cmdline_parser::gcc_version &ver)
     flag_abi_version(0), flag_leading_underscore(-1),
     flag_no_inline(false),
     flag_pic(-1), flag_pie(-1),
-    flag_exceptions(false)
+    flag_exceptions(false),
+    flag_stack_protect(-1)
 {
   using gcc_version = gcc_cmdline_parser::gcc_version;
 
@@ -1075,6 +1081,22 @@ handle_opt(const gcc_cmdline_parser::option * const o,
   case opt_code_common_fexceptions:
     flag_exceptions = !negative;
     break;
+
+  case opt_code_common_fstack_protector:
+    flag_stack_protect = !negative;
+    break;
+
+  case opt_code_common_fstack_protector_all:
+    flag_stack_protect = 2;
+    break;
+
+  case opt_code_common_fstack_protector_explicit:
+    flag_stack_protect = 3;
+    break;
+
+  case opt_code_common_fstack_protector_strong:
+    flag_stack_protect = 4;
+    break;
   }
 }
 
@@ -1097,6 +1119,12 @@ void target_gcc::opts_common::finish_options() noexcept
     flag_pic = flag_pie;
   else if (flag_pic == -1)
     flag_pic = 0;
+
+  // The code for defaulting flag_stack_protect has been introduced
+  // with GCC 6.1.0.  Before that, it had been initialized to 0
+  // (rather than -1), so there's no change in functionality here.
+  if (flag_stack_protect == -1)
+    flag_stack_protect = 0; // Assume GCC's DEFAULT_FLAG_SSP == 0
 
   if (optimize == 0)
     flag_no_inline = true;

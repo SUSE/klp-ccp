@@ -3772,20 +3772,20 @@
 },
 {
   "fstack-protector",
-  opt_code_common_unused,
+  opt_code_common_fstack_protector,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "fstack-protector-all",
-  opt_code_common_unused,
+  opt_code_common_fstack_protector_all,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
 },
 {
   "fstack-protector-explicit",
-  opt_code_common_unused,
+  opt_code_common_fstack_protector_explicit,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -3795,7 +3795,7 @@
 },
 {
   "fstack-protector-strong",
-  opt_code_common_unused,
+  opt_code_common_fstack_protector_strong,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
