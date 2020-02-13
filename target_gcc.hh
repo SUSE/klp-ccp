@@ -245,6 +245,9 @@ namespace klp
 	void _set_std_c2x(const bool iso) noexcept;
       };
 
+      opts_common& get_opts_common() noexcept
+      { return _opts_common; }
+
       struct default_option
       {
 	enum opt_levels
