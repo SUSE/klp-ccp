@@ -37,14 +37,23 @@ enum opt_code_i386
   opt_code_i386_m64,
   opt_code_i386_mx32,
 
+  opt_code_i386_m128bit_long_double,
   opt_code_i386_m3dnow,
   opt_code_i386_m3dnowa,
+  opt_code_i386_m80387,
+  opt_code_i386_m8bit_idiv,
+  opt_code_i386_m96bit_long_double,
   opt_code_i386_mabm,
+  opt_code_i386_maccumulate_outgoing_args,
   opt_code_i386_madx,
   opt_code_i386_maes,
+  opt_code_i386_malign_double,
+  opt_code_i386_malign_stringops,
   opt_code_i386_march,
   opt_code_i386_mavx,
   opt_code_i386_mavx2,
+  opt_code_i386_mavx256_split_unaligned_load,
+  opt_code_i386_mavx256_split_unaligned_store,
   opt_code_i386_mavx5124fmaps,
   opt_code_i386_mavx5124vnniw,
   opt_code_i386_mavx512bitalg,
@@ -62,6 +71,8 @@ enum opt_code_i386
   opt_code_i386_mavx512vpopcntdq,
   opt_code_i386_mbmi,
   opt_code_i386_mbmi2,
+  opt_code_i386_mcall_ms2sysv_xlogues,
+  opt_code_i386_mcld,
   opt_code_i386_mcldemote,
   opt_code_i386_mclflushopt,
   opt_code_i386_mclwb,
@@ -69,23 +80,39 @@ enum opt_code_i386
   opt_code_i386_mcrc32,
   opt_code_i386_mcx16,
   opt_code_i386_mf16c,
+  opt_code_i386_mfancy_math_387,
   opt_code_i386_mfma,
   opt_code_i386_mfma4,
+  opt_code_i386_mfp_ret_in_387,
   opt_code_i386_mfsgsbase,
   opt_code_i386_mfxsr,
   opt_code_i386_mgeneral_regs_only,
   opt_code_i386_mgfni,
+  opt_code_i386_mhard_float,
   opt_code_i386_mhle,
+  opt_code_i386_miamcu,
+  opt_code_i386_mieee_fp,
   opt_code_i386_mincoming_stack_boundary,
+  opt_code_i386_minline_all_stringops,
+  opt_code_i386_minline_stringops_dynamically,
+  opt_code_i386_mlong_double_128,
+  opt_code_i386_mlong_double_64,
+  opt_code_i386_mlong_double_80,
   opt_code_i386_mlwp,
   opt_code_i386_mlzcnt,
   opt_code_i386_mmmx,
   opt_code_i386_mmovbe,
   opt_code_i386_mmovdir64b,
   opt_code_i386_mmovdiri,
+  opt_code_i386_mms_bitfields,
   opt_code_i386_mmpx,
   opt_code_i386_mmwaitx,
+  opt_code_i386_mno_align_stringops,
+  opt_code_i386_mno_fancy_math_387,
+  opt_code_i386_mno_push_args,
+  opt_code_i386_mno_red_zone,
   opt_code_i386_mno_sse4,
+  opt_code_i386_momit_leaf_frame_pointer,
   opt_code_i386_mpclmul,
   opt_code_i386_mpcommit,
   opt_code_i386_mpconfig,
@@ -95,14 +122,19 @@ enum opt_code_i386
   opt_code_i386_mprefetchwt1,
   opt_code_i386_mprfchw,
   opt_code_i386_mptwrite,
+  opt_code_i386_mpush_args,
   opt_code_i386_mrdpid,
   opt_code_i386_mrdrnd,
   opt_code_i386_mrdseed,
+  opt_code_i386_mrecip,
+  opt_code_i386_mred_zone,
+  opt_code_i386_mrtd,
   opt_code_i386_mrtm,
   opt_code_i386_msahf,
   opt_code_i386_msgx,
   opt_code_i386_msha,
   opt_code_i386_mshstk,
+  opt_code_i386_msoft_float,
   opt_code_i386_msse,
   opt_code_i386_msse2,
   opt_code_i386_msse3,
@@ -110,12 +142,17 @@ enum opt_code_i386
   opt_code_i386_msse4_1,
   opt_code_i386_msse4_2,
   opt_code_i386_msse4a,
+  opt_code_i386_msseregparm,
   opt_code_i386_mssse3,
+  opt_code_i386_mstack_arg_probe,
   opt_code_i386_mstackrealign,
+  opt_code_i386_mstv,
   opt_code_i386_mtbm,
+  opt_code_i386_mtls_direct_seg_refs,
   opt_code_i386_mtune_ctrl,
   opt_code_i386_mtune,
   opt_code_i386_mvaes,
+  opt_code_i386_mvect8_ret_in_mem,
   opt_code_i386_mvzeroupper,
   opt_code_i386_mvpclmulqdq,
   opt_code_i386_mwaitpkg,
@@ -1180,7 +1217,7 @@ void target_x86_64_gcc::_arch_register_builtin_macros(preprocessor &pp) const
 
 target_x86_64_gcc::opts_x86::
 opts_x86(target_x86_64_gcc &t) noexcept
-  : _t(t),
+  : _t(t), _valid_target_flags(_init_valid_target_flags(t.get_gcc_version())),
     _valid_isa_flags(_init_valid_isa_flags(t.get_gcc_version())),
     _arch(nullptr), _tune(nullptr),
     force_align_arg_pointer(false),
@@ -1189,6 +1226,13 @@ opts_x86(target_x86_64_gcc &t) noexcept
     incoming_stack_boundary_arg(0), incoming_stack_boundary_arg_set(false),
     incoming_stack_boundary(0)
 {
+  // GCC's target_flags is initialized with
+  // TARGET_DEFAULT_TARGET_FLAGS.
+  __set_target_flag<target_flag_80387>(_target_flags);
+  __set_target_flag<target_flag_ieee_fp>(_target_flags);
+  __set_target_flag<target_flag_float_returns>(_target_flags);
+  __set_target_flag<target_flag_tls_direct_seg_refs>(_target_flags);
+
   // GCC's ix86_isa_flags is initialized with
   // TARGET_64BIT_DEFAULT | TARGET_SUBTARGET_ISA_DEFAULT.
   __set_isa_flag<isa_flag_64bit>(_isa_flags);
@@ -1204,6 +1248,30 @@ void target_x86_64_gcc::opts_x86::option_init_struct() noexcept
   _t.get_opts_common().flag_unwind_tables = false;
 
   _t.get_opts_common().flag_asynchronous_unwind_tables = 2;
+}
+
+target_x86_64_gcc::opts_x86::_target_flags_type target_x86_64_gcc::opts_x86::
+_init_valid_target_flags(const gcc_cmdline_parser::gcc_version &ver)
+{
+  _target_flags_type flags;
+  flags.set();
+
+  using gcc_version = gcc_cmdline_parser::gcc_version;
+
+  if (ver < gcc_version{4, 9, 0})
+    flags.reset(target_flag_long_double_128);
+
+  if (ver < gcc_version{6, 1, 0}) {
+    flags.reset(target_flag_iamcu);
+    flags.reset(target_flag_stv);
+  }
+
+  if (ver < gcc_version{8, 1, 0})
+    flags.reset(target_flag_call_ms2sysv_xlogues);
+  else
+    flags.reset(target_flag_prefer_avx128);
+
+  return flags;
 }
 
 target_x86_64_gcc::opts_x86::_isa_flags_type target_x86_64_gcc::opts_x86::
@@ -1285,6 +1353,40 @@ _init_valid_isa_flags(const gcc_cmdline_parser::gcc_version &ver)
 
   return flags;
 }
+
+template <target_x86_64_gcc::opts_x86::target_flag b>
+void target_x86_64_gcc::opts_x86::__set_target_flag(_target_flags_type &flags)
+  noexcept
+{
+  assert(_valid_target_flags.test(b));
+  flags.set(b);
+}
+
+template <target_x86_64_gcc::opts_x86::target_flag b>
+void target_x86_64_gcc::opts_x86::__unset_target_flag(_target_flags_type &flags)
+  noexcept
+{
+  assert(_valid_target_flags.test(b));
+  flags.reset(b);
+}
+
+template <target_x86_64_gcc::opts_x86::target_flag b>
+void target_x86_64_gcc::opts_x86::_set_target_flag_user(const bool value,
+							const bool generated)
+  noexcept
+{
+  if (!_valid_target_flags.test(b))
+    return;
+
+  if (!generated)
+    __set_target_flag<b>(_target_flags_set);
+
+  if (value)
+    __set_target_flag<b>(_target_flags);
+  else
+    __unset_target_flag<b>(_target_flags);
+}
+
 
 // The following mimic the OPTION_MASK_ISA_<FOO>_SET #defines from the
 // GCC sources.
@@ -4827,6 +4929,10 @@ handle_opt(const gcc_cmdline_parser::option * const o,
     __set_isa_flag<isa_flag_abi_x32>(_isa_flags);
     break;
 
+  case opt_code_i386_m128bit_long_double:
+    _set_target_flag_user<target_flag_128bit_long_double>(true, generated);
+    break;
+
   case opt_code_i386_m3dnow:
     _set_isa_flag_user<isa_flag_3dnow>(!negative, generated);
     break;
@@ -4841,8 +4947,25 @@ handle_opt(const gcc_cmdline_parser::option * const o,
     _set_isa_flag_user<isa_flag_3dnow_a>(!negative, generated);
     break;
 
+  case opt_code_i386_m80387:
+    _set_target_flag_user<target_flag_80387>(!negative, generated);
+    break;
+
+  case opt_code_i386_m8bit_idiv:
+    _set_target_flag_user<target_flag_use_8bit_idiv>(!negative, generated);
+    break;
+
+  case opt_code_i386_m96bit_long_double:
+    _set_target_flag_user<target_flag_128bit_long_double>(false, generated);
+    break;
+
   case opt_code_i386_mabm:
     _set_isa_flag_user<isa_flag_abm>(!negative, generated);
+    break;
+
+  case opt_code_i386_maccumulate_outgoing_args:
+    _set_target_flag_user<target_flag_accumulate_outgoing_args>
+      (!negative, generated);
     break;
 
   case opt_code_i386_madx:
@@ -4851,6 +4974,14 @@ handle_opt(const gcc_cmdline_parser::option * const o,
 
   case opt_code_i386_maes:
     _set_isa_flag_user<isa_flag_aes>(!negative, generated);
+    break;
+
+  case opt_code_i386_malign_double:
+    _set_target_flag_user<target_flag_align_double>(!negative, generated);
+    break;
+
+  case opt_code_i386_malign_stringops:
+    _set_target_flag_user<target_flag_no_align_stringops>(false, generated);
     break;
 
   case opt_code_i386_march:
@@ -4865,6 +4996,16 @@ handle_opt(const gcc_cmdline_parser::option * const o,
 
   case opt_code_i386_mavx2:
     _set_isa_flag_user<isa_flag_avx2>(!negative, generated);
+    break;
+
+  case opt_code_i386_mavx256_split_unaligned_load:
+    _set_target_flag_user<target_flag_avx256_split_unaligned_load>
+	(!negative, generated);
+    break;
+
+  case opt_code_i386_mavx256_split_unaligned_store:
+    _set_target_flag_user<target_flag_avx256_split_unaligned_store>
+	(!negative, generated);
     break;
 
   case opt_code_i386_mavx5124fmaps:
@@ -4947,6 +5088,15 @@ handle_opt(const gcc_cmdline_parser::option * const o,
     _set_isa_flag_user<isa_flag_bmi2>(!negative, generated);
     break;
 
+  case opt_code_i386_mcall_ms2sysv_xlogues:
+    _set_target_flag_user<target_flag_call_ms2sysv_xlogues>(!negative,
+							    generated);
+    break;
+
+  case opt_code_i386_mcld:
+    _set_target_flag_user<target_flag_cld>(!negative, generated);
+    break;
+
   case opt_code_i386_mcldemote:
     _set_isa_flag_user<isa_flag_cldemote>(!negative, generated);
     break;
@@ -4975,12 +5125,20 @@ handle_opt(const gcc_cmdline_parser::option * const o,
     _set_isa_flag_user<isa_flag_f16c>(!negative, generated);
     break;
 
+  case opt_code_i386_mfancy_math_387:
+    _set_target_flag_user<target_flag_no_fancy_math_387>(false, generated);
+    break;
+
   case opt_code_i386_mfma:
     _set_isa_flag_user<isa_flag_fma>(!negative, generated);
     break;
 
   case opt_code_i386_mfma4:
     _set_isa_flag_user<isa_flag_fma4>(!negative, generated);
+    break;
+
+  case opt_code_i386_mfp_ret_in_387:
+    _set_target_flag_user<target_flag_float_returns>(!negative, generated);
     break;
 
   case opt_code_i386_mfsgsbase:
@@ -4993,6 +5151,8 @@ handle_opt(const gcc_cmdline_parser::option * const o,
 
   case opt_code_i386_mgeneral_regs_only:
     assert(!negative);
+    _set_target_flag_user<target_flag_general_regs_only>(true, generated);
+    __unset_target_flag<target_flag_80387>(_target_flags);
     _unset_isa_flag_explicit<isa_flag_mmx>();
     _unset_isa_flag_explicit<isa_flag_sse>();
     // MPX support had been available only between GCC versions >=
@@ -5004,6 +5164,10 @@ handle_opt(const gcc_cmdline_parser::option * const o,
     _set_isa_flag_user<isa_flag_gfni>(!negative, generated);
     break;
 
+  case opt_code_i386_mhard_float:
+    _set_target_flag_user<target_flag_80387>(!negative, generated);
+    break;
+
   case opt_code_i386_mhle:
     // GCC's ix86_handle_option() never handled -mhle explictly. As a
     // result, _isa_flags_explicit had never been set for this option.
@@ -5012,6 +5176,14 @@ handle_opt(const gcc_cmdline_parser::option * const o,
 	_isa_flags_set.set(isa_flag_hle, true);
       _isa_flags.set(isa_flag_hle, !negative);
     }
+    break;
+
+  case opt_code_i386_miamcu:
+    _set_target_flag_user<target_flag_iamcu>(!negative, generated);
+    break;
+
+  case opt_code_i386_mieee_fp:
+    _set_target_flag_user<target_flag_ieee_fp>(!negative, generated);
     break;
 
   case opt_code_i386_mincoming_stack_boundary:
@@ -5031,6 +5203,28 @@ handle_opt(const gcc_cmdline_parser::option * const o,
       if (!generated)
 	incoming_stack_boundary_arg_set = true;
     }
+    break;
+
+  case opt_code_i386_minline_all_stringops:
+    _set_target_flag_user<target_flag_inline_all_stringops>(!negative,
+							    generated);
+    break;
+
+  case opt_code_i386_minline_stringops_dynamically:
+    _set_target_flag_user<target_flag_inline_stringops_dynamically>
+	(!negative, generated);
+    break;
+
+  case opt_code_i386_mlong_double_128:
+    _set_target_flag_user<target_flag_long_double_128>(true, generated);
+    break;
+
+  case opt_code_i386_mlong_double_64:
+    _set_target_flag_user<target_flag_long_double_64>(true, generated);
+    break;
+
+  case opt_code_i386_mlong_double_80:
+    _set_target_flag_user<target_flag_long_double_64>(false, generated);
     break;
 
   case opt_code_i386_mlwp:
@@ -5068,6 +5262,10 @@ handle_opt(const gcc_cmdline_parser::option * const o,
     _set_isa_flag_user<isa_flag_movdiri>(!negative, generated);
     break;
 
+  case opt_code_i386_mms_bitfields:
+    _set_target_flag_user<target_flag_ms_bitfield_layout>(!negative, generated);
+    break;
+
   case opt_code_i386_mmpx:
     // GCC's ix86_handle_option() never handled -mmpx explictly. As a
     // result, _isa_flags_explicit had never been set for this option
@@ -5084,9 +5282,30 @@ handle_opt(const gcc_cmdline_parser::option * const o,
     _set_isa_flag_user<isa_flag_mwaitx>(!negative, generated);
     break;
 
+  case opt_code_i386_mno_align_stringops:
+    _set_target_flag_user<target_flag_no_align_stringops>(true, generated);
+    break;
+
+  case opt_code_i386_mno_fancy_math_387:
+    _set_target_flag_user<target_flag_no_fancy_math_387>(true, generated);
+    break;
+
+  case opt_code_i386_mno_push_args:
+    _set_target_flag_user<target_flag_no_push_args>(true, generated);
+    break;
+
+  case opt_code_i386_mno_red_zone:
+    _set_target_flag_user<target_flag_no_red_zone>(true, generated);
+    break;
+
   case opt_code_i386_mno_sse4:
     assert(!negative);
     _set_isa_flag_user<isa_flag_sse4_1>(false, generated);
+    break;
+
+  case opt_code_i386_momit_leaf_frame_pointer:
+    _set_target_flag_user<target_flag_omit_leaf_frame_pointer>(!negative,
+							       generated);
     break;
 
   case opt_code_i386_mpclmul:
@@ -5140,6 +5359,10 @@ handle_opt(const gcc_cmdline_parser::option * const o,
     _set_isa_flag_user<isa_flag_ptwrite>(!negative, generated);
     break;
 
+  case opt_code_i386_mpush_args:
+    _set_target_flag_user<target_flag_no_push_args>(false, generated);
+    break;
+
   case opt_code_i386_mrdpid:
     _set_isa_flag_user<isa_flag_rdpid>(!negative, generated);
     break;
@@ -5150,6 +5373,18 @@ handle_opt(const gcc_cmdline_parser::option * const o,
 
   case opt_code_i386_mrdseed:
     _set_isa_flag_user<isa_flag_rdseed>(!negative, generated);
+    break;
+
+  case opt_code_i386_mrecip:
+    _set_target_flag_user<target_flag_recip>(!negative, generated);
+    break;
+
+  case opt_code_i386_mred_zone:
+    _set_target_flag_user<target_flag_no_red_zone>(false, generated);
+    break;
+
+  case opt_code_i386_mrtd:
+    _set_target_flag_user<target_flag_rtd>(!negative, generated);
     break;
 
   case opt_code_i386_mrtm:
@@ -5170,6 +5405,10 @@ handle_opt(const gcc_cmdline_parser::option * const o,
 
   case opt_code_i386_mshstk:
     _set_isa_flag_user<isa_flag_shstk>(!negative, generated);
+    break;
+
+  case opt_code_i386_msoft_float:
+    _set_target_flag_user<target_flag_80387>(negative, generated);
     break;
 
   case opt_code_i386_msse:
@@ -5201,8 +5440,16 @@ handle_opt(const gcc_cmdline_parser::option * const o,
     _set_isa_flag_user<isa_flag_sse4a>(!negative, generated);
     break;
 
+  case opt_code_i386_msseregparm:
+    _set_target_flag_user<target_flag_sseregparm>(!negative, generated);
+    break;
+
   case opt_code_i386_mssse3:
     _set_isa_flag_user<isa_flag_ssse3>(!negative, generated);
+    break;
+
+  case opt_code_i386_mstack_arg_probe:
+    _set_target_flag_user<target_flag_stack_probe>(!negative, generated);
     break;
 
   case opt_code_i386_mstackrealign:
@@ -5211,8 +5458,17 @@ handle_opt(const gcc_cmdline_parser::option * const o,
       force_align_arg_pointer_set = true;
     break;
 
+  case opt_code_i386_mstv:
+    _set_target_flag_user<target_flag_stv>(!negative, generated);
+    break;
+
   case opt_code_i386_mtbm:
     _set_isa_flag_user<isa_flag_tbm>(!negative, generated);
+    break;
+
+  case opt_code_i386_mtls_direct_seg_refs:
+    _set_target_flag_user<target_flag_tls_direct_seg_refs>(!negative,
+							   generated);
     break;
 
   case opt_code_i386_mtune_ctrl:
@@ -5229,6 +5485,14 @@ handle_opt(const gcc_cmdline_parser::option * const o,
 
   case opt_code_i386_mvaes:
     _set_isa_flag_user<isa_flag_vaes>(!negative, generated);
+    break;
+
+  case opt_code_i386_mvect8_ret_in_mem:
+    _set_target_flag_user<target_flag_vect8_returns>(!negative, generated);
+    break;
+
+  case opt_code_i386_mvzeroupper:
+    _set_target_flag_user<target_flag_vzeroupper>(!negative, generated);
     break;
 
   case opt_code_i386_mvpclmulqdq:
@@ -5278,6 +5542,10 @@ void target_x86_64_gcc::opts_x86::option_override()
   } else {
     if (_isa_flags.test(isa_flag_abi_x32))
       _isa_flags.reset(isa_flag_abi_64);
+
+    if (_isa_flags.test(isa_flag_64bit) &&
+	_target_flags.test(target_flag_iamcu)) {
+      throw cmdline_except{"Intel MCU psABI isn't supported for -m64/-mx32"};
     }
   }
 
@@ -5520,6 +5788,24 @@ void target_x86_64_gcc::opts_x86::option_override()
     set_isa_flag_from_pta(isa_flag_mwaitx);
   if (pta_flags.test(_pta::pta_flag_pku))
     set_isa_flag_from_pta(isa_flag_pku);
+
+  if (gcc_version{7, 1, 0} <= ver) {
+    if (!_target_flags_set.test(target_flag_general_regs_only) &&
+	!_target_flags_set.test(target_flag_80387)) {
+      if (pta_flags.test(_pta::pta_flag_no_80387)) {
+	_target_flags.reset(target_flag_80387);
+      } else {
+	_target_flags.set(target_flag_80387);
+      }
+    }
+  } else if (gcc_version{6, 1, 0} <= ver) {
+    if (!_target_flags_set.test(target_flag_80387)) {
+      if (pta_flags.test(_pta::pta_flag_no_80387)) {
+	_target_flags.reset(target_flag_80387);
+      } else {
+	_target_flags.set(target_flag_80387);
+      }
+    }
   }
 
   _tune = _pta::lookup(_tune_string.c_str(), ver);
@@ -5563,6 +5849,11 @@ void target_x86_64_gcc::opts_x86::option_override()
   }
 
   if (_isa_flags.test(isa_flag_64bit)) {
+    // Set GCC's TARGET_SUBTARGET64_DEFAULT flags if not explicitly
+    // disabled.
+    if (!_target_flags_set.test(target_flag_128bit_long_double))
+      __set_target_flag<target_flag_128bit_long_double>(_target_flags);
+
     if (!arch_specified) {
       // Set GCC's TARGET_SUBTARGET64_ISA_DEFAULT flags if not explicitly
       // disabled.
@@ -5575,8 +5866,32 @@ void target_x86_64_gcc::opts_x86::option_override()
     }
 
   } else {
+    // GCC's default TARGET_SUBTARGET32_DEFAULT flags are empty.
     // GCC's default TARGET_SUBTARGET32_ISA_DEFAULT flags are empty.
+
+    if (!_target_flags_set.test(target_flag_no_red_zone))
+      __set_target_flag<target_flag_no_red_zone>(_target_flags);
+
   }
+
+  if (_t.get_opts_common().flag_omit_frame_pointer)
+    __unset_target_flag<target_flag_omit_leaf_frame_pointer>(_target_flags);
+  else if (_target_flags.test(target_flag_omit_leaf_frame_pointer))
+    _t.get_opts_common().flag_omit_frame_pointer = true;
+
+  if (_t.get_opts_common().flag_finite_math_only)
+    __unset_target_flag<target_flag_ieee_fp>(_target_flags);
+
+  if (gcc_version{4, 9, 0} <= ver) {
+    if (tune_features.test(_tune_features::x86_tune_flag_always_fancy_math_387))
+      __unset_target_flag<target_flag_no_fancy_math_387>(_target_flags);
+  } else {
+    if (_tune_features::arch_always_fancy_math_387(_arch->processor, ver))
+      __unset_target_flag<target_flag_no_fancy_math_387>(_target_flags);
+  }
+
+  if (!_target_flags.test(target_flag_80387))
+    __set_target_flag<target_flag_no_fancy_math_387>(_target_flags);
 
   if (_isa_flags.test(isa_flag_sse)) {
     if (!_isa_flags_explicit.test(isa_flag_mmx))
@@ -5623,7 +5938,7 @@ void target_x86_64_gcc::opts_x86::option_override()
   }
 
   // C.f. GCC's PREFERRED_STACK_BOUNDARY_DEFAULT
-  preferred_stack_boundary = 128;
+  preferred_stack_boundary = _target_flags.test(target_flag_iamcu) ? 32 : 128;
   if (preferred_stack_boundary_arg_set) {
     unsigned int min;
     if (gcc_version{6, 5, std::numeric_limits<unsigned int>::max()} < ver) {
@@ -5646,7 +5961,7 @@ void target_x86_64_gcc::opts_x86::option_override()
     force_align_arg_pointer = false; // GCC's STACK_REALIGN_DEFAULT is zero
 
   // C.f. GCC's PREFERRED_STACK_BOUNDARY_DEFAULT
-  incoming_stack_boundary = 128;
+  incoming_stack_boundary = _target_flags.test(target_flag_iamcu) ? 32 : 128;
   if (incoming_stack_boundary_arg_set) {
     unsigned int min;
 
@@ -5660,6 +5975,150 @@ void target_x86_64_gcc::opts_x86::option_override()
       throw cmdline_except{"invalid parameter for -mincoming-stack-boundary"};
     } else {
       incoming_stack_boundary = (1u << incoming_stack_boundary_arg) * 8;
+    }
+  }
+
+  if (ver <= gcc_version{5, 5, std::numeric_limits<unsigned int>::max()}) {
+    if (!_target_flags.test(target_flag_80387)) {
+      _target_flags.reset(target_flag_float_returns);
+    }
+  }
+
+  if (gcc_version{5, 1, 0} <= ver) {
+    if ((tune_features.test
+	 (_tune_features::x86_tune_flag_accumulate_outgoing_args)) &&
+	!_target_flags_set.test(target_flag_accumulate_outgoing_args)) {
+      _target_flags.set(target_flag_accumulate_outgoing_args);
+    }
+  } else {
+    if ((tune_features.test
+	 (_tune_features::x86_tune_flag_accumulate_outgoing_args)) &&
+	!_t.get_opts_common().optimize_size &&
+	!_target_flags_set.test(target_flag_accumulate_outgoing_args)) {
+      _target_flags.set(target_flag_accumulate_outgoing_args);
+    }
+
+    if (ver <= gcc_version{4, 8, 5}) {
+      if ((_t.get_opts_common().flag_unwind_tables ||
+	   _t.get_opts_common().flag_asynchronous_unwind_tables ||
+	   _t.get_opts_common().flag_exceptions ||
+	   _t.get_opts_common().flag_non_call_exceptions) &&
+	  _t.get_opts_common().flag_omit_frame_pointer &&
+	  !_target_flags.test(target_flag_accumulate_outgoing_args)) {
+	_target_flags.set(target_flag_accumulate_outgoing_args);
+      }
+    }
+  }
+
+  if (_target_flags.test(target_flag_stack_probe) &&
+      !_target_flags.test(target_flag_accumulate_outgoing_args)) {
+    _target_flags.set(target_flag_accumulate_outgoing_args);
+  }
+
+  if (gcc_version{5, 1, 0} <= ver) {
+    if ((gcc_version{6, 5, 0} <= ver &&
+	 ver <= gcc_version{6, 5, std::numeric_limits<unsigned int>::max()}) ||
+	gcc_version{7, 3, 0} <= ver) {
+      if (!_target_flags_set.test(target_flag_vzeroupper) &&
+	  tune_features.test(_tune_features::x86_tune_flag_emit_vzeroupper)) {
+	_target_flags.set(target_flag_vzeroupper);
+      }
+    } else {
+      if (!_target_flags_set.test(target_flag_vzeroupper)) {
+	_target_flags.set(target_flag_vzeroupper);
+      }
+    }
+    if (_valid_target_flags.test(target_flag_stv)) {
+      if (!_target_flags_set.test(target_flag_stv)) {
+	_target_flags_set.set(target_flag_stv);
+      }
+      if (preferred_stack_boundary < 128 ||
+	  incoming_stack_boundary < 128 ||
+	  force_align_arg_pointer) {
+	_target_flags.reset(target_flag_stv);
+      }
+    }
+    if (!(tune_features.test
+	  (_tune_features::x86_tune_flag_avx256_unaligned_load_optimal)) &&
+	!_target_flags_set.test(target_flag_avx256_split_unaligned_load)) {
+      _target_flags.set(target_flag_avx256_split_unaligned_load);
+    }
+    if (!(tune_features.test
+	  (_tune_features::x86_tune_flag_avx256_unaligned_store_optimal)) &&
+	!_target_flags_set.test(target_flag_avx256_split_unaligned_store)) {
+      _target_flags.set(target_flag_avx256_split_unaligned_store);
+    }
+    if (_valid_target_flags.test(target_flag_prefer_avx128)) {
+      if (tune_features.test(_tune_features::x86_tune_flag_avx128_optimal) &&
+	  !_target_flags_set.test(target_flag_prefer_avx128)) {
+	_target_flags.set(target_flag_prefer_avx128);
+      }
+    }
+
+  } else if (gcc_version{4, 8, 5} < ver) {
+    if (!_t.get_opts_common().optimize_size) {
+      if (_t.get_opts_common().flag_expensive_optimizations &&
+	  !_target_flags_set.test(target_flag_vzeroupper)) {
+	_target_flags.set(target_flag_vzeroupper);
+      }
+      if (!(tune_features.test
+	    (_tune_features::x86_tune_flag_avx256_unaligned_load_optimal)) &&
+	  !_target_flags_set.test(target_flag_avx256_split_unaligned_load)) {
+	_target_flags.set(target_flag_avx256_split_unaligned_load);
+      }
+      if (!(tune_features.test
+	    (_tune_features::x86_tune_flag_avx256_unaligned_store_optimal)) &&
+	  !_target_flags_set.test(target_flag_avx256_split_unaligned_store)) {
+	_target_flags.set(target_flag_avx256_split_unaligned_store);
+      }
+      if (_valid_target_flags.test(target_flag_prefer_avx128)) {
+	if (tune_features.test(_tune_features::x86_tune_flag_avx128_optimal) &&
+	    !_target_flags_set.test(target_flag_prefer_avx128)) {
+	  _target_flags.set(target_flag_prefer_avx128);
+	}
+      }
+    }
+
+  } else {
+    // GCC <= 4.8.5
+    if (_isa_flags.test(isa_flag_avx)) {
+      if (!_t.get_opts_common().optimize_size) {
+	if (_t.get_opts_common().flag_expensive_optimizations &&
+	    !_target_flags_set.test(target_flag_vzeroupper)) {
+	  _target_flags.set(target_flag_vzeroupper);
+	}
+	if (!(tune_features.test
+	      (_tune_features::x86_tune_flag_avx256_unaligned_load_optimal)) &&
+	    !_target_flags_set.test(target_flag_avx256_split_unaligned_load)) {
+	  _target_flags.set(target_flag_avx256_split_unaligned_load);
+	}
+	if (!(tune_features.test
+	      (_tune_features::x86_tune_flag_avx256_unaligned_store_optimal)) &&
+	    !_target_flags_set.test(target_flag_avx256_split_unaligned_store)) {
+	  _target_flags.set(target_flag_avx256_split_unaligned_store);
+	}
+	if (_valid_target_flags.test(target_flag_prefer_avx128)) {
+	  if ((tune_features.test
+	       (_tune_features::x86_tune_flag_avx128_optimal)) &&
+	      !_target_flags_set.test(target_flag_prefer_avx128)) {
+	    _target_flags.set(target_flag_prefer_avx128);
+	  }
+	}
+      }
+    } else {
+      _target_flags.reset(target_flag_vzeroupper);
+    }
+  }
+
+  // GCC's TARGET_HAS_BIONIC is assumed to be zero.
+  if ((gcc_version{6, 1, 0} <= ver && _target_flags.test(target_flag_iamcu)) &&
+      !_target_flags_set.test(target_flag_long_double_64) &&
+      !_target_flags_set.test(target_flag_long_double_128)) {
+    if (_isa_flags.test(isa_flag_64bit) &&
+	_valid_target_flags.test(target_flag_long_double_128)) {
+      _target_flags.set(target_flag_long_double_128);
+    } else {
+      _target_flags.set(target_flag_long_double_64);
     }
   }
 }

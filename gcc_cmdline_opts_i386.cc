@@ -18,7 +18,7 @@
 
 {
   "m128bit-long-double",
-  opt_code_i386_unused,
+  opt_code_i386_m128bit_long_double,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -65,19 +65,19 @@
 },
 {
   "m80387",
-  opt_code_i386_unused,
+  opt_code_i386_m80387,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "m8bit-idiv",
-  opt_code_i386_unused,
+  opt_code_i386_m8bit_idiv,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "m96bit-long-double",
-  opt_code_i386_unused,
+  opt_code_i386_m96bit_long_double,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -97,7 +97,7 @@
 },
 {
   "maccumulate-outgoing-args",
-  opt_code_i386_unused,
+  opt_code_i386_maccumulate_outgoing_args,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -132,7 +132,7 @@
 },
 {
   "malign-double",
-  opt_code_i386_unused,
+  opt_code_i386_malign_double,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -159,7 +159,7 @@
 },
 {
   "malign-stringops",
-  opt_code_i386_unused,
+  opt_code_i386_malign_stringops,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -194,13 +194,13 @@
 },
 {
   "mavx256-split-unaligned-load",
-  opt_code_i386_unused,
+  opt_code_i386_mavx256_split_unaligned_load,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "mavx256-split-unaligned-store",
-  opt_code_i386_unused,
+  opt_code_i386_mavx256_split_unaligned_store,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -371,7 +371,7 @@
 },
 {
   "mcall-ms2sysv-xlogues",
-  opt_code_i386_unused,
+  opt_code_i386_mcall_ms2sysv_xlogues,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -391,7 +391,7 @@
 },
 {
   "mcld",
-  opt_code_i386_unused,
+  opt_code_i386_mcld,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -487,7 +487,7 @@
 },
 {
   "mfancy-math-387",
-  opt_code_i386_unused,
+  opt_code_i386_mfancy_math_387,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -548,7 +548,7 @@
 },
 {
   "mfp-ret-in-387",
-  opt_code_i386_unused,
+  opt_code_i386_mfp_ret_in_387,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -614,7 +614,7 @@
 },
 {
   "mhard-float",
-  opt_code_i386_unused,
+  opt_code_i386_mhard_float,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -627,7 +627,7 @@
 },
 {
   "miamcu",
-  opt_code_i386_unused,
+  opt_code_i386_miamcu,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -637,7 +637,7 @@
 },
 {
   "mieee-fp",
-  opt_code_i386_unused,
+  opt_code_i386_mieee_fp,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -692,13 +692,13 @@
 },
 {
   "minline-all-stringops",
-  opt_code_i386_unused,
+  opt_code_i386_minline_all_stringops,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
 {
   "minline-stringops-dynamically",
-  opt_code_i386_unused,
+  opt_code_i386_minline_stringops_dynamically,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -729,7 +729,7 @@
 },
 {
   "mlong-double-128",
-  opt_code_i386_unused,
+  opt_code_i386_mlong_double_128,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -739,7 +739,7 @@
 },
 {
   "mlong-double-64",
-  opt_code_i386_unused,
+  opt_code_i386_mlong_double_64,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -750,7 +750,7 @@
 },
 {
   "mlong-double-64",
-  opt_code_i386_unused,
+  opt_code_i386_mlong_double_64,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -760,7 +760,7 @@
 },
 {
   "mlong-double-80",
-  opt_code_i386_unused,
+  opt_code_i386_mlong_double_80,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -863,7 +863,7 @@
 },
 {
   "mms-bitfields",
-  opt_code_i386_unused,
+  opt_code_i386_mms_bitfields,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -879,7 +879,7 @@
 },
 {
   "mno-align-stringops",
-  opt_code_i386_unused,
+  opt_code_i386_mno_align_stringops,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -896,21 +896,21 @@
 },
 {
   "mno-fancy-math-387",
-  opt_code_i386_unused,
+  opt_code_i386_mno_fancy_math_387,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
 },
 {
   "mno-push-args",
-  opt_code_i386_unused,
+  opt_code_i386_mno_push_args,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
 },
 {
   "mno-red-zone",
-  opt_code_i386_unused,
+  opt_code_i386_mno_red_zone,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -934,7 +934,7 @@
 },
 {
   "momit-leaf-frame-pointer",
-  opt_code_i386_unused,
+  opt_code_i386_momit_leaf_frame_pointer,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -1067,7 +1067,7 @@
 },
 {
   "mpush-args",
-  opt_code_i386_unused,
+  opt_code_i386_mpush_args,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -1095,7 +1095,7 @@
 },
 {
   "mrecip",
-  opt_code_i386_unused,
+  opt_code_i386_mrecip,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -1128,7 +1128,7 @@
 },
 {
   "mred-zone",
-  opt_code_i386_unused,
+  opt_code_i386_mred_zone,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -1142,7 +1142,7 @@
 },
 {
   "mrtd",
-  opt_code_i386_unused,
+  opt_code_i386_mrtd,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -1200,7 +1200,7 @@
 },
 {
   "msoft-float",
-  opt_code_i386_unused,
+  opt_code_i386_msoft_float,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -1263,7 +1263,7 @@
 },
 {
   "msseregparm",
-  opt_code_i386_unused,
+  opt_code_i386_msseregparm,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = true,
@@ -1276,7 +1276,7 @@
 },
 {
   "mstack-arg-probe",
-  opt_code_i386_unused,
+  opt_code_i386_mstack_arg_probe,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -1335,7 +1335,7 @@
 },
 {
   "mstv",
-  opt_code_i386_unused,
+  opt_code_i386_mstv,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
   .reject_negative = false,
@@ -1358,7 +1358,7 @@
 },
 {
   "mtls-direct-seg-refs",
-  opt_code_i386_unused,
+  opt_code_i386_mtls_direct_seg_refs,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -1400,7 +1400,7 @@
 },
 {
   "mvect8-ret-in-mem",
-  opt_code_i386_unused,
+  opt_code_i386_mvect8_ret_in_mem,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -1416,7 +1416,7 @@
 },
 {
   "mvzeroupper",
-  opt_code_i386_unused,
+  opt_code_i386_mvzeroupper,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },

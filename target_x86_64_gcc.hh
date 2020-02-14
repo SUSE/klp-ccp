@@ -157,6 +157,44 @@ namespace klp
 	void option_override();
 
       private:
+	enum target_flag
+	{
+	  target_flag_128bit_long_double,
+	  target_flag_80387,
+	  target_flag_accumulate_outgoing_args,
+	  target_flag_align_double,
+	  target_flag_avx256_split_unaligned_load,
+	  target_flag_avx256_split_unaligned_store,
+	  target_flag_call_ms2sysv_xlogues,
+	  target_flag_cld,
+	  target_flag_float_returns,
+	  target_flag_general_regs_only,
+	  target_flag_iamcu,
+	  target_flag_ieee_fp,
+	  target_flag_inline_all_stringops,
+	  target_flag_inline_stringops_dynamically,
+	  target_flag_long_double_128,
+	  target_flag_long_double_64,
+	  target_flag_ms_bitfield_layout,
+	  target_flag_no_align_stringops,
+	  target_flag_no_fancy_math_387,
+	  target_flag_no_push_args,
+	  target_flag_no_red_zone,
+	  target_flag_omit_leaf_frame_pointer,
+	  target_flag_prefer_avx128,
+	  target_flag_recip,
+	  target_flag_rtd,
+	  target_flag_sseregparm,
+	  target_flag_stack_probe,
+	  target_flag_stv,
+	  target_flag_tls_direct_seg_refs,
+	  target_flag_use_8bit_idiv,
+	  target_flag_vect8_returns,
+	  target_flag_vzeroupper,
+
+	  _target_flag_max,
+	};
+
 	enum isa_flag
 	{
 	  isa_flag_3dnow,
@@ -245,10 +283,24 @@ namespace klp
 	  _isa_flag_max,
 	};
 
+	typedef std::bitset<_target_flag_max> _target_flags_type;
 	typedef std::bitset<_isa_flag_max> _isa_flags_type;
+
+	static _target_flags_type
+	_init_valid_target_flags(const gcc_cmdline_parser::gcc_version &ver);
 
 	static _isa_flags_type
 	_init_valid_isa_flags(const gcc_cmdline_parser::gcc_version &ver);
+
+	template <target_flag b>
+	void __set_target_flag(_target_flags_type &flags) noexcept;
+
+	template <target_flag b>
+	void __unset_target_flag(_target_flags_type &flags) noexcept;
+
+	template <target_flag b>
+	void _set_target_flag_user(const bool value, const bool generated)
+	  noexcept;
 
 	template <isa_flag b>
 	void __set_isa_flag(_isa_flags_type &flags) const noexcept;
@@ -269,6 +321,10 @@ namespace klp
 
 
 	target_x86_64_gcc &_t;
+
+	const _target_flags_type _valid_target_flags;
+	_target_flags_type _target_flags;
+	_target_flags_type _target_flags_set;
 
 	const _isa_flags_type _valid_isa_flags;
 	_isa_flags_type _isa_flags;
