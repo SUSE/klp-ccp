@@ -131,6 +131,7 @@ namespace klp
 	bool flag_omit_frame_pointer;
 	bool flag_omit_frame_pointer_set;
 	bool flag_exceptions;
+	bool flag_non_call_exceptions;
 
 	int flag_stack_protect;
 

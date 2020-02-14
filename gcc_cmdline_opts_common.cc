@@ -2909,7 +2909,7 @@
 },
 {
   "fnon-call-exceptions",
-  opt_code_common_unused,
+  opt_code_common_fnon_call_exceptions,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
