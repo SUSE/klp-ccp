@@ -1322,7 +1322,7 @@
 },
 {
   "mstackrealign",
-  opt_code_i386_unused,
+  opt_code_i386_mstackrealign,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_none,
 },

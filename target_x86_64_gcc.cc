@@ -109,6 +109,7 @@ enum opt_code_i386
   opt_code_i386_msse4_2,
   opt_code_i386_msse4a,
   opt_code_i386_mssse3,
+  opt_code_i386_mstackrealign,
   opt_code_i386_mtbm,
   opt_code_i386_mtune,
   opt_code_i386_mvaes,
@@ -1178,7 +1179,8 @@ target_x86_64_gcc::opts_x86::
 opts_x86(target_x86_64_gcc &t) noexcept
   : _t(t),
     _valid_isa_flags(_init_valid_isa_flags(t.get_gcc_version())),
-    _arch(nullptr), _tune(nullptr)
+    _arch(nullptr), _tune(nullptr),
+    force_align_arg_pointer(false), force_align_arg_pointer_set(false)
 {
   // GCC's ix86_isa_flags is initialized with
   // TARGET_64BIT_DEFAULT | TARGET_SUBTARGET_ISA_DEFAULT.
@@ -3654,6 +3656,12 @@ handle_opt(const gcc_cmdline_parser::option * const o,
     _set_isa_flag_user<isa_flag_ssse3>(!negative, generated);
     break;
 
+  case opt_code_i386_mstackrealign:
+    force_align_arg_pointer = !negative;
+    if (!generated)
+      force_align_arg_pointer_set = true;
+    break;
+
   case opt_code_i386_mtbm:
     _set_isa_flag_user<isa_flag_tbm>(!negative, generated);
     break;
@@ -4055,4 +4063,7 @@ void target_x86_64_gcc::opts_x86::option_override()
 	_isa_flags.reset(isa_flag_tbm);
     }
   }
+
+  if (!force_align_arg_pointer_set)
+    force_align_arg_pointer = false; // GCC's STACK_REALIGN_DEFAULT is zero
 }

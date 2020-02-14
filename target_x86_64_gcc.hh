@@ -281,6 +281,9 @@ namespace klp
 	const _pta *_tune;
 	std::string _arch_string;
 	std::string _tune_string;
+
+	bool force_align_arg_pointer;
+	bool force_align_arg_pointer_set;
       };
 
       opts_x86 _opts_x86;
