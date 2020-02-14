@@ -77,6 +77,7 @@ enum opt_code_i386
   opt_code_i386_mclflushopt,
   opt_code_i386_mclwb,
   opt_code_i386_mclzero,
+  opt_code_i386_mcmodel,
   opt_code_i386_mcrc32,
   opt_code_i386_mcx16,
   opt_code_i386_mf16c,
@@ -1221,7 +1222,7 @@ opts_x86(target_x86_64_gcc &t) noexcept
   : _t(t), _valid_target_flags(_init_valid_target_flags(t.get_gcc_version())),
     _valid_isa_flags(_init_valid_isa_flags(t.get_gcc_version())),
     _arch(nullptr), _tune(nullptr),
-    _fpmath(1UL << _fpmath_bit_387),
+    _cmodel(_cm_32), _cmodel_set(false), _fpmath(1UL << _fpmath_bit_387),
     _fpmath_set(false), force_align_arg_pointer(false),
     force_align_arg_pointer_set(false), preferred_stack_boundary_arg(0),
     preferred_stack_boundary_arg_set(false), preferred_stack_boundary(0),
@@ -5115,6 +5116,25 @@ handle_opt(const gcc_cmdline_parser::option * const o,
     _set_isa_flag_user<isa_flag_clzero>(!negative, generated);
     break;
 
+  case opt_code_i386_mcmodel:
+    assert(val);
+    if (!std::strcmp(val, "small")) {
+      _cmodel = _cm_small;
+    } else if (!std::strcmp(val, "medium")) {
+      _cmodel = _cm_medium;
+    } else if (!std::strcmp(val, "large")) {
+      _cmodel = _cm_large;
+    } else if (!std::strcmp(val, "32")) {
+      _cmodel = _cm_32;
+    } else if (!std::strcmp(val, "kernel")) {
+      _cmodel = _cm_kernel;
+    } else {
+      throw cmdline_except{"unrecognized value for -mcmodel"};
+    }
+    if (!generated)
+      _cmodel_set = true;
+    break;
+
   case opt_code_i386_mcrc32:
     _set_isa_flag_user<isa_flag_crc32>(!negative, generated);
     break;
@@ -5638,6 +5658,66 @@ void target_x86_64_gcc::opts_x86::option_override()
     _arch_string = _isa_flags.test(isa_flag_64bit) ? "x86-64" : "i386";
   } else {
     arch_specified = true;
+  }
+
+  if (_cmodel_set) {
+    switch (_cmodel) {
+    case _cm_small:
+      /* fall through */
+    case _cm_small_pic:
+      if (_t.get_opts_common().flag_pic)
+	_cmodel = _cm_small_pic;
+      if (!_isa_flags.test(isa_flag_64bit)) {
+	throw cmdline_except{"code model small not supported in 32 bit mode"};
+      }
+      break;
+
+    case _cm_medium:
+      /* fall through */
+    case _cm_medium_pic:
+      if (_t.get_opts_common().flag_pic)
+	_cmodel = _cm_medium_pic;
+      if (!_isa_flags.test(isa_flag_64bit)) {
+	throw cmdline_except{"code model medium not supported in 32 bit mode"};
+      } else if (_isa_flags.test(isa_flag_abi_x32)) {
+	throw cmdline_except{"code model medium not supported in x32 mode"};
+      }
+      break;
+
+    case _cm_large:
+      /* fall through */
+    case _cm_large_pic:
+      if (_t.get_opts_common().flag_pic)
+	_cmodel = _cm_large_pic;
+      if (!_isa_flags.test(isa_flag_64bit)) {
+	throw cmdline_except{"code model large not supported in 32 bit mode"};
+      } else if (_isa_flags.test(isa_flag_abi_x32)) {
+	throw cmdline_except{"code model large not supported in x32 mode"};
+      }
+      break;
+
+    case _cm_32:
+      if (_t.get_opts_common().flag_pic) {
+	throw cmdline_except{"code model 32 does not support PIC mode"};
+      } else if (_isa_flags.test(isa_flag_64bit)) {
+	throw cmdline_except{"code model 32 not supported in 64 bit mode"};
+      }
+      break;
+
+    case _cm_kernel:
+      if (_t.get_opts_common().flag_pic) {
+	throw cmdline_except{"code model kernel does not support PIC mode"};
+      } else if (!_isa_flags.test(isa_flag_64bit)) {
+	throw cmdline_except{"code model kernel not supported in 32 bit mode"};
+      }
+      break;
+    }
+  } else {
+    if (!_isa_flags.test(isa_flag_64bit)) {
+      _cmodel = _t.get_opts_common().flag_pic ? _cm_small_pic : _cm_small;
+    } else {
+      _cmodel = _cm_32;
+    }
   }
 
   _arch = _pta::lookup(_arch_string.c_str(), ver);

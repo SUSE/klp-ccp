@@ -340,6 +340,20 @@ namespace klp
 	std::string _tune_string;
 	std::string _tune_ctrl_string;
 
+	enum _cmodel
+	{
+	  _cm_32,
+	  _cm_small,
+	  _cm_kernel,
+	  _cm_medium,
+	  _cm_large,
+	  _cm_small_pic,
+	  _cm_medium_pic,
+	  _cm_large_pic,
+	};
+	_cmodel _cmodel;
+	bool _cmodel_set;
+
 	enum _fpmath_bit
 	{
 	  _fpmath_bit_387,
