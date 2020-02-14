@@ -90,6 +90,7 @@ enum opt_code_i386
   opt_code_i386_mpconfig,
   opt_code_i386_mpku,
   opt_code_i386_mpopcnt,
+  opt_code_i386_mpreferred_stack_boundary,
   opt_code_i386_mprefetchwt1,
   opt_code_i386_mprfchw,
   opt_code_i386_mptwrite,
@@ -1180,7 +1181,9 @@ opts_x86(target_x86_64_gcc &t) noexcept
   : _t(t),
     _valid_isa_flags(_init_valid_isa_flags(t.get_gcc_version())),
     _arch(nullptr), _tune(nullptr),
-    force_align_arg_pointer(false), force_align_arg_pointer_set(false)
+    force_align_arg_pointer(false),
+    force_align_arg_pointer_set(false), preferred_stack_boundary_arg(0),
+    preferred_stack_boundary_arg_set(false), preferred_stack_boundary(0)
 {
   // GCC's ix86_isa_flags is initialized with
   // TARGET_64BIT_DEFAULT | TARGET_SUBTARGET_ISA_DEFAULT.
@@ -3579,6 +3582,25 @@ handle_opt(const gcc_cmdline_parser::option * const o,
     _set_isa_flag_user<isa_flag_popcnt>(!negative, generated);
     break;
 
+  case opt_code_i386_mpreferred_stack_boundary:
+    {
+      std::size_t endpos;
+      int _preferred_stack_boundary_arg = -1;
+
+      try {
+	_preferred_stack_boundary_arg = std::stoi(std::string{val}, &endpos);
+      } catch (...) {}
+
+      if (_preferred_stack_boundary_arg < 0 || val[endpos] != '\0')
+	throw cmdline_except{"invalid argument to -mpreferred-stack-boundary"};
+
+      preferred_stack_boundary_arg =
+	static_cast<unsigned int>(_preferred_stack_boundary_arg);
+      if (!generated)
+	preferred_stack_boundary_arg_set = true;
+    }
+    break;
+
   case opt_code_i386_mprefetchwt1:
     _set_isa_flag_user<isa_flag_prefetchwt1>(!negative, generated);
     break;
@@ -4061,6 +4083,26 @@ void target_x86_64_gcc::opts_x86::option_override()
 	_isa_flags.reset(isa_flag_bmi2);
       if (!_isa_flags_explicit.test(isa_flag_tbm))
 	_isa_flags.reset(isa_flag_tbm);
+    }
+  }
+
+  // C.f. GCC's PREFERRED_STACK_BOUNDARY_DEFAULT
+  preferred_stack_boundary = 128;
+  if (preferred_stack_boundary_arg_set) {
+    unsigned int min;
+    if (gcc_version{6, 5, std::numeric_limits<unsigned int>::max()} < ver) {
+      min = _isa_flags.test(isa_flag_64bit) ? 3 : 2;
+    } else {
+      min = (_isa_flags.test(isa_flag_64bit) ?
+	     (_isa_flags.test(isa_flag_sse) ? 4 : 3) :  2);
+    }
+    unsigned int max = 0 ? 4 : 12; // TARGET_SEH is 0.
+
+    if (min < preferred_stack_boundary_arg ||
+	preferred_stack_boundary_arg > max) {
+      throw cmdline_except{"invalid parameter for -mpreferred-stack-boundary"};
+    } else {
+      preferred_stack_boundary = (1u << preferred_stack_boundary_arg) * 8;
     }
   }
 

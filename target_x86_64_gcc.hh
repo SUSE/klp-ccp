@@ -284,6 +284,10 @@ namespace klp
 
 	bool force_align_arg_pointer;
 	bool force_align_arg_pointer_set;
+
+	unsigned int preferred_stack_boundary_arg;
+	bool preferred_stack_boundary_arg_set;
+	unsigned int preferred_stack_boundary;
       };
 
       opts_x86 _opts_x86;
