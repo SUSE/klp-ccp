@@ -113,6 +113,7 @@ enum opt_code_i386
   opt_code_i386_mssse3,
   opt_code_i386_mstackrealign,
   opt_code_i386_mtbm,
+  opt_code_i386_mtune_ctrl,
   opt_code_i386_mtune,
   opt_code_i386_mvaes,
   opt_code_i386_mvzeroupper,
@@ -3285,6 +3286,1510 @@ lookup(const char * const name, const gcc_version &ver)
   return nullptr;
 }
 
+struct target_x86_64_gcc::opts_x86::_tune_features
+{
+  enum x86_tune_flag
+  {
+    x86_tune_flag_schedule,
+    x86_tune_flag_partial_reg_dependency,
+    x86_tune_flag_sse_partial_reg_dependency,
+    x86_tune_flag_sse_split_regs,
+    x86_tune_flag_partial_flag_reg_stall,
+    x86_tune_flag_movx,
+    x86_tune_flag_memory_mismatch_stall,
+    x86_tune_flag_fuse_cmp_and_branch,
+    x86_tune_flag_fuse_cmp_and_branch_32,
+    x86_tune_flag_fuse_cmp_and_branch_64,
+    x86_tune_flag_fuse_cmp_and_branch_soflags,
+    x86_tune_flag_fuse_alu_and_branch,
+    x86_tune_flag_reassoc_int_to_parallel,
+    x86_tune_flag_reassoc_fp_to_parallel,
+    x86_tune_flag_accumulate_outgoing_args,
+    x86_tune_flag_prologue_using_move,
+    x86_tune_flag_epilogue_using_move,
+    x86_tune_flag_use_leave,
+    x86_tune_flag_push_memory,
+    x86_tune_flag_single_push,
+    x86_tune_flag_double_push,
+    x86_tune_flag_single_pop,
+    x86_tune_flag_double_pop,
+    x86_tune_flag_pad_short_function,
+    x86_tune_flag_pad_returns,
+    x86_tune_flag_four_jump_limit,
+    x86_tune_flag_software_prefetching_beneficial,
+    x86_tune_flag_lcp_stall,
+    x86_tune_flag_read_modify,
+    x86_tune_flag_use_incdec,
+    x86_tune_flag_integer_dfmode_moves,
+    x86_tune_flag_opt_agu,
+    x86_tune_flag_avoid_lea_for_addr,
+    x86_tune_flag_slow_imul_imm32_mem,
+    x86_tune_flag_slow_imul_imm8,
+    x86_tune_flag_avoid_mem_opnd_for_cmove,
+    x86_tune_flag_single_stringop,
+    x86_tune_flag_misaligned_move_string_pro_epilogues,
+    x86_tune_flag_use_sahf,
+    x86_tune_flag_use_cltd,
+    x86_tune_flag_use_bt,
+    x86_tune_flag_use_himode_fiop,
+    x86_tune_flag_use_simode_fiop,
+    x86_tune_flag_use_ffreep,
+    x86_tune_flag_ext_80387_constants,
+    x86_tune_flag_vectorize_double,
+    x86_tune_flag_general_regs_sse_spill,
+    x86_tune_flag_sse_unaligned_load_optimal,
+    x86_tune_flag_sse_unaligned_store_optimal,
+    x86_tune_flag_sse_packed_single_insn_optimal,
+    x86_tune_flag_sse_typeless_stores,
+    x86_tune_flag_sse_load0_by_pxor,
+    x86_tune_flag_inter_unit_moves,
+    x86_tune_flag_inter_unit_moves_to_vec,
+    x86_tune_flag_inter_unit_moves_from_vec,
+    x86_tune_flag_inter_unit_conversions,
+    x86_tune_flag_split_mem_opnd_for_fp_converts,
+    x86_tune_flag_use_vector_fp_converts,
+    x86_tune_flag_use_vector_converts,
+    x86_tune_flag_slow_pshufb,
+    x86_tune_flag_vector_parallel_execution,
+    x86_tune_flag_avoid_4byte_prefixes,
+    x86_tune_flag_use_gather,
+    x86_tune_flag_avoid_128fma_chains,
+    x86_tune_flag_avoid_256fma_chains,
+    x86_tune_flag_avx256_unaligned_load_optimal,
+    x86_tune_flag_avx256_unaligned_store_optimal,
+    x86_tune_flag_avx128_optimal,
+    x86_tune_flag_avx256_optimal,
+    x86_tune_flag_avoid_false_dep_for_bmi,
+    x86_tune_flag_adjust_unroll,
+    x86_tune_flag_one_if_conv_insn,
+    x86_tune_flag_double_with_add,
+    x86_tune_flag_always_fancy_math_387,
+    x86_tune_flag_unroll_strlen,
+    x86_tune_flag_shift1,
+    x86_tune_flag_zero_extend_with_and,
+    x86_tune_flag_promote_himode_imul,
+    x86_tune_flag_fast_prefix,
+    x86_tune_flag_read_modify_write,
+    x86_tune_flag_move_m1_via_or,
+    x86_tune_flag_not_unpairable,
+    x86_tune_flag_partial_reg_stall,
+    x86_tune_flag_promote_qimode,
+    x86_tune_flag_promote_hi_regs,
+    x86_tune_flag_himode_math,
+    x86_tune_flag_split_long_moves,
+    x86_tune_flag_use_xchgb,
+    x86_tune_flag_use_mov0,
+    x86_tune_flag_not_vectormode,
+    x86_tune_flag_avoid_vector_decode,
+    x86_tune_flag_branch_prediction_hints,
+    x86_tune_flag_qimode_math,
+    x86_tune_flag_promote_qi_regs,
+    x86_tune_flag_emit_vzeroupper,
+
+    _x86_tune_flag_max,
+  };
+
+  using gcc_version = gcc_cmdline_parser::gcc_version;
+
+  typedef std::bitset<_x86_tune_flag_max> x86_tune_flags_type;
+
+  static x86_tune_flags_type
+  parse_tune_flags(const _pta::processor_type tune_processor,
+		   const std::string &mtune_ctrl_string,
+		   const gcc_version &ver);
+
+  static bool
+  arch_always_fancy_math_387(const _pta::processor_type arch_processor,
+			     const gcc_version &ver);
+
+private:
+  typedef std::bitset<_pta::_processor_max> _processor_mask_type;
+
+  template<typename... pss>
+  struct _processor_set;
+
+  template<typename ps, typename... pss>
+  struct _processor_set<ps, pss...>
+  {
+    static _processor_mask_type mask(const gcc_version &ver) noexcept
+    {
+      _processor_mask_type m{_processor_set<pss...>::mask(ver)};
+      m |= ps::mask(ver);
+      return m;
+    }
+  };
+
+  template<typename... pss>
+  struct _processor_set_not
+  {
+    static _processor_mask_type mask(const gcc_version &ver) noexcept
+    {
+      return ~_processor_set<pss...>::mask(ver);
+    }
+  };
+
+  template<_pta::processor_type processor>
+  struct __processor_set
+  {
+    static _processor_mask_type mask(const gcc_version &ver) noexcept
+    {
+      _processor_mask_type m;
+      m.set(processor);
+      return m;
+    }
+  };
+
+  using m_386 = __processor_set<_pta::processor_i386>;
+  using m_486 = __processor_set<_pta::processor_i486>;
+  using m_pent = __processor_set<_pta::processor_pentium>;
+  using m_lakemont = __processor_set<_pta::processor_lakemont>;
+  using m_ppro = __processor_set<_pta::processor_pentiumpro>;
+  using m_pent4 = __processor_set<_pta::processor_pentium4>;
+  using m_nocona = __processor_set<_pta::processor_nocona>;
+  using m_p4_nocona = _processor_set<m_pent4, m_nocona>;
+  using m_core2 = __processor_set<_pta::processor_core2>;
+  using m_corei7 = __processor_set<_pta::processor_corei7>;
+  using m_nehalem = __processor_set<_pta::processor_nehalem>;
+  using m_sandybridge = __processor_set<_pta::processor_sandybridge>;
+  using m_haswell = __processor_set<_pta::processor_haswell>;
+  using m_atom = __processor_set<_pta::processor_atom>;
+  using m_bonnell = __processor_set<_pta::processor_bonnell>;
+  using m_silvermont = __processor_set<_pta::processor_silvermont>;
+  using m_knl = __processor_set<_pta::processor_knl>;
+  using m_knm = __processor_set<_pta::processor_knm>;
+  using m_skylake = __processor_set<_pta::processor_skylake>;
+  using m_skylake_avx512 = __processor_set<_pta::processor_skylake_avx512>;
+  using m_cannonlake = __processor_set<_pta::processor_cannonlake>;
+  using m_icelake_client = __processor_set<_pta::processor_icelake_client>;
+  using m_icelake_server = __processor_set<_pta::processor_icelake_server>;
+  using m_cascadelake = __processor_set<_pta::processor_cascadelake>;
+
+  // m_CASCADELAKE got added to the mask with GCC 9.1.0. Before that
+  // processor_cascadelake didn't exist and wouldn't ever be tested for.
+  using m_core_avx512 = _processor_set<m_skylake_avx512, m_cannonlake,
+				       m_icelake_client, m_icelake_server,
+				       m_cascadelake>;
+
+  using m_core_avx2 = _processor_set<m_haswell, m_skylake, m_core_avx512>;
+
+  struct m_core_all
+  {
+    static _processor_mask_type mask(const gcc_version &ver) noexcept
+    {
+      _processor_mask_type m = m_core2::mask(ver);
+
+      // m_COREI7 has been removed from the mask with GCC 4.9.0. After
+      // that processor_corei7 doesn't exist and won't ever be tested
+      // for.
+      m |= m_corei7::mask(ver);
+
+      // m_NEHALEM and m_SANDYBRIDGE have been added to the mask with
+      // GCC 4.9.0. Before that neither of processor_nehalem or
+      // processor_sandybridge existed and wouldnt't ever be tested for.
+      m |= m_nehalem::mask(ver);
+      m |= m_sandybridge::mask(ver);
+
+      // The explicit specification of m_HASWELL has been removed from
+      // the mask definition with GCC 8.2.0. However, it still gets
+      // ored in indirectly via m_CORE_AVX2.
+      m |= m_haswell::mask(ver);
+
+      if (gcc_version{8, 2, 0} <= ver)
+	m |= m_core_avx2::mask(ver);
+
+      return m;
+    }
+  };
+
+  using m_goldmont = __processor_set<_pta::processor_goldmont>;
+  using m_goldmont_plus = __processor_set<_pta::processor_goldmont_plus>;
+  using m_tremont = __processor_set<_pta::processor_tremont>;
+  using m_intel = __processor_set<_pta::processor_intel>;
+  using m_geode = __processor_set<_pta::processor_geode>;
+  using m_k6 = __processor_set<_pta::processor_k6>;
+  using m_k6_geode = _processor_set<m_k6, m_geode>;
+  using m_k8 = __processor_set<_pta::processor_k8>;
+  using m_athlon = __processor_set<_pta::processor_athlon>;
+  using m_athlon_k8 = _processor_set<m_k8, m_athlon>;
+  using m_amdfam10 = __processor_set<_pta::processor_amdfam10>;
+  using m_bdver1 = __processor_set<_pta::processor_bdver1>;
+  using m_bdver2 = __processor_set<_pta::processor_bdver2>;
+  using m_bdver3 = __processor_set<_pta::processor_bdver3>;
+  using m_bdver4 = __processor_set<_pta::processor_bdver4>;
+  using m_znver1 = __processor_set<_pta::processor_znver1>;
+  using m_znver2 = __processor_set<_pta::processor_znver2>;
+  using m_btver1 = __processor_set<_pta::processor_btver1>;
+  using m_btver2 = __processor_set<_pta::processor_btver2>;
+
+  // m_BDVER has been added to the mask with GCC 4.9.0. Before that
+  // processor_bdver4 didn't exist and wouldn't ever be tested for.
+  using m_bdver = _processor_set<m_bdver1, m_bdver2, m_bdver3, m_bdver4>;
+  using m_btver = _processor_set<m_btver1, m_btver2>;
+  using m_znver = _processor_set<m_znver1, m_znver2>;
+
+  // m_ZNVER1 has been added to the mask with GCC 6.1.0. Before that
+  // processor_znver1 didn't exist and wouldn't ever be tested for.
+  // Likewise, m_ZNVER2 has been added with GCC 9.1.0 and before that
+  // processor_znver2 didn't exist.
+  using m_amd_multiple = _processor_set<m_athlon_k8, m_amdfam10,
+					m_bdver, m_btver, m_znver>;
+
+  // With GCC 4.9.0, m_GENERIC32 and m_GENERIC64 have been replaced
+  // with m_GENERIC. After that, processor_generic32 and
+  // processor_generic64 don't exist and won't ever be tested
+  // for. Likewise, processor_generic didn't exist before GCC 4.9.0.
+  using m_generic = _processor_set<__processor_set<_pta::processor_generic32>,
+				   __processor_set<_pta::processor_generic64>,
+				   __processor_set<_pta::processor_generic>>;
+
+  using m_generic64 = __processor_set<_pta::processor_generic64>;
+};
+
+template<>
+struct target_x86_64_gcc::opts_x86::_tune_features::_processor_set<>
+{
+  static _processor_mask_type mask(const gcc_version &ver) noexcept
+  {
+    return _processor_mask_type{};
+  }
+};
+
+target_x86_64_gcc::opts_x86::_tune_features::x86_tune_flags_type
+target_x86_64_gcc::opts_x86::_tune_features::
+parse_tune_flags(const _pta::processor_type tune_processor,
+		 const std::string &mtune_ctrl_string,
+		 const gcc_version &ver)
+{
+  static const struct {
+    x86_tune_flag feature;
+    const char *name;
+    _processor_mask_type (*mask)(const gcc_version &ver);
+    gcc_version min_gcc_version;
+    gcc_version max_gcc_version;
+  } features[] = {
+    {
+      x86_tune_flag_schedule, "schedule",
+      // With GCC 4.9.0, m_ATOM has been relaced by
+      // m_BONNELL | m_SILVERMONT | m_INTEL; after that,
+      // processor_atom doesn't exist anymore and won't ever get tested
+      // for. Likewise, neither of processor_bonnel,
+      // processor_silvermont or processor_intel existed before and
+      // would ever get tested for.
+      // m_KNL has been added to the mask with GCC 5.1.0; before that,
+      // processor_knl didn't exist und wouldn't ever get tested.
+      // m_LAKEMONT has been added to the mask with GCC 6.1.0; before
+      // that, processor_lakemont didn't exist und wouldn't ever get
+      // tested.
+      // m_KNM has been added to the mask with GCC 8.1.0; before that,
+      // processor_knm didn't exist and wouldn't ever get tested.
+      // m_GOLDMONT has been added to the mask with GCC 9.1.0; before
+      // that, processor_goldmont didn't exist and wouldn't ever get
+      // tested. Likewise for m_GOLDMONT_PLUS and m_TREMONT.
+      _processor_set<m_pent, m_lakemont, m_ppro,
+		     m_core_all, m_atom, m_bonnell, m_silvermont, m_intel,
+		     m_knl, m_knm, m_k6_geode, m_amd_multiple, m_goldmont,
+		     m_goldmont_plus, m_tremont, m_generic>::mask,
+    },
+    {
+      x86_tune_flag_partial_reg_dependency, "partial_reg_dependency",
+      // With GCC 4.9.0, m_ATOM has been relaced by
+      // m_BONNELL | m_SILVERMONT | m_INTEL; after that,
+      // processor_atom doesn't exist anymore and won't ever get tested
+      // for. Likewise, neither of processor_bonnel,
+      // processor_silvermont or processor_intel existed before and
+      // would ever get tested for.
+      // m_KNL has been added to the mask with GCC 5.1.0; before that,
+      // processor_knl didn't exist und wouldn't ever get tested.
+      _processor_set<m_p4_nocona, m_core_all, m_atom, m_bonnell, m_silvermont,
+		     m_intel, m_knl, m_amd_multiple, m_generic>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_partial_reg_dependency, "partial_reg_dependency",
+      _processor_set<m_p4_nocona, m_core2, m_nehalem, m_sandybridge,
+		     m_bonnell, m_silvermont, m_intel, m_knl, m_knm,
+		     m_amd_multiple, m_skylake_avx512, m_generic>::mask,
+      .min_gcc_version = {8, 1, 0},
+      .max_gcc_version = {8, 1, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_partial_reg_dependency, "partial_reg_dependency",
+      // m_GOLDMONT has been added to the mask with GCC 9.1.0; before
+      // that, processor_goldmont didn't exist and wouldn't ever get
+      // tested. Likewise for m_GOLDMONT_PLUS and m_TREMONT.
+      _processor_set<m_p4_nocona, m_core2, m_nehalem, m_sandybridge,
+		     m_core_avx2, m_bonnell, m_silvermont, m_goldmont,
+		     m_goldmont_plus, m_intel, m_knl, m_knm, m_amd_multiple,
+		     m_tremont, m_generic>::mask,
+      .min_gcc_version = {8, 2, 0},
+    },
+    {
+      x86_tune_flag_sse_partial_reg_dependency, "sse_partial_reg_dependency",
+      // With GCC 4.9.0, m_ATOM has been relaced by
+      // m_BONNELL | m_SILVERMONT | m_INTEL; after that,
+      // processor_atom doesn't exist anymore and won't ever get tested
+      // for. Likewise, neither of processor_bonnel,
+      // processor_silvermont or processor_intel existed before and
+      // would ever get tested for.
+      _processor_set<m_ppro, m_p4_nocona, m_core_all, m_atom, m_bonnell,
+		     m_silvermont, m_intel, m_amdfam10, m_bdver,
+		     m_generic>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 9, 4},
+    },
+    {
+      x86_tune_flag_sse_partial_reg_dependency, "sse_partial_reg_dependency",
+      // m_ZNVER1 has been added to the mask with GCC 6.1.0; before
+      // that, processor_znver1 didn't exist and wouldn't ever get
+      // tested. With GCC 9.1.0, m_ZNVER1 has been replaced by m_ZNVER
+      // which added m_ZNVER2; before that, processor_znver2 didn't
+      // exist and wouldn't ever get tested.
+      _processor_set<m_ppro, m_p4_nocona, m_core_all, m_bonnell, m_amdfam10,
+		     m_bdver, m_znver, m_generic>::mask,
+      .min_gcc_version = {5, 1, 0},
+    },
+    {
+      x86_tune_flag_sse_split_regs, "sse_split_regs",
+      _processor_set<m_athlon_k8>::mask,
+    },
+    {
+      x86_tune_flag_partial_flag_reg_stall,
+      nullptr /* no -mtune-ctrl before GCC 4.9.0 */,
+      _processor_set<m_core_all, m_generic>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      x86_tune_flag_partial_flag_reg_stall, "partial_flag_reg_stall",
+      _processor_set<m_core2, m_generic>::mask,
+      .min_gcc_version = {4, 9, 0},
+      .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_partial_flag_reg_stall, "partial_flag_reg_stall",
+      _processor_set<m_core2>::mask,
+      .min_gcc_version = {8, 1, 0},
+    },
+    {
+      x86_tune_flag_movx, "movx",
+      // With GCC 4.9.0, m_ATOM has been relaced by
+      // m_BONNELL | m_SILVERMONT | m_INTEL; after that,
+      // processor_atom doesn't exist anymore and won't ever get tested
+      // for. Likewise, neither of processor_bonnel,
+      // processor_silvermont or processor_intel existed before and
+      // would ever get tested for.
+      // m_KNL has been added to the mask with GCC 5.1.0; before that,
+      // processor_knl didn't exist und wouldn't ever get tested.
+      _processor_set<m_ppro, m_p4_nocona, m_core_all, m_atom, m_bonnell,
+		     m_silvermont, m_knl, m_intel, m_geode, m_amd_multiple,
+		     m_generic>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_movx, "movx",
+      _processor_set<m_ppro, m_p4_nocona, m_core2, m_nehalem, m_sandybridge,
+		     m_bonnell, m_silvermont, m_knl, m_knm, m_intel,
+		     m_geode, m_amd_multiple, m_skylake_avx512,
+		     m_generic>::mask,
+      .min_gcc_version = {8, 1, 0},
+      .max_gcc_version = {8, 1, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_movx, "movx",
+      // m_GOLDMONT has been added to the mask with GCC 9.1.0; before
+      // that, processor_goldmont didn't exist and wouldn't ever get
+      // tested. Likewise for m_GOLDMONT_PLUS and m_TREMONT.
+      _processor_set<m_ppro, m_p4_nocona, m_core2, m_nehalem, m_sandybridge,
+		     m_bonnell, m_silvermont, m_goldmont, m_knl, m_knm, m_intel,
+		     m_goldmont_plus, m_geode, m_amd_multiple,
+		     m_core_avx2, m_tremont, m_generic>::mask,
+      .min_gcc_version = {8, 2, 0},
+    },
+    {
+      x86_tune_flag_memory_mismatch_stall, "memory_mismatch_stall",
+      // With GCC 4.9.0, m_ATOM has been relaced by
+      // m_BONNELL | m_SILVERMONT | m_INTEL; after that,
+      // processor_atom doesn't exist anymore and won't ever get tested
+      // for. Likewise, neither of processor_bonnel,
+      // processor_silvermont or processor_intel existed before and
+      // would ever get tested for.
+      // m_KNM has been added to the mask with GCC 8.1.0; before that,
+      // processor_knm didn't exist and wouldn't ever get tested.
+      // m_GOLDMONT has been added to the mask with GCC 9.1.0; before
+      // that, processor_goldmont didn't exist and wouldn't ever get
+      // tested. Likewise for m_GOLDMONT_PLUS and m_TREMONT.
+      _processor_set<m_p4_nocona, m_core_all, m_atom, m_bonnell, m_silvermont,
+		     m_intel, m_knl, m_knm, m_goldmont, m_goldmont_plus,
+		     m_amd_multiple, m_tremont, m_generic>::mask,
+    },
+    {
+      x86_tune_flag_fuse_cmp_and_branch,
+      nullptr /* no -mtune-ctrl before GCC 4.9.0 */,
+      _processor_set<m_bdver>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      x86_tune_flag_fuse_cmp_and_branch_32, "fuse_cmp_and_branch_32",
+      // m_ZNVER1 has been added to the mask with GCC 6.1.0; before
+      // that, processor_znver1 didn't exist and wouldn't ever get
+      // tested.
+      _processor_set<m_core_all, m_bdver, m_znver1>::mask,
+      .min_gcc_version = {4, 9, 0},
+      .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_fuse_cmp_and_branch_32, "fuse_cmp_and_branch_32",
+      // Before GCC 9.1.0, m_ZNVER1 rather than m_ZNVER has been a
+      // member of the mask; before that, processor_znver2, the only
+      // additional bit m_znver introduced, didn't exist and wouldn't
+      // ever get tested.
+      _processor_set<m_core_all, m_bdver, m_znver, m_generic>::mask,
+      .min_gcc_version = {8, 1, 0},
+    },
+    {
+      x86_tune_flag_fuse_cmp_and_branch_64, "fuse_cmp_and_branch_64",
+      // m_ZNVER1 has been added to the mask with GCC 6.1.0; before
+      // that, processor_znver1 didn't exist and wouldn't ever get
+      // tested.
+      _processor_set<m_nehalem, m_sandybridge, m_haswell, m_bdver,
+		     m_znver1>::mask,
+      .min_gcc_version = {4, 9, 0},
+      .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_fuse_cmp_and_branch_64, "fuse_cmp_and_branch_64",
+      _processor_set<m_nehalem, m_sandybridge, m_haswell, m_bdver,
+		     m_znver1, m_generic>::mask,
+      .min_gcc_version = {8, 1, 0},
+      .max_gcc_version = {8, 1, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_fuse_cmp_and_branch_64, "fuse_cmp_and_branch_64",
+      // Before GCC 9.1.0, m_ZNVER1 rather than m_ZNVER has been a
+      // member of the mask; before that, processor_znver2, the only
+      // additional bit m_znver introduced, didn't exist and wouldn't
+      // ever get tested.
+      _processor_set<m_nehalem, m_sandybridge, m_core_avx2, m_bdver,
+		     m_znver, m_generic>::mask,
+      .min_gcc_version = {8, 2, 0},
+    },
+    {
+      x86_tune_flag_fuse_cmp_and_branch_soflags, "fuse_cmp_and_branch_soflags",
+      // m_ZNVER1 has been added to the mask with GCC 6.1.0; before
+      // that, processor_znver1 didn't exist and wouldn't ever get
+      // tested.
+      _processor_set<m_nehalem, m_sandybridge, m_haswell, m_bdver,
+		     m_znver1>::mask,
+      .min_gcc_version = {4, 9, 0},
+      .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_fuse_cmp_and_branch_soflags, "fuse_cmp_and_branch_soflags",
+      _processor_set<m_nehalem, m_sandybridge, m_haswell, m_bdver,
+		     m_znver1, m_generic>::mask,
+      .min_gcc_version = {8, 1, 0},
+      .max_gcc_version = {8, 1, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_fuse_cmp_and_branch_soflags, "fuse_cmp_and_branch_soflags",
+      // Before GCC 9.1.0, m_ZNVER1 rather than m_ZNVER has been a
+      // member of the mask; before that, processor_znver2, the only
+      // additional bit m_znver introduced, didn't exist and wouldn't
+      // ever get tested.
+      _processor_set<m_nehalem, m_sandybridge, m_core_avx2, m_bdver,
+		     m_znver, m_generic>::mask,
+      .min_gcc_version = {8, 2, 0},
+    },
+    {
+      x86_tune_flag_fuse_alu_and_branch, "fuse_alu_and_branch",
+      _processor_set<m_sandybridge, m_haswell>::mask,
+      .min_gcc_version = {4, 9, 0},
+      .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_fuse_alu_and_branch, "fuse_alu_and_branch",
+      _processor_set<m_sandybridge, m_haswell, m_generic>::mask,
+      .min_gcc_version = {8, 1, 0},
+      .max_gcc_version = {8, 1, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_fuse_alu_and_branch, "fuse_alu_and_branch",
+      _processor_set<m_sandybridge, m_core_avx2, m_generic>::mask,
+      .min_gcc_version = {8, 2, 0},
+    },
+    {
+      // With GCC 4.9.0, m_ATOM has been relaced by m_BONNELL; after
+      // that, processor_atom doesn't exist anymore and won't ever get
+      // tested for. Likewise, processor_bonnel didn' exist before and
+      // wouldn't ever get tested for.
+      x86_tune_flag_reassoc_int_to_parallel, "reassoc_int_to_parallel",
+      _processor_set<m_atom, m_bonnell>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_reassoc_fp_to_parallel,
+      nullptr /* no -mtune-ctrl before GCC 4.9.0 */,
+      _processor_set<m_atom, m_haswell>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      x86_tune_flag_reassoc_fp_to_parallel, "reassoc_fp_to_parallel",
+      // m_KNL has been added to the mask with GCC 5.1.0; before that,
+      // processor_knl didn't exist und wouldn't ever get tested.
+      // m_ZNVER1 has been added to the mask with GCC 6.1.0; before
+      // that, processor_znver1 didn't exist and wouldn't ever get
+      // tested.
+      _processor_set<m_bonnell, m_silvermont, m_haswell, m_knl, m_intel,
+		     m_bdver1, m_bdver2, m_znver1, m_generic>::mask,
+      .min_gcc_version = {4, 9, 0},
+      .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_accumulate_outgoing_args,
+      nullptr /* no -mtune-ctrl before GCC 4.9.0 */,
+      // Up to GCC 4.8.5 (including), this mask hadn't been stored in
+      // the tune features table, but in a separate
+      // x86_accumulate_outgoing_args constant.
+      _processor_set<m_ppro, m_p4_nocona, m_atom, m_core_all, m_amd_multiple,
+		     m_generic>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      x86_tune_flag_accumulate_outgoing_args, "accumulate_outgoing_args",
+      // m_KNL has been added to the mask with GCC 5.1.0; before that,
+      // processor_knl didn't exist und wouldn't ever get tested.
+      // m_KNM has been added to the mask with GCC 8.1.0; before that,
+      // processor_knm didn't exist and wouldn't ever get tested.
+      // m_GOLDMONT has been added to the mask with GCC 9.1.0; before
+      // that, processor_goldmont didn't exist and wouldn't ever get
+      // tested. Likewise for m_GOLDMONT_PLUS and m_TREMONT.
+      _processor_set<m_ppro, m_p4_nocona, m_bonnell, m_silvermont, m_knl, m_knm,
+		     m_intel, m_goldmont, m_goldmont_plus, m_tremont,
+		     m_athlon_k8>::mask,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      x86_tune_flag_prologue_using_move, "prologue_using_move",
+      _processor_set<m_ppro, m_athlon_k8>::mask,
+    },
+    {
+      x86_tune_flag_epilogue_using_move, "epilogue_using_move",
+      _processor_set<m_ppro, m_athlon_k8>::mask,
+    },
+    {
+      x86_tune_flag_use_leave, nullptr /* no -mtune-ctrl before GCC 4.9.0 */,
+      _processor_set<m_386, m_core_all, m_k6_geode, m_amd_multiple,
+		     m_generic64>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      x86_tune_flag_use_leave, "use_leave",
+      _processor_set<m_386, m_core_all, m_k6_geode, m_amd_multiple,
+		     m_generic>::mask,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      x86_tune_flag_push_memory, "push_memory",
+      _processor_set<m_386, m_p4_nocona, m_core_all, m_k6_geode, m_amd_multiple,
+		     m_generic>::mask,
+    },
+    {
+      x86_tune_flag_single_push, "single_push",
+      // m_LAKEMONT has been added to the mask with GCC 6.1.0; before
+      // that, processor_lakemont didn't exist und wouldn't ever get
+      // tested.
+      _processor_set<m_386, m_486, m_pent, m_lakemont, m_k6_geode>::mask,
+    },
+    {
+      x86_tune_flag_double_push, "double_push",
+      // m_LAKEMONT has been added to the mask with GCC 6.1.0; before
+      // that, processor_lakemont didn't exist und wouldn't ever get
+      // tested.
+      _processor_set<m_pent, m_lakemont, m_k6_geode>::mask,
+    },
+    {
+      x86_tune_flag_single_pop, "single_pop",
+      // m_LAKEMONT has been added to the mask with GCC 6.1.0; before
+      // that, processor_lakemont didn't exist und wouldn't ever get
+      // tested.
+      _processor_set<m_386, m_486, m_pent, m_lakemont, m_ppro>::mask,
+    },
+    {
+      x86_tune_flag_double_pop, "double_pop",
+      // m_LAKEMONT has been added to the mask with GCC 6.1.0; before
+      // that, processor_lakemont didn't exist und wouldn't ever get
+      // tested.
+      _processor_set<m_pent, m_lakemont>::mask,
+    },
+    {
+      // With GCC 4.9.0, m_ATOM has been relaced by m_BONNELL; after
+      // that, processor_atom doesn't exist anymore and won't ever get
+      // tested for. Likewise, processor_bonnel didn't exist before
+      // and wouldn't ever get tested for.
+      x86_tune_flag_pad_short_function, "pad_short_function",
+      _processor_set<m_atom, m_bonnell>::mask,
+    },
+    {
+      x86_tune_flag_pad_returns, nullptr /* no -mtune-ctrl before GCC 4.9.0 */,
+      _processor_set<m_core_all, m_amd_multiple, m_generic>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      x86_tune_flag_pad_returns, "pad_returns",
+      _processor_set<m_athlon_k8, m_amdfam10, m_generic>::mask,
+      .min_gcc_version = {4, 9, 0},
+      .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_pad_returns, "pad_returns",
+      _processor_set<m_athlon_k8, m_amdfam10>::mask,
+      .min_gcc_version = {8, 1, 0},
+    },
+    {
+      x86_tune_flag_four_jump_limit,
+      nullptr /* no -mtune-ctrl before GCC 4.9.0 */,
+      _processor_set<m_ppro, m_p4_nocona, m_core_all, m_atom, m_amd_multiple,
+		     m_generic>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      x86_tune_flag_four_jump_limit, "four_jump_limit",
+      // m_KNL has been added to the mask with GCC 5.1.0; before that,
+      // processor_knl didn't exist und wouldn't ever get tested.
+      // m_KNM has been added to the mask with GCC 8.1.0; before that,
+      // processor_knm didn't exist and wouldn't ever get tested.
+      // m_GOLDMONT has been added to the mask with GCC 9.1.0; before
+      // that, processor_goldmont didn't exist and wouldn't ever get
+      // tested. Likewise for m_GOLDMONT_PLUS and m_TREMONT.
+      _processor_set<m_ppro, m_p4_nocona, m_bonnell, m_silvermont, m_knl, m_knm,
+		     m_goldmont, m_goldmont_plus, m_tremont, m_intel,
+		     m_athlon_k8, m_amdfam10>::mask,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      x86_tune_flag_software_prefetching_beneficial,
+      "software_prefetching_beneficial",
+      // With GCC 6.1.0, the m_AMD_MULTIPLE in the mask specification
+      // has been replaced by m_ATHLON_K8 | m_AMDFAM10 | m_BDVER | m_BTVER,
+      // which happened to be the exact definition of m_AMD_MULTIPLE
+      // at that time.
+      _processor_set<m_k6_geode, m_athlon_k8, m_amdfam10, m_bdver,
+		     m_btver>::mask,
+    },
+    {
+      x86_tune_flag_lcp_stall, "lcp_stall",
+      _processor_set<m_core_all, m_generic>::mask,
+    },
+    {
+      x86_tune_flag_read_modify, "read_modify",
+      // m_LAKEMONT has been added to the mask with GCC 6.1.0; before
+      // that, processor_lakemont didn't exist und wouldn't ever get
+      // tested.
+      _processor_set_not<m_pent, m_lakemont, m_ppro>::mask,
+    },
+    {
+      x86_tune_flag_use_incdec, "use_incdec",
+      // With GCC 4.9.0, m_ATOM has been relaced by
+      // m_BONNELL | m_SILVERMONT | m_INTEL; after that,
+      // processor_atom doesn't exist anymore and won't ever get tested
+      // for. Likewise, neither of processor_bonnel,
+      // processor_silvermont or processor_intel existed before and
+      // would ever get tested for.
+      // m_KNL has been added to the mask with GCC 5.1.0; before that,
+      // processor_knl didn't exist und wouldn't ever get tested.
+      _processor_set_not<m_p4_nocona, m_core_all, m_atom, m_bonnell,
+			 m_silvermont, m_intel, m_knl, m_generic>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_use_incdec, "use_incdec",
+      // m_GOLDMONT has been added to the mask with GCC 9.1.0; before
+      // that, processor_goldmont didn't exist and wouldn't ever get
+      // tested. Likewise for m_GOLDMONT_PLUS and m_TREMONT.
+      _processor_set_not<m_p4_nocona, m_core2, m_nehalem, m_sandybridge,
+			 m_bonnell, m_silvermont, m_intel, m_knl, m_knm,
+			 m_goldmont, m_goldmont_plus, m_tremont,
+			 m_generic>::mask,
+      .min_gcc_version = {8, 1, 0},
+    },
+    {
+      x86_tune_flag_integer_dfmode_moves, "integer_dfmode_moves",
+      // With GCC 4.9.0, m_ATOM has been relaced by
+      // m_BONNELL | m_SILVERMONT | m_INTEL; after that,
+      // processor_atom doesn't exist anymore and won't ever get tested
+      // for. Likewise, neither of processor_bonnel,
+      // processor_silvermont or processor_intel existed before and
+      // would ever get tested for.
+      // m_KNL has been added to the mask with GCC 5.1.0; before that,
+      // processor_knl didn't exist und wouldn't ever get tested.
+      // m_KNM has been added to the mask with GCC 8.1.0; before that,
+      // processor_knm didn't exist and wouldn't ever get tested.
+      // m_GOLDMONT has been added to the mask with GCC 9.1.0; before
+      // that, processor_goldmont didn't exist and wouldn't ever get
+      // tested. Likewise for m_GOLDMONT_PLUS and m_TREMONT.
+      _processor_set_not<m_ppro, m_p4_nocona, m_core_all, m_atom, m_bonnell,
+			 m_silvermont, m_knl, m_knm, m_intel, m_geode,
+			 m_amd_multiple, m_goldmont, m_goldmont_plus,
+			 m_tremont, m_generic>::mask,
+    },
+    {
+      // With GCC 4.9.0, m_ATOM has been relaced by
+      // m_BONNELL | m_SILVERMONT | m_INTEL; after that,
+      // processor_atom doesn't exist anymore and won't ever get tested
+      // for. Likewise, neither of processor_bonnel,
+      // processor_silvermont or processor_intel existed before and
+      // would ever get tested for.
+      // m_KNL has been added to the mask with GCC 5.1.0; before that,
+      // processor_knl didn't exist und wouldn't ever get tested.
+      // m_KNM has been added to the mask with GCC 8.1.0; before that,
+      // processor_knm didn't exist and wouldn't ever get tested.
+      // m_GOLDMONT has been added to the mask with GCC 9.1.0; before
+      // that, processor_goldmont didn't exist and wouldn't ever get
+      // tested. Likewise for m_GOLDMONT_PLUS and m_TREMONT.
+      x86_tune_flag_opt_agu, "opt_agu",
+      _processor_set<m_atom, m_bonnell, m_silvermont, m_knl, m_knm, m_goldmont,
+		     m_goldmont_plus, m_tremont, m_intel>::mask,
+    },
+    {
+      x86_tune_flag_avoid_lea_for_addr, "avoid_lea_for_addr",
+      // m_KNL has been added to the mask with GCC 5.1.0; before that,
+      // processor_knl didn't exist und wouldn't ever get tested.
+      // m_KNM has been added to the mask with GCC 8.1.0; before that,
+      // processor_knm didn't exist and wouldn't ever get tested.
+      // m_GOLDMONT has been added to the mask with GCC 9.1.0; before
+      // that, processor_goldmont didn't exist and wouldn't ever get
+      // tested. Likewise for m_GOLDMONT_PLUS and m_TREMONT.
+      _processor_set<m_bonnell, m_silvermont, m_goldmont, m_goldmont_plus,
+		     m_tremont, m_knl, m_knm>::mask,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      x86_tune_flag_slow_imul_imm32_mem,
+      nullptr /* no -mtune-ctrl before GCC 4.9.0 */,
+      _processor_set<m_core_all, m_k8, m_amdfam10, m_bdver, m_btver,
+		     m_generic64>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      x86_tune_flag_slow_imul_imm32_mem, "slow_imul_imm32_mem",
+      _processor_set<m_k8, m_amdfam10>::mask,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      x86_tune_flag_slow_imul_imm8,
+      nullptr /* no -mtune-ctrl before GCC 4.9.0 */,
+      _processor_set<m_core_all, m_k8, m_amdfam10, m_bdver, m_btver,
+		     m_generic64>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      x86_tune_flag_slow_imul_imm8, "slow_imul_imm8",
+      _processor_set<m_k8, m_amdfam10>::mask,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      x86_tune_flag_avoid_mem_opnd_for_cmove, "avoid_mem_opnd_for_cmove",
+      // With GCC 4.9.0, m_ATOM has been relaced by
+      // m_BONNELL | m_SILVERMONT | m_INTEL; after that,
+      // processor_atom doesn't exist anymore and won't ever get tested
+      // for. Likewise, neither of processor_bonnel,
+      // processor_silvermont or processor_intel existed before and
+      // would ever get tested for.
+      // m_KNL has been added to the mask with GCC 5.1.0; before that,
+      // processor_knl didn't exist und wouldn't ever get tested.
+      // m_KNM has been added to the mask with GCC 8.1.0; before that,
+      // processor_knm didn't exist and wouldn't ever get tested.
+      // m_GOLDMONT has been added to the mask with GCC 9.1.0; before
+      // that, processor_goldmont didn't exist and wouldn't ever get
+      // tested. Likewise for m_GOLDMONT_PLUS and m_TREMONT.
+      _processor_set<m_atom, m_bonnell, m_silvermont, m_goldmont,
+		     m_goldmont_plus, m_knl, m_knm, m_tremont, m_intel>::mask,
+    },
+    {
+      x86_tune_flag_single_stringop, "single_stringop",
+      _processor_set<m_386, m_p4_nocona>::mask,
+    },
+    {
+      x86_tune_flag_misaligned_move_string_pro_epilogues,
+      "misaligned_move_string_pro_epilogues",
+      _processor_set<m_386, m_486, m_core_all, m_amd_multiple, m_generic>::mask,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      x86_tune_flag_use_sahf, "use_sahf",
+      // With GCC 4.9.0, m_ATOM has been relaced by
+      // m_BONNELL | m_SILVERMONT | m_INTEL; after that,
+      // processor_atom doesn't exist anymore and won't ever get tested
+      // for. Likewise, neither of processor_bonnel,
+      // processor_silvermont or processor_intel existed before and
+      // would ever get tested for.
+      // m_KNL has been added to the mask with GCC 5.1.0; before that,
+      // processor_knl didn't exist und wouldn't ever get tested.
+      // m_KNM has been added to the mask with GCC 8.1.0; before that,
+      // processor_knm didn't exist and wouldn't ever get tested.
+      // m_GOLDMONT has been added to the mask with GCC 9.1.0; before
+      // that, processor_goldmont didn't exist and wouldn't ever get
+      // tested. Likewise for m_GOLDMONT_PLUS and m_TREMONT.
+      // Before GCC 9.1.0, m_ZNVER1 rather than m_ZNVER has been a
+      // member of the mask; before that, processor_znver2, the only
+      // additional bit m_znver introduced, didn't exist and wouldn't
+      // ever get tested.
+      _processor_set<m_ppro, m_p4_nocona, m_core_all, m_atom, m_bonnell,
+		     m_silvermont, m_knl, m_knm, m_intel, m_k6_geode, m_k8,
+		     m_amdfam10, m_bdver, m_btver, m_znver, m_goldmont,
+		     m_goldmont_plus, m_tremont, m_generic>::mask,
+    },
+    {
+      x86_tune_flag_use_cltd, "use_cltd",
+      // With GCC 4.9.0, m_ATOM has been relaced by
+      // m_BONNELL | m_SILVERMONT | m_INTEL; after that,
+      // processor_atom doesn't exist anymore and won't ever get tested
+      // for. Likewise, neither of processor_bonnel,
+      // processor_silvermont or processor_intel existed before and
+      // would ever get tested for.
+      // m_KNL has been added to the mask with GCC 5.1.0; before that,
+      // processor_knl didn't exist und wouldn't ever get tested.
+      // m_LAKEMONT has been added to the mask with GCC 6.1.0; before
+      // that, processor_lakemont didn't exist und wouldn't ever get
+      // tested.
+      // m_KNM has been added to the mask with GCC 8.1.0; before that,
+      // processor_knm didn't exist and wouldn't ever get tested.
+      // m_GOLDMONT has been added to the mask with GCC 9.1.0; before
+      // that, processor_goldmont didn't exist and wouldn't ever get
+      // tested. Likewise for m_GOLDMONT_PLUS and m_TREMONT.
+      _processor_set_not<m_pent, m_lakemont, m_atom, m_bonnell, m_silvermont,
+			 m_knl, m_knm, m_intel, m_k6, m_goldmont,
+			 m_goldmont_plus, m_tremont>::mask,
+    },
+    {
+      x86_tune_flag_use_bt, "use_bt",
+      // With GCC 4.9.0, m_ATOM has been relaced by
+      // m_BONNELL | m_SILVERMONT | m_INTEL; after that,
+      // processor_atom doesn't exist anymore and won't ever get tested
+      // for. Likewise, neither of processor_bonnel,
+      // processor_silvermont or processor_intel existed before and
+      // would ever get tested for.
+      // m_KNL has been added to the mask with GCC 5.1.0; before that,
+      // processor_knl didn't exist und wouldn't ever get tested.
+      // m_LAKEMONT has been added to the mask with GCC 6.1.0; before
+      // that, processor_lakemont didn't exist und wouldn't ever get
+      // tested.
+      // m_KNM has been added to the mask with GCC 8.1.0; before that,
+      // processor_knm didn't exist and wouldn't ever get tested.
+      // m_GOLDMONT has been added to the mask with GCC 9.1.0; before
+      // that, processor_goldmont didn't exist and wouldn't ever get
+      // tested. Likewise for m_GOLDMONT_PLUS and m_TREMONT.
+      _processor_set<m_core_all, m_atom, m_bonnell, m_silvermont, m_knl, m_knm,
+		     m_intel, m_lakemont, m_amd_multiple, m_goldmont,
+		     m_goldmont_plus, m_tremont, m_generic>::mask,
+    },
+    {
+      x86_tune_flag_avoid_false_dep_for_bmi, "avoid_false_dep_for_bmi",
+      _processor_set<m_sandybridge, m_haswell, m_intel, m_generic>::mask,
+      .min_gcc_version = {4, 9, 2},
+      .max_gcc_version = {4, 9, 4},
+    },
+    {
+      x86_tune_flag_avoid_false_dep_for_bmi, "avoid_false_dep_for_bmi",
+      _processor_set<m_sandybridge, m_haswell, m_generic>::mask,
+      .min_gcc_version = {5, 1, 0},
+      .max_gcc_version = {8, 1, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_avoid_false_dep_for_bmi, "avoid_false_dep_for_bmi",
+      _processor_set<m_sandybridge, m_core_avx2, m_generic>::mask,
+      .min_gcc_version = {8, 2, 0},
+    },
+    {
+      x86_tune_flag_adjust_unroll, "adjust_unroll_factor",
+      _processor_set<m_bdver3, m_bdver4>::mask,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      x86_tune_flag_one_if_conv_insn, "one_if_conv_insn",
+      // m_KNM has been added to the mask with GCC 8.1.0; before that,
+      // processor_knm didn't exist and wouldn't ever get tested.
+      // m_GOLDMONT has been added to the mask with GCC 9.1.0; before
+      // that, processor_goldmont didn't exist and wouldn't ever get
+      // tested. Likewise for m_GOLDMONT_PLUS and m_TREMONT.
+      _processor_set<m_silvermont, m_knl, m_knm, m_intel, m_core_all,
+		     m_goldmont, m_goldmont_plus, m_tremont, m_generic>::mask,
+      .min_gcc_version = {6, 1, 0},
+    },
+    {
+      x86_tune_flag_use_himode_fiop, "use_himode_fiop",
+      _processor_set<m_386, m_486, m_k6_geode>::mask,
+    },
+    {
+      x86_tune_flag_use_simode_fiop, "use_simode_fiop",
+      // With GCC 4.9.0, m_ATOM has been relaced by
+      // m_BONNELL | m_SILVERMONT | m_INTEL; after that,
+      // processor_atom doesn't exist anymore and won't ever get tested
+      // for. Likewise, neither of processor_bonnel,
+      // processor_silvermont or processor_intel existed before and
+      // would ever get tested for.
+      // m_KNL has been added to the mask with GCC 5.1.0; before that,
+      // processor_knl didn't exist und wouldn't ever get tested.
+      // m_LAKEMONT has been added to the mask with GCC 6.1.0; before
+      // that, processor_lakemont didn't exist und wouldn't ever get
+      // tested.
+      // m_KNM has been added to the mask with GCC 8.1.0; before that,
+      // processor_knm didn't exist and wouldn't ever get tested.
+      // m_GOLDMONT has been added to the mask with GCC 9.1.0; before
+      // that, processor_goldmont didn't exist and wouldn't ever get
+      // tested. Likewise for m_GOLDMONT_PLUS and m_TREMONT.
+      _processor_set_not<m_pent, m_lakemont, m_ppro, m_core_all, m_atom,
+			 m_bonnell, m_silvermont, m_knl, m_knm, m_intel,
+			 m_amd_multiple, m_goldmont, m_goldmont_plus, m_tremont,
+			 m_generic>::mask,
+    },
+    {
+      x86_tune_flag_use_ffreep, "use_ffreep",
+      _processor_set<m_amd_multiple>::mask,
+    },
+    {
+      x86_tune_flag_ext_80387_constants, "ext_80387_constants",
+      // With GCC 4.9.0, m_ATOM has been relaced by
+      // m_BONNELL | m_SILVERMONT | m_INTEL; after that,
+      // processor_atom doesn't exist anymore and won't ever get tested
+      // for. Likewise, neither of processor_bonnel,
+      // processor_silvermont or processor_intel existed before and
+      // would ever get tested for.
+      // m_KNL has been added to the mask with GCC 5.1.0; before that,
+      // processor_knl didn't exist und wouldn't ever get tested.
+      // m_KNM has been added to the mask with GCC 8.1.0; before that,
+      // processor_knm didn't exist and wouldn't ever get tested.
+      // m_GOLDMONT has been added to the mask with GCC 9.1.0; before
+      // that, processor_goldmont didn't exist and wouldn't ever get
+      // tested. Likewise for m_GOLDMONT_PLUS and m_TREMONT.
+      _processor_set<m_ppro, m_p4_nocona, m_core_all, m_atom, m_bonnell,
+		     m_silvermont, m_knl, m_knm, m_intel, m_k6_geode,
+		     m_athlon_k8, m_goldmont, m_goldmont_plus, m_tremont,
+		     m_generic>::mask,
+    },
+    {
+      x86_tune_flag_vectorize_double, "vectorize_double",
+      // With GCC 4.9.0, m_ATOM has been relaced by m_BONNELL; after
+      // that, processor_atom doesn't exist anymore and won't ever get
+      // tested for. Likewise, processor_bonnel didn' exist before and
+      // wouldn't ever get tested for.
+      _processor_set_not<m_atom, m_bonnell>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {6, 5, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_general_regs_sse_spill, "general_regs_sse_spill",
+      _processor_set<m_core_all>::mask,
+    },
+    {
+      x86_tune_flag_sse_unaligned_load_optimal,
+      nullptr /* no -mtune-ctrl before GCC 4.9.0 */,
+      _processor_set<m_corei7, m_haswell, m_amdfam10, m_bdver, m_btver>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      x86_tune_flag_sse_unaligned_load_optimal, "sse_unaligned_load_optimal",
+      // m_KNL has been added to the mask with GCC 5.1.0; before that,
+      // processor_knl didn't exist und wouldn't ever get tested.
+      // m_ZNVER1 has been added to the mask with GCC 6.1.0; before
+      // that, processor_znver1 didn't exist and wouldn't ever get
+      // tested.
+      _processor_set<m_nehalem, m_sandybridge, m_haswell, m_silvermont, m_knl,
+		     m_intel, m_amdfam10, m_bdver, m_btver, m_znver1,
+		     m_generic>::mask,
+      .min_gcc_version = {4, 9, 0},
+      .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_sse_unaligned_load_optimal, "sse_unaligned_load_optimal",
+      _processor_set<m_nehalem, m_sandybridge, m_haswell, m_silvermont, m_knl,
+		     m_knm, m_intel, m_skylake_avx512, m_amdfam10, m_bdver,
+		     m_btver, m_znver1, m_generic>::mask,
+      .min_gcc_version = {8, 1, 0},
+      .max_gcc_version = {8, 1, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_sse_unaligned_load_optimal, "sse_unaligned_load_optimal",
+      // m_GOLDMONT has been added to the mask with GCC 9.1.0; before
+      // that, processor_goldmont didn't exist and wouldn't ever get
+      // tested. Likewise for m_GOLDMONT_PLUS and m_TREMONT.
+      // Before GCC 9.1.0, m_ZNVER1 rather than m_ZNVER has been a
+      // member of the mask; before that, processor_znver2, the only
+      // additional bit m_znver introduced, didn't exist and wouldn't
+      // ever get tested.
+      _processor_set<m_nehalem, m_sandybridge, m_core_avx2, m_silvermont, m_knl,
+		     m_knm, m_intel, m_goldmont, m_goldmont_plus, m_tremont,
+		     m_amdfam10, m_bdver, m_btver, m_znver, m_generic>::mask,
+      .min_gcc_version = {8, 2, 0},
+    },
+    {
+      x86_tune_flag_sse_unaligned_store_optimal,
+      nullptr /* no -mtune-ctrl before GCC 4.9.0 */,
+      _processor_set<m_corei7, m_haswell, m_bdver>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      x86_tune_flag_sse_unaligned_store_optimal, "sse_unaligned_store_optimal",
+      // m_KNL has been added to the mask with GCC 5.1.0; before that,
+      // processor_knl didn't exist und wouldn't ever get tested.
+      // m_ZNVER1 has been added to the mask with GCC 6.1.0; before
+      // that, processor_znver1 didn't exist and wouldn't ever get
+      // tested.
+      _processor_set<m_nehalem, m_sandybridge, m_haswell, m_silvermont, m_knl,
+		     m_intel, m_bdver, m_znver1, m_generic>::mask,
+      .min_gcc_version = {4, 9, 0},
+      .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_sse_unaligned_store_optimal, "sse_unaligned_store_optimal",
+      _processor_set<m_nehalem, m_sandybridge, m_haswell, m_silvermont, m_knl,
+		     m_knm, m_intel, m_skylake_avx512, m_bdver, m_znver1,
+		     m_generic>::mask,
+      .min_gcc_version = {8, 1, 0},
+      .max_gcc_version = {8, 1, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_sse_unaligned_store_optimal, "sse_unaligned_store_optimal",
+      // m_GOLDMONT has been added to the mask with GCC 9.1.0; before
+      // that, processor_goldmont didn't exist and wouldn't ever get
+      // tested. Likewise for m_GOLDMONT_PLUS and m_TREMONT.
+      // Before GCC 9.1.0, m_ZNVER1 rather than m_ZNVER has been a
+      // member of the mask; before that, processor_znver2, the only
+      // additional bit m_znver introduced, didn't exist and wouldn't
+      // ever get tested.
+      _processor_set<m_nehalem, m_sandybridge, m_core_avx2, m_silvermont, m_knl,
+		     m_knm, m_intel, m_goldmont, m_goldmont_plus, m_tremont,
+		     m_bdver, m_znver, m_generic>::mask,
+      .min_gcc_version = {8, 2, 0},
+    },
+    {
+      x86_tune_flag_sse_packed_single_insn_optimal,
+      "sse_packed_single_insn_optimal",
+      // m_ZNVER1 has been added to the mask with GCC 6.1.0; before
+      // that, processor_znver1 didn't exist and wouldn't ever get
+      // tested. With GCC 9.1.0, m_ZNVER1 has been replaced by m_ZNVER
+      // which added m_ZNVER2; before that, processor_znver2 didn't
+      // exist and wouldn't ever get tested.
+      _processor_set<m_bdver, m_znver>::mask,
+    },
+    {
+      x86_tune_flag_sse_typeless_stores,
+      nullptr /* no -mtune-ctrl before GCC 4.9.0 */,
+      _processor_set<m_amd_multiple>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      x86_tune_flag_sse_typeless_stores, "sse_typeless_stores",
+      _processor_set<m_amd_multiple, m_core_all, m_generic>::mask,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      x86_tune_flag_sse_load0_by_pxor,
+      nullptr /* no -mtune-ctrl before GCC 4.9.0 */,
+      _processor_set<m_ppro, m_p4_nocona>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      x86_tune_flag_sse_load0_by_pxor, "sse_load0_by_pxor",
+      // m_ZNVER1 has been added to the mask with GCC 6.1.0; before
+      // that, processor_znver1 didn't exist and wouldn't ever get
+      // tested. With GCC 9.1.0, m_ZNVER1 has been replaced by m_ZNVER
+      // which added m_ZNVER2; before that, processor_znver2 didn't
+      // exist and wouldn't ever get tested.
+      _processor_set<m_ppro, m_p4_nocona, m_core_all, m_bdver, m_btver, m_znver,
+		     m_generic>::mask,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      x86_tune_flag_inter_unit_moves,
+      nullptr /* no -mtune-ctrl before GCC 4.9.0 */,
+      _processor_set_not<m_amd_multiple, m_generic>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      x86_tune_flag_inter_unit_moves_to_vec, "inter_unit_moves_to_vec",
+      _processor_set_not<m_amd_multiple, m_generic>::mask,
+      .min_gcc_version = {4, 9, 0},
+      .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_inter_unit_moves_to_vec, "inter_unit_moves_to_vec",
+      _processor_set_not<m_athlon_k8, m_amdfam10, m_bdver, m_btver,
+			 m_generic>::mask,
+      .min_gcc_version = {8, 1, 0},
+      .max_gcc_version = {8, 3, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_inter_unit_moves_to_vec, "inter_unit_moves_to_vec",
+      _processor_set_not<m_athlon_k8, m_amdfam10, m_bdver, m_btver>::mask,
+      .min_gcc_version = {9, 1, 0},
+    },
+    {
+      x86_tune_flag_inter_unit_moves_from_vec, "inter_unit_moves_from_vec",
+      _processor_set_not<m_athlon_k8>::mask,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      x86_tune_flag_inter_unit_conversions, "inter_unit_conversions",
+      _processor_set_not<m_amdfam10, m_bdver>::mask,
+    },
+    {
+      x86_tune_flag_split_mem_opnd_for_fp_converts,
+      "split_mem_opnd_for_fp_converts",
+      // m_KNL has been added to the mask with GCC 5.1.0; before that,
+      // processor_knl didn't exist und wouldn't ever get tested.
+      // m_KNM has been added to the mask with GCC 8.1.0; before that,
+      // processor_knm didn't exist and wouldn't ever get tested.
+      // m_GOLDMONT has been added to the mask with GCC 9.1.0; before
+      // that, processor_goldmont didn't exist and wouldn't ever get
+      // tested. Likewise for m_GOLDMONT_PLUS and m_TREMONT.
+      _processor_set<m_silvermont, m_knl, m_knm, m_goldmont, m_goldmont_plus,
+		     m_tremont, m_intel>::mask,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      x86_tune_flag_use_vector_fp_converts,
+      nullptr /* no -mtune-ctrl before GCC 4.9.0 */,
+      _processor_set<m_core_all, m_amdfam10, m_generic>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      x86_tune_flag_use_vector_fp_converts, "use_vector_fp_converts",
+      _processor_set<m_amdfam10>::mask,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      x86_tune_flag_use_vector_converts, "use_vector_converts",
+      _processor_set<m_amdfam10>::mask,
+    },
+    {
+      x86_tune_flag_slow_pshufb, "slow_pshufb",
+      // m_KNM has been added to the mask with GCC 8.1.0; before that,
+      // processor_knm didn't exist and wouldn't ever get tested.
+      // m_GOLDMONT has been added to the mask with GCC 9.1.0; before
+      // that, processor_goldmont didn't exist and wouldn't ever get
+      // tested. Likewise for m_GOLDMONT_PLUS and m_TREMONT.
+      _processor_set<m_bonnell, m_silvermont, m_knl, m_knm, m_goldmont,
+		     m_goldmont_plus, m_tremont, m_intel>::mask,
+      .min_gcc_version = {5, 1, 0}
+    },
+    {
+      x86_tune_flag_vector_parallel_execution, "vec_parallel",
+      _processor_set<m_nehalem, m_sandybridge, m_haswell>::mask,
+      .min_gcc_version = {5, 1, 0},
+      .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_avoid_4byte_prefixes, "avoid_4byte_prefixes",
+      // m_GOLDMONT has been added to the mask with GCC 9.1.0; before
+      // that, processor_goldmont didn't exist and wouldn't ever get
+      // tested. Likewise for m_GOLDMONT_PLUS and m_TREMONT.
+      _processor_set<m_silvermont, m_goldmont, m_goldmont_plus, m_tremont,
+		     m_intel>::mask,
+      .min_gcc_version = {5, 1, 0},
+    },
+    {
+      x86_tune_flag_use_gather, "use_gather",
+      // Before GCC 9.1.0, m_ZNVER1 rather than m_ZNVER has been a
+      // member of the mask; before that, processor_znver2, the only
+      // additional bit m_znver introduced, didn't exist and wouldn't
+      // ever get tested.
+      _processor_set_not<m_znver, m_generic>::mask,
+      .min_gcc_version = {8, 1, 0},
+    },
+    {
+      x86_tune_flag_avoid_128fma_chains, "avoid_fma_chains",
+      // Before GCC 9.1.0, m_ZNVER1 rather than m_ZNVER has been a
+      // member of the mask; before that, processor_znver2, the only
+      // additional bit m_znver introduced, didn't exist and wouldn't
+      // ever get tested.
+      _processor_set<m_znver>::mask,
+      .min_gcc_version = {8, 1, 0},
+    },
+    {
+      x86_tune_flag_avoid_256fma_chains, "avoid_fma256_chains",
+      _processor_set<m_znver2>::mask,
+      .min_gcc_version = {9, 2, 0},
+    },
+    {
+      // Up to GCC 4.8.5 (including), this mask hadn't been stored in
+      // the tune features table, but in a separate
+      // x86_avx256_split_unaligned_load constant.
+      x86_tune_flag_avx256_unaligned_load_optimal,
+      nullptr /* no -mtune-ctrl before GCC 4.9.0 */,
+      _processor_set_not<m_corei7, m_generic>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      x86_tune_flag_avx256_unaligned_load_optimal, "256_unaligned_load_optimal",
+      _processor_set_not<m_nehalem, m_sandybridge, m_generic>::mask,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      // Up to GCC 4.8.5 (including), this mask hadn't been stored in
+      // the tune features table, but in a separate
+      // x86_avx256_split_unaligned_store constant.
+      x86_tune_flag_avx256_unaligned_store_optimal,
+      nullptr /* no -mtune-ctrl before GCC 4.9.0 */,
+      _processor_set_not<m_corei7, m_bdver, m_generic>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      x86_tune_flag_avx256_unaligned_store_optimal,
+      "256_unaligned_store_optimal",
+      // m_ZNVER1 has been added to the mask with GCC 6.1.0; before
+      // that, processor_znver1 didn't exist and wouldn't ever get
+      // tested.
+      _processor_set_not<m_nehalem, m_sandybridge, m_bdver, m_znver1,
+			 m_generic>::mask,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      x86_tune_flag_avx128_optimal, "avx128_optimal",
+      // m_ZNVER1 has been added to the mask with GCC 6.1.0; before
+      // that, processor_znver1 didn't exist and wouldn't ever get
+      // tested.
+      _processor_set<m_bdver, m_btver2, m_znver1>::mask,
+    },
+    {
+      x86_tune_flag_avx256_optimal, "avx256_optimal",
+      _processor_set<m_skylake_avx512>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {8, 1, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_avx256_optimal, "avx256_optimal",
+      _processor_set<m_core_avx512>::mask,
+      .min_gcc_version = {8, 2, 0},
+    },
+    {
+      x86_tune_flag_double_with_add, "double_with_add",
+      _processor_set_not<m_386>::mask,
+    },
+    {
+      x86_tune_flag_always_fancy_math_387, "always_fancy_math_387",
+      // m_LAKEMONT has been added to the mask with GCC 6.1.0; before
+      // that, processor_lakemont didn't exist und wouldn't ever get
+      // tested.
+      _processor_set_not<m_386, m_486, m_lakemont>::mask,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      x86_tune_flag_unroll_strlen,
+      nullptr /* no -mtune-ctrl before GCC 4.9.0 */,
+      _processor_set<m_486, m_pent, m_ppro, m_atom, m_core_all, m_k6,
+		     m_amd_multiple, m_generic>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      x86_tune_flag_unroll_strlen, "unroll_strlen",
+      _processor_set_not<m_386>::mask,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      x86_tune_flag_shift1, "shift1",
+      _processor_set_not<m_486>::mask,
+    },
+    {
+      x86_tune_flag_zero_extend_with_and, "zero_extend_with_and",
+      _processor_set<m_486, m_pent>::mask,
+    },
+    {
+      x86_tune_flag_promote_himode_imul, "promote_himode_imul",
+      _processor_set_not<m_386, m_486>::mask,
+    },
+    {
+      x86_tune_flag_fast_prefix, "fast_prefix",
+      // m_LAKEMONT has been added to the mask with GCC 6.1.0; before
+      // that, processor_lakemont didn't exist und wouldn't ever get
+      // tested.
+      _processor_set_not<m_386, m_486, m_pent, m_lakemont>::mask,
+    },
+    {
+      x86_tune_flag_read_modify_write, "read_modify_write",
+      // m_LAKEMONT has been added to the mask with GCC 6.1.0; before
+      // that, processor_lakemont didn't exist und wouldn't ever get
+      // tested.
+      _processor_set_not<m_pent, m_lakemont>::mask,
+    },
+    {
+      x86_tune_flag_move_m1_via_or, "move_m1_via_or",
+      // m_LAKEMONT has been added to the mask with GCC 6.1.0; before
+      // that, processor_lakemont didn't exist und wouldn't ever get
+      // tested.
+      _processor_set<m_pent, m_lakemont>::mask,
+    },
+    {
+      x86_tune_flag_not_unpairable, "not_unpairable",
+      // m_LAKEMONT has been added to the mask with GCC 6.1.0; before
+      // that, processor_lakemont didn't exist und wouldn't ever get
+      // tested.
+      _processor_set<m_pent, m_lakemont>::mask,
+    },
+    {
+      x86_tune_flag_partial_reg_stall, "partial_reg_stall",
+      _processor_set<m_ppro>::mask,
+    },
+    {
+      x86_tune_flag_promote_qimode,
+      nullptr /* no -mtune-ctrl before GCC 4.9.0 */,
+      _processor_set<m_386, m_486, m_pent, m_core_all, m_atom, m_k6_geode,
+		     m_amd_multiple, m_generic>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      x86_tune_flag_promote_qimode, "promote_qimode",
+      _processor_set_not<m_ppro>::mask,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      x86_tune_flag_promote_hi_regs, "promote_hi_regs",
+      _processor_set<m_ppro>::mask,
+    },
+    {
+      x86_tune_flag_himode_math, "himode_math",
+      _processor_set_not<m_ppro>::mask,
+    },
+    {
+      x86_tune_flag_split_long_moves, "split_long_moves",
+      _processor_set<m_ppro>::mask,
+    },
+    {
+      x86_tune_flag_use_xchgb, "use_xchgb",
+      _processor_set<m_pent4>::mask,
+    },
+    {
+      x86_tune_flag_use_mov0, "use_mov0",
+      _processor_set<m_k6>::mask,
+    },
+    {
+      x86_tune_flag_not_vectormode, "not_vectormode",
+      _processor_set<m_k6>::mask,
+    },
+    {
+      x86_tune_flag_avoid_vector_decode,
+      nullptr /* no -mtune-ctrl before GCC 4.9.0 */,
+      _processor_set<m_core_all, m_k8, m_generic64>::mask,
+      .min_gcc_version = {0, 0, 0},
+      .max_gcc_version = {4, 8, 5},
+    },
+    {
+      x86_tune_flag_avoid_vector_decode, "avoid_vector_decode",
+      _processor_set<m_k8>::mask,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      x86_tune_flag_branch_prediction_hints, "branch_prediction_hints",
+      _processor_set<>::mask,
+    },
+    {
+      x86_tune_flag_qimode_math, "qimode_math",
+      _processor_set_not<>::mask,
+    },
+    {
+      x86_tune_flag_promote_qi_regs, "promote_qi_regs",
+      _processor_set<>::mask,
+    },
+    {
+      x86_tune_flag_emit_vzeroupper, "emit_vzeroupper",
+      _processor_set_not<m_knl>::mask,
+      .min_gcc_version = {6, 5, 0},
+      .max_gcc_version = {6, 5, std::numeric_limits<unsigned int>::max()},
+    },
+    {
+      x86_tune_flag_emit_vzeroupper, "emit_vzeroupper",
+      _processor_set_not<m_knl>::mask,
+      .min_gcc_version = {7, 3, 0},
+    },
+    { _x86_tune_flag_max, nullptr, nullptr }
+  };
+
+  x86_tune_flags_type tune_flags;
+  for (const auto *f = features; f->feature != _x86_tune_flag_max; ++f) {
+    if (f->min_gcc_version <= ver && ver <= f->max_gcc_version &&
+	f->mask(ver).test(tune_processor)) {
+      tune_flags.set(f->feature);
+    }
+  }
+
+
+  std::string::const_iterator cur = mtune_ctrl_string.begin();
+  while (cur != mtune_ctrl_string.end()) {
+    bool clear = false;
+    if (*cur == '^') {
+      ++cur;
+      clear = true;
+    }
+
+    std::string::const_iterator next =
+      std::find(cur, mtune_ctrl_string.end(), ',');
+    const auto *f = features;
+    for (; f->feature != _x86_tune_flag_max; ++f) {
+      if (f->name && f->min_gcc_version <= ver && ver <= f->max_gcc_version &&
+	  !mtune_ctrl_string.compare(cur - mtune_ctrl_string.begin(),
+				     next - cur, f->name)) {
+	break;
+      }
+    }
+
+    if (f->feature != _x86_tune_flag_max) {
+      tune_flags.set(f->feature, !clear);
+    } else {
+      throw cmdline_except{
+	"unknown parameter to \"-mtune-ctrl\": " + std::string{cur, next}
+      };
+    }
+
+    if (next != mtune_ctrl_string.end())
+      ++next;
+    cur = next;
+  }
+
+  return tune_flags;
+}
+
+bool target_x86_64_gcc::opts_x86::_tune_features::
+arch_always_fancy_math_387(const _pta::processor_type arch_processor,
+			   const gcc_version &ver)
+{
+  // With GCC 4.9.0, X86_TUNE_ALWAYS_FANCY_MATH_387 got its own entry
+  // in the tune feature table. Before that, the corresponding
+  // processor mask had been stored in the separate
+  // x86_arch_always_fancy_math_387 mask. However, it had been the
+  // -march processor, not the -mtune processor which would have been
+  // tested against this mask. Hence this nasty special casing here rather
+  // than simply adding an entry for GCC < 4.9.0 into the tune feature
+  // table.
+  if (gcc_version{4, 8, 5} < ver)
+    return false;
+
+  return ((_processor_set<m_pent, m_ppro, m_p4_nocona, m_core_all, m_atom,
+			  m_amd_multiple, m_generic>::mask(ver))
+	  .test(arch_processor));
+}
+
 void target_x86_64_gcc::opts_x86::
 handle_opt(const gcc_cmdline_parser::option * const o,
 	   const char *val, const bool negative,
@@ -3710,6 +5215,12 @@ handle_opt(const gcc_cmdline_parser::option * const o,
     _set_isa_flag_user<isa_flag_tbm>(!negative, generated);
     break;
 
+  case opt_code_i386_mtune_ctrl:
+    assert(val);
+    assert(!generated);
+    _tune_ctrl_string = val;
+    break;
+
   case opt_code_i386_mtune:
     assert(val);
     assert(!generated);
@@ -4022,6 +5533,9 @@ void target_x86_64_gcc::opts_x86::option_override()
       !(tune_pta_flags.test(_pta::pta_flag_64bit))) {
     throw cmdline_except{"selected CPU doesn't support x86-64 instruction set"};
   }
+
+  const _tune_features::x86_tune_flags_type tune_features =
+    _tune_features::parse_tune_flags(_tune->processor, _tune_ctrl_string, ver);
 
   if (_isa_flags.test(isa_flag_64bit)) {
     if (_t.get_opts_common().optimize >= 1 &&

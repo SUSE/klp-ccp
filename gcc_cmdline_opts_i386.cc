@@ -1364,7 +1364,7 @@
 },
 {
   "mtune-ctrl=",
-  opt_code_i386_unused,
+  opt_code_i386_mtune_ctrl,
   gcc_cmdline_parser::option::comp_target,
   gcc_cmdline_parser::option::arg_joined,
   .reject_negative = true,

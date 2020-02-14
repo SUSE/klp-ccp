@@ -276,11 +276,13 @@ namespace klp
 	_isa_flags_type _isa_flags_set;
 
 	struct _pta;
+	struct _tune_features;
 
 	const _pta *_arch;
 	const _pta *_tune;
 	std::string _arch_string;
 	std::string _tune_string;
+	std::string _tune_ctrl_string;
 
 	bool force_align_arg_pointer;
 	bool force_align_arg_pointer_set;
