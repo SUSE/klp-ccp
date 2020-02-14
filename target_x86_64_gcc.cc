@@ -84,6 +84,7 @@ enum opt_code_i386
   opt_code_i386_mfma,
   opt_code_i386_mfma4,
   opt_code_i386_mfp_ret_in_387,
+  opt_code_i386_mfpmath,
   opt_code_i386_mfsgsbase,
   opt_code_i386_mfxsr,
   opt_code_i386_mgeneral_regs_only,
@@ -1220,7 +1221,8 @@ opts_x86(target_x86_64_gcc &t) noexcept
   : _t(t), _valid_target_flags(_init_valid_target_flags(t.get_gcc_version())),
     _valid_isa_flags(_init_valid_isa_flags(t.get_gcc_version())),
     _arch(nullptr), _tune(nullptr),
-    force_align_arg_pointer(false),
+    _fpmath(1UL << _fpmath_bit_387),
+    _fpmath_set(false), force_align_arg_pointer(false),
     force_align_arg_pointer_set(false), preferred_stack_boundary_arg(0),
     preferred_stack_boundary_arg_set(false), preferred_stack_boundary(0),
     incoming_stack_boundary_arg(0), incoming_stack_boundary_arg_set(false),
@@ -5141,6 +5143,29 @@ handle_opt(const gcc_cmdline_parser::option * const o,
     _set_target_flag_user<target_flag_float_returns>(!negative, generated);
     break;
 
+  case opt_code_i386_mfpmath:
+    assert(val);
+    if (!std::strcmp(val, "387")) {
+      _fpmath.reset();
+      _fpmath.set(_fpmath_bit_387);
+    } else if (!std::strcmp(val, "sse")) {
+      _fpmath.reset();
+      _fpmath.set(_fpmath_bit_sse);
+    } else if (!std::strcmp(val, "387,sse") ||
+	       !std::strcmp(val, "387+sse") ||
+	       !std::strcmp(val, "sse,387") ||
+	       !std::strcmp(val, "sse+387") ||
+	       !std::strcmp(val, "both")) {
+      _fpmath.reset();
+      _fpmath.set(_fpmath_bit_387);
+      _fpmath.set(_fpmath_bit_sse);
+    } else {
+      throw cmdline_except{"unrecognized value for -mfpmath"};
+    }
+    if (!generated)
+      _fpmath_set = true;
+    break;
+
   case opt_code_i386_mfsgsbase:
     _set_isa_flag_user<isa_flag_fsgsbase>(!negative, generated);
     break;
@@ -5976,6 +6001,38 @@ void target_x86_64_gcc::opts_x86::option_override()
     } else {
       incoming_stack_boundary = (1u << incoming_stack_boundary_arg) * 8;
     }
+  }
+
+  if (_fpmath_set) {
+    if (_fpmath.test(_fpmath_bit_sse)) {
+      if (!_isa_flags.test(isa_flag_sse)) {
+	if ((ver <=
+	     gcc_version{5, 5, std::numeric_limits<unsigned int>::max()}) ||
+	    _target_flags.test(target_flag_80387)) {
+	  _fpmath.reset();
+	  _fpmath.set(_fpmath_bit_387);
+	}
+      } else if (_fpmath.test(_fpmath_bit_387) &&
+		 !_target_flags.test(target_flag_80387)) {
+	_fpmath.reset();
+	_fpmath.set(_fpmath_bit_sse);
+      }
+    }
+
+  } else if (gcc_version{4, 8, 5} < ver &&
+	     _t.get_opts_common().fast_math_flags_set_p() &&
+	     _isa_flags.test(isa_flag_sse2)) {
+    _fpmath.reset();
+    _fpmath.set(_fpmath_bit_sse);
+
+  } else {
+    _fpmath.reset();
+    // This is equivalent to GCC's TARGET_FPMATH_DEFAULT_P().
+    if (_isa_flags.test(isa_flag_64bit) && _isa_flags.test(isa_flag_sse))
+      _fpmath.set(_fpmath_bit_sse);
+    else
+      _fpmath.set(_fpmath_bit_387);
+
   }
 
   if (ver <= gcc_version{5, 5, std::numeric_limits<unsigned int>::max()}) {

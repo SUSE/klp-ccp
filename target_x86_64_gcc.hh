@@ -340,6 +340,15 @@ namespace klp
 	std::string _tune_string;
 	std::string _tune_ctrl_string;
 
+	enum _fpmath_bit
+	{
+	  _fpmath_bit_387,
+	  _fpmath_bit_sse,
+	  __fpmath_bit_max,
+	};
+	std::bitset<__fpmath_bit_max> _fpmath;
+	bool _fpmath_set;
+
 	bool force_align_arg_pointer;
 	bool force_align_arg_pointer_set;
 
