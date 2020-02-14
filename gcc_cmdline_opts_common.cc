@@ -2936,7 +2936,7 @@
 },
 {
   "fomit-frame-pointer",
-  opt_code_common_unused,
+  opt_code_common_fomit_frame_pointer,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },

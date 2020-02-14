@@ -60,6 +60,7 @@ enum opt_code_common
   opt_code_common_fpic,
   opt_code_common_fpie,
 
+  opt_code_common_fomit_frame_pointer,
   opt_code_common_fexceptions,
 
   opt_code_common_fstack_protector,
@@ -889,7 +890,8 @@ target_gcc::opts_common::opts_common(const gcc_cmdline_parser::gcc_version &ver)
     flag_abi_version(0), flag_leading_underscore(-1),
     flag_no_inline(false),
     flag_pic(-1), flag_pie(-1),
-    flag_exceptions(false),
+    flag_omit_frame_pointer(false), flag_omit_frame_pointer_set(false),
+    flag_exceptions(false)
     flag_stack_protect(-1)
 {
   using gcc_version = gcc_cmdline_parser::gcc_version;
@@ -1417,6 +1419,12 @@ handle_opt(const gcc_cmdline_parser::option * const o,
       flag_pie = 1;
     else
       flag_pie = 0;
+    break;
+
+  case opt_code_common_fomit_frame_pointer:
+    flag_omit_frame_pointer = !negative;
+    if (!generated)
+      flag_omit_frame_pointer_set = true;
     break;
 
   case opt_code_common_fexceptions:

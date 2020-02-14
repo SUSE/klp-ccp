@@ -128,6 +128,8 @@ namespace klp
 	int flag_pic;
 	int flag_pie;
 
+	bool flag_omit_frame_pointer;
+	bool flag_omit_frame_pointer_set;
 	bool flag_exceptions;
 
 	int flag_stack_protect;

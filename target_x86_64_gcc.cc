@@ -3966,6 +3966,21 @@ void target_x86_64_gcc::opts_x86::option_override()
   }
 
   if (_isa_flags.test(isa_flag_64bit)) {
+    if (_t.get_opts_common().optimize >= 1 &&
+	!_t.get_opts_common().flag_omit_frame_pointer_set) {
+      // GCC's USE_X86_64_FRAME_POINTER is zero.
+      _t.get_opts_common().flag_omit_frame_pointer = true;
+    }
+  } else {
+    if (_t.get_opts_common().optimize >= 1 &&
+	!_t.get_opts_common().flag_omit_frame_pointer_set) {
+      // GCC's USE_IX86_FRAME_POINTER is zero.
+      _t.get_opts_common().flag_omit_frame_pointer =
+	!_t.get_opts_common().optimize_size;
+    }
+  }
+
+  if (_isa_flags.test(isa_flag_64bit)) {
     if (!arch_specified) {
       // Set GCC's TARGET_SUBTARGET64_ISA_DEFAULT flags if not explicitly
       // disabled.
