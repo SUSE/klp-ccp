@@ -81,6 +81,8 @@ namespace klp
 	bool optimize_fast;
 	bool optimize_size;
 
+	bool flag_expensive_optimizations;
+
 	enum class excess_precision
 	{
 	  ep_default,

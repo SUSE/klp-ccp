@@ -33,6 +33,8 @@ enum opt_code_common
   opt_code_common_Og,
   opt_code_common_Os,
 
+  opt_code_common_fexpensive_optimizations,
+
   opt_code_common_fassociative_math,
   opt_code_common_fexcess_precision,
   opt_code_common_ffinite_math_only,
@@ -872,7 +874,8 @@ void target_gcc::_c_lang_post_options()
 target_gcc::opts_common::opts_common(const gcc_cmdline_parser::gcc_version &ver)
   noexcept
   : optimize(0), optimize_debug(false), optimize_fast(false),
-    optimize_size(false), flag_associative_math(false),
+    optimize_size(false), flag_expensive_optimizations(false),
+    flag_associative_math(false),
     flag_excess_precision(excess_precision::ep_default),
     flag_finite_math_only(false), flag_errno_math(true),
     flag_reciprocal_math(false), flag_signaling_nans(false),
@@ -1281,6 +1284,10 @@ handle_opt(const gcc_cmdline_parser::option * const o,
 
   case opt_code_common_Os:
     // Handled in pre-scan
+    break;
+
+  case opt_code_common_fexpensive_optimizations:
+    flag_expensive_optimizations = !negative;
     break;
 
   case opt_code_common_fassociative_math:
