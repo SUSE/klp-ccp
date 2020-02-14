@@ -63,6 +63,8 @@ enum opt_code_common
   opt_code_common_fomit_frame_pointer,
   opt_code_common_fexceptions,
   opt_code_common_fnon_call_exceptions,
+  opt_code_common_funwind_tables,
+  opt_code_common_fasynchronous_unwind_tables,
 
   opt_code_common_fstack_protector,
   opt_code_common_fstack_protector_all,
@@ -892,7 +894,8 @@ target_gcc::opts_common::opts_common(const gcc_cmdline_parser::gcc_version &ver)
     flag_no_inline(false),
     flag_pic(-1), flag_pie(-1),
     flag_omit_frame_pointer(false), flag_omit_frame_pointer_set(false),
-    flag_exceptions(false), flag_non_call_exceptions(false)
+    flag_exceptions(false), flag_non_call_exceptions(false),
+    flag_unwind_tables(false), flag_asynchronous_unwind_tables(false),
     flag_stack_protect(-1)
 {
   using gcc_version = gcc_cmdline_parser::gcc_version;
@@ -1436,6 +1439,14 @@ handle_opt(const gcc_cmdline_parser::option * const o,
     flag_non_call_exceptions = !negative;
     break;
 
+  case opt_code_common_funwind_tables:
+    flag_unwind_tables = !negative;
+    break;
+
+  case opt_code_common_fasynchronous_unwind_tables:
+    flag_asynchronous_unwind_tables = !negative;
+    break;
+
   case opt_code_common_fstack_protector:
     flag_stack_protect = !negative;
     break;
@@ -1576,6 +1587,11 @@ process_options(const gcc_cmdline_parser::gcc_version &ver)
 
   if (flag_abi_version == 1 && gcc_version{5, 1, 0} <= ver)
     throw cmdline_except{"-fabi_version=1 only supported for gcc < 5.1.0"};
+
+  if (flag_non_call_exceptions)
+    flag_asynchronous_unwind_tables = 1;
+  if (flag_asynchronous_unwind_tables)
+    flag_unwind_tables = true;
 
   if (flag_signaling_nans)
     flag_trapping_math = true;

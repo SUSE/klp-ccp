@@ -1504,7 +1504,7 @@
 },
 {
   "fasynchronous-unwind-tables",
-  opt_code_common_unused,
+  opt_code_common_fasynchronous_unwind_tables,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },
@@ -4291,7 +4291,7 @@
 },
 {
   "funwind-tables",
-  opt_code_common_unused,
+  opt_code_common_funwind_tables,
   gcc_cmdline_parser::option::comp_common,
   gcc_cmdline_parser::option::arg_none,
 },

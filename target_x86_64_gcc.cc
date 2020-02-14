@@ -1188,7 +1188,13 @@ opts_x86(target_x86_64_gcc &t) noexcept
 
 void target_x86_64_gcc::opts_x86::option_init_struct() noexcept
 {
+  // Strictly speaking, this gets set in GCC's init_options_struct(),
+  // which would correspond more to
+  // target_gcc::_init_options_struct().  However, the value depends
+  // on the target, set it here.
+  _t.get_opts_common().flag_unwind_tables = false;
 
+  _t.get_opts_common().flag_asynchronous_unwind_tables = 2;
 }
 
 target_x86_64_gcc::opts_x86::_isa_flags_type target_x86_64_gcc::opts_x86::
@@ -3971,12 +3977,22 @@ void target_x86_64_gcc::opts_x86::option_override()
       // GCC's USE_X86_64_FRAME_POINTER is zero.
       _t.get_opts_common().flag_omit_frame_pointer = true;
     }
+
+    if (_t.get_opts_common().flag_asynchronous_unwind_tables == 2) {
+      _t.get_opts_common().flag_unwind_tables = true;
+      _t.get_opts_common().flag_asynchronous_unwind_tables = 1;
+    }
   } else {
     if (_t.get_opts_common().optimize >= 1 &&
 	!_t.get_opts_common().flag_omit_frame_pointer_set) {
       // GCC's USE_IX86_FRAME_POINTER is zero.
       _t.get_opts_common().flag_omit_frame_pointer =
 	!_t.get_opts_common().optimize_size;
+    }
+
+    if (_t.get_opts_common().flag_asynchronous_unwind_tables == 2) {
+      // GCC's USE_IX86_FRAME_POINTER is zero.
+      _t.get_opts_common().flag_asynchronous_unwind_tables = 1;
     }
   }
 
