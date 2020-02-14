@@ -76,6 +76,7 @@ enum opt_code_i386
   opt_code_i386_mgeneral_regs_only,
   opt_code_i386_mgfni,
   opt_code_i386_mhle,
+  opt_code_i386_mincoming_stack_boundary,
   opt_code_i386_mlwp,
   opt_code_i386_mlzcnt,
   opt_code_i386_mmmx,
@@ -1183,7 +1184,9 @@ opts_x86(target_x86_64_gcc &t) noexcept
     _arch(nullptr), _tune(nullptr),
     force_align_arg_pointer(false),
     force_align_arg_pointer_set(false), preferred_stack_boundary_arg(0),
-    preferred_stack_boundary_arg_set(false), preferred_stack_boundary(0)
+    preferred_stack_boundary_arg_set(false), preferred_stack_boundary(0),
+    incoming_stack_boundary_arg(0), incoming_stack_boundary_arg_set(false),
+    incoming_stack_boundary(0)
 {
   // GCC's ix86_isa_flags is initialized with
   // TARGET_64BIT_DEFAULT | TARGET_SUBTARGET_ISA_DEFAULT.
@@ -3506,6 +3509,25 @@ handle_opt(const gcc_cmdline_parser::option * const o,
     }
     break;
 
+  case opt_code_i386_mincoming_stack_boundary:
+    {
+      std::size_t endpos;
+      int _incoming_stack_boundary_arg = -1;
+
+      try {
+	_incoming_stack_boundary_arg = std::stoi(std::string{val}, &endpos);
+      } catch (...) {}
+
+      if (_incoming_stack_boundary_arg < 0 || val[endpos] != '\0')
+	throw cmdline_except{"invalid argument to -mincoming-stack-boundary"};
+
+      incoming_stack_boundary_arg =
+	static_cast<unsigned int>(_incoming_stack_boundary_arg);
+      if (!generated)
+	incoming_stack_boundary_arg_set = true;
+    }
+    break;
+
   case opt_code_i386_mlwp:
     _set_isa_flag_user<isa_flag_lwp>(!negative, generated);
     break;
@@ -4108,4 +4130,22 @@ void target_x86_64_gcc::opts_x86::option_override()
 
   if (!force_align_arg_pointer_set)
     force_align_arg_pointer = false; // GCC's STACK_REALIGN_DEFAULT is zero
+
+  // C.f. GCC's PREFERRED_STACK_BOUNDARY_DEFAULT
+  incoming_stack_boundary = 128;
+  if (incoming_stack_boundary_arg_set) {
+    unsigned int min;
+
+    if (gcc_version{5, 2, std::numeric_limits<unsigned int>::max()} < ver)
+      min = _isa_flags.test(isa_flag_64bit) ? 3 : 2;
+    else
+      min = _isa_flags.test(isa_flag_64bit) ? 4 : 2;
+
+    if (min < incoming_stack_boundary_arg ||
+	incoming_stack_boundary_arg > 12) {
+      throw cmdline_except{"invalid parameter for -mincoming-stack-boundary"};
+    } else {
+      incoming_stack_boundary = (1u << incoming_stack_boundary_arg) * 8;
+    }
+  }
 }

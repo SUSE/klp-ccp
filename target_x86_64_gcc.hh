@@ -288,6 +288,10 @@ namespace klp
 	unsigned int preferred_stack_boundary_arg;
 	bool preferred_stack_boundary_arg_set;
 	unsigned int preferred_stack_boundary;
+
+	unsigned int incoming_stack_boundary_arg;
+	bool incoming_stack_boundary_arg_set;
+	unsigned int incoming_stack_boundary;
       };
 
       opts_x86 _opts_x86;
