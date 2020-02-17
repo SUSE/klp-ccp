@@ -510,11 +510,15 @@ preprocessor::_pp_token preprocessor::_read_next_plain_token()
       goto again;
     }
 
-    _pp_result->_append_token(raw_tok);
+    std::string tok_value{raw_tok.get_value()};
+    const pp_token::type tok_type = raw_tok.get_type();
+    const bool is_pp_directive =
+      _maybe_pp_directive && raw_tok.is_punctuator("#");
+    _pp_result->_append_token(std::move(raw_tok));
 
     if (raw_tok.is_newline()) {
       _maybe_pp_directive = true;
-    } else if (_maybe_pp_directive && raw_tok.is_punctuator("#")) {
+    } else if (is_pp_directive) {
       _handle_pp_directive();
       goto again;
     } else if (!raw_tok.is_ws()) {
@@ -526,7 +530,7 @@ preprocessor::_pp_token preprocessor::_read_next_plain_token()
 
     const raw_pp_token_index raw_token_index =
       _pp_result->_get_last_raw_index();
-    return _pp_token{raw_tok.get_type(), raw_tok.get_value(),
+    return _pp_token{tok_type, std::move(tok_value),
 		     raw_pp_tokens_range{raw_token_index},
 		     raw_token_index};
   } catch (const pp_except&) {
@@ -1214,6 +1218,15 @@ _pp_token(const pp_token::type type, const std::string &value,
 	  const raw_pp_token_index passed_through_raw_token)
   : _value(value), _token_source(token_source), _macro_invocation(nullptr),
     _type(type), _passed_through_raw_token(passed_through_raw_token)
+{}
+
+preprocessor::_pp_token::
+_pp_token(const pp_token::type type, std::string &&value,
+	  const raw_pp_tokens_range &token_source,
+	  const raw_pp_token_index passed_through_raw_token) noexcept
+  : _value(std::move(value)), _token_source(token_source),
+    _macro_invocation(nullptr), _type(type),
+    _passed_through_raw_token(passed_through_raw_token)
 {}
 
 void preprocessor::_pp_token::set_type_and_value(const pp_token::type type,

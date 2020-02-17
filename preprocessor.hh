@@ -105,6 +105,11 @@ namespace klp
 		  const raw_pp_token_index passed_through_raw_token
 			= not_passed_through);
 
+	_pp_token(const pp_token::type type, std::string &&value,
+		  const raw_pp_tokens_range &token_source,
+		  const raw_pp_token_index passed_through_raw_token
+		  = not_passed_through) noexcept;
+
 	pp_token::type get_type() const noexcept
 	{
 	  return _type;
