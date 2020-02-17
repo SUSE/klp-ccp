@@ -1750,7 +1750,8 @@ namespace klp
 	virtual direct_declarator_id& get_direct_declarator_id()
 	  noexcept override;
 
-	pp_token_index get_id_tok() const noexcept;
+	pp_token_index get_id_tok() const noexcept
+	{ return _id_tok; }
 
 	const direct_declarator_func* is_function() const noexcept;
 
@@ -1911,9 +1912,11 @@ namespace klp
 
 	virtual ~declarator() noexcept override;
 
-	const direct_declarator_id& get_direct_declarator_id() const noexcept;
+	const direct_declarator_id& get_direct_declarator_id() const noexcept
+	{ return _cached_ddid; }
 
-	direct_declarator_id& get_direct_declarator_id() noexcept;
+	direct_declarator_id& get_direct_declarator_id() noexcept
+	{ return _cached_ddid; }
 
 	pp_token_index get_id_tok() const noexcept;
 
@@ -1940,6 +1943,7 @@ namespace klp
 
 	pointer *_pt;
 	direct_declarator &_dd;
+	direct_declarator_id &_cached_ddid;
       };
 
       enum class storage_class

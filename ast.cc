@@ -2382,11 +2382,6 @@ direct_declarator_id& direct_declarator_id::get_direct_declarator_id() noexcept
   return *this;
 }
 
-klp::ccp::pp_token_index direct_declarator_id::get_id_tok() const noexcept
-{
-  return _id_tok;
-}
-
 const direct_declarator_func* direct_declarator_id::is_function() const noexcept
 {
   const direct_declarator_func *ddf = nullptr;
@@ -2684,7 +2679,7 @@ bool direct_declarator_func::_process(const_processor<bool> &p) const
 declarator::declarator(const pp_tokens_range &tr, pointer* &&pt,
 		       direct_declarator* &&dd) noexcept
   : typed_ast_entity(tr), _pt(mv_p(std::move(pt))),
-    _dd(*mv_p(std::move(dd)))
+    _dd(*mv_p(std::move(dd))), _cached_ddid(_dd.get_direct_declarator_id())
 {
   _dd._set_parent(*this);
   if (_pt)
@@ -2695,17 +2690,6 @@ declarator::~declarator() noexcept
 {
   delete _pt;
   delete &_dd;
-}
-
-const direct_declarator_id& declarator::get_direct_declarator_id()
-  const noexcept
-{
-  return _dd.get_direct_declarator_id();
-}
-
-direct_declarator_id& declarator::get_direct_declarator_id() noexcept
-{
-  return _dd.get_direct_declarator_id();
 }
 
 klp::ccp::pp_token_index declarator::get_id_tok() const noexcept
