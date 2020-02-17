@@ -18,6 +18,8 @@
 
 #include <cassert>
 #include <string>
+#include <map>
+#include <functional>
 #include "ast_impl.hh"
 #include "semantic_except.hh"
 #include "pp_token.hh"
@@ -200,7 +202,25 @@ namespace
 
     struct _scope
     {
-      std::vector<expr_id::resolved> _declared_ids;
+    public:
+      typedef std::reference_wrapper<const std::string> _id_key_type;
+
+      struct _cmp_id_key
+      {
+	bool operator()(const _id_key_type &k1, const _id_key_type &k2)
+	  const noexcept
+	{
+	  return k1.get() < k2.get();
+	}
+      };
+
+      void register_id(const std::string &id, expr_id::resolved &&r)
+      {
+	_declared_ids.emplace(std::cref(id), std::move(r));
+      }
+
+      std::multimap<_id_key_type, expr_id::resolved, _cmp_id_key>
+	_declared_ids;
       std::vector<sou_decl_link> _declared_sous;
       std::vector<enum_decl_link> _declared_enums;
     };
@@ -334,12 +354,19 @@ void _id_resolver::operator()()
 	return false;
       },
       [this](enumerator &e) {
-	_scopes.back()._declared_ids.push_back(expr_id::resolved(e));
+	_scopes.back().register_id
+	  (_ast.get_pp_tokens()[e.get_id_tok()].get_value(),
+	   expr_id::resolved{e});
 	return false;
       },
       [this](identifier_list &pil) {
-	if (_is_fundef_ddf_pil(pil))
-	  _scopes.back()._declared_ids.push_back(expr_id::resolved(pil));
+	if (_is_fundef_ddf_pil(pil)) {
+	  for (auto pi_tok : pil.get_identifiers()) {
+	    _scopes.back().register_id
+	      (_ast.get_pp_tokens()[pi_tok].get_value(),
+	       expr_id::resolved{pil});
+	  }
+	}
 	return false;
       },
       [this](struct_or_union_ref &sour) {
@@ -427,90 +454,22 @@ const expr_id::resolved* _id_resolver::_lookup_id(const pp_token_index id_tok,
 						  bool *in_cur_scope)
   const noexcept
 {
-  const expr_id::resolved *result = nullptr;
-
   if (in_cur_scope)
     *in_cur_scope = false;
 
   const pp_token &id = _ast.get_pp_tokens()[id_tok];
   const auto &scopes_begin =  _scopes.rbegin();
   for (auto scope_it = scopes_begin; scope_it != _scopes.rend(); ++scope_it) {
-    for (auto r_it = scope_it->_declared_ids.rbegin();
-	 !result && r_it != scope_it->_declared_ids.rend();
-	 ++r_it) {
-      switch (r_it->get_kind()) {
-	case resolved_kind::init_declarator:
-	  {
-	    const pp_token_index r_id_tok
-	      = (r_it->get_init_declarator().get_declarator().
-		 get_direct_declarator_id().get_id_tok());
-	    if (id.get_value() ==_ast.get_pp_tokens()[r_id_tok].get_value())
-	      result = &*r_it;
-	  }
-	  break;
-
-      case resolved_kind::parameter_declaration_declarator:
-	  {
-	    const pp_token_index r_id_tok
-	      = (r_it->get_parameter_declaration_declarator()
-		 .get_declarator().get_direct_declarator_id().get_id_tok());
-	    if (id.get_value() ==_ast.get_pp_tokens()[r_id_tok].get_value())
-	      result = &*r_it;
-	  }
-	  break;
-
-      case resolved_kind::function_definition:
-	  {
-	    const pp_token_index r_id_tok
-	      = (r_it->get_function_definition().get_declarator()
-		 .get_direct_declarator_id().get_id_tok());
-	    if (id.get_value() ==_ast.get_pp_tokens()[r_id_tok].get_value())
-	      result = &*r_it;
-	  }
-	  break;
-
-      case resolved_kind::enumerator:
-	{
-	  const pp_token_index r_id_tok = r_it->get_enumerator().get_id_tok();
-	  if (id.get_value() ==_ast.get_pp_tokens()[r_id_tok].get_value())
-	    result = &*r_it;
-	}
-	break;
-
-      case resolved_kind::in_param_id_list:
-	{
-	  const identifier_list &pil = r_it->get_param_id_list();
-	  for (auto pi_tok : pil.get_identifiers()) {
-	    if (id.get_value() == _ast.get_pp_tokens()[pi_tok].get_value()) {
-	      result = &*r_it;
-	      break;
-	    }
-	  }
-	}
-	break;
-
-      case resolved_kind::none:
-	/* fall through */
-      case resolved_kind::builtin_func:
-	/* fall through */
-      case resolved_kind::builtin_var:
-	/* fall through */
-      case resolved_kind::stmt_labeled:
-	// These are never elements of _declared_ids
-	assert(0);
-	__builtin_unreachable();
-      };
-
-      if (result && !pred(*result)) {
-	result = nullptr;
-	break;
+    const auto r =
+      scope_it->_declared_ids.equal_range(std::cref(id.get_value()));
+    if (r.second != r.first) {
+      auto r_it = r.second;
+      --r_it;
+      if (pred(r_it->second)) {
+	if (in_cur_scope && scope_it == scopes_begin)
+	  *in_cur_scope = true;
+	return &r_it->second;
       }
-    }
-
-    if (result) {
-      if (in_cur_scope && scope_it == scopes_begin)
-	*in_cur_scope = true;
-      return result;
     }
   }
 
@@ -650,7 +609,9 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
       throw semantic_except(remark);
     }
 
-    _scopes.back()._declared_ids.push_back(expr_id::resolved(id));
+    _scopes.back().register_id
+      (_ast.get_pp_tokens()[ddid.get_id_tok()].get_value(),
+       expr_id::resolved(id));
     return;
   }
 
@@ -678,7 +639,9 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
       linkage::set_first_at_file_scope(id);
     }
 
-    _scopes.back()._declared_ids.push_back(expr_id::resolved(id));
+    _scopes.back().register_id
+      (_ast.get_pp_tokens()[ddid.get_id_tok()].get_value(),
+       expr_id::resolved(id));
     return;
 
   } else if (prev_is_td_in_cur_scope) {
@@ -718,7 +681,9 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
   }
 
   if (no_linkage) {
-    _scopes.back()._declared_ids.push_back(expr_id::resolved(id));
+    _scopes.back().register_id
+      (_ast.get_pp_tokens()[ddid.get_id_tok()].get_value(),
+       expr_id::resolved(id));
     return;
   }
 
@@ -866,7 +831,9 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
     __builtin_unreachable();
   }
 
-  _scopes.back()._declared_ids.push_back(expr_id::resolved(id));
+  _scopes.back().register_id
+    (_ast.get_pp_tokens()[ddid.get_id_tok()].get_value(),
+     expr_id::resolved(id));
 }
 
 void _id_resolver::_handle_param_decl(parameter_declaration_declarator &pdd)
@@ -883,7 +850,10 @@ void _id_resolver::_handle_param_decl(parameter_declaration_declarator &pdd)
     throw semantic_except(remark);
   }
 
-  _scopes.back()._declared_ids.push_back(expr_id::resolved(pdd));
+  const pp_token_index id_tok
+    = pdd.get_declarator().get_direct_declarator_id().get_id_tok();
+  _scopes.back().register_id(_ast.get_pp_tokens()[id_tok].get_value(),
+			     expr_id::resolved(pdd));
 }
 
 void _id_resolver::_handle_fun_def(function_definition &fd)
@@ -1001,7 +971,9 @@ void _id_resolver::_handle_fun_def(function_definition &fd)
     }
   }
 
-  _scopes.back()._declared_ids.push_back(expr_id::resolved(fd));
+  _scopes.back().register_id
+    (_ast.get_pp_tokens()[ddid.get_id_tok()].get_value(),
+     expr_id::resolved(fd));
 }
 
 void _id_resolver::_handle_sou_ref(struct_or_union_ref &sour)
@@ -1516,17 +1488,15 @@ void _id_resolver::_resolve_id(type_specifier_tdid &ts_tdid)
   const pp_token &id_tok = _ast.get_pp_tokens()[ts_tdid.get_id_tok()];
   for (auto scope_it = _scopes.rbegin(); scope_it != _scopes.rend();
        ++scope_it) {
-    for (auto r_it = scope_it->_declared_ids.rbegin();
-	 r_it != scope_it->_declared_ids.rend(); ++r_it) {
-      if (r_it->get_kind() == resolved_kind::init_declarator) {
-	init_declarator &id = r_it->get_init_declarator();
-	const direct_declarator_id &ddid =
-	  id.get_declarator().get_direct_declarator_id();
-	if (id_tok.get_value() ==
-	    _ast.get_pp_tokens()[ddid.get_id_tok()].get_value()) {
-	  ts_tdid.set_resolved(type_specifier_tdid::resolved{id});
-	  return;
-	}
+    const auto r =
+      scope_it->_declared_ids.equal_range(std::cref(id_tok.get_value()));
+    for (auto r_it = r.second; r_it != r.first;) {
+      --r_it;
+
+      if (r_it->second.get_kind() == resolved_kind::init_declarator) {
+	ts_tdid.set_resolved
+	  (type_specifier_tdid::resolved{r_it->second.get_init_declarator()});
+	return;
       }
     }
   }
