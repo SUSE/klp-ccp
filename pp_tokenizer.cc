@@ -79,8 +79,6 @@ char _pp_tokenizer::_read_next_char(range_in_file::loc_type &loc)
 {
   char c = _read_next_char_raw();
   loc += 1;
-  if (!c)
-    return 0;
 
   // skip continuation lines
   while (c == '\\') {
@@ -98,6 +96,7 @@ char _pp_tokenizer::_read_next_char(range_in_file::loc_type &loc)
       c = _read_next_char_raw();
     }
   }
+
   return c;
 }
 
