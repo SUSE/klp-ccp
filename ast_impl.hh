@@ -20,6 +20,8 @@
 #define AST_IMPL_HH
 
 #include <type_traits>
+#include <stack>
+#include <tuple>
 #include "ast.hh"
 #include "ast_processor_impl.hh"
 #include "type_set.hh"
@@ -347,17 +349,36 @@ namespace klp
       void _ast_entity::_for_each_dfs_pre_and_po(callable_type_pre &&c_pre,
 						 callable_type_post &&c_post)
       {
-	const bool do_po = c_pre(*this);
+	typedef std::tuple<_ast_entity *, const bool, std::size_t>
+	  walk_stack_entry_type;
+	typedef std::stack<walk_stack_entry_type> walk_stack_type;
 
-	for (std::size_t i_child = 0;; ++i_child) {
-	  _ast_entity * const ae = _get_child(i_child);
-	  if (!ae)
-	    break;
-	  ae->_for_each_dfs_pre_and_po(c_pre, c_post);
+	walk_stack_type ws;
+	_ast_entity *cur = this;
+	bool cur_do_po = c_pre(*this);
+	std::size_t cur_i_child = 0;
+	while (cur) {
+	  _ast_entity * const child = cur->_get_child(cur_i_child++);
+	  if (!child) {
+	    if (cur_do_po)
+	      c_post(*cur);
+
+	    if (ws.empty()) {
+	      cur = nullptr;
+	    } else {
+	      cur = std::get<0>(ws.top());
+	      cur_do_po = std::get<1>(ws.top());
+	      cur_i_child = std::get<2>(ws.top());
+	      ws.pop();
+	    }
+
+	  } else {
+	    ws.emplace(cur, cur_do_po, cur_i_child);
+	    cur = child;
+	    cur_do_po = c_pre(*cur);
+	    cur_i_child = 0;
+	  }
 	}
-
-	if (do_po)
-	  c_post(*this);
       }
 
       template<typename callable_type_pre,
@@ -366,43 +387,97 @@ namespace klp
 						 callable_type_post &&c_post)
 	const
       {
-	const bool do_po = c_pre(*this);
+	typedef std::tuple<const _ast_entity *, const bool, std::size_t>
+	  walk_stack_entry_type;
+	typedef std::stack<walk_stack_entry_type> walk_stack_type;
 
-	for (std::size_t i_child = 0;; ++i_child) {
-	  const _ast_entity * const ae = _get_child(i_child);
-	  if (!ae)
-	    break;
-	  ae->_for_each_dfs_pre_and_po(c_pre, c_post);
+	walk_stack_type ws;
+	const _ast_entity *cur = this;
+	bool cur_do_po = c_pre(*this);
+	std::size_t cur_i_child = 0;
+	while (cur) {
+	  const _ast_entity * const child = cur->_get_child(cur_i_child++);
+	  if (!child) {
+	    if (cur_do_po)
+	      c_post(*cur);
+
+	    if (ws.empty()) {
+	      cur = nullptr;
+	    } else {
+	      cur = std::get<0>(ws.top());
+	      cur_do_po = std::get<1>(ws.top());
+	      cur_i_child = std::get<2>(ws.top());
+	      ws.pop();
+	    }
+
+	  } else {
+	    ws.emplace(cur, cur_do_po, cur_i_child);
+	    cur = child;
+	    cur_do_po = c_pre(*cur);
+	    cur_i_child = 0;
+	  }
 	}
-
-	if (do_po)
-	  c_post(*this);
       }
 
       template <typename callable_type>
       void _ast_entity::_for_each_dfs_po(callable_type &&c)
       {
-	  for (std::size_t i_child = 0;; ++i_child) {
-	    _ast_entity * const ae = _get_child(i_child);
-	    if (!ae)
-	      break;
-	    ae->_for_each_dfs_po(std::forward<callable_type>(c));
-	  }
+	typedef std::tuple<_ast_entity *, std::size_t> walk_stack_entry_type;
+	typedef std::stack<walk_stack_entry_type> walk_stack_type;
 
-	  c(*this);
+	walk_stack_type ws;
+	_ast_entity *cur = this;
+	std::size_t cur_i_child = 0;
+	while (cur) {
+	  _ast_entity * const child = cur->_get_child(cur_i_child++);
+	  if (!child) {
+	    c(*cur);
+
+	    if (ws.empty()) {
+	      cur = nullptr;
+	    } else {
+	      cur = std::get<0>(ws.top());
+	      cur_i_child = std::get<1>(ws.top());
+	      ws.pop();
+	    }
+
+	  } else {
+	    ws.emplace(cur, cur_i_child);
+	    cur = child;
+	    cur_i_child = 0;
+	  }
+	}
       }
 
       template <typename callable_type>
       void _ast_entity::_for_each_dfs_po(callable_type &&c) const
       {
-	  for (std::size_t i_child = 0;; ++i_child) {
-	    const _ast_entity * const ae = _get_child(i_child);
-	    if (!ae)
-	      break;
-	    ae->_for_each_dfs_po(std::forward<callable_type>(c));
-	  }
+	typedef std::tuple<const _ast_entity *, std::size_t>
+	  walk_stack_entry_type;
+	typedef std::stack<walk_stack_entry_type> walk_stack_type;
 
-	  c(*this);
+	walk_stack_type ws;
+	const _ast_entity *cur = this;
+	std::size_t cur_i_child = 0;
+	while (cur) {
+	  const _ast_entity * const child = cur->_get_child(cur_i_child++);
+	  if (!child) {
+	    c(*cur);
+
+	    if (ws.empty()) {
+	      cur = nullptr;
+	    } else {
+	      cur = std::get<0>(ws.top());
+	      cur_i_child = std::get<1>(ws.top());
+	      ws.pop();
+	    }
+
+	  } else {
+	    ws.emplace(cur, cur_i_child);
+	    cur = child;
+	    cur_i_child = 0;
+	  }
+	}
       }
 
 
