@@ -60,6 +60,9 @@ namespace klp
       pp_token(const type type, const std::string &value,
 	       const raw_pp_tokens_range &token_source);
 
+      pp_token(const type type, std::string &&value,
+	       const raw_pp_tokens_range &token_source) noexcept;
+
       type get_type() const noexcept
       {
 	return _type;

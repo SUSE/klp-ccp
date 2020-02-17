@@ -115,6 +115,11 @@ namespace klp
 	  return _value;
 	}
 
+	std::string&& grab_value() noexcept
+	{
+	  return std::move(_value);
+	}
+
 	void set_type_and_value(const pp_token::type type,
 				const std::string &value);
 

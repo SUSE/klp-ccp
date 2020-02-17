@@ -467,7 +467,8 @@ void preprocessor::_grab_remarks_from(T &from)
 pp_token_index preprocessor::_emit_pp_token(pp_result &r, _pp_token &&tok)
 {
   r._append_token
-    (pp_token{tok.get_type(), tok.get_value(), tok.get_token_source()});
+    (pp_token{tok.get_type(), tok.grab_value(),
+	      tok.get_token_source()});
 
   const pp_token_index tok_index = r._get_last_pp_index();
   // Amend the macro_invocation's map of passed through raw macro
