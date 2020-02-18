@@ -20,7 +20,13 @@
 #include "cmdline_except.hh"
 #include "pp_except.hh"
 #include "preprocessor.hh"
+#include "ast.hh"
+#include "ast_impl.hh"
+#include "code_remark.hh"
+#include "semantic_except.hh"
+#include "constexpr_value.hh"
 #include "target_gcc.hh"
+
 
 using namespace klp::ccp;
 
@@ -250,9 +256,728 @@ void target_gcc::parse_command_line
   }
 }
 
+class target_gcc::_aligned_attribute_finder
+{
+public:
+  _aligned_attribute_finder(ast::ast &a,
+			    const std::function<void(ast::expr&)> &_eval_expr,
+			    const target_gcc &tgt, const bool choose_max)
+  noexcept;
+
+  bool operator()(ast::attribute &attr);
+
+  types::alignment grab_result();
+
+private:
+  types::alignment _result;
+  ast::ast &_a;
+  const std::function<void(ast::expr&)> &_eval_expr;
+  const target_gcc &_tgt;
+  const bool _choose_max;
+};
+
+target_gcc::_aligned_attribute_finder::
+_aligned_attribute_finder(klp::ccp::ast::ast &a,
+			const std::function<void(ast::expr&)> &eval_expr,
+			const target_gcc &tgt,
+			const bool choose_max) noexcept
+  : _a(a), _tgt(tgt), _eval_expr(eval_expr), _choose_max(choose_max)
+{}
+
+bool target_gcc::_aligned_attribute_finder::operator()(ast::attribute &attr)
+{
+  if (_a.get_pp_tokens()[attr.get_name_tok()].get_value() != "aligned")
+    return true;
+
+  ast::expr_list *params = attr.get_params();
+  mpa::limbs::size_type log2_value = 0;
+  if (!params) {
+    // An single 'aligned' attribute w/o any parameters
+    // means the target's "biggest alignment".
+    log2_value = _tgt.get_biggest_alignment_log2();
+
+  } else {
+    if (!params || params->size() != 1) {
+      code_remark remark
+	(code_remark::severity::fatal,
+	 "wrong number of parameters for 'aligned' attribute",
+	 _a.get_pp_result(), attr.get_tokens_range());
+      _a.get_remarks().add(remark);
+      throw semantic_except(remark);
+    }
+
+    ast::expr &e = (*params)[0];
+    if (!e.is_evaluated())
+      _eval_expr(e);
+    if (!e.is_evaluated()) {
+      code_remark remark
+	(code_remark::severity::fatal,
+	 "failed to evaluate 'aligned' attribute's parameter",
+	 _a.get_pp_result(), attr.get_tokens_range());
+      _a.get_remarks().add(remark);
+      throw semantic_except(remark);
+    }
+
+    if (!e.is_constexpr()) {
+      code_remark remark
+	(code_remark::severity::fatal,
+	 "'aligned' attribute's parameter is not a constant expression",
+	 _a.get_pp_result(), attr.get_tokens_range());
+      _a.get_remarks().add(remark);
+      throw semantic_except(remark);
+    }
+
+    const ast::constexpr_value &cv = e.get_constexpr_value();
+    if (!(cv.has_constness
+	  (ast::constexpr_value::constness::c_integer_constant_expr))) {
+      code_remark remark
+	(code_remark::severity::fatal,
+	 "'aligned' attribute's parameter is not an integer constant",
+	 _a.get_pp_result(), attr.get_tokens_range());
+      _a.get_remarks().add(remark);
+      throw semantic_except(remark);
+    }
+
+    assert(cv.get_value_kind() == ast::constexpr_value::value_kind::vk_int);
+    const target_int &ti = cv.get_int_value();
+    if (ti.is_negative()) {
+      code_remark remark(code_remark::severity::fatal,
+			 "'aligned' attribute's parameter is negative",
+			 _a.get_pp_result(), attr.get_tokens_range());
+      _a.get_remarks().add(remark);
+      throw semantic_except(remark);
+    }
+
+    const mpa::limbs &ls = ti.get_limbs();
+    const mpa::limbs::size_type ls_fls = ls.fls();
+    if (!ls_fls || ls.is_any_set_below(ls_fls - 1)) {
+      code_remark remark(code_remark::severity::fatal,
+			 "'aligned' attribute value is not a power of two",
+			 _a.get_pp_result(), attr.get_tokens_range());
+      _a.get_remarks().add(remark);
+      throw semantic_except(remark);
+    }
+
+    log2_value = ls_fls - 1;
+  }
+
+  // In order to choose between multiple 'aligned' attributes, either
+  // take the maximum or the last one encountered, depending on the
+  // context.
+  if (!_result.is_set() || !_choose_max ||
+      _result.get_log2_value() < log2_value) {
+    _result = log2_value;
+  }
+
+  return true;
+}
+
+types::alignment target_gcc::_aligned_attribute_finder::grab_result()
+{
+  return std::move(_result);
+}
+
+
+class target_gcc::_packed_attribute_finder
+{
+public:
+  _packed_attribute_finder(ast::ast &a) noexcept;
+
+  bool operator()(const ast::attribute &attr);
+
+  bool get_result() const noexcept
+  { return _has_packed_attribute; }
+
+private:
+  ast::ast &_a;
+  bool _has_packed_attribute;
+};
+
+target_gcc::_packed_attribute_finder::
+_packed_attribute_finder(ast::ast &a) noexcept
+  : _a(a), _has_packed_attribute(false)
+{}
+
+bool target_gcc::_packed_attribute_finder::
+operator()(const ast::attribute &attr)
+{
+  if (_a.get_pp_tokens()[attr.get_name_tok()].get_value() != "packed")
+    return true;
+
+  const ast::expr_list *params = attr.get_params();
+  if (params) {
+    code_remark remark(code_remark::severity::fatal,
+		       "unexpected parameters to 'packed' attribute",
+		       _a.get_pp_result(), attr.get_tokens_range());
+    _a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  _has_packed_attribute = true;
+  return false;
+}
+
+
+class target_gcc::_mode_attribute_finder
+{
+public:
+  _mode_attribute_finder(ast::ast &a, const target_gcc &tgt)
+    noexcept;
+
+  bool operator()(const ast::attribute &attr);
+
+  int_mode_kind get_int_mode_result() const noexcept
+  { return _imk; }
+
+  float_mode_kind get_float_mode_result() const noexcept
+  { return _fmk; }
+
+  pp_token_index get_mode_tok() const noexcept
+  { return _mode_tok; }
+
+  std::shared_ptr<const types::pointer_type>
+  apply_to_type(std::shared_ptr<const types::pointer_type> &&orig_t) const;
+
+  std::shared_ptr<const types::returnable_int_type>
+  apply_to_type(std::shared_ptr<const types::returnable_int_type> &&orig_t)
+    const;
+
+  std::shared_ptr<const types::addressable_type>
+  apply_to_type(std::shared_ptr<const types::addressable_type> &&orig_t)
+    const;
+
+  bool mode_attribute_found() const noexcept
+  {
+    return (_imk != int_mode_kind::imk_none ||
+	    _fmk != float_mode_kind::fmk_none);
+  }
+
+private:
+  ast::ast &_a;
+  const target_gcc &_tgt;
+  int_mode_kind _imk;
+  float_mode_kind _fmk;
+  pp_token_index _mode_tok;
+};
+
+target_gcc::_mode_attribute_finder::
+_mode_attribute_finder(ast::ast &a, const target_gcc &tgt) noexcept
+  : _a(a), _tgt(tgt),
+    _imk(int_mode_kind::imk_none), _fmk(float_mode_kind::fmk_none)
+{}
+
+bool target_gcc::_mode_attribute_finder::operator()(const ast::attribute &attr)
+{
+  const std::string &attr_name =
+    _a.get_pp_tokens()[attr.get_name_tok()].get_value();
+  if (attr_name != "mode" && attr_name != "__mode__")
+    return true;
+
+  const ast::expr_list *params = attr.get_params();
+  if (!params || params->size() != 1) {
+    code_remark remark(code_remark::severity::fatal,
+		       "wrong number of parameters for 'mode' attribute",
+		       _a.get_pp_result(), attr.get_tokens_range());
+    _a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  const ast::expr_id *e_id = nullptr;
+  (*params)[0].process<void, type_set<ast::expr_id>>
+    (wrap_callables<default_action_nop>
+     ([&](const ast::expr_id &_e_id) {
+	e_id = &_e_id;
+      }));
+  if (!e_id) {
+    code_remark remark(code_remark::severity::fatal,
+		       "invalid expression for 'mode' attribute",
+		       _a.get_pp_result(), (*params)[0].get_tokens_range());
+    _a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  const std::string &id = _a.get_pp_tokens()[e_id->get_id_tok()].get_value();
+  if (id == "QI" || id == "__QI__") {
+    _imk = int_mode_kind::imk_QI;
+  } else if (id == "HI" || id == "__HI__" || id == "byte" || id == "__byte__") {
+    _imk = int_mode_kind::imk_HI;
+  } else if (id == "SI" || id == "__SI__") {
+    _imk = int_mode_kind::imk_SI;
+  } else if (id == "DI" || id == "__DI__") {
+    _imk = int_mode_kind::imk_DI;
+  } else if (id == "TI" || id == "__TI__") {
+    _imk = int_mode_kind::imk_TI;
+  } else if (id == "word" || id == "__word__") {
+    _imk = _tgt.get_word_mode();
+  } else if (id == "pointer" || id == "__pointer__") {
+    _imk = _tgt.get_pointer_mode();
+  } else if (id == "SF" || id == "__SF__") {
+    _fmk = float_mode_kind::fmk_SF;
+  } else if (id == "DF" || id == "__DF__") {
+    _fmk = float_mode_kind::fmk_DF;
+  } else {
+    code_remark remark(code_remark::severity::fatal,
+		       "unrecognized 'mode' attribute specifier",
+		       _a.get_pp_result(), e_id->get_tokens_range());
+    _a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  if (_imk != int_mode_kind::imk_none && _fmk != float_mode_kind::fmk_none) {
+    code_remark remark(code_remark::severity::fatal,
+		       "inconsistent 'mode' attribute specifier domains",
+		       _a.get_pp_result(), e_id->get_tokens_range());
+    _a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  _mode_tok = e_id->get_tokens_range().begin;
+
+  return true;
+}
+
+std::shared_ptr<const types::pointer_type>
+target_gcc::_mode_attribute_finder::
+apply_to_type(std::shared_ptr<const types::pointer_type> &&orig_t) const
+{
+  if (!this->mode_attribute_found())
+    return std::move(orig_t);
+
+  if (_imk == int_mode_kind::imk_none ||
+      _imk != _tgt.get_pointer_mode()) {
+    code_remark remark
+      (code_remark::severity::fatal,
+       "invalid 'mode' attribute specifier for pointer type",
+       _a.get_pp_result(), _mode_tok);
+    _a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  return std::move(orig_t);
+}
+
+std::shared_ptr<const types::returnable_int_type>
+target_gcc::_mode_attribute_finder::
+apply_to_type(std::shared_ptr<const types::returnable_int_type> &&orig_t) const
+{
+  if (!this->mode_attribute_found())
+    return std::move(orig_t);
+
+  if (_imk == int_mode_kind::imk_none) {
+    code_remark remark
+      (code_remark::severity::fatal,
+       "invalid 'mode' attribute specifier for int type",
+       _a.get_pp_result(), _mode_tok);
+    _a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  if (!orig_t->is_complete()) {
+    code_remark remark
+      (code_remark::severity::fatal,
+       "applying 'mode' attribute specifier to incomplete integer type",
+       _a.get_pp_result(), _mode_tok);
+    _a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  return (types::std_int_type::create
+	  (_tgt.int_mode_to_std_int_kind(_imk), orig_t->is_signed(_tgt),
+	   orig_t->get_qualifiers()));
+}
+
+std::shared_ptr<const types::addressable_type>
+target_gcc::_mode_attribute_finder::
+apply_to_type(std::shared_ptr<const types::addressable_type> &&orig_t) const
+{
+  if (!this->mode_attribute_found())
+    return std::move(orig_t);
+
+  return types::handle_types<std::shared_ptr<const types::addressable_type>>
+    ((wrap_callables<no_default_action>
+      ([&](std::shared_ptr<const types::returnable_int_type> &&it)
+		-> std::shared_ptr<const types::addressable_type> {
+	return apply_to_type(std::move(it));
+       },
+       [&](const std::shared_ptr<const types::real_float_type> &rft) {
+	 if (_fmk == float_mode_kind::fmk_none) {
+	   code_remark remark
+	     (code_remark::severity::fatal,
+	      "invalid 'mode' attribute specifier for float type",
+	      _a.get_pp_result(), _mode_tok);
+	   _a.get_remarks().add(remark);
+	   throw semantic_except(remark);
+	 }
+
+	 return (types::real_float_type::create
+		 (_tgt.float_mode_to_float_kind(_fmk), rft->get_qualifiers()));
+       },
+       [&](std::shared_ptr<const types::pointer_type> &&pt)
+		-> std::shared_ptr<const types::addressable_type> {
+	 return apply_to_type(std::move(pt));
+       },
+       [&](const std::shared_ptr<const types::type>&)
+		-> std::shared_ptr<const types::addressable_type> {
+	 code_remark remark
+	   (code_remark::severity::fatal,
+	    "'mode' attribute specifier not applicable to type",
+	    _a.get_pp_result(), _mode_tok);
+	 _a.get_remarks().add(remark);
+	 throw semantic_except(remark);
+       })),
+     std::move(orig_t));
+}
+
+
+std::shared_ptr<const types::pointer_type> target_gcc::
+evaluate_attributes(ast::ast &a,
+		    const std::function<void(ast::expr&)> &eval_expr,
+		    std::shared_ptr<const types::pointer_type> &&t,
+		    ast::type_qualifier_list &tql) const
+{
+  // Process a pointer derivation's attributes, e.g.
+  // void * __attribute__((aligned(16))) foo;
+  _mode_attribute_finder maf(a, *this);
+  _aligned_attribute_finder aaf(a, eval_expr, *this, false);
+  tql.for_each_attribute(maf);
+  tql.for_each_attribute(aaf);
+
+  t = maf.apply_to_type(std::move(t));
+  types::alignment align = aaf.grab_result();
+  if (align.is_set())
+    t = t->set_user_alignment(std::move(align));
+
+  return std::move(t);
+}
+
+std::shared_ptr<const types::addressable_type> target_gcc::
+evaluate_attributes(ast::ast &a,
+		    const std::function<void(ast::expr&)> &eval_expr,
+		    std::shared_ptr<const types::addressable_type> &&t,
+		    ast::attribute_specifier_list * const asl) const
+{
+  // Process a direct_declarator_parenthesized's
+  // resp. abstract_declarator_parenthesized's attributes, e.g.
+  // int (__attribute__((aligned(16))) a);
+  // Behaviour is the same as for pointers, but the more generic
+  // addressable_type is returned.
+  if (!asl)
+    return std::move(t);
+
+  _mode_attribute_finder maf(a, *this);
+  _aligned_attribute_finder aaf(a, eval_expr, *this, false);
+  asl->for_each_attribute(maf);
+  asl->for_each_attribute(aaf);
+
+  t = maf.apply_to_type(std::move(t));
+  types::alignment align = aaf.grab_result();
+  if (align.is_set())
+    t = t->set_user_alignment(std::move(align));
+
+  return std::move(t);
+}
+
+std::shared_ptr<const types::addressable_type> target_gcc::
+evaluate_attributes(ast::ast &a,
+		    const std::function<void(ast::expr&)> &eval_expr,
+		    std::shared_ptr<const types::addressable_type> &&t,
+		    ast::declaration_specifiers &ds,
+		    ast::attribute_specifier_list * const asl) const
+{
+  // Process attributes in a parameter_declaration. Attributes of inner
+  // declarator derivations have already been handled.
+  // GCC doesn't permit direct application of 'aligned' attributes to
+  // function parameters.
+  auto &&check_for_aligned_attr =
+    [&](const ast::attribute &attr) {
+      if (a.get_pp_tokens()[attr.get_name_tok()].get_value() == "aligned") {
+	code_remark remark
+	(code_remark::severity::fatal,
+	 "'aligned' attribute may not be specified for function parameter",
+	 a.get_pp_result(), attr.get_tokens_range());
+	a.get_remarks().add(remark);
+	throw semantic_except(remark);
+      }
+      return true;
+    };
+
+  _mode_attribute_finder maf(a, *this);
+  if (asl) {
+    asl->for_each_attribute(maf);
+    asl->for_each_attribute(check_for_aligned_attr);
+  }
+  ds.for_each_attribute(maf);
+  ds.for_each_attribute(check_for_aligned_attr);
+
+  t = maf.apply_to_type(std::move(t));
+  return std::move(t);
+}
+
+std::shared_ptr<const types::addressable_type> target_gcc::
+evaluate_attributes(ast::ast &a,
+		    const std::function<void(ast::expr&)> &eval_expr,
+		    std::shared_ptr<const types::addressable_type> &&t,
+		    ast::specifier_qualifier_list &sql) const
+{
+  // Process a type name's attributes, i.e. thos from the specifier
+  // qualifier list. Attributes of inner declarator derivations have
+  // already been handled.
+  _mode_attribute_finder maf(a, *this);
+  _aligned_attribute_finder aaf(a, eval_expr, *this, true);
+  sql.for_each_attribute(maf);
+  sql.for_each_attribute(aaf);
+
+  t = maf.apply_to_type(std::move(t));
+  types::alignment align = aaf.grab_result();
+  if (align.is_set())
+    t = t->set_user_alignment(std::move(align));
+
+  return std::move(t);
+}
+
+std::shared_ptr<const types::addressable_type> target_gcc::
+evaluate_attributes(ast::ast &a,
+		    const std::function<void(ast::expr&)> &eval_expr,
+		    std::shared_ptr<const types::addressable_type> &&t,
+		    ast::declaration_specifiers &ds,
+		    ast::attribute_specifier_list * const asl_before,
+		    ast::attribute_specifier_list * const asl_middle,
+		    ast::attribute_specifier_list * const asl_after) const
+{
+  // Process an init_declarator's attributes, including the ones from
+  // the enclosing declaration. Attributes of inner declarator
+  // derivations have already been handled.
+
+  // Check for declaration of a function.
+  const bool is_fun = types::is_type<types::function_type>(*t);
+  if (is_fun) {
+    // Don't apply 'aligned' and 'mode' attributes to function types.
+    return std::move(t);
+  }
+
+  _mode_attribute_finder maf(a, *this);
+  _aligned_attribute_finder aaf(a, eval_expr, *this, true);
+  if (asl_after) {
+    asl_after->for_each_attribute(maf);
+    asl_after->for_each_attribute(aaf);
+  }
+  if (asl_middle) {
+    asl_middle->for_each_attribute(maf);
+    asl_middle->for_each_attribute(aaf);
+  }
+  if (asl_before) {
+    asl_before->for_each_attribute(maf);
+    asl_before->for_each_attribute(aaf);
+  }
+  ds.for_each_attribute(maf);
+  ds.for_each_attribute(aaf);
+
+  t = maf.apply_to_type(std::move(t));
+  types::alignment align = aaf.grab_result();
+  if (align.is_set())
+    t = t->set_user_alignment(std::move(align));
+
+  return std::move(t);
+}
+
+std::shared_ptr<const types::addressable_type> target_gcc::
+evaluate_attributes(ast::ast &a,
+		    const std::function<void(ast::expr&)> &eval_expr,
+		    std::shared_ptr<const types::addressable_type> &&t,
+		    ast::attribute_specifier_list * const soud_asl_before,
+		    ast::attribute_specifier_list * const soud_asl_after,
+		    ast::specifier_qualifier_list &sql,
+		    ast::attribute_specifier_list * const asl_before,
+		    ast::attribute_specifier_list * const asl_after) const
+{
+  // Process a non-bitfield struct declarator's attributes, including
+  // the ones from the enclosing declaration. Attributes of inner
+  // declarator derivations have already been handled.
+
+  // First, search for 'packed' attribute in surrounding struct/union
+  // definition: these are to be applied to each member individually.
+  bool packed = false;
+  if (soud_asl_before || soud_asl_after) {
+    _packed_attribute_finder paf(a);
+    if (soud_asl_before)
+      soud_asl_before->for_each_attribute(paf);
+    if (soud_asl_after)
+      soud_asl_after->for_each_attribute(paf);
+    packed = paf.get_result();
+  }
+
+  // Next process the struct declarator's attributes, including the
+  // ones from the enclosing declaration.
+  _mode_attribute_finder maf(a, *this);
+  _aligned_attribute_finder aaf(a, eval_expr, *this, true);
+  _packed_attribute_finder paf(a);
+  if (asl_after) {
+    asl_after->for_each_attribute(maf);
+    asl_after->for_each_attribute(aaf);
+    asl_after->for_each_attribute(paf);
+  }
+  if (asl_before) {
+    asl_before->for_each_attribute(maf);
+    asl_before->for_each_attribute(aaf);
+    asl_before->for_each_attribute(paf);
+  }
+  sql.for_each_attribute(maf);
+  sql.for_each_attribute(aaf);
+  sql.for_each_attribute(paf);
+
+  t = maf.apply_to_type(std::move(t));
+
+  packed |= paf.get_result();
+  types::alignment align = aaf.grab_result();
+  if (packed) {
+    if (align.is_set())
+      t = t->set_user_alignment(std::move(align));
+    else
+      t = t->set_user_alignment(types::alignment(0));
+
+  } else if (align.is_set()) {
+    if (t->get_effective_alignment(*this) <= align.get_log2_value())
+      t = t->set_user_alignment(std::move(align));
+  }
+
+  return std::move(t);
+}
+
+std::shared_ptr<const types::bitfield_type> target_gcc::
+evaluate_attributes(ast::ast &a,
+		    const std::function<void(ast::expr&)> &eval_expr,
+		    std::shared_ptr<const types::bitfield_type> &&t,
+		    ast::attribute_specifier_list * const soud_asl_before,
+		    ast::attribute_specifier_list * const soud_asl_after,
+		    ast::specifier_qualifier_list &sql,
+		    ast::attribute_specifier_list * const asl_before,
+		    ast::attribute_specifier_list * const asl_after) const
+{
+  // Process a bitfield struct declarator's attributes, including the
+  // ones from the enclosing declaration. Attributes of inner
+  // declarator derivations have already been handled.
+
+  // First, search for 'packed' attribute in surrounding struct/union
+  // definition: these are to be applied to each member individually.
+  bool packed = false;
+  if (soud_asl_before || soud_asl_after) {
+    _packed_attribute_finder paf(a);
+    if (soud_asl_before)
+      soud_asl_before->for_each_attribute(paf);
+    if (soud_asl_after)
+      soud_asl_after->for_each_attribute(paf);
+    packed = paf.get_result();
+  }
+
+  // Next process the struct declarator's attributes, including the
+  // ones from the enclosing declaration.
+  // For bitfields, GCC does apply the mode attribute to the
+  // underlying integer type, but only after the width has been set
+  // (and verified).
+  _mode_attribute_finder maf(a, *this);
+  _aligned_attribute_finder aaf(a, eval_expr, *this, true);
+  _packed_attribute_finder paf(a);
+  if (asl_after) {
+    asl_after->for_each_attribute(maf);
+    asl_after->for_each_attribute(aaf);
+    asl_after->for_each_attribute(paf);
+  }
+  if (asl_before) {
+    asl_before->for_each_attribute(maf);
+    asl_before->for_each_attribute(aaf);
+    asl_before->for_each_attribute(paf);
+  }
+  sql.for_each_attribute(maf);
+  sql.for_each_attribute(aaf);
+  sql.for_each_attribute(paf);
+
+  if (maf.mode_attribute_found()) {
+    std::shared_ptr<const types::returnable_int_type> base_t =
+      t->get_base_type();
+    base_t = maf.apply_to_type(std::move(base_t));
+    t = types::bitfield_type::create(std::move(base_t), t->get_width(*this));
+  }
+
+  packed |= paf.get_result();
+  types::alignment align = aaf.grab_result();
+  if (packed)
+    t = t->set_packed();
+  if (align.is_set())
+    t = t->set_user_alignment(std::move(align));
+
+  return std::move(t);
+}
+
+
 bool target_gcc::is_char_signed() const noexcept
 {
   return _opts_c_family.flag_signed_char;
+}
+
+void target_gcc::
+evaluate_enum_type(ast::ast &a,
+		   const std::function<void(ast::expr&)> &eval_expr,
+		   ast::attribute_specifier_list * const ed_asl_before,
+		   ast::attribute_specifier_list * const ed_asl_after,
+		   types::enum_content &ec) const
+{
+  _mode_attribute_finder maf(a, *this);
+  _aligned_attribute_finder aaf(a, eval_expr, *this, true);
+  _packed_attribute_finder paf(a);
+  if (ed_asl_before) {
+    ed_asl_before->for_each_attribute(aaf);
+    ed_asl_before->for_each_attribute(paf);
+    ed_asl_before->for_each_attribute(maf);
+  }
+  if (ed_asl_after) {
+    ed_asl_after->for_each_attribute(aaf);
+    ed_asl_after->for_each_attribute(paf);
+    ed_asl_after->for_each_attribute(maf);
+  }
+
+  if (maf.get_float_mode_result() != float_mode_kind::fmk_none) {
+    code_remark remark
+      (code_remark::severity::fatal,
+       "float domain 'mode' attribute at enum definition",
+       a.get_pp_result(), maf.get_mode_tok());
+    a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  this->_evaluate_enum_type(a, ec, paf.get_result(),
+			    maf.get_int_mode_result(), aaf.grab_result());
+}
+
+void target_gcc::
+layout_struct(ast::ast &a,
+	      const std::function<void(ast::expr&)> &eval_expr,
+	      ast::attribute_specifier_list * const soud_asl_before,
+	      ast::attribute_specifier_list * const soud_asl_after,
+	      types::struct_or_union_content &souc) const
+{
+  _aligned_attribute_finder aaf(a, eval_expr, *this, false);
+  if (soud_asl_before)
+    soud_asl_before->for_each_attribute(aaf);
+  if (soud_asl_after)
+    soud_asl_after->for_each_attribute(aaf);
+
+  this->_layout_struct(souc, aaf.grab_result());
+}
+
+void target_gcc::
+layout_union(ast::ast &a,
+	     const std::function<void(ast::expr&)> &eval_expr,
+	     ast::attribute_specifier_list * const soud_asl_before,
+	     ast::attribute_specifier_list * const soud_asl_after,
+	     types::struct_or_union_content &souc) const
+{
+  _aligned_attribute_finder aaf(a, eval_expr, *this, false);
+  if (soud_asl_before)
+    soud_asl_before->for_each_attribute(aaf);
+  if (soud_asl_after)
+    soud_asl_after->for_each_attribute(aaf);
+
+  this->_layout_union(souc, aaf.grab_result());
 }
 
 void target_gcc::_init_options_struct() noexcept

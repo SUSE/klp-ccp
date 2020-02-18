@@ -2199,9 +2199,6 @@ namespace klp
 	const declarator* get_declarator() const noexcept
 	{ return _d; }
 
-	std::pair<types::alignment, bool>
-	find_align_attribute(klp::ccp::ast::ast &a, const target &tgt);
-
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
@@ -3019,7 +3016,7 @@ namespace klp
 	bool is_signed_explicit() const noexcept;
 
 	template <typename callable_type>
-	bool for_each_attribute(callable_type &&c) const;
+	bool for_each_attribute(callable_type &&c);
 
       protected:
 	specifier_qualifier_list(const pp_tokens_range &tr) noexcept;
@@ -3562,6 +3559,9 @@ namespace klp
 
 	const declaration_specifiers& get_declaration_specifiers()
 	  const noexcept
+	{ return _ds; }
+
+	declaration_specifiers& get_declaration_specifiers() noexcept
 	{ return _ds; }
 
 	const init_declarator_list* get_init_declarator_list() const noexcept

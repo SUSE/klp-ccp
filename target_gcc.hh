@@ -48,7 +48,94 @@ namespace klp
       get_gcc_version() const noexcept
       { return _gcc_version; }
 
+
+      virtual std::shared_ptr<const types::pointer_type>
+      evaluate_attributes(ast::ast &a,
+			  const std::function<void(ast::expr&)> &eval_expr,
+			  std::shared_ptr<const types::pointer_type> &&t,
+			  ast::type_qualifier_list &tql) const override;
+
+      virtual std::shared_ptr<const types::addressable_type>
+      evaluate_attributes(ast::ast &a,
+			  const std::function<void(ast::expr&)> &eval_expr,
+			  std::shared_ptr<const types::addressable_type> &&t,
+			  ast::attribute_specifier_list * const asl)
+	const override;
+
+      virtual std::shared_ptr<const types::addressable_type>
+      evaluate_attributes(ast::ast &a,
+			  const std::function<void(ast::expr&)> &eval_expr,
+			  std::shared_ptr<const types::addressable_type> &&t,
+			  ast::declaration_specifiers &ds,
+			  ast::attribute_specifier_list * const asl)
+	const override;
+
+      virtual std::shared_ptr<const types::addressable_type>
+      evaluate_attributes(ast::ast &a,
+			  const std::function<void(ast::expr&)> &eval_expr,
+			  std::shared_ptr<const types::addressable_type> &&t,
+			  ast::specifier_qualifier_list &sql) const override;
+
+      virtual std::shared_ptr<const types::addressable_type>
+      evaluate_attributes(ast::ast &a,
+			  const std::function<void(ast::expr&)> &eval_expr,
+			  std::shared_ptr<const types::addressable_type> &&t,
+			  ast::declaration_specifiers &ds,
+			  ast::attribute_specifier_list * const asl_before,
+			  ast::attribute_specifier_list * const asl_middle,
+			  ast::attribute_specifier_list * const asl_after)
+	const override;
+
+      virtual std::shared_ptr<const types::addressable_type>
+      evaluate_attributes(ast::ast &a,
+			  const std::function<void(ast::expr&)> &eval_expr,
+			  std::shared_ptr<const types::addressable_type> &&t,
+			  ast::attribute_specifier_list * const soud_asl_before,
+			  ast::attribute_specifier_list * const soud_asl_after,
+			  ast::specifier_qualifier_list &sql,
+			  ast::attribute_specifier_list * const asl_before,
+			  ast::attribute_specifier_list * const asl_after)
+	const override;
+
+      virtual std::shared_ptr<const types::bitfield_type>
+      evaluate_attributes(ast::ast &a,
+			  const std::function<void(ast::expr&)> &eval_expr,
+			  std::shared_ptr<const types::bitfield_type> &&t,
+			  ast::attribute_specifier_list * const soud_asl_before,
+			  ast::attribute_specifier_list * const soud_asl_after,
+			  ast::specifier_qualifier_list &sql,
+			  ast::attribute_specifier_list * const asl_before,
+			  ast::attribute_specifier_list * const asl_after)
+	const override;
+
+
       virtual bool is_char_signed() const noexcept final;
+
+      virtual void
+      evaluate_enum_type(ast::ast &a,
+			 const std::function<void(ast::expr&)> &eval_expr,
+			 ast::attribute_specifier_list * const ed_asl_before,
+			 ast::attribute_specifier_list * const ed_asl_after,
+			 types::enum_content &ec) const override;
+
+      virtual void
+      layout_struct(ast::ast &a,
+		    const std::function<void(ast::expr&)> &eval_expr,
+		    ast::attribute_specifier_list * const soud_asl_before,
+		    ast::attribute_specifier_list * const soud_asl_after,
+		    types::struct_or_union_content &souc) const override;
+
+      virtual void
+      layout_union(ast::ast &a,
+		   const std::function<void(ast::expr&)> &eval_expr,
+		   ast::attribute_specifier_list * const soud_asl_before,
+		   ast::attribute_specifier_list * const soud_asl_after,
+		   types::struct_or_union_content &souc) const override;
+
+    private:
+      class _aligned_attribute_finder;
+      class _packed_attribute_finder;
+      class _mode_attribute_finder;
 
     protected:
       struct opts_c_family;
@@ -301,6 +388,20 @@ namespace klp
       virtual void _arch_option_override() = 0;
 
       virtual void _arch_register_builtin_macros(preprocessor &pp) const = 0;
+
+      virtual void _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
+				       const bool packed,
+				       const int_mode_kind mode,
+				       types::alignment &&user_align)
+	const = 0;
+
+      virtual void _layout_struct(types::struct_or_union_content &souc,
+				  const types::alignment &user_align)
+	const = 0;
+
+      virtual void _layout_union(types::struct_or_union_content &souc,
+				 const types::alignment &user_align)
+	const = 0;
 
       static gcc_cmdline_parser::gcc_version
       _parse_version(const char * const version);

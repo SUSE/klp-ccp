@@ -91,20 +91,22 @@ namespace klp
 
       virtual mpa::limbs::size_type get_va_list_alignment() const override;
 
-      virtual void evaluate_enum_type(ast::ast &a, types::enum_content &ec,
-				      const bool packed,
-				      const int_mode_kind mode,
-				      types::alignment &&user_align)
+    private:
+      virtual void _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
+				       const bool packed,
+				       const int_mode_kind mode,
+				       types::alignment &&user_align)
 	const override;
 
-      virtual void layout_struct(types::struct_or_union_content &souc,
+      virtual void _layout_struct(types::struct_or_union_content &souc,
+				  const types::alignment &user_align)
+	const override;
+
+      virtual void _layout_union(types::struct_or_union_content &souc,
 				 const types::alignment &user_align)
 	const override;
 
-      virtual void layout_union(types::struct_or_union_content &souc,
-				 const types::alignment &user_align)
-	const override;
-
+    public:
       virtual std::shared_ptr<const types::object_type>
       create_builtin_va_list_type() const override;
 

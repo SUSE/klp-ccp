@@ -31,7 +31,12 @@ namespace klp
     namespace ast
     {
       class ast;
-    }
+      class expr;
+      class attribute_specifier_list;
+      class type_qualifier_list;
+      class specifier_qualifier_list;
+      class declaration_specifiers;
+    };
 
     class header_resolver;
     class preprocessor;
@@ -69,8 +74,79 @@ namespace klp
 		 const std::function<void(const std::string&)> &report_warning)
       = 0;
 
+
       virtual const builtin_typedef::factories&
       get_builtin_typedefs() const noexcept = 0;
+
+
+      // Attributes following a pointer declarator's asterisk.
+      virtual std::shared_ptr<const types::pointer_type>
+      evaluate_attributes(ast::ast &a,
+			  const std::function<void(ast::expr&)> &eval_expr,
+			  std::shared_ptr<const types::pointer_type> &&t,
+			  ast::type_qualifier_list &tql) const = 0;
+
+      // Attributes following the opening parenthesis in an
+      // direct_declarator_parenthesized
+      // resp. abstract_declarator_parenthesized.
+      virtual std::shared_ptr<const types::addressable_type>
+      evaluate_attributes(ast::ast &a,
+			  const std::function<void(ast::expr&)> &eval_expr,
+			  std::shared_ptr<const types::addressable_type> &&t,
+			  ast::attribute_specifier_list * const asl) const = 0;
+
+      // Final attributes application on function parameters' types.
+      virtual std::shared_ptr<const types::addressable_type>
+      evaluate_attributes(ast::ast &a,
+			  const std::function<void(ast::expr&)> &eval_expr,
+			  std::shared_ptr<const types::addressable_type> &&t,
+			  ast::declaration_specifiers &ds,
+			  ast::attribute_specifier_list * const asl) const = 0;
+
+      // Final attributes application on type names.
+      virtual std::shared_ptr<const types::addressable_type>
+      evaluate_attributes(ast::ast &a,
+			  const std::function<void(ast::expr&)> &eval_expr,
+			  std::shared_ptr<const types::addressable_type> &&t,
+			  ast::specifier_qualifier_list &sql) const = 0;
+
+      // Final attributes application to init declarators.
+      virtual std::shared_ptr<const types::addressable_type>
+      evaluate_attributes(ast::ast &a,
+			  const std::function<void(ast::expr&)> &eval_expr,
+			  std::shared_ptr<const types::addressable_type> &&t,
+			  ast::declaration_specifiers &ds,
+			  ast::attribute_specifier_list * const asl_before,
+			  ast::attribute_specifier_list * const asl_middle,
+			  ast::attribute_specifier_list * const asl_after)
+	const = 0;
+
+      // Final attributes application to non-bitfield struct/union
+      // member declarators.
+      virtual std::shared_ptr<const types::addressable_type>
+      evaluate_attributes(ast::ast &a,
+			  const std::function<void(ast::expr&)> &eval_expr,
+			  std::shared_ptr<const types::addressable_type> &&t,
+			  ast::attribute_specifier_list * const soud_asl_before,
+			  ast::attribute_specifier_list * const soud_asl_after,
+			  ast::specifier_qualifier_list &sql,
+			  ast::attribute_specifier_list * const asl_before,
+			  ast::attribute_specifier_list * const asl_after)
+	const = 0;
+
+      // Final attributes application to bitfield struct/union member
+      // declarators.
+      virtual std::shared_ptr<const types::bitfield_type>
+      evaluate_attributes(ast::ast &a,
+			  const std::function<void(ast::expr&)> &eval_expr,
+			  std::shared_ptr<const types::bitfield_type> &&t,
+			  ast::attribute_specifier_list * const soud_asl_before,
+			  ast::attribute_specifier_list * const soud_asl_after,
+			  ast::specifier_qualifier_list &sql,
+			  ast::attribute_specifier_list * const asl_before,
+			  ast::attribute_specifier_list * const asl_after)
+	const = 0;
+
 
       virtual bool is_char_signed() const noexcept = 0;
       virtual bool is_wchar_signed() const noexcept = 0;
@@ -137,17 +213,26 @@ namespace klp
       get_execution_charset_encoder(const execution_charset_encoding e)
 	const = 0;
 
-      virtual void evaluate_enum_type(ast::ast &a, types::enum_content &ec,
-				      const bool packed,
-				      const int_mode_kind mode,
-				      types::alignment &&user_align) const = 0;
+      virtual void
+      evaluate_enum_type(ast::ast &a,
+			 const std::function<void(ast::expr&)> &eval_expr,
+			 ast::attribute_specifier_list * const ed_asl_before,
+			 ast::attribute_specifier_list * const ed_asl_after,
+			 types::enum_content &ec) const = 0;
 
-      virtual void layout_struct(types::struct_or_union_content &souc,
-				 const types::alignment &user_align)
-	const = 0;
+      virtual void
+      layout_struct(ast::ast &a,
+		    const std::function<void(ast::expr&)> &eval_expr,
+		    ast::attribute_specifier_list * const soud_asl_before,
+		    ast::attribute_specifier_list * const soud_asl_after,
+		    types::struct_or_union_content &souc) const = 0;
 
-      virtual void layout_union(types::struct_or_union_content &souc,
-				const types::alignment &user_align)
+      virtual void
+      layout_union(ast::ast &a,
+		   const std::function<void(ast::expr&)> &eval_expr,
+		   ast::attribute_specifier_list * const soud_asl_before,
+		   ast::attribute_specifier_list * const soud_asl_after,
+		   types::struct_or_union_content &souc)
 	const = 0;
 
       virtual std::shared_ptr<const types::object_type>

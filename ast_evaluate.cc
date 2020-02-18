@@ -57,12 +57,19 @@ namespace
 
     void operator()() const;
 
+    static std::function<void(klp::ccp::ast::expr&)>
+    make_expr_evaluator(klp::ccp::ast::ast &a,
+			const target &tgt) noexcept;
+
   private:
     void _check_return_stmt(const klp::ccp::ast::stmt_return &ret_stmt) const;
 
     void
     _check_function_definition(const klp::ccp::ast::function_definition &fd)
       const;
+
+    static void _evaluate_expr(klp::ccp::ast::ast &a, const target &tgt,
+			       klp::ccp::ast::expr &e);
 
     klp::ccp::ast::ast &_ast;
     klp::ccp::ast::_ast_entity &_ae;
@@ -165,6 +172,16 @@ void _evaluator::operator()() const
 				       _typed> >
     (std::move(pre), std::move(post));
 }
+
+std::function<void(klp::ccp::ast::expr&)>
+_evaluator::make_expr_evaluator(klp::ccp::ast::ast &a,
+				const target &tgt) noexcept
+{
+  return std::bind(_evaluate_expr,
+		   std::ref(a), std::cref(tgt),
+		   std::placeholders::_1);
+}
+
 
 void _evaluator::_check_return_stmt(const klp::ccp::ast::stmt_return &ret_stmt)
   const
@@ -288,6 +305,14 @@ _check_function_definition(const klp::ccp::ast::function_definition &fd) const
        }
      });
 }
+
+void _evaluator::_evaluate_expr(klp::ccp::ast::ast &a, const target &tgt,
+				klp::ccp::ast::expr &e)
+{
+  const _evaluator ev{a, e, tgt};
+  ev();
+}
+
 
 static bool _is_string_literal_expr(const expr &e)
 {
@@ -1185,347 +1210,6 @@ _check_type_completeness_local(klp::ccp::ast::ast &a,
 }
 
 
-class align_attribute_finder
-{
-public:
-  align_attribute_finder(klp::ccp::ast::ast &a, const target &tgt,
-			 const bool choose_max)
-    noexcept;
-
-  bool operator()(attribute &attr);
-
-  alignment grab_result();
-
-private:
-  alignment _result;
-  klp::ccp::ast::ast &_a;
-  const target &_tgt;
-  const bool _choose_max;
-};
-
-
-align_attribute_finder::align_attribute_finder(klp::ccp::ast::ast &a,
-					       const target &tgt,
-					       const bool choose_max)
-  noexcept
-  : _a(a), _tgt(tgt), _choose_max(choose_max)
-{}
-
-bool align_attribute_finder::operator()(attribute &attr)
-{
-  if (_a.get_pp_tokens()[attr.get_name_tok()].get_value() != "aligned")
-    return true;
-
-  expr_list *params = attr.get_params();
-  mpa::limbs::size_type log2_value = 0;
-  if (!params) {
-    // An single 'aligned' attribute w/o any parameters
-    // means the target's "biggest alignment".
-    log2_value = _tgt.get_biggest_alignment_log2();
-
-  } else {
-    if (!params || params->size() != 1) {
-      code_remark remark
-	(code_remark::severity::fatal,
-	 "wrong number of parameters for 'aligned' attribute",
-	 _a.get_pp_result(), attr.get_tokens_range());
-      _a.get_remarks().add(remark);
-      throw semantic_except(remark);
-    }
-
-    expr &e = (*params)[0];
-    if (!e.is_evaluated()) {
-      _evaluator ev(_a, e, _tgt);
-      ev();
-    }
-    if (!e.is_evaluated()) {
-      code_remark remark
-	(code_remark::severity::fatal,
-	 "failed to evaluate 'aligned' attribute's parameter",
-	 _a.get_pp_result(), attr.get_tokens_range());
-      _a.get_remarks().add(remark);
-      throw semantic_except(remark);
-    }
-
-    if (!e.is_constexpr()) {
-      code_remark remark
-	(code_remark::severity::fatal,
-	 "'aligned' attribute's parameter is not a constant expression",
-	 _a.get_pp_result(), attr.get_tokens_range());
-      _a.get_remarks().add(remark);
-      throw semantic_except(remark);
-    }
-
-    const constexpr_value &cv = e.get_constexpr_value();
-    if (!cv.has_constness(constness::c_integer_constant_expr)) {
-      code_remark remark
-	(code_remark::severity::fatal,
-	 "'aligned' attribute's parameter is not an integer constant",
-	 _a.get_pp_result(), attr.get_tokens_range());
-      _a.get_remarks().add(remark);
-      throw semantic_except(remark);
-    }
-
-    assert(cv.get_value_kind() == constexpr_value::value_kind::vk_int);
-    const target_int &ti = cv.get_int_value();
-    if (ti.is_negative()) {
-      code_remark remark(code_remark::severity::fatal,
-			 "'aligned' attribute's parameter is negative",
-			 _a.get_pp_result(), attr.get_tokens_range());
-      _a.get_remarks().add(remark);
-      throw semantic_except(remark);
-    }
-
-    const mpa::limbs &ls = ti.get_limbs();
-    const mpa::limbs::size_type ls_fls = ls.fls();
-    if (!ls_fls || ls.is_any_set_below(ls_fls - 1)) {
-      code_remark remark(code_remark::severity::fatal,
-			 "'aligned' attribute value is not a power of two",
-			 _a.get_pp_result(), attr.get_tokens_range());
-      _a.get_remarks().add(remark);
-      throw semantic_except(remark);
-    }
-
-    log2_value = ls_fls - 1;
-  }
-
-  // In order to choose between multiple 'aligned' attributes, either
-  // take the maximum or the last one encountered, depending on the
-  // context.
-  if (!_result.is_set() || !_choose_max ||
-      _result.get_log2_value() < log2_value) {
-    _result = log2_value;
-  }
-
-  return true;
-}
-
-alignment align_attribute_finder::grab_result()
-{
-  return std::move(_result);
-}
-
-
-class packed_attribute_finder
-{
-public:
-  packed_attribute_finder(klp::ccp::ast::ast &a) noexcept;
-
-  bool operator()(const attribute &attr);
-
-  bool get_result() const noexcept
-  { return _has_packed_attribute; }
-
-private:
-  klp::ccp::ast::ast &_a;
-  bool _has_packed_attribute;
-};
-
-packed_attribute_finder::packed_attribute_finder(klp::ccp::ast::ast &a) noexcept
-  : _a(a), _has_packed_attribute(false)
-{}
-
-bool packed_attribute_finder::operator()(const attribute &attr)
-{
-  if (_a.get_pp_tokens()[attr.get_name_tok()].get_value() != "packed")
-    return true;
-
-  const expr_list *params = attr.get_params();
-  if (params) {
-    code_remark remark(code_remark::severity::fatal,
-		       "unexpected parameters to 'packed' attribute",
-		       _a.get_pp_result(), attr.get_tokens_range());
-    _a.get_remarks().add(remark);
-    throw semantic_except(remark);
-  }
-
-  _has_packed_attribute = true;
-  return false;
-}
-
-
-class mode_attribute_finder
-{
-public:
-
-  mode_attribute_finder(klp::ccp::ast::ast &a, const target &tgt)
-    noexcept;
-
-  bool operator()(const attribute &attr);
-
-  int_mode_kind get_int_mode_result() const noexcept
-  { return _imk; }
-
-  float_mode_kind get_float_mode_result() const noexcept
-  { return _fmk; }
-
-  pp_token_index get_mode_tok() const noexcept
-  { return _mode_tok; }
-
-  std::shared_ptr<const addressable_type>
-  apply_to_type(std::shared_ptr<const addressable_type> &&orig_t) const;
-
-private:
-  klp::ccp::ast::ast &_a;
-  const target &_tgt;
-  int_mode_kind _imk;
-  float_mode_kind _fmk;
-  pp_token_index _mode_tok;
-};
-
-mode_attribute_finder::mode_attribute_finder(klp::ccp::ast::ast &a,
-					     const target &tgt)
-  noexcept
-  : _a(a), _tgt(tgt),
-    _imk(int_mode_kind::imk_none), _fmk(float_mode_kind::fmk_none)
-{}
-
-bool mode_attribute_finder::operator()(const attribute &attr)
-{
-  const std::string &attr_name =
-    _a.get_pp_tokens()[attr.get_name_tok()].get_value();
-  if (attr_name != "mode" && attr_name != "__mode__")
-    return true;
-
-  const expr_list *params = attr.get_params();
-  if (!params || params->size() != 1) {
-    code_remark remark(code_remark::severity::fatal,
-		       "wrong number of parameters for 'mode' attribute",
-		       _a.get_pp_result(), attr.get_tokens_range());
-    _a.get_remarks().add(remark);
-    throw semantic_except(remark);
-  }
-
-  const expr_id *e_id = nullptr;
-  (*params)[0].process<void, type_set<expr_id>>
-    (wrap_callables<default_action_nop>
-     ([&](const expr_id &_e_id) {
-	e_id = &_e_id;
-      }));
-  if (!e_id) {
-    code_remark remark(code_remark::severity::fatal,
-		       "invalid expression for 'mode' attribute",
-		       _a.get_pp_result(), (*params)[0].get_tokens_range());
-    _a.get_remarks().add(remark);
-    throw semantic_except(remark);
-  }
-
-  const std::string &id = _a.get_pp_tokens()[e_id->get_id_tok()].get_value();
-  if (id == "QI" || id == "__QI__") {
-    _imk = int_mode_kind::imk_QI;
-  } else if (id == "HI" || id == "__HI__" || id == "byte" || id == "__byte__") {
-    _imk = int_mode_kind::imk_HI;
-  } else if (id == "SI" || id == "__SI__") {
-    _imk = int_mode_kind::imk_SI;
-  } else if (id == "DI" || id == "__DI__") {
-    _imk = int_mode_kind::imk_DI;
-  } else if (id == "TI" || id == "__TI__") {
-    _imk = int_mode_kind::imk_TI;
-  } else if (id == "word" || id == "__word__") {
-    _imk = _tgt.get_word_mode();
-  } else if (id == "pointer" || id == "__pointer__") {
-    _imk = _tgt.get_pointer_mode();
-  } else if (id == "SF" || id == "__SF__") {
-    _fmk = float_mode_kind::fmk_SF;
-  } else if (id == "DF" || id == "__DF__") {
-    _fmk = float_mode_kind::fmk_DF;
-  } else {
-    code_remark remark(code_remark::severity::fatal,
-		       "unrecognized 'mode' attribute specifier",
-		       _a.get_pp_result(), e_id->get_tokens_range());
-    _a.get_remarks().add(remark);
-    throw semantic_except(remark);
-  }
-
-  if (_imk != int_mode_kind::imk_none && _fmk != float_mode_kind::fmk_none) {
-    code_remark remark(code_remark::severity::fatal,
-		       "inconsistent 'mode' attribute specifier domains",
-		       _a.get_pp_result(), e_id->get_tokens_range());
-    _a.get_remarks().add(remark);
-    throw semantic_except(remark);
-  }
-
-  _mode_tok = e_id->get_tokens_range().begin;
-
-  return true;
-}
-
-std::shared_ptr<const addressable_type> mode_attribute_finder::
-apply_to_type(std::shared_ptr<const addressable_type> &&orig_t)
-  const
-{
-  if (_imk == int_mode_kind::imk_none && _fmk == float_mode_kind::fmk_none)
-    return std::move(orig_t);
-
-  return handle_types<std::shared_ptr<const addressable_type>>
-    ((wrap_callables<no_default_action>
-      ([&](const std::shared_ptr<const int_type> &it) {
-	 if (_imk == int_mode_kind::imk_none) {
-	   code_remark remark
-	     (code_remark::severity::fatal,
-	      "invalid 'mode' attribute specifier for int type",
-	      _a.get_pp_result(), _mode_tok);
-	   _a.get_remarks().add(remark);
-	   throw semantic_except(remark);
-	 }
-
-	 if (!orig_t->is_complete()) {
-	   code_remark remark
-	     (code_remark::severity::fatal,
-	      "applying 'mode' attribute specifier to incomplete integer type",
-	      _a.get_pp_result(), _mode_tok);
-	   _a.get_remarks().add(remark);
-	   throw semantic_except(remark);
-	 }
-
-	 return std_int_type::create(_tgt.int_mode_to_std_int_kind(_imk),
-				     it->is_signed(_tgt),
-				     it->get_qualifiers());
-
-       },
-       [&](const std::shared_ptr<const real_float_type> &rft) {
-	 if (_fmk == float_mode_kind::fmk_none) {
-	   code_remark remark
-	     (code_remark::severity::fatal,
-	      "invalid 'mode' attribute specifier for float type",
-	      _a.get_pp_result(), _mode_tok);
-	   _a.get_remarks().add(remark);
-	   throw semantic_except(remark);
-	 }
-
-	 return real_float_type::create(_tgt.float_mode_to_float_kind(_fmk),
-					rft->get_qualifiers());
-
-       },
-       [&](std::shared_ptr<const pointer_type> &&pt)
-		-> std::shared_ptr<const addressable_type> {
-	 if (_imk == int_mode_kind::imk_none ||
-	     _imk != _tgt.get_pointer_mode()) {
-	   code_remark remark
-	     (code_remark::severity::fatal,
-	      "invalid 'mode' attribute specifier for pointer type",
-	      _a.get_pp_result(), _mode_tok);
-	   _a.get_remarks().add(remark);
-	   throw semantic_except(remark);
-	 }
-
-	 return std::move(pt);
-
-       },
-       [&](const std::shared_ptr<const type>&)
-		-> std::shared_ptr<const addressable_type> {
-	 code_remark remark
-	   (code_remark::severity::fatal,
-	    "'mode' attribute specifier not applicable to type",
-	    _a.get_pp_result(), _mode_tok);
-	 _a.get_remarks().add(remark);
-	 throw semantic_except(remark);
-       })),
-     std::move(orig_t));
-}
-
-
-
 void ast_translation_unit::evaluate(const target &tgt)
 {
   const _evaluator ev{*this, *_tu, tgt};
@@ -1623,32 +1307,9 @@ evaluate_type(ast &a, const target &tgt)
 					      sour.get_decl_list_node(), qs);
       },
       [&](enum_def &ed) {
-	align_attribute_finder aaf(a, tgt, false);
-	packed_attribute_finder paf(a);
-	mode_attribute_finder maf(a, tgt);
-	if (ed.get_asl_before()) {
-	  ed.get_asl_before()->for_each_attribute(aaf);
-	  ed.get_asl_before()->for_each_attribute(paf);
-	  ed.get_asl_before()->for_each_attribute(maf);
-	}
-	if (ed.get_asl_after()) {
-	  ed.get_asl_after()->for_each_attribute(aaf);
-	  ed.get_asl_after()->for_each_attribute(paf);
-	  ed.get_asl_after()->for_each_attribute(maf);
-	}
-
-	if (maf.get_float_mode_result() != float_mode_kind::fmk_none) {
-	  code_remark remark
-	    (code_remark::severity::fatal,
-	     "float domain 'mode' attribute at enum definition",
-	     a.get_pp_result(), maf.get_mode_tok());
-	  a.get_remarks().add(remark);
-	  throw semantic_except(remark);
-	}
-
 	enum_content &ec = ed.get_enumerator_list().get_content();
-	tgt.evaluate_enum_type(a, ec, paf.get_result(),
-			       maf.get_int_mode_result(), aaf.grab_result());
+	tgt.evaluate_enum_type(a, _evaluator::make_expr_evaluator(a, tgt),
+			       ed.get_asl_before(), ed.get_asl_after(), ec);
 	result = enum_type::create(ed.get_decl_list_node(), qs);
       },
       [&](const enum_ref &er) {
@@ -1966,19 +1627,8 @@ evaluate_type(ast &a, const target &tgt)
        })),
      _ds.get_type());
 
-  align_attribute_finder aaf(a, tgt, true);
-  mode_attribute_finder maf(a, tgt);
-  if (get_asl()) {
-    get_asl()->for_each_attribute(aaf);
-    get_asl()->for_each_attribute(maf);
-  }
-  get_declaration_specifiers().for_each_attribute(aaf);
-  get_declaration_specifiers().for_each_attribute(maf);
-
-  _type = maf.apply_to_type(std::move(_type));
-  alignment align = aaf.grab_result();
-  if (align.is_set())
-    _type = _type->set_user_alignment(std::move(align));
+  _type = tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
+				  std::move(_type), _ds, _asl);
 }
 
 std::shared_ptr<const klp::ccp::types::addressable_type>
@@ -1995,17 +1645,8 @@ evaluate_type(ast &a, const target &tgt)
   std::shared_ptr<const addressable_type> t = _get_enclosing_type();
 
   if (_asl) {
-    align_attribute_finder aaf(a, tgt, true);
-    mode_attribute_finder maf(a, tgt);
-
-    _asl->for_each_attribute(aaf);
-    _asl->for_each_attribute(maf);
-
-    t = maf.apply_to_type(std::move(t));
-
-    alignment align =  aaf.grab_result();
-    if (align.is_set())
-      t = t->set_user_alignment(std::move(align));
+    t = tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
+				std::move(t), _asl);
   }
 
   _set_type(std::move(t));
@@ -2089,12 +1730,12 @@ evaluate_type(ast &a, const target &tgt)
     if (_tql)
       qs = _tql->get_qualifiers();
 
-    mode_attribute_finder maf(a, tgt);
-    if (pda->get_asl())
-      pda->get_asl()->for_each_attribute(maf);
-    pda->get_declaration_specifiers().for_each_attribute(maf);
+    std::shared_ptr<const addressable_type> t = o_et.derive_pointer(qs);
+    t = tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
+				std::move(t), pda->get_declaration_specifiers(),
+				pda->get_asl());
 
-    _set_type(maf.apply_to_type(o_et.derive_pointer(qs)));
+    _set_type(std::move(t));
 
   } else {
     // The common case: either not a parameter declaration or not
@@ -2177,14 +1818,12 @@ evaluate_type(ast &a, const target &tgt)
   }
 
   if (pda) {
-    // Outermost array in a function parameter declaration, adjust the
-    // type to "pointer to element type".
-    mode_attribute_finder maf(a, tgt);
-    if (pda->get_asl())
-      pda->get_asl()->for_each_attribute(maf);
-    pda->get_declaration_specifiers().for_each_attribute(maf);
-
-    t = maf.apply_to_type(t->derive_pointer());
+    // Outermost function in a function parameter declaration, adjust
+    // the type to "pointer to function type".
+    t = t->derive_pointer();
+    t = tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
+				std::move(t), pda->get_declaration_specifiers(),
+				pda->get_asl());
   }
 
   _set_type(std::move(t));
@@ -2196,21 +1835,14 @@ evaluate_type(ast &a, const target &tgt)
   std::shared_ptr<const addressable_type> t = _get_enclosing_type();
   if (_pt) {
     for (auto tql : _pt->get_type_qualifier_lists()) {
-      qualifiers qs;
-      alignment align;
-      mode_attribute_finder maf(a, tgt);
-      if (tql) {
-	align_attribute_finder aaf(a, tgt, false);
-	qs = tql->get_qualifiers();
-	tql->for_each_attribute(aaf);
-	tql->for_each_attribute(maf);
-	align = aaf.grab_result();
+      if (!tql) {
+	t = t->derive_pointer(qualifiers{});
+      } else {
+	const qualifiers qs = tql->get_qualifiers();
+	std::shared_ptr<const pointer_type> pt = t->derive_pointer(qs);
+	t = tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
+				    std::move(pt), *tql);
       }
-
-      t = t->derive_pointer(qs);
-      t = maf.apply_to_type(std::move(t));
-      if (align.is_set())
-	t = t->set_user_alignment(std::move(align));
     }
   }
 
@@ -2222,22 +1854,21 @@ evaluate_type(ast &a, const target &tgt)
     // attributes at the enclosing context (which take precedence
     // over any such attribute from the base type or attached to any
     // declarator).
-    align_attribute_finder aaf(a, tgt, true);
-    mode_attribute_finder maf(a, tgt);
     for_each_ancestor<type_set<type_name, parameter_declaration_abstract> >
       (wrap_callables<no_default_action>
        ([&](type_name &tn) {
-	  tn.get_specifier_qualifier_list().for_each_attribute(aaf);
-	  tn.get_specifier_qualifier_list().for_each_attribute(maf);
+	  t = tgt.evaluate_attributes(a,
+				      _evaluator::make_expr_evaluator(a, tgt),
+				      std::move(t),
+				      tn.get_specifier_qualifier_list());
 	  // The ancestor search stops here
 	},
 	[&](parameter_declaration_abstract &pda) {
-	  if (pda.get_asl()) {
-	    pda.get_asl()->for_each_attribute(aaf);
-	    pda.get_asl()->for_each_attribute(maf);
-	  }
-	  pda.get_declaration_specifiers().for_each_attribute(aaf);
-	  pda.get_declaration_specifiers().for_each_attribute(maf);
+	  t = tgt.evaluate_attributes(a,
+				      _evaluator::make_expr_evaluator(a, tgt),
+				      std::move(t),
+				      pda.get_declaration_specifiers(),
+				      pda.get_asl());
 	  // The ancestor search stops here
 	},
 	[](const direct_abstract_declarator&) {
@@ -2248,11 +1879,6 @@ evaluate_type(ast &a, const target &tgt)
 	  // Proceed the search upwards
 	  return true;
 	}));
-
-    t = maf.apply_to_type(std::move(t));
-    alignment align = aaf.grab_result();
-    if (align.is_set())
-      t = t->set_user_alignment(std::move(align));
   }
 
   _set_type(std::move(t));
@@ -2281,29 +1907,12 @@ evaluate_type(ast &a, const target &tgt)
 	  (id.get_unique_parent<init_declarator_list>()
 	   .get_unique_parent<declaration>());
 
-	align_attribute_finder aaf(a, tgt, true);
-	mode_attribute_finder maf(a, tgt);
-	if (id.get_asl_after()) {
-	  id.get_asl_after()->for_each_attribute(aaf);
-	  id.get_asl_after()->for_each_attribute(maf);
-	}
-	if (id.get_asl_middle()) {
-	  id.get_asl_middle()->for_each_attribute(aaf);
-	  id.get_asl_middle()->for_each_attribute(maf);
-	}
-	if (id.get_asl_before()) {
-	  id.get_asl_before()->for_each_attribute(aaf);
-	  id.get_asl_before()->for_each_attribute(maf);
-	}
-
-	enclosing_decl.get_declaration_specifiers().for_each_attribute(aaf);
-	enclosing_decl.get_declaration_specifiers().for_each_attribute(maf);
-
-	a_t = maf.apply_to_type(std::move(a_t));
-
-	alignment align = aaf.grab_result();
-	if (align.is_set())
-	  a_t = a_t->set_user_alignment(std::move(align));
+	a_t =
+	  tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
+				  std::move(a_t),
+				  enclosing_decl.get_declaration_specifiers(),
+				  id.get_asl_before(), id.get_asl_middle(),
+				  id.get_asl_after());
 
 	l = &id.get_linkage();
       },
@@ -2324,21 +1933,11 @@ evaluate_type(ast &a, const target &tgt)
 	     })),
 	   *a_t);
 
-	align_attribute_finder aaf(a, tgt, true);
-	mode_attribute_finder maf(a, tgt);
-	if (pdd.get_asl()) {
-	  pdd.get_asl()->for_each_attribute(aaf);
-	  pdd.get_asl()->for_each_attribute(maf);
-	}
-
-	pdd.get_declaration_specifiers().for_each_attribute(aaf);
-	pdd.get_declaration_specifiers().for_each_attribute(maf);
-
-	a_t = maf.apply_to_type(std::move(a_t));
-
-	alignment align = aaf.grab_result();
-	if (align.is_set())
-	  a_t = a_t->set_user_alignment(std::move(align));
+	a_t =
+	  tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
+				  std::move(a_t),
+				  pdd.get_declaration_specifiers(),
+				  pdd.get_asl());
       },
       [&](function_definition &fd) {
 	// Ignore alignment of functions, it's not an attribute of their
@@ -2393,17 +1992,8 @@ evaluate_type(ast &a, const target &tgt)
   std::shared_ptr<const addressable_type> t = _get_enclosing_type();
 
   if (_asl) {
-    align_attribute_finder aaf(a, tgt, false);
-    mode_attribute_finder maf(a, tgt);
-
-    _asl->for_each_attribute(aaf);
-    _asl->for_each_attribute(maf);
-
-    t = maf.apply_to_type(std::move(t));
-
-    alignment align = aaf.grab_result();
-    if (align.is_set())
-      t = t->set_user_alignment(std::move(align));
+    t = tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
+				std::move(t), _asl);
   }
 
   _set_type(std::move(t));
@@ -2509,28 +2099,21 @@ evaluate_type(ast &a, const target &tgt)
 
 void declarator::evaluate_type(ast &a, const target &tgt)
 {
-  std::shared_ptr<const addressable_type> a_t = _get_enclosing_type();
+  std::shared_ptr<const addressable_type> t = _get_enclosing_type();
   if (_pt) {
     for (auto tql : _pt->get_type_qualifier_lists()) {
-      qualifiers qs;
-      alignment align;
-      mode_attribute_finder maf(a, tgt);
-      if (tql) {
-	align_attribute_finder aaf(a, tgt, false);
-	qs = tql->get_qualifiers();
-	tql->for_each_attribute(aaf);
-	tql->for_each_attribute(maf);
-	align = aaf.grab_result();
+      if (!tql) {
+	t = t->derive_pointer(qualifiers{});
+      } else {
+	const qualifiers qs = tql->get_qualifiers();
+	std::shared_ptr<const pointer_type> pt = t->derive_pointer(qs);
+	t = tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
+				    std::move(pt), *tql);
       }
-
-      a_t = a_t->derive_pointer(qs);
-      a_t = maf.apply_to_type(std::move(a_t));
-      if (align.is_set())
-	a_t = a_t->set_user_alignment(std::move(align));
     }
   }
 
-  _set_type(std::move(a_t));
+  _set_type(std::move(t));
 }
 
 void type_name::evaluate_type(ast&, const target&)
@@ -2541,90 +2124,44 @@ void type_name::evaluate_type(ast&, const target&)
     _set_type(_sql.get_type());
 }
 
-std::pair<types::alignment, bool>
-struct_declarator::find_align_attribute(klp::ccp::ast::ast &a,
-					const target &tgt)
+void struct_declarator::evaluate_type(ast &a, const target &tgt)
 {
   struct_declaration_c99 &enclosing_decl =
     (get_unique_parent<struct_declarator_list>()
      .get_unique_parent<struct_declaration_c99>());
+  specifier_qualifier_list * const sql =
+    enclosing_decl.get_specifier_qualifier_list();
+  assert(sql);
 
-  // First check whether the enclosing struct or union
-  // has got any 'packed' attribute attached to it --
-  // these apply to each member individually.
+  std::shared_ptr<const addressable_type> t;
+  if (_d)
+    t = _d->get_innermost_type();
+  else
+    t = sql->get_type();
+
+  // Find the attributes associated with the containing struct/union
+  // definition as a whole.
+  attribute_specifier_list *soud_asl_before = nullptr;
+  attribute_specifier_list *soud_asl_after = nullptr;
   struct_declaration_list &enclosing_decl_list
     = enclosing_decl.get_unique_parent<struct_declaration_list>();
-  packed_attribute_finder paf(a);
   enclosing_decl_list.process_parent
     (wrap_callables<no_default_action>
-     ([&paf](struct_or_union_def &soud) {
-       if (soud.get_asl_before())
-	 soud.get_asl_before()->for_each_attribute(paf);
-       if (soud.get_asl_after())
-	 soud.get_asl_after()->for_each_attribute(paf);
+     ([&](struct_or_union_def &soud) {
+       soud_asl_before = soud.get_asl_before();
+       soud_asl_after = soud.get_asl_after();
       },
-      [&paf](unnamed_struct_or_union &unnamed_sou) {
-       if (unnamed_sou.get_asl_before())
-	 unnamed_sou.get_asl_before()->for_each_attribute(paf);
-       if (unnamed_sou.get_asl_after())
-	 unnamed_sou.get_asl_after()->for_each_attribute(paf);
+      [&](unnamed_struct_or_union &unnamed_sou) {
+       soud_asl_before = unnamed_sou.get_asl_before();
+       soud_asl_after = unnamed_sou.get_asl_after();
       }));
 
-
-  align_attribute_finder aaf(a, tgt, true);
-  if (enclosing_decl.get_specifier_qualifier_list()) {
-    enclosing_decl.get_specifier_qualifier_list()->for_each_attribute(aaf);
-    enclosing_decl.get_specifier_qualifier_list()->for_each_attribute(paf);
-  }
-
-  if (_asl_before) {
-    _asl_before->for_each_attribute(aaf);
-    _asl_before->for_each_attribute(paf);
-  }
-  if (_asl_after) {
-    _asl_after->for_each_attribute(aaf);
-    _asl_after->for_each_attribute(paf);
-  }
-
-  return std::make_pair(aaf.grab_result(), paf.get_result());
-}
-
-void struct_declarator::evaluate_type(ast &a, const target &tgt)
-{
-  std::shared_ptr<const addressable_type> a_t;
-  specifier_qualifier_list *sql = (get_unique_parent<struct_declarator_list>()
-				   .get_unique_parent<struct_declaration_c99>()
-				   .get_specifier_qualifier_list());
-  assert(sql);
-  if (_d) {
-    a_t = _d->get_innermost_type();
-  } else {
-    a_t = sql->get_type();
-  }
-
-  std::pair<alignment, bool> align = this->find_align_attribute(a, tgt);
   if (!_width) {
     // Not a bitfield.
-    // Oddly, gcc seems to ignore 'mode' attributes for bitfields. So
-    // do it here.
-    mode_attribute_finder maf(a, tgt);
-    sql->for_each_attribute(maf);
-    if (_asl_after)
-      _asl_after->for_each_attribute(maf);
-    if (_asl_before)
-      _asl_before->for_each_attribute(maf);
-    a_t = maf.apply_to_type(std::move(a_t));
-
-    if (align.first.is_set() &&
-	(align.second ||
-	 (a_t->get_effective_alignment(tgt) <
-	  align.first.get_log2_value()))) {
-      a_t = a_t->set_user_alignment(std::move(align.first));
-    } else if (align.second) {
-      a_t = a_t->set_user_alignment(alignment(0));
-    }
-
-    _set_type(std::move(a_t));
+    t = tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
+				std::move(t), soud_asl_before, soud_asl_after,
+				*sql, _asl_before, _asl_after);
+    _set_type(std::move(t));
     return;
   }
 
@@ -2642,7 +2179,6 @@ void struct_declarator::evaluate_type(ast &a, const target &tgt)
 	      a.get_remarks().add(remark);
 	      throw semantic_except(remark);
 	    }
-
 	    return et->get_underlying_type();
 	  },
 	  [&](std::shared_ptr<const returnable_int_type> &&_r_it) {
@@ -2657,7 +2193,6 @@ void struct_declarator::evaluate_type(ast &a, const target &tgt)
 		return _r_it->to_unsigned();
 	      }
 	    }
-
 	    return std::move(_r_it);
 	  },
 	  [&](const std::shared_ptr<const type>&)
@@ -2668,7 +2203,7 @@ void struct_declarator::evaluate_type(ast &a, const target &tgt)
 	   a.get_remarks().add(remark);
 	    throw semantic_except(remark);
 	  })),
-	std::move(a_t)));
+	std::move(t)));
 
   assert(_width->is_evaluated());
 
@@ -2724,12 +2259,9 @@ void struct_declarator::evaluate_type(ast &a, const target &tgt)
   std::shared_ptr<const bitfield_type> bft =
     bitfield_type::create(std::move(ri_t), width);
 
-  if (align.second)
-    bft = bft->set_packed();
-
-  if (align.first.is_set())
-    bft = bft->set_user_alignment(align.first);
-
+  bft = tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
+				std::move(bft), soud_asl_before, soud_asl_after,
+				*sql, _asl_before, _asl_after);
   _set_type(std::move(bft));
 }
 
@@ -2828,22 +2360,18 @@ create_content(ast &a, const struct_or_union_kind souk) const
 void klp::ccp::ast::unnamed_struct_or_union::
 _layout_content(ast &a, const target &tgt)
 {
-  align_attribute_finder aaf(a, tgt, false);
-  if (_asl_before)
-    _asl_before->for_each_attribute(aaf);
-  if (_asl_after)
-    _asl_after->for_each_attribute(aaf);
-
   if (_sdl)
     _content = _sdl->create_content(a, _souk);
 
   switch (_souk) {
   case struct_or_union_kind::souk_struct:
-    tgt.layout_struct(_content, aaf.grab_result());
+    tgt.layout_struct(a, _evaluator::make_expr_evaluator(a, tgt),
+		      _asl_before, _asl_after, _content);
     break;
 
   case struct_or_union_kind::souk_union:
-    tgt.layout_union(_content, aaf.grab_result());
+    tgt.layout_union(a, _evaluator::make_expr_evaluator(a, tgt),
+		     _asl_before, _asl_after, _content);
     break;
   }
 }
@@ -2857,22 +2385,18 @@ void unnamed_struct_or_union::evaluate_type(ast &a, const target &tgt)
 void klp::ccp::ast::struct_or_union_def::
 layout_content(ast &a, const target &tgt)
 {
-  align_attribute_finder aaf(a, tgt, false);
-  if (_asl_before)
-    _asl_before->for_each_attribute(aaf);
-  if (_asl_after)
-    _asl_after->for_each_attribute(aaf);
-
   if (_sdl)
     _content = _sdl->create_content(a, _souk);
 
   switch (_souk) {
   case struct_or_union_kind::souk_struct:
-    tgt.layout_struct(_content, aaf.grab_result());
+    tgt.layout_struct(a, _evaluator::make_expr_evaluator(a, tgt),
+		      _asl_before, _asl_after, _content);
     break;
 
   case struct_or_union_kind::souk_union:
-    tgt.layout_union(_content, aaf.grab_result());
+    tgt.layout_union(a, _evaluator::make_expr_evaluator(a, tgt),
+		     _asl_before, _asl_after, _content);
     break;
   }
 }

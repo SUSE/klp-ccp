@@ -450,10 +450,11 @@ get_execution_charset_encoder(const execution_charset_encoding e) const
 					       false)));
 }
 
-void target_x86_64_gcc::evaluate_enum_type(ast::ast &a, types::enum_content &ec,
-					   const bool packed,
-					   const int_mode_kind mode,
-					   types::alignment &&user_align) const
+void target_x86_64_gcc::
+_evaluate_enum_type(ast::ast &a, types::enum_content &ec,
+		    const bool packed,
+		    const int_mode_kind mode,
+		    types::alignment &&user_align) const
 {
   // Inspect each enumerator and find the maximum required width
   // and signedness.
@@ -957,8 +958,8 @@ void record_layout_info::finish_record_layout(struct_or_union_content &sc)
 }
 
 void target_x86_64_gcc::
-layout_struct(types::struct_or_union_content &sc,
-	      const types::alignment &user_align) const
+_layout_struct(types::struct_or_union_content &sc,
+	       const types::alignment &user_align) const
 {
   record_layout_info rli(*this,
 			 (user_align.is_set() ?
@@ -974,8 +975,8 @@ layout_struct(types::struct_or_union_content &sc,
 }
 
 void target_x86_64_gcc::
-layout_union(types::struct_or_union_content &sc,
-	     const types::alignment &user_align) const
+_layout_union(types::struct_or_union_content &sc,
+	      const types::alignment &user_align) const
 {
   record_layout_info rli(*this,
 			 (user_align.is_set() ?
@@ -1021,7 +1022,7 @@ target_x86_64_gcc::create_builtin_va_list_type() const
        ("reg_save_area",
 	void_type::create()->derive_pointer()));
 
-    this->layout_struct(c, alignment{});
+    this->_layout_struct(c, alignment{});
   }
 
   return (struct_or_union_type::create(struct_or_union_kind::souk_struct,

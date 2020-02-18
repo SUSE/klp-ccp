@@ -782,7 +782,7 @@ namespace klp
       }
 
       template <typename callable_type>
-      bool specifier_qualifier_list::for_each_attribute(callable_type &&c) const
+      bool specifier_qualifier_list::for_each_attribute(callable_type &&c)
       {
 	for (auto asl : _asls) {
 	  if (!asl.get().for_each_attribute(c))
