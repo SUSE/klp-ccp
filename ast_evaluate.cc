@@ -55,12 +55,14 @@ namespace
 	       klp::ccp::ast::_ast_entity &ae,
 	       const target &tgt) noexcept;
 
-    void operator()();
+    void operator()() const;
 
   private:
-    void _check_return_stmt(const klp::ccp::ast::stmt_return &ret_stmt);
+    void _check_return_stmt(const klp::ccp::ast::stmt_return &ret_stmt) const;
+
     void
-    _check_function_definition(const klp::ccp::ast::function_definition &fd);
+    _check_function_definition(const klp::ccp::ast::function_definition &fd)
+      const;
 
     klp::ccp::ast::ast &_ast;
     klp::ccp::ast::_ast_entity &_ae;
@@ -74,7 +76,7 @@ _evaluator::_evaluator(klp::ccp::ast::ast &ast,
   : _ast(ast), _ae(ae), _tgt(tgt)
 {}
 
-void _evaluator::operator()()
+void _evaluator::operator()() const
 {
   auto &&pre =
     (wrap_callables<default_action_return_value<bool, false>::type>
@@ -165,6 +167,7 @@ void _evaluator::operator()()
 }
 
 void _evaluator::_check_return_stmt(const klp::ccp::ast::stmt_return &ret_stmt)
+  const
 {
   const function_definition *fd = nullptr;
 
@@ -232,7 +235,7 @@ void _evaluator::_check_return_stmt(const klp::ccp::ast::stmt_return &ret_stmt)
 }
 
 void _evaluator::
-_check_function_definition(const klp::ccp::ast::function_definition &fd)
+_check_function_definition(const klp::ccp::ast::function_definition &fd) const
 {
   const declarator &d = fd.get_declarator();
   const direct_declarator_id &ddid = d.get_direct_declarator_id();
@@ -1525,7 +1528,7 @@ apply_to_type(std::shared_ptr<const addressable_type> &&orig_t)
 
 void ast_translation_unit::evaluate(const target &tgt)
 {
-  _evaluator ev(*this, *_tu, tgt);
+  const _evaluator ev{*this, *_tu, tgt};
   ev();
 
   // Finally, sweep over all global objects defined in this
@@ -1548,7 +1551,7 @@ void ast_translation_unit::evaluate(const target &tgt)
 
 bool ast_pp_expr::evaluate(const target &tgt)
 {
-  _evaluator ev(*this, *_e, tgt);
+  const _evaluator ev{*this, *_e, tgt};
   ev();
 
   if (!_e->is_constexpr() ||
