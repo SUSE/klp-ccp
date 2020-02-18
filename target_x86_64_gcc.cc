@@ -513,9 +513,8 @@ void target_x86_64_gcc::evaluate_enum_type(ast::ast &a, types::enum_content &ec,
     }
   }
 
-  // Oddly, gcc enforces the type to be signed for widths <= 16.
   auto &&t = types::std_int_type::create(_width_to_int_kind(width),
-					 width <= 16 || is_any_signed);
+					 is_any_signed);
   if (user_align.is_set()) {
     const mpa::limbs::size_type align =
       static_cast<mpa::limbs::size_type>(1) << user_align.get_log2_value();
