@@ -526,18 +526,9 @@ void target_x86_64_gcc::evaluate_enum_type(ast::ast &a, types::enum_content &ec,
   ec.set_underlying_type(std::move(t));
 
   // Finally, calculate each member's type and massage its value
-  // accordingly. GCC's behaviour is a bit strange here in that it
-  // combines global signedness with each member's required precision
-  // individually.
-  //
-  // More precisely, the rules for determination of each enum member's
-  // type are as follows:
-  // 1. If the value fits into a signed int, that's the type.
-  // 2. Otherwise, if all members fit into an unsigned int,
-  //    the type is unsigned int.
-  // 3. Otherwise, if there are any negative members, then all values
-  //    fit into a signed long and the type is signed long.
-  // 4. Otherwise, the type is unsigned long.
+  // accordingly. If the value fits into an int, then that's the type,
+  // otherwise it'll be set to the underlying enum type: c.f. GCC's
+  // finish_enum().
   ec.for_each_member
     ([&](types::enum_content::member &m) {
       const target_int &v = m.get_value();
