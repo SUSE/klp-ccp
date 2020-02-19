@@ -1702,14 +1702,23 @@ evaluate_type(ast &a, const target &tgt)
        })),
      *_get_enclosing_type());
 
+  if (!o_et.is_complete()) {
+    code_remark remark(code_remark::severity::fatal,
+		       "incomplete array element type",
+		       a.get_pp_result(), get_tokens_range());
+    a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
   // An outermost array in function parameter declaration context,
   // i.e. the innermost declarator derivation, needs special
   // treatment: if the array is a function parameter's type, it must
   // get adjusted to pointer type.  An array is the innermost
   // derivation if its only AST descendants are non-pointer
   // declarators (wrapped in parens).
-  parameter_declaration_abstract *pda = nullptr;
+  type_name *tn = nullptr;
   if (!_dad || !_dad->skip_trivial_parens_down()) {
+    parameter_declaration_abstract *pda = nullptr;
     this->for_each_ancestor<type_set<type_name,
 				     parameter_declaration_abstract>>
       (wrap_callables<default_action_return_value<bool, true>::type>
@@ -1717,44 +1726,50 @@ evaluate_type(ast &a, const target &tgt)
 	  pda = &_pda;
 	  // The ancestor search stops here/
 	},
-	[&](const type_name&) {
-	  pda = nullptr;
+	[&](type_name &_tn) {
+	  tn = &_tn;
 	  // The ancestor search stops here.
 	}));
-  }
 
-  if (pda) {
-    // Outermost array in a function parameter declaration, adjust the
-    // type to "pointer to element type".
-    qualifiers qs;
-    if (_tql)
-      qs = _tql->get_qualifiers();
+    if (pda) {
+      // Outermost array in a function parameter declaration, adjust the
+      // type to "pointer to element type".
+      qualifiers qs;
+      if (_tql)
+	qs = _tql->get_qualifiers();
 
-    std::shared_ptr<const addressable_type> t = o_et.derive_pointer(qs);
-    t = tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
-				std::move(t), pda->get_declaration_specifiers(),
-				pda->get_asl());
+      std::shared_ptr<const addressable_type> t = o_et.derive_pointer(qs);
+      t = tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
+				  std::move(t),
+				  pda->get_declaration_specifiers(),
+				  pda->get_asl());
+      _set_type(std::move(t));
+      return;
 
-    _set_type(std::move(t));
-
-  } else {
-    // The common case: either not a parameter declaration or not
-    // the outermost array -- the type will be an array type.
-    if (!o_et.is_complete()) {
-      code_remark remark(code_remark::severity::fatal,
-			 "incomplete array element type",
-			 a.get_pp_result(), get_tokens_range());
-      a.get_remarks().add(remark);
-      throw semantic_except(remark);
-    }
-
-    if (_size) {
-      evaluate_array_size_expr(*_size, a, tgt);
-      _set_type(o_et.derive_array(_size));
     } else {
-      _set_type(o_et.derive_array(_vla_unspec_size));
+      assert(tn);
+
     }
   }
+
+  // Not the outermost array or outermost array in a type name --
+  // the type will be an array type.
+  std::shared_ptr<const addressable_type> t;
+  if (_size) {
+    evaluate_array_size_expr(*_size, a, tgt);
+    t = o_et.derive_array(_size);
+  } else {
+    t = o_et.derive_array(_vla_unspec_size);
+  }
+
+  if (tn) {
+    // Outermost array in a type name, apply attributes.
+    t = tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
+				std::move(t),
+				tn->get_specifier_qualifier_list());
+  }
+
+  _set_type(std::move(t));
 }
 
 void direct_abstract_declarator_func::
@@ -1802,8 +1817,9 @@ evaluate_type(ast &a, const target &tgt)
   // it must get adjusted to "pointer to function". A function
   // declarator is the innermost derivation if its only AST
   // descendants are non-pointer declarators (wrapped in parens).
-  parameter_declaration_abstract *pda = nullptr;
   if (!_dad || !_dad->skip_trivial_parens_down()) {
+    parameter_declaration_abstract *pda = nullptr;
+    type_name *tn = nullptr;
     this->for_each_ancestor<type_set<type_name,
 				     parameter_declaration_abstract>>
       (wrap_callables<default_action_return_value<bool, true>::type>
@@ -1811,19 +1827,27 @@ evaluate_type(ast &a, const target &tgt)
 	  pda = &_pda;
 	  // The ancestor search stops here/
 	},
-	[&](const type_name&) {
-	  pda = nullptr;
+	[&](type_name &_tn) {
+	  tn = &_tn;
 	  // The ancestor search stops here.
 	}));
-  }
 
-  if (pda) {
-    // Outermost function in a function parameter declaration, adjust
-    // the type to "pointer to function type".
-    t = t->derive_pointer();
-    t = tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
-				std::move(t), pda->get_declaration_specifiers(),
-				pda->get_asl());
+    if (pda) {
+      // Outermost function in a function parameter declaration, adjust
+      // the type to "pointer to function type".
+      t = t->derive_pointer();
+      t = tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
+				  std::move(t),
+				  pda->get_declaration_specifiers(),
+				  pda->get_asl());
+    } else {
+      // Outermost function derivation (innermost declarator) in a
+      // type name.  Apply type name's attributes.
+      assert(tn);
+      t = tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
+				  std::move(t),
+				  tn->get_specifier_qualifier_list());
+    }
   }
 
   _set_type(std::move(t));
@@ -1917,10 +1941,8 @@ evaluate_type(ast &a, const target &tgt)
 	l = &id.get_linkage();
       },
       [&](parameter_declaration_declarator &pdd) {
-	// First, it can still happen that the current type is of
-	// array or function type: namely with typedefs passing
-	// the direct_declarator_array and direct_declarator_func
-	// logic. Decay the type to pointers in this case.
+	// Decay parameters of array or function type to pointer types
+	// as appropriate.
 	handle_types<void>
 	  ((wrap_callables<default_action_nop>
 	    ([&](const array_type &at) {
@@ -2116,12 +2138,17 @@ void declarator::evaluate_type(ast &a, const target &tgt)
   _set_type(std::move(t));
 }
 
-void type_name::evaluate_type(ast&, const target&)
+void type_name::evaluate_type(ast &a, const target &tgt)
 {
-  if (_ad)
+  if (_ad) {
     _set_type(_ad->get_innermost_type());
-  else
-    _set_type(_sql.get_type());
+  } else {
+    // There's no abstract_declarator, apply any attributes here.
+    std::shared_ptr<const addressable_type> t = _sql.get_type();
+    t = tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
+				std::move(t), _sql);
+    _set_type(std::move(t));
+  }
 }
 
 void struct_declarator::evaluate_type(ast &a, const target &tgt)
