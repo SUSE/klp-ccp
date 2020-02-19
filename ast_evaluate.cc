@@ -1713,11 +1713,9 @@ evaluate_type(ast &a, const target &tgt)
   // An outermost array in function parameter declaration context,
   // i.e. the innermost declarator derivation, needs special
   // treatment: if the array is a function parameter's type, it must
-  // get adjusted to pointer type.  An array is the innermost
-  // derivation if its only AST descendants are non-pointer
-  // declarators (wrapped in parens).
+  // get adjusted to pointer type.
   type_name *tn = nullptr;
-  if (!_dad || !_dad->skip_trivial_parens_down()) {
+  if (!_dad) {
     parameter_declaration_abstract *pda = nullptr;
     this->for_each_ancestor<type_set<type_name,
 				     parameter_declaration_abstract>>
@@ -1814,10 +1812,8 @@ evaluate_type(ast &a, const target &tgt)
   // An outermost function type in function parameter declaration
   // context, i.e. the innermost declarator derivation, needs special
   // treatment: if the function type is a function parameter's type,
-  // it must get adjusted to "pointer to function". A function
-  // declarator is the innermost derivation if its only AST
-  // descendants are non-pointer declarators (wrapped in parens).
-  if (!_dad || !_dad->skip_trivial_parens_down()) {
+  // it must get adjusted to "pointer to function".
+  if (!_dad) {
     parameter_declaration_abstract *pda = nullptr;
     type_name *tn = nullptr;
     this->for_each_ancestor<type_set<type_name,

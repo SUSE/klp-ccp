@@ -1967,12 +1967,6 @@ direct_abstract_declarator::_get_enclosing_type() const noexcept
   return pt;
 }
 
-const direct_abstract_declarator* direct_abstract_declarator::
-skip_trivial_parens_down() const noexcept
-{
-  return this;
-}
-
 
 direct_abstract_declarator_parenthesized::
 direct_abstract_declarator_parenthesized(const pp_tokens_range &tr,
@@ -1999,20 +1993,6 @@ get_innermost_type() const noexcept
 {
   return _ad.get_innermost_type();
 }
-
-const direct_abstract_declarator* direct_abstract_declarator_parenthesized::
-skip_trivial_parens_down() const noexcept
-{
-  if (_ad.get_pointer())
-    return this;
-
-  const direct_abstract_declarator *dad = _ad.get_direct_abstract_declarator();
-  if (!dad)
-    return dad;
-
-  return dad->skip_trivial_parens_down();
-}
-
 
 _ast_entity*
 direct_abstract_declarator_parenthesized::_get_child(const size_t i) const noexcept

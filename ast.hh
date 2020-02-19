@@ -1528,9 +1528,6 @@ namespace klp
 	virtual std::shared_ptr<const types::addressable_type>
 	get_innermost_type() const noexcept = 0;
 
-	virtual const direct_abstract_declarator*
-	skip_trivial_parens_down() const noexcept;
-
       protected:
 	direct_abstract_declarator(const pp_tokens_range &tr) noexcept;
 
@@ -1553,9 +1550,6 @@ namespace klp
 
 	virtual std::shared_ptr<const types::addressable_type>
 	get_innermost_type() const noexcept override;
-
-	virtual const direct_abstract_declarator*
-	skip_trivial_parens_down() const noexcept override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
