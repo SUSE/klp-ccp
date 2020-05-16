@@ -1098,7 +1098,7 @@ target_x86_64_gcc::_arch_get_option_optimization_table() const noexcept
       .min_gcc_version = {4, 9, 0},
     },
     {
-      default_option::opt_levels_2_plus, "freorder-blocks-algorithm", "stc",
+      default_option::opt_levels_2_plus, "freorder-blocks-algorithm=", "stc",
       false,
       .min_gcc_version = {6, 1, 0},
     },

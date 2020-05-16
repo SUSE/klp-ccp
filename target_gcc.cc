@@ -1334,7 +1334,7 @@ void target_gcc::_default_options_optimization
     { default_option::opt_levels_2_plus, "ftree-tail-merge", nullptr, false },
     { default_option::opt_levels_2_plus, "ftree-vrp", nullptr, false },
     {
-      default_option::opt_levels_2_plus, "fvect-cost-model", "cheap", false,
+      default_option::opt_levels_2_plus, "fvect-cost-model=", "cheap", false,
       .min_gcc_version = {4, 9, 0},
     },
     {
@@ -1386,8 +1386,8 @@ void target_gcc::_default_options_optimization
       nullptr, false
     },
     {
-      default_option::opt_levels_2_plus_speed_only, "freorder-blocks-algorithm",
-      "stc", false,
+      default_option::opt_levels_2_plus_speed_only,
+      "freorder-blocks-algorithm=", "stc", false,
       .min_gcc_version = {6, 1, 0},
     },
     {
@@ -1453,7 +1453,7 @@ void target_gcc::_default_options_optimization
       .max_gcc_version = {4, 8, 5},
     },
     {
-      default_option::opt_levels_3_plus, "fvect-cost-model", "dynamic", false,
+      default_option::opt_levels_3_plus, "fvect-cost-model=", "dynamic", false,
       .min_gcc_version = {4, 9, 0},
     },
     {
