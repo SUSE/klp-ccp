@@ -33,6 +33,7 @@
 #include "lp_except.hh"
 #include "source_writer.hh"
 #include "depreprocessor.hh"
+#include "builtins_impl.hh"
 #include "create_lp.hh"
 
 using namespace klp::ccp;
@@ -5224,7 +5225,7 @@ _fun_expr_id_needs_externalization(const ast::expr_id &eid)
 	       (wrap_callables<default_action_return_value<bool, false>::type>
 		([&](const types::builtin_func_type &bft) {
 		   return (bft.get_builtin_func_factory() ==
-			   builtin_func_choose_expr_create);
+			   builtins::impl::builtin_func_choose_expr::create);
 		 }),
 		*e.get_func().get_type()));
 	  }

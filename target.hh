@@ -74,10 +74,11 @@ namespace klp
 		 const std::function<void(const std::string&)> &report_warning)
       = 0;
 
+      virtual const builtin_func::factory
+      lookup_builtin_func(const std::string &id) const noexcept = 0;
 
       virtual const builtin_typedef::factories&
       get_builtin_typedefs() const noexcept = 0;
-
 
       // Attributes following a pointer declarator's asterisk.
       virtual std::shared_ptr<const types::pointer_type>

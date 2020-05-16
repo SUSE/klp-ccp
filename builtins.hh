@@ -57,17 +57,15 @@ namespace klp
 
       typedef std::unique_ptr<builtin_func> (*factory)();
 
-      constexpr builtin_func() noexcept;
+      constexpr builtin_func() noexcept
+      {}
+
       virtual ~builtin_func() noexcept;
 
       virtual evaluation_result_type
       evaluate(ast::ast &a, const target &tgt,
 	       const ast::expr_func_invocation &efi) const = 0;
-
-      static factory lookup(const std::string &id);
     };
-
-    std::unique_ptr<builtin_func> builtin_func_choose_expr_create();
 
     class builtin_var
     {

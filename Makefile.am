@@ -14,6 +14,7 @@ noinst_HEADERS =				\
 	ast_processor.hh			\
 	ast_processor_impl.hh			\
 	builtins.hh				\
+	builtins_impl.hh			\
 	callables_wrapper.hh			\
 	cmdline_except.hh			\
 	code_remark.hh				\
@@ -69,6 +70,7 @@ libcp_a_SOURCES =				\
 	ast_evaluate.cc			\
 	ast_resolve.cc				\
 	builtins.cc				\
+	builtins_impl.cc			\
 	cmdline_except.cc			\
 	code_remark.cc				\
 	code_remarks.cc			\

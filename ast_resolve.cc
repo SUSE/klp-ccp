@@ -1423,7 +1423,7 @@ void _id_resolver::_resolve_id(expr_id &ei)
   // and if so, report that fact.
   const pp_token &id_tok = _ast.get_pp_tokens()[ei.get_id_tok()];
   const builtin_func::factory builtin_func_fac =
-    builtin_func::lookup(id_tok.get_value());
+    _tgt.lookup_builtin_func(id_tok.get_value());
   if (builtin_func_fac) {
     ei.set_resolved(expr_id::resolved(builtin_func_fac));
     return;

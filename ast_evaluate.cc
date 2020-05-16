@@ -30,6 +30,7 @@
 #include "execution_charset_encoder.hh"
 #include "ast_evaluate.hh"
 #include "pp_token.hh"
+#include "builtins_impl.hh"
 
 using namespace klp::ccp;
 using namespace klp::ccp::ast;
@@ -2592,7 +2593,7 @@ void expr::_convert_type_for_expr_context()
 	    ((wrap_callables<default_action_nop>
 	      ([&](const builtin_func_type &bft) {
 		 if (bft.get_builtin_func_factory() !=
-		     builtin_func_choose_expr_create) {
+		     builtins::impl::builtin_func_choose_expr::create) {
 		   return;
 		 }
 
