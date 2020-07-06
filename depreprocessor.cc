@@ -1148,10 +1148,11 @@ _try_rewrite_macro_arguments(const pp_result &pp_result,
 			 return rmat.arg_tok < val;
 		       });
     assert(insert_pos == replaced_macro_arg_toks.end() ||
-	   insert_pos->arg_tok != pta->get_arg_tok_raw());
+	   insert_pos->arg_tok > pta->get_arg_tok_raw());
 
-    replaced_macro_arg_toks.emplace_back
-      (_op::replaced_macro_arg_tok{
+    replaced_macro_arg_toks.emplace
+      (insert_pos,
+       _op::replaced_macro_arg_tok{
 	 pta->get_arg_tok_raw(),
 	 replace_op->new_tok,
 	 replace_op->add_pointer_deref
