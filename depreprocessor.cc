@@ -3954,12 +3954,6 @@ void depreprocessor::_prepare_cond_incls(transformed_input_chunk &tic)
       }
     };
 
-  enter_new_cond_incls_in_chunk(s);
-
-  raw_pp_token_index max_begin_seen =
-    !s.empty() ? s.back().get().get_range().begin : 0;
-  s.clear();
-
   auto &&leave_cond_incls_in_chunk =
     [&](const _cond_incl_stack_type::size_type nkeep) {
       for (_cond_incl_stack_type::size_type i = _cond_incl_stack.size();
@@ -3979,11 +3973,15 @@ void depreprocessor::_prepare_cond_incls(transformed_input_chunk &tic)
 	       tic._is_range_in_hole(it_cond_incl->get_range(), _pp_result));
     };
 
-  for (; it_cond_incl != cond_incls_end; next_cond_incl()) {
-    if (tic._is_range_in_hole(it_cond_incl->get_range(), _pp_result))
-      continue;
+  enter_new_cond_incls_in_chunk(s);
+  s.clear();
+  raw_pp_token_index max_begin_seen = it_cond_incl->get_range().begin;
+  next_cond_incl();
 
-    if (max_begin_seen < it_cond_incl->get_range().begin) {
+  for (; it_cond_incl != cond_incls_end; next_cond_incl()) {
+    assert(!tic._is_range_in_hole(it_cond_incl->get_range(), _pp_result));
+
+    if (max_begin_seen <= it_cond_incl->get_range().begin) {
       max_begin_seen = it_cond_incl->get_range().begin;
 
       s = _build_cond_incl_stack(*it_cond_incl);
