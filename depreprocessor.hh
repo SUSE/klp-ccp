@@ -78,6 +78,14 @@ namespace klp
 	enter_leave,
       };
 
+      struct _output_state
+      {
+	_output_state() noexcept;
+
+	raw_pp_token_index last_input_pos_raw;
+	bool last_was_newline;
+      };
+
     public:
       class transformed_input_chunk
       {
@@ -287,9 +295,9 @@ namespace klp
 
 	bool _has_macro_undefs_or_defines_to_emit_before() const noexcept;
 
-	std::pair<raw_pp_token_index, bool>
-	_write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
-	       bool last_was_newline, const bool write_newlines_before,
+	void
+	_write(source_writer &writer, _output_state &state,
+	       const bool write_newlines_before,
 	       const pp_result &pp_result,
 	       _source_reader_cache &source_reader_cache,
 	       output_remarks &remarks) const;
@@ -390,13 +398,11 @@ namespace klp
 
 	bool has_macro_undefs_or_defines_to_emit() const noexcept;
 
-	raw_pp_token_index write(source_writer &writer,
-				 raw_pp_token_index cur_input_pos_raw,
-				 bool last_was_newline,
-				 const bool write_newlines_before,
-				 const pp_result &pp_result,
-				 _source_reader_cache &source_reader_cache,
-				 output_remarks &remarks) const;
+	void write(source_writer &writer, _output_state &state,
+		   const bool write_newlines_before,
+		   const pp_result &pp_result,
+		   _source_reader_cache &source_reader_cache,
+		   output_remarks &remarks) const;
 
       private:
 	enum class _kind
@@ -445,13 +451,12 @@ namespace klp
 
 	bool has_macro_undefs_or_defines_to_emit() const noexcept;
 
-	raw_pp_token_index write(source_writer &writer,
-				 raw_pp_token_index cur_input_pos_raw,
-				 bool last_was_newline,
-				 const bool write_newlines_before,
-				 const pp_result &pp_result,
-				 _source_reader_cache &source_reader_cache,
-				 output_remarks &remarks) const;
+	void write(source_writer &writer,
+		   _output_state &state,
+		   const bool write_newlines_before,
+		   const pp_result &pp_result,
+		   _source_reader_cache &source_reader_cache,
+		   output_remarks &remarks) const;
 
       private:
 	std::reference_wrapper<const pp_result::conditional_inclusion_node> _c;
@@ -615,34 +620,32 @@ namespace klp
 	noexcept;
       _pos_in_output _end_pos_in_output() noexcept;
 
-      static bool _write_newlines(source_writer &writer,
-				  const raw_pp_token_index last_end_raw,
+      static void _write_newlines(source_writer &writer, _output_state &state,
 				  const raw_pp_token_index next_begin_raw,
-				  const bool last_was_newline,
 				  const bool need_newline,
 				  const pp_result &pp_result,
 				  _source_reader_cache &source_reader_cache);
 
-      static void _write_directive(source_writer &writer,
+      static void _write_directive(source_writer &writer, _output_state &state,
 				   const raw_pp_tokens_range &directive_range,
 				   const pp_result &pp_result,
 				   _source_reader_cache &source_reader_cache);
-      static void _write_define(source_writer &writer,
-				const pp_result::macro &m,
+      static void _write_define(source_writer &writer, _output_state &state,
+				const _macro_define_to_emit &md,
+				const bool write_newlines_before,
 				const pp_result &pp_result,
 				_source_reader_cache &source_reader_cache,
 				output_remarks &remarks);
-      static void _write_undef(source_writer &writer,
+      static void _write_undef(source_writer &writer, _output_state &state,
 			       const _macro_undef_to_emit &mu,
+			       const bool write_newlines_before,
 			       const pp_result &pp_result,
 			       _source_reader_cache &source_reader_cache);
 
-      static raw_pp_token_index
-      _write_defines_and_undefs(source_writer &writer,
+      static void
+      _write_defines_and_undefs(source_writer &writer, _output_state &state,
 				const std::vector<_macro_define_to_emit> &mds,
 				const std::vector<_macro_undef_to_emit> &mus,
-				raw_pp_token_index cur_input_pos_raw,
-				bool last_was_newline,
 				const bool write_newlines_before,
 				const pp_result &pp_result,
 				_source_reader_cache &source_reader_cache,
@@ -676,13 +679,11 @@ namespace klp
 		(const pp_result::conditional_inclusion_node &c,
 		 const _cond_incl_transition_kind k) noexcept;
 
-      static raw_pp_token_index
+      static void
       _write_cond_incl_transition
-		(source_writer &writer,
+		(source_writer &writer, _output_state &state,
 		 const pp_result::conditional_inclusion_node &c,
 		 const _cond_incl_transition_kind k,
-		 raw_pp_token_index cur_input_pos_raw,
-		 const bool last_was_newline,
 		 const bool write_newlines_before,
 		 const pp_result &pp_result,
 		 _source_reader_cache &source_reader_cache,

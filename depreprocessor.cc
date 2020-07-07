@@ -186,6 +186,12 @@ get(const pp_result::header_inclusion_node &h)
 }
 
 
+depreprocessor::_output_state::_output_state() noexcept
+  : last_input_pos_raw(std::numeric_limits<raw_pp_token_index>::max()),
+    last_was_newline(true)
+{}
+
+
 depreprocessor::transformed_input_chunk::
 transformed_input_chunk(const pp_tokens_range &bounding_r)
   : _bounding_r(bounding_r)
@@ -1215,10 +1221,9 @@ _has_macro_undefs_or_defines_to_emit_before() const noexcept
 	   _macro_defines_to_emit.front().pos == begin_pos));
 }
 
-std::pair<raw_pp_token_index, bool> depreprocessor::transformed_input_chunk::
-_write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
-       bool last_was_newline, const bool write_newlines_before,
-       const pp_result &pp_result,
+void depreprocessor::transformed_input_chunk::
+_write(source_writer &writer, _output_state &state,
+       const bool write_newlines_before, const pp_result &pp_result,
        _source_reader_cache &source_reader_cache,
        output_remarks &remarks) const
 {
@@ -1237,23 +1242,6 @@ _write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
   auto it_md = _macro_defines_to_emit.cbegin();
   auto write_mus_and_mds_at_cur_pos =
     [&]() {
-      auto write_md =
-	[&](const _macro_define_to_emit &md) {
-	  _write_define(writer, md.m.get(), pp_result, source_reader_cache,
-			remarks);
-
-	  last_was_newline = true;
-	  skip_following_insert_ws = true;
-	};
-
-      auto write_mu =
-	[&](const _macro_undef_to_emit &mu) {
-	  _write_undef(writer, mu, pp_result, source_reader_cache);
-
-	  last_was_newline = true;
-	  skip_following_insert_ws = true;
-	};
-
       // Write in directive order, except for undefs for which a
       // corresponding define is about to get emitted at cur_pos:
       // always put these immediately in front of the #define.
@@ -1280,28 +1268,15 @@ _write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
 				    mu.mu.original->get_name() :
 				    mu.mu.name));
 			 });
-	  const raw_pp_tokens_range md_range = it_md->m.get_range_raw();
 	  if (it_matching_mu != mus_end) {
-	    if (write_newlines) {
-	      depreprocessor::_write_newlines
-		(writer, cur_input_pos_raw,
-		 it_matching_mu->mu.get_range_raw().begin,
-		 last_was_newline, true, pp_result, source_reader_cache);
-	    } else {
-	      write_newlines = true;
-	    }
-	    write_mu(it_matching_mu->mu);
+	    _write_undef(writer, state, it_matching_mu->mu, write_newlines,
+			 pp_result, source_reader_cache);
 
-	  } else if (write_newlines) {
-	    depreprocessor::_write_newlines(writer, cur_input_pos_raw,
-					    md_range.begin, last_was_newline,
-					    true, pp_result,
-					    source_reader_cache);
-	  } else {
-	    write_newlines = true;
+	    write_newlines = false;
 	  }
-	  write_md(it_md->m);
-	  cur_input_pos_raw = md_range.end;
+	  _write_define(writer, state, it_md->m, write_newlines,
+			pp_result, source_reader_cache, remarks);
+	  write_newlines = true;
 	  ++it_md;
 	}
 
@@ -1314,20 +1289,13 @@ _write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
 			   [&](const _macro_define_to_emit_in_chunk &md) {
 			     return md.m.m.get().get_name() == name;
 			   })) {
-	    const raw_pp_tokens_range mu_range = it_mu->mu.get_range_raw();
-	    if (write_newlines) {
-	      depreprocessor::_write_newlines(writer, cur_input_pos_raw,
-					      mu_range.begin, last_was_newline,
-					      true, pp_result,
-					      source_reader_cache);
-	    } else {
-	      write_newlines = true;
-	    }
-	    write_mu(it_mu->mu);
-	    cur_input_pos_raw = mu_range.end;
+	    _write_undef(writer, state, it_mu->mu, write_newlines, pp_result,
+			 source_reader_cache);
+	    write_newlines = true;
 	  }
 	  ++it_mu;
 	}
+	skip_following_insert_ws = true;
       }
     };
 
@@ -1462,11 +1430,8 @@ _write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
 
 	    if (at_beginning) {
 	      if (write_newlines) {
-		last_was_newline = _write_newlines(writer, cur_input_pos_raw,
-						   batch_range_raw.begin,
-						   last_was_newline, false,
-						   pp_result,
-						   source_reader_cache);
+		_write_newlines(writer, state, batch_range_raw.begin, false,
+				pp_result, source_reader_cache);
 	      }
 	      at_beginning = false;
 	      write_newlines = true;
@@ -1485,13 +1450,13 @@ _write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
 	    batch_range_raw.begin = copy_end;
 
 	    const raw_pp_token& last_tok = raw_toks[copy_end - 1];
-	    last_was_newline = last_tok.is_newline();
+	    state.last_input_pos_raw = copy_end;
+	    state.last_was_newline = last_tok.is_newline();
 	    skip_following_insert_ws = (last_tok.is_punctuator("(") ||
 					last_tok.is_punctuator("[") ||
 					last_tok.is_punctuator("{") ||
 					last_tok.is_ws() ||
-					last_was_newline);
-	    cur_input_pos_raw = copy_end;
+					state.last_was_newline);
 	  }
 	  cur_pos.tok = next_stop;
 
@@ -1499,11 +1464,9 @@ _write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
 	  // Copy preprocessed tokens.
 	  if (at_beginning) {
 	    if (write_newlines) {
-	      last_was_newline =
-		_write_newlines(writer, cur_input_pos_raw,
-				std::numeric_limits<raw_pp_token_index>::max(),
-				last_was_newline, false, pp_result,
-				source_reader_cache);
+	      _write_newlines(writer, state,
+			      std::numeric_limits<raw_pp_token_index>::max(),
+			      false, pp_result, source_reader_cache);
 	    }
 	    at_beginning = false;
 	    write_newlines = true;
@@ -1514,14 +1477,15 @@ _write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
 	    writer.append(pp_token::stringify(tok.get_type(), tok.get_value()));
 	    ++cur_pos.tok;
 
-	    last_was_newline = tok.is_newline();
+	    state.last_was_newline = tok.is_newline();
 	    skip_following_insert_ws = (tok.is_punctuator("(") ||
 					tok.is_punctuator("[") ||
 					tok.is_punctuator("{") ||
 					tok.is_ws() ||
-					last_was_newline);
+					state.last_was_newline);
 	  }
-	  cur_input_pos_raw = std::numeric_limits<raw_pp_token_index>::max();
+	  state.last_input_pos_raw =
+	    std::numeric_limits<raw_pp_token_index>::max();
 	  ++it_range_to_emit_expanded;
 	}
       }
@@ -1535,10 +1499,8 @@ _write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
 	  op.get_range_raw(pp_result).end;
 	if (at_beginning) {
 	  if (write_newlines) {
-	    last_was_newline =
-	      _write_newlines(writer, cur_input_pos_raw, op_range_raw.begin,
-			      last_was_newline, false, pp_result,
-			      source_reader_cache);
+	    _write_newlines(writer, state, op_range_raw.begin, false, pp_result,
+			    source_reader_cache);
 	  }
 	  write_newlines = true;
 	  at_beginning = false;
@@ -1546,18 +1508,18 @@ _write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
 
 	if (op.add_pointer_deref) {
 	  writer.append("(*" + op.new_tok.get_value() + ")");
-	  last_was_newline = false;
+	  state.last_was_newline = false;
 	  skip_following_insert_ws = false;
 	} else {
 	  writer.append(op.new_tok.get_value());
-	  last_was_newline = op.new_tok.is_newline();
+	  state.last_was_newline = op.new_tok.is_newline();
 	  skip_following_insert_ws = (op.new_tok.is_punctuator("(") ||
 				      op.new_tok.is_punctuator("[") ||
 				      op.new_tok.is_punctuator("{") ||
 				      op.new_tok.is_ws() ||
-				      last_was_newline);
+				      state.last_was_newline);
 	}
-	cur_input_pos_raw = op_range_raw.end;
+	state.last_input_pos_raw = op_range_raw.end;
       }
       break;
 
@@ -1569,23 +1531,21 @@ _write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
 	  op.get_range_raw(pp_result).end;
 	if (at_beginning) {
 	  if (write_newlines) {
-	    last_was_newline =
-	      _write_newlines(writer, cur_input_pos_raw, op_range_raw.begin,
-			      last_was_newline, false, pp_result,
-			      source_reader_cache);
+	    _write_newlines(writer, state, op_range_raw.begin, false, pp_result,
+			    source_reader_cache);
 	  }
 	  write_newlines = true;
 	  at_beginning = false;
 	}
 
 	writer.append(op.new_tok.get_value());
-	last_was_newline = op.new_tok.is_newline();
+	state.last_input_pos_raw = op_range_raw.end;
+	state.last_was_newline = op.new_tok.is_newline();
 	skip_following_insert_ws = (op.new_tok.is_punctuator("(") ||
 				    op.new_tok.is_punctuator("[") ||
 				    op.new_tok.is_punctuator("{") ||
 				    op.new_tok.is_ws() ||
-				    last_was_newline);
-	cur_input_pos_raw = op_range_raw.end;
+				    state.last_was_newline);
       }
       break;
 
@@ -1635,24 +1595,21 @@ _write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
 	}
 
 	if (!skip_insert_ws) {
-	  assert(!last_was_newline);
+	  assert(!state.last_was_newline);
 	  writer.append(" ");
-	  cur_input_pos_raw = op.get_range_raw(pp_result).end;
+	  state.last_input_pos_raw = op.get_range_raw(pp_result).end;
 	}
       }
       break;
 
     case _op::action::cond_incl_transition:
-      cur_input_pos_raw =
-	depreprocessor::_write_cond_incl_transition(writer, *op.cond_incl_node,
-						    op.cond_incl_trans_kind,
-						    cur_input_pos_raw,
-						    last_was_newline,
-						    write_newlines,
-						    pp_result,
-						    source_reader_cache,
-						    remarks);
-      last_was_newline = true;
+      depreprocessor::_write_cond_incl_transition(writer, state,
+						  *op.cond_incl_node,
+						  op.cond_incl_trans_kind,
+						  write_newlines,
+						  pp_result,
+						  source_reader_cache,
+						  remarks);
       skip_following_insert_ws = true;
       break;
 
@@ -1664,8 +1621,7 @@ _write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
 	  op.rewritten_macro_invocation->get_source_range();
 	if (at_beginning) {
 	  if (write_newlines) {
-	    _write_newlines(writer, cur_input_pos_raw, op_range_raw.begin,
-			    last_was_newline, false, pp_result,
+	    _write_newlines(writer, state, op_range_raw.begin, false, pp_result,
 			    source_reader_cache);
 	  }
 	  write_newlines = true;
@@ -1710,16 +1666,14 @@ _write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
 	  }
 	}
 
-	last_was_newline = false;
-	cur_input_pos_raw = op_range_raw.end;
+	state.last_input_pos_raw = op_range_raw.end;
+	state.last_was_newline = false;
       }
       break;
     }
 
     cur_pos = _next_pos_in_chunk(cur_pos);
   }
-
-  return std::make_pair(cur_input_pos_raw, last_was_newline);
 }
 
 
@@ -2192,27 +2146,23 @@ has_macro_undefs_or_defines_to_emit() const noexcept
   return !_macro_undefs_to_emit.empty() || !_macro_defines_to_emit.empty();
 }
 
-raw_pp_token_index depreprocessor::_header_inclusion_chunk::
-write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
-      bool last_was_newline, const bool write_newlines_before,
-      const pp_result &pp_result,
-      _source_reader_cache &source_reader_cache,
-      output_remarks &remarks) const
+void depreprocessor::_header_inclusion_chunk::
+write(source_writer &writer, _output_state &state,
+      const bool write_newlines_before, const pp_result &pp_result,
+      _source_reader_cache &source_reader_cache, output_remarks &remarks) const
 {
   bool write_newlines;
   if (has_macro_undefs_or_defines_to_emit()) {
     // First, write the needed #defines + #undefs.
-    cur_input_pos_raw =
-      depreprocessor::_write_defines_and_undefs(writer,
-						_macro_defines_to_emit,
-						_macro_undefs_to_emit,
-						cur_input_pos_raw,
-						last_was_newline,
-						write_newlines_before,
-						pp_result,
-						source_reader_cache, remarks);
-    last_was_newline = true;
-    if (cur_input_pos_raw != std::numeric_limits<raw_pp_token_index>::max()) {
+    depreprocessor::_write_defines_and_undefs(writer, state,
+					      _macro_defines_to_emit,
+					      _macro_undefs_to_emit,
+					      write_newlines_before,
+					      pp_result,
+					      source_reader_cache, remarks);
+    state.last_was_newline = true;
+    if (state.last_input_pos_raw !=
+	std::numeric_limits<raw_pp_token_index>::max()) {
       write_newlines = true;
     } else {
       // The last preprocessor directive written had been an #undef
@@ -2235,26 +2185,26 @@ write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
       const raw_pp_tokens_range &directive_range =
 	this->_child_node->get_directive_range();
       if (write_newlines) {
-	depreprocessor::_write_newlines(writer, cur_input_pos_raw,
-					directive_range.begin, last_was_newline,
+	depreprocessor::_write_newlines(writer, state, directive_range.begin,
 					true, pp_result, source_reader_cache);
       }
-      _write_directive(writer, directive_range, pp_result, source_reader_cache);
+      _write_directive(writer, state, directive_range, pp_result,
+		       source_reader_cache);
     }
     break;
 
   case _kind::k_root:
     if (write_newlines) {
-      depreprocessor::_write_newlines(writer, cur_input_pos_raw,
-				      range_raw.begin, last_was_newline,
-				      true, pp_result, source_reader_cache);
+      depreprocessor::_write_newlines(writer, state, range_raw.begin, true,
+				      pp_result, source_reader_cache);
     }
     writer.append("#include \"" + _root_node->get_filename() + "\"");
     writer.append(source_writer::newline_tag{});
     break;
   }
 
-  return range_raw.end;
+  state.last_input_pos_raw = range_raw.end;
+  state.last_was_newline = true;
 }
 
 
@@ -2311,27 +2261,23 @@ has_macro_undefs_or_defines_to_emit() const noexcept
   return !_macro_undefs_to_emit.empty() || !_macro_defines_to_emit.empty();
 }
 
-raw_pp_token_index depreprocessor::_cond_incl_transition_chunk::
-write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
-      bool last_was_newline, const bool write_newlines_before,
-      const pp_result &pp_result,
-      _source_reader_cache &source_reader_cache,
-      output_remarks &remarks) const
+void depreprocessor::_cond_incl_transition_chunk::
+write(source_writer &writer, _output_state &state,
+      const bool write_newlines_before, const pp_result &pp_result,
+      _source_reader_cache &source_reader_cache, output_remarks &remarks) const
 {
   bool write_newlines;
   if (has_macro_undefs_or_defines_to_emit()) {
     // First, write the needed #defines + #undefs.
-    cur_input_pos_raw =
-      depreprocessor::_write_defines_and_undefs(writer,
-						_macro_defines_to_emit,
-						_macro_undefs_to_emit,
-						cur_input_pos_raw,
-						last_was_newline,
-						write_newlines_before,
-						pp_result,
-						source_reader_cache, remarks);
-    last_was_newline = true;
-    if (cur_input_pos_raw != std::numeric_limits<raw_pp_token_index>::max()) {
+    depreprocessor::_write_defines_and_undefs(writer, state,
+					      _macro_defines_to_emit,
+					      _macro_undefs_to_emit,
+					      write_newlines_before,
+					      pp_result,
+					      source_reader_cache, remarks);
+    state.last_was_newline = true;
+    if (state.last_input_pos_raw !=
+	std::numeric_limits<raw_pp_token_index>::max()) {
       write_newlines = true;
     } else {
       // The last preprocessor directive written had been an #undef
@@ -2345,13 +2291,11 @@ write(source_writer &writer, raw_pp_token_index cur_input_pos_raw,
   }
 
   // And write the conditional inclusion transition.
-  return depreprocessor::_write_cond_incl_transition(writer, _c.get(), _k,
-						     cur_input_pos_raw,
-						     last_was_newline,
-						     write_newlines,
-						     pp_result,
-						     source_reader_cache,
-						     remarks);
+  depreprocessor::_write_cond_incl_transition(writer, state, _c.get(), _k,
+					      write_newlines,
+					      pp_result,
+					      source_reader_cache,
+					      remarks);
 }
 
 
@@ -2543,9 +2487,7 @@ void depreprocessor::operator()(const std::string &outfile)
   _source_reader_cache source_reader_cache;
 
   bool is_first_chunk = true;
-  raw_pp_token_index cur_input_pos_raw =
-    std::numeric_limits<raw_pp_token_index>::max();
-  bool last_was_newline = true;
+  _output_state state;
   bool write_newlines_before;
   for (auto it_c = _chunks.cbegin(); it_c != _chunks.cend(); ++it_c) {
     switch (it_c->k) {
@@ -2559,9 +2501,9 @@ void depreprocessor::operator()(const std::string &outfile)
 	if (it_c != _chunks.cbegin() && (it_c - 1)->k == it_c->k &&
 	    (it_c - 1)->tic._bounding_r == it_c->tic._bounding_r &&
 	    !it_c->tic._has_macro_undefs_or_defines_to_emit_before()) {
-	  if (!last_was_newline) {
+	  if (!state.last_was_newline) {
 	    writer.append(source_writer::newline_tag{});
-	    last_was_newline = true;
+	    state.last_was_newline = true;
 	  }
 	  write_newlines_before = false;
 	} else {
@@ -2572,10 +2514,8 @@ void depreprocessor::operator()(const std::string &outfile)
 	is_first_chunk = false;
       }
 
-      std::tie(cur_input_pos_raw, last_was_newline) =
-	it_c->tic._write(writer, cur_input_pos_raw, last_was_newline,
-			 write_newlines_before, _pp_result, source_reader_cache,
-			 _remarks);
+      it_c->tic._write(writer, state, write_newlines_before, _pp_result,
+		       source_reader_cache, _remarks);
       break;
 
     case _chunk::kind::header_inclusion:
@@ -2585,7 +2525,7 @@ void depreprocessor::operator()(const std::string &outfile)
       if (!is_first_chunk) {
 	if (it_c != _chunks.cbegin() && (it_c - 1)->k == it_c->k &&
 	    !it_c->hic.has_macro_undefs_or_defines_to_emit()) {
-	  assert(last_was_newline);
+	  assert(state.last_was_newline);
 	  write_newlines_before = false;
 	} else {
 	  write_newlines_before = true;
@@ -2595,11 +2535,8 @@ void depreprocessor::operator()(const std::string &outfile)
 	is_first_chunk = false;
       }
 
-      cur_input_pos_raw =
-	it_c->hic.write(writer, cur_input_pos_raw, last_was_newline,
-			write_newlines_before, _pp_result, source_reader_cache,
-			_remarks);
-      last_was_newline = true;
+      it_c->hic.write(writer, state, write_newlines_before, _pp_result,
+		      source_reader_cache, _remarks);
       break;
 
     case _chunk::kind::cond_incl_transition:
@@ -2609,11 +2546,9 @@ void depreprocessor::operator()(const std::string &outfile)
 	write_newlines_before = false;
 	is_first_chunk = false;
       }
-      cur_input_pos_raw =
-	it_c->cic.write(writer, cur_input_pos_raw, last_was_newline,
-			write_newlines_before, _pp_result, source_reader_cache,
-			_remarks);
-      last_was_newline = true;
+
+      it_c->cic.write(writer, state, write_newlines_before, _pp_result,
+		      source_reader_cache, _remarks);
       break;
 
     case _chunk::kind::_dead:
@@ -2623,7 +2558,7 @@ void depreprocessor::operator()(const std::string &outfile)
   }
 
   // C source files should always end with a newline.
-  if (!last_was_newline)
+  if (!state.last_was_newline)
     writer.append(source_writer::newline_tag{});
 
   writer.flush();
@@ -3536,45 +3471,48 @@ depreprocessor::_pos_in_output depreprocessor::_end_pos_in_output() noexcept
 }
 
 
-bool depreprocessor::_write_newlines(source_writer &writer,
-				     const raw_pp_token_index last_end_raw,
+void depreprocessor::_write_newlines(source_writer &writer,
+				     _output_state &state,
 				     const raw_pp_token_index next_begin_raw,
-				     const bool last_was_newline,
 				     const bool need_newline,
 				     const pp_result &pp_result,
 				     _source_reader_cache &source_reader_cache)
 {
   const raw_pp_tokens &raw_toks = pp_result.get_raw_tokens();
-  if (last_end_raw != std::numeric_limits<raw_pp_token_index>::max() &&
+  if ((state.last_input_pos_raw !=
+       std::numeric_limits<raw_pp_token_index>::max()) &&
       next_begin_raw != std::numeric_limits<raw_pp_token_index>::max() &&
-      last_end_raw <= next_begin_raw &&
-      std::all_of(raw_toks.begin() + last_end_raw,
+      state.last_input_pos_raw <= next_begin_raw &&
+      std::all_of(raw_toks.begin() + state.last_input_pos_raw,
 		  raw_toks.begin() + next_begin_raw,
 		  [](const raw_pp_token &raw_tok) {
 		    return raw_tok.is_ws() || raw_tok.is_newline();
 		  })) {
     // The next position is separated from the previous one only by
     // whitespace and newlines.
-    if (std::all_of(raw_toks.begin() + last_end_raw,
+    if (std::all_of(raw_toks.begin() + state.last_input_pos_raw,
 		    raw_toks.begin() + next_begin_raw,
 		    [](const raw_pp_token &raw_tok) {
 		      return raw_tok.is_ws();
 		    })) {
       // The next position is separated from the previous one only by
       // whitespace.
-      if (!last_was_newline && need_newline) {
+      if (!state.last_was_newline && need_newline) {
 	writer.append(source_writer::newline_tag{});
-	return true;
+	state.last_was_newline = true;
       } else {
 	// Copy the separating whitespace, if any. Note that the
 	// whitespace comes all from a single source file, thus
 	// _write_directive() can be used.
-	if (last_end_raw != next_begin_raw) {
-	  _write_directive(writer,
-			   raw_pp_tokens_range{last_end_raw, next_begin_raw},
+	if (state.last_input_pos_raw != next_begin_raw) {
+	  _write_directive(writer, state,
+			   raw_pp_tokens_range{
+			     state.last_input_pos_raw,
+			     next_begin_raw
+			   },
 			   pp_result, source_reader_cache);
 	}
-	return false;
+	state.last_was_newline = false;
       }
 
     } else {
@@ -3582,35 +3520,37 @@ bool depreprocessor::_write_newlines(source_writer &writer,
       // next position. Count them in order to determine how many to
       // emit.
       raw_pp_tokens::size_type n_newlines =
-	std::count_if(raw_toks.begin() + last_end_raw,
+	std::count_if(raw_toks.begin() + state.last_input_pos_raw,
 		      raw_toks.begin() + next_begin_raw,
 		      [](const raw_pp_token &raw_tok) {
 			return raw_tok.is_newline();
 		      });
-      n_newlines += last_was_newline;
+      n_newlines += state.last_was_newline;
 
       // Emit at most one empty line.
       n_newlines = std::min(n_newlines,
 			    static_cast<raw_pp_tokens::size_type>(2));
       if (!n_newlines && need_newline)
 	n_newlines = 1;
-      n_newlines -= last_was_newline;
+      n_newlines -= state.last_was_newline;
       for (raw_pp_tokens::size_type i = 0; i < n_newlines; ++i)
 	writer.append(source_writer::newline_tag{});
 
-      return last_was_newline || n_newlines;
+      state.last_was_newline = state.last_was_newline || n_newlines;
     }
+
+    return;
   }
 
   // Separate the previous output from the next by an empty line.
-  if (!last_was_newline)
+  if (!state.last_was_newline)
     writer.append(source_writer::newline_tag{});
   writer.append(source_writer::newline_tag{});
-  return true;
+  state.last_was_newline = true;
 }
 
 void
-depreprocessor::_write_directive(source_writer &writer,
+depreprocessor::_write_directive(source_writer &writer, _output_state &state,
 				 const raw_pp_tokens_range &directive_range,
 				 const pp_result &pp_result,
 				 _source_reader_cache &source_reader_cache)
@@ -3625,16 +3565,27 @@ depreprocessor::_write_directive(source_writer &writer,
        raw_toks[directive_range.begin].get_range_in_file().begin,
        raw_toks[directive_range.end - 1].get_range_in_file().end
      });
+  state.last_input_pos_raw = directive_range.end;
+  state.last_was_newline = raw_toks[directive_range.end - 1].is_newline();
 }
 
-void depreprocessor::_write_define(source_writer &writer,
-				   const pp_result::macro &m,
+void depreprocessor::_write_define(source_writer &writer, _output_state &state,
+				   const _macro_define_to_emit &md,
+				   const bool write_newlines_before,
 				   const pp_result &pp_result,
 				   _source_reader_cache &source_reader_cache,
 				   output_remarks &remarks)
 {
+  const raw_pp_tokens_range &md_range = md.get_range_raw();
+
+  if (write_newlines_before) {
+    _write_newlines(writer, state, md_range.begin, true,
+		    pp_result, source_reader_cache);
+  }
+
+  const pp_result::macro &m = md.m.get();
   if (!m.is_predefined()) {
-    _write_directive(writer, m.get_directive_range(), pp_result,
+    _write_directive(writer, state, m.get_directive_range(), pp_result,
 		     source_reader_cache);
   } else {
     if (!m.is_builtin_special()) {
@@ -3667,6 +3618,7 @@ void depreprocessor::_write_define(source_writer &writer,
       }
       s += '\n';
       writer.append(s);
+
     } else {
       // Ugh, something bad happend: user code #undeffed some builtin
       // special macro like __FILE__, __LINE__, __COUNTER__
@@ -3682,48 +3634,51 @@ void depreprocessor::_write_define(source_writer &writer,
       remarks.add(std::move(remark));
       writer.append("#error \"required special macro " + m.get_name() +
 		    " has been undefined before\"\n");
+      state.last_input_pos_raw = std::numeric_limits<raw_pp_token_index>::max();
+      state.last_was_newline = true;
+      return;
+
     }
   }
+
+  state.last_input_pos_raw = md_range.begin;
+  state.last_was_newline = true;
 }
 
-void depreprocessor::_write_undef(source_writer &writer,
+void depreprocessor::_write_undef(source_writer &writer, _output_state &state,
 				  const _macro_undef_to_emit &mu,
+				  const bool write_newlines_before,
 				  const pp_result &pp_result,
 				  _source_reader_cache &source_reader_cache)
 {
+  const raw_pp_tokens_range &mu_range = mu.get_range_raw();
+
+  if (write_newlines_before) {
+    _write_newlines(writer, state, mu_range.begin, true,
+		    pp_result, source_reader_cache);
+  }
+
   if (mu.original && !mu.original->is_predefined()) {
-    _write_directive(writer, mu.original->get_directive_range(), pp_result,
-		     source_reader_cache);
+    _write_directive(writer, state, mu.original->get_directive_range(),
+		     pp_result, source_reader_cache);
   } else {
     const std::string &name = mu.original ? mu.original->get_name() : mu.name;
     writer.append("#undef " + name + "\n");
   }
+
+  state.last_input_pos_raw = mu_range.end;
+  state.last_was_newline = true;
 }
 
-raw_pp_token_index depreprocessor::
-_write_defines_and_undefs(source_writer &writer,
+void depreprocessor::
+_write_defines_and_undefs(source_writer &writer, _output_state &state,
 			  const std::vector<_macro_define_to_emit> &mds,
 			  const std::vector<_macro_undef_to_emit> &mus,
-			  raw_pp_token_index cur_input_pos_raw,
-			  bool last_was_newline,
 			  const bool write_newlines_before,
 			  const pp_result &pp_result,
 			  _source_reader_cache &source_reader_cache,
 			  output_remarks &remarks)
 {
-  auto write_md =
-    [&](const _macro_define_to_emit &md) {
-    _write_define(writer, md.m.get(), pp_result, source_reader_cache,
-		  remarks);
-    last_was_newline = true;
-  };
-
-  auto write_mu =
-    [&](const _macro_undef_to_emit &mu) {
-    _write_undef(writer, mu, pp_result, source_reader_cache);
-    last_was_newline = true;
-  };
-
   bool write_newlines = write_newlines_before;
 
   // Write in directive order, except for undefs for which a
@@ -3746,27 +3701,14 @@ _write_defines_and_undefs(source_writer &writer,
 				mu.original->get_name() :
 				mu.name));
 		     });
-      const raw_pp_tokens_range md_range = it_md->get_range_raw();
       if (it_matching_mu != mus_end) {
-	if (write_newlines) {
-	  depreprocessor::_write_newlines
-	    (writer, cur_input_pos_raw,
-	     it_matching_mu->get_range_raw().begin,
-	     last_was_newline, true, pp_result, source_reader_cache);
-	} else {
-	  write_newlines = true;
-	}
-	write_mu(*it_matching_mu);
-
-      } else if (write_newlines) {
-	depreprocessor::_write_newlines(writer, cur_input_pos_raw,
-					md_range.begin, last_was_newline,
-					true, pp_result, source_reader_cache);
-      } else {
-	write_newlines = true;
+	_write_undef(writer, state, *it_matching_mu, write_newlines,
+		     pp_result, source_reader_cache);
+	write_newlines = false;
       }
-      write_md(*it_md);
-      cur_input_pos_raw = md_range.end;
+      _write_define(writer, state, *it_md, write_newlines,
+		    pp_result, source_reader_cache, remarks);
+      write_newlines = true;
       ++it_md;
     }
 
@@ -3779,22 +3721,13 @@ _write_defines_and_undefs(source_writer &writer,
 		       [&](const _macro_define_to_emit &md) {
 			 return md.m.get().get_name() == name;
 		       })) {
-	const raw_pp_tokens_range mu_range = it_mu->get_range_raw();
-	if (write_newlines) {
-	  depreprocessor::_write_newlines(writer, cur_input_pos_raw,
-					  mu_range.begin, last_was_newline,
-					  true, pp_result, source_reader_cache);
-	} else {
-	  write_newlines = true;
-	}
-	write_mu(*it_mu);
-	cur_input_pos_raw = mu_range.end;
+	_write_undef(writer, state, *it_mu, write_newlines, pp_result,
+		     source_reader_cache);
+	write_newlines = true;
       }
       ++it_mu;
     }
   }
-
-  return cur_input_pos_raw;
 }
 
 bool depreprocessor::
@@ -4088,12 +4021,11 @@ _get_cond_incl_trans_range_raw(const pp_result::conditional_inclusion_node &c,
   }
 }
 
-raw_pp_token_index depreprocessor::
+void depreprocessor::
 _write_cond_incl_transition(source_writer &writer,
+			    _output_state &state,
 			    const pp_result::conditional_inclusion_node &c,
 			    const _cond_incl_transition_kind k,
-			    raw_pp_token_index cur_input_pos_raw,
-			    const bool last_was_newline,
 			    const bool write_newlines_before,
 			    const pp_result &pp_result,
 			    _source_reader_cache &source_reader_cache,
@@ -4103,35 +4035,35 @@ _write_cond_incl_transition(source_writer &writer,
   case _cond_incl_transition_kind::enter:
     {
       if (write_newlines_before) {
-	_write_newlines(writer, cur_input_pos_raw,
-			c.get_branch_directive_range(0).begin,
-			last_was_newline, true, pp_result, source_reader_cache);
+	_write_newlines(writer, state, c.get_branch_directive_range(0).begin,
+			true, pp_result, source_reader_cache);
       }
       assert(c.has_taken_branch());
       for (auto i = 0; i < c.get_taken_branch(); ++i) {
-	_write_directive(writer, c.get_branch_directive_range(i),
+	_write_directive(writer, state, c.get_branch_directive_range(i),
 			 pp_result, source_reader_cache);
 	writer.append("#error \"klp-ccp: non-taken branch\"");
 	writer.append(source_writer::newline_tag{});
       }
       const raw_pp_tokens_range &taken_branch_range
 	= c.get_branch_directive_range(c.get_taken_branch());
-      _write_directive(writer, taken_branch_range, pp_result,
+      _write_directive(writer, state, taken_branch_range, pp_result,
 		       source_reader_cache);
-      return taken_branch_range.end;
+      state.last_input_pos_raw = taken_branch_range.end;
     }
+    break;
 
   case _cond_incl_transition_kind::leave:
     {
       assert(c.has_taken_branch());
       if (write_newlines_before) {
 	_write_newlines
-	  (writer, cur_input_pos_raw,
-	   c.get_branch_directive_range(c.get_taken_branch() + 1).begin,
-	   last_was_newline, true, pp_result, source_reader_cache);
+	  (writer, state,
+	   c.get_branch_directive_range(c.get_taken_branch() + 1).begin, true,
+	   pp_result, source_reader_cache);
       }
       for (auto i = c.get_taken_branch() + 1; i < c.nbranches(); ++i) {
-	_write_directive(writer, c.get_branch_directive_range(i),
+	_write_directive(writer, state, c.get_branch_directive_range(i),
 			 pp_result, source_reader_cache);
 	writer.append("#error \"klp-ccp: non-taken branch\"");
 	writer.append(source_writer::newline_tag{});
@@ -4145,28 +4077,33 @@ _write_cond_incl_transition(source_writer &writer,
       }
       const raw_pp_tokens_range &endif_range =
 	c.get_branch_directive_range(c.nbranches());
-      _write_directive(writer, endif_range, pp_result, source_reader_cache);
-      return endif_range.end;
+      _write_directive(writer, state, endif_range, pp_result,
+		       source_reader_cache);
+      state.last_input_pos_raw = endif_range.end;
     }
+    break;
 
   case _cond_incl_transition_kind::enter_leave:
     {
       if (write_newlines_before) {
-	_write_newlines(writer, cur_input_pos_raw,
-			c.get_branch_directive_range(0).begin,
-			last_was_newline, true, pp_result, source_reader_cache);
+	_write_newlines(writer, state, c.get_branch_directive_range(0).begin,
+			true, pp_result, source_reader_cache);
       }
       assert(!c.has_taken_branch());
       for (auto i = 0; i < c.nbranches(); ++i) {
-	_write_directive(writer, c.get_branch_directive_range(i),
+	_write_directive(writer, state, c.get_branch_directive_range(i),
 			 pp_result, source_reader_cache);
 	writer.append("#error \"klp-ccp: non-taken branch\"");
 	writer.append(source_writer::newline_tag{});
       }
       const raw_pp_tokens_range &endif_range =
 	c.get_branch_directive_range(c.nbranches());
-      _write_directive(writer, endif_range, pp_result, source_reader_cache);
-      return endif_range.end;
+      _write_directive(writer, state, endif_range, pp_result,
+		       source_reader_cache);
+      state.last_input_pos_raw = endif_range.end;
     }
+    break;
   }
+
+  state.last_was_newline = true;
 }
