@@ -1,3 +1,4 @@
+/* klp-ccp: from testsuite/ccp/macros-27.c */
 static int (*klpe_espr_i);
 
 void klpp_pu_f(void)

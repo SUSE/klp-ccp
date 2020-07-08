@@ -1,3 +1,4 @@
+/* klp-ccp: from testsuite/ccp/macros-11.c */
 #define A
 
 #include "macros-11.h"

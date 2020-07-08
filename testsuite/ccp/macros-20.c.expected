@@ -1,5 +1,7 @@
+/* klp-ccp: from testsuite/ccp/macros-20.c */
 #define FOO()
 
+/* klp-ccp: from testsuite/ccp/macros-20.h */
 #if defined(G)
 #error "klp-ccp: non-taken branch"
 #elif defined(FOO)
@@ -11,7 +13,10 @@ static void G(void);
 #else
 #error "klp-ccp: a preceeding branch should have been taken"
 #endif
+
+/* klp-ccp: not from file */
 #undef G
+/* klp-ccp: from testsuite/ccp/macros-20.c */
 #include "macros-20.h"
 
 void klpp_pu_f(void)

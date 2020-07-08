@@ -1,3 +1,4 @@
+/* klp-ccp: from testsuite/ccp/fun-closure-9.h */
 static void* ee_g(void);
 
 void *ee_j(void);
@@ -14,6 +15,7 @@ void *ee_g(void)
 	return &ee_h;
 }
 
+/* klp-ccp: from testsuite/ccp/fun-closure-9.c */
 void klpp_pu_f(void)
 {
 	ee_g();

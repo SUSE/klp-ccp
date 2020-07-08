@@ -1,3 +1,4 @@
+/* klp-ccp: from testsuite/ccp/tag-defs-8.c */
 struct A
 {
 	enum B

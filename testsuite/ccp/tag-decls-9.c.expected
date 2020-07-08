@@ -1,3 +1,4 @@
+/* klp-ccp: from testsuite/ccp/tag-decls-9.c */
 enum unneeded_container
 {
 	uc0 = sizeof(struct A*),

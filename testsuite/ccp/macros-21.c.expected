@@ -1,7 +1,9 @@
+/* klp-ccp: from testsuite/ccp/macros-21.h */
 #define FOO int
 
 static FOO g(void);
 
+/* klp-ccp: from testsuite/ccp/macros-21.c */
 #include "macros-21.h"
 
 #define FOO void

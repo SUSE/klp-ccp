@@ -1,3 +1,4 @@
+/* klp-ccp: from testsuite/ccp/macros-4.c */
 #define B(a) # a
 
 void klpp_pu_f(void)

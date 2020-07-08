@@ -1,2 +1,3 @@
+/* klp-ccp: from testsuite/ccp/tag-decls-3.c */
 struct A* klpp_pu_f(struct A*)
 {}

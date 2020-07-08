@@ -1,11 +1,9 @@
+/* klp-ccp: from testsuite/ccp/macros-9.c */
 #define A
-
 #define B
-
 #define C
 
 #define __str(a) #a
-
 #define str(a) __str(|a|)
 
 void klpp_pu_f(void)

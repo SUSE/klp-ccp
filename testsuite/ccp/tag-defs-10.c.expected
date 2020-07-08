@@ -1,3 +1,4 @@
+/* klp-ccp: from testsuite/ccp/tag-defs-10.c */
 typedef struct A
 {
 	int a;

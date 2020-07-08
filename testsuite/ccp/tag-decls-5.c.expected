@@ -1,3 +1,4 @@
+/* klp-ccp: from testsuite/ccp/tag-decls-5.c */
 struct A;
 
 void klpp_pu_f(void)

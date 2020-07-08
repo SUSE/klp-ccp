@@ -1,8 +1,11 @@
+/* klp-ccp: from testsuite/ccp/macros-19.h */
 #define G g
 
 static void G(void);
 
+/* klp-ccp: not from file */
 #undef G
+/* klp-ccp: from testsuite/ccp/macros-19.c */
 #include "macros-19.h"
 
 void klpp_pu_f(void)

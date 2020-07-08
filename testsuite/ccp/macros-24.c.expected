@@ -1,3 +1,4 @@
+/* klp-ccp: from testsuite/ccp/macros-24.c */
 #define READ_ONCE(x) (*(volatile typeof(x) *)(x))
 
 static int (*klpe_espr_i);

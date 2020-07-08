@@ -1,3 +1,4 @@
+/* klp-ccp: from testsuite/ccp/tag-decls-7.c */
 struct unneeded_container
 {
 	struct A *a;

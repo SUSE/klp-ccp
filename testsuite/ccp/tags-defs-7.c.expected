@@ -1,4 +1,3 @@
-/* klp-ccp: from testsuite/ccp/tag-defs-7.c */
 struct A
 {
 	struct B

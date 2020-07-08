@@ -1,7 +1,7 @@
+/* klp-ccp: from testsuite/ccp/macros-14.c */
 #define s hello
 
 #define __str(a) #a
-
 #define str(a) __str(a)
 
 static void g(void)
@@ -10,6 +10,7 @@ static void g(void)
 }
 
 #undef s
+
 void klpp_pu_f(void)
 {
 	g();

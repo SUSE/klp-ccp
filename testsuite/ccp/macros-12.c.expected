@@ -1,3 +1,4 @@
+/* klp-ccp: from testsuite/ccp/macros-12.c */
 #define VOID void
 
 static VOID (*klpe_espr_g)(void);

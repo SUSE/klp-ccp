@@ -1,3 +1,4 @@
+/* klp-ccp: from testsuite/ccp/tag-defs-9.c */
 typedef struct A td_a;
 
 static void klpp_ps_f(td_a *)

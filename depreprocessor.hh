@@ -82,6 +82,7 @@ namespace klp
       {
 	_output_state() noexcept;
 
+	const pp_result::header_inclusion_node *last_input_file;
 	raw_pp_token_index last_input_pos_raw;
 	bool last_was_newline;
       };
@@ -619,6 +620,9 @@ namespace klp
       _chunk_pos_in_output(const _chunks_type::iterator &it_chunk)
 	noexcept;
       _pos_in_output _end_pos_in_output() noexcept;
+
+      static void _set_input_file(source_writer &writer, _output_state &state,
+				  const pp_result::header_inclusion_node *h);
 
       static void _write_newlines(source_writer &writer, _output_state &state,
 				  const raw_pp_token_index next_begin_raw,

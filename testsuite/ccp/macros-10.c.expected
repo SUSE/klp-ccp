@@ -1,5 +1,7 @@
+/* klp-ccp: from testsuite/ccp/macros-10.h */
 static void g(void);
 
+/* klp-ccp: from testsuite/ccp/macros-10.c */
 #define A "macros-10.h"
 
 #include A

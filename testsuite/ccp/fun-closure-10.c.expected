@@ -1,3 +1,4 @@
+/* klp-ccp: from testsuite/ccp/fun-closure-10.c */
 int klpp_pu_f(void)
 {
 	g();

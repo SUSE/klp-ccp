@@ -1,3 +1,4 @@
+/* klp-ccp: from testsuite/ccp/macros-23.c */
 #define void() int
 
 static void() g(void)

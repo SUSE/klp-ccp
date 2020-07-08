@@ -187,7 +187,8 @@ get(const pp_result::header_inclusion_node &h)
 
 
 depreprocessor::_output_state::_output_state() noexcept
-  : last_input_pos_raw(std::numeric_limits<raw_pp_token_index>::max()),
+  : last_input_file(nullptr),
+    last_input_pos_raw(std::numeric_limits<raw_pp_token_index>::max()),
     last_was_newline(true)
 {}
 
@@ -1345,12 +1346,24 @@ _write(source_writer &writer, _output_state &state,
   auto advance_source_to =
     [&](const raw_pp_token_index raw_index) {
       assert(raw_index >= cur_source_range.begin);
-      while (cur_source_range.end <= raw_index) {
-	it_source = it_source_next;
-	assert(it_source != sources_end);
-	++it_source_next;
-	cur_source_range.begin = cur_source_range.end;
-	cur_source_range.end = get_cur_source_end();
+      if (raw_index != range_raw.end) {
+	while (cur_source_range.end <= raw_index) {
+	  it_source = it_source_next;
+	  assert(it_source != sources_end);
+	  ++it_source_next;
+	  cur_source_range.begin = cur_source_range.end;
+	  cur_source_range.end = get_cur_source_end();
+	}
+      } else {
+	// Insertion op at end of transformed_input_chunk. Skip to the
+	// last input file.
+	while (it_source_next != sources_end) {
+	  it_source = it_source_next;
+	  ++it_source_next;
+	  cur_source_range.begin = cur_source_range.end;
+	  cur_source_range.end = get_cur_source_end();
+	}
+	assert(cur_source_range.end == raw_index);
       }
     };
 
@@ -1438,6 +1451,7 @@ _write(source_writer &writer, _output_state &state,
 	    }
 
 	    advance_source_to(batch_range_raw.begin);
+	    _set_input_file(writer, state, &*it_source);
 	    copy_end = std::min(cur_source_range.end, copy_end);
 	    assert(copy_end != batch_range_raw.begin);
 	    const raw_pp_tokens &raw_toks = pp_result.get_raw_tokens();
@@ -1474,6 +1488,13 @@ _write(source_writer &writer, _output_state &state,
 	  const pp_tokens &toks = pp_result.get_pp_tokens();
 	  while (cur_pos.tok != it_range_to_emit_expanded->end) {
 	    const pp_token &tok = toks[cur_pos.tok];
+	    const raw_pp_tokens_range tok_range_raw =
+	      pp_result.pp_tokens_range_to_raw(pp_tokens_range{
+							cur_pos.tok,
+							cur_pos.tok + 1
+					       });
+	    advance_source_to(tok_range_raw.begin);
+	    _set_input_file(writer, state, &*it_source);
 	    writer.append(pp_token::stringify(tok.get_type(), tok.get_value()));
 	    ++cur_pos.tok;
 
@@ -1495,8 +1516,7 @@ _write(source_writer &writer, _output_state &state,
       {
 	write_mus_and_mds_at_cur_pos();
 
-	const raw_pp_tokens_range op_range_raw =
-	  op.get_range_raw(pp_result).end;
+	const raw_pp_tokens_range op_range_raw = op.get_range_raw(pp_result);
 	if (at_beginning) {
 	  if (write_newlines) {
 	    _write_newlines(writer, state, op_range_raw.begin, false, pp_result,
@@ -1505,6 +1525,9 @@ _write(source_writer &writer, _output_state &state,
 	  write_newlines = true;
 	  at_beginning = false;
 	}
+
+	advance_source_to(op_range_raw.begin);
+	_set_input_file(writer, state, &*it_source);
 
 	if (op.add_pointer_deref) {
 	  writer.append("(*" + op.new_tok.get_value() + ")");
@@ -1527,8 +1550,7 @@ _write(source_writer &writer, _output_state &state,
       {
 	write_mus_and_mds_at_cur_pos();
 
-	const raw_pp_tokens_range op_range_raw =
-	  op.get_range_raw(pp_result).end;
+	const raw_pp_tokens_range op_range_raw = op.get_range_raw(pp_result);
 	if (at_beginning) {
 	  if (write_newlines) {
 	    _write_newlines(writer, state, op_range_raw.begin, false, pp_result,
@@ -1537,6 +1559,9 @@ _write(source_writer &writer, _output_state &state,
 	  write_newlines = true;
 	  at_beginning = false;
 	}
+
+	advance_source_to(op_range_raw.begin);
+	_set_input_file(writer, state, &*it_source);
 
 	writer.append(op.new_tok.get_value());
 	state.last_input_pos_raw = op_range_raw.end;
@@ -1631,6 +1656,7 @@ _write(source_writer &writer, _output_state &state,
 	// All the tokens from a macro invocation come from a single
 	// file.
 	advance_source_to(op_range_raw.begin);
+	_set_input_file(writer, state, &*it_source);
 	source_reader &sr = source_reader_cache.get(*it_source);
 
 	const _op::replaced_macro_arg_toks_type &replaced_arg_toks
@@ -3471,6 +3497,21 @@ depreprocessor::_pos_in_output depreprocessor::_end_pos_in_output() noexcept
 }
 
 
+void depreprocessor::_set_input_file(source_writer &writer,
+				     _output_state &state,
+				     const pp_result::header_inclusion_node *h)
+{
+  if (state.last_input_file != h) {
+    assert(state.last_was_newline);
+    if (h)
+      writer.append("/* klp-ccp: from " + h->get_filename() + " */");
+    else
+      writer.append("/* klp-ccp: not from file */");
+    writer.append(source_writer::newline_tag{});
+    state.last_input_file = h;
+  }
+}
+
 void depreprocessor::_write_newlines(source_writer &writer,
 				     _output_state &state,
 				     const raw_pp_token_index next_begin_raw,
@@ -3559,6 +3600,7 @@ depreprocessor::_write_directive(source_writer &writer, _output_state &state,
   assert(it_source !=  pp_result.intersecting_sources_end(directive_range));
   source_reader &reader = source_reader_cache.get(*it_source);
   const raw_pp_tokens &raw_toks = pp_result.get_raw_tokens();
+  _set_input_file(writer, state, &*it_source);
   writer.append
     (reader,
      range_in_file{
@@ -3588,6 +3630,7 @@ void depreprocessor::_write_define(source_writer &writer, _output_state &state,
     _write_directive(writer, state, m.get_directive_range(), pp_result,
 		     source_reader_cache);
   } else {
+    _set_input_file(writer, state, nullptr);
     if (!m.is_builtin_special()) {
       std::string s = "#define " + m.get_name();
       if (m.is_func_like()) {
@@ -3619,6 +3662,9 @@ void depreprocessor::_write_define(source_writer &writer, _output_state &state,
       s += '\n';
       writer.append(s);
 
+      state.last_input_pos_raw = md_range.begin;
+      state.last_was_newline = true;
+
     } else {
       // Ugh, something bad happend: user code #undeffed some builtin
       // special macro like __FILE__, __LINE__, __COUNTER__
@@ -3636,13 +3682,8 @@ void depreprocessor::_write_define(source_writer &writer, _output_state &state,
 		    " has been undefined before\"\n");
       state.last_input_pos_raw = std::numeric_limits<raw_pp_token_index>::max();
       state.last_was_newline = true;
-      return;
-
     }
   }
-
-  state.last_input_pos_raw = md_range.begin;
-  state.last_was_newline = true;
 }
 
 void depreprocessor::_write_undef(source_writer &writer, _output_state &state,
@@ -3663,11 +3704,11 @@ void depreprocessor::_write_undef(source_writer &writer, _output_state &state,
 		     pp_result, source_reader_cache);
   } else {
     const std::string &name = mu.original ? mu.original->get_name() : mu.name;
+    _set_input_file(writer, state, nullptr);
     writer.append("#undef " + name + "\n");
+    state.last_input_pos_raw = mu_range.end;
+    state.last_was_newline = true;
   }
-
-  state.last_input_pos_raw = mu_range.end;
-  state.last_was_newline = true;
 }
 
 void depreprocessor::

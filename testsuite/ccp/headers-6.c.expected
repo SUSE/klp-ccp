@@ -1,14 +1,13 @@
+/* klp-ccp: from testsuite/ccp/headers-6.c */
 static
+/* klp-ccp: from testsuite/ccp/headers-6-internal.h */
 void
-
 #include "headers-6-1.h"
-
 (void)
-
 #include "headers-6-2.h"
-
 }
 
+/* klp-ccp: from testsuite/ccp/headers-6.c */
 void klpp_pu_f(void)
 {
 	g();

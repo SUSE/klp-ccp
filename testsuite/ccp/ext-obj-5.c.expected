@@ -1,3 +1,4 @@
+/* klp-ccp: from testsuite/ccp/ext-obj-5.c */
 extern char ee_o[4];
 
 void klpp_pu_f(void)

@@ -1,3 +1,4 @@
+/* klp-ccp: from testsuite/ccp/ext-obj-9.c */
 int a;
 
 static void klpp_ps_f(void)

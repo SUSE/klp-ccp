@@ -1,7 +1,6 @@
+/* klp-ccp: from testsuite/ccp/headers-5.c */
 static void
-
 #include "headers-5.h"
-
 i(void)
 {}
 

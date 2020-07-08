@@ -1,3 +1,4 @@
+/* klp-ccp: from testsuite/ccp/tag-defs-4.c */
 enum A
 {
 	a_a,

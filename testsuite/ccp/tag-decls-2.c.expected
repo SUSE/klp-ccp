@@ -1,3 +1,4 @@
+/* klp-ccp: from testsuite/ccp/tag-decls-2.c */
 enum A;
 
 void klpp_pu_f(enum A*)

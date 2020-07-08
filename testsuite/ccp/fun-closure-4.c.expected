@@ -1,5 +1,7 @@
+/* klp-ccp: from testsuite/ccp/fun-closure-4.h */
 static void ee_g(void);
 
+/* klp-ccp: from testsuite/ccp/fun-closure-4.c */
 #include "fun-closure-4.h"
 
 void klpp_pu_f(void)

@@ -1,5 +1,5 @@
+/* klp-ccp: from testsuite/ccp/macros-7.c */
 #define A() 0
-
 #define B() +
 
 void klpp_pu_f(void)

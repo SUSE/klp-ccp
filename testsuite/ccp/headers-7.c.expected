@@ -1,3 +1,4 @@
+/* klp-ccp: from testsuite/ccp/headers-7.c */
 void h(void);
 
 #include "headers-7.h"
