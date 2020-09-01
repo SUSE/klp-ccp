@@ -280,27 +280,37 @@ void user_policy_command::instance::wait()
   assert(_pid != -1);
 
   while (_stdout_fd != -1 || _stdout_fd != -1) {
-    int nfds = 0;
+    int nfds;
     fd_set readfds;
-    FD_ZERO(&readfds);
 
-    if (_stdout_fd != -1) {
-      if (_stdout_fd > nfds)
-	nfds = _stdout_fd;
-      FD_SET(_stdout_fd, &readfds);
-    }
-    if (_stderr_fd != -1) {
-      if (_stderr_fd > nfds)
-	nfds = _stderr_fd;
-      FD_SET(_stderr_fd, &readfds);
-    }
-    ++nfds;
+    while (true) {
+      nfds = 0;
+      FD_ZERO(&readfds);
 
-    if (select(nfds, &readfds, nullptr, nullptr, nullptr) < 0) {
-      throw std::system_error{
-	      errno, std::system_category(),
+      if (_stdout_fd != -1) {
+	if (_stdout_fd > nfds)
+	  nfds = _stdout_fd;
+	FD_SET(_stdout_fd, &readfds);
+      }
+      if (_stderr_fd != -1) {
+	if (_stderr_fd > nfds)
+	  nfds = _stderr_fd;
+	FD_SET(_stderr_fd, &readfds);
+      }
+      ++nfds;
+
+      if (select(nfds, &readfds, nullptr, nullptr, nullptr) < 0) {
+	if (errno == EINTR) {
+	  errno = 0;
+	} else {
+	  throw std::system_error{
+	    errno, std::system_category(),
 	      "failed to wait for output from \"" + _argv[0] + "\""
-	    };
+	  };
+	}
+      } else {
+	break;
+      }
     }
 
     if (FD_ISSET(_stdout_fd, &readfds)) {
