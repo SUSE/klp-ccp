@@ -7095,6 +7095,7 @@ void _lp_deps_resolver::operator()()
 	      it_sour->parent.k != tag_parent::kind::k_enum_def) {
 	    assert(it_sour->sour.get_decl_list_node().is_visible_from(dn));
 	    it_sour->emit_tag_decl = true;
+	    break;
 	  }
 	}
       }
@@ -7137,6 +7138,7 @@ void _lp_deps_resolver::operator()()
 	      it_er->parent.k != tag_parent::kind::k_enum_def) {
 	    assert(it_er->er.get_decl_list_node().is_visible_from(dn));
 	    it_er->emit_tag_decl = true;
+	    break;
 	  }
 	}
       }
