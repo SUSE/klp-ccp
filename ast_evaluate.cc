@@ -6561,7 +6561,7 @@ void expr_string_literal::evaluate_type(ast &a, const target &tgt)
 
 void expr_parenthesized::evaluate_type(ast&, const target&)
 {
-  if (_e.is_constexpr())
+  if (_e.is_constexpr() || _e.is_dereferenced_const_addr())
     _set_value(_e.get_constexpr_value().clone());
   _set_type(_e.get_type());
   _set_lvalue(_e.is_lvalue());
