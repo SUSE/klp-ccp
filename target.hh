@@ -155,9 +155,6 @@ namespace klp
       get_float_exponent_width(const types::float_type::kind k)
 	const noexcept = 0;
 
-      virtual types::float_type::kind
-      float_mode_to_float_kind(const float_mode_kind m) const noexcept = 0;
-
       virtual types::std_int_type::kind get_ptrdiff_kind() const noexcept = 0;
 
       virtual mpa::limbs::size_type get_biggest_alignment_log2()

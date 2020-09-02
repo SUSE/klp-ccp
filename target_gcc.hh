@@ -418,6 +418,9 @@ namespace klp
       virtual types::std_int_type::kind
       _int_mode_to_std_int_kind(const int_mode_kind m) const noexcept = 0;
 
+      virtual types::float_type::kind
+      _float_mode_to_float_kind(const float_mode_kind m) const noexcept = 0;
+
       virtual int_mode_kind _get_pointer_mode() const noexcept = 0;
 
       virtual int_mode_kind _get_word_mode() const noexcept = 0;

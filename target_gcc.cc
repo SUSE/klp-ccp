@@ -2527,7 +2527,7 @@ apply_to_type(std::shared_ptr<const types::addressable_type> &&orig_t) const
 	 }
 
 	 return (types::real_float_type::create
-		 (_tgt.float_mode_to_float_kind(_fmk), rft->get_qualifiers()));
+		 (_tgt._float_mode_to_float_kind(_fmk), rft->get_qualifiers()));
        },
        [&](std::shared_ptr<const types::pointer_type> &&pt)
 		-> std::shared_ptr<const types::addressable_type> {

@@ -53,9 +53,6 @@ namespace klp
       get_float_exponent_width(const types::float_type::kind k)
 	const noexcept override;
 
-      virtual types::float_type::kind
-      float_mode_to_float_kind(const float_mode_kind m) const noexcept override;
-
       virtual mpa::limbs::size_type get_biggest_alignment_log2()
 	const noexcept override;
 
@@ -87,6 +84,10 @@ namespace klp
     private:
       virtual types::std_int_type::kind
       _int_mode_to_std_int_kind(const int_mode_kind m) const noexcept override;
+
+      virtual types::float_type::kind
+      _float_mode_to_float_kind(const float_mode_kind m)
+	const noexcept override;
 
       virtual int_mode_kind _get_pointer_mode() const noexcept override;
 

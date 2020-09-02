@@ -351,22 +351,6 @@ get_float_exponent_width(const types::float_type::kind k)
   };
 }
 
-types::float_type::kind target_x86_64_gcc::
-float_mode_to_float_kind(const float_mode_kind m) const noexcept
-{
-  switch (m) {
-  case float_mode_kind::fmk_none:
-    assert(0);
-    __builtin_unreachable();
-
-  case float_mode_kind::fmk_SF:
-    return types::float_type::kind::k_float;
-
-  case float_mode_kind::fmk_DF:
-    return types::float_type::kind::k_double;
-  }
-}
-
 mpa::limbs::size_type target_x86_64_gcc::get_biggest_alignment_log2()
   const noexcept
 {
@@ -436,6 +420,22 @@ target_x86_64_gcc::_int_mode_to_std_int_kind(const int_mode_kind m)
 
   case int_mode_kind::imk_TI:
     return types::std_int_type::kind::k_int128;
+  }
+}
+
+types::float_type::kind target_x86_64_gcc::
+_float_mode_to_float_kind(const float_mode_kind m) const noexcept
+{
+  switch (m) {
+  case float_mode_kind::fmk_none:
+    assert(0);
+    __builtin_unreachable();
+
+  case float_mode_kind::fmk_SF:
+    return types::float_type::kind::k_float;
+
+  case float_mode_kind::fmk_DF:
+    return types::float_type::kind::k_double;
   }
 }
 
