@@ -42,13 +42,6 @@ namespace klp
     class preprocessor;
     class execution_charset_encoder;
 
-    enum class float_mode_kind
-    {
-      fmk_none,
-      fmk_SF,
-      fmk_DF,
-    };
-
     class target
     {
     public:

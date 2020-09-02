@@ -409,6 +409,13 @@ namespace klp
 	imk_TI,
       };
 
+      enum class float_mode_kind
+      {
+	fmk_none,
+	fmk_SF,
+	fmk_DF,
+      };
+
       static mpa::limbs::size_type _int_mode_to_width(const int_mode_kind m)
 	noexcept;
 
