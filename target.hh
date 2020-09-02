@@ -42,19 +42,6 @@ namespace klp
     class preprocessor;
     class execution_charset_encoder;
 
-    enum class int_mode_kind
-    {
-      imk_none,
-      imk_QI,
-      imk_HI,
-      imk_SI,
-      imk_DI,
-      imk_TI,
-    };
-
-    mpa::limbs::size_type int_mode_to_width(const int_mode_kind m) noexcept;
-    int_mode_kind width_to_int_mode(const mpa::limbs::size_type w);
-
     enum class float_mode_kind
     {
       fmk_none,

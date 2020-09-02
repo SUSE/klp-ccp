@@ -398,6 +398,23 @@ namespace klp
 
       virtual void _arch_register_builtin_macros(preprocessor &pp) const = 0;
 
+    protected:
+      enum class int_mode_kind
+      {
+	imk_none,
+	imk_QI,
+	imk_HI,
+	imk_SI,
+	imk_DI,
+	imk_TI,
+      };
+
+      static mpa::limbs::size_type _int_mode_to_width(const int_mode_kind m)
+	noexcept;
+
+    private:
+      static int_mode_kind _width_to_int_mode(const mpa::limbs::size_type w);
+
       virtual types::std_int_type::kind
       _int_mode_to_std_int_kind(const int_mode_kind m) const noexcept = 0;
 

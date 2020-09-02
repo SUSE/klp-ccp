@@ -2834,7 +2834,7 @@ bool target_gcc::is_char_signed() const noexcept
 types::std_int_type::kind
 target_gcc::width_to_std_int_kind(const mpa::limbs::size_type w) const
 {
-  return this->_int_mode_to_std_int_kind(width_to_int_mode(w));
+  return this->_int_mode_to_std_int_kind(_width_to_int_mode(w));
 }
 
 types::std_int_type::kind target_gcc::get_ptrdiff_kind() const noexcept
@@ -2906,6 +2906,49 @@ layout_union(ast::ast &a,
     soud_asl_after->for_each_attribute(aaf);
 
   this->_layout_union(souc, aaf.grab_result());
+}
+
+mpa::limbs::size_type target_gcc::_int_mode_to_width(const int_mode_kind m)
+  noexcept
+{
+  switch (m) {
+  case int_mode_kind::imk_none:
+    assert(0);
+    __builtin_unreachable();
+
+  case int_mode_kind::imk_QI:
+    return 8;
+
+  case int_mode_kind::imk_HI:
+    return 16;
+
+  case int_mode_kind::imk_SI:
+    return 32;
+
+  case int_mode_kind::imk_DI:
+    return 64;
+
+  case int_mode_kind::imk_TI:
+    return 128;
+  }
+}
+
+target_gcc::int_mode_kind
+target_gcc::_width_to_int_mode(const mpa::limbs::size_type w)
+{
+  if (w > 128) {
+    throw std::overflow_error("no mode for integer width");
+  } else if (w > 64) {
+    return int_mode_kind::imk_TI;
+  } else if (w > 32) {
+    return int_mode_kind::imk_DI;
+  } else if (w > 16) {
+    return int_mode_kind::imk_SI;
+  } else if (w > 8) {
+    return int_mode_kind::imk_HI;
+  } else {
+    return int_mode_kind::imk_QI;
+  }
 }
 
 void target_gcc::_init_options_struct() noexcept

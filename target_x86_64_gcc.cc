@@ -439,12 +439,12 @@ target_x86_64_gcc::_int_mode_to_std_int_kind(const int_mode_kind m)
   }
 }
 
-int_mode_kind target_x86_64_gcc::_get_pointer_mode() const noexcept
+target_gcc::int_mode_kind target_x86_64_gcc::_get_pointer_mode() const noexcept
 {
   return int_mode_kind::imk_DI;
 }
 
-int_mode_kind target_x86_64_gcc::_get_word_mode() const noexcept
+target_gcc::int_mode_kind target_x86_64_gcc::_get_word_mode() const noexcept
 {
   return int_mode_kind::imk_DI;
 }
@@ -462,7 +462,7 @@ _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
   mpa::limbs::size_type width = 0;
 
   if (mode != int_mode_kind::imk_none)
-      width = int_mode_to_width(mode);
+      width = _int_mode_to_width(mode);
 
   ec.for_each_member
     ([&](const types::enum_content::member &m) {
