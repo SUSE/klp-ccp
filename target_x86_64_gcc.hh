@@ -122,9 +122,6 @@ namespace klp
       virtual bool is_pid_t_signed() const noexcept override;
 
     private:
-      static types::std_int_type::kind
-      _width_to_int_kind(const mpa::limbs::size_type w) noexcept;
-
       virtual const gcc_cmdline_parser::option *
       _arch_get_opt_table() const noexcept override;
 

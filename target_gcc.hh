@@ -113,6 +113,9 @@ namespace klp
 
       virtual bool is_char_signed() const noexcept final;
 
+      virtual types::std_int_type::kind
+      width_to_std_int_kind(const mpa::limbs::size_type w) const override;
+
       virtual void
       evaluate_enum_type(ast::ast &a,
 			 const std::function<void(ast::expr&)> &eval_expr,

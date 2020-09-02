@@ -6439,9 +6439,9 @@ void expr_constant::evaluate_type(ast &a, const target &tgt)
   const mpa::limbs::size_type req_width =
     (!is_unsigned && b == base::dec) ? m.fls() + 1 : m.fls();
 
-  int_mode_kind int_mode;
+  std_int_type::kind min_kind;
   try {
-    int_mode = width_to_int_mode(req_width);
+    min_kind = tgt.width_to_std_int_kind(req_width);
   } catch (const std::overflow_error &) {
     code_remark remark (code_remark::severity::fatal,
 			"integer constant overflow",
@@ -6450,7 +6450,6 @@ void expr_constant::evaluate_type(ast &a, const target &tgt)
     throw semantic_except(remark);
   }
 
-  const std_int_type::kind min_kind = tgt.int_mode_to_std_int_kind(int_mode);
   if (k < min_kind)
     k = min_kind;
   const mpa::limbs::size_type width = tgt.get_std_int_width(k);

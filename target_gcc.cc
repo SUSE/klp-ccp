@@ -259,60 +259,59 @@ void target_gcc::parse_command_line
 
 namespace
 {
+  template<unsigned int w, bool is_signed>
+  static std::shared_ptr<const types::addressable_type>
+  __mk_iN(const target &tgt)
+  {
+    return types::std_int_type::create(tgt.width_to_std_int_kind(w), is_signed);
+  }
+
   static std::shared_ptr<const types::addressable_type>
   _mk_i8(const target &tgt)
   {
-    const int_mode_kind m = width_to_int_mode(8);
-    return types::std_int_type::create(tgt.int_mode_to_std_int_kind(m), true);
+    return __mk_iN<8, true>(tgt);
   }
 
   static std::shared_ptr<const types::addressable_type>
   _mk_i16(const target &tgt)
   {
-    const int_mode_kind m = width_to_int_mode(16);
-    return types::std_int_type::create(tgt.int_mode_to_std_int_kind(m), true);
+    return __mk_iN<16, true>(tgt);
   }
 
   static std::shared_ptr<const types::addressable_type>
   _mk_u16(const target &tgt)
   {
-    const int_mode_kind m = width_to_int_mode(16);
-    return types::std_int_type::create(tgt.int_mode_to_std_int_kind(m), false);
+    return __mk_iN<16, false>(tgt);
   }
 
   static std::shared_ptr<const types::addressable_type>
   _mk_i32(const target &tgt)
   {
-    const int_mode_kind m = width_to_int_mode(32);
-    return types::std_int_type::create(tgt.int_mode_to_std_int_kind(m), true);
+    return __mk_iN<32, true>(tgt);
   }
 
   static std::shared_ptr<const types::addressable_type>
   _mk_u32(const target &tgt)
   {
-    const int_mode_kind m = width_to_int_mode(32);
-    return types::std_int_type::create(tgt.int_mode_to_std_int_kind(m), false);
+    return __mk_iN<32, false>(tgt);
   }
 
   static std::shared_ptr<const types::addressable_type>
   _mk_i64(const target &tgt)
   {
-    const int_mode_kind m = width_to_int_mode(64);
-    return types::std_int_type::create(tgt.int_mode_to_std_int_kind(m), true);
+    return __mk_iN<64, true>(tgt);
   }
 
   static std::shared_ptr<const types::addressable_type>
   _mk_u64(const target &tgt)
   {
-    const int_mode_kind m = width_to_int_mode(64);
-    return types::std_int_type::create(tgt.int_mode_to_std_int_kind(m), false);
+    return __mk_iN<64, false>(tgt);
   }
 
   static std::shared_ptr<const types::addressable_type>
   _mk_i128(const target &tgt)
   {
-    const int_mode_kind m = width_to_int_mode(128);
-    return types::std_int_type::create(tgt.int_mode_to_std_int_kind(m), true);
+    return __mk_iN<128, true>(tgt);
   }
 
   static std::shared_ptr<const types::addressable_type>
@@ -2830,6 +2829,12 @@ evaluate_attributes(ast::ast &a,
 bool target_gcc::is_char_signed() const noexcept
 {
   return _opts_c_family.flag_signed_char;
+}
+
+types::std_int_type::kind
+target_gcc::width_to_std_int_kind(const mpa::limbs::size_type w) const
+{
+  return this->int_mode_to_std_int_kind(width_to_int_mode(w));
 }
 
 void target_gcc::

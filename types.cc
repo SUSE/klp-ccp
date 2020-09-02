@@ -2194,8 +2194,7 @@ mpa::limbs::size_type bitfield_type::get_width(const target&)
 std::shared_ptr<const std_int_type>
 bitfield_type::promote(const target &tgt) const
 {
-  const int_mode_kind m = width_to_int_mode(_width);
-  const std_int_type::kind k = tgt.int_mode_to_std_int_kind(m);
+  const std_int_type::kind k = tgt.width_to_std_int_kind(_width);
   return std_int_type::create(k, _base_type->is_signed(tgt));
 }
 

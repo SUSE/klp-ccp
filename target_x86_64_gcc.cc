@@ -514,7 +514,7 @@ _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
     }
   }
 
-  auto &&t = types::std_int_type::create(_width_to_int_kind(width),
+  auto &&t = types::std_int_type::create(width_to_std_int_kind(width),
 					 is_any_signed);
   if (user_align.is_set()) {
     const mpa::limbs::size_type align =
@@ -556,7 +556,7 @@ _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
       }
 
       m.convert_value(m_width - m_is_signed, m_is_signed);
-      m.set_type(types::std_int_type::create(_width_to_int_kind(m_width),
+      m.set_type(types::std_int_type::create(width_to_std_int_kind(m_width),
 					     m_is_signed));
      });
 }
@@ -1054,31 +1054,6 @@ types::std_int_type::kind target_x86_64_gcc::get_pid_t_kind() const noexcept
 bool target_x86_64_gcc::is_pid_t_signed() const noexcept
 {
   return true;
-}
-
-types::std_int_type::kind
-target_x86_64_gcc::_width_to_int_kind(const mpa::limbs::size_type w) noexcept
-{
-  switch (w) {
-  case 8:
-    return types::std_int_type::kind::k_char;
-
-  case 16:
-    return types::std_int_type::kind::k_short;
-
-  case 32:
-    return types::std_int_type::kind::k_int;
-
-  case 64:
-    return types::std_int_type::kind::k_long;
-
-  case 128:
-    return types::std_int_type::kind::k_int128;
-
-  default:
-    assert(0);
-    __builtin_unreachable();
-  };
 }
 
 const gcc_cmdline_parser::option *
