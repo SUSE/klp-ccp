@@ -61,8 +61,6 @@ namespace klp
 
       virtual int_mode_kind get_pointer_mode() const noexcept override;
 
-      virtual int_mode_kind get_word_mode() const noexcept override;
-
       virtual mpa::limbs::size_type get_biggest_alignment_log2()
 	const noexcept override;
 
@@ -92,6 +90,8 @@ namespace klp
       virtual mpa::limbs::size_type get_va_list_alignment() const override;
 
     private:
+      virtual int_mode_kind _get_word_mode() const noexcept override;
+
       virtual void _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
 				       const bool packed,
 				       const int_mode_kind mode,

@@ -141,6 +141,7 @@ namespace klp
       class _aligned_attribute_finder;
       class _packed_attribute_finder;
       class _mode_attribute_finder;
+      friend class _mode_attribute_finder;
 
     protected:
       struct opts_c_family;
@@ -393,6 +394,8 @@ namespace klp
       virtual void _arch_option_override() = 0;
 
       virtual void _arch_register_builtin_macros(preprocessor &pp) const = 0;
+
+      virtual int_mode_kind _get_word_mode() const noexcept = 0;
 
       virtual void _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
 				       const bool packed,

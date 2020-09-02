@@ -2425,7 +2425,7 @@ bool target_gcc::_mode_attribute_finder::operator()(const ast::attribute &attr)
   } else if (id == "TI" || id == "__TI__") {
     _imk = int_mode_kind::imk_TI;
   } else if (id == "word" || id == "__word__") {
-    _imk = _tgt.get_word_mode();
+    _imk = _tgt._get_word_mode();
   } else if (id == "pointer" || id == "__pointer__") {
     _imk = _tgt.get_pointer_mode();
   } else if (id == "SF" || id == "__SF__") {
