@@ -45,9 +45,6 @@ namespace klp
       get_std_int_width(const types::std_int_type::kind k) const noexcept
 	override;
 
-      virtual types::std_int_type::kind
-      int_mode_to_std_int_kind(const int_mode_kind m) const noexcept override;
-
       virtual mpa::limbs::size_type
       get_float_significand_width(const types::float_type::kind k)
 	const noexcept override;
@@ -88,6 +85,9 @@ namespace klp
       virtual mpa::limbs::size_type get_va_list_alignment() const override;
 
     private:
+      virtual types::std_int_type::kind
+      _int_mode_to_std_int_kind(const int_mode_kind m) const noexcept override;
+
       virtual int_mode_kind _get_pointer_mode() const noexcept override;
 
       virtual int_mode_kind _get_word_mode() const noexcept override;

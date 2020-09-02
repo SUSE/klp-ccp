@@ -398,6 +398,9 @@ namespace klp
 
       virtual void _arch_register_builtin_macros(preprocessor &pp) const = 0;
 
+      virtual types::std_int_type::kind
+      _int_mode_to_std_int_kind(const int_mode_kind m) const noexcept = 0;
+
       virtual int_mode_kind _get_pointer_mode() const noexcept = 0;
 
       virtual int_mode_kind _get_word_mode() const noexcept = 0;

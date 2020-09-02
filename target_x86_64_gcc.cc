@@ -319,33 +319,6 @@ target_x86_64_gcc::get_std_int_width(const types::std_int_type::kind k)
   };
 }
 
-types::std_int_type::kind
-target_x86_64_gcc::int_mode_to_std_int_kind(const int_mode_kind m)
-  const noexcept
-{
-  switch (m) {
-  case int_mode_kind::imk_none:
-    assert(0);
-    __builtin_unreachable();
-
-  case int_mode_kind::imk_QI:
-    return types::std_int_type::kind::k_char;
-
-  case int_mode_kind::imk_HI:
-    return types::std_int_type::kind::k_short;
-
-  case int_mode_kind::imk_SI:
-    return types::std_int_type::kind::k_int;
-
-  case int_mode_kind::imk_DI:
-    return types::std_int_type::kind::k_long;
-
-  case int_mode_kind::imk_TI:
-    return types::std_int_type::kind::k_int128;
-  }
-}
-
-
 mpa::limbs::size_type target_x86_64_gcc::
 get_float_significand_width(const types::float_type::kind k)
   const noexcept
@@ -438,6 +411,32 @@ get_execution_charset_encoder(const execution_charset_encoding e) const
 					       target_char_kind,
 					       std::string(target_code),
 					       false)));
+}
+
+types::std_int_type::kind
+target_x86_64_gcc::_int_mode_to_std_int_kind(const int_mode_kind m)
+  const noexcept
+{
+  switch (m) {
+  case int_mode_kind::imk_none:
+    assert(0);
+    __builtin_unreachable();
+
+  case int_mode_kind::imk_QI:
+    return types::std_int_type::kind::k_char;
+
+  case int_mode_kind::imk_HI:
+    return types::std_int_type::kind::k_short;
+
+  case int_mode_kind::imk_SI:
+    return types::std_int_type::kind::k_int;
+
+  case int_mode_kind::imk_DI:
+    return types::std_int_type::kind::k_long;
+
+  case int_mode_kind::imk_TI:
+    return types::std_int_type::kind::k_int128;
+  }
 }
 
 int_mode_kind target_x86_64_gcc::_get_pointer_mode() const noexcept

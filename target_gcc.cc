@@ -2499,7 +2499,7 @@ apply_to_type(std::shared_ptr<const types::returnable_int_type> &&orig_t) const
   }
 
   return (types::std_int_type::create
-	  (_tgt.int_mode_to_std_int_kind(_imk), orig_t->is_signed(_tgt),
+	  (_tgt._int_mode_to_std_int_kind(_imk), orig_t->is_signed(_tgt),
 	   orig_t->get_qualifiers()));
 }
 
@@ -2834,12 +2834,12 @@ bool target_gcc::is_char_signed() const noexcept
 types::std_int_type::kind
 target_gcc::width_to_std_int_kind(const mpa::limbs::size_type w) const
 {
-  return this->int_mode_to_std_int_kind(width_to_int_mode(w));
+  return this->_int_mode_to_std_int_kind(width_to_int_mode(w));
 }
 
 types::std_int_type::kind target_gcc::get_ptrdiff_kind() const noexcept
 {
-  return this->int_mode_to_std_int_kind(this->_get_pointer_mode());
+  return this->_int_mode_to_std_int_kind(this->_get_pointer_mode());
 }
 
 void target_gcc::
