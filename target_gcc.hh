@@ -116,6 +116,9 @@ namespace klp
       virtual types::std_int_type::kind
       width_to_std_int_kind(const mpa::limbs::size_type w) const override;
 
+      virtual types::std_int_type::kind get_ptrdiff_kind()
+	const noexcept override;
+
       virtual void
       evaluate_enum_type(ast::ast &a,
 			 const std::function<void(ast::expr&)> &eval_expr,
@@ -394,6 +397,8 @@ namespace klp
       virtual void _arch_option_override() = 0;
 
       virtual void _arch_register_builtin_macros(preprocessor &pp) const = 0;
+
+      virtual int_mode_kind _get_pointer_mode() const noexcept = 0;
 
       virtual int_mode_kind _get_word_mode() const noexcept = 0;
 

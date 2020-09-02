@@ -174,9 +174,7 @@ namespace klp
       virtual types::float_type::kind
       float_mode_to_float_kind(const float_mode_kind m) const noexcept = 0;
 
-      virtual int_mode_kind get_pointer_mode() const noexcept = 0;
-
-      types::std_int_type::kind get_ptrdiff_kind() const noexcept;
+      virtual types::std_int_type::kind get_ptrdiff_kind() const noexcept = 0;
 
       virtual mpa::limbs::size_type get_biggest_alignment_log2()
 	const noexcept = 0;

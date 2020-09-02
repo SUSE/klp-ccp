@@ -394,11 +394,6 @@ float_mode_to_float_kind(const float_mode_kind m) const noexcept
   }
 }
 
-int_mode_kind target_x86_64_gcc::get_pointer_mode() const noexcept
-{
-  return int_mode_kind::imk_DI;
-}
-
 mpa::limbs::size_type target_x86_64_gcc::get_biggest_alignment_log2()
   const noexcept
 {
@@ -443,6 +438,11 @@ get_execution_charset_encoder(const execution_charset_encoding e) const
 					       target_char_kind,
 					       std::string(target_code),
 					       false)));
+}
+
+int_mode_kind target_x86_64_gcc::_get_pointer_mode() const noexcept
+{
+  return int_mode_kind::imk_DI;
 }
 
 int_mode_kind target_x86_64_gcc::_get_word_mode() const noexcept

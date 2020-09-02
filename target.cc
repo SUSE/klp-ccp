@@ -64,8 +64,3 @@ int_mode_kind klp::ccp::width_to_int_mode(const mpa::limbs::size_type w)
 
 
 target::~target() noexcept = default;
-
-types::std_int_type::kind target::get_ptrdiff_kind() const noexcept
-{
-  return this->int_mode_to_std_int_kind(this->get_pointer_mode());
-}

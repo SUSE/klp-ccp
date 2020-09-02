@@ -2427,7 +2427,7 @@ bool target_gcc::_mode_attribute_finder::operator()(const ast::attribute &attr)
   } else if (id == "word" || id == "__word__") {
     _imk = _tgt._get_word_mode();
   } else if (id == "pointer" || id == "__pointer__") {
-    _imk = _tgt.get_pointer_mode();
+    _imk = _tgt._get_pointer_mode();
   } else if (id == "SF" || id == "__SF__") {
     _fmk = float_mode_kind::fmk_SF;
   } else if (id == "DF" || id == "__DF__") {
@@ -2461,7 +2461,7 @@ apply_to_type(std::shared_ptr<const types::pointer_type> &&orig_t) const
     return std::move(orig_t);
 
   if (_imk == int_mode_kind::imk_none ||
-      _imk != _tgt.get_pointer_mode()) {
+      _imk != _tgt._get_pointer_mode()) {
     code_remark remark
       (code_remark::severity::fatal,
        "invalid 'mode' attribute specifier for pointer type",
@@ -2835,6 +2835,11 @@ types::std_int_type::kind
 target_gcc::width_to_std_int_kind(const mpa::limbs::size_type w) const
 {
   return this->int_mode_to_std_int_kind(width_to_int_mode(w));
+}
+
+types::std_int_type::kind target_gcc::get_ptrdiff_kind() const noexcept
+{
+  return this->int_mode_to_std_int_kind(this->_get_pointer_mode());
 }
 
 void target_gcc::
