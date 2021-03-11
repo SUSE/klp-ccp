@@ -4559,8 +4559,8 @@ void expr_cast::evaluate_type(ast &a, const target &tgt)
 	 _convert_type_for_expr_context();
 
        },
-       [&](const std::shared_ptr<const integral_type> &it_target,
-	   const std::shared_ptr<const integral_type> &it_source) {
+       [&](const std::shared_ptr<const returnable_int_type> &it_target,
+	   const std::shared_ptr<const returnable_int_type> &it_source) {
 
 	 check_enum_completeness_source();
 	 check_enum_completeness_target();
@@ -4606,7 +4606,7 @@ void expr_cast::evaluate_type(ast &a, const target &tgt)
 	 }
 
        },
-       [&](const std::shared_ptr<const integral_type> &it_target,
+       [&](const std::shared_ptr<const returnable_int_type> &it_target,
 	   const std::shared_ptr<const float_type> &ft_source) {
 	 check_enum_completeness_target();
 
@@ -4641,7 +4641,7 @@ void expr_cast::evaluate_type(ast &a, const target &tgt)
 	 }
 
        },
-       [&](const std::shared_ptr<const integral_type> &it_target,
+       [&](const std::shared_ptr<const returnable_int_type> &it_target,
 	   const std::shared_ptr<const pointer_type> &pt_source) {
 	 check_enum_completeness_target();
 
@@ -4713,8 +4713,17 @@ void expr_cast::evaluate_type(ast &a, const target &tgt)
 	 _convert_type_for_expr_context();
 
        },
+       [&](const std::shared_ptr<const arithmetic_type> &at_target,
+	   const std::shared_ptr<const bitfield_type>&) {
+
+	 check_enum_completeness_source();
+
+	 _set_type(at_target);
+	 _convert_type_for_expr_context();
+
+       },
        [&](const std::shared_ptr<const pointer_type> &pt_target,
-	   const std::shared_ptr<const integral_type> &it_source) {
+	   const std::shared_ptr<const returnable_int_type> &it_source) {
 	 check_enum_completeness_source();
 
 	 _set_type(pt_target);
@@ -4732,6 +4741,14 @@ void expr_cast::evaluate_type(ast &a, const target &tgt)
 	} else {
 	  _set_value(constexpr_value::address_constant{cv.get_int_value()});
 	}
+
+       },
+       [&](const std::shared_ptr<const pointer_type> &pt_target,
+	   const std::shared_ptr<const bitfield_type>&) {
+	 check_enum_completeness_source();
+
+	 _set_type(pt_target);
+	 _convert_type_for_expr_context();
 
        },
        [&](const std::shared_ptr<const pointer_type> &pt_target,
