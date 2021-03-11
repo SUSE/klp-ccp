@@ -2461,9 +2461,12 @@ void enumerator::register_at_parent(ast &a, const target &tgt)
     assert(cv.get_value_kind() == constexpr_value::value_kind::vk_int);
 
     const target_int &value = cv.get_int_value();
-    ec.add_member(*this, name,
-		  std::dynamic_pointer_cast<const integral_type>(_value->get_type()),
-		  value);
+    handle_types<void>
+      ((wrap_callables<default_action_unreachable<void, type_set<> >::type>
+	([&](const std::shared_ptr<const returnable_int_type> &it) {
+	  ec.add_member(*this, name, it, value);
+	 })),
+       _value->get_type());
 
   } else {
     try {
@@ -3346,7 +3349,7 @@ void expr_binop::_evaluate_arith_binop(const arithmetic_type &at_left,
 
     handle_types<void>
       ((wrap_callables<default_action_nop>
-	([&](const integral_type &it) {
+	([&](const returnable_int_type &it) {
 	   const target_int i_left = cv_left.convert_to(tgt, it);
 	   const target_int i_right = cv_right.convert_to(tgt, it);
 	   target_int i_result;
@@ -4136,7 +4139,7 @@ void expr_binop::_evaluate_cmp(const types::arithmetic_type &at_left,
 
 	 }
        },
-       [&](const integral_type &it) {
+       [&](const returnable_int_type &it) {
 	    // These don't overflow because the result type comes from
 	    // an arithmetic conversion.
 	    const target_int i_left = cv_left.convert_to(tgt, it);
