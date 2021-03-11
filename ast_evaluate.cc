@@ -3612,8 +3612,8 @@ void expr_binop::_evaluate_ptr_sub(const pointer_type &pt_left,
   }
 }
 
-void expr_binop::_evaluate_shift(const types::integral_type &it_left,
-				 const types::integral_type &it_right,
+void expr_binop::_evaluate_shift(const types::returnable_int_type &it_left,
+				 const types::returnable_int_type &it_right,
 				 ast &a, const target &tgt)
 {
   const std::shared_ptr<const std_int_type> it_result
@@ -3695,8 +3695,8 @@ void expr_binop::_evaluate_shift(const types::integral_type &it_left,
   }
 }
 
-void expr_binop::_evaluate_bin_binop(const types::integral_type &it_left,
-				     const types::integral_type &it_right,
+void expr_binop::_evaluate_bin_binop(const types::returnable_int_type &it_left,
+				     const types::returnable_int_type &it_right,
 				     ast &a, const target &tgt)
 {
   const std::shared_ptr<const std_int_type> it_result
@@ -4006,7 +4006,7 @@ void expr_binop::_evaluate_cmp(const types::pointer_type &pt_left,
 }
 
 void expr_binop::_evaluate_cmp(const types::pointer_type &pt_left,
-			       const types::integral_type &it_right,
+			       const types::returnable_int_type &it_right,
 			       ast &a, const target &tgt)
 {
   const std::shared_ptr<const std_int_type> it_result
@@ -4074,7 +4074,7 @@ void expr_binop::_evaluate_cmp(const types::pointer_type &pt_left,
   }
 }
 
-void expr_binop::_evaluate_cmp(const types::integral_type &it_left,
+void expr_binop::_evaluate_cmp(const types::returnable_int_type &it_left,
 			       const types::pointer_type &pt_right,
 			       ast &a, const target &tgt)
 {
@@ -4287,7 +4287,7 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
 	   _evaluate_ptr_sub(pt_left, pt_right, a, tgt);
 
 	 },
-	 [&](const pointer_type &pt_left, const integral_type &it_right) {
+	 [&](const pointer_type &pt_left, const returnable_int_type &it_right) {
 	   const mpa::limbs pointed_to_size =
 	     _check_pointer_arithmetic(a, pt_left, *this, tgt);
 
@@ -4303,10 +4303,32 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
 	   }
 
 	 },
+	 [&](const pointer_type &pt_left, const bitfield_type&) {
+	   const mpa::limbs pointed_to_size =
+	     _check_pointer_arithmetic(a, pt_left, *this, tgt);
+
+	   _set_type(_left.get_type());
+	   _convert_type_for_expr_context();
+	 },
 	 [&](const arithmetic_type &at_left, const arithmetic_type &at_right) {
 	   check_enum_completeness_op(_left);
 	   check_enum_completeness_op(_right);
 	   _evaluate_arith_binop(at_left, at_right, a, tgt);
+
+	 },
+	 [&](const arithmetic_type &at_left, const bitfield_type &bft_right) {
+	   check_enum_completeness_op(_left);
+	   _evaluate_arith_binop(at_left, *bft_right.promote(tgt), a, tgt);
+
+	 },
+	 [&](const bitfield_type &bft_left, const arithmetic_type &at_right) {
+	   check_enum_completeness_op(_right);
+	   _evaluate_arith_binop(*bft_left.promote(tgt), at_right, a, tgt);
+
+	 },
+	 [&](const bitfield_type &bft_left, const bitfield_type &bft_right) {
+	   _evaluate_arith_binop(*bft_left.promote(tgt),
+				 *bft_right.promote(tgt), a, tgt);
 
 	 },
 	 [&](const type&, const type&) {
@@ -4324,7 +4346,7 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
   case binary_op::add:
     handle_types<void>
       ((wrap_callables<no_default_action>
-	([&](const pointer_type &pt_left, const integral_type &it_right) {
+	([&](const pointer_type &pt_left, const returnable_int_type &it_right) {
 	   const mpa::limbs pointed_to_size =
 	     _check_pointer_arithmetic(a, pt_left, *this, tgt);
 
@@ -4340,7 +4362,15 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
 	   }
 
 	 },
-	 [&](const integral_type &it_left, const pointer_type &pt_right) {
+	 [&](const pointer_type &pt_left, const bitfield_type&) {
+	   const mpa::limbs pointed_to_size =
+	     _check_pointer_arithmetic(a, pt_left, *this, tgt);
+
+	   _set_type(_left.get_type());
+	   _convert_type_for_expr_context();
+
+	 },
+	 [&](const returnable_int_type &it_left, const pointer_type &pt_right) {
 	   const mpa::limbs pointed_to_size =
 	     _check_pointer_arithmetic(a, pt_right, *this, tgt);
 
@@ -4356,10 +4386,33 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
 	   }
 
 	 },
+	 [&](const bitfield_type&, const pointer_type &pt_right) {
+	   const mpa::limbs pointed_to_size =
+	     _check_pointer_arithmetic(a, pt_right, *this, tgt);
+
+	   _set_type(_right.get_type());
+	   _convert_type_for_expr_context();
+
+	 },
 	 [&](const arithmetic_type &at_left, const arithmetic_type &at_right) {
 	   check_enum_completeness_op(_left);
 	   check_enum_completeness_op(_right);
 	   _evaluate_arith_binop(at_left, at_right, a, tgt);
+
+	 },
+	 [&](const arithmetic_type &at_left, const bitfield_type &bft_right) {
+	   check_enum_completeness_op(_left);
+	   _evaluate_arith_binop(at_left, *bft_right.promote(tgt), a, tgt);
+
+	 },
+	 [&](const bitfield_type &bft_left, const arithmetic_type &at_right) {
+	   check_enum_completeness_op(_right);
+	   _evaluate_arith_binop(*bft_left.promote(tgt), at_right, a, tgt);
+
+	 },
+	 [&](const bitfield_type &bft_left, const bitfield_type &bft_right) {
+	   _evaluate_arith_binop(*bft_left.promote(tgt),
+				 *bft_right.promote(tgt), a, tgt);
 
 	 },
 	 [&](const type&, const type&) {
@@ -4384,6 +4437,21 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
 	   _evaluate_arith_binop(at_left, at_right, a, tgt);
 
 	 },
+	 [&](const arithmetic_type &at_left, const bitfield_type &bft_right) {
+	   check_enum_completeness_op(_left);
+	   _evaluate_arith_binop(at_left, *bft_right.promote(tgt), a, tgt);
+
+	 },
+	 [&](const bitfield_type &bft_left, const arithmetic_type &at_right) {
+	   check_enum_completeness_op(_right);
+	   _evaluate_arith_binop(*bft_left.promote(tgt), at_right, a, tgt);
+
+	 },
+	 [&](const bitfield_type &bft_left, const bitfield_type &bft_right) {
+	   _evaluate_arith_binop(*bft_left.promote(tgt),
+				 *bft_right.promote(tgt), a, tgt);
+
+	 },
 	 [&](const type&, const type&) {
 	   code_remark remark
 	     (code_remark::severity::fatal,
@@ -4401,10 +4469,28 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
   case binary_op::rshift:
     handle_types<void>
       ((wrap_callables<no_default_action>
-	([&](const integral_type &it_left, const integral_type &it_right) {
+	([&](const returnable_int_type &it_left,
+	     const returnable_int_type &it_right) {
 	   check_enum_completeness_op(_left);
 	   check_enum_completeness_op(_right);
 	   _evaluate_shift(it_left, it_right, a, tgt);
+
+	 },
+	 [&](const returnable_int_type &it_left,
+	     const bitfield_type &bft_right) {
+	   check_enum_completeness_op(_left);
+	   _evaluate_shift(it_left, *bft_right.promote(tgt), a, tgt);
+
+	 },
+	 [&](const bitfield_type &bft_left,
+	     const returnable_int_type &it_right) {
+	   check_enum_completeness_op(_right);
+	   _evaluate_shift(*bft_left.promote(tgt), it_right, a, tgt);
+
+	 },
+	 [&](const bitfield_type &bft_left, const bitfield_type &bft_right) {
+	   _evaluate_shift(*bft_left.promote(tgt),
+			   *bft_right.promote(tgt), a, tgt);
 
 	 },
 	 [&](const type&, const type&) {
@@ -4427,10 +4513,28 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
   case binary_op::bin_or:
     handle_types<void>
       ((wrap_callables<no_default_action>
-	([&](const integral_type &it_left, const integral_type &it_right) {
+	([&](const returnable_int_type &it_left,
+	     const returnable_int_type &it_right) {
 	   check_enum_completeness_op(_left);
 	   check_enum_completeness_op(_right);
 	   _evaluate_bin_binop(it_left, it_right, a, tgt);
+
+	 },
+	 [&](const returnable_int_type &it_left,
+	     const bitfield_type &bft_right) {
+	   check_enum_completeness_op(_left);
+	   _evaluate_bin_binop(it_left, *bft_right.promote(tgt), a, tgt);
+
+	 },
+	 [&](const bitfield_type &bft_left,
+	     const returnable_int_type &it_right) {
+	   check_enum_completeness_op(_right);
+	   _evaluate_bin_binop(*bft_left.promote(tgt), it_right, a, tgt);
+
+	 },
+	 [&](const bitfield_type &bft_left, const bitfield_type &bft_right) {
+	   _evaluate_bin_binop(*bft_left.promote(tgt),
+			       *bft_right.promote(tgt), a, tgt);
 
 	 },
 	 [&](const type&, const type&) {
@@ -4482,20 +4586,43 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
 	   _evaluate_cmp(pt_left, pt_right, a, tgt);
 
 	 },
-	 [&](const pointer_type &pt_left, const integral_type &it_right) {
+	 [&](const pointer_type &pt_left, const returnable_int_type &it_right) {
 	   check_enum_completeness_op(_right);
 	   _evaluate_cmp(pt_left, it_right, a, tgt);
 
 	 },
-	 [&](const integral_type &it_left, const pointer_type &pt_right) {
+	 [&](const pointer_type &pt_left, const bitfield_type &bft_right) {
+	   _evaluate_cmp(pt_left, *bft_right.promote(tgt), a, tgt);
+
+	 },
+	 [&](const returnable_int_type &it_left, const pointer_type &pt_right) {
 	   check_enum_completeness_op(_left);
 	   _evaluate_cmp(it_left, pt_right, a, tgt);
+
+	 },
+	 [&](const bitfield_type &bft_left, const pointer_type &pt_right) {
+	   _evaluate_cmp(*bft_left.promote(tgt), pt_right, a, tgt);
 
 	 },
 	 [&](const arithmetic_type &at_left, const arithmetic_type &at_right) {
 	   check_enum_completeness_op(_left);
 	   check_enum_completeness_op(_right);
 	   _evaluate_cmp(at_left, at_right, a, tgt);
+
+	 },
+	 [&](const arithmetic_type &at_left, const bitfield_type &bft_right) {
+	   check_enum_completeness_op(_left);
+	   _evaluate_cmp(at_left, *bft_right.promote(tgt), a, tgt);
+
+	 },
+	 [&](const bitfield_type &bft_left, const arithmetic_type &at_right) {
+	   check_enum_completeness_op(_right);
+	   _evaluate_cmp(*bft_left.promote(tgt), at_right, a, tgt);
+
+	 },
+	 [&](const bitfield_type &bft_left, const bitfield_type &bft_right) {
+	   _evaluate_cmp(*bft_left.promote(tgt), *bft_right.promote(tgt),
+			 a, tgt);
 
 	 },
 	 [&](const type&, const type&) {

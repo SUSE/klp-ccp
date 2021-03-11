@@ -444,6 +444,7 @@ namespace klp
       bool is_scalar_type(arg_type &&arg) noexcept
       {
 	return (is_type<arithmetic_type>(std::forward<arg_type>(arg)) ||
+		is_type<bitfield_type>(std::forward<arg_type>(arg)) ||
 		is_type<pointer_type>(std::forward<arg_type>(arg)));
       }
 
