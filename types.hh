@@ -47,7 +47,7 @@ namespace klp
       class addressable_type;
       class void_type;
       class arithmetic_type;
-      class int_type;
+      class integral_type;
       class plain_char_type;
       class bool_type;
       class std_int_type;
@@ -877,10 +877,10 @@ namespace klp
 	virtual arithmetic_type* _clone() const override = 0;
       };
 
-      class int_type : public arithmetic_type
+      class integral_type : public arithmetic_type
       {
       public:
-	virtual ~int_type() noexcept = 0;
+	virtual ~integral_type() noexcept = 0;
 
 	virtual std::shared_ptr<const arithmetic_type>
 	arithmetic_conversion(const target &tgt,
@@ -896,7 +896,7 @@ namespace klp
 			      const complex_float_type &ct) const override;
 
 	virtual std::shared_ptr<const std_int_type>
-	integer_conversion(const target &tgt, const int_type &it) const;
+	integer_conversion(const target &tgt, const integral_type &it) const;
 
 	virtual std::shared_ptr<const std_int_type>
 	integer_conversion(const target &tgt, const std_int_type &it)
@@ -911,15 +911,15 @@ namespace klp
 	promote(const target &tgt) const = 0;
 
       protected:
-	int_type();
+	integral_type();
 
-	int_type(const int_type&);
+	integral_type(const integral_type&);
 
       private:
-	virtual int_type* _clone() const override = 0;
+	virtual integral_type* _clone() const override = 0;
       };
 
-      class returnable_int_type : public returnable_object_type, public int_type
+      class returnable_int_type : public returnable_object_type, public integral_type
       {
       public:
 	virtual ~returnable_int_type() noexcept = 0;
@@ -992,7 +992,7 @@ namespace klp
 			      const complex_float_type &ct) const override;
 
 	virtual std::shared_ptr<const std_int_type>
-	integer_conversion(const target &tgt, const int_type &it)
+	integer_conversion(const target &tgt, const integral_type &it)
 	  const override;
 
 	virtual std::shared_ptr<const std_int_type>
@@ -1119,7 +1119,7 @@ namespace klp
 	{
 	public:
 	  member(const ast::enumerator &e, const std::string &name,
-		 const std::shared_ptr<const int_type> &initial_type,
+		 const std::shared_ptr<const integral_type> &initial_type,
 		 const target_int &value);
 
 	  const ast::enumerator &
@@ -1137,20 +1137,20 @@ namespace klp
 	  void convert_value(const mpa::limbs::size_type prec,
 			     const bool is_signed);
 
-	  void set_type(std::shared_ptr<const int_type> &&t) noexcept;
+	  void set_type(std::shared_ptr<const integral_type> &&t) noexcept;
 
-	  const std::shared_ptr<const int_type>&
+	  const std::shared_ptr<const integral_type>&
 	  get_type() const noexcept;
 
 	private:
 	  const ast::enumerator &_e;
 	  const std::string _name;
 	  target_int _value;
-	  std::shared_ptr<const int_type> _type;
+	  std::shared_ptr<const integral_type> _type;
 	};
 
 	void add_member(const ast::enumerator &e, const std::string &name,
-			const std::shared_ptr<const int_type> &initial_type,
+			const std::shared_ptr<const integral_type> &initial_type,
 			const target_int &value);
 
 	void add_member(const ast::enumerator &e, const std::string &name,
@@ -1236,7 +1236,7 @@ namespace klp
 	mutable const enum_content *_content;
       };
 
-      class bitfield_type final : public int_type
+      class bitfield_type final : public integral_type
       {
       public:
 	virtual ~bitfield_type() noexcept;

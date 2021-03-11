@@ -401,7 +401,7 @@ namespace
       mul,
     };
 
-    typedef std::shared_ptr<const types::int_type>(*t_fac)();
+    typedef std::shared_ptr<const types::integral_type>(*t_fac)();
 
     virtual evaluation_result_type
     evaluate(klp::ccp::ast::ast &a, const target &tgt,
@@ -410,12 +410,12 @@ namespace
     template <t_fac tfac, bool p_variant, op o>
     static std::unique_ptr<builtin_func> create();
 
-    static std::shared_ptr<const types::int_type> fac_i();
-    static std::shared_ptr<const types::int_type> fac_u();
-    static std::shared_ptr<const types::int_type> fac_l();
-    static std::shared_ptr<const types::int_type> fac_ul();
-    static std::shared_ptr<const types::int_type> fac_ll();
-    static std::shared_ptr<const types::int_type> fac_ull();
+    static std::shared_ptr<const types::integral_type> fac_i();
+    static std::shared_ptr<const types::integral_type> fac_u();
+    static std::shared_ptr<const types::integral_type> fac_l();
+    static std::shared_ptr<const types::integral_type> fac_ul();
+    static std::shared_ptr<const types::integral_type> fac_ll();
+    static std::shared_ptr<const types::integral_type> fac_ull();
 
   private:
     t_fac _target_fac;
@@ -466,7 +466,7 @@ evaluate(klp::ccp::ast::ast &a, const target &tgt,
 	  return
 	    (types::handle_types<mpa::limbs::size_type>
 	     ((wrap_callables<default_action_nop>
-	       ([&](const types::int_type &_it) {
+	       ([&](const types::integral_type &_it) {
 		  types::handle_types<void>
 		    ((wrap_callables<default_action_nop>
 		      ([&](const types::enum_type &et) {
@@ -596,8 +596,8 @@ _builtin_overflow::evaluate(klp::ccp::ast::ast &a, const target &tgt,
 
   const ast::expr_list &args = *efi.get_args();
   bool types_ok = true;
-  std::shared_ptr<const types::int_type> it_target;
-  const std::shared_ptr<const types::int_type> it_target_spec =
+  std::shared_ptr<const types::integral_type> it_target;
+  const std::shared_ptr<const types::integral_type> it_target_spec =
     _target_fac ? _target_fac() : nullptr;
   if (!it_target_spec) {
     // The first two or, for the _p variant, all arguments shall be of
@@ -605,7 +605,7 @@ _builtin_overflow::evaluate(klp::ccp::ast::ast &a, const target &tgt,
     for (unsigned int i = 0; i < (_p_variant ? 3 : 2); ++i) {
       types::handle_types<void>
 	((wrap_callables<default_action_nop>
-	  ([&](const std::shared_ptr<const types::int_type> &t) {
+	  ([&](const std::shared_ptr<const types::integral_type> &t) {
 	     types::handle_types<void>
 	       ((wrap_callables<default_action_nop>
 		 ([&](const types::enum_type &et) {
@@ -681,7 +681,7 @@ _builtin_overflow::evaluate(klp::ccp::ast::ast &a, const target &tgt,
 	([&](const types::pointer_type &pt) {
 	   types::handle_types<void>
 	     ((wrap_callables<default_action_nop>
-	       ([&](const std::shared_ptr<const types::int_type> &t) {
+	       ([&](const std::shared_ptr<const types::integral_type> &t) {
 		  types::handle_types<void>
 		    ((wrap_callables<default_action_nop>
 		      ([&](const types::enum_type &et) {
@@ -845,33 +845,33 @@ _builtin_overflow::evaluate(klp::ccp::ast::ast &a, const target &tgt,
 				false};
 }
 
-std::shared_ptr<const types::int_type> _builtin_overflow::fac_i()
+std::shared_ptr<const types::integral_type> _builtin_overflow::fac_i()
 {
   return types::std_int_type::create(types::std_int_type::kind::k_int, true);
 }
 
-std::shared_ptr<const types::int_type> _builtin_overflow::fac_u()
+std::shared_ptr<const types::integral_type> _builtin_overflow::fac_u()
 {
   return types::std_int_type::create(types::std_int_type::kind::k_int, false);
 }
 
-std::shared_ptr<const types::int_type> _builtin_overflow::fac_l()
+std::shared_ptr<const types::integral_type> _builtin_overflow::fac_l()
 {
   return types::std_int_type::create(types::std_int_type::kind::k_long, true);
 }
 
-std::shared_ptr<const types::int_type> _builtin_overflow::fac_ul()
+std::shared_ptr<const types::integral_type> _builtin_overflow::fac_ul()
 {
   return types::std_int_type::create(types::std_int_type::kind::k_long, false);
 }
 
-std::shared_ptr<const types::int_type> _builtin_overflow::fac_ll()
+std::shared_ptr<const types::integral_type> _builtin_overflow::fac_ll()
 {
   return types::std_int_type::create(types::std_int_type::kind::k_long_long,
 				     true);
 }
 
-std::shared_ptr<const types::int_type> _builtin_overflow::fac_ull()
+std::shared_ptr<const types::integral_type> _builtin_overflow::fac_ull()
 {
   return types::std_int_type::create(types::std_int_type::kind::k_long_long,
 				     false);

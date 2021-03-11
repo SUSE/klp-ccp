@@ -729,7 +729,7 @@ is_compatible_with(const target &tgt,
   for (auto pt : t.get_parameter_type_list()) {
     if (!(handle_types<bool>
 	  ((wrap_callables<default_action_return_value<bool, true>::type>
-	    ([&](const int_type &it) {
+	    ([&](const integral_type &it) {
 	       return it.is_compatible_with(tgt, *it.promote(tgt), true);
 	     },
 	     [&](const float_type &ft) {
@@ -1543,11 +1543,11 @@ arithmetic_type::arithmetic_type(const arithmetic_type&) = default;
 arithmetic_type::~arithmetic_type() noexcept = default;
 
 
-int_type::int_type() = default;
+integral_type::integral_type() = default;
 
-int_type::int_type(const int_type&) = default;
+integral_type::integral_type(const integral_type&) = default;
 
-int_type::~int_type() noexcept = default;
+integral_type::~integral_type() noexcept = default;
 
 std::shared_ptr<const arithmetic_type>
 arithmetic_type::strip_qualifiers() const
@@ -1557,7 +1557,7 @@ arithmetic_type::strip_qualifiers() const
 }
 
 std::shared_ptr<const arithmetic_type>
-int_type::arithmetic_conversion(const target &tgt,
+integral_type::arithmetic_conversion(const target &tgt,
 				const arithmetic_type &at) const
 {
   // Gets called for all non-std_int_type integer types. Promote to
@@ -1566,14 +1566,14 @@ int_type::arithmetic_conversion(const target &tgt,
 }
 
 std::shared_ptr<const arithmetic_type>
-int_type::arithmetic_conversion(const target &tgt,
-				const std_int_type &it) const
+integral_type::arithmetic_conversion(const target &tgt,
+				     const std_int_type &it) const
 {
   return this->integer_conversion(tgt, it);
 }
 
 std::shared_ptr<const arithmetic_type>
-int_type::arithmetic_conversion(const target &tgt,
+integral_type::arithmetic_conversion(const target &tgt,
 				const real_float_type &ft) const
 {
   // Gets called for all non-std_int_type integer types. Promote to
@@ -1582,8 +1582,8 @@ int_type::arithmetic_conversion(const target &tgt,
 }
 
 std::shared_ptr<const arithmetic_type>
-int_type::arithmetic_conversion(const target &tgt,
-				const complex_float_type &ct) const
+integral_type::arithmetic_conversion(const target &tgt,
+				     const complex_float_type &ct) const
 {
   // Gets called for all non-std_int_type integer types. Promote to
   // std_int_type and forward the call.
@@ -1591,13 +1591,14 @@ int_type::arithmetic_conversion(const target &tgt,
 }
 
 std::shared_ptr<const std_int_type>
-int_type::integer_conversion(const target &tgt, const int_type &it) const
+integral_type::integer_conversion(const target &tgt, const integral_type &it)
+  const
 {
   return it.integer_conversion(tgt, *this->promote(tgt));
 }
 
 std::shared_ptr<const std_int_type>
-int_type::integer_conversion(const target &tgt, const std_int_type &it)
+integral_type::integer_conversion(const target &tgt, const std_int_type &it)
   const
 {
   return it.integer_conversion(tgt, *this->promote(tgt));
@@ -1713,7 +1714,7 @@ std_int_type::arithmetic_conversion(const target &tgt,
 }
 
 std::shared_ptr<const std_int_type>
-std_int_type::integer_conversion(const target &tgt, const int_type &it)
+std_int_type::integer_conversion(const target &tgt, const integral_type &it)
   const
 {
   return it.integer_conversion(tgt, *this);
@@ -1933,7 +1934,7 @@ std::shared_ptr<const returnable_int_type> bool_type::to_unsigned() const
 
 enum_content::member::
 member(const ast::enumerator &e, const std::string &name,
-       const std::shared_ptr<const int_type> &initial_type,
+       const std::shared_ptr<const integral_type> &initial_type,
        const target_int &value)
   : _e(e), _name(name), _value(value), _type(initial_type)
 {}
@@ -1945,13 +1946,13 @@ void enum_content::member::convert_value(const mpa::limbs::size_type prec,
     _value = _value.convert(prec, is_signed);
 }
 
-void enum_content::member::set_type(std::shared_ptr<const int_type> &&t)
+void enum_content::member::set_type(std::shared_ptr<const integral_type> &&t)
   noexcept
 {
   _type = std::move(t);
 }
 
-const std::shared_ptr<const int_type>&
+const std::shared_ptr<const integral_type>&
 enum_content::member::get_type() const noexcept
 {
   assert(_type);
@@ -1960,7 +1961,7 @@ enum_content::member::get_type() const noexcept
 
 void enum_content::
 add_member(const ast::enumerator &e, const std::string &name,
-	   const std::shared_ptr<const int_type> &initial_type,
+	   const std::shared_ptr<const integral_type> &initial_type,
 	   const target_int &value)
 {
   assert(!_underlying_type);

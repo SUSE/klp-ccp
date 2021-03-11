@@ -725,7 +725,7 @@ bool _initializer_list_evaluator::_descend_cursor(const expr &e_init)
 	   }
 
 	   if (_is_string_literal_expr(e_init) &&
-	       is_type<int_type>(*next_at.get_element_type())) {
+	       is_type<integral_type>(*next_at.get_element_type())) {
 	     stop = true;
 	     found = true;
 	     return;
@@ -863,7 +863,7 @@ _evaluate_array_init(klp::ccp::ast::ast &a, const target &tgt,
   // First, deal with the special case of the initializer expression
   // being a string literal.
   if (_is_string_literal_expr(ie.get_expr()) &&
-      is_type<int_type>(*at_target.get_element_type())) {
+      is_type<integral_type>(*at_target.get_element_type())) {
     return _evaluate_array_init_from_string_literal(a, tgt, at_target,
 						    ie.get_expr());
   }
@@ -959,7 +959,7 @@ _evaluate_array_init(klp::ccp::ast::ast &a, const target &tgt,
 {
   // First check, if the array type is possibly an array of characters and
   // the initializer_list contains a single string literal.
-  if (is_type<int_type>(*at_target.get_element_type())) {
+  if (is_type<integral_type>(*at_target.get_element_type())) {
     const initializer_expr * const unwrapped_ie
       = _try_unwrap_initializer_list(il);
     if (unwrapped_ie) {
@@ -1662,7 +1662,7 @@ static void evaluate_array_size_expr(expr &size, klp::ccp::ast::ast &a,
   e();
 
 
-  if (!is_type<int_type>(*size.get_type())) {
+  if (!is_type<integral_type>(*size.get_type())) {
     code_remark remark(code_remark::severity::fatal,
 		       "array size expression is not of integer type",
 		       a.get_pp_result(), size.get_tokens_range());
@@ -2461,7 +2461,7 @@ void enumerator::register_at_parent(ast &a, const target &tgt)
 
     const target_int &value = cv.get_int_value();
     ec.add_member(*this, name,
-		  std::dynamic_pointer_cast<const int_type>(_value->get_type()),
+		  std::dynamic_pointer_cast<const integral_type>(_value->get_type()),
 		  value);
 
   } else {
@@ -2798,7 +2798,7 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 	 }
 
        },
-       [&](const int_type &target, const pointer_type&) {
+       [&](const integral_type &target, const pointer_type&) {
 	 code_remark remark
 	   (code_remark::severity::warning,
 	    "assignment to integer from pointer",
@@ -2807,7 +2807,7 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 
 	 check_enum_completeness_lhs(target);
        },
-       [&](const pointer_type&, const int_type &source) {
+       [&](const pointer_type&, const integral_type &source) {
 	 // Source expression shall be a zero integer constant
 	 // expression.
 	 if (!e_source.is_constexpr() ||
@@ -2847,8 +2847,8 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 	   handle_types<void>
 	     ((wrap_callables<default_action_unreachable<void, type_set<> >
 				::type>
-	       ([&](const int_type &ptt_it_target,
-		    const int_type &ptt_it_source) {
+	       ([&](const integral_type &ptt_it_target,
+		    const integral_type &ptt_it_source) {
 		  if (pointed_to_type_target.is_complete() &&
 		      pointed_to_type_source.is_complete() &&
 		      ptt_it_target.get_width(tgt) !=
@@ -2970,7 +2970,7 @@ void expr_assignment::evaluate_type(ast &a, const target &tgt)
     // mul/div case for the handling of arithmetic operands otherwise.
     if ((handle_types<bool>
 	 ((wrap_callables<default_action_return_value<bool, false>::type>
-	   ([&](const pointer_type &pt_lhs, const int_type&) {
+	   ([&](const pointer_type &pt_lhs, const integral_type&) {
 	      _check_pointer_arithmetic(a, pt_lhs, _lhs, tgt);
 	      check_enum_completeness_rhs();
 	      _set_type(pt_lhs.strip_qualifiers());
@@ -3015,7 +3015,7 @@ void expr_assignment::evaluate_type(ast &a, const target &tgt)
     // Integer operands wanted.
     handle_types<void>
       ((wrap_callables<no_default_action>
-	([&](const int_type&, const int_type&) {
+	([&](const integral_type&, const integral_type&) {
 	   check_enum_completeness_lhs();
 	   check_enum_completeness_rhs();
 
@@ -3107,7 +3107,7 @@ void expr_conditional::evaluate_type(ast &a, const target &tgt)
 	 if (cv_value) {
 	   handle_types<void>
 	     ((wrap_callables<default_action_nop>
-	       ([&](const int_type &it_result) {
+	       ([&](const integral_type &it_result) {
 		  target_int i_result = cv_value->convert_to(tgt, it_result);
 		  // Strictly speaking, the result is an integer
 		  // constant expression if and only if all
@@ -3220,7 +3220,7 @@ void expr_conditional::evaluate_type(ast &a, const target &tgt)
 	   _set_value(cv_value->clone());
 
        },
-       [&](const pointer_type&, const int_type&) {
+       [&](const pointer_type&, const integral_type&) {
 	 // The false expression shall be a zero integer constant
 	 // (NULL).
 	 if (!_expr_false.is_constexpr() ||
@@ -3250,7 +3250,7 @@ void expr_conditional::evaluate_type(ast &a, const target &tgt)
 	 }
 
        },
-       [&](const int_type&, const pointer_type&) {
+       [&](const integral_type&, const pointer_type&) {
 	 // The true expression shall be a zero integer constant
 	 // (NULL).
 	 if (!expr_true.is_constexpr() ||
@@ -3345,7 +3345,7 @@ void expr_binop::_evaluate_arith_binop(const arithmetic_type &at_left,
 
     handle_types<void>
       ((wrap_callables<default_action_nop>
-	([&](const int_type &it) {
+	([&](const integral_type &it) {
 	   const target_int i_left = cv_left.convert_to(tgt, it);
 	   const target_int i_right = cv_right.convert_to(tgt, it);
 	   target_int i_result;
@@ -3541,8 +3541,8 @@ void expr_binop::_evaluate_ptr_sub(const pointer_type &pt_left,
   }
 }
 
-void expr_binop::_evaluate_shift(const types::int_type &it_left,
-				 const types::int_type &it_right,
+void expr_binop::_evaluate_shift(const types::integral_type &it_left,
+				 const types::integral_type &it_right,
 				 ast &a, const target &tgt)
 {
   const std::shared_ptr<const std_int_type> it_result
@@ -3624,8 +3624,8 @@ void expr_binop::_evaluate_shift(const types::int_type &it_left,
   }
 }
 
-void expr_binop::_evaluate_bin_binop(const types::int_type &it_left,
-				     const types::int_type &it_right,
+void expr_binop::_evaluate_bin_binop(const types::integral_type &it_left,
+				     const types::integral_type &it_right,
 				     ast &a, const target &tgt)
 {
   const std::shared_ptr<const std_int_type> it_result
@@ -3935,7 +3935,7 @@ void expr_binop::_evaluate_cmp(const types::pointer_type &pt_left,
 }
 
 void expr_binop::_evaluate_cmp(const types::pointer_type &pt_left,
-			       const types::int_type &it_right,
+			       const types::integral_type &it_right,
 			       ast &a, const target &tgt)
 {
   const std::shared_ptr<const std_int_type> it_result
@@ -4003,7 +4003,7 @@ void expr_binop::_evaluate_cmp(const types::pointer_type &pt_left,
   }
 }
 
-void expr_binop::_evaluate_cmp(const types::int_type &it_left,
+void expr_binop::_evaluate_cmp(const types::integral_type &it_left,
 			       const types::pointer_type &pt_right,
 			       ast &a, const target &tgt)
 {
@@ -4135,7 +4135,7 @@ void expr_binop::_evaluate_cmp(const types::arithmetic_type &at_left,
 
 	 }
        },
-       [&](const int_type &it) {
+       [&](const integral_type &it) {
 	    // These don't overflow because the result type comes from
 	    // an arithmetic conversion.
 	    const target_int i_left = cv_left.convert_to(tgt, it);
@@ -4216,7 +4216,7 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
 	   _evaluate_ptr_sub(pt_left, pt_right, a, tgt);
 
 	 },
-	 [&](const pointer_type &pt_left, const int_type &it_right) {
+	 [&](const pointer_type &pt_left, const integral_type &it_right) {
 	   const mpa::limbs pointed_to_size =
 	     _check_pointer_arithmetic(a, pt_left, *this, tgt);
 
@@ -4253,7 +4253,7 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
   case binary_op::add:
     handle_types<void>
       ((wrap_callables<no_default_action>
-	([&](const pointer_type &pt_left, const int_type &it_right) {
+	([&](const pointer_type &pt_left, const integral_type &it_right) {
 	   const mpa::limbs pointed_to_size =
 	     _check_pointer_arithmetic(a, pt_left, *this, tgt);
 
@@ -4269,7 +4269,7 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
 	   }
 
 	 },
-	 [&](const int_type &it_left, const pointer_type &pt_right) {
+	 [&](const integral_type &it_left, const pointer_type &pt_right) {
 	   const mpa::limbs pointed_to_size =
 	     _check_pointer_arithmetic(a, pt_right, *this, tgt);
 
@@ -4330,7 +4330,7 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
   case binary_op::rshift:
     handle_types<void>
       ((wrap_callables<no_default_action>
-	([&](const int_type &it_left, const int_type &it_right) {
+	([&](const integral_type &it_left, const integral_type &it_right) {
 	   check_enum_completeness_op(_left);
 	   check_enum_completeness_op(_right);
 	   _evaluate_shift(it_left, it_right, a, tgt);
@@ -4356,7 +4356,7 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
   case binary_op::bin_or:
     handle_types<void>
       ((wrap_callables<no_default_action>
-	([&](const int_type &it_left, const int_type &it_right) {
+	([&](const integral_type &it_left, const integral_type &it_right) {
 	   check_enum_completeness_op(_left);
 	   check_enum_completeness_op(_right);
 	   _evaluate_bin_binop(it_left, it_right, a, tgt);
@@ -4411,12 +4411,12 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
 	   _evaluate_cmp(pt_left, pt_right, a, tgt);
 
 	 },
-	 [&](const pointer_type &pt_left, const int_type &it_right) {
+	 [&](const pointer_type &pt_left, const integral_type &it_right) {
 	   check_enum_completeness_op(_right);
 	   _evaluate_cmp(pt_left, it_right, a, tgt);
 
 	 },
-	 [&](const int_type &it_left, const pointer_type &pt_right) {
+	 [&](const integral_type &it_left, const pointer_type &pt_right) {
 	   check_enum_completeness_op(_left);
 	   _evaluate_cmp(it_left, pt_right, a, tgt);
 
@@ -4488,8 +4488,8 @@ void expr_cast::evaluate_type(ast &a, const target &tgt)
 	 _convert_type_for_expr_context();
 
        },
-       [&](const std::shared_ptr<const int_type> &it_target,
-	   const std::shared_ptr<const int_type> &it_source) {
+       [&](const std::shared_ptr<const integral_type> &it_target,
+	   const std::shared_ptr<const integral_type> &it_source) {
 
 	 check_enum_completeness_source();
 	 check_enum_completeness_target();
@@ -4535,7 +4535,7 @@ void expr_cast::evaluate_type(ast &a, const target &tgt)
 	 }
 
        },
-       [&](const std::shared_ptr<const int_type> &it_target,
+       [&](const std::shared_ptr<const integral_type> &it_target,
 	   const std::shared_ptr<const float_type> &ft_source) {
 	 check_enum_completeness_target();
 
@@ -4570,7 +4570,7 @@ void expr_cast::evaluate_type(ast &a, const target &tgt)
 	 }
 
        },
-       [&](const std::shared_ptr<const int_type> &it_target,
+       [&](const std::shared_ptr<const integral_type> &it_target,
 	   const std::shared_ptr<const pointer_type> &pt_source) {
 	 check_enum_completeness_target();
 
@@ -4643,7 +4643,7 @@ void expr_cast::evaluate_type(ast &a, const target &tgt)
 
        },
        [&](const std::shared_ptr<const pointer_type> &pt_target,
-	   const std::shared_ptr<const int_type> &it_source) {
+	   const std::shared_ptr<const integral_type> &it_source) {
 	 check_enum_completeness_source();
 
 	 _set_type(pt_target);
@@ -4832,7 +4832,7 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
 	 [&](const type &t) {
 	   // As an (undocumented!) extension, GCC allows computed gotos
 	   // with integer targets. Accept that too, but warn.
-	   if (is_type<int_type>(t) &&
+	   if (is_type<integral_type>(t) &&
 	       this->get_parent()->is_any_of<stmt_goto>()) {
 	     code_remark remark
 	       (code_remark::severity::warning,
@@ -4862,7 +4862,7 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
   case unary_op_pre::neg:
     handle_types<void>
       ((wrap_callables<no_default_action>
-	([&](const std::shared_ptr<const int_type> &it) {
+	([&](const std::shared_ptr<const integral_type> &it) {
 	   check_enum_completeness_op();
 
 	   std::shared_ptr<const std_int_type> it_result =
@@ -4929,7 +4929,7 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
   case unary_op_pre::bin_neg:
     handle_types<void>
       ((wrap_callables<no_default_action>
-	([&](const std::shared_ptr<const int_type> &it) {
+	([&](const std::shared_ptr<const integral_type> &it) {
 	   check_enum_completeness_op();
 
 	   std::shared_ptr<const std_int_type> it_result =
@@ -5321,7 +5321,7 @@ void expr_builtin_offsetof::evaluate_type(ast &a, const target &tgt)
 	       })),
 	     *t_base);
 
-	if (!is_type<int_type>(*e_index.get_type())) {
+	if (!is_type<integral_type>(*e_index.get_type())) {
 	  code_remark remark
 	    (code_remark::severity::fatal,
 	     "array index expression doesn't have integer type",
@@ -5455,11 +5455,11 @@ void expr_array_subscript::evaluate_type(ast &a, const target &tgt)
 
   handle_types<void>
     ((wrap_callables<default_action_nop>
-      ([&](const pointer_type &pt_base, const int_type &it_index) {
+      ([&](const pointer_type &pt_base, const integral_type &it_index) {
 	 check_enum_completeness_index(_index);
 	 _evaluate_type(a, tgt, pt_base, _base, _index);
        },
-       [&](const int_type &it_index, const pointer_type &pt_base) {
+       [&](const integral_type &it_index, const pointer_type &pt_base) {
 	 check_enum_completeness_index(_base);
 	 _evaluate_type(a, tgt, pt_base, _index, _base);
        },
