@@ -3541,7 +3541,7 @@ void depreprocessor::_write_newlines(source_writer &writer,
       if (!state.last_was_newline && need_newline) {
 	writer.append(source_writer::newline_tag{});
 	state.last_was_newline = true;
-      } else {
+      } else if (!need_newline) {
 	// Copy the separating whitespace, if any. Note that the
 	// whitespace comes all from a single source file, thus
 	// _write_directive() can be used.
@@ -3552,8 +3552,8 @@ void depreprocessor::_write_newlines(source_writer &writer,
 			     next_begin_raw
 			   },
 			   pp_result, source_reader_cache);
+	  state.last_was_newline = false;
 	}
-	state.last_was_newline = false;
       }
 
     } else {
@@ -4072,6 +4072,7 @@ _write_cond_incl_transition(source_writer &writer,
 			    _source_reader_cache &source_reader_cache,
 			    output_remarks &remarks)
 {
+  assert(write_newlines_before || state.last_was_newline);
   switch (k) {
   case _cond_incl_transition_kind::enter:
     {
