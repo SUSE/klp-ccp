@@ -466,7 +466,7 @@ evaluate(klp::ccp::ast::ast &a, const target &tgt,
 	  return
 	    (types::handle_types<mpa::limbs::size_type>
 	     ((wrap_callables<default_action_nop>
-	       ([&](const types::integral_type &_it) {
+	       ([&](const types::returnable_int_type &_it) {
 		  types::handle_types<void>
 		    ((wrap_callables<default_action_nop>
 		      ([&](const types::enum_type &et) {
