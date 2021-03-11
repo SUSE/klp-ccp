@@ -4955,6 +4955,11 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
 	   _convert_type_for_expr_context();
 
 	 },
+	 [&](const bitfield_type &bft) {
+	   _set_type(t);
+	   _convert_type_for_expr_context();
+
+	 },
 	 [&](const pointer_type &pt) {
 	   _check_pointer_arithmetic(a, pt, _e, tgt);
 	   _set_type(t->strip_qualifiers());
@@ -5077,7 +5082,7 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
   case unary_op_pre::neg:
     handle_types<void>
       ((wrap_callables<no_default_action>
-	([&](const std::shared_ptr<const integral_type> &it) {
+	([&](const std::shared_ptr<const returnable_int_type> &it) {
 	   check_enum_completeness_op();
 
 	   std::shared_ptr<const std_int_type> it_result =
@@ -5104,6 +5109,11 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
 	   }
 
 	   _set_type(std::move(it_result));
+	   _convert_type_for_expr_context();
+
+	 },
+	 [&](const std::shared_ptr<const bitfield_type> &bft) {
+	   _set_type(bft->promote(tgt));
 	   _convert_type_for_expr_context();
 
 	 },
@@ -5144,7 +5154,7 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
   case unary_op_pre::bin_neg:
     handle_types<void>
       ((wrap_callables<no_default_action>
-	([&](const std::shared_ptr<const integral_type> &it) {
+	([&](const std::shared_ptr<const returnable_int_type> &it) {
 	   check_enum_completeness_op();
 
 	   std::shared_ptr<const std_int_type> it_result =
@@ -5170,6 +5180,11 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
 	   }
 
 	   _set_type(std::move(it_result));
+	   _convert_type_for_expr_context();
+
+	 },
+	 [&](const std::shared_ptr<const bitfield_type> &bft) {
+	   _set_type(bft->promote(tgt));
 	   _convert_type_for_expr_context();
 
 	 },
