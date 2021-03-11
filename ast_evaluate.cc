@@ -5962,6 +5962,10 @@ void expr_unop_post::evaluate_type(ast &a, const target &tgt)
 	 _set_type(std::move(at));
 	 _convert_type_for_expr_context();
        },
+       [&](const std::shared_ptr<const bitfield_type> &bft) {
+	 _set_type(bft);
+	 _convert_type_for_expr_context();
+       },
        [&](const std::shared_ptr<const pointer_type> &pt) {
 	 _check_pointer_arithmetic(a, *pt, _e, tgt);
 	 _set_type(pt->strip_qualifiers());
