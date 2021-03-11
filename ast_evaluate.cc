@@ -725,7 +725,7 @@ bool _initializer_list_evaluator::_descend_cursor(const expr &e_init)
 	   }
 
 	   if (_is_string_literal_expr(e_init) &&
-	       is_type<integral_type>(*next_at.get_element_type())) {
+	       is_type<returnable_int_type>(*next_at.get_element_type())) {
 	     stop = true;
 	     found = true;
 	     return;
@@ -863,7 +863,7 @@ _evaluate_array_init(klp::ccp::ast::ast &a, const target &tgt,
   // First, deal with the special case of the initializer expression
   // being a string literal.
   if (_is_string_literal_expr(ie.get_expr()) &&
-      is_type<integral_type>(*at_target.get_element_type())) {
+      is_type<returnable_int_type>(*at_target.get_element_type())) {
     return _evaluate_array_init_from_string_literal(a, tgt, at_target,
 						    ie.get_expr());
   }
@@ -959,7 +959,7 @@ _evaluate_array_init(klp::ccp::ast::ast &a, const target &tgt,
 {
   // First check, if the array type is possibly an array of characters and
   // the initializer_list contains a single string literal.
-  if (is_type<integral_type>(*at_target.get_element_type())) {
+  if (is_type<returnable_int_type>(*at_target.get_element_type())) {
     const initializer_expr * const unwrapped_ie
       = _try_unwrap_initializer_list(il);
     if (unwrapped_ie) {
