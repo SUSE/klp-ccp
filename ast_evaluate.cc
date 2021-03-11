@@ -2789,6 +2789,22 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 	 // Always Ok
 
        },
+       [&](const arithmetic_type &target, const bitfield_type&) {
+	 check_enum_completeness_lhs(target);
+
+	 // Always Ok
+
+       },
+       [&](const bitfield_type&, const arithmetic_type &source) {
+	 check_enum_completeness_rhs(source);
+
+	 // Always Ok
+
+       },
+       [&](const bitfield_type&, const bitfield_type&) {
+	 // Always Ok
+
+       },
        [&](const bitfield_type &bft, const pointer_type&) {
 	 // If the bitfield's underlying type is a bool,
 	 // then the assignment is Ok and has the same semantics
@@ -2802,7 +2818,7 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 	 }
 
        },
-       [&](const integral_type &target, const pointer_type&) {
+       [&](const returnable_int_type &target, const pointer_type&) {
 	 code_remark remark
 	   (code_remark::severity::warning,
 	    "assignment to integer from pointer",
@@ -2811,7 +2827,7 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 
 	 check_enum_completeness_lhs(target);
        },
-       [&](const pointer_type&, const integral_type &source) {
+       [&](const pointer_type&, const returnable_int_type &source) {
 	 // Source expression shall be a zero integer constant
 	 // expression.
 	 if (!e_source.is_constexpr() ||
@@ -2825,6 +2841,16 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 	 }
 
 	 check_enum_completeness_lhs(source);
+
+       },
+       [&](const pointer_type&, const bitfield_type&) {
+	 // Source expression shall be a zero integer constant
+	 // expression, but bitfields never qualify as such one.
+	 code_remark remark
+	   (code_remark::severity::warning,
+	    "assignment to pointer from integer which is not NULL",
+	    a.get_pp_result(), e_source.get_tokens_range());
+	 a.get_remarks().add(remark);
 
        },
        [&](const pointer_type &target, const pointer_type &source) {
@@ -2851,8 +2877,8 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 	   handle_types<void>
 	     ((wrap_callables<default_action_unreachable<void, type_set<> >
 				::type>
-	       ([&](const integral_type &ptt_it_target,
-		    const integral_type &ptt_it_source) {
+	       ([&](const returnable_int_type &ptt_it_target,
+		    const returnable_int_type &ptt_it_source) {
 		  if (pointed_to_type_target.is_complete() &&
 		      pointed_to_type_source.is_complete() &&
 		      ptt_it_target.get_width(tgt) !=
@@ -2974,9 +3000,15 @@ void expr_assignment::evaluate_type(ast &a, const target &tgt)
     // mul/div case for the handling of arithmetic operands otherwise.
     if ((handle_types<bool>
 	 ((wrap_callables<default_action_return_value<bool, false>::type>
-	   ([&](const pointer_type &pt_lhs, const integral_type&) {
+	   ([&](const pointer_type &pt_lhs, const returnable_int_type&) {
 	      _check_pointer_arithmetic(a, pt_lhs, _lhs, tgt);
 	      check_enum_completeness_rhs();
+	      _set_type(pt_lhs.strip_qualifiers());
+	      _convert_type_for_expr_context();
+	      return true;
+	    },
+	    [&](const pointer_type &pt_lhs, const bitfield_type&) {
+	      _check_pointer_arithmetic(a, pt_lhs, _lhs, tgt);
 	      _set_type(pt_lhs.strip_qualifiers());
 	      _convert_type_for_expr_context();
 	      return true;
@@ -2995,6 +3027,25 @@ void expr_assignment::evaluate_type(ast &a, const target &tgt)
 	   check_enum_completeness_lhs();
 	   check_enum_completeness_rhs();
 
+	   // Ok
+	   _set_type(t_lhs);
+	   _convert_type_for_expr_context();
+	 },
+	 [&](const arithmetic_type&, const bitfield_type&) {
+	   check_enum_completeness_lhs();
+
+	   // Ok
+	   _set_type(t_lhs);
+	   _convert_type_for_expr_context();
+	 },
+	 [&](const bitfield_type&, const arithmetic_type&) {
+	   check_enum_completeness_rhs();
+
+	   // Ok
+	   _set_type(t_lhs);
+	   _convert_type_for_expr_context();
+	 },
+	 [&](const bitfield_type&, const bitfield_type&) {
 	   // Ok
 	   _set_type(t_lhs);
 	   _convert_type_for_expr_context();
@@ -3019,10 +3070,26 @@ void expr_assignment::evaluate_type(ast &a, const target &tgt)
     // Integer operands wanted.
     handle_types<void>
       ((wrap_callables<no_default_action>
-	([&](const integral_type&, const integral_type&) {
+	([&](const returnable_int_type&, const returnable_int_type&) {
 	   check_enum_completeness_lhs();
 	   check_enum_completeness_rhs();
 
+	   _set_type(t_lhs);
+	   _convert_type_for_expr_context();
+	 },
+	 [&](const returnable_int_type&, const bitfield_type&) {
+	   check_enum_completeness_lhs();
+
+	   _set_type(t_lhs);
+	   _convert_type_for_expr_context();
+	 },
+	 [&](const bitfield_type&, const returnable_int_type&) {
+	   check_enum_completeness_rhs();
+
+	   _set_type(t_lhs);
+	   _convert_type_for_expr_context();
+	 },
+	 [&](const bitfield_type&, const bitfield_type&) {
 	   _set_type(t_lhs);
 	   _convert_type_for_expr_context();
 	 },
