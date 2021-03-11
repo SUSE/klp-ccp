@@ -1662,7 +1662,8 @@ static void evaluate_array_size_expr(expr &size, klp::ccp::ast::ast &a,
   e();
 
 
-  if (!is_type<integral_type>(*size.get_type())) {
+  if (!is_type<returnable_int_type>(*size.get_type()) &&
+      !is_type<bitfield_type>(*size.get_type())) {
     code_remark remark(code_remark::severity::fatal,
 		       "array size expression is not of integer type",
 		       a.get_pp_result(), size.get_tokens_range());
@@ -5321,7 +5322,8 @@ void expr_builtin_offsetof::evaluate_type(ast &a, const target &tgt)
 	       })),
 	     *t_base);
 
-	if (!is_type<integral_type>(*e_index.get_type())) {
+	if (!is_type<returnable_int_type>(*e_index.get_type()) &&
+	    !is_type<bitfield_type>(*e_index.get_type())) {
 	  code_remark remark
 	    (code_remark::severity::fatal,
 	     "array index expression doesn't have integer type",
@@ -5455,11 +5457,19 @@ void expr_array_subscript::evaluate_type(ast &a, const target &tgt)
 
   handle_types<void>
     ((wrap_callables<default_action_nop>
-      ([&](const pointer_type &pt_base, const integral_type &it_index) {
+      ([&](const pointer_type &pt_base, const returnable_int_type&) {
 	 check_enum_completeness_index(_index);
 	 _evaluate_type(a, tgt, pt_base, _base, _index);
        },
-       [&](const integral_type &it_index, const pointer_type &pt_base) {
+       [&](const pointer_type &pt_base, const bitfield_type&) {
+	 check_enum_completeness_index(_index);
+	 _evaluate_type(a, tgt, pt_base, _base, _index);
+       },
+       [&](const returnable_int_type&, const pointer_type &pt_base) {
+	 check_enum_completeness_index(_base);
+	 _evaluate_type(a, tgt, pt_base, _index, _base);
+       },
+       [&](const bitfield_type&, const pointer_type &pt_base) {
 	 check_enum_completeness_index(_base);
 	 _evaluate_type(a, tgt, pt_base, _index, _base);
        },
