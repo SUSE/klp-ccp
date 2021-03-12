@@ -47,7 +47,6 @@ namespace klp
       class addressable_type;
       class void_type;
       class arithmetic_type;
-      class integral_type;
       class plain_char_type;
       class bool_type;
       class std_int_type;
@@ -877,10 +876,13 @@ namespace klp
 	virtual arithmetic_type* _clone() const override = 0;
       };
 
-      class integral_type : public arithmetic_type
+
+      class returnable_int_type : public returnable_object_type, public arithmetic_type
       {
       public:
-	virtual ~integral_type() noexcept = 0;
+	virtual ~returnable_int_type() noexcept = 0;
+
+	std::shared_ptr<const returnable_int_type> strip_qualifiers() const;
 
 	virtual std::shared_ptr<const arithmetic_type>
 	arithmetic_conversion(const target &tgt,
@@ -896,7 +898,7 @@ namespace klp
 			      const complex_float_type &ct) const override;
 
 	virtual std::shared_ptr<const std_int_type>
-	integer_conversion(const target &tgt, const integral_type &it) const;
+	integer_conversion(const target &tgt, const returnable_int_type &it) const;
 
 	virtual std::shared_ptr<const std_int_type>
 	integer_conversion(const target &tgt, const std_int_type &it)
@@ -909,22 +911,6 @@ namespace klp
 
 	virtual std::shared_ptr<const std_int_type>
 	promote(const target &tgt) const = 0;
-
-      protected:
-	integral_type();
-
-	integral_type(const integral_type&);
-
-      private:
-	virtual integral_type* _clone() const override = 0;
-      };
-
-      class returnable_int_type : public returnable_object_type, public integral_type
-      {
-      public:
-	virtual ~returnable_int_type() noexcept = 0;
-
-	std::shared_ptr<const returnable_int_type> strip_qualifiers() const;
 
 	virtual std::shared_ptr<const returnable_int_type> to_unsigned()
 	  const = 0;
@@ -992,7 +978,7 @@ namespace klp
 			      const complex_float_type &ct) const override;
 
 	virtual std::shared_ptr<const std_int_type>
-	integer_conversion(const target &tgt, const integral_type &it)
+	integer_conversion(const target &tgt, const returnable_int_type &it)
 	  const override;
 
 	virtual std::shared_ptr<const std_int_type>

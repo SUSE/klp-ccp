@@ -1542,66 +1542,11 @@ arithmetic_type::arithmetic_type(const arithmetic_type&) = default;
 
 arithmetic_type::~arithmetic_type() noexcept = default;
 
-
-integral_type::integral_type() = default;
-
-integral_type::integral_type(const integral_type&) = default;
-
-integral_type::~integral_type() noexcept = default;
-
 std::shared_ptr<const arithmetic_type>
 arithmetic_type::strip_qualifiers() const
 {
   return _strip_qualifiers(_self_ptr<arithmetic_type>(),
 			   &arithmetic_type::_clone);
-}
-
-std::shared_ptr<const arithmetic_type>
-integral_type::arithmetic_conversion(const target &tgt,
-				const arithmetic_type &at) const
-{
-  // Gets called for all non-std_int_type integer types. Promote to
-  // std_int_type and forward the call.
-  return at.arithmetic_conversion(tgt, *this->promote(tgt));
-}
-
-std::shared_ptr<const arithmetic_type>
-integral_type::arithmetic_conversion(const target &tgt,
-				     const std_int_type &it) const
-{
-  return this->integer_conversion(tgt, it);
-}
-
-std::shared_ptr<const arithmetic_type>
-integral_type::arithmetic_conversion(const target &tgt,
-				const real_float_type &ft) const
-{
-  // Gets called for all non-std_int_type integer types. Promote to
-  // std_int_type and forward the call.
-  return ft.arithmetic_conversion(tgt, *this->promote(tgt));
-}
-
-std::shared_ptr<const arithmetic_type>
-integral_type::arithmetic_conversion(const target &tgt,
-				     const complex_float_type &ct) const
-{
-  // Gets called for all non-std_int_type integer types. Promote to
-  // std_int_type and forward the call.
-  return ct.arithmetic_conversion(tgt, *this->promote(tgt));
-}
-
-std::shared_ptr<const std_int_type>
-integral_type::integer_conversion(const target &tgt, const integral_type &it)
-  const
-{
-  return it.integer_conversion(tgt, *this->promote(tgt));
-}
-
-std::shared_ptr<const std_int_type>
-integral_type::integer_conversion(const target &tgt, const std_int_type &it)
-  const
-{
-  return it.integer_conversion(tgt, *this->promote(tgt));
 }
 
 
@@ -1616,6 +1561,54 @@ returnable_int_type::strip_qualifiers() const
 {
   return _strip_qualifiers(_self_ptr<returnable_int_type>(),
 			   &returnable_int_type::_clone);
+}
+
+std::shared_ptr<const arithmetic_type>
+returnable_int_type::arithmetic_conversion(const target &tgt,
+					   const arithmetic_type &at) const
+{
+  // Gets called for all non-std_int_type integer types. Promote to
+  // std_int_type and forward the call.
+  return at.arithmetic_conversion(tgt, *this->promote(tgt));
+}
+
+std::shared_ptr<const arithmetic_type>
+returnable_int_type::arithmetic_conversion(const target &tgt,
+					   const std_int_type &it) const
+{
+  return this->integer_conversion(tgt, it);
+}
+
+std::shared_ptr<const arithmetic_type>
+returnable_int_type::arithmetic_conversion(const target &tgt,
+					   const real_float_type &ft) const
+{
+  // Gets called for all non-std_int_type integer types. Promote to
+  // std_int_type and forward the call.
+  return ft.arithmetic_conversion(tgt, *this->promote(tgt));
+}
+
+std::shared_ptr<const arithmetic_type>
+returnable_int_type::arithmetic_conversion(const target &tgt,
+					   const complex_float_type &ct) const
+{
+  // Gets called for all non-std_int_type integer types. Promote to
+  // std_int_type and forward the call.
+  return ct.arithmetic_conversion(tgt, *this->promote(tgt));
+}
+
+std::shared_ptr<const std_int_type>
+returnable_int_type::integer_conversion(const target &tgt, const returnable_int_type &it)
+  const
+{
+  return it.integer_conversion(tgt, *this->promote(tgt));
+}
+
+std::shared_ptr<const std_int_type>
+returnable_int_type::integer_conversion(const target &tgt, const std_int_type &it)
+  const
+{
+  return it.integer_conversion(tgt, *this->promote(tgt));
 }
 
 
@@ -1714,7 +1707,7 @@ std_int_type::arithmetic_conversion(const target &tgt,
 }
 
 std::shared_ptr<const std_int_type>
-std_int_type::integer_conversion(const target &tgt, const integral_type &it)
+std_int_type::integer_conversion(const target &tgt, const returnable_int_type &it)
   const
 {
   return it.integer_conversion(tgt, *this);
