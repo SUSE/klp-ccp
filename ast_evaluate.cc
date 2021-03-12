@@ -3178,7 +3178,7 @@ void expr_conditional::evaluate_type(ast &a, const target &tgt)
 	 if (cv_value) {
 	   handle_types<void>
 	     ((wrap_callables<default_action_nop>
-	       ([&](const integral_type &it_result) {
+	       ([&](const returnable_int_type &it_result) {
 		  target_int i_result = cv_value->convert_to(tgt, it_result);
 		  // Strictly speaking, the result is an integer
 		  // constant expression if and only if all
@@ -3220,6 +3220,31 @@ void expr_conditional::evaluate_type(ast &a, const target &tgt)
 		})),
 	      *at_result);
 	 }
+
+       },
+       [&](const arithmetic_type &at_true, const bitfield_type &bft_false) {
+	 check_enum_completeness_t_true();
+
+	 std::shared_ptr<const arithmetic_type> at_result
+	   = at_true.arithmetic_conversion(tgt, *bft_false.promote(tgt));
+	 _set_type(std::move(at_result));
+
+       },
+       [&](const bitfield_type &bft_true, const arithmetic_type &at_false) {
+	 check_enum_completeness_t_false();
+
+	 std::shared_ptr<const arithmetic_type> at_result
+	   = at_false.arithmetic_conversion(tgt, *bft_true.promote(tgt));
+	 _set_type(std::move(at_result));
+
+       },
+       [&](const bitfield_type &bft_true, const bitfield_type &bft_false) {
+	 check_enum_completeness_t_false();
+
+	 std::shared_ptr<const arithmetic_type> at_result
+	   = (bft_true.promote(tgt)
+	      ->arithmetic_conversion(tgt, *bft_false.promote(tgt)));
+	 _set_type(std::move(at_result));
 
        },
        [&](const pointer_type &pt_true, const pointer_type &pt_false) {
@@ -3291,7 +3316,7 @@ void expr_conditional::evaluate_type(ast &a, const target &tgt)
 	   _set_value(cv_value->clone());
 
        },
-       [&](const pointer_type&, const integral_type&) {
+       [&](const pointer_type&, const returnable_int_type&) {
 	 // The false expression shall be a zero integer constant
 	 // (NULL).
 	 if (!_expr_false.is_constexpr() ||
@@ -3321,7 +3346,17 @@ void expr_conditional::evaluate_type(ast &a, const target &tgt)
 	 }
 
        },
-       [&](const integral_type&, const pointer_type&) {
+       [&](const pointer_type&, const bitfield_type&) {
+	 // The false expression shall be a zero integer constant
+	 // (NULL), a bit-field obviously doesn't qualify
+	 code_remark remark
+	   (code_remark::severity::fatal,
+	    "expected null pointer constant for ternary operator's operand",
+	    a.get_pp_result(), _expr_false.get_tokens_range());
+	 a.get_remarks().add(remark);
+	 throw semantic_except(remark);
+       },
+       [&](const returnable_int_type&, const pointer_type&) {
 	 // The true expression shall be a zero integer constant
 	 // (NULL).
 	 if (!expr_true.is_constexpr() ||
@@ -3350,6 +3385,16 @@ void expr_conditional::evaluate_type(ast &a, const target &tgt)
 	   }
 	 }
 
+       },
+       [&](const bitfield_type&, const pointer_type&) {
+	 // The true expression shall be a zero integer constant
+	 // (NULL), a bit-field obviously doesn't qualify
+	 code_remark remark
+	   (code_remark::severity::fatal,
+	    "expected null pointer constant for ternary operator's operand",
+	    a.get_pp_result(), _expr_false.get_tokens_range());
+	 a.get_remarks().add(remark);
+	 throw semantic_except(remark);
        },
        [&](const struct_or_union_type &sout_true,
 	   const struct_or_union_type &sout_false) {
