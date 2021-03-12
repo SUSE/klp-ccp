@@ -1934,7 +1934,7 @@ std::shared_ptr<const returnable_int_type> bool_type::to_unsigned() const
 
 enum_content::member::
 member(const ast::enumerator &e, const std::string &name,
-       const std::shared_ptr<const integral_type> &initial_type,
+       const std::shared_ptr<const returnable_int_type> &initial_type,
        const target_int &value)
   : _e(e), _name(name), _value(value), _type(initial_type)
 {}
@@ -1946,13 +1946,13 @@ void enum_content::member::convert_value(const mpa::limbs::size_type prec,
     _value = _value.convert(prec, is_signed);
 }
 
-void enum_content::member::set_type(std::shared_ptr<const integral_type> &&t)
+void enum_content::member::set_type(std::shared_ptr<const returnable_int_type> &&t)
   noexcept
 {
   _type = std::move(t);
 }
 
-const std::shared_ptr<const integral_type>&
+const std::shared_ptr<const returnable_int_type>&
 enum_content::member::get_type() const noexcept
 {
   assert(_type);
@@ -1961,7 +1961,7 @@ enum_content::member::get_type() const noexcept
 
 void enum_content::
 add_member(const ast::enumerator &e, const std::string &name,
-	   const std::shared_ptr<const integral_type> &initial_type,
+	   const std::shared_ptr<const returnable_int_type> &initial_type,
 	   const target_int &value)
 {
   assert(!_underlying_type);

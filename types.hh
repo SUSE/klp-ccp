@@ -1119,7 +1119,7 @@ namespace klp
 	{
 	public:
 	  member(const ast::enumerator &e, const std::string &name,
-		 const std::shared_ptr<const integral_type> &initial_type,
+		 const std::shared_ptr<const returnable_int_type> &initial_type,
 		 const target_int &value);
 
 	  const ast::enumerator &
@@ -1137,20 +1137,20 @@ namespace klp
 	  void convert_value(const mpa::limbs::size_type prec,
 			     const bool is_signed);
 
-	  void set_type(std::shared_ptr<const integral_type> &&t) noexcept;
+	  void set_type(std::shared_ptr<const returnable_int_type> &&t) noexcept;
 
-	  const std::shared_ptr<const integral_type>&
+	  const std::shared_ptr<const returnable_int_type>&
 	  get_type() const noexcept;
 
 	private:
 	  const ast::enumerator &_e;
 	  const std::string _name;
 	  target_int _value;
-	  std::shared_ptr<const integral_type> _type;
+	  std::shared_ptr<const returnable_int_type> _type;
 	};
 
 	void add_member(const ast::enumerator &e, const std::string &name,
-			const std::shared_ptr<const integral_type> &initial_type,
+			const std::shared_ptr<const returnable_int_type> &initial_type,
 			const target_int &value);
 
 	void add_member(const ast::enumerator &e, const std::string &name,
