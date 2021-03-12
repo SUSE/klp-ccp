@@ -727,7 +727,7 @@ _layout_decl_bitfield(const bitfield_type &bf_t) const
     // From gcc: A zero-length bit-field affects the alignment of the
     // next field.  In essence such bit-fields are not influenced by
     // any packing due to #pragma pack or attribute packed.
-    const std::shared_ptr<const returnable_int_type>& base_type = bf_t.get_base_type();
+    const std::shared_ptr<const int_type>& base_type = bf_t.get_base_type();
     const mpa::limbs::size_type base_type_align_ffs =
       3 + base_type->get_effective_alignment(_tgt) + 1;
     desired_align_ffs = std::max(base_type_align_ffs, desired_align_ffs);
@@ -758,7 +758,7 @@ _update_alignment_for_bitfield(const struct_or_union_content::member &m,
     _layout_decl_bitfield(bf_t);
 
   if (!m.get_name().empty()) {
-    const std::shared_ptr<const returnable_int_type>& base_type = bf_t.get_base_type();
+    const std::shared_ptr<const int_type>& base_type = bf_t.get_base_type();
     mpa::limbs::size_type type_align_ffs =
       3 + base_type->get_effective_alignment(_tgt) + 1;
 
@@ -843,7 +843,7 @@ void record_layout_info::place_struct_field(struct_or_union_content::member &m)
 	     _is_size_constant && _offset.fits_into_type<uhwi>() &&
 	     (bf_t.get_base_type()->get_size(_tgt).lshift(3)
 	      .fits_into_type<uhwi>())) {
-	   const std::shared_ptr<const returnable_int_type>& base_type =
+	   const std::shared_ptr<const int_type>& base_type =
 	     bf_t.get_base_type();
 	   const mpa::limbs::size_type type_align_ffs =
 	     3 + base_type->get_effective_alignment(_tgt) + 1;

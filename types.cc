@@ -729,7 +729,7 @@ is_compatible_with(const target &tgt,
   for (auto pt : t.get_parameter_type_list()) {
     if (!(handle_types<bool>
 	  ((wrap_callables<default_action_return_value<bool, true>::type>
-	    ([&](const returnable_int_type &it) {
+	    ([&](const int_type &it) {
 	       return it.is_compatible_with(tgt, *it.promote(tgt), true);
 	     },
 	     [&](const float_type &ft) {
@@ -1550,22 +1550,21 @@ arithmetic_type::strip_qualifiers() const
 }
 
 
-returnable_int_type::returnable_int_type() = default;
+int_type::int_type() = default;
 
-returnable_int_type::returnable_int_type(const returnable_int_type&) = default;
+int_type::int_type(const int_type&) = default;
 
-returnable_int_type::~returnable_int_type() noexcept = default;
+int_type::~int_type() noexcept = default;
 
-std::shared_ptr<const returnable_int_type>
-returnable_int_type::strip_qualifiers() const
+std::shared_ptr<const int_type>
+int_type::strip_qualifiers() const
 {
-  return _strip_qualifiers(_self_ptr<returnable_int_type>(),
-			   &returnable_int_type::_clone);
+  return _strip_qualifiers(_self_ptr<int_type>(), &int_type::_clone);
 }
 
 std::shared_ptr<const arithmetic_type>
-returnable_int_type::arithmetic_conversion(const target &tgt,
-					   const arithmetic_type &at) const
+int_type::arithmetic_conversion(const target &tgt,
+				const arithmetic_type &at) const
 {
   // Gets called for all non-std_int_type integer types. Promote to
   // std_int_type and forward the call.
@@ -1573,15 +1572,15 @@ returnable_int_type::arithmetic_conversion(const target &tgt,
 }
 
 std::shared_ptr<const arithmetic_type>
-returnable_int_type::arithmetic_conversion(const target &tgt,
-					   const std_int_type &it) const
+int_type::arithmetic_conversion(const target &tgt,
+				const std_int_type &it) const
 {
   return this->integer_conversion(tgt, it);
 }
 
 std::shared_ptr<const arithmetic_type>
-returnable_int_type::arithmetic_conversion(const target &tgt,
-					   const real_float_type &ft) const
+int_type::arithmetic_conversion(const target &tgt,
+				const real_float_type &ft) const
 {
   // Gets called for all non-std_int_type integer types. Promote to
   // std_int_type and forward the call.
@@ -1589,8 +1588,8 @@ returnable_int_type::arithmetic_conversion(const target &tgt,
 }
 
 std::shared_ptr<const arithmetic_type>
-returnable_int_type::arithmetic_conversion(const target &tgt,
-					   const complex_float_type &ct) const
+int_type::arithmetic_conversion(const target &tgt,
+				const complex_float_type &ct) const
 {
   // Gets called for all non-std_int_type integer types. Promote to
   // std_int_type and forward the call.
@@ -1598,14 +1597,13 @@ returnable_int_type::arithmetic_conversion(const target &tgt,
 }
 
 std::shared_ptr<const std_int_type>
-returnable_int_type::integer_conversion(const target &tgt, const returnable_int_type &it)
-  const
+int_type::integer_conversion(const target &tgt, const int_type &it) const
 {
   return it.integer_conversion(tgt, *this->promote(tgt));
 }
 
 std::shared_ptr<const std_int_type>
-returnable_int_type::integer_conversion(const target &tgt, const std_int_type &it)
+int_type::integer_conversion(const target &tgt, const std_int_type &it)
   const
 {
   return it.integer_conversion(tgt, *this->promote(tgt));
@@ -1707,7 +1705,7 @@ std_int_type::arithmetic_conversion(const target &tgt,
 }
 
 std::shared_ptr<const std_int_type>
-std_int_type::integer_conversion(const target &tgt, const returnable_int_type &it)
+std_int_type::integer_conversion(const target &tgt, const int_type &it)
   const
 {
   return it.integer_conversion(tgt, *this);
@@ -1770,7 +1768,7 @@ std_int_type::promote(const target&) const
   }
 }
 
-std::shared_ptr<const returnable_int_type> std_int_type::to_unsigned() const
+std::shared_ptr<const int_type> std_int_type::to_unsigned() const
 {
   assert(_signed);
   return create(_k, false, get_qualifiers());
@@ -1845,7 +1843,7 @@ plain_char_type::promote(const target&) const
 			      get_qualifiers());
 }
 
-std::shared_ptr<const returnable_int_type> plain_char_type::to_unsigned() const
+std::shared_ptr<const int_type> plain_char_type::to_unsigned() const
 {
   return std_int_type::create(std_int_type::kind::k_char, false,
 			      get_qualifiers());
@@ -1917,7 +1915,7 @@ bool_type::promote(const target&) const
 			      get_qualifiers());
 }
 
-std::shared_ptr<const returnable_int_type> bool_type::to_unsigned() const
+std::shared_ptr<const int_type> bool_type::to_unsigned() const
 {
   // A _Bool is always unsigned, no need to call to_unsigned() on it.
   assert(0);
@@ -1927,7 +1925,7 @@ std::shared_ptr<const returnable_int_type> bool_type::to_unsigned() const
 
 enum_content::member::
 member(const ast::enumerator &e, const std::string &name,
-       const std::shared_ptr<const returnable_int_type> &initial_type,
+       const std::shared_ptr<const int_type> &initial_type,
        const target_int &value)
   : _e(e), _name(name), _value(value), _type(initial_type)
 {}
@@ -1939,13 +1937,13 @@ void enum_content::member::convert_value(const mpa::limbs::size_type prec,
     _value = _value.convert(prec, is_signed);
 }
 
-void enum_content::member::set_type(std::shared_ptr<const returnable_int_type> &&t)
+void enum_content::member::set_type(std::shared_ptr<const int_type> &&t)
   noexcept
 {
   _type = std::move(t);
 }
 
-const std::shared_ptr<const returnable_int_type>&
+const std::shared_ptr<const int_type>&
 enum_content::member::get_type() const noexcept
 {
   assert(_type);
@@ -1954,7 +1952,7 @@ enum_content::member::get_type() const noexcept
 
 void enum_content::
 add_member(const ast::enumerator &e, const std::string &name,
-	   const std::shared_ptr<const returnable_int_type> &initial_type,
+	   const std::shared_ptr<const int_type> &initial_type,
 	   const target_int &value)
 {
   assert(!_underlying_type);
@@ -2111,7 +2109,7 @@ std::shared_ptr<const std_int_type> enum_type::promote(const target &tgt)
   return this->get_underlying_type()->promote(tgt);
 }
 
-std::shared_ptr<const returnable_int_type> enum_type::to_unsigned() const
+std::shared_ptr<const int_type> enum_type::to_unsigned() const
 {
   return get_underlying_type()->to_unsigned();
 }
@@ -2140,7 +2138,7 @@ const enum_content* enum_type::_get_content() const noexcept
 
 
 bitfield_type::
-bitfield_type(std::shared_ptr<const returnable_int_type> &&base_type,
+bitfield_type(std::shared_ptr<const int_type> &&base_type,
 	      const mpa::limbs::size_type width)
   : type(base_type->get_qualifiers()),
     _base_type(base_type->strip_qualifiers()), _width(width), _packed(false)
@@ -2156,7 +2154,7 @@ bitfield_type* bitfield_type::_clone() const
 }
 
 std::shared_ptr<const bitfield_type>
-bitfield_type::create(std::shared_ptr<const returnable_int_type> &&base_type,
+bitfield_type::create(std::shared_ptr<const int_type> &&base_type,
 		      const mpa::limbs::size_type width)
 {
   return (std::shared_ptr<const bitfield_type>

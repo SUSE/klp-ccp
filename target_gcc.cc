@@ -401,7 +401,7 @@ namespace
       mul,
     };
 
-    typedef std::shared_ptr<const types::returnable_int_type>(*t_fac)();
+    typedef std::shared_ptr<const types::int_type>(*t_fac)();
 
     virtual evaluation_result_type
     evaluate(klp::ccp::ast::ast &a, const target &tgt,
@@ -410,12 +410,12 @@ namespace
     template <t_fac tfac, bool p_variant, op o>
     static std::unique_ptr<builtin_func> create();
 
-    static std::shared_ptr<const types::returnable_int_type> fac_i();
-    static std::shared_ptr<const types::returnable_int_type> fac_u();
-    static std::shared_ptr<const types::returnable_int_type> fac_l();
-    static std::shared_ptr<const types::returnable_int_type> fac_ul();
-    static std::shared_ptr<const types::returnable_int_type> fac_ll();
-    static std::shared_ptr<const types::returnable_int_type> fac_ull();
+    static std::shared_ptr<const types::int_type> fac_i();
+    static std::shared_ptr<const types::int_type> fac_u();
+    static std::shared_ptr<const types::int_type> fac_l();
+    static std::shared_ptr<const types::int_type> fac_ul();
+    static std::shared_ptr<const types::int_type> fac_ll();
+    static std::shared_ptr<const types::int_type> fac_ull();
 
   private:
     t_fac _target_fac;
@@ -466,7 +466,7 @@ evaluate(klp::ccp::ast::ast &a, const target &tgt,
 	  return
 	    (types::handle_types<mpa::limbs::size_type>
 	     ((wrap_callables<default_action_nop>
-	       ([&](const types::returnable_int_type &_it) {
+	       ([&](const types::int_type &_it) {
 		  types::handle_types<void>
 		    ((wrap_callables<default_action_nop>
 		      ([&](const types::enum_type &et) {
@@ -599,7 +599,7 @@ _builtin_overflow::evaluate(klp::ccp::ast::ast &a, const target &tgt,
   mpa::limbs::size_type target_width =
     std::numeric_limits<mpa::limbs::size_type>::max();
   bool target_is_signed;
-  const std::shared_ptr<const types::returnable_int_type> it_target_spec =
+  const std::shared_ptr<const types::int_type> it_target_spec =
     _target_fac ? _target_fac() : nullptr;
   assert(!_p_variant || !_target_fac);
   if (_p_variant) {
@@ -608,7 +608,7 @@ _builtin_overflow::evaluate(klp::ccp::ast::ast &a, const target &tgt,
     for (unsigned int i = 0; i < 3; ++i) {
       types::handle_types<void>
 	((wrap_callables<default_action_nop>
-	  ([&](const std::shared_ptr<const types::returnable_int_type> &it) {
+	  ([&](const std::shared_ptr<const types::int_type> &it) {
 	     types::handle_types<void>
 	       ((wrap_callables<default_action_nop>
 		 ([&](const types::enum_type &et) {
@@ -689,7 +689,7 @@ _builtin_overflow::evaluate(klp::ccp::ast::ast &a, const target &tgt,
 	([&](const types::pointer_type &pt) {
 	   types::handle_types<void>
 	     ((wrap_callables<default_action_nop>
-	       ([&](const std::shared_ptr<const types::returnable_int_type> &it) {
+	       ([&](const std::shared_ptr<const types::int_type> &it) {
 		  types::handle_types<void>
 		    ((wrap_callables<default_action_nop>
 		      ([&](const types::enum_type &et) {
@@ -849,33 +849,33 @@ _builtin_overflow::evaluate(klp::ccp::ast::ast &a, const target &tgt,
 				false};
 }
 
-std::shared_ptr<const types::returnable_int_type> _builtin_overflow::fac_i()
+std::shared_ptr<const types::int_type> _builtin_overflow::fac_i()
 {
   return types::std_int_type::create(types::std_int_type::kind::k_int, true);
 }
 
-std::shared_ptr<const types::returnable_int_type> _builtin_overflow::fac_u()
+std::shared_ptr<const types::int_type> _builtin_overflow::fac_u()
 {
   return types::std_int_type::create(types::std_int_type::kind::k_int, false);
 }
 
-std::shared_ptr<const types::returnable_int_type> _builtin_overflow::fac_l()
+std::shared_ptr<const types::int_type> _builtin_overflow::fac_l()
 {
   return types::std_int_type::create(types::std_int_type::kind::k_long, true);
 }
 
-std::shared_ptr<const types::returnable_int_type> _builtin_overflow::fac_ul()
+std::shared_ptr<const types::int_type> _builtin_overflow::fac_ul()
 {
   return types::std_int_type::create(types::std_int_type::kind::k_long, false);
 }
 
-std::shared_ptr<const types::returnable_int_type> _builtin_overflow::fac_ll()
+std::shared_ptr<const types::int_type> _builtin_overflow::fac_ll()
 {
   return types::std_int_type::create(types::std_int_type::kind::k_long_long,
 				     true);
 }
 
-std::shared_ptr<const types::returnable_int_type> _builtin_overflow::fac_ull()
+std::shared_ptr<const types::int_type> _builtin_overflow::fac_ull()
 {
   return types::std_int_type::create(types::std_int_type::kind::k_long_long,
 				     false);
@@ -2359,8 +2359,8 @@ public:
   std::shared_ptr<const types::pointer_type>
   apply_to_type(std::shared_ptr<const types::pointer_type> &&orig_t) const;
 
-  std::shared_ptr<const types::returnable_int_type>
-  apply_to_type(std::shared_ptr<const types::returnable_int_type> &&orig_t)
+  std::shared_ptr<const types::int_type>
+  apply_to_type(std::shared_ptr<const types::int_type> &&orig_t)
     const;
 
   std::shared_ptr<const types::addressable_type>
@@ -2477,9 +2477,9 @@ apply_to_type(std::shared_ptr<const types::pointer_type> &&orig_t) const
   return std::move(orig_t);
 }
 
-std::shared_ptr<const types::returnable_int_type>
+std::shared_ptr<const types::int_type>
 target_gcc::_mode_attribute_finder::
-apply_to_type(std::shared_ptr<const types::returnable_int_type> &&orig_t) const
+apply_to_type(std::shared_ptr<const types::int_type> &&orig_t) const
 {
   if (!this->mode_attribute_found())
     return std::move(orig_t);
@@ -2516,7 +2516,7 @@ apply_to_type(std::shared_ptr<const types::addressable_type> &&orig_t) const
 
   return types::handle_types<std::shared_ptr<const types::addressable_type>>
     ((wrap_callables<no_default_action>
-      ([&](std::shared_ptr<const types::returnable_int_type> &&it)
+      ([&](std::shared_ptr<const types::int_type> &&it)
 		-> std::shared_ptr<const types::addressable_type> {
 	return apply_to_type(std::move(it));
        },
@@ -2813,7 +2813,7 @@ evaluate_attributes(ast::ast &a,
   sql.for_each_attribute(paf);
 
   if (maf.mode_attribute_found()) {
-    std::shared_ptr<const types::returnable_int_type> base_t =
+    std::shared_ptr<const types::int_type> base_t =
       t->get_base_type();
     base_t = maf.apply_to_type(std::move(base_t));
     t = types::bitfield_type::create(std::move(base_t), t->get_width(*this));

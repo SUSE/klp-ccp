@@ -877,12 +877,12 @@ namespace klp
       };
 
 
-      class returnable_int_type : public arithmetic_type
+      class int_type : public arithmetic_type
       {
       public:
-	virtual ~returnable_int_type() noexcept = 0;
+	virtual ~int_type() noexcept = 0;
 
-	std::shared_ptr<const returnable_int_type> strip_qualifiers() const;
+	std::shared_ptr<const int_type> strip_qualifiers() const;
 
 	virtual std::shared_ptr<const arithmetic_type>
 	arithmetic_conversion(const target &tgt,
@@ -898,7 +898,7 @@ namespace klp
 			      const complex_float_type &ct) const override;
 
 	virtual std::shared_ptr<const std_int_type>
-	integer_conversion(const target &tgt, const returnable_int_type &it) const;
+	integer_conversion(const target &tgt, const int_type &it) const;
 
 	virtual std::shared_ptr<const std_int_type>
 	integer_conversion(const target &tgt, const std_int_type &it)
@@ -912,19 +912,19 @@ namespace klp
 	virtual std::shared_ptr<const std_int_type>
 	promote(const target &tgt) const = 0;
 
-	virtual std::shared_ptr<const returnable_int_type> to_unsigned()
+	virtual std::shared_ptr<const int_type> to_unsigned()
 	  const = 0;
 
       protected:
-	returnable_int_type();
+	int_type();
 
-	returnable_int_type(const returnable_int_type&);
+	int_type(const int_type&);
 
       private:
-	virtual returnable_int_type* _clone() const override = 0;
+	virtual int_type* _clone() const override = 0;
       };
 
-      class std_int_type final : public returnable_int_type
+      class std_int_type final : public int_type
       {
       public:
 	enum class kind
@@ -978,7 +978,7 @@ namespace klp
 			      const complex_float_type &ct) const override;
 
 	virtual std::shared_ptr<const std_int_type>
-	integer_conversion(const target &tgt, const returnable_int_type &it)
+	integer_conversion(const target &tgt, const int_type &it)
 	  const override;
 
 	virtual std::shared_ptr<const std_int_type>
@@ -994,7 +994,7 @@ namespace klp
 	virtual std::shared_ptr<const std_int_type>
 	promote(const target &tgt) const override;
 
-	virtual std::shared_ptr<const returnable_int_type> to_unsigned()
+	virtual std::shared_ptr<const int_type> to_unsigned()
 	  const override;
 
 	kind get_kind() const noexcept
@@ -1012,7 +1012,7 @@ namespace klp
 	const bool _signed;
       };
 
-      class plain_char_type final : public returnable_int_type
+      class plain_char_type final : public int_type
       {
       public:
 	virtual ~plain_char_type() noexcept;
@@ -1044,7 +1044,7 @@ namespace klp
 	virtual std::shared_ptr<const std_int_type>
 	promote(const target &tgt) const override;
 
-	virtual std::shared_ptr<const returnable_int_type> to_unsigned()
+	virtual std::shared_ptr<const int_type> to_unsigned()
 	  const override;
 
       private:
@@ -1055,7 +1055,7 @@ namespace klp
 	virtual plain_char_type* _clone() const override;
       };
 
-      class bool_type final : public returnable_int_type
+      class bool_type final : public int_type
       {
       public:
 	virtual ~bool_type() noexcept;
@@ -1087,7 +1087,7 @@ namespace klp
 	virtual std::shared_ptr<const std_int_type>
 	promote(const target &tgt) const override;
 
-	virtual std::shared_ptr<const returnable_int_type> to_unsigned()
+	virtual std::shared_ptr<const int_type> to_unsigned()
 	  const override;
 
       private:
@@ -1105,7 +1105,7 @@ namespace klp
 	{
 	public:
 	  member(const ast::enumerator &e, const std::string &name,
-		 const std::shared_ptr<const returnable_int_type> &initial_type,
+		 const std::shared_ptr<const int_type> &initial_type,
 		 const target_int &value);
 
 	  const ast::enumerator &
@@ -1123,20 +1123,20 @@ namespace klp
 	  void convert_value(const mpa::limbs::size_type prec,
 			     const bool is_signed);
 
-	  void set_type(std::shared_ptr<const returnable_int_type> &&t) noexcept;
+	  void set_type(std::shared_ptr<const int_type> &&t) noexcept;
 
-	  const std::shared_ptr<const returnable_int_type>&
+	  const std::shared_ptr<const int_type>&
 	  get_type() const noexcept;
 
 	private:
 	  const ast::enumerator &_e;
 	  const std::string _name;
 	  target_int _value;
-	  std::shared_ptr<const returnable_int_type> _type;
+	  std::shared_ptr<const int_type> _type;
 	};
 
 	void add_member(const ast::enumerator &e, const std::string &name,
-			const std::shared_ptr<const returnable_int_type> &initial_type,
+			const std::shared_ptr<const int_type> &initial_type,
 			const target_int &value);
 
 	void add_member(const ast::enumerator &e, const std::string &name,
@@ -1161,7 +1161,7 @@ namespace klp
 	std::shared_ptr<const std_int_type> _underlying_type;
       };
 
-      class enum_type final : public returnable_int_type
+      class enum_type final : public int_type
       {
       public:
 	virtual ~enum_type() noexcept;
@@ -1198,7 +1198,7 @@ namespace klp
 	virtual std::shared_ptr<const std_int_type>
 	promote(const target &tgt) const override;
 
-	virtual std::shared_ptr<const returnable_int_type> to_unsigned()
+	virtual std::shared_ptr<const int_type> to_unsigned()
 	  const override;
 
 	const std::shared_ptr<const std_int_type>&
@@ -1228,7 +1228,7 @@ namespace klp
 	virtual ~bitfield_type() noexcept;
 
 	static std::shared_ptr<const bitfield_type>
-	create(std::shared_ptr<const returnable_int_type> &&base_type,
+	create(std::shared_ptr<const int_type> &&base_type,
 	       const mpa::limbs::size_type width);
 
 	virtual type_id get_type_id() const noexcept override;
@@ -1246,7 +1246,7 @@ namespace klp
 	std::shared_ptr<const std_int_type>
 	promote(const target &tgt) const;
 
-	const std::shared_ptr<const returnable_int_type>& get_base_type()
+	const std::shared_ptr<const int_type>& get_base_type()
 	  const noexcept
 	{ return _base_type; }
 
@@ -1262,14 +1262,14 @@ namespace klp
 	std::shared_ptr<const bitfield_type> set_packed() const;
 
       private:
-	bitfield_type(std::shared_ptr<const returnable_int_type> &&base_type,
+	bitfield_type(std::shared_ptr<const int_type> &&base_type,
 		      const mpa::limbs::size_type width);
 
 	bitfield_type(const bitfield_type&);
 
 	virtual bitfield_type* _clone() const override;
 
-	std::shared_ptr<const returnable_int_type> _base_type;
+	std::shared_ptr<const int_type> _base_type;
 	const mpa::limbs::size_type _width;
 
 	alignment _user_align;

@@ -654,11 +654,11 @@ namespace klp
 	void _evaluate_ptr_sub(const types::pointer_type &pt_left,
 			       const types::pointer_type &pt_right,
 			       ast &a, const target &tgt);
-	void _evaluate_shift(const types::returnable_int_type &it_left,
-			     const types::returnable_int_type &it_right,
+	void _evaluate_shift(const types::int_type &it_left,
+			     const types::int_type &it_right,
 			     ast &a, const target &tgt);
-	void _evaluate_bin_binop(const types::returnable_int_type &it_left,
-				 const types::returnable_int_type &it_right,
+	void _evaluate_bin_binop(const types::int_type &it_left,
+				 const types::int_type &it_right,
 				 ast &a, const target &tgt);
 	void _evaluate_logical_binop(const ast &a, const target &tgt);
 
@@ -666,9 +666,9 @@ namespace klp
 			   const types::pointer_type &pt_right,
 			   ast &a, const target &tgt);
 	void _evaluate_cmp(const types::pointer_type &pt_left,
-			   const types::returnable_int_type &it_right,
+			   const types::int_type &it_right,
 			   ast &a, const target &tgt);
-	void _evaluate_cmp(const types::returnable_int_type &it_left,
+	void _evaluate_cmp(const types::int_type &it_left,
 			   const types::pointer_type &pt_right,
 			   ast &a, const target &tgt);
 	void _evaluate_cmp(const types::arithmetic_type &at_left,
