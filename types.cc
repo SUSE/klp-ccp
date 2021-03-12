@@ -732,8 +732,11 @@ is_compatible_with(const target &tgt,
 	    ([&](const int_type &it) {
 	       return it.is_compatible_with(tgt, *it.promote(tgt), true);
 	     },
-	     [&](const float_type &ft) {
-	       return ft.is_compatible_with(tgt, *ft.promote(), true);
+	     [&](const real_float_type &rft) {
+	       return rft.is_compatible_with(tgt, *rft.promote(), true);
+	     },
+	     [&](const complex_float_type &cft) {
+	       return cft.is_compatible_with(tgt, *cft.promote(), true);
 	     })),
 	   *pt))) {
       return false;
@@ -2318,7 +2321,7 @@ real_float_type::arithmetic_conversion(const target &tgt,
   return ct.arithmetic_conversion(tgt, *this);
 }
 
-std::shared_ptr<const float_type> real_float_type::promote() const
+std::shared_ptr<const real_float_type> real_float_type::promote() const
 {
   if (this->get_kind() == kind::k_float)
     return real_float_type::create(kind::k_double, this->get_qualifiers());
@@ -2415,7 +2418,7 @@ complex_float_type::arithmetic_conversion(const target&,
   }
 }
 
-std::shared_ptr<const float_type> complex_float_type::promote() const
+std::shared_ptr<const complex_float_type> complex_float_type::promote() const
 {
   if (this->get_kind() == kind::k_float)
     return complex_float_type::create(kind::k_double, this->get_qualifiers());

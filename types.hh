@@ -1297,8 +1297,6 @@ namespace klp
 	mpa::limbs::size_type
 	get_exponent_width(const target &tgt) const noexcept;
 
-	virtual std::shared_ptr<const float_type> promote() const = 0;
-
       protected:
 	float_type(const kind k);
 
@@ -1346,7 +1344,7 @@ namespace klp
 	arithmetic_conversion(const target &tgt,
 			      const complex_float_type &ct) const override;
 
-	virtual std::shared_ptr<const float_type> promote() const override;
+	std::shared_ptr<const real_float_type> promote() const;
 
       private:
 	real_float_type(const kind k, const qualifiers &qs);
@@ -1392,7 +1390,7 @@ namespace klp
 	arithmetic_conversion(const target &tgt,
 			      const complex_float_type &ct) const override;
 
-	virtual std::shared_ptr<const float_type> promote() const override;
+	std::shared_ptr<const complex_float_type> promote() const;
 
       private:
 	complex_float_type(const kind k, const qualifiers &qs);
