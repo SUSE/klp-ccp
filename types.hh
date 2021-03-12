@@ -1236,7 +1236,7 @@ namespace klp
 	mutable const enum_content *_content;
       };
 
-      class bitfield_type final : public integral_type
+      class bitfield_type final : public type
       {
       public:
 	virtual ~bitfield_type() noexcept;
@@ -1251,14 +1251,14 @@ namespace klp
 					const bool ignore_qualifiers)
 	  const override;
 
-	virtual bool is_signed(const target &tgt)
-	  const noexcept override;
+	std::shared_ptr<const bitfield_type> strip_qualifiers() const;
 
-	virtual mpa::limbs::size_type get_width(const target &tgt)
-	  const noexcept override;
+	bool is_signed(const target &tgt) const noexcept;
 
-	virtual std::shared_ptr<const std_int_type>
-	promote(const target &tgt) const override;
+	mpa::limbs::size_type get_width(const target &tgt) const noexcept;
+
+	std::shared_ptr<const std_int_type>
+	promote(const target &tgt) const;
 
 	const std::shared_ptr<const returnable_int_type>& get_base_type()
 	  const noexcept

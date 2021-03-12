@@ -2181,6 +2181,11 @@ bool bitfield_type::is_compatible_with(const target &tgt, const type &t,
   return t.is_compatible_with(tgt, *this, ignore_qualifiers);
 }
 
+std::shared_ptr<const bitfield_type> bitfield_type::strip_qualifiers() const
+{
+  return _strip_qualifiers(_self_ptr<bitfield_type>(), &bitfield_type::_clone);
+}
+
 bool bitfield_type::is_signed(const target &tgt) const noexcept
 {
   return _base_type->is_signed(tgt);
