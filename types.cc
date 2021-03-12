@@ -2265,13 +2265,13 @@ std::shared_ptr<const real_float_type> real_float_type::strip_qualifiers() const
 
 mpa::limbs real_float_type::get_size(const target &tgt) const
 {
-  return tgt.get_float_size(this->get_kind(), false);
+  return tgt.get_float_size(this->get_kind());
 }
 
 mpa::limbs::size_type
 real_float_type::get_type_alignment(const target &tgt) const noexcept
 {
-  return tgt.get_float_alignment(this->get_kind(), false);
+  return tgt.get_float_alignment(this->get_kind());
 }
 
 std::shared_ptr<const arithmetic_type>

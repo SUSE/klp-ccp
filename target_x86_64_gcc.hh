@@ -66,12 +66,11 @@ namespace klp
       virtual mpa::limbs::size_type
       get_std_int_alignment(const types::std_int_type::kind k) const override;
 
-      virtual mpa::limbs get_float_size(const types::real_float_type::kind k,
-					const bool is_complex) const override;
+      virtual mpa::limbs get_float_size(const types::real_float_type::kind k)
+	const override;
 
       virtual mpa::limbs::size_type
-      get_float_alignment(const types::real_float_type::kind k,
-			  const bool) const override;
+      get_float_alignment(const types::real_float_type::kind k) const override;
 
       virtual mpa::limbs get_pointer_size() const override;
 

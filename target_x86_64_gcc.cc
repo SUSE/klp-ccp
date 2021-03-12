@@ -573,8 +573,7 @@ get_std_int_alignment(const types::std_int_type::kind k) const
 }
 
 mpa::limbs target_x86_64_gcc::
-get_float_size(const types::real_float_type::kind k,
-	       const bool is_complex) const
+get_float_size(const types::real_float_type::kind k) const
 {
   mpa::limbs size;
 
@@ -592,16 +591,13 @@ get_float_size(const types::real_float_type::kind k,
     break;
   };
 
-  if (is_complex)
-    size = size.lshift(1);
-
   return size;
 }
 
 mpa::limbs::size_type target_x86_64_gcc::
-get_float_alignment(const types::real_float_type::kind k, const bool) const
+get_float_alignment(const types::real_float_type::kind k) const
 {
-  return get_float_size(k, false).ffs() - 1;
+  return get_float_size(k).ffs() - 1;
 }
 
 mpa::limbs target_x86_64_gcc::get_pointer_size() const
