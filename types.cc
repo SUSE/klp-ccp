@@ -729,7 +729,7 @@ is_compatible_with(const target &tgt,
   for (auto pt : t.get_parameter_type_list()) {
     if (!(handle_types<bool>
 	  ((wrap_callables<default_action_return_value<bool, true>::type>
-	    ([&](const integral_type &it) {
+	    ([&](const returnable_int_type &it) {
 	       return it.is_compatible_with(tgt, *it.promote(tgt), true);
 	     },
 	     [&](const float_type &ft) {
