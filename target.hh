@@ -141,11 +141,11 @@ namespace klp
       width_to_std_int_kind(const mpa::limbs::size_type w) const = 0;
 
       virtual mpa::limbs::size_type
-      get_float_significand_width(const types::float_type::kind k)
+      get_float_significand_width(const types::real_float_type::kind k)
 	const noexcept = 0;
 
       virtual mpa::limbs::size_type
-      get_float_exponent_width(const types::float_type::kind k)
+      get_float_exponent_width(const types::real_float_type::kind k)
 	const noexcept = 0;
 
       virtual types::std_int_type::kind get_ptrdiff_kind() const noexcept = 0;
@@ -159,11 +159,11 @@ namespace klp
       virtual mpa::limbs::size_type
       get_std_int_alignment(const types::std_int_type::kind k) const = 0;
 
-      virtual mpa::limbs get_float_size(const types::float_type::kind k,
+      virtual mpa::limbs get_float_size(const types::real_float_type::kind k,
 					const bool is_complex) const = 0;
 
       virtual mpa::limbs::size_type
-      get_float_alignment(const types::float_type::kind k,
+      get_float_alignment(const types::real_float_type::kind k,
 			  const bool is_complex) const = 0;
 
       virtual mpa::limbs get_pointer_size() const = 0;

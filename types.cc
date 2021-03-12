@@ -2216,29 +2216,8 @@ std::shared_ptr<const bitfield_type> bitfield_type::set_packed() const
 }
 
 
-float_type::float_type(const kind k)
-  : _k(k)
-{}
-
-float_type::float_type(const float_type&) = default;
-
-float_type::~float_type() noexcept = default;
-
-mpa::limbs::size_type
-float_type::get_significand_width(const target &tgt) const noexcept
-{
-  return tgt.get_float_significand_width(_k);
-}
-
-mpa::limbs::size_type
-float_type::get_exponent_width(const target &tgt) const noexcept
-{
-  return tgt.get_float_exponent_width(_k);
-}
-
-
 real_float_type::real_float_type(const kind k, const qualifiers &qs)
-  : type(qs), float_type(k)
+  : type(qs), _k(k)
 {}
 
 real_float_type::real_float_type(const real_float_type&) = default;
@@ -2340,6 +2319,18 @@ std::shared_ptr<const real_float_type> real_float_type::promote() const
     return real_float_type::create(kind::k_double, this->get_qualifiers());
 
   return _self_ptr<real_float_type>();
+}
+
+mpa::limbs::size_type
+real_float_type::get_significand_width(const target &tgt) const noexcept
+{
+  return tgt.get_float_significand_width(_k);
+}
+
+mpa::limbs::size_type
+real_float_type::get_exponent_width(const target &tgt) const noexcept
+{
+  return tgt.get_float_exponent_width(_k);
 }
 
 

@@ -46,11 +46,11 @@ namespace klp
 	override;
 
       virtual mpa::limbs::size_type
-      get_float_significand_width(const types::float_type::kind k)
+      get_float_significand_width(const types::real_float_type::kind k)
 	const noexcept override;
 
       virtual mpa::limbs::size_type
-      get_float_exponent_width(const types::float_type::kind k)
+      get_float_exponent_width(const types::real_float_type::kind k)
 	const noexcept override;
 
       virtual mpa::limbs::size_type get_biggest_alignment_log2()
@@ -66,11 +66,11 @@ namespace klp
       virtual mpa::limbs::size_type
       get_std_int_alignment(const types::std_int_type::kind k) const override;
 
-      virtual mpa::limbs get_float_size(const types::float_type::kind k,
+      virtual mpa::limbs get_float_size(const types::real_float_type::kind k,
 					const bool is_complex) const override;
 
       virtual mpa::limbs::size_type
-      get_float_alignment(const types::float_type::kind k,
+      get_float_alignment(const types::real_float_type::kind k,
 			  const bool) const override;
 
       virtual mpa::limbs get_pointer_size() const override;
@@ -85,7 +85,7 @@ namespace klp
       virtual types::std_int_type::kind
       _int_mode_to_std_int_kind(const int_mode_kind m) const noexcept override;
 
-      virtual types::float_type::kind
+      virtual types::real_float_type::kind
       _float_mode_to_float_kind(const float_mode_kind m)
 	const noexcept override;
 

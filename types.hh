@@ -1276,7 +1276,7 @@ namespace klp
 	bool _packed;
       };
 
-      class float_type : public arithmetic_type
+      class real_float_type final : public arithmetic_type
       {
       public:
 	enum class kind
@@ -1286,31 +1286,6 @@ namespace klp
 	 k_long_double,
 	};
 
-	virtual ~float_type() noexcept = 0;
-
-	kind get_kind() const noexcept
-	{ return _k; }
-
-	mpa::limbs::size_type
-	get_significand_width(const target &tgt) const noexcept;
-
-	mpa::limbs::size_type
-	get_exponent_width(const target &tgt) const noexcept;
-
-      protected:
-	float_type(const kind k);
-
-	float_type(const float_type&);
-
-      private:
-	virtual float_type* _clone() const override = 0;
-
-	kind _k;
-      };
-
-      class real_float_type final : public float_type
-      {
-      public:
 	virtual ~real_float_type() noexcept;
 
 	static std::shared_ptr<const real_float_type>
@@ -1352,12 +1327,23 @@ namespace klp
 
 	std::shared_ptr<const real_float_type> promote() const;
 
+	kind get_kind() const noexcept
+	{ return _k; }
+
+	mpa::limbs::size_type
+	get_significand_width(const target &tgt) const noexcept;
+
+	mpa::limbs::size_type
+	get_exponent_width(const target &tgt) const noexcept;
+
       private:
 	real_float_type(const kind k, const qualifiers &qs);
 
 	real_float_type(const real_float_type&);
 
 	virtual real_float_type* _clone() const override;
+
+	kind _k;
       };
 
       class complex_float_type final : public arithmetic_type

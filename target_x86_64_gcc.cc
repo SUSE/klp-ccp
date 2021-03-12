@@ -320,33 +320,33 @@ target_x86_64_gcc::get_std_int_width(const types::std_int_type::kind k)
 }
 
 mpa::limbs::size_type target_x86_64_gcc::
-get_float_significand_width(const types::float_type::kind k)
+get_float_significand_width(const types::real_float_type::kind k)
   const noexcept
 {
   switch (k) {
-  case types::float_type::kind::k_float:
+  case types::real_float_type::kind::k_float:
     return 24;
 
-  case types::float_type::kind::k_double:
+  case types::real_float_type::kind::k_double:
     return 53;
 
-  case types::float_type::kind::k_long_double:
+  case types::real_float_type::kind::k_long_double:
     return 113;
   };
 }
 
 mpa::limbs::size_type target_x86_64_gcc::
-get_float_exponent_width(const types::float_type::kind k)
+get_float_exponent_width(const types::real_float_type::kind k)
   const noexcept
 {
   switch (k) {
-  case types::float_type::kind::k_float:
+  case types::real_float_type::kind::k_float:
     return 8;
 
-  case types::float_type::kind::k_double:
+  case types::real_float_type::kind::k_double:
     return 11;
 
-  case types::float_type::kind::k_long_double:
+  case types::real_float_type::kind::k_long_double:
     return 15;
   };
 }
@@ -423,7 +423,7 @@ target_x86_64_gcc::_int_mode_to_std_int_kind(const int_mode_kind m)
   }
 }
 
-types::float_type::kind target_x86_64_gcc::
+types::real_float_type::kind target_x86_64_gcc::
 _float_mode_to_float_kind(const float_mode_kind m) const noexcept
 {
   switch (m) {
@@ -432,10 +432,10 @@ _float_mode_to_float_kind(const float_mode_kind m) const noexcept
     __builtin_unreachable();
 
   case float_mode_kind::fmk_SF:
-    return types::float_type::kind::k_float;
+    return types::real_float_type::kind::k_float;
 
   case float_mode_kind::fmk_DF:
-    return types::float_type::kind::k_double;
+    return types::real_float_type::kind::k_double;
   }
 }
 
@@ -573,21 +573,21 @@ get_std_int_alignment(const types::std_int_type::kind k) const
 }
 
 mpa::limbs target_x86_64_gcc::
-get_float_size(const types::float_type::kind k,
+get_float_size(const types::real_float_type::kind k,
 	       const bool is_complex) const
 {
   mpa::limbs size;
 
   switch (k) {
-  case float_type::kind::k_float:
+  case real_float_type::kind::k_float:
     size = mpa::limbs::from_size_type(4);
     break;
 
-  case float_type::kind::k_double:
+  case real_float_type::kind::k_double:
     size = mpa::limbs::from_size_type(8);
     break;
 
-  case float_type::kind::k_long_double:
+  case real_float_type::kind::k_long_double:
     size = mpa::limbs::from_size_type(16);
     break;
   };
@@ -599,7 +599,7 @@ get_float_size(const types::float_type::kind k,
 }
 
 mpa::limbs::size_type target_x86_64_gcc::
-get_float_alignment(const types::float_type::kind k, const bool) const
+get_float_alignment(const types::real_float_type::kind k, const bool) const
 {
   return get_float_size(k, false).ffs() - 1;
 }
