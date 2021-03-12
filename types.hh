@@ -847,7 +847,7 @@ namespace klp
 	mutable const struct_or_union_content *_content;
       };
 
-      class arithmetic_type : public virtual type
+      class arithmetic_type : public returnable_object_type
       {
       public:
 	virtual ~arithmetic_type() noexcept = 0;
@@ -877,7 +877,7 @@ namespace klp
       };
 
 
-      class returnable_int_type : public returnable_object_type, public arithmetic_type
+      class returnable_int_type : public arithmetic_type
       {
       public:
 	virtual ~returnable_int_type() noexcept = 0;
@@ -1276,8 +1276,7 @@ namespace klp
 	bool _packed;
       };
 
-      class float_type : public returnable_object_type,
-			 public arithmetic_type
+      class float_type : public arithmetic_type
       {
       public:
 	enum class kind
