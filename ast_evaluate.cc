@@ -1577,7 +1577,8 @@ evaluate_type(ast &a, const target &tgt)
       if (!is_complex)
 	_set_type(real_float_type::create(k, qs));
       else
-	_set_type(complex_float_type::create(k, qs));
+	_set_type(complex_float_type::create(real_float_type::create(k),
+					     qs));
 
       return;
     }

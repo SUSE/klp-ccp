@@ -164,19 +164,22 @@ klp::ccp::builtins::impl::mk_ld(const target&)
 std::shared_ptr<const addressable_type>
 klp::ccp::builtins::impl::mk_fC(const target&)
 {
-  return complex_float_type::create(real_float_type::kind::k_float);
+  return (complex_float_type::create
+	  (real_float_type::create(real_float_type::kind::k_float)));
 }
 
 std::shared_ptr<const addressable_type>
 klp::ccp::builtins::impl::mk_dC(const target&)
 {
-  return complex_float_type::create(real_float_type::kind::k_double);
+  return (complex_float_type::create
+	  (real_float_type::create(real_float_type::kind::k_double)));
 }
 
 std::shared_ptr<const addressable_type>
 klp::ccp::builtins::impl::mk_ldC(const target&)
 {
-  return complex_float_type::create(real_float_type::kind::k_long_double);
+  return (complex_float_type::create
+	  (real_float_type::create(real_float_type::kind::k_long_double)));
 }
 
 std::shared_ptr<const addressable_type>

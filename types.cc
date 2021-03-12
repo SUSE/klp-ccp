@@ -2278,6 +2278,12 @@ bool real_float_type::is_compatible_with(const target&,
 	   (this->get_qualifiers() == t.get_qualifiers())));
 }
 
+std::shared_ptr<const real_float_type> real_float_type::strip_qualifiers() const
+{
+  return _strip_qualifiers(_self_ptr<real_float_type>(),
+			   &real_float_type::_clone);
+}
+
 mpa::limbs real_float_type::get_size(const target &tgt) const
 {
   return tgt.get_float_size(this->get_kind(), false);
@@ -2304,14 +2310,10 @@ real_float_type::arithmetic_conversion(const target&,
 }
 
 std::shared_ptr<const arithmetic_type>
-real_float_type::arithmetic_conversion(const target&,
+real_float_type::arithmetic_conversion(const target &tgt,
 				       const real_float_type &ft) const
 {
-  if (this->get_kind() >= ft.get_kind()) {
-    return this->arithmetic_type::strip_qualifiers();
-  } else {
-    return ft.arithmetic_type::strip_qualifiers();
-  }
+  return this->real_float_conversion(tgt, ft);
 }
 
 std::shared_ptr<const arithmetic_type>
@@ -2319,6 +2321,17 @@ real_float_type::arithmetic_conversion(const target &tgt,
 				       const complex_float_type &ct) const
 {
   return ct.arithmetic_conversion(tgt, *this);
+}
+
+std::shared_ptr<const real_float_type>
+real_float_type::real_float_conversion(const target &tgt,
+				       const real_float_type &ft) const
+{
+  if (this->get_kind() >= ft.get_kind()) {
+    return this->real_float_type::strip_qualifiers();
+  } else {
+    return ft.real_float_type::strip_qualifiers();
+  }
 }
 
 std::shared_ptr<const real_float_type> real_float_type::promote() const
@@ -2330,8 +2343,10 @@ std::shared_ptr<const real_float_type> real_float_type::promote() const
 }
 
 
-complex_float_type::complex_float_type(const kind k, const qualifiers &qs)
-  : type(qs), float_type(k)
+complex_float_type::
+complex_float_type(std::shared_ptr<const real_float_type> &&base_type,
+		   const qualifiers &qs)
+  : type(qs), _base_type(std::move(base_type))
 {}
 
 complex_float_type::complex_float_type(const complex_float_type&) = default;
@@ -2344,10 +2359,11 @@ complex_float_type* complex_float_type::_clone() const
 }
 
 std::shared_ptr<const complex_float_type>
-complex_float_type::create(const kind k, const qualifiers &qs)
+complex_float_type::create(std::shared_ptr<const real_float_type> &&base_type,
+			   const qualifiers &qs)
 {
   return (std::shared_ptr<const complex_float_type>
-	  (new complex_float_type(k, qs)));
+	  (new complex_float_type(std::move(base_type), qs)));
 }
 
 type::type_id complex_float_type::get_type_id() const noexcept
@@ -2362,24 +2378,24 @@ bool complex_float_type::is_compatible_with(const target &tgt,
   return t.is_compatible_with(tgt, *this, ignore_qualifiers);
 }
 
-bool complex_float_type::is_compatible_with(const target&,
+bool complex_float_type::is_compatible_with(const target &tgt,
 					    const complex_float_type &t,
 					    const bool ignore_qualifiers) const
 {
-  return (this->get_kind() == t.get_kind() &&
+  return (this->_base_type->is_compatible_with(tgt, *t._base_type, true) &&
 	  (ignore_qualifiers ||
 	   (this->get_qualifiers() == t.get_qualifiers())));
 }
 
 mpa::limbs complex_float_type::get_size(const target &tgt) const
 {
-  return tgt.get_float_size(this->get_kind(), true);
+  return _base_type->get_size(tgt).lshift(1);
 }
 
 mpa::limbs::size_type
 complex_float_type::get_type_alignment(const target &tgt) const noexcept
 {
-  return tgt.get_float_alignment(this->get_kind(), true);
+  return this->_base_type->get_type_alignment(tgt);
 }
 
 std::shared_ptr<const arithmetic_type>
@@ -2397,33 +2413,25 @@ complex_float_type::arithmetic_conversion(const target&,
 }
 
 std::shared_ptr<const arithmetic_type>
-complex_float_type::arithmetic_conversion(const target&,
+complex_float_type::arithmetic_conversion(const target &tgt,
 					  const real_float_type &ft) const
 {
-  if (this->get_kind() >= ft.get_kind()) {
-    return this->arithmetic_type::strip_qualifiers();
-  } else {
-    return complex_float_type::create(ft.get_kind());
-  }
+  return (complex_float_type::create
+	  (this->_base_type->real_float_conversion(tgt, ft)));
 }
 
 std::shared_ptr<const arithmetic_type>
-complex_float_type::arithmetic_conversion(const target&,
+complex_float_type::arithmetic_conversion(const target &tgt,
 					  const complex_float_type &ct) const
 {
-  if (this->get_kind() >= ct.get_kind()) {
-    return this->arithmetic_type::strip_qualifiers();
-  } else {
-    return ct.arithmetic_type::strip_qualifiers();
-  }
+  return (complex_float_type::create
+	  (this->_base_type->real_float_conversion(tgt, *ct._base_type)));
 }
 
 std::shared_ptr<const complex_float_type> complex_float_type::promote() const
 {
-  if (this->get_kind() == kind::k_float)
-    return complex_float_type::create(kind::k_double, this->get_qualifiers());
-
-  return _self_ptr<complex_float_type>();
+  return complex_float_type::create(this->_base_type->promote(),
+				    this->get_qualifiers());
 }
 
 

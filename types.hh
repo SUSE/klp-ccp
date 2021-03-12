@@ -1326,6 +1326,8 @@ namespace klp
 					const bool ignore_qualifiers)
 	  const override;
 
+	std::shared_ptr<const real_float_type> strip_qualifiers() const;
+
 	virtual mpa::limbs get_size(const target &tgt) const override;
 
 	virtual mpa::limbs::size_type
@@ -1338,11 +1340,15 @@ namespace klp
 	arithmetic_conversion(const target&,
 			      const std_int_type&) const override;
 	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const target&,
+	arithmetic_conversion(const target &tgt,
 			      const real_float_type &ft) const override;
 	virtual std::shared_ptr<const arithmetic_type>
 	arithmetic_conversion(const target &tgt,
 			      const complex_float_type &ct) const override;
+
+	std::shared_ptr<const real_float_type>
+	real_float_conversion(const target &tgt,
+			      const real_float_type &ft) const;
 
 	std::shared_ptr<const real_float_type> promote() const;
 
@@ -1354,20 +1360,21 @@ namespace klp
 	virtual real_float_type* _clone() const override;
       };
 
-      class complex_float_type final : public float_type
+      class complex_float_type final : public arithmetic_type
       {
       public:
 	virtual ~complex_float_type() noexcept;
 
 	static std::shared_ptr<const complex_float_type>
-	create(const kind k, const qualifiers &qs = qualifiers{});
+	create(std::shared_ptr<const real_float_type> &&base_type,
+	       const qualifiers &qs = qualifiers{});
 
 	virtual type_id get_type_id() const noexcept override;
 
 	virtual bool is_compatible_with(const target &tgt, const type &t,
 					const bool ignore_qualifiers)
 	  const override;
-	virtual bool is_compatible_with(const target&,
+	virtual bool is_compatible_with(const target &tgt,
 					const complex_float_type &t,
 					const bool ignore_qualifiers)
 	  const override;
@@ -1384,7 +1391,7 @@ namespace klp
 	arithmetic_conversion(const target&,
 			      const std_int_type&) const override;
 	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const target&,
+	arithmetic_conversion(const target &tgt,
 			      const real_float_type &ft) const override;
 	virtual std::shared_ptr<const arithmetic_type>
 	arithmetic_conversion(const target &tgt,
@@ -1393,11 +1400,14 @@ namespace klp
 	std::shared_ptr<const complex_float_type> promote() const;
 
       private:
-	complex_float_type(const kind k, const qualifiers &qs);
+	complex_float_type(std::shared_ptr<const real_float_type> &&base_type,
+			   const qualifiers &qs);
 
 	complex_float_type(const complex_float_type&);
 
 	virtual complex_float_type* _clone() const override;
+
+	std::shared_ptr<const real_float_type> _base_type;
       };
 
       class builtin_func_type final : public type
