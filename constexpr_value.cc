@@ -304,7 +304,7 @@ constexpr_value::address_constant& constexpr_value::get_address_value() noexcept
 }
 
 target_int constexpr_value::convert_to(const target &tgt,
-				       const integral_type &it) const
+				       const returnable_int_type &it) const
 {
   const bool is_signed = it.is_signed(tgt);
   const mpa::limbs::size_type prec = it.get_width(tgt) - is_signed;

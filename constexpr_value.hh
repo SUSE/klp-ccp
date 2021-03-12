@@ -32,7 +32,7 @@ namespace klp
 
     namespace types
     {
-      class integral_type;
+      class returnable_int_type;
       class real_float_type;
     };
 
@@ -163,7 +163,7 @@ namespace klp
 	address_constant& get_address_value() noexcept;
 
 	target_int convert_to(const target &tgt,
-			      const types::integral_type &it) const;
+			      const types::returnable_int_type &it) const;
 	target_float convert_to(const target &tgt,
 				const types::real_float_type &ft) const;
 
