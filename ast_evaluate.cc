@@ -5097,7 +5097,8 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
 	 [&](const type &t) {
 	   // As an (undocumented!) extension, GCC allows computed gotos
 	   // with integer targets. Accept that too, but warn.
-	   if (is_type<integral_type>(t) &&
+	   if ((is_type<returnable_int_type>(t) ||
+		is_type<bitfield_type>(t)) &&
 	       this->get_parent()->is_any_of<stmt_goto>()) {
 	     code_remark remark
 	       (code_remark::severity::warning,
