@@ -1553,12 +1553,12 @@ evaluate_type(ast &a, const target &tgt)
 
   case cls_float:
     {
-      real_float_type::kind k;
+      std_float_type::kind k;
 
       switch (float_base_type) {
       case fbt_float:
 	assert(!is_long);
-	k = real_float_type::kind::k_float;
+	k = std_float_type::kind::k_float;
 	break;
 
       case fbt_unknown:
@@ -1567,17 +1567,17 @@ evaluate_type(ast &a, const target &tgt)
       case fbt_double:
 	assert(is_long <= 1);
 	if (!is_long)
-	  k = real_float_type::kind::k_double;
+	  k = std_float_type::kind::k_double;
 	else
-	  k = real_float_type::kind::k_long_double;
+	  k = std_float_type::kind::k_long_double;
 
 	break;
       }
 
       if (!is_complex)
-	_set_type(real_float_type::create(k, qs));
+	_set_type(std_float_type::create(k, qs));
       else
-	_set_type(complex_float_type::create(real_float_type::create(k),
+	_set_type(complex_float_type::create(std_float_type::create(k),
 					     qs));
 
       return;
@@ -6468,13 +6468,13 @@ void expr_constant::evaluate_type(ast &a, const target &tgt)
       throw semantic_except(remark);
     }
 
-    real_float_type::kind k = real_float_type::kind::k_double;
+    std_float_type::kind k = std_float_type::kind::k_double;
     std::string::const_iterator it_flt_suffix = val.end();
     switch (val.back()) {
     case 'f':
       /* fall through */
     case 'F':
-      k = real_float_type::kind::k_float;
+      k = std_float_type::kind::k_float;
       --it_flt_suffix;
       break;
 
@@ -6482,14 +6482,14 @@ void expr_constant::evaluate_type(ast &a, const target &tgt)
     case 'd':
       /* fall through */
     case 'D':
-      k = real_float_type::kind::k_double;
+      k = std_float_type::kind::k_double;
       --it_flt_suffix;
       break;
 
     case 'l':
       /* fall through */
     case 'L':
-      k = real_float_type::kind::k_long_double;
+      k = std_float_type::kind::k_long_double;
       --it_flt_suffix;
       break;
     }
@@ -6638,7 +6638,7 @@ void expr_constant::evaluate_type(ast &a, const target &tgt)
 				      std::move(m), std::move(e))));
 
     _set_value(constexpr_value::literal_fp_constant_tag{}, std::move(flt));
-    _set_type(real_float_type::create(k));
+    _set_type(std_float_type::create(k));
     return;
   }
 

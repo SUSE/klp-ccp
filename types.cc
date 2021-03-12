@@ -176,7 +176,7 @@ bool type::is_compatible_with(const target&, const enum_type&,
   return false;
 }
 
-bool type::is_compatible_with(const target&, const real_float_type&,
+bool type::is_compatible_with(const target&, const std_float_type&,
 			      const bool) const
 {
   return false;
@@ -2216,62 +2216,16 @@ std::shared_ptr<const bitfield_type> bitfield_type::set_packed() const
 }
 
 
-real_float_type::real_float_type(const kind k, const qualifiers &qs)
-  : type(qs), _k(k)
-{}
+real_float_type::real_float_type() = default;
 
 real_float_type::real_float_type(const real_float_type&) = default;
 
 real_float_type::~real_float_type() noexcept = default;
 
-real_float_type* real_float_type::_clone() const
-{
-  return new real_float_type(*this);
-}
-
-std::shared_ptr<const real_float_type>
-real_float_type::create(const kind k, const qualifiers &qs)
-{
-  return (std::shared_ptr<const real_float_type>
-	  (new real_float_type(k, qs)));
-}
-
-type::type_id real_float_type::get_type_id() const noexcept
-{
-  return type_id::tid_real_float;
-}
-
-bool real_float_type::is_compatible_with(const target &tgt,
-					 const type &t,
-					 const bool ignore_qualifiers) const
-{
-  return t.is_compatible_with(tgt, *this, ignore_qualifiers);
-}
-
-bool real_float_type::is_compatible_with(const target&,
-					 const real_float_type &t,
-					 const bool ignore_qualifiers) const
-{
-  return (this->get_kind() == t.get_kind() &&
-	  (ignore_qualifiers ||
-	   (this->get_qualifiers() == t.get_qualifiers())));
-}
-
 std::shared_ptr<const real_float_type> real_float_type::strip_qualifiers() const
 {
   return _strip_qualifiers(_self_ptr<real_float_type>(),
 			   &real_float_type::_clone);
-}
-
-mpa::limbs real_float_type::get_size(const target &tgt) const
-{
-  return tgt.get_float_size(this->get_kind());
-}
-
-mpa::limbs::size_type
-real_float_type::get_type_alignment(const target &tgt) const noexcept
-{
-  return tgt.get_float_alignment(this->get_kind());
 }
 
 std::shared_ptr<const arithmetic_type>
@@ -2302,9 +2256,70 @@ real_float_type::arithmetic_conversion(const target &tgt,
   return ct.arithmetic_conversion(tgt, *this);
 }
 
+
+
+std_float_type::std_float_type(const kind k, const qualifiers &qs)
+  : type(qs), _k(k)
+{}
+
+std_float_type::std_float_type(const std_float_type&) = default;
+
+std_float_type::~std_float_type() noexcept = default;
+
+std_float_type* std_float_type::_clone() const
+{
+  return new std_float_type(*this);
+}
+
+std::shared_ptr<const std_float_type>
+std_float_type::create(const kind k, const qualifiers &qs)
+{
+  return (std::shared_ptr<const std_float_type>
+	  (new std_float_type(k, qs)));
+}
+
+type::type_id std_float_type::get_type_id() const noexcept
+{
+  return type_id::tid_std_float;
+}
+
+bool std_float_type::is_compatible_with(const target &tgt,
+					 const type &t,
+					 const bool ignore_qualifiers) const
+{
+  return t.is_compatible_with(tgt, *this, ignore_qualifiers);
+}
+
+bool std_float_type::is_compatible_with(const target&,
+					 const std_float_type &t,
+					 const bool ignore_qualifiers) const
+{
+  return (this->get_kind() == t.get_kind() &&
+	  (ignore_qualifiers ||
+	   (this->get_qualifiers() == t.get_qualifiers())));
+}
+
+mpa::limbs std_float_type::get_size(const target &tgt) const
+{
+  return tgt.get_float_size(this->get_kind());
+}
+
+mpa::limbs::size_type
+std_float_type::get_type_alignment(const target &tgt) const noexcept
+{
+  return tgt.get_float_alignment(this->get_kind());
+}
+
 std::shared_ptr<const real_float_type>
-real_float_type::real_float_conversion(const target &tgt,
-				       const real_float_type &ft) const
+std_float_type::real_float_conversion(const target &tgt,
+				      const real_float_type &ft) const
+{
+  return ft.real_float_conversion(tgt, *this);
+}
+
+std::shared_ptr<const real_float_type>
+std_float_type::real_float_conversion(const target &tgt,
+				      const std_float_type &ft) const
 {
   if (this->get_kind() >= ft.get_kind()) {
     return this->real_float_type::strip_qualifiers();
@@ -2313,22 +2328,22 @@ real_float_type::real_float_conversion(const target &tgt,
   }
 }
 
-std::shared_ptr<const real_float_type> real_float_type::promote() const
+std::shared_ptr<const real_float_type> std_float_type::promote() const
 {
   if (this->get_kind() == kind::k_float)
-    return real_float_type::create(kind::k_double, this->get_qualifiers());
+    return std_float_type::create(kind::k_double, this->get_qualifiers());
 
   return _self_ptr<real_float_type>();
 }
 
 mpa::limbs::size_type
-real_float_type::get_significand_width(const target &tgt) const noexcept
+std_float_type::get_significand_width(const target &tgt) const noexcept
 {
   return tgt.get_float_significand_width(_k);
 }
 
 mpa::limbs::size_type
-real_float_type::get_exponent_width(const target &tgt) const noexcept
+std_float_type::get_exponent_width(const target &tgt) const noexcept
 {
   return tgt.get_float_exponent_width(_k);
 }

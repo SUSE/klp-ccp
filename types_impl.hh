@@ -387,9 +387,9 @@ namespace klp
 			 std::forward<arg_type>(arg))),
 		       std::forward<args_types>(args)...));
 
-	    case type::type_id::tid_real_float:
+	    case type::type_id::tid_std_float:
 	      return (_handle_types<ret_type>
-		      ((_downcast_and_bind_1st<real_float_type>
+		      ((_downcast_and_bind_1st<std_float_type>
 			(std::forward<callable_type>(c),
 			 std::forward<arg_type>(arg))),
 		       std::forward<args_types>(args)...));

@@ -2530,7 +2530,7 @@ apply_to_type(std::shared_ptr<const types::addressable_type> &&orig_t) const
 	   throw semantic_except(remark);
 	 }
 
-	 return (types::real_float_type::create
+	 return (types::std_float_type::create
 		 (_tgt._float_mode_to_float_kind(_fmk), rft->get_qualifiers()));
        },
        [&](std::shared_ptr<const types::pointer_type> &&pt)

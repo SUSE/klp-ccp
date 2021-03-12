@@ -52,6 +52,7 @@ namespace klp
       class std_int_type;
       class enum_type;
       class real_float_type;
+      class std_float_type;
       class complex_float_type;
       class struct_or_union_type;
       class array_type;
@@ -142,7 +143,7 @@ namespace klp
 	  tid_bool,
 	  tid_enum,
 	  tid_bitfield,
-	  tid_real_float,
+	  tid_std_float,
 	  tid_complex_float,
 	  tid_builtin_func,
 	};
@@ -171,7 +172,7 @@ namespace klp
 					const enum_type &t,
 					const bool ignore_qualifiers) const;
 	virtual bool is_compatible_with(const target &tgt,
-					const real_float_type &t,
+					const std_float_type &t,
 					const bool ignore_qualifiers) const;
 	virtual bool is_compatible_with(const target &tgt,
 					const complex_float_type &t,
@@ -1276,37 +1277,12 @@ namespace klp
 	bool _packed;
       };
 
-      class real_float_type final : public arithmetic_type
+      class real_float_type : public arithmetic_type
       {
       public:
-	enum class kind
-	{
-	 k_float,
-	 k_double,
-	 k_long_double,
-	};
-
-	virtual ~real_float_type() noexcept;
-
-	static std::shared_ptr<const real_float_type>
-	create(const kind k, const qualifiers &qs = qualifiers{});
-
-	virtual type_id get_type_id() const noexcept override;
-
-	virtual bool is_compatible_with(const target &tgt, const type &t,
-					const bool ignore_qualifiers)
-	  const override;
-	virtual bool is_compatible_with(const target&,
-					const real_float_type &t,
-					const bool ignore_qualifiers)
-	  const override;
+	~real_float_type() noexcept = 0;
 
 	std::shared_ptr<const real_float_type> strip_qualifiers() const;
-
-	virtual mpa::limbs get_size(const target &tgt) const override;
-
-	virtual mpa::limbs::size_type
-	get_type_alignment(const target &tgt) const noexcept override;
 
 	virtual std::shared_ptr<const arithmetic_type>
 	arithmetic_conversion(const target &tgt,
@@ -1321,27 +1297,86 @@ namespace klp
 	arithmetic_conversion(const target &tgt,
 			      const complex_float_type &ct) const override;
 
-	std::shared_ptr<const real_float_type>
+	virtual std::shared_ptr<const real_float_type>
 	real_float_conversion(const target &tgt,
-			      const real_float_type &ft) const;
+			      const real_float_type &ft) const = 0;
 
-	std::shared_ptr<const real_float_type> promote() const;
+	virtual std::shared_ptr<const real_float_type>
+	real_float_conversion(const target &tgt,
+			      const std_float_type &ft) const = 0;
+
+	virtual std::shared_ptr<const real_float_type> promote() const = 0;
+
+	virtual mpa::limbs::size_type
+	get_significand_width(const target &tgt) const noexcept = 0;
+
+	virtual mpa::limbs::size_type
+	get_exponent_width(const target &tgt) const noexcept = 0;
+
+      protected:
+	real_float_type();
+
+	real_float_type(const real_float_type&);
+
+      private:
+	virtual real_float_type* _clone() const override = 0;
+      };
+
+      class std_float_type final : public real_float_type
+      {
+      public:
+	enum class kind
+	{
+	 k_float,
+	 k_double,
+	 k_long_double,
+	};
+
+	virtual ~std_float_type() noexcept;
+
+	static std::shared_ptr<const std_float_type>
+	create(const kind k, const qualifiers &qs = qualifiers{});
+
+	virtual type_id get_type_id() const noexcept override;
+
+	virtual bool is_compatible_with(const target &tgt, const type &t,
+					const bool ignore_qualifiers)
+	  const override;
+	virtual bool is_compatible_with(const target&,
+					const std_float_type &t,
+					const bool ignore_qualifiers)
+	  const override;
+
+	virtual mpa::limbs get_size(const target &tgt) const override;
+
+	virtual mpa::limbs::size_type
+	get_type_alignment(const target &tgt) const noexcept override;
+
+	virtual std::shared_ptr<const real_float_type>
+	real_float_conversion(const target &tgt,
+			      const real_float_type &ft) const override;
+
+	virtual std::shared_ptr<const real_float_type>
+	real_float_conversion(const target &tgt,
+			      const std_float_type &ft) const override;
+
+	virtual std::shared_ptr<const real_float_type> promote() const override;
+
+	virtual mpa::limbs::size_type
+	get_significand_width(const target &tgt) const noexcept override;
+
+	virtual mpa::limbs::size_type
+	get_exponent_width(const target &tgt) const noexcept override;
 
 	kind get_kind() const noexcept
 	{ return _k; }
 
-	mpa::limbs::size_type
-	get_significand_width(const target &tgt) const noexcept;
-
-	mpa::limbs::size_type
-	get_exponent_width(const target &tgt) const noexcept;
-
       private:
-	real_float_type(const kind k, const qualifiers &qs);
+	std_float_type(const kind k, const qualifiers &qs);
 
-	real_float_type(const real_float_type&);
+	std_float_type(const std_float_type&);
 
-	virtual real_float_type* _clone() const override;
+	virtual std_float_type* _clone() const override;
 
 	kind _k;
       };

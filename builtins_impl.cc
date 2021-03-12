@@ -146,40 +146,40 @@ klp::ccp::builtins::impl::mk_ssz(const target &tgt)
 std::shared_ptr<const addressable_type>
 klp::ccp::builtins::impl::mk_f(const target&)
 {
-  return real_float_type::create(real_float_type::kind::k_float);
+  return std_float_type::create(std_float_type::kind::k_float);
 }
 
 std::shared_ptr<const addressable_type>
 klp::ccp::builtins::impl::mk_d(const target&)
 {
-  return real_float_type::create(real_float_type::kind::k_double);
+  return std_float_type::create(std_float_type::kind::k_double);
 }
 
 std::shared_ptr<const addressable_type>
 klp::ccp::builtins::impl::mk_ld(const target&)
 {
-  return real_float_type::create(real_float_type::kind::k_long_double);
+  return std_float_type::create(std_float_type::kind::k_long_double);
 }
 
 std::shared_ptr<const addressable_type>
 klp::ccp::builtins::impl::mk_fC(const target&)
 {
   return (complex_float_type::create
-	  (real_float_type::create(real_float_type::kind::k_float)));
+	  (std_float_type::create(std_float_type::kind::k_float)));
 }
 
 std::shared_ptr<const addressable_type>
 klp::ccp::builtins::impl::mk_dC(const target&)
 {
   return (complex_float_type::create
-	  (real_float_type::create(real_float_type::kind::k_double)));
+	  (std_float_type::create(std_float_type::kind::k_double)));
 }
 
 std::shared_ptr<const addressable_type>
 klp::ccp::builtins::impl::mk_ldC(const target&)
 {
   return (complex_float_type::create
-	  (real_float_type::create(real_float_type::kind::k_long_double)));
+	  (std_float_type::create(std_float_type::kind::k_long_double)));
 }
 
 std::shared_ptr<const addressable_type>
@@ -232,21 +232,21 @@ klp::ccp::builtins::impl::mk_pi(const target&)
 std::shared_ptr<const addressable_type>
 klp::ccp::builtins::impl::mk_pf(const target&)
 {
-  return (real_float_type::create(real_float_type::kind::k_float)
+  return (std_float_type::create(std_float_type::kind::k_float)
 	  ->derive_pointer());
 }
 
 std::shared_ptr<const addressable_type>
 klp::ccp::builtins::impl::mk_pd(const target&)
 {
-  return (real_float_type::create(real_float_type::kind::k_double)
+  return (std_float_type::create(std_float_type::kind::k_double)
 	  ->derive_pointer());
 }
 
 std::shared_ptr<const addressable_type>
 klp::ccp::builtins::impl::mk_pld(const target&)
 {
-  return (real_float_type::create(real_float_type::kind::k_long_double)
+  return (std_float_type::create(std_float_type::kind::k_long_double)
 	  ->derive_pointer());
 }
 
