@@ -5165,7 +5165,7 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
 	   _convert_type_for_expr_context();
 
 	 },
-	 [&](std::shared_ptr<const float_type> &&ft) {
+	 [&](std::shared_ptr<const real_float_type> &&ft) {
 	   if (_e.is_constexpr()) {
 	     const constexpr_value &cv = _e.get_constexpr_value();
 	     assert(cv.get_value_kind() ==
@@ -5183,6 +5183,11 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
 	   }
 
 	   _set_type(std::move(ft));
+	   _convert_type_for_expr_context();
+
+	 },
+	 [&](std::shared_ptr<const arithmetic_type> &&at) {
+	   _set_type(std::move(at));
 	   _convert_type_for_expr_context();
 
 	 },
