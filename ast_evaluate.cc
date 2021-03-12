@@ -4773,7 +4773,7 @@ void expr_cast::evaluate_type(ast &a, const target &tgt)
 
        },
        [&](const std::shared_ptr<const int_type> &it_target,
-	   const std::shared_ptr<const float_type> &ft_source) {
+	   const std::shared_ptr<const real_float_type> &ft_source) {
 	 check_enum_completeness_target();
 
 	 _set_type(it_target);
@@ -4805,6 +4805,14 @@ void expr_cast::evaluate_type(ast &a, const target &tgt)
 	 } else {
 	   _set_value(std::move(i_result));
 	 }
+
+       },
+       [&](const std::shared_ptr<const int_type> &it_target,
+	   const std::shared_ptr<const arithmetic_type>&) {
+	 check_enum_completeness_target();
+
+	 _set_type(it_target);
+	 _convert_type_for_expr_context();
 
        },
        [&](const std::shared_ptr<const int_type> &it_target,
