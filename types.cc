@@ -1569,14 +1569,13 @@ std::shared_ptr<const arithmetic_type>
 int_type::arithmetic_conversion(const target &tgt,
 				const arithmetic_type &at) const
 {
-  // Gets called for all non-std_int_type integer types. Promote to
-  // std_int_type and forward the call.
+  // Double-dispatch, but promote the int first.
   return at.arithmetic_conversion(tgt, *this->promote(tgt));
 }
 
 std::shared_ptr<const arithmetic_type>
 int_type::arithmetic_conversion(const target &tgt,
-				const std_int_type &it) const
+				const int_type &it) const
 {
   return this->integer_conversion(tgt, it);
 }
@@ -1585,8 +1584,6 @@ std::shared_ptr<const arithmetic_type>
 int_type::arithmetic_conversion(const target &tgt,
 				const real_float_type &ft) const
 {
-  // Gets called for all non-std_int_type integer types. Promote to
-  // std_int_type and forward the call.
   return ft.arithmetic_conversion(tgt, *this->promote(tgt));
 }
 
@@ -1594,8 +1591,6 @@ std::shared_ptr<const arithmetic_type>
 int_type::arithmetic_conversion(const target &tgt,
 				const complex_float_type &ct) const
 {
-  // Gets called for all non-std_int_type integer types. Promote to
-  // std_int_type and forward the call.
   return ct.arithmetic_conversion(tgt, *this->promote(tgt));
 }
 
@@ -1686,32 +1681,10 @@ std_int_type::set_user_alignment(const alignment &user_align) const
 			     user_align, &std_int_type::_clone);
 }
 
-std::shared_ptr<const arithmetic_type>
-std_int_type::arithmetic_conversion(const target &tgt,
-				    const arithmetic_type &at) const
-{
-  return at.arithmetic_conversion(tgt, *this);
-}
-
-std::shared_ptr<const arithmetic_type>
-std_int_type::arithmetic_conversion(const target &tgt,
-				    const real_float_type &ft) const
-{
-  return ft.arithmetic_conversion(tgt, *this);
-}
-
-std::shared_ptr<const arithmetic_type>
-std_int_type::arithmetic_conversion(const target &tgt,
-				    const complex_float_type &ct) const
-{
-  return ct.arithmetic_conversion(tgt, *this);
-}
-
 std::shared_ptr<const std_int_type>
-std_int_type::integer_conversion(const target &tgt, const int_type &it)
-  const
+std_int_type::integer_conversion(const target &tgt, const int_type &it) const
 {
-  return it.integer_conversion(tgt, *this);
+  return it.integer_conversion(tgt, *this->promote(tgt));
 }
 
 std::shared_ptr<const std_int_type>
@@ -2232,12 +2205,13 @@ std::shared_ptr<const arithmetic_type>
 real_float_type::arithmetic_conversion(const target &tgt,
 				       const arithmetic_type &at) const
 {
+  // Double-dispatch.
   return at.arithmetic_conversion(tgt, *this);
 }
 
 std::shared_ptr<const arithmetic_type>
 real_float_type::arithmetic_conversion(const target&,
-				       const std_int_type&) const
+				       const int_type&) const
 {
   return this->arithmetic_type::strip_qualifiers();
 }
@@ -2408,12 +2382,13 @@ std::shared_ptr<const arithmetic_type>
 complex_float_type::arithmetic_conversion(const target &tgt,
 					  const arithmetic_type &at) const
 {
+  // Double-dispatch.
   return at.arithmetic_conversion(tgt, *this);
 }
 
 std::shared_ptr<const arithmetic_type>
 complex_float_type::arithmetic_conversion(const target&,
-					  const std_int_type&) const
+					  const int_type&) const
 {
   return this->arithmetic_type::strip_qualifiers();
 }

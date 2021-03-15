@@ -47,6 +47,7 @@ namespace klp
       class addressable_type;
       class void_type;
       class arithmetic_type;
+      class int_type;
       class plain_char_type;
       class bool_type;
       class std_int_type;
@@ -860,7 +861,7 @@ namespace klp
 			      const arithmetic_type &at) const = 0;
 	virtual std::shared_ptr<const arithmetic_type>
 	arithmetic_conversion(const target &tgt,
-			      const std_int_type &it) const = 0;
+			      const int_type &it) const = 0;
 	virtual std::shared_ptr<const arithmetic_type>
 	arithmetic_conversion(const target &tgt,
 			      const real_float_type &ft) const = 0;
@@ -890,7 +891,7 @@ namespace klp
 			      const arithmetic_type &at) const override;
 	virtual std::shared_ptr<const arithmetic_type>
 	arithmetic_conversion(const target &tgt,
-			      const std_int_type &it) const override;
+			      const int_type &it) const override;
 	virtual std::shared_ptr<const arithmetic_type>
 	arithmetic_conversion(const target &tgt,
 			      const real_float_type &ft) const override;
@@ -967,16 +968,6 @@ namespace klp
 
 	std::shared_ptr<const std_int_type>
 	set_user_alignment(const alignment &user_align) const;
-
-	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const target &tgt,
-			      const arithmetic_type &at) const override;
-	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const target &tgt,
-			      const real_float_type &ft) const override;
-	virtual std::shared_ptr<const arithmetic_type>
-	arithmetic_conversion(const target &tgt,
-			      const complex_float_type &ct) const override;
 
 	virtual std::shared_ptr<const std_int_type>
 	integer_conversion(const target &tgt, const int_type &it)
@@ -1289,7 +1280,7 @@ namespace klp
 			      const arithmetic_type &at) const override;
 	virtual std::shared_ptr<const arithmetic_type>
 	arithmetic_conversion(const target&,
-			      const std_int_type&) const override;
+			      const int_type&) const override;
 	virtual std::shared_ptr<const arithmetic_type>
 	arithmetic_conversion(const target &tgt,
 			      const real_float_type &ft) const override;
@@ -1410,7 +1401,7 @@ namespace klp
 			      const arithmetic_type &at) const override;
 	virtual std::shared_ptr<const arithmetic_type>
 	arithmetic_conversion(const target&,
-			      const std_int_type&) const override;
+			      const int_type&) const override;
 	virtual std::shared_ptr<const arithmetic_type>
 	arithmetic_conversion(const target &tgt,
 			      const real_float_type &ft) const override;
