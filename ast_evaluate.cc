@@ -3662,8 +3662,7 @@ void expr_binop::_evaluate_shift(const types::int_type &it_left,
 				 const types::int_type &it_right,
 				 ast &a, const target &tgt)
 {
-  const std::shared_ptr<const std_int_type> it_result
-    = it_left.promote(tgt);
+  const std::shared_ptr<const int_type> it_result = it_left.promote(tgt);
 
   _set_type(it_result);
 
@@ -3745,7 +3744,7 @@ void expr_binop::_evaluate_bin_binop(const types::int_type &it_left,
 				     const types::int_type &it_right,
 				     ast &a, const target &tgt)
 {
-  const std::shared_ptr<const std_int_type> it_result
+  const std::shared_ptr<const int_type> it_result
     = it_left.integer_conversion(tgt, it_right);
   _set_type(it_result);
 
@@ -5134,8 +5133,7 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
 	([&](const std::shared_ptr<const int_type> &it) {
 	   check_enum_completeness_op();
 
-	   std::shared_ptr<const std_int_type> it_result =
-	     it->promote(tgt);
+	   std::shared_ptr<const int_type> it_result = it->promote(tgt);
 
 	   if (_e.is_constexpr()) {
 	     const constexpr_value &cv = _e.get_constexpr_value();
@@ -5211,8 +5209,7 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
 	([&](const std::shared_ptr<const int_type> &it) {
 	   check_enum_completeness_op();
 
-	   std::shared_ptr<const std_int_type> it_result =
-	     it->promote(tgt);
+	   std::shared_ptr<const int_type> it_result = it->promote(tgt);
 
 	   if (_e.is_constexpr()) {
 	     const constexpr_value &cv = _e.get_constexpr_value();
