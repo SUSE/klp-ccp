@@ -1682,7 +1682,7 @@ std::shared_ptr<const int_type>
 std_int_type::integer_conversion(const target &tgt, const int_type &it) const
 {
   // Double-dispatch, but promote the std_int_type first.
-  return it.integer_conversion(tgt, *this->promote(tgt));
+  return it.integer_conversion(tgt, *this->_promote());
 }
 
 std::shared_ptr<const int_type>
@@ -1690,9 +1690,9 @@ std_int_type::integer_conversion(const target &tgt,
 				 const std_int_type &it) const
 {
   if (_k < kind::k_int)
-    return this->promote(tgt)->integer_conversion(tgt, it);
+    return this->_promote()->integer_conversion(tgt, it);
   else if (it._k < kind::k_int)
-    return this->integer_conversion(tgt, *it.promote(tgt));
+    return this->integer_conversion(tgt, *it._promote());
 
   if (_signed == it._signed) {
     if (_k >= it._k) {
@@ -1727,8 +1727,19 @@ mpa::limbs::size_type std_int_type::get_width(const target &tgt)
   return tgt.get_std_int_width(_k);
 }
 
-std::shared_ptr<const std_int_type>
+std::shared_ptr<const int_type>
 std_int_type::promote(const target&) const
+{
+  return this->_promote();
+}
+
+std::shared_ptr<const int_type> std_int_type::to_unsigned() const
+{
+  assert(_signed);
+  return create(_k, false, get_qualifiers());
+}
+
+std::shared_ptr<const std_int_type> std_int_type::_promote() const
 {
   switch (_k) {
   case kind::k_char:
@@ -1741,13 +1752,6 @@ std_int_type::promote(const target&) const
     return _self_ptr<std_int_type>();
   }
 }
-
-std::shared_ptr<const int_type> std_int_type::to_unsigned() const
-{
-  assert(_signed);
-  return create(_k, false, get_qualifiers());
-}
-
 
 plain_char_type::plain_char_type(const qualifiers &qs)
   : type(qs)
@@ -1803,7 +1807,7 @@ std::shared_ptr<const int_type>
 plain_char_type::integer_conversion(const target &tgt, const int_type &it) const
 {
   // Promote and double-dispatch.
-  return it.integer_conversion(tgt, *this->promote(tgt));
+  return it.integer_conversion(tgt, *this->_promote());
 }
 
 bool plain_char_type::is_signed(const target &tgt) const noexcept
@@ -1817,16 +1821,20 @@ mpa::limbs::size_type plain_char_type::get_width(const target &tgt)
   return tgt.get_std_int_width(std_int_type::kind::k_char);
 }
 
-std::shared_ptr<const std_int_type>
-plain_char_type::promote(const target&) const
+std::shared_ptr<const int_type> plain_char_type::promote(const target&) const
 {
-  return std_int_type::create(std_int_type::kind::k_int, true,
-			      get_qualifiers());
+  return this->_promote();
 }
 
 std::shared_ptr<const int_type> plain_char_type::to_unsigned() const
 {
   return std_int_type::create(std_int_type::kind::k_char, false,
+			      get_qualifiers());
+}
+
+std::shared_ptr<const std_int_type> plain_char_type::_promote() const
+{
+  return std_int_type::create(std_int_type::kind::k_int, true,
 			      get_qualifiers());
 }
 
@@ -1882,7 +1890,7 @@ std::shared_ptr<const int_type>
 bool_type::integer_conversion(const target &tgt, const int_type &it) const
 {
   // Promote and double-dispatch.
-  return it.integer_conversion(tgt, *this->promote(tgt));
+  return it.integer_conversion(tgt, *this->_promote());
 }
 
 bool bool_type::is_signed(const target&) const noexcept
@@ -1896,11 +1904,9 @@ mpa::limbs::size_type bool_type::get_width(const target&)
   return 1;
 }
 
-std::shared_ptr<const std_int_type>
-bool_type::promote(const target&) const
+std::shared_ptr<const int_type> bool_type::promote(const target&) const
 {
-  return std_int_type::create(std_int_type::kind::k_int, true,
-			      get_qualifiers());
+  return this->_promote();
 }
 
 std::shared_ptr<const int_type> bool_type::to_unsigned() const
@@ -1908,6 +1914,12 @@ std::shared_ptr<const int_type> bool_type::to_unsigned() const
   // A _Bool is always unsigned, no need to call to_unsigned() on it.
   assert(0);
   return nullptr;
+}
+
+std::shared_ptr<const std_int_type> bool_type::_promote() const
+{
+  return std_int_type::create(std_int_type::kind::k_int, true,
+			      get_qualifiers());
 }
 
 
@@ -2098,8 +2110,7 @@ mpa::limbs::size_type enum_type::get_width(const target &tgt)
   return get_underlying_type()->get_width(tgt);
 }
 
-std::shared_ptr<const std_int_type> enum_type::promote(const target &tgt)
-  const
+std::shared_ptr<const int_type> enum_type::promote(const target &tgt) const
 {
   return this->get_underlying_type()->promote(tgt);
 }

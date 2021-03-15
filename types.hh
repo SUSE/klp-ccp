@@ -911,7 +911,7 @@ namespace klp
 	virtual mpa::limbs::size_type get_width(const target &tgt)
 	  const noexcept = 0;
 
-	virtual std::shared_ptr<const std_int_type>
+	virtual std::shared_ptr<const int_type>
 	promote(const target &tgt) const = 0;
 
 	virtual std::shared_ptr<const int_type> to_unsigned()
@@ -983,7 +983,7 @@ namespace klp
 	virtual mpa::limbs::size_type get_width(const target &tgt)
 	  const noexcept override;
 
-	virtual std::shared_ptr<const std_int_type>
+	virtual std::shared_ptr<const int_type>
 	promote(const target &tgt) const override;
 
 	virtual std::shared_ptr<const int_type> to_unsigned()
@@ -999,6 +999,8 @@ namespace klp
 	std_int_type(const std_int_type&);
 
 	virtual std_int_type* _clone() const override;
+
+	std::shared_ptr<const std_int_type> _promote() const;
 
 	const kind _k;
 	const bool _signed;
@@ -1037,7 +1039,7 @@ namespace klp
 	virtual mpa::limbs::size_type get_width(const target &tgt)
 	  const noexcept override;
 
-	virtual std::shared_ptr<const std_int_type>
+	virtual std::shared_ptr<const int_type>
 	promote(const target &tgt) const override;
 
 	virtual std::shared_ptr<const int_type> to_unsigned()
@@ -1049,6 +1051,8 @@ namespace klp
 	plain_char_type(const plain_char_type&);
 
 	virtual plain_char_type* _clone() const override;
+
+	std::shared_ptr<const std_int_type> _promote() const;
       };
 
       class bool_type final : public int_type
@@ -1084,7 +1088,7 @@ namespace klp
 	virtual mpa::limbs::size_type get_width(const target &tgt)
 	  const noexcept override;
 
-	virtual std::shared_ptr<const std_int_type>
+	virtual std::shared_ptr<const int_type>
 	promote(const target &tgt) const override;
 
 	virtual std::shared_ptr<const int_type> to_unsigned()
@@ -1096,6 +1100,8 @@ namespace klp
 	bool_type(const bool_type&);
 
 	virtual bool_type* _clone() const override;
+
+	std::shared_ptr<const std_int_type> _promote() const;
       };
 
       class enum_content
@@ -1199,7 +1205,7 @@ namespace klp
 	virtual mpa::limbs::size_type get_width(const target &tgt)
 	  const noexcept override;
 
-	virtual std::shared_ptr<const std_int_type>
+	virtual std::shared_ptr<const int_type>
 	promote(const target &tgt) const override;
 
 	virtual std::shared_ptr<const int_type> to_unsigned()
