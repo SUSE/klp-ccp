@@ -1253,8 +1253,7 @@ namespace klp
 
 	mpa::limbs::size_type get_width(const target &tgt) const noexcept;
 
-	std::shared_ptr<const std_int_type>
-	promote(const target &tgt) const;
+	std::shared_ptr<const int_type> promote(const target &tgt) const;
 
 	const std::shared_ptr<const int_type>& get_base_type()
 	  const noexcept
