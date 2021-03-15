@@ -899,10 +899,10 @@ namespace klp
 	arithmetic_conversion(const target &tgt,
 			      const complex_float_type &ct) const override;
 
-	virtual std::shared_ptr<const std_int_type>
-	integer_conversion(const target &tgt, const int_type &it) const;
+	virtual std::shared_ptr<const int_type>
+	integer_conversion(const target &tgt, const int_type &it) const = 0;
 
-	virtual std::shared_ptr<const std_int_type>
+	virtual std::shared_ptr<const int_type>
 	integer_conversion(const target &tgt, const std_int_type &it)
 	  const;
 
@@ -969,11 +969,11 @@ namespace klp
 	std::shared_ptr<const std_int_type>
 	set_user_alignment(const alignment &user_align) const;
 
-	virtual std::shared_ptr<const std_int_type>
+	virtual std::shared_ptr<const int_type>
 	integer_conversion(const target &tgt, const int_type &it)
 	  const override;
 
-	virtual std::shared_ptr<const std_int_type>
+	virtual std::shared_ptr<const int_type>
 	integer_conversion(const target &tgt, const std_int_type &it)
 	  const override;
 
@@ -1027,6 +1027,10 @@ namespace klp
 	virtual mpa::limbs::size_type
 	get_type_alignment(const target &tgt) const noexcept override;
 
+	virtual std::shared_ptr<const int_type>
+	integer_conversion(const target &tgt, const int_type &it)
+	  const override;
+
 	virtual bool is_signed(const target &tgt)
 	  const noexcept override;
 
@@ -1069,6 +1073,10 @@ namespace klp
 
 	virtual mpa::limbs::size_type
 	get_type_alignment(const target &tgt) const noexcept override;
+
+	virtual std::shared_ptr<const int_type>
+	integer_conversion(const target &tgt, const int_type &it)
+	  const override;
 
 	virtual bool is_signed(const target &tgt)
 	  const noexcept override;
@@ -1180,6 +1188,10 @@ namespace klp
 
 	virtual mpa::limbs::size_type
 	get_type_alignment(const target &tgt) const noexcept override;
+
+	virtual std::shared_ptr<const int_type>
+	integer_conversion(const target &tgt, const int_type &it)
+	  const override;
 
 	virtual bool is_signed(const target &tgt)
 	  const noexcept override;

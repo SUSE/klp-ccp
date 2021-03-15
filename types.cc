@@ -1594,17 +1594,14 @@ int_type::arithmetic_conversion(const target &tgt,
   return ct.arithmetic_conversion(tgt, *this->promote(tgt));
 }
 
-std::shared_ptr<const std_int_type>
-int_type::integer_conversion(const target &tgt, const int_type &it) const
-{
-  return it.integer_conversion(tgt, *this->promote(tgt));
-}
-
-std::shared_ptr<const std_int_type>
+std::shared_ptr<const int_type>
 int_type::integer_conversion(const target &tgt, const std_int_type &it)
   const
 {
-  return it.integer_conversion(tgt, *this->promote(tgt));
+  // Default for plain_char_type, bool_type and enum_type. The
+  // generic overload will return some intermediate result of
+  // different type (std_int_type most probably).
+  return this->integer_conversion(tgt, static_cast<const int_type&>(it));
 }
 
 
@@ -1681,13 +1678,14 @@ std_int_type::set_user_alignment(const alignment &user_align) const
 			     user_align, &std_int_type::_clone);
 }
 
-std::shared_ptr<const std_int_type>
+std::shared_ptr<const int_type>
 std_int_type::integer_conversion(const target &tgt, const int_type &it) const
 {
+  // Double-dispatch, but promote the std_int_type first.
   return it.integer_conversion(tgt, *this->promote(tgt));
 }
 
-std::shared_ptr<const std_int_type>
+std::shared_ptr<const int_type>
 std_int_type::integer_conversion(const target &tgt,
 				 const std_int_type &it) const
 {
@@ -1801,6 +1799,13 @@ plain_char_type::get_type_alignment(const target&) const noexcept
   return 0;
 }
 
+std::shared_ptr<const int_type>
+plain_char_type::integer_conversion(const target &tgt, const int_type &it) const
+{
+  // Promote and double-dispatch.
+  return it.integer_conversion(tgt, *this->promote(tgt));
+}
+
 bool plain_char_type::is_signed(const target &tgt) const noexcept
 {
   return tgt.is_char_signed();
@@ -1871,6 +1876,13 @@ mpa::limbs::size_type
 bool_type::get_type_alignment(const target&) const noexcept
 {
   return 0;
+}
+
+std::shared_ptr<const int_type>
+bool_type::integer_conversion(const target &tgt, const int_type &it) const
+{
+  // Promote and double-dispatch.
+  return it.integer_conversion(tgt, *this->promote(tgt));
 }
 
 bool bool_type::is_signed(const target&) const noexcept
@@ -2066,6 +2078,13 @@ mpa::limbs::size_type enum_type::get_type_alignment(const target &tgt)
   const noexcept
 {
   return get_underlying_type()->get_type_alignment(tgt);
+}
+
+std::shared_ptr<const int_type>
+enum_type::integer_conversion(const target &tgt, const int_type &it) const
+{
+  // Promote and forward to non-enum_type implemenation.
+  return this->promote(tgt)->integer_conversion(tgt, it);
 }
 
 bool enum_type::is_signed(const target &tgt) const noexcept
