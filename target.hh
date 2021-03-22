@@ -137,8 +137,10 @@ namespace klp
       virtual mpa::limbs::size_type
       get_std_int_width(const types::std_int_type::kind k) const noexcept = 0;
 
-      virtual types::std_int_type::kind
-      width_to_std_int_kind(const mpa::limbs::size_type w) const = 0;
+      virtual std::shared_ptr<const types::int_type>
+      width_to_int_type(const mpa::limbs::size_type w, const bool is_signed,
+			const bool std_int_required)
+	const = 0;
 
       virtual mpa::limbs::size_type
       get_float_significand_width(const types::std_float_type::kind k)

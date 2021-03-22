@@ -886,6 +886,9 @@ namespace klp
 
 	std::shared_ptr<const int_type> strip_qualifiers() const;
 
+	std::shared_ptr<const int_type>
+	set_user_alignment(const alignment &user_align) const;
+
 	virtual std::shared_ptr<const arithmetic_type>
 	arithmetic_conversion(const target &tgt,
 			      const arithmetic_type &at) const override;
@@ -965,9 +968,6 @@ namespace klp
 
 	virtual mpa::limbs::size_type
 	get_type_alignment(const target &tgt) const noexcept override;
-
-	std::shared_ptr<const std_int_type>
-	set_user_alignment(const alignment &user_align) const;
 
 	virtual std::shared_ptr<const int_type>
 	integer_conversion(const target &tgt, const int_type &it)

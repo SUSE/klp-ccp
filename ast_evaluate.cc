@@ -6732,37 +6732,36 @@ void expr_constant::evaluate_type(ast &a, const target &tgt)
   // Determine the resulting type, c.f. C99, 6.4.4.1(5).
   const mpa::limbs::size_type req_width =
     (!is_unsigned && b == base::dec) ? m.fls() + 1 : m.fls();
+  mpa::limbs::size_type width = tgt.get_std_int_width(k);
+  std::shared_ptr<const types::int_type> t;
+  if (width >= req_width) {
+    if (!is_unsigned && b != base::dec && m.is_any_set_at_or_above(width - 1))
+      is_unsigned = true;
+    t = types::std_int_type::create(k, !is_unsigned);
 
-  std_int_type::kind min_kind;
-  try {
-    min_kind = tgt.width_to_std_int_kind(req_width);
-  } catch (const std::overflow_error &) {
-    code_remark remark (code_remark::severity::fatal,
-			"integer constant overflow",
-			a.get_pp_result(), _const_tok);
-    a.get_remarks().add(remark);
-    throw semantic_except(remark);
+  } else {
+    try {
+      t = tgt.width_to_int_type(req_width, !is_unsigned, true);
+    } catch (const std::overflow_error &) {
+      code_remark remark (code_remark::severity::fatal,
+			  "integer constant overflow",
+			  a.get_pp_result(), _const_tok);
+      a.get_remarks().add(remark);
+      throw semantic_except(remark);
+    }
+
+    width = t->get_width(tgt);
+    if (!is_unsigned && b != base::dec && m.is_any_set_at_or_above(width - 1)) {
+      is_unsigned = true;
+      t = t->to_unsigned();
+    }
   }
 
-  if (k < min_kind)
-    k = min_kind;
-  const mpa::limbs::size_type width = tgt.get_std_int_width(k);
-  assert(width);
-  if (!is_unsigned && b != base::dec && m.is_any_set_at_or_above(width - 1)) {
-    is_unsigned = true;
-  }
-  if (!is_unsigned && m.is_any_set_at_or_above(width - 1)) {
-    code_remark remark (code_remark::severity::fatal,
-			"integer constant overflow",
-			a.get_pp_result(), _const_tok);
-    a.get_remarks().add(remark);
-    throw semantic_except(remark);
-  }
-
+  assert(is_unsigned || !m.is_any_set_at_or_above(width - 1));
   m.resize(mpa::limbs::width_to_size(width));
   target_int i(width - !is_unsigned, !is_unsigned, std::move(m));
   _set_value(constexpr_value::integer_constant_expr_tag{}, std::move(i));
-  _set_type(types::std_int_type::create(k, !is_unsigned));
+  _set_type(std::move(t));
   return;
 }
 

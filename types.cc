@@ -1565,6 +1565,13 @@ int_type::strip_qualifiers() const
   return _strip_qualifiers(_self_ptr<int_type>(), &int_type::_clone);
 }
 
+std::shared_ptr<const int_type>
+int_type::set_user_alignment(const alignment &user_align) const
+{
+  return _set_user_alignment(_self_ptr<int_type>(),
+			     user_align, &int_type::_clone);
+}
+
 std::shared_ptr<const arithmetic_type>
 int_type::arithmetic_conversion(const target &tgt,
 				const arithmetic_type &at) const
@@ -1669,13 +1676,6 @@ mpa::limbs::size_type std_int_type::get_type_alignment(const target &tgt)
   const noexcept
 {
   return tgt.get_std_int_alignment(_k);
-}
-
-std::shared_ptr<const std_int_type>
-std_int_type::set_user_alignment(const alignment &user_align) const
-{
-  return _set_user_alignment(_self_ptr<std_int_type>(),
-			     user_align, &std_int_type::_clone);
 }
 
 std::shared_ptr<const int_type>
@@ -2196,8 +2196,7 @@ mpa::limbs::size_type bitfield_type::get_width(const target&)
 
 std::shared_ptr<const int_type> bitfield_type::promote(const target &tgt) const
 {
-  const std_int_type::kind k = tgt.width_to_std_int_kind(_width);
-  return std_int_type::create(k, _base_type->is_signed(tgt));
+  return tgt.width_to_int_type(_width, _base_type->is_signed(tgt), false);
 }
 
 std::shared_ptr<const bitfield_type>

@@ -263,7 +263,7 @@ namespace
   static std::shared_ptr<const types::addressable_type>
   __mk_iN(const target &tgt)
   {
-    return types::std_int_type::create(tgt.width_to_std_int_kind(w), is_signed);
+    return tgt.width_to_int_type(w, is_signed, false);
   }
 
   static std::shared_ptr<const types::addressable_type>
@@ -2835,10 +2835,13 @@ bool target_gcc::is_char_signed() const noexcept
   return _opts_c_family.flag_signed_char;
 }
 
-types::std_int_type::kind
-target_gcc::width_to_std_int_kind(const mpa::limbs::size_type w) const
+std::shared_ptr<const types::int_type>
+target_gcc::width_to_int_type(const mpa::limbs::size_type w,
+			      const bool is_signed,
+			      const bool std_int_required) const
 {
-  return this->_int_mode_to_std_int_kind(_width_to_int_mode(w));
+  return (types::std_int_type::create
+	  (this->_int_mode_to_std_int_kind(_width_to_int_mode(w)), is_signed));
 }
 
 types::std_int_type::kind target_gcc::get_ptrdiff_kind() const noexcept

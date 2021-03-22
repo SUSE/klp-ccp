@@ -513,8 +513,7 @@ _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
     }
   }
 
-  auto &&t = types::std_int_type::create(width_to_std_int_kind(width),
-					 is_any_signed);
+  auto &&t = this->width_to_int_type(width, is_any_signed, false);
   if (user_align.is_set()) {
     const mpa::limbs::size_type align =
       static_cast<mpa::limbs::size_type>(1) << user_align.get_log2_value();
@@ -555,8 +554,7 @@ _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
       }
 
       m.convert_value(m_width - m_is_signed, m_is_signed);
-      m.set_type(types::std_int_type::create(width_to_std_int_kind(m_width),
-					     m_is_signed));
+      m.set_type(this->width_to_int_type(m_width, m_is_signed, false));
      });
 }
 
