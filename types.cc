@@ -2005,14 +2005,14 @@ const enum_content::member* enum_content::lookup(const std::string &name)
   return nullptr;
 }
 
-void enum_content::set_underlying_type(std::shared_ptr<const std_int_type> &&ut)
+void enum_content::set_underlying_type(std::shared_ptr<const int_type> &&ut)
   noexcept
 {
   assert(!_underlying_type);
   _underlying_type = std::move(ut);
 }
 
-const std::shared_ptr<const std_int_type>&
+const std::shared_ptr<const int_type>&
 enum_content::get_underlying_type() const noexcept
 {
   return _underlying_type;
@@ -2120,7 +2120,7 @@ std::shared_ptr<const int_type> enum_type::to_unsigned() const
   return get_underlying_type()->to_unsigned();
 }
 
-const std::shared_ptr<const std_int_type>& enum_type::get_underlying_type()
+const std::shared_ptr<const int_type>& enum_type::get_underlying_type()
   const noexcept
 {
   assert(this->is_complete());

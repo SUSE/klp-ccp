@@ -1153,10 +1153,10 @@ namespace klp
 	bool empty() const noexcept
 	{ return _members.empty(); }
 
-	void set_underlying_type(std::shared_ptr<const std_int_type> &&ut)
+	void set_underlying_type(std::shared_ptr<const int_type> &&ut)
 	  noexcept;
 
-	const std::shared_ptr<const std_int_type>&
+	const std::shared_ptr<const int_type>&
 	get_underlying_type() const noexcept;
 
 	template <typename callable_type>
@@ -1164,7 +1164,7 @@ namespace klp
 
       private:
 	std::vector<member> _members;
-	std::shared_ptr<const std_int_type> _underlying_type;
+	std::shared_ptr<const int_type> _underlying_type;
       };
 
       class enum_type final : public int_type
@@ -1211,7 +1211,7 @@ namespace klp
 	virtual std::shared_ptr<const int_type> to_unsigned()
 	  const override;
 
-	const std::shared_ptr<const std_int_type>&
+	const std::shared_ptr<const int_type>&
 	get_underlying_type() const noexcept;
 
 	const ast::enum_decl_list_node& get_decl_list_node() const noexcept
