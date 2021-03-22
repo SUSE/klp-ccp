@@ -359,6 +359,13 @@ namespace klp
 			 std::forward<arg_type>(arg))),
 		       std::forward<args_types>(args)...));
 
+	    case type::type_id::tid_ext_int:
+	      return (_handle_types<ret_type>
+		      ((_downcast_and_bind_1st<ext_int_type>
+			(std::forward<callable_type>(c),
+			 std::forward<arg_type>(arg))),
+		       std::forward<args_types>(args)...));
+
 	    case type::type_id::tid_plain_char:
 	      return (_handle_types<ret_type>
 		      ((_downcast_and_bind_1st<plain_char_type>

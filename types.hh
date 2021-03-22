@@ -51,6 +51,7 @@ namespace klp
       class plain_char_type;
       class bool_type;
       class std_int_type;
+      class ext_int_type;
       class enum_type;
       class real_float_type;
       class std_float_type;
@@ -140,6 +141,7 @@ namespace klp
 	  tid_pointer,
 	  tid_struct_or_union,
 	  tid_std_int,
+	  tid_ext_int,
 	  tid_plain_char,
 	  tid_bool,
 	  tid_enum,
@@ -168,6 +170,9 @@ namespace klp
 					const bool ignore_qualifiers) const;
 	virtual bool is_compatible_with(const target &tgt,
 					const std_int_type &t,
+					const bool ignore_qualifiers) const;
+	virtual bool is_compatible_with(const target &tgt,
+					const ext_int_type &t,
 					const bool ignore_qualifiers) const;
 	virtual bool is_compatible_with(const target &tgt,
 					const enum_type &t,
@@ -909,6 +914,10 @@ namespace klp
 	integer_conversion(const target &tgt, const std_int_type &it)
 	  const;
 
+	virtual std::shared_ptr<const int_type>
+	integer_conversion(const target &tgt, const ext_int_type &it)
+	  const;
+
 	virtual bool is_signed(const target &tgt) const noexcept = 0;
 
 	virtual mpa::limbs::size_type get_width(const target &tgt)
@@ -1001,6 +1010,103 @@ namespace klp
 	virtual std_int_type* _clone() const override;
 
 	std::shared_ptr<const std_int_type> _promote() const;
+
+	const kind _k;
+	const bool _signed;
+      };
+
+      class ext_int_type final : public int_type
+      {
+      public:
+	class kind
+	{
+	public:
+	  constexpr explicit kind(const int tgt_id) noexcept
+	    : _tgt_id(tgt_id)
+	  {}
+
+	  constexpr kind(const kind &k) noexcept = default;
+
+	  constexpr explicit operator int() const
+	  { return _tgt_id; }
+
+	  kind& operator=(const kind &rhs) noexcept
+	  {
+	    this->_tgt_id = rhs._tgt_id;
+	    return *this;
+	  }
+
+	  constexpr bool operator==(const kind &rhs) const noexcept
+	  {
+	    return this->_tgt_id == rhs._tgt_id;
+	  }
+
+	private:
+	  kind() = delete;
+
+	  int _tgt_id;
+	};
+
+	virtual ~ext_int_type() noexcept;
+
+	static std::shared_ptr<const ext_int_type>
+	create(const kind k, const bool is_signed,
+	       const qualifiers &qs = qualifiers{});
+
+	virtual type_id get_type_id() const noexcept override;
+
+	virtual bool is_compatible_with(const target &tgt, const type &t,
+					const bool ignore_qualifiers)
+	  const override;
+	virtual bool is_compatible_with(const target&,
+					const ext_int_type &t,
+					const bool ignore_qualifiers)
+	  const override;
+	virtual bool is_compatible_with(const target &tgt,
+					const enum_type &t,
+					const bool ignore_qualifiers)
+	  const override;
+
+	std::shared_ptr<const ext_int_type> strip_qualifiers() const;
+
+	virtual mpa::limbs get_size(const target &tgt) const override;
+
+	virtual mpa::limbs::size_type
+	get_type_alignment(const target &tgt) const noexcept override;
+
+	virtual std::shared_ptr<const int_type>
+	integer_conversion(const target &tgt, const int_type &it)
+	  const override;
+
+	virtual std::shared_ptr<const int_type>
+	integer_conversion(const target &tgt, const std_int_type &it)
+	  const override;
+
+	virtual std::shared_ptr<const int_type>
+	integer_conversion(const target &tgt, const ext_int_type &it)
+	  const override;
+
+	virtual bool is_signed(const target &tgt)
+	  const noexcept override;
+
+	virtual mpa::limbs::size_type get_width(const target &tgt)
+	  const noexcept override;
+
+	virtual std::shared_ptr<const int_type>
+	promote(const target &tgt) const override;
+
+	virtual std::shared_ptr<const int_type> to_unsigned()
+	  const override;
+
+	const kind get_kind() const noexcept
+	{ return _k; }
+
+      private:
+	ext_int_type(const kind k, const bool is_signed, const qualifiers &qs);
+
+	ext_int_type(const ext_int_type&);
+
+	virtual ext_int_type* _clone() const override;
 
 	const kind _k;
 	const bool _signed;
@@ -1185,6 +1291,10 @@ namespace klp
 	  const override;
 	virtual bool is_compatible_with(const target &tgt,
 					const std_int_type &t,
+					const bool ignore_qualifiers)
+	  const override;
+	virtual bool is_compatible_with(const target &tgt,
+					const ext_int_type &t,
 					const bool ignore_qualifiers)
 	  const override;
 

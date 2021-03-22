@@ -46,6 +46,10 @@ namespace klp
 	override;
 
       virtual mpa::limbs::size_type
+      get_ext_int_width(const types::ext_int_type::kind k)
+	const noexcept override;
+
+      virtual mpa::limbs::size_type
       get_float_significand_width(const types::std_float_type::kind k)
 	const noexcept override;
 
@@ -65,6 +69,12 @@ namespace klp
 
       virtual mpa::limbs::size_type
       get_std_int_alignment(const types::std_int_type::kind k) const override;
+
+      virtual mpa::limbs get_ext_int_size(const types::ext_int_type::kind k)
+	const override;
+
+      virtual mpa::limbs::size_type
+      get_ext_int_alignment(const types::ext_int_type::kind k) const override;
 
       virtual mpa::limbs get_float_size(const types::std_float_type::kind k)
 	const override;

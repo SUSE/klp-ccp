@@ -170,6 +170,12 @@ bool type::is_compatible_with(const target&, const std_int_type&,
   return false;
 }
 
+bool type::is_compatible_with(const target&, const ext_int_type&,
+			      const bool) const
+{
+  return false;
+}
+
 bool type::is_compatible_with(const target&, const enum_type&,
 			      const bool) const
 {
@@ -1611,6 +1617,18 @@ int_type::integer_conversion(const target &tgt, const std_int_type &it)
   return this->integer_conversion(tgt, static_cast<const int_type&>(it));
 }
 
+std::shared_ptr<const int_type>
+int_type::integer_conversion(const target &tgt, const ext_int_type &it) const
+{
+  // Default for plain_char_type, bool_type, enum_type and
+  // std_int_type. The generic overload will return some intermediate
+  // result of different type (std_int_type most probably) in all but
+  // the latter case. For std_int_type, the double-dispatch will
+  // forward the call to
+  // ext_int_type::integer_conversion(const std_int_type&).
+  return this->integer_conversion(tgt, static_cast<const int_type&>(it));
+}
+
 
 std_int_type::std_int_type(const kind k, const bool is_signed,
 			   const qualifiers &qs)
@@ -1752,6 +1770,178 @@ std::shared_ptr<const std_int_type> std_int_type::_promote() const
     return _self_ptr<std_int_type>();
   }
 }
+
+ext_int_type::ext_int_type(const kind k, const bool is_signed,
+			   const qualifiers &qs)
+  : type(qs), _k(k), _signed(is_signed)
+{}
+
+ext_int_type::ext_int_type(const ext_int_type&) = default;
+
+ext_int_type::~ext_int_type() noexcept = default;
+
+ext_int_type* ext_int_type::_clone() const
+{
+  return new ext_int_type(*this);
+}
+
+std::shared_ptr<const ext_int_type>
+ext_int_type::create(const kind k, const bool is_signed,
+		     const qualifiers &qs)
+{
+  return (std::shared_ptr<const ext_int_type>
+	  (new ext_int_type(k, is_signed, qs)));
+}
+
+type::type_id ext_int_type::get_type_id() const noexcept
+{
+  return type_id::tid_ext_int;
+}
+
+bool ext_int_type::is_compatible_with(const target &tgt, const type &t,
+				      const bool ignore_qualifiers) const
+
+{
+  return t.is_compatible_with(tgt, *this, ignore_qualifiers);
+}
+
+bool ext_int_type::is_compatible_with(const target&,
+					const ext_int_type &t,
+					const bool ignore_qualifiers)
+	  const
+{
+  return (this->_k == t._k &&
+	  this->_signed == t._signed &&
+	  (ignore_qualifiers ||
+	   (this->get_qualifiers() == t.get_qualifiers())));
+}
+
+bool ext_int_type::is_compatible_with(const target &tgt,
+				      const enum_type &t,
+				      const bool ignore_qualifiers)
+  const
+{
+  return t.is_compatible_with(tgt, *this, ignore_qualifiers);
+}
+
+std::shared_ptr<const ext_int_type> ext_int_type::strip_qualifiers() const
+{
+  return _strip_qualifiers(_self_ptr<ext_int_type>(), &ext_int_type::_clone);
+}
+
+mpa::limbs ext_int_type::get_size(const target &tgt) const
+{
+  return tgt.get_ext_int_size(_k);
+}
+
+mpa::limbs::size_type
+ext_int_type::get_type_alignment(const target &tgt) const noexcept
+{
+  return tgt.get_ext_int_alignment(_k);
+}
+
+std::shared_ptr<const int_type>
+ext_int_type::integer_conversion(const target &tgt, const int_type &it) const
+{
+  // Double-dispatch
+  return it.integer_conversion(tgt, *this);
+}
+
+std::shared_ptr<const int_type>
+ext_int_type::integer_conversion(const target &tgt, const std_int_type &it)
+  const
+{
+  const mpa::limbs::size_type l_width = this->get_width(tgt);
+  if (l_width <= tgt.get_std_int_width(std_int_type::kind::k_int))
+    return this->promote(tgt)->integer_conversion(tgt, it);
+
+  const std::shared_ptr<const int_type> pit = it.promote(tgt);
+  const mpa::limbs::size_type r_width = pit->get_width(tgt);
+  if (_signed == pit->is_signed(tgt)) {
+    if (l_width >= r_width)
+      return this->strip_qualifiers();
+    else
+      return pit->strip_qualifiers();
+  }
+
+  if (l_width == r_width) {
+    if (!_signed)
+      return pit->strip_qualifiers()->to_unsigned();
+    else
+      return pit->strip_qualifiers();
+  } else if (l_width > r_width) {
+    return this->strip_qualifiers();
+  } else {
+    return pit->strip_qualifiers();
+  }
+}
+
+std::shared_ptr<const int_type>
+ext_int_type::integer_conversion(const target &tgt, const ext_int_type &it)
+  const
+{
+  const mpa::limbs::size_type int_width =
+    tgt.get_std_int_width(std_int_type::kind::k_int);
+  const mpa::limbs::size_type l_width = this->get_width(tgt);
+  if (l_width <= int_width)
+    return this->promote(tgt)->integer_conversion(tgt, it);
+  const mpa::limbs::size_type r_width = it.get_width(tgt);
+  if (r_width <= int_width)
+    return this->integer_conversion(tgt, *it.promote(tgt));
+
+  if (_signed == it._signed) {
+    if (l_width >= r_width)
+      return this->strip_qualifiers();
+    else
+      return it.strip_qualifiers();
+  }
+
+  if (l_width == r_width) {
+    if (!_signed)
+      return this->strip_qualifiers();
+    else
+      return it.strip_qualifiers();
+  } else if (l_width > r_width) {
+    return this->strip_qualifiers();
+  } else {
+    return it.strip_qualifiers();
+  }
+}
+
+bool ext_int_type::is_signed(const target &tgt) const noexcept
+{
+  return _signed;
+}
+
+mpa::limbs::size_type ext_int_type::get_width(const target &tgt)
+  const noexcept
+{
+    return tgt.get_ext_int_width(_k);
+}
+
+std::shared_ptr<const int_type>
+ext_int_type::promote(const target &tgt) const
+{
+  const mpa::limbs::size_type int_width =
+    tgt.get_std_int_width(types::std_int_type::kind::k_int);
+  const mpa::limbs::size_type w = this->get_width(tgt);
+
+  if (w > int_width)
+    return _self_ptr<ext_int_type>();
+
+  bool is_signed = true;
+  if (w == int_width && !_signed)
+    is_signed = false;
+
+  return std_int_type::create(std_int_type::kind::k_int, is_signed,
+			      get_qualifiers());
+}
+
+std::shared_ptr<const int_type> ext_int_type::to_unsigned() const
+{
+  return create(_k, false, get_qualifiers());
+}
+
 
 plain_char_type::plain_char_type(const qualifiers &qs)
   : type(qs)
@@ -2062,6 +2252,18 @@ bool enum_type::is_compatible_with(const target&, const enum_type &t,
 
 bool enum_type::is_compatible_with(const target &tgt,
 				   const std_int_type &t,
+				   const bool ignore_qualifiers) const
+{
+  if (!ignore_qualifiers && (this->get_qualifiers() != t.get_qualifiers()))
+    return false;
+
+  if (!this->is_complete())
+    return false;
+  return this->get_underlying_type()->is_compatible_with(tgt, t, false);
+}
+
+bool enum_type::is_compatible_with(const target &tgt,
+				   const ext_int_type &t,
 				   const bool ignore_qualifiers) const
 {
   if (!ignore_qualifiers && (this->get_qualifiers() != t.get_qualifiers()))

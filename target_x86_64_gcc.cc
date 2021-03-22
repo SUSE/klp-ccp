@@ -319,6 +319,13 @@ target_x86_64_gcc::get_std_int_width(const types::std_int_type::kind k)
   };
 }
 
+mpa::limbs::size_type
+target_x86_64_gcc::get_ext_int_width(const types::ext_int_type::kind k)
+  const noexcept
+{
+  return _int_mode_to_width(static_cast<int_mode_kind>(static_cast<int>(k)));
+}
+
 mpa::limbs::size_type target_x86_64_gcc::
 get_float_significand_width(const types::std_float_type::kind k)
   const noexcept
@@ -568,6 +575,18 @@ mpa::limbs::size_type target_x86_64_gcc::
 get_std_int_alignment(const types::std_int_type::kind k) const
 {
   return get_std_int_size(k).ffs() - 1;
+}
+
+mpa::limbs target_x86_64_gcc::
+get_ext_int_size(const types::ext_int_type::kind k) const
+{
+  return mpa::limbs::from_size_type(get_ext_int_width(k) / 8);
+}
+
+mpa::limbs::size_type target_x86_64_gcc::
+get_ext_int_alignment(const types::ext_int_type::kind k) const
+{
+  return get_ext_int_size(k).ffs() - 1;
 }
 
 mpa::limbs target_x86_64_gcc::
