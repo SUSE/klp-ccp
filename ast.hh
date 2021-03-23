@@ -2094,6 +2094,30 @@ namespace klp
 	pod_spec _pod_spec;
       };
 
+      class type_specifier_ext_int final : public type_specifier
+      {
+      public:
+	type_specifier_ext_int(const pp_tokens_range &tr,
+			       const types::ext_int_type::kind &k) noexcept;
+
+	virtual ~type_specifier_ext_int() noexcept override;
+
+	types::ext_int_type::kind get_ext_int_kind() const noexcept
+	{
+	  return _k;
+	}
+
+      private:
+	virtual _ast_entity* _get_child(const size_t) const noexcept override;
+
+	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
+	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
+
+	types::ext_int_type::kind _k;
+      };
+
       class type_specifier_tdid final : public type_specifier
       {
       public:
@@ -3060,6 +3084,8 @@ namespace klp
 	void extend(declaration_specifiers* &&ds);
 
 	storage_class get_storage_class(ast &ast) const;
+
+	bool is_inline() const noexcept;
 
 	template <typename callable_type>
 	void for_each_storage_class_specifier(callable_type &&c) const;

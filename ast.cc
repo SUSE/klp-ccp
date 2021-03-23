@@ -2965,6 +2965,40 @@ bool type_specifier_pod::_process(const_processor<bool> &p) const
 }
 
 
+type_specifier_ext_int::
+type_specifier_ext_int(const pp_tokens_range &tr,
+		       const types::ext_int_type::kind &k) noexcept
+  : type_specifier(tr), _k(k)
+{}
+
+type_specifier_ext_int::~type_specifier_ext_int() noexcept = default;
+
+_ast_entity* type_specifier_ext_int::_get_child(const size_t) const noexcept
+{
+  return nullptr;
+}
+
+void type_specifier_ext_int::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+void type_specifier_ext_int::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
+bool type_specifier_ext_int::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool type_specifier_ext_int::_process(const_processor<bool> &p) const
+{
+  return p(*this);
+}
+
+
 type_specifier_tdid::resolved::resolved() noexcept
   : _kind(resolved_kind::none)
 {}
@@ -4771,6 +4805,10 @@ storage_class declaration_specifiers::get_storage_class(ast &ast) const
   return sc;
 }
 
+bool declaration_specifiers::is_inline() const noexcept
+{
+  return !_fss.empty();
+}
 
 _ast_entity* declaration_specifiers::_get_child(const size_t i) const noexcept
 {
