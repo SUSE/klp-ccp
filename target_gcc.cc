@@ -2835,6 +2835,17 @@ bool target_gcc::is_char_signed() const noexcept
   return _opts_c_family.flag_signed_char;
 }
 
+target::ext_int_keywords target_gcc::get_ext_int_keywords() const
+{
+  ext_int_keywords kws;
+
+  kws.emplace
+    ("__int128",
+     types::ext_int_type::kind{static_cast<int>(int_mode_kind::imk_TI)});
+
+  return kws;
+}
+
 std::shared_ptr<const types::int_type>
 target_gcc::width_to_int_type(const mpa::limbs::size_type w,
 			      const bool is_signed,

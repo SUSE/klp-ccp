@@ -20,6 +20,8 @@
 #define TARGET_HH
 
 #include <functional>
+#include <map>
+#include <string>
 #include "types.hh"
 #include "mp_arithmetic.hh"
 #include "builtins.hh"
@@ -142,6 +144,11 @@ namespace klp
 
       virtual mpa::limbs::size_type
       get_std_int_alignment(const types::std_int_type::kind k) const = 0;
+
+
+      typedef std::map<std::string, types::ext_int_type::kind> ext_int_keywords;
+
+      virtual ext_int_keywords get_ext_int_keywords() const = 0;
 
       virtual mpa::limbs::size_type
       get_ext_int_width(const types::ext_int_type::kind k) const noexcept = 0;

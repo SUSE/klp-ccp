@@ -113,6 +113,8 @@ namespace klp
 
       virtual bool is_char_signed() const noexcept final;
 
+      virtual ext_int_keywords get_ext_int_keywords() const override;
+
       virtual std::shared_ptr<const types::int_type>
       width_to_int_type(const mpa::limbs::size_type w, const bool is_signed,
 			const bool std_int_required)

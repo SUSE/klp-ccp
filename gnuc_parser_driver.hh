@@ -26,14 +26,13 @@
 #include "gnuc_parser.hh"
 #include "pp_tokens.hh"
 #include "preprocessor.hh"
+#include "target.hh"
 #include "code_remarks.hh"
 
 namespace klp
 {
   namespace ccp
   {
-    class target;
-
     namespace yy
     {
       class gnuc_parser_driver
@@ -100,6 +99,8 @@ namespace klp
 
 	unsigned int _ignore_td_spec;
 	bool _in_typedef;
+
+	const target::ext_int_keywords _ext_int_keywords;
 
 	friend class gnuc_parser;
       };

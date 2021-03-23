@@ -163,7 +163,8 @@ static _val_tok_map_type _initialize_val_tok_map(const _val_tok_map_entry *e)
 gnuc_parser_driver::gnuc_parser_driver(preprocessor &&pp,
 				       const target &tgt)
   : _result(nullptr), _pp(std::move(pp)),
-    _parser(*this), _ignore_td_spec(0), _in_typedef(false)
+    _parser(*this), _ignore_td_spec(0), _in_typedef(false),
+    _ext_int_keywords(tgt.get_ext_int_keywords())
 {
   _typedefs_scopes.emplace();
   for (const auto &btd : tgt.get_builtin_typedefs())
@@ -242,6 +243,7 @@ gnuc_parser_driver::lex(gnuc_parser::semantic_type *value,
   static const _val_tok_map_type punct_map =
     _initialize_val_tok_map(punct_map_entries);
   _val_tok_map_type::const_iterator it_tok_type;
+  target::ext_int_keywords::const_iterator it_ext_int_kw;
   switch (tok.get_type()) {
   case pp_token::type::pp_number:
     /* fall through */
@@ -271,6 +273,12 @@ gnuc_parser_driver::lex(gnuc_parser::semantic_type *value,
     it_tok_type = kw_map.find(tok.get_value());
     if (it_tok_type != kw_map.cend())
       return it_tok_type->second;
+
+    it_ext_int_kw = _ext_int_keywords.find(tok.get_value());
+    if (it_ext_int_kw != _ext_int_keywords.cend()) {
+      value->ext_int_kind = it_ext_int_kw->second;
+      return gnuc_parser::token_type::TOK_KW_EXT_INT;
+    }
 
     value->token_index = loc->begin;
 
