@@ -1021,6 +1021,8 @@ namespace klp
 	class kind
 	{
 	public:
+	  kind() noexcept = default;
+
 	  constexpr explicit kind(const int tgt_id) noexcept
 	    : _tgt_id(tgt_id)
 	  {}
@@ -1030,11 +1032,7 @@ namespace klp
 	  constexpr explicit operator int() const
 	  { return _tgt_id; }
 
-	  kind& operator=(const kind &rhs) noexcept
-	  {
-	    this->_tgt_id = rhs._tgt_id;
-	    return *this;
-	  }
+	  kind& operator=(const kind &rhs) noexcept = default;
 
 	  constexpr bool operator==(const kind &rhs) const noexcept
 	  {
@@ -1042,8 +1040,6 @@ namespace klp
 	  }
 
 	private:
-	  kind() = delete;
-
 	  int _tgt_id;
 	};
 
