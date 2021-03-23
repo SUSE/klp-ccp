@@ -1269,13 +1269,18 @@ evaluate_type(ast &a, const target &tgt)
 
   std::shared_ptr<const addressable_type> result;
   _tss[0].get().process<void, type_set<type_specifier_pod,
+				       type_specifier_ext_int,
 				       type_specifier_tdid,
 				       struct_or_union_def,
 				       struct_or_union_ref,
 				       enum_def, enum_ref,
 				       typeof_expr, typeof_type_name> >
     (wrap_callables<default_action_unreachable<void, type_set<> >::type>
-     ([&](const type_specifier_pod&) {
+     ([](const type_specifier_pod&) {
+       // Will be processed below
+       return;
+      },
+      [](const type_specifier_ext_int&) {
        // Will be processed below
        return;
       },
@@ -1371,8 +1376,11 @@ evaluate_type(ast &a, const target &tgt)
     ibt_unknown,
     ibt_char,
     ibt_int,
+    ibt_ext_int,
     ibt_int128,
   } int_base_type = ibt_unknown;
+
+  types::ext_int_type::kind ext_int_kind{-1};
 
   enum {
     fbt_unknown,
@@ -1382,10 +1390,11 @@ evaluate_type(ast &a, const target &tgt)
 
   for (auto ts : _tss) {
     ts.get().process<void, type_set<type_specifier_pod,
+				    type_specifier_ext_int,
 				    type_specifier> >
       (wrap_callables<default_action_unreachable<void, type_set<> >
 		      ::template type>
-       ([&](const type_specifier_pod& ts_pod) {
+       ([&](const type_specifier_pod &ts_pod) {
 	 bool conflict = false;
 
 	 switch (ts_pod.get_pod_spec()) {
@@ -1490,6 +1499,21 @@ evaluate_type(ast &a, const target &tgt)
 	   throw semantic_except(remark);
 	 }
        },
+       [&](const type_specifier_ext_int &ts_ext_int) {
+	 if ((cls != cls_unknown && cls != cls_int) ||
+	     is_short || is_long ||
+	     int_base_type != ibt_unknown) {
+	   code_remark remark(code_remark::severity::fatal,
+			      "conflicting type specifier",
+			      a.get_pp_result(), ts_ext_int.get_tokens_range());
+	   a.get_remarks().add(remark);
+	   throw semantic_except(remark);
+	 }
+
+	 cls = cls_int;
+	 int_base_type = ibt_ext_int;
+	 ext_int_kind = ts_ext_int.get_ext_int_kind();
+       },
        [&](const type_specifier &_ts) {
 	 code_remark remark(code_remark::severity::fatal,
 			    "conflicting type specifier",
@@ -1515,6 +1539,8 @@ evaluate_type(ast &a, const target &tgt)
     if (int_base_type == ibt_char && !is_signed && !is_unsigned) {
       _set_type(plain_char_type::create(qs));
       return;
+    } else if (int_base_type == ibt_ext_int) {
+      _set_type(ext_int_type::create(ext_int_kind, !is_unsigned, qs));
     }
 
     assert(!(is_signed && is_unsigned));
