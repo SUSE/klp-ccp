@@ -482,10 +482,15 @@ namespace klp
 
       void _register_builtin_macros(preprocessor &pp) const;
 
+      std::map<const std::string, const builtin_func::factory>
+      _register_builtin_funcs();
+
       const gcc_cmdline_parser::gcc_version _gcc_version;
 
       opts_common _opts_common;
       opts_c_family _opts_c_family;
+
+      std::map<const std::string, const builtin_func::factory> _builtin_funcs;
     };
   }
 }

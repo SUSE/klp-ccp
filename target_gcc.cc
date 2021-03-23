@@ -147,7 +147,8 @@ static gcc_cmdline_parser::option gcc_opt_table_c_family[] = {
 
 target_gcc::target_gcc(const char * const version)
   : _gcc_version(_parse_version(version)),
-    _opts_common(_gcc_version), _opts_c_family()
+    _opts_common(_gcc_version), _opts_c_family(),
+    _builtin_funcs(_register_builtin_funcs())
 {}
 
 target_gcc::~target_gcc() noexcept = default;
@@ -257,1921 +258,11 @@ void target_gcc::parse_command_line
 }
 
 
-namespace
-{
-  template<unsigned int w, bool is_signed>
-  static std::shared_ptr<const types::addressable_type>
-  __mk_iN(const target &tgt)
-  {
-    return tgt.width_to_int_type(w, is_signed, false);
-  }
-
-  static std::shared_ptr<const types::addressable_type>
-  _mk_i8(const target &tgt)
-  {
-    return __mk_iN<8, true>(tgt);
-  }
-
-  static std::shared_ptr<const types::addressable_type>
-  _mk_i16(const target &tgt)
-  {
-    return __mk_iN<16, true>(tgt);
-  }
-
-  static std::shared_ptr<const types::addressable_type>
-  _mk_u16(const target &tgt)
-  {
-    return __mk_iN<16, false>(tgt);
-  }
-
-  static std::shared_ptr<const types::addressable_type>
-  _mk_i32(const target &tgt)
-  {
-    return __mk_iN<32, true>(tgt);
-  }
-
-  static std::shared_ptr<const types::addressable_type>
-  _mk_u32(const target &tgt)
-  {
-    return __mk_iN<32, false>(tgt);
-  }
-
-  static std::shared_ptr<const types::addressable_type>
-  _mk_i64(const target &tgt)
-  {
-    return __mk_iN<64, true>(tgt);
-  }
-
-  static std::shared_ptr<const types::addressable_type>
-  _mk_u64(const target &tgt)
-  {
-    return __mk_iN<64, false>(tgt);
-  }
-
-  static std::shared_ptr<const types::addressable_type>
-  _mk_i128(const target &tgt)
-  {
-    return __mk_iN<128, true>(tgt);
-  }
-
-  static std::shared_ptr<const types::addressable_type>
-  _mk_wi(const target &tgt)
-  {
-    return types::std_int_type::create(tgt.get_wint_kind(),
-				       tgt.is_wint_signed());
-  }
-
-  static std::shared_ptr<const types::addressable_type>
-  _mk_pid(const target &tgt)
-  {
-    return types::std_int_type::create(tgt.get_pid_t_kind(),
-				       tgt.is_pid_t_signed());
-  }
-
-  static std::shared_ptr<const types::addressable_type>
-  mk_pF_v_var(const target&)
-  {
-    return (types::void_type::create()
-	    ->derive_function(false)
-	    ->derive_pointer());
-  }
-
-  static std::shared_ptr<const types::addressable_type>
-  _mk_val(const target &tgt)
-  {
-    std::shared_ptr<const types::addressable_type> t =
-      tgt.create_builtin_va_list_type();
-    types::handle_types<void>
-      ((wrap_callables<default_action_nop>
-	([&](const types::array_type &at) {
-	   t = at.get_element_type()->derive_pointer();
-	 })),
-       *t);
-    return t;
-  }
-
-  class _builtin_func_pi_overload final : public builtin_func
-  {
-  public:
-    _builtin_func_pi_overload(const unsigned int pi_arg_index,
-			      const builtin_func::factory fac8,
-			      const builtin_func::factory fac16,
-			      const builtin_func::factory fac32,
-			      const builtin_func::factory fac64,
-			      const builtin_func::factory fac128) noexcept;
-
-    virtual ~_builtin_func_pi_overload() noexcept override;
-
-    virtual evaluation_result_type
-    evaluate(klp::ccp::ast::ast &a, const target &tgt,
-	     const ast::expr_func_invocation &efi) const override;
-
-  private:
-    const unsigned int _pi_arg_index;
-    const builtin_func::factory _fac8;
-    const builtin_func::factory _fac16;
-    const builtin_func::factory _fac32;
-    const builtin_func::factory _fac64;
-    const builtin_func::factory _fac128;
-  };
-
-  template <const unsigned int pi_arg_index,
-	    const builtin_func::factory fac8,
-	    const builtin_func::factory fac16,
-	    const builtin_func::factory fac32,
-	    const builtin_func::factory fac64,
-	    const builtin_func::factory fac128>
-  struct _builtin_func_pi_overload_fac
-  {
-    static std::unique_ptr<builtin_func> create()
-    {
-      return (std::unique_ptr<builtin_func>
-	      (new _builtin_func_pi_overload(pi_arg_index, fac8, fac16,
-					     fac32, fac64, fac128)));;
-    }
-  };
-
-  class _builtin_overflow : public builtin_func
-  {
-  public:
-    enum class op
-    {
-      add,
-      sub,
-      mul,
-    };
-
-    typedef std::shared_ptr<const types::int_type>(*t_fac)();
-
-    virtual evaluation_result_type
-    evaluate(klp::ccp::ast::ast &a, const target &tgt,
-	     const ast::expr_func_invocation &efi) const override;
-
-    template <t_fac tfac, bool p_variant, op o>
-    static std::unique_ptr<builtin_func> create();
-
-    static std::shared_ptr<const types::int_type> fac_i();
-    static std::shared_ptr<const types::int_type> fac_u();
-    static std::shared_ptr<const types::int_type> fac_l();
-    static std::shared_ptr<const types::int_type> fac_ul();
-    static std::shared_ptr<const types::int_type> fac_ll();
-    static std::shared_ptr<const types::int_type> fac_ull();
-
-  private:
-    t_fac _target_fac;
-    bool _p_variant;
-    op _op;
-
-    _builtin_overflow(const t_fac expected_it_fac, const bool p_variant,
-		      const op op) noexcept;
-  };
-}
-
-_builtin_func_pi_overload::
-_builtin_func_pi_overload(const unsigned int pi_arg_index,
-			  const builtin_func::factory fac8,
-			  const builtin_func::factory fac16,
-			  const builtin_func::factory fac32,
-			  const builtin_func::factory fac64,
-			  const builtin_func::factory fac128) noexcept
-  : _pi_arg_index(pi_arg_index), _fac8(fac8), _fac16(fac16),
-    _fac32(fac32), _fac64(fac64), _fac128(fac128)
-{}
-
-_builtin_func_pi_overload::~_builtin_func_pi_overload() noexcept = default;
-
-builtin_func::evaluation_result_type _builtin_func_pi_overload::
-evaluate(klp::ccp::ast::ast &a, const target &tgt,
-	 const ast::expr_func_invocation &efi) const
-{
-  const ast::expr_list * const args = efi.get_args();
-  const std::size_t n_args = !args ? 0 : args->size();
-
-  if (n_args <= _pi_arg_index) {
-    code_remark remark
-      (code_remark::severity::warning,
-       "too few arguments in builtin function invocation",
-       a.get_pp_result(), efi.get_tokens_range());
-    a.get_remarks().add(remark);
-    throw semantic_except(remark);
-  }
-
-  // The argument at index pi_arg_index shall have pointer to integer
-  // type. Demultiplex according to that integer type's width.
-  const ast::expr &e_pi_arg = (*args)[_pi_arg_index];
-  const mpa::limbs::size_type width =
-    (types::handle_types<mpa::limbs::size_type>
-     ((wrap_callables<default_action_nop>
-       ([&](const types::pointer_type &pt) {
-	  return
-	    (types::handle_types<mpa::limbs::size_type>
-	     ((wrap_callables<default_action_nop>
-	       ([&](const types::int_type &_it) {
-		  types::handle_types<void>
-		    ((wrap_callables<default_action_nop>
-		      ([&](const types::enum_type &et) {
-			 if (!et.is_complete()) {
-			   code_remark remark
-			     (code_remark::severity::fatal,
-			      "incomplete enum type passed to builtin function",
-			      a.get_pp_result(), e_pi_arg.get_tokens_range());
-			   a.get_remarks().add(remark);
-			   throw semantic_except(remark);
-			 }
-		       })),
-		     _it);
-
-		  return _it.get_width(tgt);
-		},
-		[&](const types::pointer_type&) {
-		  // Undocumented, but gcc also accepts pointers to pointers
-		  // for the atomic primitives.
-		  return tgt.get_std_int_width(tgt.get_ptrdiff_kind());
-		},
-		[&](const types::type&) -> mpa::limbs::size_type {
-		  code_remark remark
-		    (code_remark::severity::warning,
-		     "expected pointer to int argument to builtin invocation",
-		     a.get_pp_result(), e_pi_arg.get_tokens_range());
-		  a.get_remarks().add(remark);
-		  throw semantic_except(remark);
-		})),
-	      *pt.get_pointed_to_type()));
-	},
-	[&](const types::type&) -> mpa::limbs::size_type {
-	  code_remark remark
-	    (code_remark::severity::warning,
-	     "expected pointer argument to builtin invocation",
-	     a.get_pp_result(), e_pi_arg.get_tokens_range());
-	  a.get_remarks().add(remark);
-	  throw semantic_except(remark);
-	})),
-      *e_pi_arg.get_type()));
-
-  builtin_func::factory fac;
-  switch (width) {
-  case 8:
-    fac = _fac8;
-    break;
-
-  case 16:
-    fac = _fac16;
-    break;
-
-  case 32:
-    fac = _fac32;
-    break;
-
-  case 64:
-    fac = _fac64;
-    break;
-
-  case 128:
-    fac = _fac128;
-    break;
-
-  default:
-    {
-      code_remark remark
-	(code_remark::severity::warning,
-	 "can't handle argument's integer width at builtin invocation",
-	 a.get_pp_result(), e_pi_arg.get_tokens_range());
-      a.get_remarks().add(remark);
-      throw semantic_except(remark);
-    }
-  };
-
-  return fac()->evaluate(a, tgt, efi);
-}
-
-_builtin_overflow::_builtin_overflow(const t_fac target_fac,
-				     const bool p_variant,
-				     const op op) noexcept
-  : _target_fac(target_fac), _p_variant(p_variant), _op(op)
-{}
-
-template <_builtin_overflow::t_fac tfac, bool p_variant,
-	  _builtin_overflow::op o>
-std::unique_ptr<builtin_func> _builtin_overflow::create()
-{
-  return (std::unique_ptr<builtin_func>
-	  (new _builtin_overflow(tfac, p_variant, o)));
-}
-
-builtin_func::evaluation_result_type
-_builtin_overflow::evaluate(klp::ccp::ast::ast &a, const target &tgt,
-			    const ast::expr_func_invocation &efi) const
-{
-  auto &&myname =
-    [this]() -> std::string {
-      switch (_op) {
-      case op::add:
-	if (_p_variant)
-	  return std::string{"__builtin_add_overflow_p()"};
-	else
-	  return std::string{"__builtin_add_overflow()"};
-
-      case op::sub:
-	if (_p_variant)
-	  return std::string{"__builtin_sub_overflow_p()"};
-	else
-	  return std::string{"__builtin_sub_overflow()"};
-
-      case op::mul:
-	if (_p_variant)
-	  return std::string{"__builtin_mul_overflow_p()"};
-	else
-	  return std::string{"__builtin_mul_overflow()"};
-      }
-    };
-
-  if (!efi.get_args() || efi.get_args()->size() != 3) {
-    code_remark remark
-      (code_remark::severity::warning,
-       "wrong number of arguments to " + myname(),
-       a.get_pp_result(), efi.get_tokens_range());
-    a.get_remarks().add(remark);
-    throw semantic_except(remark);
-  }
-
-  const ast::expr_list &args = *efi.get_args();
-  bool types_ok = true;
-  mpa::limbs::size_type target_width =
-    std::numeric_limits<mpa::limbs::size_type>::max();
-  bool target_is_signed;
-  const std::shared_ptr<const types::int_type> it_target_spec =
-    _target_fac ? _target_fac() : nullptr;
-  assert(!_p_variant || !_target_fac);
-  if (_p_variant) {
-    // The first two or, for the _p variant, all arguments shall be of
-    // integer type.
-    for (unsigned int i = 0; i < 3; ++i) {
-      types::handle_types<void>
-	((wrap_callables<default_action_nop>
-	  ([&](const std::shared_ptr<const types::int_type> &it) {
-	     types::handle_types<void>
-	       ((wrap_callables<default_action_nop>
-		 ([&](const types::enum_type &et) {
-		    if (!et.is_complete()) {
-		      code_remark remark
-			(code_remark::severity::fatal,
-			 ("argument to " + myname() +
-			  " has incomplete enum type"),
-			 a.get_pp_result(), args[i].get_tokens_range());
-		      a.get_remarks().add(remark);
-		      throw semantic_except(remark);
-		    }
-		  })),
-		*it);
-
-	     if (i == 2) {
-	       target_width = it->get_width(tgt);
-	       target_is_signed = it->is_signed(tgt);
-	     }
-	   },
-	   [&](const std::shared_ptr<const types::bitfield_type> &bft) {
-	     if (i == 2) {
-	       target_width = bft->get_width(tgt);
-	       target_is_signed = bft->is_signed(tgt);
-	     }
-	   },
-	   [&](const std::shared_ptr<const types::type>&) {
-	     types_ok = false;
-
-	     code_remark remark
-	       (code_remark::severity::warning,
-		"non-integer argument to " + myname(),
-		a.get_pp_result(), args[i].get_tokens_range());
-	     a.get_remarks().add(remark);
-	   })),
-	 args[i].get_type());
-    }
-  } else {
-    // For the non-_p variant, the first two or shall be of arithmetic
-    // type.
-    for (unsigned int i = 0; i < 2; ++i) {
-      types::handle_types<void>
-	((wrap_callables<default_action_nop>
-	  ([&](const std::shared_ptr<const types::arithmetic_type> &t) {
-	     types::handle_types<void>
-	       ((wrap_callables<default_action_nop>
-		 ([&](const types::enum_type &et) {
-		    if (!et.is_complete()) {
-		      code_remark remark
-			(code_remark::severity::fatal,
-			 ("argument to " + myname() +
-			  " has incomplete enum type"),
-			 a.get_pp_result(), args[i].get_tokens_range());
-		      a.get_remarks().add(remark);
-		      throw semantic_except(remark);
-		    }
-		  })),
-		*t);
-	   },
-	   [&](const std::shared_ptr<const types::bitfield_type> &) {
-	   },
-	   [&](const std::shared_ptr<const types::type>&) {
-	     types_ok = false;
-
-	     code_remark remark
-	       (code_remark::severity::warning,
-		"non-arithmetic argument to " + myname(),
-		a.get_pp_result(), args[i].get_tokens_range());
-	     a.get_remarks().add(remark);
-	   })),
-	 args[i].get_type());
-    }
-
-    // Extract the third argument's type for !_p_variant.
-    // The third argument is expected to be a pointer to int.
-    types::handle_types<void>
-      ((wrap_callables<default_action_nop>
-	([&](const types::pointer_type &pt) {
-	   types::handle_types<void>
-	     ((wrap_callables<default_action_nop>
-	       ([&](const std::shared_ptr<const types::int_type> &it) {
-		  types::handle_types<void>
-		    ((wrap_callables<default_action_nop>
-		      ([&](const types::enum_type &et) {
-			 if (!et.is_complete()) {
-			   code_remark remark
-			     (code_remark::severity::fatal,
-			      ("argument to " + myname() +
-			       " is of pointer to incomplete enum type"),
-			      a.get_pp_result(), args[2].get_tokens_range());
-			   a.get_remarks().add(remark);
-			   throw semantic_except(remark);
-			 }
-		       })),
-		     *it);
-
-		  if (it_target_spec &&
-		      !it_target_spec->is_compatible_with(tgt, *it, true)) {
-		    types_ok = false;
-
-		    code_remark remark
-		      (code_remark::severity::warning,
-		       ("third argument to " + myname() +
-			" has incompatible pointer type"),
-		       a.get_pp_result(), args[2].get_tokens_range());
-		    a.get_remarks().add(remark);
-		  } else {
-		    target_width = it->get_width(tgt);
-		    target_is_signed = it->is_signed(tgt);
-		  }
-		},
-		[&](const std::shared_ptr<const types::type>&) {
-		  types_ok = false;
-
-		  code_remark remark
-		    (code_remark::severity::warning,
-		     ("third argument to " + myname() +
-		      " is not a pointer to integer"),
-		     a.get_pp_result(), args[2].get_tokens_range());
-		  a.get_remarks().add(remark);
-		})),
-	      pt.get_pointed_to_type());
-	 },
-	 [&](const types::type&) {
-	   types_ok = false;
-
-	   code_remark remark
-	     (code_remark::severity::warning,
-	      "third argument to " + myname() + " is not a pointer",
-	      a.get_pp_result(), args[2].get_tokens_range());
-	   a.get_remarks().add(remark);
-	   throw semantic_except(remark);
-	 })),
-       *args[2].get_type());
-  }
-
-  if (!args[0].is_constexpr() || !args[1].is_constexpr() || !types_ok) {
-    return evaluation_result_type{types::bool_type::create(), nullptr, false};
-  }
-
-  assert(target_width !=
-	 std::numeric_limits<mpa::limbs::size_type>::max());
-
-  const ast::constexpr_value &cv0 = args[0].get_constexpr_value();
-  const target_int &i0 =
-    (!it_target_spec ?
-     cv0.get_int_value() :
-     cv0.convert_to(tgt, *it_target_spec));
-  const ast::constexpr_value &cv1 = args[1].get_constexpr_value();
-  const target_int &i1 =
-    (!it_target_spec ?
-     cv1.get_int_value() :
-     cv1.convert_to(tgt, *it_target_spec));
-
-  mpa::limbs r;
-  if (_op == op::add || _op == op::sub) {
-    mpa::limbs ls0 = i0.get_limbs();
-    if (!i0.is_signed()) {
-      // Make room for an additional sign bit.
-      ls0.resize(mpa::limbs::width_to_size(i0.width() + 1));
-    }
-    mpa::limbs ls1 = i1.get_limbs();
-    if (_op == op::sub) {
-      // Make room for an additional sign bit unconditionally.
-      ls1.resize(mpa::limbs::width_to_size(i1.width() + 1));
-      if (i1.is_signed()) {
-	ls1.set_bits_at_and_above(i1.width(), ls1.test_bit(i1.width() - 1));
-      }
-      // And complement
-      ls1 = ls1.complement();
-    } if (!i1.is_signed()) {
-      // Make room for an additional sign bit.
-      ls1.resize(mpa::limbs::width_to_size(i1.width() + 1));
-    }
-
-    r = ls0.add_signed(ls1);
-
-  } else {
-    assert(_op == op::mul);
-    bool is_negative = false;
-    mpa::limbs ls0 = i0.get_limbs();
-    if (i0.is_signed() && i0.is_negative()) {
-      is_negative = true;
-      ls0 = ls0.complement();
-    }
-    mpa::limbs ls1 = i1.get_limbs();
-    if (i1.is_signed() && i1.is_negative()) {
-      is_negative ^= true;
-      ls1 = ls1.complement();
-    }
-
-    r = ls0 * ls1;
-    r.resize(mpa::limbs::width_to_size(r.width() + 1));
-    if (is_negative)
-      r = r.complement();
-  }
-
-  bool overflow = false;
-  if (target_is_signed) {
-    if (target_width < r.width() - r.clrsb())
-      overflow = true;
-  } else {
-    if (r.test_bit(r.width() - 1))
-      overflow = true;
-    else if (r.is_any_set_at_or_above(target_width))
-      overflow = true;
-  }
-
-  std::shared_ptr<const types::bool_type> t_result = types::bool_type::create();
-  const mpa::limbs::size_type w = t_result->get_width(tgt);
-  const bool is_signed = t_result->is_signed(tgt);
-  target_int ti_result =
-    (overflow ?
-     target_int::create_one(w - is_signed, is_signed) :
-     target_int::create_zero(w - is_signed, is_signed));
-  std::unique_ptr<ast::constexpr_value> cv_result;
-  if (_p_variant &&
-      (cv0.has_constness
-       (ast::constexpr_value::constness::c_integer_constant_expr)) &&
-      (cv1.has_constness
-       (ast::constexpr_value::constness::c_integer_constant_expr))) {
-    cv_result.reset
-      (new ast::constexpr_value
-       (ast::constexpr_value::integer_constant_expr_tag{}, ti_result));
-  } else if (_p_variant &&
-	     (cv0.has_constness
-	      (ast::constexpr_value::constness::c_arithmetic_constant_expr)) &&
-	     (cv1.has_constness
-	      (ast::constexpr_value::constness::c_arithmetic_constant_expr))) {
-    cv_result.reset
-      (new ast::constexpr_value
-       (ast::constexpr_value::arithmetic_constant_expr_tag{}, ti_result));
-  } else {
-    cv_result.reset(new ast::constexpr_value(ti_result));
-  }
-
-  return evaluation_result_type{std::move(t_result), std::move(cv_result),
-				false};
-}
-
-std::shared_ptr<const types::int_type> _builtin_overflow::fac_i()
-{
-  return types::std_int_type::create(types::std_int_type::kind::k_int, true);
-}
-
-std::shared_ptr<const types::int_type> _builtin_overflow::fac_u()
-{
-  return types::std_int_type::create(types::std_int_type::kind::k_int, false);
-}
-
-std::shared_ptr<const types::int_type> _builtin_overflow::fac_l()
-{
-  return types::std_int_type::create(types::std_int_type::kind::k_long, true);
-}
-
-std::shared_ptr<const types::int_type> _builtin_overflow::fac_ul()
-{
-  return types::std_int_type::create(types::std_int_type::kind::k_long, false);
-}
-
-std::shared_ptr<const types::int_type> _builtin_overflow::fac_ll()
-{
-  return types::std_int_type::create(types::std_int_type::kind::k_long_long,
-				     true);
-}
-
-std::shared_ptr<const types::int_type> _builtin_overflow::fac_ull()
-{
-  return types::std_int_type::create(types::std_int_type::kind::k_long_long,
-				     false);
-}
-
-
 const builtin_func::factory
 target_gcc::lookup_builtin_func(const std::string &id) const noexcept
 {
-  using namespace klp::ccp::builtins::impl;
-
-  using sp_v = builtin_func_simple_proto::fac<false, mk_v>;
-  using sp_v_i = builtin_func_simple_proto::fac<false, mk_v, mk_i>;
-  using sp_v_f_pf_pf =
-    builtin_func_simple_proto::fac<false, mk_v, mk_f, mk_pf, mk_pf>;
-  using sp_v_d_pd_pd =
-    builtin_func_simple_proto::fac<false, mk_v, mk_d, mk_pd, mk_pd>;
-  using sp_v_ld_pld_pld =
-    builtin_func_simple_proto::fac<false, mk_v, mk_ld, mk_pld, mk_pld>;
-  using sp_v_ssz_pv =
-    builtin_func_simple_proto::fac<false, mk_v, mk_ssz, mk_pv>;
-  using sp_v_pv = builtin_func_simple_proto::fac<false, mk_v, mk_pv>;
-  using sp_v_pv_i = builtin_func_simple_proto::fac<false, mk_v, mk_pv, mk_i>;
-  using sp_v_pv_sz = builtin_func_simple_proto::fac<false, mk_v, mk_pv, mk_sz>;
-  using sp_v_pv_pv = builtin_func_simple_proto::fac<false, mk_v, mk_pv, mk_pv>;
-  using sp_v_pcv_pv_sz =
-    builtin_func_simple_proto::fac<false, mk_v, mk_pcv, mk_pv, mk_sz>;
-  using sp_v_pcvv_var =
-    builtin_func_simple_proto::fac<true, mk_v, mk_pcvv>;
-  using sp_v_pvv = builtin_func_simple_proto::fac<false, mk_v, mk_pvv>;
-  using sp_v_pvv_i = builtin_func_simple_proto::fac<false, mk_v, mk_pvv, mk_i>;
-  using sp_v_pvv_pv_i =
-    builtin_func_simple_proto::fac<false, mk_v, mk_pvv, mk_pv, mk_i>;
-  using sp_v_pvv_pv_pv_i =
-    builtin_func_simple_proto::fac<false, mk_v, mk_pvv, mk_pv, mk_pv, mk_i>;
-  using sp_v_pvv_var =
-    builtin_func_simple_proto::fac<true, mk_v, mk_pvv>;
-  using sp_v_pcvv_pv_i =
-    builtin_func_simple_proto::fac<false, mk_v, mk_pcvv, mk_pv, mk_i>;
-  using sp_v_val =
-    builtin_func_simple_proto::fac<false, mk_v, _mk_val>;
-  using sp_v_val_val =
-    builtin_func_simple_proto::fac<false, mk_v, _mk_val, _mk_val>;
-  using sp_v_val_var =
-    builtin_func_simple_proto::fac<true, mk_v, _mk_val>;
-  using sp_pv_pF_v_var__pv_sz =
-    builtin_func_simple_proto::fac<false, mk_pv, mk_pF_v_var, mk_pv, mk_sz>;
-  using sp_v_var =
-    builtin_func_simple_proto::fac<true, mk_v>;
-
-  using sp_i = builtin_func_simple_proto::fac<false, mk_i>;
-  using sp_i_i = builtin_func_simple_proto::fac<false, mk_i, mk_i>;
-  using sp_i_i_i_i_i_i_var =
-    builtin_func_simple_proto::fac<true, mk_i, mk_i, mk_i, mk_i, mk_i, mk_i>;
-  using sp_i_i_pv = builtin_func_simple_proto::fac<false, mk_i, mk_i, mk_pv>;
-  using sp_i_i_pcc_val =
-    builtin_func_simple_proto::fac<false, mk_i, mk_i, mk_pcc, _mk_val>;
-  using sp_i_i_pcc_var =
-    builtin_func_simple_proto::fac<true, mk_i, mk_i, mk_pcc>;
-  using sp_i_u = builtin_func_simple_proto::fac<false, mk_i, mk_u>;
-  using sp_i_l = builtin_func_simple_proto::fac<false, mk_i, mk_l>;
-  using sp_i_ul = builtin_func_simple_proto::fac<false, mk_i, mk_ul>;
-  using sp_i_ll = builtin_func_simple_proto::fac<false, mk_i, mk_ll>;
-  using sp_i_ull = builtin_func_simple_proto::fac<false, mk_i, mk_ull>;
-  using sp_i_imax = builtin_func_simple_proto::fac<false, mk_i, mk_imax>;
-  using sp_i_umax = builtin_func_simple_proto::fac<false, mk_i, mk_umax>;
-  using sp_i_wi = builtin_func_simple_proto::fac<false, mk_i, _mk_wi>;
-  using sp_i_f = builtin_func_simple_proto::fac<false, mk_i, mk_f>;
-  using sp_i_d = builtin_func_simple_proto::fac<false, mk_i, mk_d>;
-  using sp_i_ld = builtin_func_simple_proto::fac<false, mk_i, mk_ld>;
-  using sp_i_pv = builtin_func_simple_proto::fac<false, mk_i, mk_pv>;
-  using sp_i_pv_i_pcc_val =
-    builtin_func_simple_proto::fac<false, mk_i, mk_pv, mk_i, mk_pcc, _mk_val>;
-  using sp_i_pv_i_pcc_var =
-    builtin_func_simple_proto::fac<true, mk_i, mk_pv, mk_i, mk_pcc>;
-  using sp_i_pv_pcc_val =
-    builtin_func_simple_proto::fac<false, mk_i, mk_pv, mk_pcc, _mk_val>;
-  using sp_i_pv_pcc_var =
-    builtin_func_simple_proto::fac<true, mk_i, mk_pv, mk_pcc>;
-  using sp_i_pcv_pcv_sz =
-    builtin_func_simple_proto::fac<false, mk_i, mk_pcv, mk_pcv, mk_sz>;
-  using sp_i_pc_i_sz_pcc_var =
-    builtin_func_simple_proto::fac<true, mk_i, mk_pc, mk_i, mk_sz, mk_pcc>;
-  using sp_i_pc_i_sz_pcc_val =
-    builtin_func_simple_proto::fac<false,
-				   mk_i, mk_pc, mk_i, mk_sz, mk_pcc, _mk_val>;
-  using sp_i_pc_sz_i_sz_pcc_var =
-    builtin_func_simple_proto::fac<true,
-				   mk_i, mk_pc, mk_sz, mk_i, mk_sz, mk_pcc>;
-  using sp_i_pc_sz_i_sz_pcc_val =
-    builtin_func_simple_proto::fac<false, mk_i, mk_pc, mk_sz, mk_i, mk_sz,
-				   mk_pcc, _mk_val>;
-  using sp_i_pc_sz_pcc_val =
-    builtin_func_simple_proto::fac<false, mk_i, mk_pc, mk_sz, mk_pcc, _mk_val>;
-  using sp_i_pc_sz_pcc_var =
-    builtin_func_simple_proto::fac<true, mk_i, mk_pc, mk_sz, mk_pcc>;
-  using sp_i_pc_pcc_val =
-    builtin_func_simple_proto::fac<false, mk_i, mk_pc, mk_pcc, _mk_val>;
-  using sp_i_pc_pcc_var =
-    builtin_func_simple_proto::fac<true, mk_i, mk_pc, mk_pcc>;
-  using sp_i_pcc =
-    builtin_func_simple_proto::fac<false, mk_i, mk_pcc>;
-  using sp_i_pcc_sz_pcc_var =
-    builtin_func_simple_proto::fac<true, mk_i, mk_pcc, mk_sz, mk_pcc>;
-  using sp_i_pcc_pv =
-    builtin_func_simple_proto::fac<false, mk_i, mk_pcc, mk_pv>;
-  using sp_i_pcc_pv_pcc =
-    builtin_func_simple_proto::fac<false, mk_i, mk_pcc, mk_pv, mk_pcc>;
-  using sp_i_pcc_pv_pcc_pv_pcc =
-    builtin_func_simple_proto::fac<false,
-				   mk_i, mk_pcc, mk_pv, mk_pcc, mk_pv, mk_pcc>;
-  using sp_i_pcc_pcc =
-    builtin_func_simple_proto::fac<false, mk_i, mk_pcc, mk_pcc>;
-  using sp_i_pcc_pcc_sz =
-    builtin_func_simple_proto::fac<false, mk_i, mk_pcc, mk_pcc, mk_sz>;
-  using sp_i_pcc_pcc_val =
-    builtin_func_simple_proto::fac<false, mk_i, mk_pcc, mk_pcc, _mk_val>;
-  using sp_i_pcc_pcc_var =
-    builtin_func_simple_proto::fac<true, mk_i, mk_pcc, mk_pcc>;
-  using sp_i_pcc_val =
-    builtin_func_simple_proto::fac<false, mk_i, mk_pcc, _mk_val>;
-  using sp_i_pcc_var = builtin_func_simple_proto::fac<true, mk_i, mk_pcc>;
-  using sp_i_var = builtin_func_simple_proto::fac<true, mk_i>;
-
-  using sp_u = builtin_func_simple_proto::fac<false, mk_u, mk_ll>;
-
-  using sp_l_l = builtin_func_simple_proto::fac<false, mk_l, mk_l>;
-  using sp_l_l_l = builtin_func_simple_proto::fac<false, mk_l, mk_l, mk_l>;
-  using sp_l_f = builtin_func_simple_proto::fac<false, mk_l, mk_f>;
-  using sp_l_d = builtin_func_simple_proto::fac<false, mk_l, mk_d>;
-  using sp_l_ld = builtin_func_simple_proto::fac<false, mk_l, mk_ld>;
-
-  using sp_ll_ll = builtin_func_simple_proto::fac<false, mk_ll, mk_ll>;
-  using sp_ll_f = builtin_func_simple_proto::fac<false, mk_ll, mk_f>;
-  using sp_ll_d = builtin_func_simple_proto::fac<false, mk_ll, mk_d>;
-  using sp_ll_ld = builtin_func_simple_proto::fac<false, mk_ll, mk_ld>;
-
-  using sp_b_sz_pcvv =
-    builtin_func_simple_proto::fac<false, mk_b, mk_sz, mk_pcvv>;
-  using sp_b_pvv_i = builtin_func_simple_proto::fac<false, mk_b, mk_pvv, mk_i>;
-  using sp_b_pvv_pv_pv_b_i_i =
-    builtin_func_simple_proto::fac<false, mk_b, mk_pvv, mk_pv, mk_pv, mk_b,
-				   mk_i, mk_i>;
-  using sp_b_var = builtin_func_simple_proto::fac<true, mk_b>;
-
-  using sp_imax_imax = builtin_func_simple_proto::fac<false, mk_imax, mk_imax>;
-
-  using sp_u16_u16 = builtin_func_simple_proto::fac<false, _mk_u16, _mk_u16>;
-  using sp_u32_u32 = builtin_func_simple_proto::fac<false, _mk_u32, _mk_u32>;
-  using sp_u64_u64 = builtin_func_simple_proto::fac<false, _mk_u64, _mk_u64>;
-
-  using sp_wi_wi = builtin_func_simple_proto::fac<false, _mk_wi, _mk_wi>;
-
-  using sp_sz_pv = builtin_func_simple_proto::fac<false, mk_sz, mk_pv>;
-  using sp_sz_pcv_i =
-    builtin_func_simple_proto::fac<false, mk_sz, mk_pcv, mk_i>;
-  using sp_sz_pc_sz_pcc_pcv =
-    builtin_func_simple_proto::fac<false, mk_sz, mk_pc, mk_sz, mk_pcc, mk_pcv>;
-  using sp_sz_pcc = builtin_func_simple_proto::fac<false, mk_sz, mk_pcc>;
-  using sp_sz_pcc_sz_sz_pv =
-    builtin_func_simple_proto::fac<false, mk_sz, mk_pcc, mk_sz, mk_sz, mk_pv>;
-  using sp_sz_pcc_pcc =
-    builtin_func_simple_proto::fac<false, mk_sz, mk_pcc, mk_pcc>;
-
-  using sp_ssz_pc_sz_pcc_var =
-    builtin_func_simple_proto::fac<true, mk_ssz, mk_pc, mk_sz, mk_pcc>;
-
-  using sp_pid = builtin_func_simple_proto::fac<false, _mk_pid, mk_pv>;
-
-  using sp_f = builtin_func_simple_proto::fac<false, mk_f>;
-  using sp_f_i_f = builtin_func_simple_proto::fac<false, mk_f, mk_i, mk_f>;
-  using sp_f_f = builtin_func_simple_proto::fac<false, mk_f, mk_f>;
-  using sp_f_f_i = builtin_func_simple_proto::fac<false, mk_f, mk_f, mk_i>;
-  using sp_f_f_l = builtin_func_simple_proto::fac<false, mk_f, mk_f, mk_l>;
-  using sp_f_f_f = builtin_func_simple_proto::fac<false, mk_f, mk_f, mk_f>;
-  using sp_f_f_f_f =
-    builtin_func_simple_proto::fac<false, mk_f, mk_f, mk_f, mk_f>;
-  using sp_f_f_f_pi =
-    builtin_func_simple_proto::fac<false, mk_f, mk_f, mk_f, mk_pi>;
-  using sp_f_f_pi = builtin_func_simple_proto::fac<false, mk_f, mk_f, mk_pi>;
-  using sp_f_f_pf = builtin_func_simple_proto::fac<false, mk_f, mk_f, mk_pf>;
-  using sp_f_fC = builtin_func_simple_proto::fac<false, mk_f, mk_fC>;
-  using sp_f_pcc = builtin_func_simple_proto::fac<false, mk_f, mk_pcc>;
-
-  using sp_d = builtin_func_simple_proto::fac<false, mk_d>;
-  using sp_d_i_d = builtin_func_simple_proto::fac<false, mk_d, mk_i, mk_d>;
-  using sp_d_d = builtin_func_simple_proto::fac<false, mk_d, mk_d>;
-  using sp_d_d_i = builtin_func_simple_proto::fac<false, mk_d, mk_d, mk_i>;
-  using sp_d_d_l = builtin_func_simple_proto::fac<false, mk_d, mk_d, mk_l>;
-  using sp_d_d_d = builtin_func_simple_proto::fac<false, mk_d, mk_d, mk_d>;
-  using sp_d_d_d_d =
-    builtin_func_simple_proto::fac<false, mk_d, mk_d, mk_d, mk_d>;
-  using sp_d_d_d_pi =
-    builtin_func_simple_proto::fac<false, mk_d, mk_d, mk_d, mk_pi>;
-  using sp_d_d_pi = builtin_func_simple_proto::fac<false, mk_d, mk_d, mk_pi>;
-  using sp_d_d_pd = builtin_func_simple_proto::fac<false, mk_d, mk_d, mk_pd>;
-  using sp_d_dC = builtin_func_simple_proto::fac<false, mk_d, mk_dC>;
-  using sp_d_pcc = builtin_func_simple_proto::fac<false, mk_d, mk_pcc>;
-
-  using sp_ld = builtin_func_simple_proto::fac<false, mk_ld>;
-  using sp_ld_i_ld = builtin_func_simple_proto::fac<false, mk_ld, mk_i, mk_ld>;
-  using sp_ld_ld = builtin_func_simple_proto::fac<false, mk_ld, mk_ld>;
-  using sp_ld_ld_i = builtin_func_simple_proto::fac<false, mk_ld, mk_ld, mk_i>;
-  using sp_ld_ld_l = builtin_func_simple_proto::fac<false, mk_ld, mk_ld, mk_l>;
-  using sp_ld_ld_ld =
-    builtin_func_simple_proto::fac<false, mk_ld, mk_ld, mk_ld>;
-  using sp_ld_ld_ld_ld =
-    builtin_func_simple_proto::fac<false, mk_ld, mk_ld, mk_ld, mk_ld>;
-  using sp_ld_ld_ld_pi =
-    builtin_func_simple_proto::fac<false, mk_ld, mk_ld, mk_ld, mk_pi>;
-  using sp_ld_ld_pi =
-    builtin_func_simple_proto::fac<false, mk_ld, mk_ld, mk_pi>;
-  using sp_ld_ld_pld =
-    builtin_func_simple_proto::fac<false, mk_ld, mk_ld, mk_pld>;
-  using sp_ld_ldC = builtin_func_simple_proto::fac<false, mk_ld, mk_ldC>;
-  using sp_ld_pcc = builtin_func_simple_proto::fac<false, mk_ld, mk_pcc>;
-
-  using sp_fC_f = builtin_func_simple_proto::fac<false, mk_fC, mk_f>;
-  using sp_fC_fC = builtin_func_simple_proto::fac<false, mk_fC, mk_fC>;
-  using sp_fC_fC_fC =
-    builtin_func_simple_proto::fac<false, mk_fC, mk_fC, mk_fC>;
-
-  using sp_dC_d = builtin_func_simple_proto::fac<false, mk_dC, mk_d>;
-  using sp_dC_dC = builtin_func_simple_proto::fac<false, mk_dC, mk_dC>;
-  using sp_dC_dC_dC =
-    builtin_func_simple_proto::fac<false, mk_dC, mk_dC, mk_dC>;
-
-  using sp_ldC_ld = builtin_func_simple_proto::fac<false, mk_ldC, mk_ld>;
-  using sp_ldC_ldC = builtin_func_simple_proto::fac<false, mk_ldC, mk_ldC>;
-  using sp_ldC_ldC_ldC =
-    builtin_func_simple_proto::fac<false, mk_ldC, mk_ldC, mk_ldC>;
-
-
-  using sp_pv = builtin_func_simple_proto::fac<false, mk_pv>;
-  using sp_pv_u = builtin_func_simple_proto::fac<false, mk_pv, mk_u>;
-  using sp_pv_sz = builtin_func_simple_proto::fac<false, mk_pv, mk_sz>;
-  using sp_pv_sz_sz =
-    builtin_func_simple_proto::fac<false, mk_pv, mk_sz, mk_sz>;
-  using sp_pv_pv = builtin_func_simple_proto::fac<false, mk_pv, mk_pv>;
-  using sp_pv_pv_i_sz =
-    builtin_func_simple_proto::fac<false, mk_pv, mk_pv, mk_i, mk_sz>;
-  using sp_pv_pv_i_sz_sz =
-    builtin_func_simple_proto::fac<false, mk_pv, mk_pv, mk_i, mk_sz, mk_sz>;
-  using sp_pv_pv_sz =
-    builtin_func_simple_proto::fac<false, mk_pv, mk_pv, mk_sz>;
-  using sp_pv_pv_pcv_sz =
-    builtin_func_simple_proto::fac<false, mk_pv, mk_pv, mk_pcv, mk_sz>;
-  using sp_pv_pv_pcv_sz_sz =
-    builtin_func_simple_proto::fac<false, mk_pv, mk_pv, mk_pcv, mk_sz, mk_sz>;
-  using sp_pv_pcv_i_sz =
-    builtin_func_simple_proto::fac<false, mk_pv, mk_pcv, mk_i, mk_sz>;
-  using sp_pv_pcv_sz_var =
-    builtin_func_simple_proto::fac<true, mk_pv, mk_pv, mk_sz>;
-  using sp_pv_var =
-    builtin_func_simple_proto::fac<true, mk_pv>;
-
-  using sp_pc_pc_pcc =
-    builtin_func_simple_proto::fac<false, mk_pc, mk_pc, mk_pcc>;
-  using sp_pc_pc_pcc_sz =
-    builtin_func_simple_proto::fac<false, mk_pc, mk_pc, mk_pcc, mk_sz>;
-  using sp_pc_pcc =
-    builtin_func_simple_proto::fac<false, mk_pc, mk_pcc>;
-  using sp_pc_pcc_i =
-    builtin_func_simple_proto::fac<false, mk_pc, mk_pcc, mk_i>;
-  using sp_pc_pcc_sz =
-    builtin_func_simple_proto::fac<false, mk_pc, mk_pcc, mk_sz>;
-  using sp_pc_pcc_pcc =
-    builtin_func_simple_proto::fac<false, mk_pc, mk_pcc, mk_pcc>;
-  using sp_pc_pcc_pcc_i =
-    builtin_func_simple_proto::fac<false, mk_pc, mk_pcc, mk_pcc, mk_i>;
-  using sp_pc_pc_pcc_sz_sz =
-    builtin_func_simple_proto::fac<false, mk_pc, mk_pc, mk_pcc, mk_sz, mk_sz>;
-
-  using sp_pcc = builtin_func_simple_proto::fac<false, mk_pcc>;
-
-  using sp_i8_pvv_i8 =
-    builtin_func_simple_proto::fac<false, _mk_i8, mk_pvv, _mk_i8>;
-  using sp_i16_pvv_i16 =
-    builtin_func_simple_proto::fac<false, _mk_i16, mk_pvv, _mk_i16>;
-  using sp_i32_pvv_i32 =
-    builtin_func_simple_proto::fac<false, _mk_i32, mk_pvv, _mk_i32>;
-  using sp_i64_pvv_i64 =
-    builtin_func_simple_proto::fac<false, _mk_i64, mk_pvv, _mk_i64>;
-  using sp_i128_pvv_i128 =
-    builtin_func_simple_proto::fac<false, _mk_i128, mk_pvv, _mk_i128>;
-
-  using sp_i8_pvv_i8_var =
-    builtin_func_simple_proto::fac<true, _mk_i8, mk_pvv, _mk_i8>;
-  using sp_i16_pvv_i16_var =
-    builtin_func_simple_proto::fac<true, _mk_i16, mk_pvv, _mk_i16>;
-  using sp_i32_pvv_i32_var =
-    builtin_func_simple_proto::fac<true, _mk_i32, mk_pvv, _mk_i32>;
-  using sp_i64_pvv_i64_var =
-    builtin_func_simple_proto::fac<true, _mk_i64, mk_pvv, _mk_i64>;
-  using sp_i128_pvv_i128_var =
-    builtin_func_simple_proto::fac<true, _mk_i128, mk_pvv, _mk_i128>;
-  using pio0_iN_pvv_iN_var =
-    _builtin_func_pi_overload_fac<0,
-				  sp_i8_pvv_i8_var::create,
-				  sp_i16_pvv_i16_var::create,
-				  sp_i32_pvv_i32_var::create,
-				  sp_i64_pvv_i64_var::create,
-				  sp_i128_pvv_i128_var::create>;
-
-  using sp_b_pvv_i8_i8 =
-    builtin_func_simple_proto::fac<false, mk_b, mk_pvv, _mk_i8, _mk_i8>;
-  using sp_b_pvv_i16_i16 =
-    builtin_func_simple_proto::fac<false, mk_b, mk_pvv, _mk_i16, _mk_i16>;
-  using sp_b_pvv_i32_i32 =
-    builtin_func_simple_proto::fac<false, mk_b, mk_pvv, _mk_i32, _mk_i32>;
-  using sp_b_pvv_i64_i64 =
-    builtin_func_simple_proto::fac<false, mk_b, mk_pvv, _mk_i64, _mk_i64>;
-  using sp_b_pvv_i128_i128 =
-    builtin_func_simple_proto::fac<false, mk_b, mk_pvv, _mk_i128, _mk_i128>;
-
-  using sp_b_pvv_i8_i8_var =
-    builtin_func_simple_proto::fac<true, mk_b, mk_pvv, _mk_i8, _mk_i8>;
-  using sp_b_pvv_i16_i16_var =
-    builtin_func_simple_proto::fac<true, mk_b, mk_pvv, _mk_i16, _mk_i16>;
-  using sp_b_pvv_i32_i32_var =
-    builtin_func_simple_proto::fac<true, mk_b, mk_pvv, _mk_i32, _mk_i32>;
-  using sp_b_pvv_i64_i64_var =
-    builtin_func_simple_proto::fac<true, mk_b, mk_pvv, _mk_i64, _mk_i64>;
-  using sp_b_pvv_i128_i128_var =
-    builtin_func_simple_proto::fac<true, mk_b, mk_pvv, _mk_i128, _mk_i128>;
-  using pio0_b_pvv_iN_iN_var =
-    _builtin_func_pi_overload_fac<0,
-				  sp_b_pvv_i8_i8_var::create,
-				  sp_b_pvv_i16_i16_var::create,
-				  sp_b_pvv_i32_i32_var::create,
-				  sp_b_pvv_i64_i64_var::create,
-				  sp_b_pvv_i128_i128_var::create>;
-
-  using sp_i8_pvv_i8_i8 =
-    builtin_func_simple_proto::fac<false, _mk_i8, mk_pvv, _mk_i8, _mk_i8>;
-  using sp_i16_pvv_i16_i16 =
-    builtin_func_simple_proto::fac<false, _mk_i16, mk_pvv, _mk_i16, _mk_i16>;
-  using sp_i32_pvv_i32_i32 =
-    builtin_func_simple_proto::fac<false, _mk_i32, mk_pvv, _mk_i32, _mk_i32>;
-  using sp_i64_pvv_i64_i64 =
-    builtin_func_simple_proto::fac<false, _mk_i64, mk_pvv, _mk_i64, _mk_i64>;
-  using sp_i128_pvv_i128_i128 =
-    builtin_func_simple_proto::fac<false, _mk_i128, mk_pvv, _mk_i128, _mk_i128>;
-
-  using sp_i8_pvv_i8_i8_var =
-    builtin_func_simple_proto::fac<true, _mk_i8, mk_pvv, _mk_i8, _mk_i8>;
-  using sp_i16_pvv_i16_i16_var =
-    builtin_func_simple_proto::fac<true, _mk_i16, mk_pvv, _mk_i16, _mk_i16>;
-  using sp_i32_pvv_i32_i32_var =
-    builtin_func_simple_proto::fac<true, _mk_i32, mk_pvv, _mk_i32, _mk_i32>;
-  using sp_i64_pvv_i64_i64_var =
-    builtin_func_simple_proto::fac<true, _mk_i64, mk_pvv, _mk_i64, _mk_i64>;
-  using sp_i128_pvv_i128_i128_var =
-    builtin_func_simple_proto::fac<true, _mk_i128, mk_pvv, _mk_i128, _mk_i128>;
-  using pio0_iN_pvv_iN_iN_var =
-    _builtin_func_pi_overload_fac<0,
-				  sp_i8_pvv_i8_i8_var::create,
-				  sp_i16_pvv_i16_i16_var::create,
-				  sp_i32_pvv_i32_i32_var::create,
-				  sp_i64_pvv_i64_i64_var::create,
-				  sp_i128_pvv_i128_i128_var::create>;
-
-  using pio0_v_pvv_var = _builtin_func_pi_overload_fac<0,
-						       sp_v_pvv_var::create,
-						       sp_v_pvv_var::create,
-						       sp_v_pvv_var::create,
-						       sp_v_pvv_var::create,
-						       sp_v_pvv_var::create>;
-
-  using sp_i8_pvv_i8_i =
-    builtin_func_simple_proto::fac<false, _mk_i8, mk_pvv, _mk_i8, mk_i>;
-  using sp_i16_pvv_i16_i =
-    builtin_func_simple_proto::fac<false, _mk_i16, mk_pvv, _mk_i16, mk_i>;
-  using sp_i32_pvv_i32_i =
-    builtin_func_simple_proto::fac<false, _mk_i32,  mk_pvv, _mk_i32, mk_i>;
-  using sp_i64_pvv_i64_i =
-    builtin_func_simple_proto::fac<false, _mk_i64, mk_pvv, _mk_i64, mk_i>;
-  using sp_i128_pvv_i128_i =
-    builtin_func_simple_proto::fac<false, _mk_i128, mk_pvv, _mk_i128, mk_i>;
-  using pio0_iN_pvv_iN_i =
-    _builtin_func_pi_overload_fac<0,
-				  sp_i8_pvv_i8_i::create,
-				  sp_i16_pvv_i16_i::create,
-				  sp_i32_pvv_i32_i::create,
-				  sp_i64_pvv_i64_i::create,
-				  sp_i128_pvv_i128_i::create>;
-
-  using sp_i8_pcvv_i =
-    builtin_func_simple_proto::fac<false, _mk_i8, mk_pcvv, mk_i>;
-  using sp_i16_pcvv_i =
-    builtin_func_simple_proto::fac<false, _mk_i16, mk_pcvv, mk_i>;
-  using sp_i32_pcvv_i =
-    builtin_func_simple_proto::fac<false, _mk_i32, mk_pcvv, mk_i>;
-  using sp_i64_pcvv_i =
-    builtin_func_simple_proto::fac<false, _mk_i64, mk_pcvv, mk_i>;
-  using sp_i128_pcvv_i =
-    builtin_func_simple_proto::fac<false, _mk_i128, mk_pcvv, mk_i>;
-  using pio0_iN_pcvv_i = _builtin_func_pi_overload_fac<0,
-						       sp_i8_pcvv_i::create,
-						       sp_i16_pcvv_i::create,
-						       sp_i32_pcvv_i::create,
-						       sp_i64_pcvv_i::create,
-						       sp_i128_pcvv_i::create>;
-
-  using sp_b_pvv_pv_i8_b_i_i =
-    builtin_func_simple_proto::fac<false, mk_b, mk_pvv, mk_pv, _mk_i8, mk_b,
-				   mk_i, mk_i>;
-  using sp_b_pvv_pv_i16_b_i_i =
-    builtin_func_simple_proto::fac<false, mk_b, mk_pvv, mk_pv, _mk_i16, mk_b,
-				   mk_i, mk_i>;
-  using sp_b_pvv_pv_i32_b_i_i =
-    builtin_func_simple_proto::fac<false, mk_b, mk_pvv, mk_pv, _mk_i32, mk_b,
-				   mk_i, mk_i>;
-  using sp_b_pvv_pv_i64_b_i_i =
-    builtin_func_simple_proto::fac<false, mk_b, mk_pvv, mk_pv, _mk_i64, mk_b,
-				   mk_i, mk_i>;
-  using sp_b_pvv_pv_i128_b_i_i =
-    builtin_func_simple_proto::fac<false, mk_b, mk_pvv, mk_pv, _mk_i128, mk_b,
-				   mk_i, mk_i>;
-  using pio0_b_pvv_pv_iN_b_i_i =
-    _builtin_func_pi_overload_fac<0,
-				  sp_b_pvv_pv_i8_b_i_i::create,
-				  sp_b_pvv_pv_i16_b_i_i::create,
-				  sp_b_pvv_pv_i32_b_i_i::create,
-				  sp_b_pvv_pv_i64_b_i_i::create,
-				  sp_b_pvv_pv_i128_b_i_i::create>;
-
-  using sp_v_pvv_i8_i =
-    builtin_func_simple_proto::fac<false, mk_v, mk_pvv, _mk_i8, mk_i>;
-  using sp_v_pvv_i16_i =
-    builtin_func_simple_proto::fac<false, mk_v, mk_pvv, _mk_i16, mk_i>;
-  using sp_v_pvv_i32_i =
-    builtin_func_simple_proto::fac<false, mk_v,  mk_pvv, _mk_i32, mk_i>;
-  using sp_v_pvv_i64_i =
-    builtin_func_simple_proto::fac<false, mk_v, mk_pvv, _mk_i64, mk_i>;
-  using sp_v_pvv_i128_i =
-    builtin_func_simple_proto::fac<false, mk_v, mk_pvv, _mk_i128, mk_i>;
-  using pio0_v_pvv_iN_i =
-    _builtin_func_pi_overload_fac<0,
-				  sp_v_pvv_i8_i::create,
-				  sp_v_pvv_i16_i::create,
-				  sp_v_pvv_i32_i::create,
-				  sp_v_pvv_i64_i::create,
-				  sp_v_pvv_i128_i::create>;
-
-
-  static std::map<const std::string,
-		  const builtin_func::factory > m = {
-    // Category: math builtins.
-    { "__builtin_acos", sp_d_d::create },
-    { "__builtin_acosf", sp_f_f::create },
-    { "__builtin_acosl", sp_ld_ld::create },
-    { "__builtin_acosh", sp_d_d::create },
-    { "__builtin_acoshf", sp_f_f::create },
-    { "__builtin_acoshl", sp_ld_ld::create },
-    { "__builtin_asin", sp_d_d::create },
-    { "__builtin_asinf", sp_f_f::create },
-    { "__builtin_asinl", sp_ld_ld::create },
-    { "__builtin_asinh", sp_d_d::create },
-    { "__builtin_asinhf", sp_f_f::create },
-    { "__builtin_asinhl", sp_ld_ld::create },
-    { "__builtin_atan", sp_d_d::create },
-    { "__builtin_atanf", sp_f_f::create },
-    { "__builtin_atanl", sp_ld_ld::create },
-    { "__builtin_atanh", sp_d_d::create },
-    { "__builtin_atanhf", sp_f_f::create },
-    { "__builtin_atanhl", sp_ld_ld::create },
-    { "__builtin_atan2", sp_d_d_d::create },
-    { "__builtin_atan2f", sp_f_f_f::create },
-    { "__builtin_atan2l", sp_ld_ld_ld::create },
-    { "__builtin_cbrt", sp_d_d::create },
-    { "__builtin_cbrtf", sp_f_f::create },
-    { "__builtin_cbrtl", sp_ld_ld::create },
-    { "__builtin_ceil", sp_d_d::create },
-    { "__builtin_ceilf", sp_f_f::create },
-    { "__builtin_ceill", sp_ld_ld::create },
-    { "__builtin_copysign", sp_d_d_d::create },
-    { "__builtin_copysignf", sp_f_f_f::create },
-    { "__builtin_copysignl", sp_ld_ld_ld::create },
-    { "__builtin_cos", sp_d_d::create },
-    { "__builtin_cosf", sp_f_f::create },
-    { "__builtin_cosl", sp_ld_ld::create },
-    { "__builtin_cosh", sp_d_d::create },
-    { "__builtin_coshf", sp_f_f::create },
-    { "__builtin_coshl", sp_ld_ld::create },
-    { "__builtin_drem", sp_d_d_d::create },
-    { "__builtin_dremf", sp_f_f_f::create },
-    { "__builtin_dreml", sp_ld_ld_ld::create },
-    { "__builtin_erf", sp_d_d::create },
-    { "__builtin_erff", sp_f_f::create },
-    { "__builtin_erfl", sp_ld_ld::create },
-    { "__builtin_erfc", sp_d_d::create },
-    { "__builtin_erfcf", sp_f_f::create },
-    { "__builtin_erfcl", sp_ld_ld::create },
-    { "__builtin_exp", sp_d_d::create },
-    { "__builtin_expf", sp_f_f::create },
-    { "__builtin_expl", sp_ld_ld::create },
-    { "__builtin_exp10", sp_d_d::create },
-    { "__builtin_exp10f", sp_f_f::create },
-    { "__builtin_exp10l", sp_ld_ld::create },
-    { "__builtin_exp2", sp_d_d::create },
-    { "__builtin_exp2f", sp_f_f::create },
-    { "__builtin_exp2l", sp_ld_ld::create },
-    { "__builtin_expm1", sp_d_d::create },
-    { "__builtin_expm1f", sp_f_f::create },
-    { "__builtin_expm1l", sp_ld_ld::create },
-    { "__builtin_fabs", sp_d_d::create },
-    { "__builtin_fabsf", sp_f_f::create },
-    { "__builtin_fabsl", sp_ld_ld::create },
-    { "__builtin_fdim", sp_d_d_d::create },
-    { "__builtin_fdimf", sp_f_f_f::create },
-    { "__builtin_fdiml", sp_ld_ld_ld::create },
-    { "__builtin_floor", sp_d_d::create },
-    { "__builtin_floor", sp_d_d::create },
-    { "__builtin_floorf", sp_f_f::create },
-    { "__builtin_floorl", sp_ld_ld::create },
-    { "__builtin_fma", sp_d_d_d_d::create },
-    { "__builtin_fmaf", sp_f_f_f_f::create },
-    { "__builtin_fmal", sp_ld_ld_ld_ld::create },
-    { "__builtin_fmax", sp_d_d_d::create },
-    { "__builtin_fmaxf", sp_f_f_f::create },
-    { "__builtin_fmaxl", sp_ld_ld_ld::create },
-    { "__builtin_fmin", sp_d_d_d::create },
-    { "__builtin_fminf", sp_f_f_f::create },
-    { "__builtin_fminl", sp_ld_ld_ld::create },
-    { "__builtin_fmod", sp_d_d_d::create },
-    { "__builtin_fmodf", sp_f_f_f::create },
-    { "__builtin_fmodl", sp_ld_ld_ld::create },
-    { "__builtin_frexp", sp_d_d_pi::create },
-    { "__builtin_frexpf", sp_f_f_pi::create },
-    { "__builtin_frexpl", sp_ld_ld_pi::create },
-    { "__builtin_gamma", sp_d_d::create },
-    { "__builtin_gammaf", sp_f_f::create },
-    { "__builtin_gammal", sp_ld_ld::create },
-    { "__builtin_gamma_r", sp_d_d_pi::create },
-    { "__builtin_gammaf_r", sp_f_f_pi::create },
-    { "__builtin_gammal_r", sp_ld_ld_pi::create },
-    { "__builtin_huge_val", sp_d::create },
-    { "__builtin_huge_valf", sp_f::create },
-    { "__builtin_huge_vall", sp_ld::create },
-    { "__builtin_hypot", sp_d_d_d::create },
-    { "__builtin_hypotf", sp_f_f_f::create },
-    { "__builtin_hypotl", sp_ld_ld_ld::create },
-    { "__builtin_iceil", sp_i_d::create },
-    { "__builtin_iceilf", sp_i_f::create },
-    { "__builtin_iceild", sp_i_ld::create },
-    { "__builtin_ifloor", sp_i_d::create },
-    { "__builtin_ifloorf", sp_i_f::create },
-    { "__builtin_ifloorl", sp_i_ld::create },
-    { "__builtin_ilogb", sp_i_d::create },
-    { "__builtin_ilogbf", sp_i_f::create },
-    { "__builtin_ilogbl", sp_i_ld::create },
-    { "__builtin_inf", sp_d::create },
-    { "__builtin_inff", sp_f::create },
-    { "__builtin_infl", sp_ld::create },
-    { "__builtin_irint", sp_i_d::create },
-    { "__builtin_irintf", sp_i_f::create },
-    { "__builtin_irintl", sp_i_ld::create },
-    { "__builtin_iround", sp_i_d::create },
-    { "__builtin_iroundf", sp_i_f::create },
-    { "__builtin_iroundl", sp_i_ld::create },
-    { "__builtin_j0", sp_d_d::create },
-    { "__builtin_j0f", sp_f_f::create },
-    { "__builtin_j0l", sp_ld_ld::create },
-    { "__builtin_j1", sp_d_d::create },
-    { "__builtin_j1f", sp_f_f::create },
-    { "__builtin_j1l", sp_ld_ld::create },
-    { "__builtin_jn", sp_d_i_d::create },
-    { "__builtin_jnf", sp_f_i_f::create },
-    { "__builtin_jnl", sp_ld_i_ld::create },
-    { "__builtin_lceil", sp_l_d::create },
-    { "__builtin_lceilf", sp_l_f::create },
-    { "__builtin_lceill", sp_l_ld::create },
-    { "__builtin_ldexp", sp_d_d_i::create },
-    { "__builtin_ldexpf", sp_f_f_i::create },
-    { "__builtin_ldexpl", sp_ld_ld_i::create },
-    { "__builtin_lfloor", sp_l_d::create },
-    { "__builtin_lfloorf", sp_l_f::create },
-    { "__builtin_lfloorl", sp_l_ld::create },
-    { "__builtin_lgamma", sp_d_d::create },
-    { "__builtin_lgammaf", sp_f_f::create },
-    { "__builtin_lgammal", sp_ld_ld::create },
-    { "__builtin_lgamma_r", sp_d_d_pi::create },
-    { "__builtin_lgammaf_r", sp_f_f_pi::create },
-    { "__builtin_lgammal_r", sp_ld_ld_pi::create },
-    { "__builtin_llceil", sp_ll_d::create },
-    { "__builtin_llceilf", sp_ll_f::create },
-    { "__builtin_llceill", sp_ll_ld::create },
-    { "__builtin_llfloor", sp_ll_d::create },
-    { "__builtin_llfloorf", sp_ll_f::create },
-    { "__builtin_llfloorl", sp_ll_ld::create },
-    { "__builtin_llrint", sp_ll_d::create },
-    { "__builtin_llrintf", sp_ll_f::create },
-    { "__builtin_llrintl", sp_ll_ld::create },
-    { "__builtin_llround", sp_ll_d::create },
-    { "__builtin_llroundf", sp_ll_f::create },
-    { "__builtin_llroundl", sp_ll_ld::create },
-    { "__builtin_log", sp_d_d::create },
-    { "__builtin_logf", sp_f_f::create },
-    { "__builtin_logl", sp_ld_ld::create },
-    { "__builtin_log10", sp_d_d::create },
-    { "__builtin_log10f", sp_f_f::create },
-    { "__builtin_log10l", sp_ld_ld::create },
-    { "__builtin_log1p", sp_d_d::create },
-    { "__builtin_log1pf", sp_f_f::create },
-    { "__builtin_log1pl", sp_ld_ld::create },
-    { "__builtin_log2", sp_d_d::create },
-    { "__builtin_log2f", sp_f_f::create },
-    { "__builtin_log2l", sp_ld_ld::create },
-    { "__builtin_logb", sp_d_d::create },
-    { "__builtin_logbf", sp_f_f::create },
-    { "__builtin_logbl", sp_ld_ld::create },
-    { "__builtin_lrint", sp_l_d::create },
-    { "__builtin_lrintf", sp_l_f::create },
-    { "__builtin_lrintl", sp_l_ld::create },
-    { "__builtin_lround", sp_l_d::create },
-    { "__builtin_lroundf", sp_l_f::create },
-    { "__builtin_lroundl", sp_l_ld::create },
-    { "__builtin_modf", sp_d_d_pd::create },
-    { "__builtin_modff", sp_f_f_pf::create },
-    { "__builtin_modfl", sp_ld_ld_pld::create },
-    { "__builtin_nan", sp_d_pcc::create },
-    { "__builtin_nanf", sp_f_pcc::create },
-    { "__builtin_nanl", sp_ld_pcc::create },
-    { "__builtin_nans", sp_d_pcc::create },
-    { "__builtin_nansf", sp_f_pcc::create },
-    { "__builtin_nansl", sp_ld_pcc::create },
-    { "__builtin_nearbyint", sp_d_d::create },
-    { "__builtin_nearbyintf", sp_f_f::create },
-    { "__builtin_nearbyintl", sp_ld_ld::create },
-    { "__builtin_nextafter", sp_d_d_d::create },
-    { "__builtin_nextafterf", sp_f_f_f::create },
-    { "__builtin_nextafterl", sp_ld_ld_ld::create },
-    { "__builtin_nexttoward", sp_d_d_d::create },
-    { "__builtin_nexttowardf", sp_f_f_f::create },
-    { "__builtin_nexttowardl", sp_ld_ld_ld::create },
-    { "__builtin_pow", sp_d_d_d::create },
-    { "__builtin_powf", sp_f_f_f::create },
-    { "__builtin_powl", sp_ld_ld_ld::create },
-    { "__builtin_pow10", sp_d_d::create },
-    { "__builtin_pow10f", sp_f_f::create },
-    { "__builtin_pow10l", sp_ld_ld::create },
-    { "__builtin_powi", sp_d_d_i::create },
-    { "__builtin_powif", sp_f_f_i::create },
-    { "__builtin_powil", sp_ld_ld_i::create },
-    { "__builtin_remainder", sp_d_d_d::create },
-    { "__builtin_remainderf", sp_f_f_f::create },
-    { "__builtin_remainderl", sp_ld_ld_ld::create },
-    { "__builtin_remquo", sp_d_d_d_pi::create },
-    { "__builtin_remquof", sp_f_f_f_pi::create },
-    { "__builtin_remquol", sp_ld_ld_ld_pi::create },
-    { "__builtin_rint", sp_d_d::create },
-    { "__builtin_rintf", sp_f_f::create },
-    { "__builtin_rintl", sp_ld_ld::create },
-    { "__builtin_round", sp_d_d::create },
-    { "__builtin_roundf", sp_f_f::create },
-    { "__builtin_roundl", sp_ld_ld::create },
-    { "__builtin_scalb", sp_d_d_d::create },
-    { "__builtin_scalbf", sp_f_f_f::create },
-    { "__builtin_scalbl", sp_ld_ld_ld::create },
-    { "__builtin_scalbln", sp_d_d_l::create },
-    { "__builtin_scalblnf", sp_f_f_l::create },
-    { "__builtin_scalblnl", sp_ld_ld_l::create },
-    { "__builtin_scalbn", sp_d_d_i::create },
-    { "__builtin_scalbnf", sp_f_f_i::create },
-    { "__builtin_scalbnl", sp_ld_ld_i::create },
-    { "__builtin_signbit", sp_i_d::create },
-    { "__builtin_signbitf", sp_i_f::create },
-    { "__builtin_signbitl", sp_i_ld::create },
-    { "__builtin_significand", sp_d_d::create },
-    { "__builtin_significandf", sp_f_f::create },
-    { "__builtin_significandl", sp_ld_ld::create },
-    { "__builtin_sin", sp_d_d::create },
-    { "__builtin_sinf", sp_f_f::create },
-    { "__builtin_sinl", sp_ld_ld::create },
-    { "__builtin_sincos", sp_v_d_pd_pd::create },
-    { "__builtin_sincosf", sp_v_f_pf_pf::create },
-    { "__builtin_sincosl", sp_v_ld_pld_pld::create },
-    { "__builtin_sinh", sp_d_d::create },
-    { "__builtin_sinhf", sp_f_f::create },
-    { "__builtin_sinhl", sp_ld_ld::create },
-    { "__builtin_sqrt", sp_d_d::create },
-    { "__builtin_sqrtf", sp_f_f::create },
-    { "__builtin_sqrtl", sp_ld_ld::create },
-    { "__builtin_tan", sp_d_d::create },
-    { "__builtin_tanf", sp_f_f::create },
-    { "__builtin_tanl", sp_ld_ld::create },
-    { "__builtin_tanh", sp_d_d::create },
-    { "__builtin_tanhf", sp_f_f::create },
-    { "__builtin_tanhl", sp_ld_ld::create },
-    { "__builtin_tgamma", sp_d_d::create },
-    { "__builtin_tgammaf", sp_f_f::create },
-    { "__builtin_tgammal", sp_ld_ld::create },
-    { "__builtin_trunc", sp_d_d::create },
-    { "__builtin_truncf", sp_f_f::create },
-    { "__builtin_truncl", sp_ld_ld::create },
-    { "__builtin_y0", sp_d_d::create },
-    { "__builtin_y0f", sp_f_f::create },
-    { "__builtin_y0l", sp_ld_ld::create },
-    { "__builtin_y1", sp_d_d::create },
-    { "__builtin_y1f", sp_f_f::create },
-    { "__builtin_y1l", sp_ld_ld::create },
-    { "__builtin_yn", sp_d_i_d::create },
-    { "__builtin_ynf", sp_f_i_f::create },
-    { "__builtin_ynl", sp_ld_i_ld::create },
-
-    // Category: _Complex math builtins.
-    { "__builtin_cabs", sp_d_dC::create },
-    { "__builtin_cabsf", sp_f_fC::create },
-    { "__builtin_cabsl", sp_ld_ldC::create },
-    { "__builtin_cacos", sp_dC_dC::create },
-    { "__builtin_cacosf", sp_fC_fC::create },
-    { "__builtin_cacosl", sp_ldC_ldC::create },
-    { "__builtin_cacosh", sp_dC_dC::create },
-    { "__builtin_cacoshf", sp_fC_fC::create },
-    { "__builtin_cacoshl", sp_ldC_ldC::create },
-    { "__builtin_carg", sp_d_dC::create },
-    { "__builtin_cargf", sp_f_fC::create },
-    { "__builtin_cargl", sp_ld_ldC::create },
-    { "__builtin_casin", sp_dC_dC::create },
-    { "__builtin_casinf", sp_fC_fC::create },
-    { "__builtin_casinl", sp_ldC_ldC::create },
-    { "__builtin_casinh", sp_dC_dC::create },
-    { "__builtin_casinhf", sp_fC_fC::create },
-    { "__builtin_casinhl", sp_ldC_ldC::create },
-    { "__builtin_catan", sp_dC_dC::create },
-    { "__builtin_catanf", sp_fC_fC::create },
-    { "__builtin_catanl", sp_ldC_ldC::create },
-    { "__builtin_catanh", sp_dC_dC::create },
-    { "__builtin_catanhf", sp_fC_fC::create },
-    { "__builtin_catanhl", sp_ldC_ldC::create },
-    { "__builtin_ccos", sp_dC_dC::create },
-    { "__builtin_ccosf", sp_fC_fC::create },
-    { "__builtin_ccosl", sp_ldC_ldC::create },
-    { "__builtin_ccosh", sp_dC_dC::create },
-    { "__builtin_ccoshf", sp_fC_fC::create },
-    { "__builtin_ccoshl", sp_ldC_ldC::create },
-    { "__builtin_cexp", sp_dC_dC::create },
-    { "__builtin_cexpf", sp_fC_fC::create },
-    { "__builtin_cexpl", sp_ldC_ldC::create },
-    { "__builtin_cexpi", sp_dC_d::create },
-    { "__builtin_cexpif", sp_fC_f::create },
-    { "__builtin_cexpil", sp_ldC_ld::create },
-    { "__builtin_cimag", sp_d_dC::create },
-    { "__builtin_cimagf", sp_f_fC::create },
-    { "__builtin_cimagl", sp_ld_ldC::create },
-    { "__builtin_clog", sp_dC_dC::create },
-    { "__builtin_clogf", sp_fC_fC::create },
-    { "__builtin_clogl", sp_ldC_ldC::create },
-    { "__builtin_clog10", sp_dC_dC::create },
-    { "__builtin_clog10f", sp_fC_fC::create },
-    { "__builtin_clog10l", sp_ldC_ldC::create },
-    { "__builtin_conj", sp_dC_dC::create },
-    { "__builtin_conjf", sp_fC_fC::create },
-    { "__builtin_conjl", sp_ldC_ldC::create },
-    { "__builtin_cpow", sp_dC_dC_dC::create },
-    { "__builtin_cpowf", sp_fC_fC_fC::create },
-    { "__builtin_cpowl", sp_ldC_ldC_ldC::create },
-    { "__builtin_cproj", sp_dC_dC::create },
-    { "__builtin_cprojf", sp_fC_fC::create },
-    { "__builtin_cprojl", sp_ldC_ldC::create },
-    { "__builtin_creal", sp_d_dC::create },
-    { "__builtin_crealf", sp_f_fC::create },
-    { "__builtin_creall", sp_ld_ldC::create },
-    { "__builtin_csin", sp_dC_dC::create },
-    { "__builtin_csinf", sp_fC_fC::create },
-    { "__builtin_csinl", sp_ldC_ldC::create },
-    { "__builtin_csinh", sp_dC_dC::create },
-    { "__builtin_csinhf", sp_fC_fC::create },
-    { "__builtin_csinhl", sp_ldC_ldC::create },
-    { "__builtin_csqrt", sp_dC_dC::create },
-    { "__builtin_csqrtf", sp_fC_fC::create },
-    { "__builtin_csqrtl", sp_ldC_ldC::create },
-    { "__builtin_ctan", sp_dC_dC::create },
-    { "__builtin_ctanf", sp_fC_fC::create },
-    { "__builtin_ctanl", sp_ldC_ldC::create },
-    { "__builtin_ctanh", sp_dC_dC::create },
-    { "__builtin_ctanhf", sp_fC_fC::create },
-    { "__builtin_ctanhl", sp_ldC_ldC::create },
-
-    // Category string/memory builtins.
-    { "__builtin_bcmp", sp_i_pcv_pcv_sz::create },
-    { "__builtin_bcopy", sp_v_pcv_pv_sz::create },
-    { "__builtin_bzero", sp_v_pv_sz::create },
-    { "__builtin_index", sp_pc_pcc_i::create },
-    { "__builtin_memchr", sp_pv_pcv_i_sz::create },
-    { "__builtin_memcmp", sp_i_pcv_pcv_sz::create },
-    { "__builtin_memcpy", sp_pv_pv_pcv_sz::create },
-    { "__builtin_memmove", sp_pv_pv_pcv_sz::create },
-    { "__builtin_mempcpy", sp_pv_pv_pcv_sz::create },
-    { "__builtin_memset", sp_pv_pv_i_sz::create },
-    { "__builtin_rindex", sp_pc_pcc_i::create },
-    { "__builtin_stpcpy", sp_pc_pc_pcc::create },
-    { "__builtin_stpncpy", sp_pc_pc_pcc_sz::create },
-    { "__builtin_strcasecmp", sp_i_pcc_pcc::create },
-    { "__builtin_strcat", sp_pc_pc_pcc::create },
-    { "__builtin_strchr", sp_pc_pcc_i::create },
-    { "__builtin_strcmp", sp_i_pcc_pcc::create },
-    { "__builtin_strcpy", sp_pc_pc_pcc::create },
-    { "__builtin_strcspn", sp_sz_pcc_pcc::create },
-    { "__builtin_strdup", sp_pc_pcc::create },
-    { "__builtin_strndup", sp_pc_pcc_sz::create },
-    { "__builtin_strlen", sp_sz_pcc::create },
-    { "__builtin_strncasecmp", sp_i_pcc_pcc_sz::create },
-    { "__builtin_strncat", sp_pc_pc_pcc_sz::create },
-    { "__builtin_strncmp", sp_i_pcc_pcc_sz::create },
-    { "__builtin_strncpy", sp_pc_pc_pcc_sz::create },
-    { "__builtin_strpbrk", sp_pc_pcc_pcc::create },
-    { "__builtin_strrchr", sp_pc_pcc_i::create },
-    { "__builtin_strspn", sp_sz_pcc_pcc::create },
-    { "__builtin_strstr", sp_pc_pcc_pcc::create },
-
-    // Category: stdio builtins.
-    { "__builtin_fprintf", sp_i_pv_pcc_var::create },
-    { "__builtin_fprintf_unlocked", sp_i_pv_pcc_var::create },
-    { "__builtin_putc", sp_i_i_pv::create },
-    { "__builtin_putc_unlocked", sp_i_i_pv::create },
-    { "__builtin_fputc", sp_i_i_pv::create },
-    { "__builtin_fputc_unlocked", sp_i_i_pv::create },
-    { "__builtin_fputs", sp_i_pcc_pv::create },
-    { "__builtin_fputs_unlocked", sp_i_pcc_pv::create },
-    { "__builtin_fscanf", sp_i_pv_pcc_var::create },
-    { "__builtin_fwrite", sp_sz_pcc_sz_sz_pv::create },
-    { "__builtin_fwrite_unlocked", sp_sz_pcc_sz_sz_pv::create },
-    { "__builtin_printf", sp_i_pcc_var::create },
-    { "__builtin_printf_unlocked", sp_i_pcc_var::create },
-    { "__builtin_putchar", sp_i_i::create },
-    { "__builtin_putchar_unlocked", sp_i_i::create },
-    { "__builtin_puts", sp_i_pcc::create },
-    { "__builtin_puts_unlocked", sp_i_pcc::create },
-    { "__builtin_scanf", sp_i_pcc_var::create },
-    { "__builtin_snprintf", sp_i_pc_sz_pcc_var::create },
-    { "__builtin_sprintf", sp_i_pc_pcc_var::create },
-    { "__builtin_sscanf", sp_i_pcc_sz_pcc_var::create },
-    { "__builtin_vfprintf", sp_i_pv_pcc_val::create },
-    { "__builtin_vfscanf", sp_i_pv_pcc_val::create },
-    { "__builtin_vprintf", sp_i_pcc_val::create },
-    { "__builtin_vscanf", sp_i_pcc_val::create },
-    { "__builtin_vsnprintf", sp_i_pc_sz_pcc_val::create },
-    { "__builtin_vsprintf", sp_i_pc_pcc_val::create },
-    { "__builtin_vsscanf", sp_i_pcc_pcc_val::create },
-
-    // Category: ctype builtins.
-    { "__builtin_isalnum", sp_i_i::create },
-    { "__builtin_isalpha", sp_i_i::create },
-    { "__builtin_isascii", sp_i_i::create },
-    { "__builtin_isblank", sp_i_i::create },
-    { "__builtin_iscntrl", sp_i_i::create },
-    { "__builtin_isdigit", sp_i_i::create },
-    { "__builtin_isgraph", sp_i_i::create },
-    { "__builtin_islower", sp_i_i::create },
-    { "__builtin_isprint", sp_i_i::create },
-    { "__builtin_ispunct", sp_i_i::create },
-    { "__builtin_isspace", sp_i_i::create },
-    { "__builtin_isupper", sp_i_i::create },
-    { "__builtin_isxdigit", sp_i_i::create },
-    { "__builtin_toascii", sp_i_i::create },
-    { "__builtin_tolower", sp_i_i::create },
-    { "__builtin_toupper", sp_i_i::create },
-    { "__builtin_iswalnum", sp_i_wi::create },
-    { "__builtin_iswalpha", sp_i_wi::create },
-    { "__builtin_iswblank", sp_i_wi::create },
-    { "__builtin_iswcntrl", sp_i_wi::create },
-    { "__builtin_iswdigit", sp_i_wi::create },
-    { "__builtin_iswgraph", sp_i_wi::create },
-    { "__builtin_iswlower", sp_i_wi::create },
-    { "__builtin_iswprint", sp_i_wi::create },
-    { "__builtin_iswpunct", sp_i_wi::create },
-    { "__builtin_iswspace", sp_i_wi::create },
-    { "__builtin_iswupper", sp_i_wi::create },
-    { "__builtin_iswxdigit", sp_i_wi::create },
-    { "__builtin_toascii", sp_i_wi::create },
-    { "__builtin_towlower", sp_wi_wi::create },
-    { "__builtin_towupper", sp_wi_wi::create },
-
-    // Category: overflow builtins
-    { "__builtin_add_overflow",
-      _builtin_overflow::create<nullptr, false, _builtin_overflow::op::add> },
-    { "__builtin_add_overflow_p",
-      _builtin_overflow::create<nullptr, true, _builtin_overflow::op::add> },
-    { "__builtin_sadd_overflow",
-      _builtin_overflow::create<_builtin_overflow::fac_i, false,
-			       _builtin_overflow::op::add> },
-    { "__builtin_saddl_overflow",
-      _builtin_overflow::create<_builtin_overflow::fac_l, false,
-			       _builtin_overflow::op::add> },
-    { "__builtin_saddll_overflow",
-      _builtin_overflow::create<_builtin_overflow::fac_ll, false,
-			       _builtin_overflow::op::add> },
-    { "__builtin_uadd_overflow",
-      _builtin_overflow::create<_builtin_overflow::fac_u, false,
-			       _builtin_overflow::op::add> },
-    { "__builtin_uaddl_overflow",
-      _builtin_overflow::create<_builtin_overflow::fac_ul, false,
-			       _builtin_overflow::op::add> },
-    { "__builtin_uaddll_overflow",
-      _builtin_overflow::create<_builtin_overflow::fac_ull, false,
-			       _builtin_overflow::op::add> },
-    { "__builtin_sub_overflow",
-      _builtin_overflow::create<nullptr, false, _builtin_overflow::op::sub> },
-    { "__builtin_sub_overflow_p",
-      _builtin_overflow::create<nullptr, true, _builtin_overflow::op::sub> },
-    { "__builtin_ssub_overflow",
-      _builtin_overflow::create<_builtin_overflow::fac_i, false,
-				_builtin_overflow::op::sub> },
-    { "__builtin_ssubl_overflow",
-      _builtin_overflow::create<_builtin_overflow::fac_l, false,
-				_builtin_overflow::op::sub> },
-    { "__builtin_ssubll_overflow",
-      _builtin_overflow::create<_builtin_overflow::fac_ll, false,
-				_builtin_overflow::op::sub> },
-    { "__builtin_usub_overflow",
-      _builtin_overflow::create<_builtin_overflow::fac_u, false,
-				_builtin_overflow::op::sub> },
-    { "__builtin_usubl_overflow",
-      _builtin_overflow::create<_builtin_overflow::fac_ul, false,
-				_builtin_overflow::op::sub> },
-    { "__builtin_usubll_overflow",
-      _builtin_overflow::create<_builtin_overflow::fac_ull, false,
-				_builtin_overflow::op::sub> },
-    { "__builtin_mul_overflow",
-      _builtin_overflow::create<nullptr, false, _builtin_overflow::op::mul> },
-    { "__builtin_mul_overflow_p",
-      _builtin_overflow::create<nullptr, true, _builtin_overflow::op::mul> },
-    { "__builtin_smul_overflow",
-      _builtin_overflow::create<_builtin_overflow::fac_i, false,
-				_builtin_overflow::op::mul> },
-    { "__builtin_smull_overflow",
-      _builtin_overflow::create<_builtin_overflow::fac_l, false,
-				_builtin_overflow::op::mul> },
-    { "__builtin_smulll_overflow",
-      _builtin_overflow::create<_builtin_overflow::fac_ll, false,
-				_builtin_overflow::op::mul> },
-    { "__builtin_umul_overflow",
-      _builtin_overflow::create<_builtin_overflow::fac_u, false,
-				_builtin_overflow::op::mul> },
-    { "__builtin_umull_overflow",
-      _builtin_overflow::create<_builtin_overflow::fac_ul, false,
-				_builtin_overflow::op::mul> },
-    { "__builtin_umulll_overflow",
-      _builtin_overflow::create<_builtin_overflow::fac_ull, false,
-				_builtin_overflow::op::mul> },
-
-    // Category: miscellaneous builtins.
-    { "__builtin_abort", sp_v::create },
-    { "__builtin_abs", sp_i_i::create },
-    { "__builtin_aggregate_incoming_address", sp_pv_var::create },
-    { "__builtin_aligned_alloc", sp_pv_sz_sz::create },
-    { "__builtin_alloca", sp_pv_sz::create },
-    { "__builtin_alloca_with_align", sp_pv_sz_sz::create },
-    { "__builtin_apply", sp_pv_pF_v_var__pv_sz::create },
-    { "__builtin_apply_args", sp_pv_var::create },
-    { "__builtin_assume_aligned", sp_pv_pcv_sz_var::create },
-    { "__builtin_bswap16", sp_u16_u16::create },
-    { "__builtin_bswap32", sp_u32_u32::create },
-    { "__builtin_bswap64", sp_u64_u64::create },
-    { "__builtin_calloc", sp_pv_sz_sz::create },
-    { "__builtin_choose_expr", builtin_func_choose_expr::create },
-    { "__builtin___clear_cache", sp_v_pv_pv::create },
-    { "__builtin_classify_type", sp_i_var::create },
-    { "__builtin_clz", sp_i_u::create },
-    { "__builtin_clzimax", sp_i_umax::create },
-    { "__builtin_clzl", sp_i_ul::create },
-    { "__builtin_clzll", sp_i_ull::create },
-    { "__builtin_constant_p", builtin_func_constant_p::create },
-    { "__builtin_ctz", sp_i_u::create },
-    { "__builtin_ctzimax", sp_i_umax::create },
-    { "__builtin_ctzl", sp_i_ul::create },
-    { "__builtin_ctzll", sp_i_ull::create },
-    { "__builtin_clrsb", sp_i_i::create },
-    { "__builtin_clrsbimax", sp_i_imax::create },
-    { "__builtin_clrsbl", sp_i_l::create },
-    { "__builtin_clrsbll", sp_i_ll::create },
-    { "__builtin_dcgettext", sp_pc_pcc_pcc_i::create },
-    { "__builtin_dgettext", sp_pc_pcc_pcc::create },
-    { "__builtin_dwarf_cfa", sp_pv::create },
-    { "__builtin_dwarf_sp_column", sp_u::create },
-    { "__builtin_eh_return", sp_v_ssz_pv::create },
-    { "__builtin_eh_return_data_regno)", sp_i_i::create },
-    { "__builtin_execl", sp_i_pcc_pcc_var::create },
-    { "__builtin_execlp", sp_i_pcc_pcc_var::create },
-    { "__builtin_execle", sp_i_pcc_pcc_var::create },
-    { "__builtin_execv", sp_i_pcc_pv_pcc::create },
-    { "__builtin_execvp", sp_i_pcc_pv_pcc::create },
-    { "__builtin_execve", sp_i_pcc_pv_pcc_pv_pcc::create },
-    { "__builtin_exit", sp_v_i::create },
-    { "__builtin_expect", sp_l_l_l::create },
-    { "__builtin_extend_pointer", sp_sz_pv::create },
-    { "__builtin_extract_return_addr", sp_pv_pv::create },
-    { "__builtin_ffs", sp_i_i::create },
-    { "__builtin_ffsimax", sp_i_imax::create },
-    { "__builtin_ffsl", sp_i_l::create },
-    { "__builtin_ffsll", sp_i_ll::create },
-    { "__builtin_fork", sp_pid::create },
-    { "__builtin_frame_address", sp_pv_u::create },
-    { "__builtin_free", sp_v_pv::create },
-    { "__builtin_frob_return_address", sp_pv_pv::create },
-    { "__builtin_gettext", sp_pc_pcc::create },
-    { "__builtin_imaxabs", sp_imax_imax::create },
-    { "__builtin_init_dwarf_reg_size_table", sp_v_pv::create },
-    { "__builtin_finite", sp_i_d::create },
-    { "__builtin_finitef", sp_i_f::create },
-    { "__builtin_finitel", sp_i_ld::create },
-    { "__builtin_fpclassify", sp_i_i_i_i_i_i_var::create },
-    { "__builtin_isfinite", sp_i_var::create },
-    { "__builtin_isinf_sign", sp_i_var::create },
-    { "__builtin_isinf", sp_i_var::create },
-    { "__builtin_isinff", sp_i_f::create },
-    { "__builtin_isinfl", sp_i_ld::create },
-    { "__builtin_isnan", sp_i_var::create },
-    { "__builtin_isnanf", sp_i_f::create },
-    { "__builtin_isnanl", sp_i_ld::create },
-    { "__builtin_isnormal", sp_i_var::create },
-    { "__builtin_isgreater", sp_i_var::create },
-    { "__builtin_isgreaterequal", sp_i_var::create },
-    { "__builtin_isless", sp_i_var::create },
-    { "__builtin_islessequal", sp_i_var::create },
-    { "__builtin_islessgreater", sp_i_var::create },
-    { "__builtin_isunordered", sp_i_var::create },
-    { "__builtin_labs", sp_l_l::create },
-    { "__builtin_llabs", sp_ll_ll::create },
-    { "__builtin_longjmp", sp_v_pv_i::create },
-    { "__builtin_malloc", sp_pv_sz::create },
-    { "__builtin_next_arg", sp_pv_var::create },
-    { "__builtin_parity", sp_i_u::create },
-    { "__builtin_parityimax", sp_i_umax::create },
-    { "__builtin_parityl", sp_i_ul::create },
-    { "__builtin_parityll", sp_i_ull::create },
-    { "__builtin_popcount", sp_i_u::create },
-    { "__builtin_popcountimax", sp_i_umax::create },
-    { "__builtin_popcountl", sp_i_ul::create },
-    { "__builtin_popcountll", sp_i_ull::create },
-    { "__builtin_prefetch", sp_v_pcvv_var::create },
-    { "__builtin_realloc", sp_pv_pv_sz::create },
-    { "__builtin_return", sp_v_pv::create },
-    { "__builtin_return_address", sp_pv_u::create },
-    { "__builtin_saveregs", sp_pv_var::create },
-    { "__builtin_setjmp", sp_i_pv::create },
-    { "__builtin_stack_restore", sp_v_pv::create },
-    { "__builtin_stack_save", sp_pv::create },
-    { "__builtin_strfmon", sp_ssz_pc_sz_pcc_var::create },
-    { "__builtin_strftime", sp_sz_pc_sz_pcc_pcv::create },
-    { "__builtin_trap", sp_v::create },
-    { "__builtin_unreachable", sp_v::create },
-    { "__builtin_unwind_init", sp_v::create },
-    { "__builtin_update_setjmp_buf", sp_v_pv_i::create },
-    { "__builtin_va_copy", sp_v_val_val::create },
-    { "__builtin_va_end", sp_v_val::create },
-    { "__builtin_va_start", sp_v_val_var::create },
-    { "__builtin_va_arg_pack", sp_i::create },
-    { "__builtin_va_arg_pack_len", sp_i::create },
-    { "__builtin__exit", sp_v_i::create },
-    { "__builtin__Exit", sp_v_i::create },
-
-    // Object size checking builtins.
-    { "__builtin_object_size", sp_sz_pcv_i::create },
-    { "__builtin___memcpy_chk", sp_pv_pv_pcv_sz_sz::create },
-    { "__builtin___memmove_chk", sp_pv_pv_pcv_sz_sz::create },
-    { "__builtin___mempcpy_chk", sp_pv_pv_pcv_sz_sz::create },
-    { "__builtin___memset_chk", sp_pv_pv_i_sz_sz::create },
-    { "__builtin___stpcpy_chk", sp_pc_pc_pcc_sz::create },
-    { "__builtin___stpncpy_chk", sp_pc_pc_pcc_sz_sz::create },
-    { "__builtin___strcat_chk", sp_pc_pc_pcc_sz::create },
-    { "__builtin___strcpy_chk", sp_pc_pc_pcc_sz::create },
-    { "__builtin___strncat_chk", sp_pc_pc_pcc_sz_sz::create },
-    { "__builtin___strncpy_chk", sp_pc_pc_pcc_sz_sz::create },
-    { "__builtin___snprintf_chk", sp_i_pc_sz_i_sz_pcc_var::create },
-    { "__builtin___vsnprintf_chk", sp_i_pc_sz_i_sz_pcc_val::create },
-    { "__builtin___sprintf_chk", sp_i_pc_i_sz_pcc_var::create },
-    { "__builtin___vsprintf_chk", sp_i_pc_i_sz_pcc_val::create },
-    { "__builtin___fprintf_chk", sp_i_pv_i_pcc_var::create },
-    { "__builtin___vfprintf_chk", sp_i_pv_i_pcc_val::create },
-    { "__builtin___printf_chk", sp_i_i_pcc_var::create },
-    { "__builtin___vprintf_chk", sp_i_i_pcc_val::create },
-
-    // Profiling hooks.
-    { "__cyg_profile_func_enter", sp_v_pv_pv::create },
-    { "__cyg_profile_func_exit", sp_v_pv_pv::create },
-
-    // TLS thread pointer related builtins.
-    { "__builtin_thread_pointer", sp_pv::create },
-    { "__builtin_set_thread_pointer", sp_v_pv::create },
-
-    // __FILE__, __LINE__, __FUNCTION__ as builtins.
-    { "__builtin_FILE", sp_pcc::create },
-    { "__builtin_FUNCTION", sp_pcc::create },
-    { "__builtin_LINE", sp_i::create },
-
-    // Synchronization Primitives.
-    { "__sync_fetch_and_add", pio0_iN_pvv_iN_var::create },
-    { "__sync_fetch_and_add_1", sp_i8_pvv_i8::create },
-    { "__sync_fetch_and_add_2", sp_i16_pvv_i16::create },
-    { "__sync_fetch_and_add_4", sp_i32_pvv_i32::create },
-    { "__sync_fetch_and_add_8", sp_i64_pvv_i64::create },
-    { "__sync_fetch_and_add_16", sp_i128_pvv_i128::create },
-    { "__sync_fetch_and_sub", pio0_iN_pvv_iN_var::create },
-    { "__sync_fetch_and_sub_1", sp_i8_pvv_i8::create },
-    { "__sync_fetch_and_sub_2", sp_i16_pvv_i16::create },
-    { "__sync_fetch_and_sub_4", sp_i32_pvv_i32::create },
-    { "__sync_fetch_and_sub_8", sp_i64_pvv_i64::create },
-    { "__sync_fetch_and_sub_16", sp_i128_pvv_i128::create },
-    { "__sync_fetch_and_or", pio0_iN_pvv_iN_var::create },
-    { "__sync_fetch_and_or_1", sp_i8_pvv_i8::create },
-    { "__sync_fetch_and_or_2", sp_i16_pvv_i16::create },
-    { "__sync_fetch_and_or_4", sp_i32_pvv_i32::create },
-    { "__sync_fetch_and_or_8", sp_i64_pvv_i64::create },
-    { "__sync_fetch_and_or_16", sp_i128_pvv_i128::create },
-    { "__sync_fetch_and_and", pio0_iN_pvv_iN_var::create },
-    { "__sync_fetch_and_and_1", sp_i8_pvv_i8::create },
-    { "__sync_fetch_and_and_2", sp_i16_pvv_i16::create },
-    { "__sync_fetch_and_and_4", sp_i32_pvv_i32::create },
-    { "__sync_fetch_and_and_8", sp_i64_pvv_i64::create },
-    { "__sync_fetch_and_and_16", sp_i128_pvv_i128::create },
-    { "__sync_fetch_and_xor", pio0_iN_pvv_iN_var::create },
-    { "__sync_fetch_and_xor_1", sp_i8_pvv_i8::create },
-    { "__sync_fetch_and_xor_2", sp_i16_pvv_i16::create },
-    { "__sync_fetch_and_xor_4", sp_i32_pvv_i32::create },
-    { "__sync_fetch_and_xor_8", sp_i64_pvv_i64::create },
-    { "__sync_fetch_and_xor_16", sp_i128_pvv_i128::create },
-    { "__sync_fetch_and_nand", pio0_iN_pvv_iN_var::create },
-    { "__sync_fetch_and_nand_1", sp_i8_pvv_i8::create },
-    { "__sync_fetch_and_nand_2", sp_i16_pvv_i16::create },
-    { "__sync_fetch_and_nand_4", sp_i32_pvv_i32::create },
-    { "__sync_fetch_and_nand_8", sp_i64_pvv_i64::create },
-    { "__sync_fetch_and_nand_16", sp_i128_pvv_i128::create },
-    { "__sync_add_and_fetch", pio0_iN_pvv_iN_var::create },
-    { "__sync_add_and_fetch_1", sp_i8_pvv_i8::create },
-    { "__sync_add_and_fetch_2", sp_i16_pvv_i16::create },
-    { "__sync_add_and_fetch_4", sp_i32_pvv_i32::create },
-    { "__sync_add_and_fetch_8", sp_i64_pvv_i64::create },
-    { "__sync_add_and_fetch_16", sp_i128_pvv_i128::create },
-    { "__sync_sub_and_fetch", pio0_iN_pvv_iN_var::create },
-    { "__sync_sub_and_fetch_1", sp_i8_pvv_i8::create },
-    { "__sync_sub_and_fetch_2", sp_i16_pvv_i16::create },
-    { "__sync_sub_and_fetch_4", sp_i32_pvv_i32::create },
-    { "__sync_sub_and_fetch_8", sp_i64_pvv_i64::create },
-    { "__sync_sub_and_fetch_16", sp_i128_pvv_i128::create },
-    { "__sync_or_and_fetch", pio0_iN_pvv_iN_var::create },
-    { "__sync_or_and_fetch_1", sp_i8_pvv_i8::create },
-    { "__sync_or_and_fetch_2", sp_i16_pvv_i16::create },
-    { "__sync_or_and_fetch_4", sp_i32_pvv_i32::create },
-    { "__sync_or_and_fetch_8", sp_i64_pvv_i64::create },
-    { "__sync_or_and_fetch_16", sp_i128_pvv_i128::create },
-    { "__sync_and_and_fetch", pio0_iN_pvv_iN_var::create },
-    { "__sync_and_and_fetch_1", sp_i8_pvv_i8::create },
-    { "__sync_and_and_fetch_2", sp_i16_pvv_i16::create },
-    { "__sync_and_and_fetch_4", sp_i32_pvv_i32::create },
-    { "__sync_and_and_fetch_8", sp_i64_pvv_i64::create },
-    { "__sync_and_and_fetch_16", sp_i128_pvv_i128::create },
-    { "__sync_xor_and_fetch", pio0_iN_pvv_iN_var::create },
-    { "__sync_xor_and_fetch_1", sp_i8_pvv_i8::create },
-    { "__sync_xor_and_fetch_2", sp_i16_pvv_i16::create },
-    { "__sync_xor_and_fetch_4", sp_i32_pvv_i32::create },
-    { "__sync_xor_and_fetch_8", sp_i64_pvv_i64::create },
-    { "__sync_xor_and_fetch_16", sp_i128_pvv_i128::create },
-    { "__sync_nand_and_fetch", pio0_iN_pvv_iN_var::create },
-    { "__sync_nand_and_fetch_1", sp_i8_pvv_i8::create },
-    { "__sync_nand_and_fetch_2", sp_i16_pvv_i16::create },
-    { "__sync_nand_and_fetch_4", sp_i32_pvv_i32::create },
-    { "__sync_nand_and_fetch_8", sp_i64_pvv_i64::create },
-    { "__sync_nand_and_fetch_16", sp_i128_pvv_i128::create },
-    { "__sync_bool_compare_and_swap", pio0_b_pvv_iN_iN_var::create },
-    { "__sync_bool_compare_and_swap_1", sp_b_pvv_i8_i8::create },
-    { "__sync_bool_compare_and_swap_2", sp_b_pvv_i16_i16::create },
-    { "__sync_bool_compare_and_swap_4", sp_b_pvv_i32_i32::create },
-    { "__sync_bool_compare_and_swap_8", sp_b_pvv_i64_i64::create },
-    { "__sync_bool_compare_and_swap_16", sp_b_pvv_i128_i128::create },
-    { "__sync_val_compare_and_swap", pio0_iN_pvv_iN_iN_var::create },
-    { "__sync_val_compare_and_swap_1", sp_i8_pvv_i8_i8::create },
-    { "__sync_val_compare_and_swap_2", sp_i16_pvv_i16_i16::create },
-    { "__sync_val_compare_and_swap_4", sp_i32_pvv_i32_i32::create },
-    { "__sync_val_compare_and_swap_8", sp_i64_pvv_i64_i64::create },
-    { "__sync_val_compare_and_swap_16", sp_i128_pvv_i128_i128::create },
-    { "__sync_lock_test_and_set", pio0_iN_pvv_iN_var::create },
-    { "__sync_lock_test_and_set_1", sp_i8_pvv_i8::create },
-    { "__sync_lock_test_and_set_2", sp_i16_pvv_i16::create },
-    { "__sync_lock_test_and_set_4", sp_i32_pvv_i32::create },
-    { "__sync_lock_test_and_set_8", sp_i64_pvv_i64::create },
-    { "__sync_lock_test_and_set_16", sp_i128_pvv_i128::create },
-    { "__sync_lock_release", pio0_v_pvv_var::create },
-    { "__sync_lock_release_1", sp_v_pvv::create },
-    { "__sync_lock_release_2", sp_v_pvv::create },
-    { "__sync_lock_release_4", sp_v_pvv::create },
-    { "__sync_lock_release_8", sp_v_pvv::create },
-    { "__sync_lock_release_16", sp_v_pvv::create },
-    { "__sync_synchronize", sp_v::create },
-    { "__atomic_test_and_set", sp_b_pvv_i::create },
-    { "__atomic_clear", sp_v_pvv_i::create },
-    { "__atomic_exchange", sp_v_pvv_pv_pv_i::create },
-    { "__atomic_exchange_n", pio0_iN_pvv_iN_i::create },
-    { "__atomic_exchange_1", sp_i8_pvv_i8_i::create },
-    { "__atomic_exchange_2", sp_i16_pvv_i16_i::create },
-    { "__atomic_exchange_4", sp_i32_pvv_i32_i::create },
-    { "__atomic_exchange_8", sp_i64_pvv_i64_i::create },
-    { "__atomic_exchange_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_load", sp_v_pcvv_pv_i::create },
-    { "__atomic_load_n", pio0_iN_pcvv_i::create },
-    { "__atomic_load_1", sp_i8_pcvv_i::create },
-    { "__atomic_load_2", sp_i16_pcvv_i::create },
-    { "__atomic_load_4", sp_i32_pcvv_i::create },
-    { "__atomic_load_8", sp_i64_pcvv_i::create },
-    { "__atomic_load_16", sp_i128_pcvv_i::create },
-    { "__atomic_compare_exchange", sp_b_pvv_pv_pv_b_i_i::create },
-    { "__atomic_compare_exchange_n", pio0_b_pvv_pv_iN_b_i_i::create },
-    { "__atomic_compare_exchange_1", sp_b_pvv_pv_i8_b_i_i::create },
-    { "__atomic_compare_exchange_2", sp_b_pvv_pv_i16_b_i_i::create },
-    { "__atomic_compare_exchange_4", sp_b_pvv_pv_i32_b_i_i::create },
-    { "__atomic_compare_exchange_8", sp_b_pvv_pv_i64_b_i_i::create },
-    { "__atomic_compare_exchange_16", sp_b_pvv_pv_i128_b_i_i::create },
-    { "__atomic_store", sp_v_pvv_pv_i::create },
-    { "__atomic_store_n", pio0_v_pvv_iN_i::create },
-    { "__atomic_store_1", sp_v_pvv_i8_i::create },
-    { "__atomic_store_2", sp_v_pvv_i16_i::create },
-    { "__atomic_store_4", sp_v_pvv_i32_i::create },
-    { "__atomic_store_8", sp_v_pvv_i64_i::create },
-    { "__atomic_store_16", sp_v_pvv_i128_i::create },
-    { "__atomic_add_fetch", pio0_iN_pvv_iN_i::create },
-    { "__atomic_add_fetch_1", sp_i8_pvv_i8_i::create },
-    { "__atomic_add_fetch_2", sp_i16_pvv_i16_i::create },
-    { "__atomic_add_fetch_4", sp_i32_pvv_i32_i::create },
-    { "__atomic_add_fetch_8", sp_i64_pvv_i64_i::create },
-    { "__atomic_add_fetch_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_sub_fetch", pio0_iN_pvv_iN_i::create },
-    { "__atomic_sub_fetch_1", sp_i8_pvv_i8_i::create },
-    { "__atomic_sub_fetch_2", sp_i16_pvv_i16_i::create },
-    { "__atomic_sub_fetch_4", sp_i32_pvv_i32_i::create },
-    { "__atomic_sub_fetch_8", sp_i64_pvv_i64_i::create },
-    { "__atomic_sub_fetch_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_and_fetch", pio0_iN_pvv_iN_i::create },
-    { "__atomic_and_fetch_1", sp_i8_pvv_i8_i::create },
-    { "__atomic_and_fetch_2", sp_i16_pvv_i16_i::create },
-    { "__atomic_and_fetch_4", sp_i32_pvv_i32_i::create },
-    { "__atomic_and_fetch_8", sp_i64_pvv_i64_i::create },
-    { "__atomic_and_fetch_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_nand_fetch", pio0_iN_pvv_iN_i::create },
-    { "__atomic_nand_fetch_1", sp_i8_pvv_i8_i::create },
-    { "__atomic_nand_fetch_2", sp_i16_pvv_i16_i::create },
-    { "__atomic_nand_fetch_4", sp_i32_pvv_i32_i::create },
-    { "__atomic_nand_fetch_8", sp_i64_pvv_i64_i::create },
-    { "__atomic_nand_fetch_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_xor_fetch", pio0_iN_pvv_iN_i::create },
-    { "__atomic_xor_fetch_1", sp_i8_pvv_i8_i::create },
-    { "__atomic_xor_fetch_2", sp_i16_pvv_i16_i::create },
-    { "__atomic_xor_fetch_4", sp_i32_pvv_i32_i::create },
-    { "__atomic_xor_fetch_8", sp_i64_pvv_i64_i::create },
-    { "__atomic_xor_fetch_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_or_fetch", pio0_iN_pvv_iN_i::create },
-    { "__atomic_or_fetch_1", sp_i8_pvv_i8_i::create },
-    { "__atomic_or_fetch_2", sp_i16_pvv_i16_i::create },
-    { "__atomic_or_fetch_4", sp_i32_pvv_i32_i::create },
-    { "__atomic_or_fetch_8", sp_i64_pvv_i64_i::create },
-    { "__atomic_or_fetch_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_fetch_add", pio0_iN_pvv_iN_i::create },
-    { "__atomic_fetch_add_1", sp_i8_pvv_i8_i::create },
-    { "__atomic_fetch_add_2", sp_i16_pvv_i16_i::create },
-    { "__atomic_fetch_add_4", sp_i32_pvv_i32_i::create },
-    { "__atomic_fetch_add_8", sp_i64_pvv_i64_i::create },
-    { "__atomic_fetch_add_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_fetch_sub", pio0_iN_pvv_iN_i::create },
-    { "__atomic_fetch_sub_1", sp_i8_pvv_i8_i::create },
-    { "__atomic_fetch_sub_2", sp_i16_pvv_i16_i::create },
-    { "__atomic_fetch_sub_4", sp_i32_pvv_i32_i::create },
-    { "__atomic_fetch_sub_8", sp_i64_pvv_i64_i::create },
-    { "__atomic_fetch_sub_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_fetch_and", pio0_iN_pvv_iN_i::create },
-    { "__atomic_fetch_and_1", sp_i8_pvv_i8_i::create },
-    { "__atomic_fetch_and_2", sp_i16_pvv_i16_i::create },
-    { "__atomic_fetch_and_4", sp_i32_pvv_i32_i::create },
-    { "__atomic_fetch_and_8", sp_i64_pvv_i64_i::create },
-    { "__atomic_fetch_and_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_fetch_nand", pio0_iN_pvv_iN_i::create },
-    { "__atomic_fetch_nand_1", sp_i8_pvv_i8_i::create },
-    { "__atomic_fetch_nand_2", sp_i16_pvv_i16_i::create },
-    { "__atomic_fetch_nand_4", sp_i32_pvv_i32_i::create },
-    { "__atomic_fetch_nand_8", sp_i64_pvv_i64_i::create },
-    { "__atomic_fetch_nand_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_fetch_xor", pio0_iN_pvv_iN_i::create },
-    { "__atomic_fetch_xor_1", sp_i8_pvv_i8_i::create },
-    { "__atomic_fetch_xor_2", sp_i16_pvv_i16_i::create },
-    { "__atomic_fetch_xor_4", sp_i32_pvv_i32_i::create },
-    { "__atomic_fetch_xor_8", sp_i64_pvv_i64_i::create },
-    { "__atomic_fetch_xor_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_fetch_or", pio0_iN_pvv_iN_i::create },
-    { "__atomic_fetch_or_1", sp_i8_pvv_i8_i::create },
-    { "__atomic_fetch_or_2", sp_i16_pvv_i16_i::create },
-    { "__atomic_fetch_or_4", sp_i32_pvv_i32_i::create },
-    { "__atomic_fetch_or_8", sp_i64_pvv_i64_i::create },
-    { "__atomic_fetch_or_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_always_lock_free", sp_b_sz_pcvv::create },
-    { "__atomic_is_lock_free", sp_b_sz_pcvv::create },
-    { "__atomic_thread_fence", sp_v_i::create },
-    { "__atomic_signal_fence", sp_v_i::create },
-  };
-
-  auto it = m.find(id);
-  if (it == m.end())
+  auto it = _builtin_funcs.find(id);
+  if (it == _builtin_funcs.end())
     return nullptr;
 
   return it->second;
@@ -4783,4 +2874,1920 @@ void target_gcc::_register_builtin_macros(preprocessor &pp) const
     pp.register_builtin_macro(bom.first, bom.second);
 
   this->_arch_register_builtin_macros(pp);
+}
+
+namespace
+{
+  template<unsigned int w, bool is_signed>
+  static std::shared_ptr<const types::addressable_type>
+  __mk_iN(const target &tgt)
+  {
+    return tgt.width_to_int_type(w, is_signed, false);
+  }
+
+  static std::shared_ptr<const types::addressable_type>
+  _mk_i8(const target &tgt)
+  {
+    return __mk_iN<8, true>(tgt);
+  }
+
+  static std::shared_ptr<const types::addressable_type>
+  _mk_i16(const target &tgt)
+  {
+    return __mk_iN<16, true>(tgt);
+  }
+
+  static std::shared_ptr<const types::addressable_type>
+  _mk_u16(const target &tgt)
+  {
+    return __mk_iN<16, false>(tgt);
+  }
+
+  static std::shared_ptr<const types::addressable_type>
+  _mk_i32(const target &tgt)
+  {
+    return __mk_iN<32, true>(tgt);
+  }
+
+  static std::shared_ptr<const types::addressable_type>
+  _mk_u32(const target &tgt)
+  {
+    return __mk_iN<32, false>(tgt);
+  }
+
+  static std::shared_ptr<const types::addressable_type>
+  _mk_i64(const target &tgt)
+  {
+    return __mk_iN<64, true>(tgt);
+  }
+
+  static std::shared_ptr<const types::addressable_type>
+  _mk_u64(const target &tgt)
+  {
+    return __mk_iN<64, false>(tgt);
+  }
+
+  static std::shared_ptr<const types::addressable_type>
+  _mk_i128(const target &tgt)
+  {
+    return __mk_iN<128, true>(tgt);
+  }
+
+  static std::shared_ptr<const types::addressable_type>
+  _mk_wi(const target &tgt)
+  {
+    return types::std_int_type::create(tgt.get_wint_kind(),
+				       tgt.is_wint_signed());
+  }
+
+  static std::shared_ptr<const types::addressable_type>
+  _mk_pid(const target &tgt)
+  {
+    return types::std_int_type::create(tgt.get_pid_t_kind(),
+				       tgt.is_pid_t_signed());
+  }
+
+  static std::shared_ptr<const types::addressable_type>
+  mk_pF_v_var(const target&)
+  {
+    return (types::void_type::create()
+	    ->derive_function(false)
+	    ->derive_pointer());
+  }
+
+  static std::shared_ptr<const types::addressable_type>
+  _mk_val(const target &tgt)
+  {
+    std::shared_ptr<const types::addressable_type> t =
+      tgt.create_builtin_va_list_type();
+    types::handle_types<void>
+      ((wrap_callables<default_action_nop>
+	([&](const types::array_type &at) {
+	   t = at.get_element_type()->derive_pointer();
+	 })),
+       *t);
+    return t;
+  }
+
+  class _builtin_func_pi_overload final : public builtin_func
+  {
+  public:
+    _builtin_func_pi_overload(const unsigned int pi_arg_index,
+			      const builtin_func::factory fac8,
+			      const builtin_func::factory fac16,
+			      const builtin_func::factory fac32,
+			      const builtin_func::factory fac64,
+			      const builtin_func::factory fac128) noexcept;
+
+    virtual ~_builtin_func_pi_overload() noexcept override;
+
+    virtual evaluation_result_type
+    evaluate(klp::ccp::ast::ast &a, const target &tgt,
+	     const ast::expr_func_invocation &efi) const override;
+
+  private:
+    const unsigned int _pi_arg_index;
+    const builtin_func::factory _fac8;
+    const builtin_func::factory _fac16;
+    const builtin_func::factory _fac32;
+    const builtin_func::factory _fac64;
+    const builtin_func::factory _fac128;
+  };
+
+  template <const unsigned int pi_arg_index,
+	    const builtin_func::factory fac8,
+	    const builtin_func::factory fac16,
+	    const builtin_func::factory fac32,
+	    const builtin_func::factory fac64,
+	    const builtin_func::factory fac128>
+  struct _builtin_func_pi_overload_fac
+  {
+    static std::unique_ptr<builtin_func> create()
+    {
+      return (std::unique_ptr<builtin_func>
+	      (new _builtin_func_pi_overload(pi_arg_index, fac8, fac16,
+					     fac32, fac64, fac128)));;
+    }
+  };
+
+  class _builtin_overflow : public builtin_func
+  {
+  public:
+    enum class op
+    {
+      add,
+      sub,
+      mul,
+    };
+
+    typedef std::shared_ptr<const types::int_type>(*t_fac)();
+
+    virtual evaluation_result_type
+    evaluate(klp::ccp::ast::ast &a, const target &tgt,
+	     const ast::expr_func_invocation &efi) const override;
+
+    template <t_fac tfac, bool p_variant, op o>
+    static std::unique_ptr<builtin_func> create();
+
+    static std::shared_ptr<const types::int_type> fac_i();
+    static std::shared_ptr<const types::int_type> fac_u();
+    static std::shared_ptr<const types::int_type> fac_l();
+    static std::shared_ptr<const types::int_type> fac_ul();
+    static std::shared_ptr<const types::int_type> fac_ll();
+    static std::shared_ptr<const types::int_type> fac_ull();
+
+  private:
+    t_fac _target_fac;
+    bool _p_variant;
+    op _op;
+
+    _builtin_overflow(const t_fac expected_it_fac, const bool p_variant,
+		      const op op) noexcept;
+  };
+}
+
+_builtin_func_pi_overload::
+_builtin_func_pi_overload(const unsigned int pi_arg_index,
+			  const builtin_func::factory fac8,
+			  const builtin_func::factory fac16,
+			  const builtin_func::factory fac32,
+			  const builtin_func::factory fac64,
+			  const builtin_func::factory fac128) noexcept
+  : _pi_arg_index(pi_arg_index), _fac8(fac8), _fac16(fac16),
+    _fac32(fac32), _fac64(fac64), _fac128(fac128)
+{}
+
+_builtin_func_pi_overload::~_builtin_func_pi_overload() noexcept = default;
+
+builtin_func::evaluation_result_type _builtin_func_pi_overload::
+evaluate(klp::ccp::ast::ast &a, const target &tgt,
+	 const ast::expr_func_invocation &efi) const
+{
+  const ast::expr_list * const args = efi.get_args();
+  const std::size_t n_args = !args ? 0 : args->size();
+
+  if (n_args <= _pi_arg_index) {
+    code_remark remark
+      (code_remark::severity::warning,
+       "too few arguments in builtin function invocation",
+       a.get_pp_result(), efi.get_tokens_range());
+    a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  // The argument at index pi_arg_index shall have pointer to integer
+  // type. Demultiplex according to that integer type's width.
+  const ast::expr &e_pi_arg = (*args)[_pi_arg_index];
+  const mpa::limbs::size_type width =
+    (types::handle_types<mpa::limbs::size_type>
+     ((wrap_callables<default_action_nop>
+       ([&](const types::pointer_type &pt) {
+	  return
+	    (types::handle_types<mpa::limbs::size_type>
+	     ((wrap_callables<default_action_nop>
+	       ([&](const types::int_type &_it) {
+		  types::handle_types<void>
+		    ((wrap_callables<default_action_nop>
+		      ([&](const types::enum_type &et) {
+			 if (!et.is_complete()) {
+			   code_remark remark
+			     (code_remark::severity::fatal,
+			      "incomplete enum type passed to builtin function",
+			      a.get_pp_result(), e_pi_arg.get_tokens_range());
+			   a.get_remarks().add(remark);
+			   throw semantic_except(remark);
+			 }
+		       })),
+		     _it);
+
+		  return _it.get_width(tgt);
+		},
+		[&](const types::pointer_type&) {
+		  // Undocumented, but gcc also accepts pointers to pointers
+		  // for the atomic primitives.
+		  return tgt.get_std_int_width(tgt.get_ptrdiff_kind());
+		},
+		[&](const types::type&) -> mpa::limbs::size_type {
+		  code_remark remark
+		    (code_remark::severity::warning,
+		     "expected pointer to int argument to builtin invocation",
+		     a.get_pp_result(), e_pi_arg.get_tokens_range());
+		  a.get_remarks().add(remark);
+		  throw semantic_except(remark);
+		})),
+	      *pt.get_pointed_to_type()));
+	},
+	[&](const types::type&) -> mpa::limbs::size_type {
+	  code_remark remark
+	    (code_remark::severity::warning,
+	     "expected pointer argument to builtin invocation",
+	     a.get_pp_result(), e_pi_arg.get_tokens_range());
+	  a.get_remarks().add(remark);
+	  throw semantic_except(remark);
+	})),
+      *e_pi_arg.get_type()));
+
+  builtin_func::factory fac;
+  switch (width) {
+  case 8:
+    fac = _fac8;
+    break;
+
+  case 16:
+    fac = _fac16;
+    break;
+
+  case 32:
+    fac = _fac32;
+    break;
+
+  case 64:
+    fac = _fac64;
+    break;
+
+  case 128:
+    fac = _fac128;
+    break;
+
+  default:
+    {
+      code_remark remark
+	(code_remark::severity::warning,
+	 "can't handle argument's integer width at builtin invocation",
+	 a.get_pp_result(), e_pi_arg.get_tokens_range());
+      a.get_remarks().add(remark);
+      throw semantic_except(remark);
+    }
+  };
+
+  return fac()->evaluate(a, tgt, efi);
+}
+
+_builtin_overflow::_builtin_overflow(const t_fac target_fac,
+				     const bool p_variant,
+				     const op op) noexcept
+  : _target_fac(target_fac), _p_variant(p_variant), _op(op)
+{}
+
+template <_builtin_overflow::t_fac tfac, bool p_variant,
+	  _builtin_overflow::op o>
+std::unique_ptr<builtin_func> _builtin_overflow::create()
+{
+  return (std::unique_ptr<builtin_func>
+	  (new _builtin_overflow(tfac, p_variant, o)));
+}
+
+builtin_func::evaluation_result_type
+_builtin_overflow::evaluate(klp::ccp::ast::ast &a, const target &tgt,
+			    const ast::expr_func_invocation &efi) const
+{
+  auto &&myname =
+    [this]() -> std::string {
+      switch (_op) {
+      case op::add:
+	if (_p_variant)
+	  return std::string{"__builtin_add_overflow_p()"};
+	else
+	  return std::string{"__builtin_add_overflow()"};
+
+      case op::sub:
+	if (_p_variant)
+	  return std::string{"__builtin_sub_overflow_p()"};
+	else
+	  return std::string{"__builtin_sub_overflow()"};
+
+      case op::mul:
+	if (_p_variant)
+	  return std::string{"__builtin_mul_overflow_p()"};
+	else
+	  return std::string{"__builtin_mul_overflow()"};
+      }
+    };
+
+  if (!efi.get_args() || efi.get_args()->size() != 3) {
+    code_remark remark
+      (code_remark::severity::warning,
+       "wrong number of arguments to " + myname(),
+       a.get_pp_result(), efi.get_tokens_range());
+    a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  const ast::expr_list &args = *efi.get_args();
+  bool types_ok = true;
+  mpa::limbs::size_type target_width =
+    std::numeric_limits<mpa::limbs::size_type>::max();
+  bool target_is_signed;
+  const std::shared_ptr<const types::int_type> it_target_spec =
+    _target_fac ? _target_fac() : nullptr;
+  assert(!_p_variant || !_target_fac);
+  if (_p_variant) {
+    // The first two or, for the _p variant, all arguments shall be of
+    // integer type.
+    for (unsigned int i = 0; i < 3; ++i) {
+      types::handle_types<void>
+	((wrap_callables<default_action_nop>
+	  ([&](const std::shared_ptr<const types::int_type> &it) {
+	     types::handle_types<void>
+	       ((wrap_callables<default_action_nop>
+		 ([&](const types::enum_type &et) {
+		    if (!et.is_complete()) {
+		      code_remark remark
+			(code_remark::severity::fatal,
+			 ("argument to " + myname() +
+			  " has incomplete enum type"),
+			 a.get_pp_result(), args[i].get_tokens_range());
+		      a.get_remarks().add(remark);
+		      throw semantic_except(remark);
+		    }
+		  })),
+		*it);
+
+	     if (i == 2) {
+	       target_width = it->get_width(tgt);
+	       target_is_signed = it->is_signed(tgt);
+	     }
+	   },
+	   [&](const std::shared_ptr<const types::bitfield_type> &bft) {
+	     if (i == 2) {
+	       target_width = bft->get_width(tgt);
+	       target_is_signed = bft->is_signed(tgt);
+	     }
+	   },
+	   [&](const std::shared_ptr<const types::type>&) {
+	     types_ok = false;
+
+	     code_remark remark
+	       (code_remark::severity::warning,
+		"non-integer argument to " + myname(),
+		a.get_pp_result(), args[i].get_tokens_range());
+	     a.get_remarks().add(remark);
+	   })),
+	 args[i].get_type());
+    }
+  } else {
+    // For the non-_p variant, the first two or shall be of arithmetic
+    // type.
+    for (unsigned int i = 0; i < 2; ++i) {
+      types::handle_types<void>
+	((wrap_callables<default_action_nop>
+	  ([&](const std::shared_ptr<const types::arithmetic_type> &t) {
+	     types::handle_types<void>
+	       ((wrap_callables<default_action_nop>
+		 ([&](const types::enum_type &et) {
+		    if (!et.is_complete()) {
+		      code_remark remark
+			(code_remark::severity::fatal,
+			 ("argument to " + myname() +
+			  " has incomplete enum type"),
+			 a.get_pp_result(), args[i].get_tokens_range());
+		      a.get_remarks().add(remark);
+		      throw semantic_except(remark);
+		    }
+		  })),
+		*t);
+	   },
+	   [&](const std::shared_ptr<const types::bitfield_type> &) {
+	   },
+	   [&](const std::shared_ptr<const types::type>&) {
+	     types_ok = false;
+
+	     code_remark remark
+	       (code_remark::severity::warning,
+		"non-arithmetic argument to " + myname(),
+		a.get_pp_result(), args[i].get_tokens_range());
+	     a.get_remarks().add(remark);
+	   })),
+	 args[i].get_type());
+    }
+
+    // Extract the third argument's type for !_p_variant.
+    // The third argument is expected to be a pointer to int.
+    types::handle_types<void>
+      ((wrap_callables<default_action_nop>
+	([&](const types::pointer_type &pt) {
+	   types::handle_types<void>
+	     ((wrap_callables<default_action_nop>
+	       ([&](const std::shared_ptr<const types::int_type> &it) {
+		  types::handle_types<void>
+		    ((wrap_callables<default_action_nop>
+		      ([&](const types::enum_type &et) {
+			 if (!et.is_complete()) {
+			   code_remark remark
+			     (code_remark::severity::fatal,
+			      ("argument to " + myname() +
+			       " is of pointer to incomplete enum type"),
+			      a.get_pp_result(), args[2].get_tokens_range());
+			   a.get_remarks().add(remark);
+			   throw semantic_except(remark);
+			 }
+		       })),
+		     *it);
+
+		  if (it_target_spec &&
+		      !it_target_spec->is_compatible_with(tgt, *it, true)) {
+		    types_ok = false;
+
+		    code_remark remark
+		      (code_remark::severity::warning,
+		       ("third argument to " + myname() +
+			" has incompatible pointer type"),
+		       a.get_pp_result(), args[2].get_tokens_range());
+		    a.get_remarks().add(remark);
+		  } else {
+		    target_width = it->get_width(tgt);
+		    target_is_signed = it->is_signed(tgt);
+		  }
+		},
+		[&](const std::shared_ptr<const types::type>&) {
+		  types_ok = false;
+
+		  code_remark remark
+		    (code_remark::severity::warning,
+		     ("third argument to " + myname() +
+		      " is not a pointer to integer"),
+		     a.get_pp_result(), args[2].get_tokens_range());
+		  a.get_remarks().add(remark);
+		})),
+	      pt.get_pointed_to_type());
+	 },
+	 [&](const types::type&) {
+	   types_ok = false;
+
+	   code_remark remark
+	     (code_remark::severity::warning,
+	      "third argument to " + myname() + " is not a pointer",
+	      a.get_pp_result(), args[2].get_tokens_range());
+	   a.get_remarks().add(remark);
+	   throw semantic_except(remark);
+	 })),
+       *args[2].get_type());
+  }
+
+  if (!args[0].is_constexpr() || !args[1].is_constexpr() || !types_ok) {
+    return evaluation_result_type{types::bool_type::create(), nullptr, false};
+  }
+
+  assert(target_width !=
+	 std::numeric_limits<mpa::limbs::size_type>::max());
+
+  const ast::constexpr_value &cv0 = args[0].get_constexpr_value();
+  const target_int &i0 =
+    (!it_target_spec ?
+     cv0.get_int_value() :
+     cv0.convert_to(tgt, *it_target_spec));
+  const ast::constexpr_value &cv1 = args[1].get_constexpr_value();
+  const target_int &i1 =
+    (!it_target_spec ?
+     cv1.get_int_value() :
+     cv1.convert_to(tgt, *it_target_spec));
+
+  mpa::limbs r;
+  if (_op == op::add || _op == op::sub) {
+    mpa::limbs ls0 = i0.get_limbs();
+    if (!i0.is_signed()) {
+      // Make room for an additional sign bit.
+      ls0.resize(mpa::limbs::width_to_size(i0.width() + 1));
+    }
+    mpa::limbs ls1 = i1.get_limbs();
+    if (_op == op::sub) {
+      // Make room for an additional sign bit unconditionally.
+      ls1.resize(mpa::limbs::width_to_size(i1.width() + 1));
+      if (i1.is_signed()) {
+	ls1.set_bits_at_and_above(i1.width(), ls1.test_bit(i1.width() - 1));
+      }
+      // And complement
+      ls1 = ls1.complement();
+    } if (!i1.is_signed()) {
+      // Make room for an additional sign bit.
+      ls1.resize(mpa::limbs::width_to_size(i1.width() + 1));
+    }
+
+    r = ls0.add_signed(ls1);
+
+  } else {
+    assert(_op == op::mul);
+    bool is_negative = false;
+    mpa::limbs ls0 = i0.get_limbs();
+    if (i0.is_signed() && i0.is_negative()) {
+      is_negative = true;
+      ls0 = ls0.complement();
+    }
+    mpa::limbs ls1 = i1.get_limbs();
+    if (i1.is_signed() && i1.is_negative()) {
+      is_negative ^= true;
+      ls1 = ls1.complement();
+    }
+
+    r = ls0 * ls1;
+    r.resize(mpa::limbs::width_to_size(r.width() + 1));
+    if (is_negative)
+      r = r.complement();
+  }
+
+  bool overflow = false;
+  if (target_is_signed) {
+    if (target_width < r.width() - r.clrsb())
+      overflow = true;
+  } else {
+    if (r.test_bit(r.width() - 1))
+      overflow = true;
+    else if (r.is_any_set_at_or_above(target_width))
+      overflow = true;
+  }
+
+  std::shared_ptr<const types::bool_type> t_result = types::bool_type::create();
+  const mpa::limbs::size_type w = t_result->get_width(tgt);
+  const bool is_signed = t_result->is_signed(tgt);
+  target_int ti_result =
+    (overflow ?
+     target_int::create_one(w - is_signed, is_signed) :
+     target_int::create_zero(w - is_signed, is_signed));
+  std::unique_ptr<ast::constexpr_value> cv_result;
+  if (_p_variant &&
+      (cv0.has_constness
+       (ast::constexpr_value::constness::c_integer_constant_expr)) &&
+      (cv1.has_constness
+       (ast::constexpr_value::constness::c_integer_constant_expr))) {
+    cv_result.reset
+      (new ast::constexpr_value
+       (ast::constexpr_value::integer_constant_expr_tag{}, ti_result));
+  } else if (_p_variant &&
+	     (cv0.has_constness
+	      (ast::constexpr_value::constness::c_arithmetic_constant_expr)) &&
+	     (cv1.has_constness
+	      (ast::constexpr_value::constness::c_arithmetic_constant_expr))) {
+    cv_result.reset
+      (new ast::constexpr_value
+       (ast::constexpr_value::arithmetic_constant_expr_tag{}, ti_result));
+  } else {
+    cv_result.reset(new ast::constexpr_value(ti_result));
+  }
+
+  return evaluation_result_type{std::move(t_result), std::move(cv_result),
+				false};
+}
+
+std::shared_ptr<const types::int_type> _builtin_overflow::fac_i()
+{
+  return types::std_int_type::create(types::std_int_type::kind::k_int, true);
+}
+
+std::shared_ptr<const types::int_type> _builtin_overflow::fac_u()
+{
+  return types::std_int_type::create(types::std_int_type::kind::k_int, false);
+}
+
+std::shared_ptr<const types::int_type> _builtin_overflow::fac_l()
+{
+  return types::std_int_type::create(types::std_int_type::kind::k_long, true);
+}
+
+std::shared_ptr<const types::int_type> _builtin_overflow::fac_ul()
+{
+  return types::std_int_type::create(types::std_int_type::kind::k_long, false);
+}
+
+std::shared_ptr<const types::int_type> _builtin_overflow::fac_ll()
+{
+  return types::std_int_type::create(types::std_int_type::kind::k_long_long,
+				     true);
+}
+
+std::shared_ptr<const types::int_type> _builtin_overflow::fac_ull()
+{
+  return types::std_int_type::create(types::std_int_type::kind::k_long_long,
+				     false);
+}
+
+
+std::map<const std::string, const builtin_func::factory>
+target_gcc::_register_builtin_funcs()
+{
+  using namespace klp::ccp::builtins::impl;
+
+  using sp_v = builtin_func_simple_proto::fac<false, mk_v>;
+  using sp_v_i = builtin_func_simple_proto::fac<false, mk_v, mk_i>;
+  using sp_v_f_pf_pf =
+    builtin_func_simple_proto::fac<false, mk_v, mk_f, mk_pf, mk_pf>;
+  using sp_v_d_pd_pd =
+    builtin_func_simple_proto::fac<false, mk_v, mk_d, mk_pd, mk_pd>;
+  using sp_v_ld_pld_pld =
+    builtin_func_simple_proto::fac<false, mk_v, mk_ld, mk_pld, mk_pld>;
+  using sp_v_ssz_pv =
+    builtin_func_simple_proto::fac<false, mk_v, mk_ssz, mk_pv>;
+  using sp_v_pv = builtin_func_simple_proto::fac<false, mk_v, mk_pv>;
+  using sp_v_pv_i = builtin_func_simple_proto::fac<false, mk_v, mk_pv, mk_i>;
+  using sp_v_pv_sz = builtin_func_simple_proto::fac<false, mk_v, mk_pv, mk_sz>;
+  using sp_v_pv_pv = builtin_func_simple_proto::fac<false, mk_v, mk_pv, mk_pv>;
+  using sp_v_pcv_pv_sz =
+    builtin_func_simple_proto::fac<false, mk_v, mk_pcv, mk_pv, mk_sz>;
+  using sp_v_pcvv_var =
+    builtin_func_simple_proto::fac<true, mk_v, mk_pcvv>;
+  using sp_v_pvv = builtin_func_simple_proto::fac<false, mk_v, mk_pvv>;
+  using sp_v_pvv_i = builtin_func_simple_proto::fac<false, mk_v, mk_pvv, mk_i>;
+  using sp_v_pvv_pv_i =
+    builtin_func_simple_proto::fac<false, mk_v, mk_pvv, mk_pv, mk_i>;
+  using sp_v_pvv_pv_pv_i =
+    builtin_func_simple_proto::fac<false, mk_v, mk_pvv, mk_pv, mk_pv, mk_i>;
+  using sp_v_pvv_var =
+    builtin_func_simple_proto::fac<true, mk_v, mk_pvv>;
+  using sp_v_pcvv_pv_i =
+    builtin_func_simple_proto::fac<false, mk_v, mk_pcvv, mk_pv, mk_i>;
+  using sp_v_val =
+    builtin_func_simple_proto::fac<false, mk_v, _mk_val>;
+  using sp_v_val_val =
+    builtin_func_simple_proto::fac<false, mk_v, _mk_val, _mk_val>;
+  using sp_v_val_var =
+    builtin_func_simple_proto::fac<true, mk_v, _mk_val>;
+  using sp_pv_pF_v_var__pv_sz =
+    builtin_func_simple_proto::fac<false, mk_pv, mk_pF_v_var, mk_pv, mk_sz>;
+  using sp_v_var =
+    builtin_func_simple_proto::fac<true, mk_v>;
+
+  using sp_i = builtin_func_simple_proto::fac<false, mk_i>;
+  using sp_i_i = builtin_func_simple_proto::fac<false, mk_i, mk_i>;
+  using sp_i_i_i_i_i_i_var =
+    builtin_func_simple_proto::fac<true, mk_i, mk_i, mk_i, mk_i, mk_i, mk_i>;
+  using sp_i_i_pv = builtin_func_simple_proto::fac<false, mk_i, mk_i, mk_pv>;
+  using sp_i_i_pcc_val =
+    builtin_func_simple_proto::fac<false, mk_i, mk_i, mk_pcc, _mk_val>;
+  using sp_i_i_pcc_var =
+    builtin_func_simple_proto::fac<true, mk_i, mk_i, mk_pcc>;
+  using sp_i_u = builtin_func_simple_proto::fac<false, mk_i, mk_u>;
+  using sp_i_l = builtin_func_simple_proto::fac<false, mk_i, mk_l>;
+  using sp_i_ul = builtin_func_simple_proto::fac<false, mk_i, mk_ul>;
+  using sp_i_ll = builtin_func_simple_proto::fac<false, mk_i, mk_ll>;
+  using sp_i_ull = builtin_func_simple_proto::fac<false, mk_i, mk_ull>;
+  using sp_i_imax = builtin_func_simple_proto::fac<false, mk_i, mk_imax>;
+  using sp_i_umax = builtin_func_simple_proto::fac<false, mk_i, mk_umax>;
+  using sp_i_wi = builtin_func_simple_proto::fac<false, mk_i, _mk_wi>;
+  using sp_i_f = builtin_func_simple_proto::fac<false, mk_i, mk_f>;
+  using sp_i_d = builtin_func_simple_proto::fac<false, mk_i, mk_d>;
+  using sp_i_ld = builtin_func_simple_proto::fac<false, mk_i, mk_ld>;
+  using sp_i_pv = builtin_func_simple_proto::fac<false, mk_i, mk_pv>;
+  using sp_i_pv_i_pcc_val =
+    builtin_func_simple_proto::fac<false, mk_i, mk_pv, mk_i, mk_pcc, _mk_val>;
+  using sp_i_pv_i_pcc_var =
+    builtin_func_simple_proto::fac<true, mk_i, mk_pv, mk_i, mk_pcc>;
+  using sp_i_pv_pcc_val =
+    builtin_func_simple_proto::fac<false, mk_i, mk_pv, mk_pcc, _mk_val>;
+  using sp_i_pv_pcc_var =
+    builtin_func_simple_proto::fac<true, mk_i, mk_pv, mk_pcc>;
+  using sp_i_pcv_pcv_sz =
+    builtin_func_simple_proto::fac<false, mk_i, mk_pcv, mk_pcv, mk_sz>;
+  using sp_i_pc_i_sz_pcc_var =
+    builtin_func_simple_proto::fac<true, mk_i, mk_pc, mk_i, mk_sz, mk_pcc>;
+  using sp_i_pc_i_sz_pcc_val =
+    builtin_func_simple_proto::fac<false,
+				   mk_i, mk_pc, mk_i, mk_sz, mk_pcc, _mk_val>;
+  using sp_i_pc_sz_i_sz_pcc_var =
+    builtin_func_simple_proto::fac<true,
+				   mk_i, mk_pc, mk_sz, mk_i, mk_sz, mk_pcc>;
+  using sp_i_pc_sz_i_sz_pcc_val =
+    builtin_func_simple_proto::fac<false, mk_i, mk_pc, mk_sz, mk_i, mk_sz,
+				   mk_pcc, _mk_val>;
+  using sp_i_pc_sz_pcc_val =
+    builtin_func_simple_proto::fac<false, mk_i, mk_pc, mk_sz, mk_pcc, _mk_val>;
+  using sp_i_pc_sz_pcc_var =
+    builtin_func_simple_proto::fac<true, mk_i, mk_pc, mk_sz, mk_pcc>;
+  using sp_i_pc_pcc_val =
+    builtin_func_simple_proto::fac<false, mk_i, mk_pc, mk_pcc, _mk_val>;
+  using sp_i_pc_pcc_var =
+    builtin_func_simple_proto::fac<true, mk_i, mk_pc, mk_pcc>;
+  using sp_i_pcc =
+    builtin_func_simple_proto::fac<false, mk_i, mk_pcc>;
+  using sp_i_pcc_sz_pcc_var =
+    builtin_func_simple_proto::fac<true, mk_i, mk_pcc, mk_sz, mk_pcc>;
+  using sp_i_pcc_pv =
+    builtin_func_simple_proto::fac<false, mk_i, mk_pcc, mk_pv>;
+  using sp_i_pcc_pv_pcc =
+    builtin_func_simple_proto::fac<false, mk_i, mk_pcc, mk_pv, mk_pcc>;
+  using sp_i_pcc_pv_pcc_pv_pcc =
+    builtin_func_simple_proto::fac<false,
+				   mk_i, mk_pcc, mk_pv, mk_pcc, mk_pv, mk_pcc>;
+  using sp_i_pcc_pcc =
+    builtin_func_simple_proto::fac<false, mk_i, mk_pcc, mk_pcc>;
+  using sp_i_pcc_pcc_sz =
+    builtin_func_simple_proto::fac<false, mk_i, mk_pcc, mk_pcc, mk_sz>;
+  using sp_i_pcc_pcc_val =
+    builtin_func_simple_proto::fac<false, mk_i, mk_pcc, mk_pcc, _mk_val>;
+  using sp_i_pcc_pcc_var =
+    builtin_func_simple_proto::fac<true, mk_i, mk_pcc, mk_pcc>;
+  using sp_i_pcc_val =
+    builtin_func_simple_proto::fac<false, mk_i, mk_pcc, _mk_val>;
+  using sp_i_pcc_var = builtin_func_simple_proto::fac<true, mk_i, mk_pcc>;
+  using sp_i_var = builtin_func_simple_proto::fac<true, mk_i>;
+
+  using sp_u = builtin_func_simple_proto::fac<false, mk_u, mk_ll>;
+
+  using sp_l_l = builtin_func_simple_proto::fac<false, mk_l, mk_l>;
+  using sp_l_l_l = builtin_func_simple_proto::fac<false, mk_l, mk_l, mk_l>;
+  using sp_l_f = builtin_func_simple_proto::fac<false, mk_l, mk_f>;
+  using sp_l_d = builtin_func_simple_proto::fac<false, mk_l, mk_d>;
+  using sp_l_ld = builtin_func_simple_proto::fac<false, mk_l, mk_ld>;
+
+  using sp_ll_ll = builtin_func_simple_proto::fac<false, mk_ll, mk_ll>;
+  using sp_ll_f = builtin_func_simple_proto::fac<false, mk_ll, mk_f>;
+  using sp_ll_d = builtin_func_simple_proto::fac<false, mk_ll, mk_d>;
+  using sp_ll_ld = builtin_func_simple_proto::fac<false, mk_ll, mk_ld>;
+
+  using sp_b_sz_pcvv =
+    builtin_func_simple_proto::fac<false, mk_b, mk_sz, mk_pcvv>;
+  using sp_b_pvv_i = builtin_func_simple_proto::fac<false, mk_b, mk_pvv, mk_i>;
+  using sp_b_pvv_pv_pv_b_i_i =
+    builtin_func_simple_proto::fac<false, mk_b, mk_pvv, mk_pv, mk_pv, mk_b,
+				   mk_i, mk_i>;
+  using sp_b_var = builtin_func_simple_proto::fac<true, mk_b>;
+
+  using sp_imax_imax = builtin_func_simple_proto::fac<false, mk_imax, mk_imax>;
+
+  using sp_u16_u16 = builtin_func_simple_proto::fac<false, _mk_u16, _mk_u16>;
+  using sp_u32_u32 = builtin_func_simple_proto::fac<false, _mk_u32, _mk_u32>;
+  using sp_u64_u64 = builtin_func_simple_proto::fac<false, _mk_u64, _mk_u64>;
+
+  using sp_wi_wi = builtin_func_simple_proto::fac<false, _mk_wi, _mk_wi>;
+
+  using sp_sz_pv = builtin_func_simple_proto::fac<false, mk_sz, mk_pv>;
+  using sp_sz_pcv_i =
+    builtin_func_simple_proto::fac<false, mk_sz, mk_pcv, mk_i>;
+  using sp_sz_pc_sz_pcc_pcv =
+    builtin_func_simple_proto::fac<false, mk_sz, mk_pc, mk_sz, mk_pcc, mk_pcv>;
+  using sp_sz_pcc = builtin_func_simple_proto::fac<false, mk_sz, mk_pcc>;
+  using sp_sz_pcc_sz_sz_pv =
+    builtin_func_simple_proto::fac<false, mk_sz, mk_pcc, mk_sz, mk_sz, mk_pv>;
+  using sp_sz_pcc_pcc =
+    builtin_func_simple_proto::fac<false, mk_sz, mk_pcc, mk_pcc>;
+
+  using sp_ssz_pc_sz_pcc_var =
+    builtin_func_simple_proto::fac<true, mk_ssz, mk_pc, mk_sz, mk_pcc>;
+
+  using sp_pid = builtin_func_simple_proto::fac<false, _mk_pid, mk_pv>;
+
+  using sp_f = builtin_func_simple_proto::fac<false, mk_f>;
+  using sp_f_i_f = builtin_func_simple_proto::fac<false, mk_f, mk_i, mk_f>;
+  using sp_f_f = builtin_func_simple_proto::fac<false, mk_f, mk_f>;
+  using sp_f_f_i = builtin_func_simple_proto::fac<false, mk_f, mk_f, mk_i>;
+  using sp_f_f_l = builtin_func_simple_proto::fac<false, mk_f, mk_f, mk_l>;
+  using sp_f_f_f = builtin_func_simple_proto::fac<false, mk_f, mk_f, mk_f>;
+  using sp_f_f_f_f =
+    builtin_func_simple_proto::fac<false, mk_f, mk_f, mk_f, mk_f>;
+  using sp_f_f_f_pi =
+    builtin_func_simple_proto::fac<false, mk_f, mk_f, mk_f, mk_pi>;
+  using sp_f_f_pi = builtin_func_simple_proto::fac<false, mk_f, mk_f, mk_pi>;
+  using sp_f_f_pf = builtin_func_simple_proto::fac<false, mk_f, mk_f, mk_pf>;
+  using sp_f_fC = builtin_func_simple_proto::fac<false, mk_f, mk_fC>;
+  using sp_f_pcc = builtin_func_simple_proto::fac<false, mk_f, mk_pcc>;
+
+  using sp_d = builtin_func_simple_proto::fac<false, mk_d>;
+  using sp_d_i_d = builtin_func_simple_proto::fac<false, mk_d, mk_i, mk_d>;
+  using sp_d_d = builtin_func_simple_proto::fac<false, mk_d, mk_d>;
+  using sp_d_d_i = builtin_func_simple_proto::fac<false, mk_d, mk_d, mk_i>;
+  using sp_d_d_l = builtin_func_simple_proto::fac<false, mk_d, mk_d, mk_l>;
+  using sp_d_d_d = builtin_func_simple_proto::fac<false, mk_d, mk_d, mk_d>;
+  using sp_d_d_d_d =
+    builtin_func_simple_proto::fac<false, mk_d, mk_d, mk_d, mk_d>;
+  using sp_d_d_d_pi =
+    builtin_func_simple_proto::fac<false, mk_d, mk_d, mk_d, mk_pi>;
+  using sp_d_d_pi = builtin_func_simple_proto::fac<false, mk_d, mk_d, mk_pi>;
+  using sp_d_d_pd = builtin_func_simple_proto::fac<false, mk_d, mk_d, mk_pd>;
+  using sp_d_dC = builtin_func_simple_proto::fac<false, mk_d, mk_dC>;
+  using sp_d_pcc = builtin_func_simple_proto::fac<false, mk_d, mk_pcc>;
+
+  using sp_ld = builtin_func_simple_proto::fac<false, mk_ld>;
+  using sp_ld_i_ld = builtin_func_simple_proto::fac<false, mk_ld, mk_i, mk_ld>;
+  using sp_ld_ld = builtin_func_simple_proto::fac<false, mk_ld, mk_ld>;
+  using sp_ld_ld_i = builtin_func_simple_proto::fac<false, mk_ld, mk_ld, mk_i>;
+  using sp_ld_ld_l = builtin_func_simple_proto::fac<false, mk_ld, mk_ld, mk_l>;
+  using sp_ld_ld_ld =
+    builtin_func_simple_proto::fac<false, mk_ld, mk_ld, mk_ld>;
+  using sp_ld_ld_ld_ld =
+    builtin_func_simple_proto::fac<false, mk_ld, mk_ld, mk_ld, mk_ld>;
+  using sp_ld_ld_ld_pi =
+    builtin_func_simple_proto::fac<false, mk_ld, mk_ld, mk_ld, mk_pi>;
+  using sp_ld_ld_pi =
+    builtin_func_simple_proto::fac<false, mk_ld, mk_ld, mk_pi>;
+  using sp_ld_ld_pld =
+    builtin_func_simple_proto::fac<false, mk_ld, mk_ld, mk_pld>;
+  using sp_ld_ldC = builtin_func_simple_proto::fac<false, mk_ld, mk_ldC>;
+  using sp_ld_pcc = builtin_func_simple_proto::fac<false, mk_ld, mk_pcc>;
+
+  using sp_fC_f = builtin_func_simple_proto::fac<false, mk_fC, mk_f>;
+  using sp_fC_fC = builtin_func_simple_proto::fac<false, mk_fC, mk_fC>;
+  using sp_fC_fC_fC =
+    builtin_func_simple_proto::fac<false, mk_fC, mk_fC, mk_fC>;
+
+  using sp_dC_d = builtin_func_simple_proto::fac<false, mk_dC, mk_d>;
+  using sp_dC_dC = builtin_func_simple_proto::fac<false, mk_dC, mk_dC>;
+  using sp_dC_dC_dC =
+    builtin_func_simple_proto::fac<false, mk_dC, mk_dC, mk_dC>;
+
+  using sp_ldC_ld = builtin_func_simple_proto::fac<false, mk_ldC, mk_ld>;
+  using sp_ldC_ldC = builtin_func_simple_proto::fac<false, mk_ldC, mk_ldC>;
+  using sp_ldC_ldC_ldC =
+    builtin_func_simple_proto::fac<false, mk_ldC, mk_ldC, mk_ldC>;
+
+
+  using sp_pv = builtin_func_simple_proto::fac<false, mk_pv>;
+  using sp_pv_u = builtin_func_simple_proto::fac<false, mk_pv, mk_u>;
+  using sp_pv_sz = builtin_func_simple_proto::fac<false, mk_pv, mk_sz>;
+  using sp_pv_sz_sz =
+    builtin_func_simple_proto::fac<false, mk_pv, mk_sz, mk_sz>;
+  using sp_pv_pv = builtin_func_simple_proto::fac<false, mk_pv, mk_pv>;
+  using sp_pv_pv_i_sz =
+    builtin_func_simple_proto::fac<false, mk_pv, mk_pv, mk_i, mk_sz>;
+  using sp_pv_pv_i_sz_sz =
+    builtin_func_simple_proto::fac<false, mk_pv, mk_pv, mk_i, mk_sz, mk_sz>;
+  using sp_pv_pv_sz =
+    builtin_func_simple_proto::fac<false, mk_pv, mk_pv, mk_sz>;
+  using sp_pv_pv_pcv_sz =
+    builtin_func_simple_proto::fac<false, mk_pv, mk_pv, mk_pcv, mk_sz>;
+  using sp_pv_pv_pcv_sz_sz =
+    builtin_func_simple_proto::fac<false, mk_pv, mk_pv, mk_pcv, mk_sz, mk_sz>;
+  using sp_pv_pcv_i_sz =
+    builtin_func_simple_proto::fac<false, mk_pv, mk_pcv, mk_i, mk_sz>;
+  using sp_pv_pcv_sz_var =
+    builtin_func_simple_proto::fac<true, mk_pv, mk_pv, mk_sz>;
+  using sp_pv_var =
+    builtin_func_simple_proto::fac<true, mk_pv>;
+
+  using sp_pc_pc_pcc =
+    builtin_func_simple_proto::fac<false, mk_pc, mk_pc, mk_pcc>;
+  using sp_pc_pc_pcc_sz =
+    builtin_func_simple_proto::fac<false, mk_pc, mk_pc, mk_pcc, mk_sz>;
+  using sp_pc_pcc =
+    builtin_func_simple_proto::fac<false, mk_pc, mk_pcc>;
+  using sp_pc_pcc_i =
+    builtin_func_simple_proto::fac<false, mk_pc, mk_pcc, mk_i>;
+  using sp_pc_pcc_sz =
+    builtin_func_simple_proto::fac<false, mk_pc, mk_pcc, mk_sz>;
+  using sp_pc_pcc_pcc =
+    builtin_func_simple_proto::fac<false, mk_pc, mk_pcc, mk_pcc>;
+  using sp_pc_pcc_pcc_i =
+    builtin_func_simple_proto::fac<false, mk_pc, mk_pcc, mk_pcc, mk_i>;
+  using sp_pc_pc_pcc_sz_sz =
+    builtin_func_simple_proto::fac<false, mk_pc, mk_pc, mk_pcc, mk_sz, mk_sz>;
+
+  using sp_pcc = builtin_func_simple_proto::fac<false, mk_pcc>;
+
+  using sp_i8_pvv_i8 =
+    builtin_func_simple_proto::fac<false, _mk_i8, mk_pvv, _mk_i8>;
+  using sp_i16_pvv_i16 =
+    builtin_func_simple_proto::fac<false, _mk_i16, mk_pvv, _mk_i16>;
+  using sp_i32_pvv_i32 =
+    builtin_func_simple_proto::fac<false, _mk_i32, mk_pvv, _mk_i32>;
+  using sp_i64_pvv_i64 =
+    builtin_func_simple_proto::fac<false, _mk_i64, mk_pvv, _mk_i64>;
+  using sp_i128_pvv_i128 =
+    builtin_func_simple_proto::fac<false, _mk_i128, mk_pvv, _mk_i128>;
+
+  using sp_i8_pvv_i8_var =
+    builtin_func_simple_proto::fac<true, _mk_i8, mk_pvv, _mk_i8>;
+  using sp_i16_pvv_i16_var =
+    builtin_func_simple_proto::fac<true, _mk_i16, mk_pvv, _mk_i16>;
+  using sp_i32_pvv_i32_var =
+    builtin_func_simple_proto::fac<true, _mk_i32, mk_pvv, _mk_i32>;
+  using sp_i64_pvv_i64_var =
+    builtin_func_simple_proto::fac<true, _mk_i64, mk_pvv, _mk_i64>;
+  using sp_i128_pvv_i128_var =
+    builtin_func_simple_proto::fac<true, _mk_i128, mk_pvv, _mk_i128>;
+  using pio0_iN_pvv_iN_var =
+    _builtin_func_pi_overload_fac<0,
+				  sp_i8_pvv_i8_var::create,
+				  sp_i16_pvv_i16_var::create,
+				  sp_i32_pvv_i32_var::create,
+				  sp_i64_pvv_i64_var::create,
+				  sp_i128_pvv_i128_var::create>;
+
+  using sp_b_pvv_i8_i8 =
+    builtin_func_simple_proto::fac<false, mk_b, mk_pvv, _mk_i8, _mk_i8>;
+  using sp_b_pvv_i16_i16 =
+    builtin_func_simple_proto::fac<false, mk_b, mk_pvv, _mk_i16, _mk_i16>;
+  using sp_b_pvv_i32_i32 =
+    builtin_func_simple_proto::fac<false, mk_b, mk_pvv, _mk_i32, _mk_i32>;
+  using sp_b_pvv_i64_i64 =
+    builtin_func_simple_proto::fac<false, mk_b, mk_pvv, _mk_i64, _mk_i64>;
+  using sp_b_pvv_i128_i128 =
+    builtin_func_simple_proto::fac<false, mk_b, mk_pvv, _mk_i128, _mk_i128>;
+
+  using sp_b_pvv_i8_i8_var =
+    builtin_func_simple_proto::fac<true, mk_b, mk_pvv, _mk_i8, _mk_i8>;
+  using sp_b_pvv_i16_i16_var =
+    builtin_func_simple_proto::fac<true, mk_b, mk_pvv, _mk_i16, _mk_i16>;
+  using sp_b_pvv_i32_i32_var =
+    builtin_func_simple_proto::fac<true, mk_b, mk_pvv, _mk_i32, _mk_i32>;
+  using sp_b_pvv_i64_i64_var =
+    builtin_func_simple_proto::fac<true, mk_b, mk_pvv, _mk_i64, _mk_i64>;
+  using sp_b_pvv_i128_i128_var =
+    builtin_func_simple_proto::fac<true, mk_b, mk_pvv, _mk_i128, _mk_i128>;
+  using pio0_b_pvv_iN_iN_var =
+    _builtin_func_pi_overload_fac<0,
+				  sp_b_pvv_i8_i8_var::create,
+				  sp_b_pvv_i16_i16_var::create,
+				  sp_b_pvv_i32_i32_var::create,
+				  sp_b_pvv_i64_i64_var::create,
+				  sp_b_pvv_i128_i128_var::create>;
+
+  using sp_i8_pvv_i8_i8 =
+    builtin_func_simple_proto::fac<false, _mk_i8, mk_pvv, _mk_i8, _mk_i8>;
+  using sp_i16_pvv_i16_i16 =
+    builtin_func_simple_proto::fac<false, _mk_i16, mk_pvv, _mk_i16, _mk_i16>;
+  using sp_i32_pvv_i32_i32 =
+    builtin_func_simple_proto::fac<false, _mk_i32, mk_pvv, _mk_i32, _mk_i32>;
+  using sp_i64_pvv_i64_i64 =
+    builtin_func_simple_proto::fac<false, _mk_i64, mk_pvv, _mk_i64, _mk_i64>;
+  using sp_i128_pvv_i128_i128 =
+    builtin_func_simple_proto::fac<false, _mk_i128, mk_pvv, _mk_i128, _mk_i128>;
+
+  using sp_i8_pvv_i8_i8_var =
+    builtin_func_simple_proto::fac<true, _mk_i8, mk_pvv, _mk_i8, _mk_i8>;
+  using sp_i16_pvv_i16_i16_var =
+    builtin_func_simple_proto::fac<true, _mk_i16, mk_pvv, _mk_i16, _mk_i16>;
+  using sp_i32_pvv_i32_i32_var =
+    builtin_func_simple_proto::fac<true, _mk_i32, mk_pvv, _mk_i32, _mk_i32>;
+  using sp_i64_pvv_i64_i64_var =
+    builtin_func_simple_proto::fac<true, _mk_i64, mk_pvv, _mk_i64, _mk_i64>;
+  using sp_i128_pvv_i128_i128_var =
+    builtin_func_simple_proto::fac<true, _mk_i128, mk_pvv, _mk_i128, _mk_i128>;
+  using pio0_iN_pvv_iN_iN_var =
+    _builtin_func_pi_overload_fac<0,
+				  sp_i8_pvv_i8_i8_var::create,
+				  sp_i16_pvv_i16_i16_var::create,
+				  sp_i32_pvv_i32_i32_var::create,
+				  sp_i64_pvv_i64_i64_var::create,
+				  sp_i128_pvv_i128_i128_var::create>;
+
+  using pio0_v_pvv_var = _builtin_func_pi_overload_fac<0,
+						       sp_v_pvv_var::create,
+						       sp_v_pvv_var::create,
+						       sp_v_pvv_var::create,
+						       sp_v_pvv_var::create,
+						       sp_v_pvv_var::create>;
+
+  using sp_i8_pvv_i8_i =
+    builtin_func_simple_proto::fac<false, _mk_i8, mk_pvv, _mk_i8, mk_i>;
+  using sp_i16_pvv_i16_i =
+    builtin_func_simple_proto::fac<false, _mk_i16, mk_pvv, _mk_i16, mk_i>;
+  using sp_i32_pvv_i32_i =
+    builtin_func_simple_proto::fac<false, _mk_i32,  mk_pvv, _mk_i32, mk_i>;
+  using sp_i64_pvv_i64_i =
+    builtin_func_simple_proto::fac<false, _mk_i64, mk_pvv, _mk_i64, mk_i>;
+  using sp_i128_pvv_i128_i =
+    builtin_func_simple_proto::fac<false, _mk_i128, mk_pvv, _mk_i128, mk_i>;
+  using pio0_iN_pvv_iN_i =
+    _builtin_func_pi_overload_fac<0,
+				  sp_i8_pvv_i8_i::create,
+				  sp_i16_pvv_i16_i::create,
+				  sp_i32_pvv_i32_i::create,
+				  sp_i64_pvv_i64_i::create,
+				  sp_i128_pvv_i128_i::create>;
+
+  using sp_i8_pcvv_i =
+    builtin_func_simple_proto::fac<false, _mk_i8, mk_pcvv, mk_i>;
+  using sp_i16_pcvv_i =
+    builtin_func_simple_proto::fac<false, _mk_i16, mk_pcvv, mk_i>;
+  using sp_i32_pcvv_i =
+    builtin_func_simple_proto::fac<false, _mk_i32, mk_pcvv, mk_i>;
+  using sp_i64_pcvv_i =
+    builtin_func_simple_proto::fac<false, _mk_i64, mk_pcvv, mk_i>;
+  using sp_i128_pcvv_i =
+    builtin_func_simple_proto::fac<false, _mk_i128, mk_pcvv, mk_i>;
+  using pio0_iN_pcvv_i = _builtin_func_pi_overload_fac<0,
+						       sp_i8_pcvv_i::create,
+						       sp_i16_pcvv_i::create,
+						       sp_i32_pcvv_i::create,
+						       sp_i64_pcvv_i::create,
+						       sp_i128_pcvv_i::create>;
+
+  using sp_b_pvv_pv_i8_b_i_i =
+    builtin_func_simple_proto::fac<false, mk_b, mk_pvv, mk_pv, _mk_i8, mk_b,
+				   mk_i, mk_i>;
+  using sp_b_pvv_pv_i16_b_i_i =
+    builtin_func_simple_proto::fac<false, mk_b, mk_pvv, mk_pv, _mk_i16, mk_b,
+				   mk_i, mk_i>;
+  using sp_b_pvv_pv_i32_b_i_i =
+    builtin_func_simple_proto::fac<false, mk_b, mk_pvv, mk_pv, _mk_i32, mk_b,
+				   mk_i, mk_i>;
+  using sp_b_pvv_pv_i64_b_i_i =
+    builtin_func_simple_proto::fac<false, mk_b, mk_pvv, mk_pv, _mk_i64, mk_b,
+				   mk_i, mk_i>;
+  using sp_b_pvv_pv_i128_b_i_i =
+    builtin_func_simple_proto::fac<false, mk_b, mk_pvv, mk_pv, _mk_i128, mk_b,
+				   mk_i, mk_i>;
+  using pio0_b_pvv_pv_iN_b_i_i =
+    _builtin_func_pi_overload_fac<0,
+				  sp_b_pvv_pv_i8_b_i_i::create,
+				  sp_b_pvv_pv_i16_b_i_i::create,
+				  sp_b_pvv_pv_i32_b_i_i::create,
+				  sp_b_pvv_pv_i64_b_i_i::create,
+				  sp_b_pvv_pv_i128_b_i_i::create>;
+
+  using sp_v_pvv_i8_i =
+    builtin_func_simple_proto::fac<false, mk_v, mk_pvv, _mk_i8, mk_i>;
+  using sp_v_pvv_i16_i =
+    builtin_func_simple_proto::fac<false, mk_v, mk_pvv, _mk_i16, mk_i>;
+  using sp_v_pvv_i32_i =
+    builtin_func_simple_proto::fac<false, mk_v,  mk_pvv, _mk_i32, mk_i>;
+  using sp_v_pvv_i64_i =
+    builtin_func_simple_proto::fac<false, mk_v, mk_pvv, _mk_i64, mk_i>;
+  using sp_v_pvv_i128_i =
+    builtin_func_simple_proto::fac<false, mk_v, mk_pvv, _mk_i128, mk_i>;
+  using pio0_v_pvv_iN_i =
+    _builtin_func_pi_overload_fac<0,
+				  sp_v_pvv_i8_i::create,
+				  sp_v_pvv_i16_i::create,
+				  sp_v_pvv_i32_i::create,
+				  sp_v_pvv_i64_i::create,
+				  sp_v_pvv_i128_i::create>;
+
+
+  static std::map<const std::string,
+		  const builtin_func::factory > m = {
+    // Category: math builtins.
+    { "__builtin_acos", sp_d_d::create },
+    { "__builtin_acosf", sp_f_f::create },
+    { "__builtin_acosl", sp_ld_ld::create },
+    { "__builtin_acosh", sp_d_d::create },
+    { "__builtin_acoshf", sp_f_f::create },
+    { "__builtin_acoshl", sp_ld_ld::create },
+    { "__builtin_asin", sp_d_d::create },
+    { "__builtin_asinf", sp_f_f::create },
+    { "__builtin_asinl", sp_ld_ld::create },
+    { "__builtin_asinh", sp_d_d::create },
+    { "__builtin_asinhf", sp_f_f::create },
+    { "__builtin_asinhl", sp_ld_ld::create },
+    { "__builtin_atan", sp_d_d::create },
+    { "__builtin_atanf", sp_f_f::create },
+    { "__builtin_atanl", sp_ld_ld::create },
+    { "__builtin_atanh", sp_d_d::create },
+    { "__builtin_atanhf", sp_f_f::create },
+    { "__builtin_atanhl", sp_ld_ld::create },
+    { "__builtin_atan2", sp_d_d_d::create },
+    { "__builtin_atan2f", sp_f_f_f::create },
+    { "__builtin_atan2l", sp_ld_ld_ld::create },
+    { "__builtin_cbrt", sp_d_d::create },
+    { "__builtin_cbrtf", sp_f_f::create },
+    { "__builtin_cbrtl", sp_ld_ld::create },
+    { "__builtin_ceil", sp_d_d::create },
+    { "__builtin_ceilf", sp_f_f::create },
+    { "__builtin_ceill", sp_ld_ld::create },
+    { "__builtin_copysign", sp_d_d_d::create },
+    { "__builtin_copysignf", sp_f_f_f::create },
+    { "__builtin_copysignl", sp_ld_ld_ld::create },
+    { "__builtin_cos", sp_d_d::create },
+    { "__builtin_cosf", sp_f_f::create },
+    { "__builtin_cosl", sp_ld_ld::create },
+    { "__builtin_cosh", sp_d_d::create },
+    { "__builtin_coshf", sp_f_f::create },
+    { "__builtin_coshl", sp_ld_ld::create },
+    { "__builtin_drem", sp_d_d_d::create },
+    { "__builtin_dremf", sp_f_f_f::create },
+    { "__builtin_dreml", sp_ld_ld_ld::create },
+    { "__builtin_erf", sp_d_d::create },
+    { "__builtin_erff", sp_f_f::create },
+    { "__builtin_erfl", sp_ld_ld::create },
+    { "__builtin_erfc", sp_d_d::create },
+    { "__builtin_erfcf", sp_f_f::create },
+    { "__builtin_erfcl", sp_ld_ld::create },
+    { "__builtin_exp", sp_d_d::create },
+    { "__builtin_expf", sp_f_f::create },
+    { "__builtin_expl", sp_ld_ld::create },
+    { "__builtin_exp10", sp_d_d::create },
+    { "__builtin_exp10f", sp_f_f::create },
+    { "__builtin_exp10l", sp_ld_ld::create },
+    { "__builtin_exp2", sp_d_d::create },
+    { "__builtin_exp2f", sp_f_f::create },
+    { "__builtin_exp2l", sp_ld_ld::create },
+    { "__builtin_expm1", sp_d_d::create },
+    { "__builtin_expm1f", sp_f_f::create },
+    { "__builtin_expm1l", sp_ld_ld::create },
+    { "__builtin_fabs", sp_d_d::create },
+    { "__builtin_fabsf", sp_f_f::create },
+    { "__builtin_fabsl", sp_ld_ld::create },
+    { "__builtin_fdim", sp_d_d_d::create },
+    { "__builtin_fdimf", sp_f_f_f::create },
+    { "__builtin_fdiml", sp_ld_ld_ld::create },
+    { "__builtin_floor", sp_d_d::create },
+    { "__builtin_floor", sp_d_d::create },
+    { "__builtin_floorf", sp_f_f::create },
+    { "__builtin_floorl", sp_ld_ld::create },
+    { "__builtin_fma", sp_d_d_d_d::create },
+    { "__builtin_fmaf", sp_f_f_f_f::create },
+    { "__builtin_fmal", sp_ld_ld_ld_ld::create },
+    { "__builtin_fmax", sp_d_d_d::create },
+    { "__builtin_fmaxf", sp_f_f_f::create },
+    { "__builtin_fmaxl", sp_ld_ld_ld::create },
+    { "__builtin_fmin", sp_d_d_d::create },
+    { "__builtin_fminf", sp_f_f_f::create },
+    { "__builtin_fminl", sp_ld_ld_ld::create },
+    { "__builtin_fmod", sp_d_d_d::create },
+    { "__builtin_fmodf", sp_f_f_f::create },
+    { "__builtin_fmodl", sp_ld_ld_ld::create },
+    { "__builtin_frexp", sp_d_d_pi::create },
+    { "__builtin_frexpf", sp_f_f_pi::create },
+    { "__builtin_frexpl", sp_ld_ld_pi::create },
+    { "__builtin_gamma", sp_d_d::create },
+    { "__builtin_gammaf", sp_f_f::create },
+    { "__builtin_gammal", sp_ld_ld::create },
+    { "__builtin_gamma_r", sp_d_d_pi::create },
+    { "__builtin_gammaf_r", sp_f_f_pi::create },
+    { "__builtin_gammal_r", sp_ld_ld_pi::create },
+    { "__builtin_huge_val", sp_d::create },
+    { "__builtin_huge_valf", sp_f::create },
+    { "__builtin_huge_vall", sp_ld::create },
+    { "__builtin_hypot", sp_d_d_d::create },
+    { "__builtin_hypotf", sp_f_f_f::create },
+    { "__builtin_hypotl", sp_ld_ld_ld::create },
+    { "__builtin_iceil", sp_i_d::create },
+    { "__builtin_iceilf", sp_i_f::create },
+    { "__builtin_iceild", sp_i_ld::create },
+    { "__builtin_ifloor", sp_i_d::create },
+    { "__builtin_ifloorf", sp_i_f::create },
+    { "__builtin_ifloorl", sp_i_ld::create },
+    { "__builtin_ilogb", sp_i_d::create },
+    { "__builtin_ilogbf", sp_i_f::create },
+    { "__builtin_ilogbl", sp_i_ld::create },
+    { "__builtin_inf", sp_d::create },
+    { "__builtin_inff", sp_f::create },
+    { "__builtin_infl", sp_ld::create },
+    { "__builtin_irint", sp_i_d::create },
+    { "__builtin_irintf", sp_i_f::create },
+    { "__builtin_irintl", sp_i_ld::create },
+    { "__builtin_iround", sp_i_d::create },
+    { "__builtin_iroundf", sp_i_f::create },
+    { "__builtin_iroundl", sp_i_ld::create },
+    { "__builtin_j0", sp_d_d::create },
+    { "__builtin_j0f", sp_f_f::create },
+    { "__builtin_j0l", sp_ld_ld::create },
+    { "__builtin_j1", sp_d_d::create },
+    { "__builtin_j1f", sp_f_f::create },
+    { "__builtin_j1l", sp_ld_ld::create },
+    { "__builtin_jn", sp_d_i_d::create },
+    { "__builtin_jnf", sp_f_i_f::create },
+    { "__builtin_jnl", sp_ld_i_ld::create },
+    { "__builtin_lceil", sp_l_d::create },
+    { "__builtin_lceilf", sp_l_f::create },
+    { "__builtin_lceill", sp_l_ld::create },
+    { "__builtin_ldexp", sp_d_d_i::create },
+    { "__builtin_ldexpf", sp_f_f_i::create },
+    { "__builtin_ldexpl", sp_ld_ld_i::create },
+    { "__builtin_lfloor", sp_l_d::create },
+    { "__builtin_lfloorf", sp_l_f::create },
+    { "__builtin_lfloorl", sp_l_ld::create },
+    { "__builtin_lgamma", sp_d_d::create },
+    { "__builtin_lgammaf", sp_f_f::create },
+    { "__builtin_lgammal", sp_ld_ld::create },
+    { "__builtin_lgamma_r", sp_d_d_pi::create },
+    { "__builtin_lgammaf_r", sp_f_f_pi::create },
+    { "__builtin_lgammal_r", sp_ld_ld_pi::create },
+    { "__builtin_llceil", sp_ll_d::create },
+    { "__builtin_llceilf", sp_ll_f::create },
+    { "__builtin_llceill", sp_ll_ld::create },
+    { "__builtin_llfloor", sp_ll_d::create },
+    { "__builtin_llfloorf", sp_ll_f::create },
+    { "__builtin_llfloorl", sp_ll_ld::create },
+    { "__builtin_llrint", sp_ll_d::create },
+    { "__builtin_llrintf", sp_ll_f::create },
+    { "__builtin_llrintl", sp_ll_ld::create },
+    { "__builtin_llround", sp_ll_d::create },
+    { "__builtin_llroundf", sp_ll_f::create },
+    { "__builtin_llroundl", sp_ll_ld::create },
+    { "__builtin_log", sp_d_d::create },
+    { "__builtin_logf", sp_f_f::create },
+    { "__builtin_logl", sp_ld_ld::create },
+    { "__builtin_log10", sp_d_d::create },
+    { "__builtin_log10f", sp_f_f::create },
+    { "__builtin_log10l", sp_ld_ld::create },
+    { "__builtin_log1p", sp_d_d::create },
+    { "__builtin_log1pf", sp_f_f::create },
+    { "__builtin_log1pl", sp_ld_ld::create },
+    { "__builtin_log2", sp_d_d::create },
+    { "__builtin_log2f", sp_f_f::create },
+    { "__builtin_log2l", sp_ld_ld::create },
+    { "__builtin_logb", sp_d_d::create },
+    { "__builtin_logbf", sp_f_f::create },
+    { "__builtin_logbl", sp_ld_ld::create },
+    { "__builtin_lrint", sp_l_d::create },
+    { "__builtin_lrintf", sp_l_f::create },
+    { "__builtin_lrintl", sp_l_ld::create },
+    { "__builtin_lround", sp_l_d::create },
+    { "__builtin_lroundf", sp_l_f::create },
+    { "__builtin_lroundl", sp_l_ld::create },
+    { "__builtin_modf", sp_d_d_pd::create },
+    { "__builtin_modff", sp_f_f_pf::create },
+    { "__builtin_modfl", sp_ld_ld_pld::create },
+    { "__builtin_nan", sp_d_pcc::create },
+    { "__builtin_nanf", sp_f_pcc::create },
+    { "__builtin_nanl", sp_ld_pcc::create },
+    { "__builtin_nans", sp_d_pcc::create },
+    { "__builtin_nansf", sp_f_pcc::create },
+    { "__builtin_nansl", sp_ld_pcc::create },
+    { "__builtin_nearbyint", sp_d_d::create },
+    { "__builtin_nearbyintf", sp_f_f::create },
+    { "__builtin_nearbyintl", sp_ld_ld::create },
+    { "__builtin_nextafter", sp_d_d_d::create },
+    { "__builtin_nextafterf", sp_f_f_f::create },
+    { "__builtin_nextafterl", sp_ld_ld_ld::create },
+    { "__builtin_nexttoward", sp_d_d_d::create },
+    { "__builtin_nexttowardf", sp_f_f_f::create },
+    { "__builtin_nexttowardl", sp_ld_ld_ld::create },
+    { "__builtin_pow", sp_d_d_d::create },
+    { "__builtin_powf", sp_f_f_f::create },
+    { "__builtin_powl", sp_ld_ld_ld::create },
+    { "__builtin_pow10", sp_d_d::create },
+    { "__builtin_pow10f", sp_f_f::create },
+    { "__builtin_pow10l", sp_ld_ld::create },
+    { "__builtin_powi", sp_d_d_i::create },
+    { "__builtin_powif", sp_f_f_i::create },
+    { "__builtin_powil", sp_ld_ld_i::create },
+    { "__builtin_remainder", sp_d_d_d::create },
+    { "__builtin_remainderf", sp_f_f_f::create },
+    { "__builtin_remainderl", sp_ld_ld_ld::create },
+    { "__builtin_remquo", sp_d_d_d_pi::create },
+    { "__builtin_remquof", sp_f_f_f_pi::create },
+    { "__builtin_remquol", sp_ld_ld_ld_pi::create },
+    { "__builtin_rint", sp_d_d::create },
+    { "__builtin_rintf", sp_f_f::create },
+    { "__builtin_rintl", sp_ld_ld::create },
+    { "__builtin_round", sp_d_d::create },
+    { "__builtin_roundf", sp_f_f::create },
+    { "__builtin_roundl", sp_ld_ld::create },
+    { "__builtin_scalb", sp_d_d_d::create },
+    { "__builtin_scalbf", sp_f_f_f::create },
+    { "__builtin_scalbl", sp_ld_ld_ld::create },
+    { "__builtin_scalbln", sp_d_d_l::create },
+    { "__builtin_scalblnf", sp_f_f_l::create },
+    { "__builtin_scalblnl", sp_ld_ld_l::create },
+    { "__builtin_scalbn", sp_d_d_i::create },
+    { "__builtin_scalbnf", sp_f_f_i::create },
+    { "__builtin_scalbnl", sp_ld_ld_i::create },
+    { "__builtin_signbit", sp_i_d::create },
+    { "__builtin_signbitf", sp_i_f::create },
+    { "__builtin_signbitl", sp_i_ld::create },
+    { "__builtin_significand", sp_d_d::create },
+    { "__builtin_significandf", sp_f_f::create },
+    { "__builtin_significandl", sp_ld_ld::create },
+    { "__builtin_sin", sp_d_d::create },
+    { "__builtin_sinf", sp_f_f::create },
+    { "__builtin_sinl", sp_ld_ld::create },
+    { "__builtin_sincos", sp_v_d_pd_pd::create },
+    { "__builtin_sincosf", sp_v_f_pf_pf::create },
+    { "__builtin_sincosl", sp_v_ld_pld_pld::create },
+    { "__builtin_sinh", sp_d_d::create },
+    { "__builtin_sinhf", sp_f_f::create },
+    { "__builtin_sinhl", sp_ld_ld::create },
+    { "__builtin_sqrt", sp_d_d::create },
+    { "__builtin_sqrtf", sp_f_f::create },
+    { "__builtin_sqrtl", sp_ld_ld::create },
+    { "__builtin_tan", sp_d_d::create },
+    { "__builtin_tanf", sp_f_f::create },
+    { "__builtin_tanl", sp_ld_ld::create },
+    { "__builtin_tanh", sp_d_d::create },
+    { "__builtin_tanhf", sp_f_f::create },
+    { "__builtin_tanhl", sp_ld_ld::create },
+    { "__builtin_tgamma", sp_d_d::create },
+    { "__builtin_tgammaf", sp_f_f::create },
+    { "__builtin_tgammal", sp_ld_ld::create },
+    { "__builtin_trunc", sp_d_d::create },
+    { "__builtin_truncf", sp_f_f::create },
+    { "__builtin_truncl", sp_ld_ld::create },
+    { "__builtin_y0", sp_d_d::create },
+    { "__builtin_y0f", sp_f_f::create },
+    { "__builtin_y0l", sp_ld_ld::create },
+    { "__builtin_y1", sp_d_d::create },
+    { "__builtin_y1f", sp_f_f::create },
+    { "__builtin_y1l", sp_ld_ld::create },
+    { "__builtin_yn", sp_d_i_d::create },
+    { "__builtin_ynf", sp_f_i_f::create },
+    { "__builtin_ynl", sp_ld_i_ld::create },
+
+    // Category: _Complex math builtins.
+    { "__builtin_cabs", sp_d_dC::create },
+    { "__builtin_cabsf", sp_f_fC::create },
+    { "__builtin_cabsl", sp_ld_ldC::create },
+    { "__builtin_cacos", sp_dC_dC::create },
+    { "__builtin_cacosf", sp_fC_fC::create },
+    { "__builtin_cacosl", sp_ldC_ldC::create },
+    { "__builtin_cacosh", sp_dC_dC::create },
+    { "__builtin_cacoshf", sp_fC_fC::create },
+    { "__builtin_cacoshl", sp_ldC_ldC::create },
+    { "__builtin_carg", sp_d_dC::create },
+    { "__builtin_cargf", sp_f_fC::create },
+    { "__builtin_cargl", sp_ld_ldC::create },
+    { "__builtin_casin", sp_dC_dC::create },
+    { "__builtin_casinf", sp_fC_fC::create },
+    { "__builtin_casinl", sp_ldC_ldC::create },
+    { "__builtin_casinh", sp_dC_dC::create },
+    { "__builtin_casinhf", sp_fC_fC::create },
+    { "__builtin_casinhl", sp_ldC_ldC::create },
+    { "__builtin_catan", sp_dC_dC::create },
+    { "__builtin_catanf", sp_fC_fC::create },
+    { "__builtin_catanl", sp_ldC_ldC::create },
+    { "__builtin_catanh", sp_dC_dC::create },
+    { "__builtin_catanhf", sp_fC_fC::create },
+    { "__builtin_catanhl", sp_ldC_ldC::create },
+    { "__builtin_ccos", sp_dC_dC::create },
+    { "__builtin_ccosf", sp_fC_fC::create },
+    { "__builtin_ccosl", sp_ldC_ldC::create },
+    { "__builtin_ccosh", sp_dC_dC::create },
+    { "__builtin_ccoshf", sp_fC_fC::create },
+    { "__builtin_ccoshl", sp_ldC_ldC::create },
+    { "__builtin_cexp", sp_dC_dC::create },
+    { "__builtin_cexpf", sp_fC_fC::create },
+    { "__builtin_cexpl", sp_ldC_ldC::create },
+    { "__builtin_cexpi", sp_dC_d::create },
+    { "__builtin_cexpif", sp_fC_f::create },
+    { "__builtin_cexpil", sp_ldC_ld::create },
+    { "__builtin_cimag", sp_d_dC::create },
+    { "__builtin_cimagf", sp_f_fC::create },
+    { "__builtin_cimagl", sp_ld_ldC::create },
+    { "__builtin_clog", sp_dC_dC::create },
+    { "__builtin_clogf", sp_fC_fC::create },
+    { "__builtin_clogl", sp_ldC_ldC::create },
+    { "__builtin_clog10", sp_dC_dC::create },
+    { "__builtin_clog10f", sp_fC_fC::create },
+    { "__builtin_clog10l", sp_ldC_ldC::create },
+    { "__builtin_conj", sp_dC_dC::create },
+    { "__builtin_conjf", sp_fC_fC::create },
+    { "__builtin_conjl", sp_ldC_ldC::create },
+    { "__builtin_cpow", sp_dC_dC_dC::create },
+    { "__builtin_cpowf", sp_fC_fC_fC::create },
+    { "__builtin_cpowl", sp_ldC_ldC_ldC::create },
+    { "__builtin_cproj", sp_dC_dC::create },
+    { "__builtin_cprojf", sp_fC_fC::create },
+    { "__builtin_cprojl", sp_ldC_ldC::create },
+    { "__builtin_creal", sp_d_dC::create },
+    { "__builtin_crealf", sp_f_fC::create },
+    { "__builtin_creall", sp_ld_ldC::create },
+    { "__builtin_csin", sp_dC_dC::create },
+    { "__builtin_csinf", sp_fC_fC::create },
+    { "__builtin_csinl", sp_ldC_ldC::create },
+    { "__builtin_csinh", sp_dC_dC::create },
+    { "__builtin_csinhf", sp_fC_fC::create },
+    { "__builtin_csinhl", sp_ldC_ldC::create },
+    { "__builtin_csqrt", sp_dC_dC::create },
+    { "__builtin_csqrtf", sp_fC_fC::create },
+    { "__builtin_csqrtl", sp_ldC_ldC::create },
+    { "__builtin_ctan", sp_dC_dC::create },
+    { "__builtin_ctanf", sp_fC_fC::create },
+    { "__builtin_ctanl", sp_ldC_ldC::create },
+    { "__builtin_ctanh", sp_dC_dC::create },
+    { "__builtin_ctanhf", sp_fC_fC::create },
+    { "__builtin_ctanhl", sp_ldC_ldC::create },
+
+    // Category string/memory builtins.
+    { "__builtin_bcmp", sp_i_pcv_pcv_sz::create },
+    { "__builtin_bcopy", sp_v_pcv_pv_sz::create },
+    { "__builtin_bzero", sp_v_pv_sz::create },
+    { "__builtin_index", sp_pc_pcc_i::create },
+    { "__builtin_memchr", sp_pv_pcv_i_sz::create },
+    { "__builtin_memcmp", sp_i_pcv_pcv_sz::create },
+    { "__builtin_memcpy", sp_pv_pv_pcv_sz::create },
+    { "__builtin_memmove", sp_pv_pv_pcv_sz::create },
+    { "__builtin_mempcpy", sp_pv_pv_pcv_sz::create },
+    { "__builtin_memset", sp_pv_pv_i_sz::create },
+    { "__builtin_rindex", sp_pc_pcc_i::create },
+    { "__builtin_stpcpy", sp_pc_pc_pcc::create },
+    { "__builtin_stpncpy", sp_pc_pc_pcc_sz::create },
+    { "__builtin_strcasecmp", sp_i_pcc_pcc::create },
+    { "__builtin_strcat", sp_pc_pc_pcc::create },
+    { "__builtin_strchr", sp_pc_pcc_i::create },
+    { "__builtin_strcmp", sp_i_pcc_pcc::create },
+    { "__builtin_strcpy", sp_pc_pc_pcc::create },
+    { "__builtin_strcspn", sp_sz_pcc_pcc::create },
+    { "__builtin_strdup", sp_pc_pcc::create },
+    { "__builtin_strndup", sp_pc_pcc_sz::create },
+    { "__builtin_strlen", sp_sz_pcc::create },
+    { "__builtin_strncasecmp", sp_i_pcc_pcc_sz::create },
+    { "__builtin_strncat", sp_pc_pc_pcc_sz::create },
+    { "__builtin_strncmp", sp_i_pcc_pcc_sz::create },
+    { "__builtin_strncpy", sp_pc_pc_pcc_sz::create },
+    { "__builtin_strpbrk", sp_pc_pcc_pcc::create },
+    { "__builtin_strrchr", sp_pc_pcc_i::create },
+    { "__builtin_strspn", sp_sz_pcc_pcc::create },
+    { "__builtin_strstr", sp_pc_pcc_pcc::create },
+
+    // Category: stdio builtins.
+    { "__builtin_fprintf", sp_i_pv_pcc_var::create },
+    { "__builtin_fprintf_unlocked", sp_i_pv_pcc_var::create },
+    { "__builtin_putc", sp_i_i_pv::create },
+    { "__builtin_putc_unlocked", sp_i_i_pv::create },
+    { "__builtin_fputc", sp_i_i_pv::create },
+    { "__builtin_fputc_unlocked", sp_i_i_pv::create },
+    { "__builtin_fputs", sp_i_pcc_pv::create },
+    { "__builtin_fputs_unlocked", sp_i_pcc_pv::create },
+    { "__builtin_fscanf", sp_i_pv_pcc_var::create },
+    { "__builtin_fwrite", sp_sz_pcc_sz_sz_pv::create },
+    { "__builtin_fwrite_unlocked", sp_sz_pcc_sz_sz_pv::create },
+    { "__builtin_printf", sp_i_pcc_var::create },
+    { "__builtin_printf_unlocked", sp_i_pcc_var::create },
+    { "__builtin_putchar", sp_i_i::create },
+    { "__builtin_putchar_unlocked", sp_i_i::create },
+    { "__builtin_puts", sp_i_pcc::create },
+    { "__builtin_puts_unlocked", sp_i_pcc::create },
+    { "__builtin_scanf", sp_i_pcc_var::create },
+    { "__builtin_snprintf", sp_i_pc_sz_pcc_var::create },
+    { "__builtin_sprintf", sp_i_pc_pcc_var::create },
+    { "__builtin_sscanf", sp_i_pcc_sz_pcc_var::create },
+    { "__builtin_vfprintf", sp_i_pv_pcc_val::create },
+    { "__builtin_vfscanf", sp_i_pv_pcc_val::create },
+    { "__builtin_vprintf", sp_i_pcc_val::create },
+    { "__builtin_vscanf", sp_i_pcc_val::create },
+    { "__builtin_vsnprintf", sp_i_pc_sz_pcc_val::create },
+    { "__builtin_vsprintf", sp_i_pc_pcc_val::create },
+    { "__builtin_vsscanf", sp_i_pcc_pcc_val::create },
+
+    // Category: ctype builtins.
+    { "__builtin_isalnum", sp_i_i::create },
+    { "__builtin_isalpha", sp_i_i::create },
+    { "__builtin_isascii", sp_i_i::create },
+    { "__builtin_isblank", sp_i_i::create },
+    { "__builtin_iscntrl", sp_i_i::create },
+    { "__builtin_isdigit", sp_i_i::create },
+    { "__builtin_isgraph", sp_i_i::create },
+    { "__builtin_islower", sp_i_i::create },
+    { "__builtin_isprint", sp_i_i::create },
+    { "__builtin_ispunct", sp_i_i::create },
+    { "__builtin_isspace", sp_i_i::create },
+    { "__builtin_isupper", sp_i_i::create },
+    { "__builtin_isxdigit", sp_i_i::create },
+    { "__builtin_toascii", sp_i_i::create },
+    { "__builtin_tolower", sp_i_i::create },
+    { "__builtin_toupper", sp_i_i::create },
+    { "__builtin_iswalnum", sp_i_wi::create },
+    { "__builtin_iswalpha", sp_i_wi::create },
+    { "__builtin_iswblank", sp_i_wi::create },
+    { "__builtin_iswcntrl", sp_i_wi::create },
+    { "__builtin_iswdigit", sp_i_wi::create },
+    { "__builtin_iswgraph", sp_i_wi::create },
+    { "__builtin_iswlower", sp_i_wi::create },
+    { "__builtin_iswprint", sp_i_wi::create },
+    { "__builtin_iswpunct", sp_i_wi::create },
+    { "__builtin_iswspace", sp_i_wi::create },
+    { "__builtin_iswupper", sp_i_wi::create },
+    { "__builtin_iswxdigit", sp_i_wi::create },
+    { "__builtin_toascii", sp_i_wi::create },
+    { "__builtin_towlower", sp_wi_wi::create },
+    { "__builtin_towupper", sp_wi_wi::create },
+
+    // Category: overflow builtins
+    { "__builtin_add_overflow",
+      _builtin_overflow::create<nullptr, false, _builtin_overflow::op::add> },
+    { "__builtin_add_overflow_p",
+      _builtin_overflow::create<nullptr, true, _builtin_overflow::op::add> },
+    { "__builtin_sadd_overflow",
+      _builtin_overflow::create<_builtin_overflow::fac_i, false,
+			       _builtin_overflow::op::add> },
+    { "__builtin_saddl_overflow",
+      _builtin_overflow::create<_builtin_overflow::fac_l, false,
+			       _builtin_overflow::op::add> },
+    { "__builtin_saddll_overflow",
+      _builtin_overflow::create<_builtin_overflow::fac_ll, false,
+			       _builtin_overflow::op::add> },
+    { "__builtin_uadd_overflow",
+      _builtin_overflow::create<_builtin_overflow::fac_u, false,
+			       _builtin_overflow::op::add> },
+    { "__builtin_uaddl_overflow",
+      _builtin_overflow::create<_builtin_overflow::fac_ul, false,
+			       _builtin_overflow::op::add> },
+    { "__builtin_uaddll_overflow",
+      _builtin_overflow::create<_builtin_overflow::fac_ull, false,
+			       _builtin_overflow::op::add> },
+    { "__builtin_sub_overflow",
+      _builtin_overflow::create<nullptr, false, _builtin_overflow::op::sub> },
+    { "__builtin_sub_overflow_p",
+      _builtin_overflow::create<nullptr, true, _builtin_overflow::op::sub> },
+    { "__builtin_ssub_overflow",
+      _builtin_overflow::create<_builtin_overflow::fac_i, false,
+				_builtin_overflow::op::sub> },
+    { "__builtin_ssubl_overflow",
+      _builtin_overflow::create<_builtin_overflow::fac_l, false,
+				_builtin_overflow::op::sub> },
+    { "__builtin_ssubll_overflow",
+      _builtin_overflow::create<_builtin_overflow::fac_ll, false,
+				_builtin_overflow::op::sub> },
+    { "__builtin_usub_overflow",
+      _builtin_overflow::create<_builtin_overflow::fac_u, false,
+				_builtin_overflow::op::sub> },
+    { "__builtin_usubl_overflow",
+      _builtin_overflow::create<_builtin_overflow::fac_ul, false,
+				_builtin_overflow::op::sub> },
+    { "__builtin_usubll_overflow",
+      _builtin_overflow::create<_builtin_overflow::fac_ull, false,
+				_builtin_overflow::op::sub> },
+    { "__builtin_mul_overflow",
+      _builtin_overflow::create<nullptr, false, _builtin_overflow::op::mul> },
+    { "__builtin_mul_overflow_p",
+      _builtin_overflow::create<nullptr, true, _builtin_overflow::op::mul> },
+    { "__builtin_smul_overflow",
+      _builtin_overflow::create<_builtin_overflow::fac_i, false,
+				_builtin_overflow::op::mul> },
+    { "__builtin_smull_overflow",
+      _builtin_overflow::create<_builtin_overflow::fac_l, false,
+				_builtin_overflow::op::mul> },
+    { "__builtin_smulll_overflow",
+      _builtin_overflow::create<_builtin_overflow::fac_ll, false,
+				_builtin_overflow::op::mul> },
+    { "__builtin_umul_overflow",
+      _builtin_overflow::create<_builtin_overflow::fac_u, false,
+				_builtin_overflow::op::mul> },
+    { "__builtin_umull_overflow",
+      _builtin_overflow::create<_builtin_overflow::fac_ul, false,
+				_builtin_overflow::op::mul> },
+    { "__builtin_umulll_overflow",
+      _builtin_overflow::create<_builtin_overflow::fac_ull, false,
+				_builtin_overflow::op::mul> },
+
+    // Category: miscellaneous builtins.
+    { "__builtin_abort", sp_v::create },
+    { "__builtin_abs", sp_i_i::create },
+    { "__builtin_aggregate_incoming_address", sp_pv_var::create },
+    { "__builtin_aligned_alloc", sp_pv_sz_sz::create },
+    { "__builtin_alloca", sp_pv_sz::create },
+    { "__builtin_alloca_with_align", sp_pv_sz_sz::create },
+    { "__builtin_apply", sp_pv_pF_v_var__pv_sz::create },
+    { "__builtin_apply_args", sp_pv_var::create },
+    { "__builtin_assume_aligned", sp_pv_pcv_sz_var::create },
+    { "__builtin_bswap16", sp_u16_u16::create },
+    { "__builtin_bswap32", sp_u32_u32::create },
+    { "__builtin_bswap64", sp_u64_u64::create },
+    { "__builtin_calloc", sp_pv_sz_sz::create },
+    { "__builtin_choose_expr", builtin_func_choose_expr::create },
+    { "__builtin___clear_cache", sp_v_pv_pv::create },
+    { "__builtin_classify_type", sp_i_var::create },
+    { "__builtin_clz", sp_i_u::create },
+    { "__builtin_clzimax", sp_i_umax::create },
+    { "__builtin_clzl", sp_i_ul::create },
+    { "__builtin_clzll", sp_i_ull::create },
+    { "__builtin_constant_p", builtin_func_constant_p::create },
+    { "__builtin_ctz", sp_i_u::create },
+    { "__builtin_ctzimax", sp_i_umax::create },
+    { "__builtin_ctzl", sp_i_ul::create },
+    { "__builtin_ctzll", sp_i_ull::create },
+    { "__builtin_clrsb", sp_i_i::create },
+    { "__builtin_clrsbimax", sp_i_imax::create },
+    { "__builtin_clrsbl", sp_i_l::create },
+    { "__builtin_clrsbll", sp_i_ll::create },
+    { "__builtin_dcgettext", sp_pc_pcc_pcc_i::create },
+    { "__builtin_dgettext", sp_pc_pcc_pcc::create },
+    { "__builtin_dwarf_cfa", sp_pv::create },
+    { "__builtin_dwarf_sp_column", sp_u::create },
+    { "__builtin_eh_return", sp_v_ssz_pv::create },
+    { "__builtin_eh_return_data_regno)", sp_i_i::create },
+    { "__builtin_execl", sp_i_pcc_pcc_var::create },
+    { "__builtin_execlp", sp_i_pcc_pcc_var::create },
+    { "__builtin_execle", sp_i_pcc_pcc_var::create },
+    { "__builtin_execv", sp_i_pcc_pv_pcc::create },
+    { "__builtin_execvp", sp_i_pcc_pv_pcc::create },
+    { "__builtin_execve", sp_i_pcc_pv_pcc_pv_pcc::create },
+    { "__builtin_exit", sp_v_i::create },
+    { "__builtin_expect", sp_l_l_l::create },
+    { "__builtin_extend_pointer", sp_sz_pv::create },
+    { "__builtin_extract_return_addr", sp_pv_pv::create },
+    { "__builtin_ffs", sp_i_i::create },
+    { "__builtin_ffsimax", sp_i_imax::create },
+    { "__builtin_ffsl", sp_i_l::create },
+    { "__builtin_ffsll", sp_i_ll::create },
+    { "__builtin_fork", sp_pid::create },
+    { "__builtin_frame_address", sp_pv_u::create },
+    { "__builtin_free", sp_v_pv::create },
+    { "__builtin_frob_return_address", sp_pv_pv::create },
+    { "__builtin_gettext", sp_pc_pcc::create },
+    { "__builtin_imaxabs", sp_imax_imax::create },
+    { "__builtin_init_dwarf_reg_size_table", sp_v_pv::create },
+    { "__builtin_finite", sp_i_d::create },
+    { "__builtin_finitef", sp_i_f::create },
+    { "__builtin_finitel", sp_i_ld::create },
+    { "__builtin_fpclassify", sp_i_i_i_i_i_i_var::create },
+    { "__builtin_isfinite", sp_i_var::create },
+    { "__builtin_isinf_sign", sp_i_var::create },
+    { "__builtin_isinf", sp_i_var::create },
+    { "__builtin_isinff", sp_i_f::create },
+    { "__builtin_isinfl", sp_i_ld::create },
+    { "__builtin_isnan", sp_i_var::create },
+    { "__builtin_isnanf", sp_i_f::create },
+    { "__builtin_isnanl", sp_i_ld::create },
+    { "__builtin_isnormal", sp_i_var::create },
+    { "__builtin_isgreater", sp_i_var::create },
+    { "__builtin_isgreaterequal", sp_i_var::create },
+    { "__builtin_isless", sp_i_var::create },
+    { "__builtin_islessequal", sp_i_var::create },
+    { "__builtin_islessgreater", sp_i_var::create },
+    { "__builtin_isunordered", sp_i_var::create },
+    { "__builtin_labs", sp_l_l::create },
+    { "__builtin_llabs", sp_ll_ll::create },
+    { "__builtin_longjmp", sp_v_pv_i::create },
+    { "__builtin_malloc", sp_pv_sz::create },
+    { "__builtin_next_arg", sp_pv_var::create },
+    { "__builtin_parity", sp_i_u::create },
+    { "__builtin_parityimax", sp_i_umax::create },
+    { "__builtin_parityl", sp_i_ul::create },
+    { "__builtin_parityll", sp_i_ull::create },
+    { "__builtin_popcount", sp_i_u::create },
+    { "__builtin_popcountimax", sp_i_umax::create },
+    { "__builtin_popcountl", sp_i_ul::create },
+    { "__builtin_popcountll", sp_i_ull::create },
+    { "__builtin_prefetch", sp_v_pcvv_var::create },
+    { "__builtin_realloc", sp_pv_pv_sz::create },
+    { "__builtin_return", sp_v_pv::create },
+    { "__builtin_return_address", sp_pv_u::create },
+    { "__builtin_saveregs", sp_pv_var::create },
+    { "__builtin_setjmp", sp_i_pv::create },
+    { "__builtin_stack_restore", sp_v_pv::create },
+    { "__builtin_stack_save", sp_pv::create },
+    { "__builtin_strfmon", sp_ssz_pc_sz_pcc_var::create },
+    { "__builtin_strftime", sp_sz_pc_sz_pcc_pcv::create },
+    { "__builtin_trap", sp_v::create },
+    { "__builtin_unreachable", sp_v::create },
+    { "__builtin_unwind_init", sp_v::create },
+    { "__builtin_update_setjmp_buf", sp_v_pv_i::create },
+    { "__builtin_va_copy", sp_v_val_val::create },
+    { "__builtin_va_end", sp_v_val::create },
+    { "__builtin_va_start", sp_v_val_var::create },
+    { "__builtin_va_arg_pack", sp_i::create },
+    { "__builtin_va_arg_pack_len", sp_i::create },
+    { "__builtin__exit", sp_v_i::create },
+    { "__builtin__Exit", sp_v_i::create },
+
+    // Object size checking builtins.
+    { "__builtin_object_size", sp_sz_pcv_i::create },
+    { "__builtin___memcpy_chk", sp_pv_pv_pcv_sz_sz::create },
+    { "__builtin___memmove_chk", sp_pv_pv_pcv_sz_sz::create },
+    { "__builtin___mempcpy_chk", sp_pv_pv_pcv_sz_sz::create },
+    { "__builtin___memset_chk", sp_pv_pv_i_sz_sz::create },
+    { "__builtin___stpcpy_chk", sp_pc_pc_pcc_sz::create },
+    { "__builtin___stpncpy_chk", sp_pc_pc_pcc_sz_sz::create },
+    { "__builtin___strcat_chk", sp_pc_pc_pcc_sz::create },
+    { "__builtin___strcpy_chk", sp_pc_pc_pcc_sz::create },
+    { "__builtin___strncat_chk", sp_pc_pc_pcc_sz_sz::create },
+    { "__builtin___strncpy_chk", sp_pc_pc_pcc_sz_sz::create },
+    { "__builtin___snprintf_chk", sp_i_pc_sz_i_sz_pcc_var::create },
+    { "__builtin___vsnprintf_chk", sp_i_pc_sz_i_sz_pcc_val::create },
+    { "__builtin___sprintf_chk", sp_i_pc_i_sz_pcc_var::create },
+    { "__builtin___vsprintf_chk", sp_i_pc_i_sz_pcc_val::create },
+    { "__builtin___fprintf_chk", sp_i_pv_i_pcc_var::create },
+    { "__builtin___vfprintf_chk", sp_i_pv_i_pcc_val::create },
+    { "__builtin___printf_chk", sp_i_i_pcc_var::create },
+    { "__builtin___vprintf_chk", sp_i_i_pcc_val::create },
+
+    // Profiling hooks.
+    { "__cyg_profile_func_enter", sp_v_pv_pv::create },
+    { "__cyg_profile_func_exit", sp_v_pv_pv::create },
+
+    // TLS thread pointer related builtins.
+    { "__builtin_thread_pointer", sp_pv::create },
+    { "__builtin_set_thread_pointer", sp_v_pv::create },
+
+    // __FILE__, __LINE__, __FUNCTION__ as builtins.
+    { "__builtin_FILE", sp_pcc::create },
+    { "__builtin_FUNCTION", sp_pcc::create },
+    { "__builtin_LINE", sp_i::create },
+
+    // Synchronization Primitives.
+    { "__sync_fetch_and_add", pio0_iN_pvv_iN_var::create },
+    { "__sync_fetch_and_add_1", sp_i8_pvv_i8::create },
+    { "__sync_fetch_and_add_2", sp_i16_pvv_i16::create },
+    { "__sync_fetch_and_add_4", sp_i32_pvv_i32::create },
+    { "__sync_fetch_and_add_8", sp_i64_pvv_i64::create },
+    { "__sync_fetch_and_add_16", sp_i128_pvv_i128::create },
+    { "__sync_fetch_and_sub", pio0_iN_pvv_iN_var::create },
+    { "__sync_fetch_and_sub_1", sp_i8_pvv_i8::create },
+    { "__sync_fetch_and_sub_2", sp_i16_pvv_i16::create },
+    { "__sync_fetch_and_sub_4", sp_i32_pvv_i32::create },
+    { "__sync_fetch_and_sub_8", sp_i64_pvv_i64::create },
+    { "__sync_fetch_and_sub_16", sp_i128_pvv_i128::create },
+    { "__sync_fetch_and_or", pio0_iN_pvv_iN_var::create },
+    { "__sync_fetch_and_or_1", sp_i8_pvv_i8::create },
+    { "__sync_fetch_and_or_2", sp_i16_pvv_i16::create },
+    { "__sync_fetch_and_or_4", sp_i32_pvv_i32::create },
+    { "__sync_fetch_and_or_8", sp_i64_pvv_i64::create },
+    { "__sync_fetch_and_or_16", sp_i128_pvv_i128::create },
+    { "__sync_fetch_and_and", pio0_iN_pvv_iN_var::create },
+    { "__sync_fetch_and_and_1", sp_i8_pvv_i8::create },
+    { "__sync_fetch_and_and_2", sp_i16_pvv_i16::create },
+    { "__sync_fetch_and_and_4", sp_i32_pvv_i32::create },
+    { "__sync_fetch_and_and_8", sp_i64_pvv_i64::create },
+    { "__sync_fetch_and_and_16", sp_i128_pvv_i128::create },
+    { "__sync_fetch_and_xor", pio0_iN_pvv_iN_var::create },
+    { "__sync_fetch_and_xor_1", sp_i8_pvv_i8::create },
+    { "__sync_fetch_and_xor_2", sp_i16_pvv_i16::create },
+    { "__sync_fetch_and_xor_4", sp_i32_pvv_i32::create },
+    { "__sync_fetch_and_xor_8", sp_i64_pvv_i64::create },
+    { "__sync_fetch_and_xor_16", sp_i128_pvv_i128::create },
+    { "__sync_fetch_and_nand", pio0_iN_pvv_iN_var::create },
+    { "__sync_fetch_and_nand_1", sp_i8_pvv_i8::create },
+    { "__sync_fetch_and_nand_2", sp_i16_pvv_i16::create },
+    { "__sync_fetch_and_nand_4", sp_i32_pvv_i32::create },
+    { "__sync_fetch_and_nand_8", sp_i64_pvv_i64::create },
+    { "__sync_fetch_and_nand_16", sp_i128_pvv_i128::create },
+    { "__sync_add_and_fetch", pio0_iN_pvv_iN_var::create },
+    { "__sync_add_and_fetch_1", sp_i8_pvv_i8::create },
+    { "__sync_add_and_fetch_2", sp_i16_pvv_i16::create },
+    { "__sync_add_and_fetch_4", sp_i32_pvv_i32::create },
+    { "__sync_add_and_fetch_8", sp_i64_pvv_i64::create },
+    { "__sync_add_and_fetch_16", sp_i128_pvv_i128::create },
+    { "__sync_sub_and_fetch", pio0_iN_pvv_iN_var::create },
+    { "__sync_sub_and_fetch_1", sp_i8_pvv_i8::create },
+    { "__sync_sub_and_fetch_2", sp_i16_pvv_i16::create },
+    { "__sync_sub_and_fetch_4", sp_i32_pvv_i32::create },
+    { "__sync_sub_and_fetch_8", sp_i64_pvv_i64::create },
+    { "__sync_sub_and_fetch_16", sp_i128_pvv_i128::create },
+    { "__sync_or_and_fetch", pio0_iN_pvv_iN_var::create },
+    { "__sync_or_and_fetch_1", sp_i8_pvv_i8::create },
+    { "__sync_or_and_fetch_2", sp_i16_pvv_i16::create },
+    { "__sync_or_and_fetch_4", sp_i32_pvv_i32::create },
+    { "__sync_or_and_fetch_8", sp_i64_pvv_i64::create },
+    { "__sync_or_and_fetch_16", sp_i128_pvv_i128::create },
+    { "__sync_and_and_fetch", pio0_iN_pvv_iN_var::create },
+    { "__sync_and_and_fetch_1", sp_i8_pvv_i8::create },
+    { "__sync_and_and_fetch_2", sp_i16_pvv_i16::create },
+    { "__sync_and_and_fetch_4", sp_i32_pvv_i32::create },
+    { "__sync_and_and_fetch_8", sp_i64_pvv_i64::create },
+    { "__sync_and_and_fetch_16", sp_i128_pvv_i128::create },
+    { "__sync_xor_and_fetch", pio0_iN_pvv_iN_var::create },
+    { "__sync_xor_and_fetch_1", sp_i8_pvv_i8::create },
+    { "__sync_xor_and_fetch_2", sp_i16_pvv_i16::create },
+    { "__sync_xor_and_fetch_4", sp_i32_pvv_i32::create },
+    { "__sync_xor_and_fetch_8", sp_i64_pvv_i64::create },
+    { "__sync_xor_and_fetch_16", sp_i128_pvv_i128::create },
+    { "__sync_nand_and_fetch", pio0_iN_pvv_iN_var::create },
+    { "__sync_nand_and_fetch_1", sp_i8_pvv_i8::create },
+    { "__sync_nand_and_fetch_2", sp_i16_pvv_i16::create },
+    { "__sync_nand_and_fetch_4", sp_i32_pvv_i32::create },
+    { "__sync_nand_and_fetch_8", sp_i64_pvv_i64::create },
+    { "__sync_nand_and_fetch_16", sp_i128_pvv_i128::create },
+    { "__sync_bool_compare_and_swap", pio0_b_pvv_iN_iN_var::create },
+    { "__sync_bool_compare_and_swap_1", sp_b_pvv_i8_i8::create },
+    { "__sync_bool_compare_and_swap_2", sp_b_pvv_i16_i16::create },
+    { "__sync_bool_compare_and_swap_4", sp_b_pvv_i32_i32::create },
+    { "__sync_bool_compare_and_swap_8", sp_b_pvv_i64_i64::create },
+    { "__sync_bool_compare_and_swap_16", sp_b_pvv_i128_i128::create },
+    { "__sync_val_compare_and_swap", pio0_iN_pvv_iN_iN_var::create },
+    { "__sync_val_compare_and_swap_1", sp_i8_pvv_i8_i8::create },
+    { "__sync_val_compare_and_swap_2", sp_i16_pvv_i16_i16::create },
+    { "__sync_val_compare_and_swap_4", sp_i32_pvv_i32_i32::create },
+    { "__sync_val_compare_and_swap_8", sp_i64_pvv_i64_i64::create },
+    { "__sync_val_compare_and_swap_16", sp_i128_pvv_i128_i128::create },
+    { "__sync_lock_test_and_set", pio0_iN_pvv_iN_var::create },
+    { "__sync_lock_test_and_set_1", sp_i8_pvv_i8::create },
+    { "__sync_lock_test_and_set_2", sp_i16_pvv_i16::create },
+    { "__sync_lock_test_and_set_4", sp_i32_pvv_i32::create },
+    { "__sync_lock_test_and_set_8", sp_i64_pvv_i64::create },
+    { "__sync_lock_test_and_set_16", sp_i128_pvv_i128::create },
+    { "__sync_lock_release", pio0_v_pvv_var::create },
+    { "__sync_lock_release_1", sp_v_pvv::create },
+    { "__sync_lock_release_2", sp_v_pvv::create },
+    { "__sync_lock_release_4", sp_v_pvv::create },
+    { "__sync_lock_release_8", sp_v_pvv::create },
+    { "__sync_lock_release_16", sp_v_pvv::create },
+    { "__sync_synchronize", sp_v::create },
+    { "__atomic_test_and_set", sp_b_pvv_i::create },
+    { "__atomic_clear", sp_v_pvv_i::create },
+    { "__atomic_exchange", sp_v_pvv_pv_pv_i::create },
+    { "__atomic_exchange_n", pio0_iN_pvv_iN_i::create },
+    { "__atomic_exchange_1", sp_i8_pvv_i8_i::create },
+    { "__atomic_exchange_2", sp_i16_pvv_i16_i::create },
+    { "__atomic_exchange_4", sp_i32_pvv_i32_i::create },
+    { "__atomic_exchange_8", sp_i64_pvv_i64_i::create },
+    { "__atomic_exchange_16", sp_i128_pvv_i128_i::create },
+    { "__atomic_load", sp_v_pcvv_pv_i::create },
+    { "__atomic_load_n", pio0_iN_pcvv_i::create },
+    { "__atomic_load_1", sp_i8_pcvv_i::create },
+    { "__atomic_load_2", sp_i16_pcvv_i::create },
+    { "__atomic_load_4", sp_i32_pcvv_i::create },
+    { "__atomic_load_8", sp_i64_pcvv_i::create },
+    { "__atomic_load_16", sp_i128_pcvv_i::create },
+    { "__atomic_compare_exchange", sp_b_pvv_pv_pv_b_i_i::create },
+    { "__atomic_compare_exchange_n", pio0_b_pvv_pv_iN_b_i_i::create },
+    { "__atomic_compare_exchange_1", sp_b_pvv_pv_i8_b_i_i::create },
+    { "__atomic_compare_exchange_2", sp_b_pvv_pv_i16_b_i_i::create },
+    { "__atomic_compare_exchange_4", sp_b_pvv_pv_i32_b_i_i::create },
+    { "__atomic_compare_exchange_8", sp_b_pvv_pv_i64_b_i_i::create },
+    { "__atomic_compare_exchange_16", sp_b_pvv_pv_i128_b_i_i::create },
+    { "__atomic_store", sp_v_pvv_pv_i::create },
+    { "__atomic_store_n", pio0_v_pvv_iN_i::create },
+    { "__atomic_store_1", sp_v_pvv_i8_i::create },
+    { "__atomic_store_2", sp_v_pvv_i16_i::create },
+    { "__atomic_store_4", sp_v_pvv_i32_i::create },
+    { "__atomic_store_8", sp_v_pvv_i64_i::create },
+    { "__atomic_store_16", sp_v_pvv_i128_i::create },
+    { "__atomic_add_fetch", pio0_iN_pvv_iN_i::create },
+    { "__atomic_add_fetch_1", sp_i8_pvv_i8_i::create },
+    { "__atomic_add_fetch_2", sp_i16_pvv_i16_i::create },
+    { "__atomic_add_fetch_4", sp_i32_pvv_i32_i::create },
+    { "__atomic_add_fetch_8", sp_i64_pvv_i64_i::create },
+    { "__atomic_add_fetch_16", sp_i128_pvv_i128_i::create },
+    { "__atomic_sub_fetch", pio0_iN_pvv_iN_i::create },
+    { "__atomic_sub_fetch_1", sp_i8_pvv_i8_i::create },
+    { "__atomic_sub_fetch_2", sp_i16_pvv_i16_i::create },
+    { "__atomic_sub_fetch_4", sp_i32_pvv_i32_i::create },
+    { "__atomic_sub_fetch_8", sp_i64_pvv_i64_i::create },
+    { "__atomic_sub_fetch_16", sp_i128_pvv_i128_i::create },
+    { "__atomic_and_fetch", pio0_iN_pvv_iN_i::create },
+    { "__atomic_and_fetch_1", sp_i8_pvv_i8_i::create },
+    { "__atomic_and_fetch_2", sp_i16_pvv_i16_i::create },
+    { "__atomic_and_fetch_4", sp_i32_pvv_i32_i::create },
+    { "__atomic_and_fetch_8", sp_i64_pvv_i64_i::create },
+    { "__atomic_and_fetch_16", sp_i128_pvv_i128_i::create },
+    { "__atomic_nand_fetch", pio0_iN_pvv_iN_i::create },
+    { "__atomic_nand_fetch_1", sp_i8_pvv_i8_i::create },
+    { "__atomic_nand_fetch_2", sp_i16_pvv_i16_i::create },
+    { "__atomic_nand_fetch_4", sp_i32_pvv_i32_i::create },
+    { "__atomic_nand_fetch_8", sp_i64_pvv_i64_i::create },
+    { "__atomic_nand_fetch_16", sp_i128_pvv_i128_i::create },
+    { "__atomic_xor_fetch", pio0_iN_pvv_iN_i::create },
+    { "__atomic_xor_fetch_1", sp_i8_pvv_i8_i::create },
+    { "__atomic_xor_fetch_2", sp_i16_pvv_i16_i::create },
+    { "__atomic_xor_fetch_4", sp_i32_pvv_i32_i::create },
+    { "__atomic_xor_fetch_8", sp_i64_pvv_i64_i::create },
+    { "__atomic_xor_fetch_16", sp_i128_pvv_i128_i::create },
+    { "__atomic_or_fetch", pio0_iN_pvv_iN_i::create },
+    { "__atomic_or_fetch_1", sp_i8_pvv_i8_i::create },
+    { "__atomic_or_fetch_2", sp_i16_pvv_i16_i::create },
+    { "__atomic_or_fetch_4", sp_i32_pvv_i32_i::create },
+    { "__atomic_or_fetch_8", sp_i64_pvv_i64_i::create },
+    { "__atomic_or_fetch_16", sp_i128_pvv_i128_i::create },
+    { "__atomic_fetch_add", pio0_iN_pvv_iN_i::create },
+    { "__atomic_fetch_add_1", sp_i8_pvv_i8_i::create },
+    { "__atomic_fetch_add_2", sp_i16_pvv_i16_i::create },
+    { "__atomic_fetch_add_4", sp_i32_pvv_i32_i::create },
+    { "__atomic_fetch_add_8", sp_i64_pvv_i64_i::create },
+    { "__atomic_fetch_add_16", sp_i128_pvv_i128_i::create },
+    { "__atomic_fetch_sub", pio0_iN_pvv_iN_i::create },
+    { "__atomic_fetch_sub_1", sp_i8_pvv_i8_i::create },
+    { "__atomic_fetch_sub_2", sp_i16_pvv_i16_i::create },
+    { "__atomic_fetch_sub_4", sp_i32_pvv_i32_i::create },
+    { "__atomic_fetch_sub_8", sp_i64_pvv_i64_i::create },
+    { "__atomic_fetch_sub_16", sp_i128_pvv_i128_i::create },
+    { "__atomic_fetch_and", pio0_iN_pvv_iN_i::create },
+    { "__atomic_fetch_and_1", sp_i8_pvv_i8_i::create },
+    { "__atomic_fetch_and_2", sp_i16_pvv_i16_i::create },
+    { "__atomic_fetch_and_4", sp_i32_pvv_i32_i::create },
+    { "__atomic_fetch_and_8", sp_i64_pvv_i64_i::create },
+    { "__atomic_fetch_and_16", sp_i128_pvv_i128_i::create },
+    { "__atomic_fetch_nand", pio0_iN_pvv_iN_i::create },
+    { "__atomic_fetch_nand_1", sp_i8_pvv_i8_i::create },
+    { "__atomic_fetch_nand_2", sp_i16_pvv_i16_i::create },
+    { "__atomic_fetch_nand_4", sp_i32_pvv_i32_i::create },
+    { "__atomic_fetch_nand_8", sp_i64_pvv_i64_i::create },
+    { "__atomic_fetch_nand_16", sp_i128_pvv_i128_i::create },
+    { "__atomic_fetch_xor", pio0_iN_pvv_iN_i::create },
+    { "__atomic_fetch_xor_1", sp_i8_pvv_i8_i::create },
+    { "__atomic_fetch_xor_2", sp_i16_pvv_i16_i::create },
+    { "__atomic_fetch_xor_4", sp_i32_pvv_i32_i::create },
+    { "__atomic_fetch_xor_8", sp_i64_pvv_i64_i::create },
+    { "__atomic_fetch_xor_16", sp_i128_pvv_i128_i::create },
+    { "__atomic_fetch_or", pio0_iN_pvv_iN_i::create },
+    { "__atomic_fetch_or_1", sp_i8_pvv_i8_i::create },
+    { "__atomic_fetch_or_2", sp_i16_pvv_i16_i::create },
+    { "__atomic_fetch_or_4", sp_i32_pvv_i32_i::create },
+    { "__atomic_fetch_or_8", sp_i64_pvv_i64_i::create },
+    { "__atomic_fetch_or_16", sp_i128_pvv_i128_i::create },
+    { "__atomic_always_lock_free", sp_b_sz_pcvv::create },
+    { "__atomic_is_lock_free", sp_b_sz_pcvv::create },
+    { "__atomic_thread_fence", sp_v_i::create },
+    { "__atomic_signal_fence", sp_v_i::create },
+  };
+
+  return m;
 }
