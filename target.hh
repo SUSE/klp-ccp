@@ -137,8 +137,20 @@ namespace klp
       virtual mpa::limbs::size_type
       get_std_int_width(const types::std_int_type::kind k) const noexcept = 0;
 
+      virtual mpa::limbs get_std_int_size(const types::std_int_type::kind k)
+	const = 0;
+
+      virtual mpa::limbs::size_type
+      get_std_int_alignment(const types::std_int_type::kind k) const = 0;
+
       virtual mpa::limbs::size_type
       get_ext_int_width(const types::ext_int_type::kind k) const noexcept = 0;
+
+      virtual mpa::limbs get_ext_int_size(const types::ext_int_type::kind k)
+	const = 0;
+
+      virtual mpa::limbs::size_type
+      get_ext_int_alignment(const types::ext_int_type::kind k) const = 0;
 
       virtual std::shared_ptr<const types::int_type>
       width_to_int_type(const mpa::limbs::size_type w, const bool is_signed,
@@ -153,32 +165,20 @@ namespace klp
       get_float_exponent_width(const types::std_float_type::kind k)
 	const noexcept = 0;
 
-      virtual types::std_int_type::kind get_ptrdiff_kind() const noexcept = 0;
-
-      virtual mpa::limbs::size_type get_biggest_alignment_log2()
-	const noexcept = 0;
-
-      virtual mpa::limbs get_std_int_size(const types::std_int_type::kind k)
-	const = 0;
-
-      virtual mpa::limbs::size_type
-      get_std_int_alignment(const types::std_int_type::kind k) const = 0;
-
-      virtual mpa::limbs get_ext_int_size(const types::ext_int_type::kind k)
-	const = 0;
-
-      virtual mpa::limbs::size_type
-      get_ext_int_alignment(const types::ext_int_type::kind k) const = 0;
-
       virtual mpa::limbs get_float_size(const types::std_float_type::kind k)
 	const = 0;
 
       virtual mpa::limbs::size_type
       get_float_alignment(const types::std_float_type::kind k) const = 0;
 
+      virtual types::std_int_type::kind get_ptrdiff_kind() const noexcept = 0;
+
       virtual mpa::limbs get_pointer_size() const = 0;
 
       virtual mpa::limbs::size_type get_pointer_alignment() const = 0;
+
+      virtual mpa::limbs::size_type get_biggest_alignment_log2()
+	const noexcept = 0;
 
       virtual mpa::limbs get_va_list_size() const = 0;
 

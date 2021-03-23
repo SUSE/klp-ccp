@@ -319,11 +319,35 @@ target_x86_64_gcc::get_std_int_width(const types::std_int_type::kind k)
   };
 }
 
+mpa::limbs target_x86_64_gcc::
+get_std_int_size(const types::std_int_type::kind k) const
+{
+  return mpa::limbs::from_size_type(get_std_int_width(k) / 8);
+}
+
+mpa::limbs::size_type target_x86_64_gcc::
+get_std_int_alignment(const types::std_int_type::kind k) const
+{
+  return get_std_int_size(k).ffs() - 1;
+}
+
 mpa::limbs::size_type
 target_x86_64_gcc::get_ext_int_width(const types::ext_int_type::kind k)
   const noexcept
 {
   return _int_mode_to_width(static_cast<int_mode_kind>(static_cast<int>(k)));
+}
+
+mpa::limbs target_x86_64_gcc::
+get_ext_int_size(const types::ext_int_type::kind k) const
+{
+  return mpa::limbs::from_size_type(get_ext_int_width(k) / 8);
+}
+
+mpa::limbs::size_type target_x86_64_gcc::
+get_ext_int_alignment(const types::ext_int_type::kind k) const
+{
+  return get_ext_int_size(k).ffs() - 1;
 }
 
 mpa::limbs::size_type target_x86_64_gcc::
@@ -356,6 +380,44 @@ get_float_exponent_width(const types::std_float_type::kind k)
   case types::std_float_type::kind::k_long_double:
     return 15;
   };
+}
+
+mpa::limbs target_x86_64_gcc::
+get_float_size(const types::std_float_type::kind k) const
+{
+  mpa::limbs size;
+
+  switch (k) {
+  case std_float_type::kind::k_float:
+    size = mpa::limbs::from_size_type(4);
+    break;
+
+  case std_float_type::kind::k_double:
+    size = mpa::limbs::from_size_type(8);
+    break;
+
+  case std_float_type::kind::k_long_double:
+    size = mpa::limbs::from_size_type(16);
+    break;
+  };
+
+  return size;
+}
+
+mpa::limbs::size_type target_x86_64_gcc::
+get_float_alignment(const types::std_float_type::kind k) const
+{
+  return get_float_size(k).ffs() - 1;
+}
+
+mpa::limbs target_x86_64_gcc::get_pointer_size() const
+{
+  return mpa::limbs::from_size_type(8);
+}
+
+mpa::limbs::size_type target_x86_64_gcc::get_pointer_alignment() const
+{
+  return 3;
 }
 
 mpa::limbs::size_type target_x86_64_gcc::get_biggest_alignment_log2()
@@ -563,68 +625,6 @@ _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
       m.convert_value(m_width - m_is_signed, m_is_signed);
       m.set_type(this->width_to_int_type(m_width, m_is_signed, false));
      });
-}
-
-mpa::limbs target_x86_64_gcc::
-get_std_int_size(const types::std_int_type::kind k) const
-{
-  return mpa::limbs::from_size_type(get_std_int_width(k) / 8);
-}
-
-mpa::limbs::size_type target_x86_64_gcc::
-get_std_int_alignment(const types::std_int_type::kind k) const
-{
-  return get_std_int_size(k).ffs() - 1;
-}
-
-mpa::limbs target_x86_64_gcc::
-get_ext_int_size(const types::ext_int_type::kind k) const
-{
-  return mpa::limbs::from_size_type(get_ext_int_width(k) / 8);
-}
-
-mpa::limbs::size_type target_x86_64_gcc::
-get_ext_int_alignment(const types::ext_int_type::kind k) const
-{
-  return get_ext_int_size(k).ffs() - 1;
-}
-
-mpa::limbs target_x86_64_gcc::
-get_float_size(const types::std_float_type::kind k) const
-{
-  mpa::limbs size;
-
-  switch (k) {
-  case std_float_type::kind::k_float:
-    size = mpa::limbs::from_size_type(4);
-    break;
-
-  case std_float_type::kind::k_double:
-    size = mpa::limbs::from_size_type(8);
-    break;
-
-  case std_float_type::kind::k_long_double:
-    size = mpa::limbs::from_size_type(16);
-    break;
-  };
-
-  return size;
-}
-
-mpa::limbs::size_type target_x86_64_gcc::
-get_float_alignment(const types::std_float_type::kind k) const
-{
-  return get_float_size(k).ffs() - 1;
-}
-
-mpa::limbs target_x86_64_gcc::get_pointer_size() const
-{
-  return mpa::limbs::from_size_type(8);
-}
-
-mpa::limbs::size_type target_x86_64_gcc::get_pointer_alignment() const
-{
-  return 3;
 }
 
 mpa::limbs target_x86_64_gcc::get_va_list_size() const

@@ -45,9 +45,21 @@ namespace klp
       get_std_int_width(const types::std_int_type::kind k) const noexcept
 	override;
 
+      virtual mpa::limbs get_std_int_size(const types::std_int_type::kind k)
+	const override;
+
+      virtual mpa::limbs::size_type
+      get_std_int_alignment(const types::std_int_type::kind k) const override;
+
       virtual mpa::limbs::size_type
       get_ext_int_width(const types::ext_int_type::kind k)
 	const noexcept override;
+
+      virtual mpa::limbs get_ext_int_size(const types::ext_int_type::kind k)
+	const override;
+
+      virtual mpa::limbs::size_type
+      get_ext_int_alignment(const types::ext_int_type::kind k) const override;
 
       virtual mpa::limbs::size_type
       get_float_significand_width(const types::std_float_type::kind k)
@@ -56,25 +68,6 @@ namespace klp
       virtual mpa::limbs::size_type
       get_float_exponent_width(const types::std_float_type::kind k)
 	const noexcept override;
-
-      virtual mpa::limbs::size_type get_biggest_alignment_log2()
-	const noexcept override;
-
-      virtual std::unique_ptr<execution_charset_encoder>
-      get_execution_charset_encoder(const execution_charset_encoding e)
-	const override;
-
-      virtual mpa::limbs get_std_int_size(const types::std_int_type::kind k)
-	const override;
-
-      virtual mpa::limbs::size_type
-      get_std_int_alignment(const types::std_int_type::kind k) const override;
-
-      virtual mpa::limbs get_ext_int_size(const types::ext_int_type::kind k)
-	const override;
-
-      virtual mpa::limbs::size_type
-      get_ext_int_alignment(const types::ext_int_type::kind k) const override;
 
       virtual mpa::limbs get_float_size(const types::std_float_type::kind k)
 	const override;
@@ -85,6 +78,13 @@ namespace klp
       virtual mpa::limbs get_pointer_size() const override;
 
       virtual mpa::limbs::size_type get_pointer_alignment() const override;
+
+      virtual mpa::limbs::size_type get_biggest_alignment_log2()
+	const noexcept override;
+
+      virtual std::unique_ptr<execution_charset_encoder>
+      get_execution_charset_encoder(const execution_charset_encoding e)
+	const override;
 
       virtual mpa::limbs get_va_list_size() const override;
 
