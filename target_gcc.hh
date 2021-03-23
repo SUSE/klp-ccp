@@ -405,7 +405,6 @@ namespace klp
     protected:
       enum class int_mode_kind
       {
-	imk_none,
 	imk_QI,
 	imk_HI,
 	imk_SI,
@@ -415,7 +414,6 @@ namespace klp
 
       enum class float_mode_kind
       {
-	fmk_none,
 	fmk_SF,
 	fmk_DF,
       };
@@ -438,7 +436,7 @@ namespace klp
 
       virtual void _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
 				       const bool packed,
-				       const int_mode_kind mode,
+				       const int_mode_kind * const mode,
 				       types::alignment &&user_align)
 	const = 0;
 

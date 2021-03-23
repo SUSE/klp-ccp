@@ -104,7 +104,7 @@ namespace klp
 
       virtual void _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
 				       const bool packed,
-				       const int_mode_kind mode,
+				       const int_mode_kind * const mode,
 				       types::alignment &&user_align)
 	const override;
 

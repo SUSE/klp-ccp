@@ -2347,11 +2347,11 @@ public:
 
   bool operator()(const ast::attribute &attr);
 
-  int_mode_kind get_int_mode_result() const noexcept
-  { return _imk; }
+  const int_mode_kind* get_int_mode_result() const noexcept
+  { return _imk_set ? &_imk : nullptr; }
 
-  float_mode_kind get_float_mode_result() const noexcept
-  { return _fmk; }
+  const float_mode_kind* get_float_mode_result() const noexcept
+  { return _fmk_set ? &_fmk : nullptr; }
 
   pp_token_index get_mode_tok() const noexcept
   { return _mode_tok; }
@@ -2369,22 +2369,22 @@ public:
 
   bool mode_attribute_found() const noexcept
   {
-    return (_imk != int_mode_kind::imk_none ||
-	    _fmk != float_mode_kind::fmk_none);
+    return _imk_set || _fmk_set;
   }
 
 private:
   ast::ast &_a;
   const target_gcc &_tgt;
   int_mode_kind _imk;
+  bool _imk_set;
   float_mode_kind _fmk;
+  bool _fmk_set;
   pp_token_index _mode_tok;
 };
 
 target_gcc::_mode_attribute_finder::
 _mode_attribute_finder(ast::ast &a, const target_gcc &tgt) noexcept
-  : _a(a), _tgt(tgt),
-    _imk(int_mode_kind::imk_none), _fmk(float_mode_kind::fmk_none)
+  : _a(a), _tgt(tgt), _imk_set(false), _fmk_set(false)
 {}
 
 bool target_gcc::_mode_attribute_finder::operator()(const ast::attribute &attr)
@@ -2420,22 +2420,31 @@ bool target_gcc::_mode_attribute_finder::operator()(const ast::attribute &attr)
   const std::string &id = _a.get_pp_tokens()[e_id->get_id_tok()].get_value();
   if (id == "QI" || id == "__QI__") {
     _imk = int_mode_kind::imk_QI;
+    _imk_set = true;
   } else if (id == "HI" || id == "__HI__" || id == "byte" || id == "__byte__") {
     _imk = int_mode_kind::imk_HI;
+    _imk_set = true;
   } else if (id == "SI" || id == "__SI__") {
     _imk = int_mode_kind::imk_SI;
+    _imk_set = true;
   } else if (id == "DI" || id == "__DI__") {
     _imk = int_mode_kind::imk_DI;
+    _imk_set = true;
   } else if (id == "TI" || id == "__TI__") {
     _imk = int_mode_kind::imk_TI;
+    _imk_set = true;
   } else if (id == "word" || id == "__word__") {
     _imk = _tgt._get_word_mode();
+    _imk_set = true;
   } else if (id == "pointer" || id == "__pointer__") {
     _imk = _tgt._get_pointer_mode();
+    _imk_set = true;
   } else if (id == "SF" || id == "__SF__") {
     _fmk = float_mode_kind::fmk_SF;
+    _fmk_set = true;
   } else if (id == "DF" || id == "__DF__") {
     _fmk = float_mode_kind::fmk_DF;
+    _fmk_set = true;
   } else {
     code_remark remark(code_remark::severity::fatal,
 		       "unrecognized 'mode' attribute specifier",
@@ -2444,7 +2453,7 @@ bool target_gcc::_mode_attribute_finder::operator()(const ast::attribute &attr)
     throw semantic_except(remark);
   }
 
-  if (_imk != int_mode_kind::imk_none && _fmk != float_mode_kind::fmk_none) {
+  if (_imk_set && _fmk_set) {
     code_remark remark(code_remark::severity::fatal,
 		       "inconsistent 'mode' attribute specifier domains",
 		       _a.get_pp_result(), e_id->get_tokens_range());
@@ -2464,8 +2473,7 @@ apply_to_type(std::shared_ptr<const types::pointer_type> &&orig_t) const
   if (!this->mode_attribute_found())
     return std::move(orig_t);
 
-  if (_imk == int_mode_kind::imk_none ||
-      _imk != _tgt._get_pointer_mode()) {
+  if (!_imk_set || _imk != _tgt._get_pointer_mode()) {
     code_remark remark
       (code_remark::severity::fatal,
        "invalid 'mode' attribute specifier for pointer type",
@@ -2484,7 +2492,7 @@ apply_to_type(std::shared_ptr<const types::int_type> &&orig_t) const
   if (!this->mode_attribute_found())
     return std::move(orig_t);
 
-  if (_imk == int_mode_kind::imk_none) {
+  if (!_imk_set) {
     code_remark remark
       (code_remark::severity::fatal,
        "invalid 'mode' attribute specifier for int type",
@@ -2521,7 +2529,7 @@ apply_to_type(std::shared_ptr<const types::addressable_type> &&orig_t) const
 	return apply_to_type(std::move(it));
        },
        [&](const std::shared_ptr<const types::real_float_type> &rft) {
-	 if (_fmk == float_mode_kind::fmk_none) {
+	 if (!_fmk_set) {
 	   code_remark remark
 	     (code_remark::severity::fatal,
 	      "invalid 'mode' attribute specifier for float type",
@@ -2881,7 +2889,7 @@ evaluate_enum_type(ast::ast &a,
     ed_asl_after->for_each_attribute(maf);
   }
 
-  if (maf.get_float_mode_result() != float_mode_kind::fmk_none) {
+  if (maf.get_float_mode_result()) {
     code_remark remark
       (code_remark::severity::fatal,
        "float domain 'mode' attribute at enum definition",
@@ -2930,10 +2938,6 @@ mpa::limbs::size_type target_gcc::_int_mode_to_width(const int_mode_kind m)
   noexcept
 {
   switch (m) {
-  case int_mode_kind::imk_none:
-    assert(0);
-    __builtin_unreachable();
-
   case int_mode_kind::imk_QI:
     return 8;
 

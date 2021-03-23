@@ -471,10 +471,6 @@ target_x86_64_gcc::_int_mode_to_std_int_kind(const int_mode_kind m)
   const noexcept
 {
   switch (m) {
-  case int_mode_kind::imk_none:
-    assert(0);
-    __builtin_unreachable();
-
   case int_mode_kind::imk_QI:
     return types::std_int_type::kind::k_char;
 
@@ -496,10 +492,6 @@ types::std_float_type::kind target_x86_64_gcc::
 _float_mode_to_float_kind(const float_mode_kind m) const noexcept
 {
   switch (m) {
-  case float_mode_kind::fmk_none:
-    assert(0);
-    __builtin_unreachable();
-
   case float_mode_kind::fmk_SF:
     return types::std_float_type::kind::k_float;
 
@@ -521,7 +513,7 @@ target_gcc::int_mode_kind target_x86_64_gcc::_get_word_mode() const noexcept
 void target_x86_64_gcc::
 _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
 		    const bool packed,
-		    const int_mode_kind mode,
+		    const int_mode_kind * const mode,
 		    types::alignment &&user_align) const
 {
   // Inspect each enumerator and find the maximum required width
@@ -530,8 +522,8 @@ _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
   mpa::limbs::size_type min_prec = 0;
   mpa::limbs::size_type width = 0;
 
-  if (mode != int_mode_kind::imk_none)
-      width = _int_mode_to_width(mode);
+  if (mode)
+      width = _int_mode_to_width(*mode);
 
   ec.for_each_member
     ([&](const types::enum_content::member &m) {
@@ -548,8 +540,7 @@ _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
 	a.get_remarks().add(remark);
 	throw semantic_except(remark);
 
-      } else if (mode != int_mode_kind::imk_none &&
-		 min_prec + is_any_signed > width) {
+      } else if (mode && min_prec + is_any_signed > width) {
 	code_remark remark(code_remark::severity::fatal,
 			   "enumerator value exceeds specified integer mode",
 			   a.get_pp_result(),
@@ -561,7 +552,7 @@ _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
     });
 
   // Normalize the width.
-  if (mode == int_mode_kind::imk_none) {
+  if (!mode) {
     width = min_prec + is_any_signed;
     assert(width <= 64);
 
