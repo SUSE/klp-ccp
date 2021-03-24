@@ -29,11 +29,12 @@ using namespace klp::ccp::builtins::impl;
 using namespace klp::ccp::ast;
 using namespace klp::ccp::types;
 
-builtin_func_simple_proto::
-builtin_func_simple_proto(const t_fac ret_fac,
-			  const std::initializer_list<t_fac> &exp_arg_facs,
-			  const bool variadic) noexcept
-  : _ret_fac(ret_fac), _exp_arg_facs(exp_arg_facs), _variadic(variadic)
+builtin_func_simple_proto::builtin_func_simple_proto
+	(const bool variadic,
+	 std::shared_ptr<const types::addressable_type> &&ret_type,
+	 exp_arg_types_type &&exp_arg_types) noexcept
+  : _variadic(variadic), _ret_type(std::move(ret_type)),
+    _exp_arg_types(std::move(exp_arg_types))
 {}
 
 builtin_func_simple_proto::~builtin_func_simple_proto() noexcept = default;
@@ -45,7 +46,7 @@ evaluate(klp::ccp::ast::ast &a, const target &tgt,
   const expr_list * const args = efi.get_args();
   const std::size_t n_args = !args ? 0 : args->size();
 
-  if (n_args < _exp_arg_facs.size()) {
+  if (n_args < _exp_arg_types.size()) {
     code_remark remark
       (code_remark::severity::fatal,
        "too few arguments in builtin function invocation",
@@ -53,7 +54,7 @@ evaluate(klp::ccp::ast::ast &a, const target &tgt,
     a.get_remarks().add(remark);
     throw semantic_except(remark);
 
-  } else if (!_variadic && n_args > _exp_arg_facs.size()) {
+  } else if (!_variadic && n_args > _exp_arg_types.size()) {
     code_remark remark
       (code_remark::severity::fatal,
        "too many arguments in builtin function invocation",
@@ -63,12 +64,12 @@ evaluate(klp::ccp::ast::ast &a, const target &tgt,
   }
 
   std::size_t i = 0;
-  for (const auto tf : _exp_arg_facs) {
-    check_types_assignment(a, tgt, *tf(tgt), (*args)[i]);
+  for (const auto &t : _exp_arg_types) {
+    check_types_assignment(a, tgt, *t, (*args)[i]);
     ++i;
   }
 
-  return evaluation_result_type{_ret_fac(tgt), nullptr, false};
+  return evaluation_result_type{_ret_type, nullptr, false};
 }
 
 

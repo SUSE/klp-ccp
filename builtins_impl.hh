@@ -20,7 +20,8 @@
 #define BUILTINS_IMPL_HH
 
 #include "builtins.hh"
-#include <initializer_list>
+#include <vector>
+#include <functional>
 
 namespace klp
 {
@@ -32,39 +33,73 @@ namespace klp
       {
 	class builtin_func_simple_proto final : public builtin_func
 	{
+	private:
+	  typedef std::vector<std::shared_ptr<const types::addressable_type>>
+		  exp_arg_types_type;
+
 	public:
-	  typedef std::shared_ptr<const types::addressable_type>
-	  (*t_fac)(const target&);
-
-	  builtin_func_simple_proto
-		(const t_fac ret_fac,
-		 const std::initializer_list<t_fac> &exp_arg_facs,
-		 const bool variadic) noexcept;
-
 	  virtual ~builtin_func_simple_proto() noexcept override;
 
 	  virtual evaluation_result_type
 	  evaluate(klp::ccp::ast::ast &a, const target &tgt,
 		   const ast::expr_func_invocation &efi) const override;
 
-	  template <bool variadic, t_fac ret_fac, t_fac... exp_arg_facs>
-	  struct fac
-	  {
-	    static std::unique_ptr<builtin_func> create()
-	    {
-	      static const std::initializer_list<t_fac> _exp_arg_facs =
-		{ exp_arg_facs... };
-	      return (std::unique_ptr<builtin_func>
-		      (new builtin_func_simple_proto(ret_fac, _exp_arg_facs,
-						     variadic)));
-	    }
-	  };
+	  template<typename target_type,
+		   typename ret_type_fac_type,
+		   typename... exp_arg_types_facs_types>
+	  static builtin_func::factory
+	  factory(const target_type &tgt, const bool variadic,
+		  const ret_type_fac_type &ret_type_fac,
+		  const exp_arg_types_facs_types &...exp_arg_types_facs);
 
 	private:
-	  const t_fac _ret_fac;
-	  const std::initializer_list<t_fac> &_exp_arg_facs;
+	  builtin_func_simple_proto
+		(const bool variadic,
+		 std::shared_ptr<const types::addressable_type> &&ret_type,
+		 exp_arg_types_type &&exp_arg_types) noexcept;
+
+	public:
+	  template <typename target_type,
+		    typename ret_type_fac_type,
+		    typename... exp_arg_types_facs_types>
+	  static std::unique_ptr<builtin_func>
+	  _create(const std::reference_wrapper<const target_type> &tgt,
+		  const bool variadic,
+		  const ret_type_fac_type &ret_type_fac,
+		  const exp_arg_types_facs_types &...exp_arg_types_facs)
+	  {
+	    exp_arg_types_type exp_arg_types =
+	      { exp_arg_types_facs(tgt.get())... };
+	    return (std::unique_ptr<builtin_func>
+		    {new builtin_func_simple_proto(variadic,
+						   ret_type_fac(tgt.get()),
+						   std::move(exp_arg_types))});
+	  }
+
 	  const bool _variadic;
+	  std::shared_ptr<const types::addressable_type> _ret_type;
+	  exp_arg_types_type _exp_arg_types;
 	};
+
+	template<typename target_type,
+		 typename ret_type_fac_type,
+		 typename... exp_arg_types_facs_types>
+	builtin_func::factory builtin_func_simple_proto::
+	factory(const target_type &tgt, const bool variadic,
+		const ret_type_fac_type &ret_type_fac,
+		const exp_arg_types_facs_types &...exp_arg_types_facs)
+	{
+	  auto b = std::bind
+	    (_create<target_type,
+		     typename std::decay<ret_type_fac_type>::type,
+		     typename std::decay<exp_arg_types_facs_types>::type...>,
+	     std::cref(tgt),
+	     variadic,
+	     ret_type_fac,
+	     exp_arg_types_facs...);
+	  return b;
+	}
+
 
 	std::shared_ptr<const types::addressable_type>
 	mk_v(const target&);
