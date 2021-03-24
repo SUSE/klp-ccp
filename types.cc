@@ -2647,8 +2647,8 @@ std::shared_ptr<const complex_float_type> complex_float_type::promote() const
 
 
 builtin_func_type::
-builtin_func_type(const builtin_func::factory builtin_func_fac)
-  : _builtin_func_fac(builtin_func_fac)
+builtin_func_type(const builtin_func::factory &builtin_func_fac)
+  : _builtin_func_fac(&builtin_func_fac)
 {}
 
 builtin_func_type::builtin_func_type(const builtin_func_type&) = default;
@@ -2661,7 +2661,7 @@ builtin_func_type* builtin_func_type::_clone() const
 }
 
 std::shared_ptr<const builtin_func_type>
-builtin_func_type::create(const builtin_func::factory builtin_func_fac)
+builtin_func_type::create(const builtin_func::factory &builtin_func_fac)
 {
   return (std::shared_ptr<const builtin_func_type>
 	  (new builtin_func_type(builtin_func_fac)));

@@ -1551,7 +1551,7 @@ namespace klp
 	virtual ~builtin_func_type() noexcept override;
 
 	static std::shared_ptr<const builtin_func_type>
-	create(const builtin_func::factory builtin_func_fac);
+	create(const builtin_func::factory &builtin_func_fac);
 
 	virtual type_id get_type_id() const noexcept override;
 
@@ -1559,17 +1559,17 @@ namespace klp
 					const bool ignore_qualifiers)
 	  const override;
 
-	builtin_func::factory get_builtin_func_factory() const noexcept
-	{ return _builtin_func_fac; }
+	const builtin_func::factory& get_builtin_func_factory() const noexcept
+	{ return *_builtin_func_fac; }
 
       private:
-	builtin_func_type(const builtin_func::factory builtin_func_fac);
+	builtin_func_type(const builtin_func::factory &builtin_func_fac);
 
 	builtin_func_type(const builtin_func_type&);
 
 	virtual builtin_func_type* _clone() const override;
 
-	const builtin_func::factory _builtin_func_fac;
+	const builtin_func::factory * const _builtin_func_fac;
       };
     }
   }
