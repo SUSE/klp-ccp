@@ -1335,9 +1335,9 @@ expr_id::resolved::resolved() noexcept
   : _kind(resolved_kind::none)
 {}
 
-expr_id::resolved::resolved(const builtin_func::factory builtin_func_fac)
+expr_id::resolved::resolved(const builtin_func::factory &builtin_func_fac)
   noexcept
-  : _kind(resolved_kind::builtin_func), _builtin_func_fac(builtin_func_fac)
+  : _kind(resolved_kind::builtin_func), _builtin_func_fac(&builtin_func_fac)
 {}
 
 expr_id::resolved::resolved(const builtin_var::factory builtin_var_fac)
@@ -1369,11 +1369,11 @@ expr_id::resolved::resolved(identifier_list &pil) noexcept
   : _kind(resolved_kind::in_param_id_list), _pil(&pil)
 {}
 
-klp::ccp::builtin_func::factory expr_id::resolved::get_builtin_func_factory()
-  const noexcept
+const klp::ccp::builtin_func::factory&
+expr_id::resolved::get_builtin_func_factory() const noexcept
 {
   assert(_kind == resolved_kind::builtin_func);
-  return _builtin_func_fac;
+  return *_builtin_func_fac;
 }
 
 klp::ccp::builtin_var::factory expr_id::resolved::get_builtin_var_factory()
@@ -1421,6 +1421,7 @@ identifier_list& expr_id::resolved::get_param_id_list()
   assert(_kind == resolved_kind::in_param_id_list);
   return *_pil;
 }
+
 
 expr_id::expr_id(const pp_token_index id_tok) noexcept
   : expr(pp_tokens_range{id_tok, id_tok + 1}), _id_tok(id_tok)

@@ -5224,8 +5224,8 @@ _fun_expr_id_needs_externalization(const ast::expr_id &eid)
 	      (types::handle_types<bool>
 	       (wrap_callables<default_action_return_value<bool, false>::type>
 		([&](const types::builtin_func_type &bft) {
-		   return (bft.get_builtin_func_factory() ==
-			   builtins::impl::builtin_func_choose_expr::create);
+		  return (builtins::impl::builtin_func_choose_expr::is_factory
+			  (bft.get_builtin_func_factory()));
 		 }),
 		*e.get_func().get_type()));
 	  }

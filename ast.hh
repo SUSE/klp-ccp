@@ -1195,7 +1195,7 @@ namespace klp
 	{
 	public:
 	  resolved() noexcept;
-	  resolved(const builtin_func::factory builtin_func_fac) noexcept;
+	  resolved(const builtin_func::factory &builtin_func_fac) noexcept;
 	  resolved(const builtin_var::factory builtin_var_fac) noexcept;
 	  resolved(init_declarator &id) noexcept;
 	  resolved(parameter_declaration_declarator &pdd) noexcept;
@@ -1220,7 +1220,8 @@ namespace klp
 	  resolved_kind get_kind() const noexcept
 	  { return _kind; }
 
-	  builtin_func::factory get_builtin_func_factory() const noexcept;
+	  const builtin_func::factory& get_builtin_func_factory()
+	    const noexcept;
 	  builtin_var::factory get_builtin_var_factory() const noexcept;
 	  init_declarator& get_init_declarator() const noexcept;
 	  parameter_declaration_declarator&
@@ -1235,7 +1236,7 @@ namespace klp
 
 	  union
 	  {
-	    builtin_func::factory _builtin_func_fac;
+	    const builtin_func::factory *_builtin_func_fac;
 	    builtin_var::factory _builtin_var_fac;
 	    init_declarator *_id;
 	    parameter_declaration_declarator *_pdd;

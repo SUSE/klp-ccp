@@ -55,7 +55,7 @@ namespace klp
 	bool is_lvalue;
       };
 
-      typedef std::unique_ptr<builtin_func> (*factory)();
+      typedef std::function<std::unique_ptr<builtin_func>()> factory;
 
       constexpr builtin_func() noexcept
       {}

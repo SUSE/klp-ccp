@@ -162,6 +162,8 @@ namespace klp
 
 	  static std::unique_ptr<builtin_func> create();
 
+	  static bool is_factory(const builtin_func::factory &fac) noexcept;
+
 	private:
 	  builtin_func_choose_expr() noexcept;
 	};

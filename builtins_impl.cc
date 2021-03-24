@@ -303,6 +303,13 @@ std::unique_ptr<builtin_func> builtin_func_choose_expr::create()
 	  (new builtin_func_choose_expr()));
 }
 
+bool builtin_func_choose_expr::is_factory(const builtin_func::factory &fac)
+  noexcept
+{
+  const auto fac_target = fac.target<decltype(&create)>();
+  return fac_target && *fac_target == create;
+}
+
 
 builtin_func_constant_p::builtin_func_constant_p() noexcept = default;
 

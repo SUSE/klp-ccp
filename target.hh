@@ -56,7 +56,7 @@ namespace klp
 		 const std::function<void(const std::string&)> &report_warning)
       = 0;
 
-      virtual const builtin_func::factory
+      virtual const builtin_func::factory*
       lookup_builtin_func(const std::string &id) const noexcept = 0;
 
       virtual const builtin_typedef::factories&

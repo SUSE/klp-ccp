@@ -48,7 +48,7 @@ namespace klp
       get_gcc_version() const noexcept
       { return _gcc_version; }
 
-      virtual const builtin_func::factory
+      virtual const builtin_func::factory*
       lookup_builtin_func(const std::string &id) const noexcept override;
 
       virtual std::shared_ptr<const types::pointer_type>

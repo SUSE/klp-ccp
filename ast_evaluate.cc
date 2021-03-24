@@ -2623,8 +2623,8 @@ void expr::_convert_type_for_expr_context()
 	  handle_types<void>
 	    ((wrap_callables<default_action_nop>
 	      ([&](const builtin_func_type &bft) {
-		 if (bft.get_builtin_func_factory() !=
-		     builtins::impl::builtin_func_choose_expr::create) {
+		 if(!(builtins::impl::builtin_func_choose_expr::is_factory
+		      (bft.get_builtin_func_factory()))) {
 		   return;
 		 }
 

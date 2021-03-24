@@ -258,14 +258,14 @@ void target_gcc::parse_command_line
 }
 
 
-const builtin_func::factory
+const builtin_func::factory*
 target_gcc::lookup_builtin_func(const std::string &id) const noexcept
 {
   auto it = _builtin_funcs.find(id);
   if (it == _builtin_funcs.end())
     return nullptr;
 
-  return it->second;
+  return &it->second;
 }
 
 class target_gcc::_aligned_attribute_finder
@@ -2994,15 +2994,15 @@ namespace
     const builtin_func::factory _fac128;
   };
 
-  template <const unsigned int pi_arg_index,
-	    const builtin_func::factory fac8,
-	    const builtin_func::factory fac16,
-	    const builtin_func::factory fac32,
-	    const builtin_func::factory fac64,
-	    const builtin_func::factory fac128>
+  template <const unsigned int pi_arg_index>
   struct _builtin_func_pi_overload_fac
   {
-    static std::unique_ptr<builtin_func> create()
+    static std::unique_ptr<builtin_func>
+    create(const builtin_func::factory fac8,
+	   const builtin_func::factory fac16,
+	   const builtin_func::factory fac32,
+	   const builtin_func::factory fac64,
+	   const builtin_func::factory fac128)
     {
       return (std::unique_ptr<builtin_func>
 	      (new _builtin_func_pi_overload(pi_arg_index, fac8, fac16,
@@ -3791,13 +3791,13 @@ target_gcc::_register_builtin_funcs()
     builtin_func_simple_proto::fac<true, _mk_i64, mk_pvv, _mk_i64>;
   using sp_i128_pvv_i128_var =
     builtin_func_simple_proto::fac<true, _mk_i128, mk_pvv, _mk_i128>;
-  using pio0_iN_pvv_iN_var =
-    _builtin_func_pi_overload_fac<0,
-				  sp_i8_pvv_i8_var::create,
-				  sp_i16_pvv_i16_var::create,
-				  sp_i32_pvv_i32_var::create,
-				  sp_i64_pvv_i64_var::create,
-				  sp_i128_pvv_i128_var::create>;
+  auto pio0_iN_pvv_iN_var_fac =
+    std::bind(_builtin_func_pi_overload_fac<0>::create,
+	      sp_i8_pvv_i8_var::create,
+	      sp_i16_pvv_i16_var::create,
+	      sp_i32_pvv_i32_var::create,
+	      sp_i64_pvv_i64_var::create,
+	      sp_i128_pvv_i128_var::create);
 
   using sp_b_pvv_i8_i8 =
     builtin_func_simple_proto::fac<false, mk_b, mk_pvv, _mk_i8, _mk_i8>;
@@ -3820,13 +3820,13 @@ target_gcc::_register_builtin_funcs()
     builtin_func_simple_proto::fac<true, mk_b, mk_pvv, _mk_i64, _mk_i64>;
   using sp_b_pvv_i128_i128_var =
     builtin_func_simple_proto::fac<true, mk_b, mk_pvv, _mk_i128, _mk_i128>;
-  using pio0_b_pvv_iN_iN_var =
-    _builtin_func_pi_overload_fac<0,
-				  sp_b_pvv_i8_i8_var::create,
-				  sp_b_pvv_i16_i16_var::create,
-				  sp_b_pvv_i32_i32_var::create,
-				  sp_b_pvv_i64_i64_var::create,
-				  sp_b_pvv_i128_i128_var::create>;
+  auto pio0_b_pvv_iN_iN_var_fac =
+    std::bind(_builtin_func_pi_overload_fac<0>::create,
+	      sp_b_pvv_i8_i8_var::create,
+	      sp_b_pvv_i16_i16_var::create,
+	      sp_b_pvv_i32_i32_var::create,
+	      sp_b_pvv_i64_i64_var::create,
+	      sp_b_pvv_i128_i128_var::create);
 
   using sp_i8_pvv_i8_i8 =
     builtin_func_simple_proto::fac<false, _mk_i8, mk_pvv, _mk_i8, _mk_i8>;
@@ -3849,20 +3849,21 @@ target_gcc::_register_builtin_funcs()
     builtin_func_simple_proto::fac<true, _mk_i64, mk_pvv, _mk_i64, _mk_i64>;
   using sp_i128_pvv_i128_i128_var =
     builtin_func_simple_proto::fac<true, _mk_i128, mk_pvv, _mk_i128, _mk_i128>;
-  using pio0_iN_pvv_iN_iN_var =
-    _builtin_func_pi_overload_fac<0,
-				  sp_i8_pvv_i8_i8_var::create,
-				  sp_i16_pvv_i16_i16_var::create,
-				  sp_i32_pvv_i32_i32_var::create,
-				  sp_i64_pvv_i64_i64_var::create,
-				  sp_i128_pvv_i128_i128_var::create>;
+  auto pio0_iN_pvv_iN_iN_var_fac =
+    std::bind(_builtin_func_pi_overload_fac<0>::create,
+	      sp_i8_pvv_i8_i8_var::create,
+	      sp_i16_pvv_i16_i16_var::create,
+	      sp_i32_pvv_i32_i32_var::create,
+	      sp_i64_pvv_i64_i64_var::create,
+	      sp_i128_pvv_i128_i128_var::create);
 
-  using pio0_v_pvv_var = _builtin_func_pi_overload_fac<0,
-						       sp_v_pvv_var::create,
-						       sp_v_pvv_var::create,
-						       sp_v_pvv_var::create,
-						       sp_v_pvv_var::create,
-						       sp_v_pvv_var::create>;
+  auto pio0_v_pvv_var_fac =
+    std::bind(_builtin_func_pi_overload_fac<0>::create,
+	      sp_v_pvv_var::create,
+	      sp_v_pvv_var::create,
+	      sp_v_pvv_var::create,
+	      sp_v_pvv_var::create,
+	      sp_v_pvv_var::create);
 
   using sp_i8_pvv_i8_i =
     builtin_func_simple_proto::fac<false, _mk_i8, mk_pvv, _mk_i8, mk_i>;
@@ -3874,13 +3875,13 @@ target_gcc::_register_builtin_funcs()
     builtin_func_simple_proto::fac<false, _mk_i64, mk_pvv, _mk_i64, mk_i>;
   using sp_i128_pvv_i128_i =
     builtin_func_simple_proto::fac<false, _mk_i128, mk_pvv, _mk_i128, mk_i>;
-  using pio0_iN_pvv_iN_i =
-    _builtin_func_pi_overload_fac<0,
-				  sp_i8_pvv_i8_i::create,
-				  sp_i16_pvv_i16_i::create,
-				  sp_i32_pvv_i32_i::create,
-				  sp_i64_pvv_i64_i::create,
-				  sp_i128_pvv_i128_i::create>;
+  auto pio0_iN_pvv_iN_i_fac =
+    std::bind(_builtin_func_pi_overload_fac<0>::create,
+	      sp_i8_pvv_i8_i::create,
+	      sp_i16_pvv_i16_i::create,
+	      sp_i32_pvv_i32_i::create,
+	      sp_i64_pvv_i64_i::create,
+	      sp_i128_pvv_i128_i::create);
 
   using sp_i8_pcvv_i =
     builtin_func_simple_proto::fac<false, _mk_i8, mk_pcvv, mk_i>;
@@ -3892,12 +3893,13 @@ target_gcc::_register_builtin_funcs()
     builtin_func_simple_proto::fac<false, _mk_i64, mk_pcvv, mk_i>;
   using sp_i128_pcvv_i =
     builtin_func_simple_proto::fac<false, _mk_i128, mk_pcvv, mk_i>;
-  using pio0_iN_pcvv_i = _builtin_func_pi_overload_fac<0,
-						       sp_i8_pcvv_i::create,
-						       sp_i16_pcvv_i::create,
-						       sp_i32_pcvv_i::create,
-						       sp_i64_pcvv_i::create,
-						       sp_i128_pcvv_i::create>;
+  auto pio0_iN_pcvv_i_fac =
+    std::bind(_builtin_func_pi_overload_fac<0>::create,
+	      sp_i8_pcvv_i::create,
+	      sp_i16_pcvv_i::create,
+	      sp_i32_pcvv_i::create,
+	      sp_i64_pcvv_i::create,
+	      sp_i128_pcvv_i::create);
 
   using sp_b_pvv_pv_i8_b_i_i =
     builtin_func_simple_proto::fac<false, mk_b, mk_pvv, mk_pv, _mk_i8, mk_b,
@@ -3914,13 +3916,13 @@ target_gcc::_register_builtin_funcs()
   using sp_b_pvv_pv_i128_b_i_i =
     builtin_func_simple_proto::fac<false, mk_b, mk_pvv, mk_pv, _mk_i128, mk_b,
 				   mk_i, mk_i>;
-  using pio0_b_pvv_pv_iN_b_i_i =
-    _builtin_func_pi_overload_fac<0,
-				  sp_b_pvv_pv_i8_b_i_i::create,
-				  sp_b_pvv_pv_i16_b_i_i::create,
-				  sp_b_pvv_pv_i32_b_i_i::create,
-				  sp_b_pvv_pv_i64_b_i_i::create,
-				  sp_b_pvv_pv_i128_b_i_i::create>;
+  auto pio0_b_pvv_pv_iN_b_i_i_fac =
+    std::bind(_builtin_func_pi_overload_fac<0>::create,
+	      sp_b_pvv_pv_i8_b_i_i::create,
+	      sp_b_pvv_pv_i16_b_i_i::create,
+	      sp_b_pvv_pv_i32_b_i_i::create,
+	      sp_b_pvv_pv_i64_b_i_i::create,
+	      sp_b_pvv_pv_i128_b_i_i::create);
 
   using sp_v_pvv_i8_i =
     builtin_func_simple_proto::fac<false, mk_v, mk_pvv, _mk_i8, mk_i>;
@@ -3932,13 +3934,13 @@ target_gcc::_register_builtin_funcs()
     builtin_func_simple_proto::fac<false, mk_v, mk_pvv, _mk_i64, mk_i>;
   using sp_v_pvv_i128_i =
     builtin_func_simple_proto::fac<false, mk_v, mk_pvv, _mk_i128, mk_i>;
-  using pio0_v_pvv_iN_i =
-    _builtin_func_pi_overload_fac<0,
-				  sp_v_pvv_i8_i::create,
-				  sp_v_pvv_i16_i::create,
-				  sp_v_pvv_i32_i::create,
-				  sp_v_pvv_i64_i::create,
-				  sp_v_pvv_i128_i::create>;
+  auto pio0_v_pvv_iN_i_fac =
+    std::bind(_builtin_func_pi_overload_fac<0>::create,
+	      sp_v_pvv_i8_i::create,
+	      sp_v_pvv_i16_i::create,
+	      sp_v_pvv_i32_i::create,
+	      sp_v_pvv_i64_i::create,
+	      sp_v_pvv_i128_i::create);
 
 
   static std::map<const std::string,
@@ -4584,97 +4586,97 @@ target_gcc::_register_builtin_funcs()
     { "__builtin_LINE", sp_i::create },
 
     // Synchronization Primitives.
-    { "__sync_fetch_and_add", pio0_iN_pvv_iN_var::create },
+    { "__sync_fetch_and_add", pio0_iN_pvv_iN_var_fac },
     { "__sync_fetch_and_add_1", sp_i8_pvv_i8::create },
     { "__sync_fetch_and_add_2", sp_i16_pvv_i16::create },
     { "__sync_fetch_and_add_4", sp_i32_pvv_i32::create },
     { "__sync_fetch_and_add_8", sp_i64_pvv_i64::create },
     { "__sync_fetch_and_add_16", sp_i128_pvv_i128::create },
-    { "__sync_fetch_and_sub", pio0_iN_pvv_iN_var::create },
+    { "__sync_fetch_and_sub", pio0_iN_pvv_iN_var_fac },
     { "__sync_fetch_and_sub_1", sp_i8_pvv_i8::create },
     { "__sync_fetch_and_sub_2", sp_i16_pvv_i16::create },
     { "__sync_fetch_and_sub_4", sp_i32_pvv_i32::create },
     { "__sync_fetch_and_sub_8", sp_i64_pvv_i64::create },
     { "__sync_fetch_and_sub_16", sp_i128_pvv_i128::create },
-    { "__sync_fetch_and_or", pio0_iN_pvv_iN_var::create },
+    { "__sync_fetch_and_or", pio0_iN_pvv_iN_var_fac },
     { "__sync_fetch_and_or_1", sp_i8_pvv_i8::create },
     { "__sync_fetch_and_or_2", sp_i16_pvv_i16::create },
     { "__sync_fetch_and_or_4", sp_i32_pvv_i32::create },
     { "__sync_fetch_and_or_8", sp_i64_pvv_i64::create },
     { "__sync_fetch_and_or_16", sp_i128_pvv_i128::create },
-    { "__sync_fetch_and_and", pio0_iN_pvv_iN_var::create },
+    { "__sync_fetch_and_and", pio0_iN_pvv_iN_var_fac },
     { "__sync_fetch_and_and_1", sp_i8_pvv_i8::create },
     { "__sync_fetch_and_and_2", sp_i16_pvv_i16::create },
     { "__sync_fetch_and_and_4", sp_i32_pvv_i32::create },
     { "__sync_fetch_and_and_8", sp_i64_pvv_i64::create },
     { "__sync_fetch_and_and_16", sp_i128_pvv_i128::create },
-    { "__sync_fetch_and_xor", pio0_iN_pvv_iN_var::create },
+    { "__sync_fetch_and_xor", pio0_iN_pvv_iN_var_fac },
     { "__sync_fetch_and_xor_1", sp_i8_pvv_i8::create },
     { "__sync_fetch_and_xor_2", sp_i16_pvv_i16::create },
     { "__sync_fetch_and_xor_4", sp_i32_pvv_i32::create },
     { "__sync_fetch_and_xor_8", sp_i64_pvv_i64::create },
     { "__sync_fetch_and_xor_16", sp_i128_pvv_i128::create },
-    { "__sync_fetch_and_nand", pio0_iN_pvv_iN_var::create },
+    { "__sync_fetch_and_nand", pio0_iN_pvv_iN_var_fac },
     { "__sync_fetch_and_nand_1", sp_i8_pvv_i8::create },
     { "__sync_fetch_and_nand_2", sp_i16_pvv_i16::create },
     { "__sync_fetch_and_nand_4", sp_i32_pvv_i32::create },
     { "__sync_fetch_and_nand_8", sp_i64_pvv_i64::create },
     { "__sync_fetch_and_nand_16", sp_i128_pvv_i128::create },
-    { "__sync_add_and_fetch", pio0_iN_pvv_iN_var::create },
+    { "__sync_add_and_fetch", pio0_iN_pvv_iN_var_fac },
     { "__sync_add_and_fetch_1", sp_i8_pvv_i8::create },
     { "__sync_add_and_fetch_2", sp_i16_pvv_i16::create },
     { "__sync_add_and_fetch_4", sp_i32_pvv_i32::create },
     { "__sync_add_and_fetch_8", sp_i64_pvv_i64::create },
     { "__sync_add_and_fetch_16", sp_i128_pvv_i128::create },
-    { "__sync_sub_and_fetch", pio0_iN_pvv_iN_var::create },
+    { "__sync_sub_and_fetch", pio0_iN_pvv_iN_var_fac },
     { "__sync_sub_and_fetch_1", sp_i8_pvv_i8::create },
     { "__sync_sub_and_fetch_2", sp_i16_pvv_i16::create },
     { "__sync_sub_and_fetch_4", sp_i32_pvv_i32::create },
     { "__sync_sub_and_fetch_8", sp_i64_pvv_i64::create },
     { "__sync_sub_and_fetch_16", sp_i128_pvv_i128::create },
-    { "__sync_or_and_fetch", pio0_iN_pvv_iN_var::create },
+    { "__sync_or_and_fetch", pio0_iN_pvv_iN_var_fac },
     { "__sync_or_and_fetch_1", sp_i8_pvv_i8::create },
     { "__sync_or_and_fetch_2", sp_i16_pvv_i16::create },
     { "__sync_or_and_fetch_4", sp_i32_pvv_i32::create },
     { "__sync_or_and_fetch_8", sp_i64_pvv_i64::create },
     { "__sync_or_and_fetch_16", sp_i128_pvv_i128::create },
-    { "__sync_and_and_fetch", pio0_iN_pvv_iN_var::create },
+    { "__sync_and_and_fetch", pio0_iN_pvv_iN_var_fac },
     { "__sync_and_and_fetch_1", sp_i8_pvv_i8::create },
     { "__sync_and_and_fetch_2", sp_i16_pvv_i16::create },
     { "__sync_and_and_fetch_4", sp_i32_pvv_i32::create },
     { "__sync_and_and_fetch_8", sp_i64_pvv_i64::create },
     { "__sync_and_and_fetch_16", sp_i128_pvv_i128::create },
-    { "__sync_xor_and_fetch", pio0_iN_pvv_iN_var::create },
+    { "__sync_xor_and_fetch", pio0_iN_pvv_iN_var_fac },
     { "__sync_xor_and_fetch_1", sp_i8_pvv_i8::create },
     { "__sync_xor_and_fetch_2", sp_i16_pvv_i16::create },
     { "__sync_xor_and_fetch_4", sp_i32_pvv_i32::create },
     { "__sync_xor_and_fetch_8", sp_i64_pvv_i64::create },
     { "__sync_xor_and_fetch_16", sp_i128_pvv_i128::create },
-    { "__sync_nand_and_fetch", pio0_iN_pvv_iN_var::create },
+    { "__sync_nand_and_fetch", pio0_iN_pvv_iN_var_fac },
     { "__sync_nand_and_fetch_1", sp_i8_pvv_i8::create },
     { "__sync_nand_and_fetch_2", sp_i16_pvv_i16::create },
     { "__sync_nand_and_fetch_4", sp_i32_pvv_i32::create },
     { "__sync_nand_and_fetch_8", sp_i64_pvv_i64::create },
     { "__sync_nand_and_fetch_16", sp_i128_pvv_i128::create },
-    { "__sync_bool_compare_and_swap", pio0_b_pvv_iN_iN_var::create },
+    { "__sync_bool_compare_and_swap", pio0_b_pvv_iN_iN_var_fac },
     { "__sync_bool_compare_and_swap_1", sp_b_pvv_i8_i8::create },
     { "__sync_bool_compare_and_swap_2", sp_b_pvv_i16_i16::create },
     { "__sync_bool_compare_and_swap_4", sp_b_pvv_i32_i32::create },
     { "__sync_bool_compare_and_swap_8", sp_b_pvv_i64_i64::create },
     { "__sync_bool_compare_and_swap_16", sp_b_pvv_i128_i128::create },
-    { "__sync_val_compare_and_swap", pio0_iN_pvv_iN_iN_var::create },
+    { "__sync_val_compare_and_swap", pio0_iN_pvv_iN_iN_var_fac },
     { "__sync_val_compare_and_swap_1", sp_i8_pvv_i8_i8::create },
     { "__sync_val_compare_and_swap_2", sp_i16_pvv_i16_i16::create },
     { "__sync_val_compare_and_swap_4", sp_i32_pvv_i32_i32::create },
     { "__sync_val_compare_and_swap_8", sp_i64_pvv_i64_i64::create },
     { "__sync_val_compare_and_swap_16", sp_i128_pvv_i128_i128::create },
-    { "__sync_lock_test_and_set", pio0_iN_pvv_iN_var::create },
+    { "__sync_lock_test_and_set", pio0_iN_pvv_iN_var_fac },
     { "__sync_lock_test_and_set_1", sp_i8_pvv_i8::create },
     { "__sync_lock_test_and_set_2", sp_i16_pvv_i16::create },
     { "__sync_lock_test_and_set_4", sp_i32_pvv_i32::create },
     { "__sync_lock_test_and_set_8", sp_i64_pvv_i64::create },
     { "__sync_lock_test_and_set_16", sp_i128_pvv_i128::create },
-    { "__sync_lock_release", pio0_v_pvv_var::create },
+    { "__sync_lock_release", pio0_v_pvv_var_fac },
     { "__sync_lock_release_1", sp_v_pvv::create },
     { "__sync_lock_release_2", sp_v_pvv::create },
     { "__sync_lock_release_4", sp_v_pvv::create },
@@ -4684,100 +4686,100 @@ target_gcc::_register_builtin_funcs()
     { "__atomic_test_and_set", sp_b_pvv_i::create },
     { "__atomic_clear", sp_v_pvv_i::create },
     { "__atomic_exchange", sp_v_pvv_pv_pv_i::create },
-    { "__atomic_exchange_n", pio0_iN_pvv_iN_i::create },
+    { "__atomic_exchange_n", pio0_iN_pvv_iN_i_fac },
     { "__atomic_exchange_1", sp_i8_pvv_i8_i::create },
     { "__atomic_exchange_2", sp_i16_pvv_i16_i::create },
     { "__atomic_exchange_4", sp_i32_pvv_i32_i::create },
     { "__atomic_exchange_8", sp_i64_pvv_i64_i::create },
     { "__atomic_exchange_16", sp_i128_pvv_i128_i::create },
     { "__atomic_load", sp_v_pcvv_pv_i::create },
-    { "__atomic_load_n", pio0_iN_pcvv_i::create },
+    { "__atomic_load_n", pio0_iN_pcvv_i_fac },
     { "__atomic_load_1", sp_i8_pcvv_i::create },
     { "__atomic_load_2", sp_i16_pcvv_i::create },
     { "__atomic_load_4", sp_i32_pcvv_i::create },
     { "__atomic_load_8", sp_i64_pcvv_i::create },
     { "__atomic_load_16", sp_i128_pcvv_i::create },
     { "__atomic_compare_exchange", sp_b_pvv_pv_pv_b_i_i::create },
-    { "__atomic_compare_exchange_n", pio0_b_pvv_pv_iN_b_i_i::create },
+    { "__atomic_compare_exchange_n", pio0_b_pvv_pv_iN_b_i_i_fac },
     { "__atomic_compare_exchange_1", sp_b_pvv_pv_i8_b_i_i::create },
     { "__atomic_compare_exchange_2", sp_b_pvv_pv_i16_b_i_i::create },
     { "__atomic_compare_exchange_4", sp_b_pvv_pv_i32_b_i_i::create },
     { "__atomic_compare_exchange_8", sp_b_pvv_pv_i64_b_i_i::create },
     { "__atomic_compare_exchange_16", sp_b_pvv_pv_i128_b_i_i::create },
     { "__atomic_store", sp_v_pvv_pv_i::create },
-    { "__atomic_store_n", pio0_v_pvv_iN_i::create },
+    { "__atomic_store_n", pio0_v_pvv_iN_i_fac },
     { "__atomic_store_1", sp_v_pvv_i8_i::create },
     { "__atomic_store_2", sp_v_pvv_i16_i::create },
     { "__atomic_store_4", sp_v_pvv_i32_i::create },
     { "__atomic_store_8", sp_v_pvv_i64_i::create },
     { "__atomic_store_16", sp_v_pvv_i128_i::create },
-    { "__atomic_add_fetch", pio0_iN_pvv_iN_i::create },
+    { "__atomic_add_fetch", pio0_iN_pvv_iN_i_fac },
     { "__atomic_add_fetch_1", sp_i8_pvv_i8_i::create },
     { "__atomic_add_fetch_2", sp_i16_pvv_i16_i::create },
     { "__atomic_add_fetch_4", sp_i32_pvv_i32_i::create },
     { "__atomic_add_fetch_8", sp_i64_pvv_i64_i::create },
     { "__atomic_add_fetch_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_sub_fetch", pio0_iN_pvv_iN_i::create },
+    { "__atomic_sub_fetch", pio0_iN_pvv_iN_i_fac },
     { "__atomic_sub_fetch_1", sp_i8_pvv_i8_i::create },
     { "__atomic_sub_fetch_2", sp_i16_pvv_i16_i::create },
     { "__atomic_sub_fetch_4", sp_i32_pvv_i32_i::create },
     { "__atomic_sub_fetch_8", sp_i64_pvv_i64_i::create },
     { "__atomic_sub_fetch_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_and_fetch", pio0_iN_pvv_iN_i::create },
+    { "__atomic_and_fetch", pio0_iN_pvv_iN_i_fac },
     { "__atomic_and_fetch_1", sp_i8_pvv_i8_i::create },
     { "__atomic_and_fetch_2", sp_i16_pvv_i16_i::create },
     { "__atomic_and_fetch_4", sp_i32_pvv_i32_i::create },
     { "__atomic_and_fetch_8", sp_i64_pvv_i64_i::create },
     { "__atomic_and_fetch_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_nand_fetch", pio0_iN_pvv_iN_i::create },
+    { "__atomic_nand_fetch", pio0_iN_pvv_iN_i_fac },
     { "__atomic_nand_fetch_1", sp_i8_pvv_i8_i::create },
     { "__atomic_nand_fetch_2", sp_i16_pvv_i16_i::create },
     { "__atomic_nand_fetch_4", sp_i32_pvv_i32_i::create },
     { "__atomic_nand_fetch_8", sp_i64_pvv_i64_i::create },
     { "__atomic_nand_fetch_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_xor_fetch", pio0_iN_pvv_iN_i::create },
+    { "__atomic_xor_fetch", pio0_iN_pvv_iN_i_fac },
     { "__atomic_xor_fetch_1", sp_i8_pvv_i8_i::create },
     { "__atomic_xor_fetch_2", sp_i16_pvv_i16_i::create },
     { "__atomic_xor_fetch_4", sp_i32_pvv_i32_i::create },
     { "__atomic_xor_fetch_8", sp_i64_pvv_i64_i::create },
     { "__atomic_xor_fetch_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_or_fetch", pio0_iN_pvv_iN_i::create },
+    { "__atomic_or_fetch", pio0_iN_pvv_iN_i_fac },
     { "__atomic_or_fetch_1", sp_i8_pvv_i8_i::create },
     { "__atomic_or_fetch_2", sp_i16_pvv_i16_i::create },
     { "__atomic_or_fetch_4", sp_i32_pvv_i32_i::create },
     { "__atomic_or_fetch_8", sp_i64_pvv_i64_i::create },
     { "__atomic_or_fetch_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_fetch_add", pio0_iN_pvv_iN_i::create },
+    { "__atomic_fetch_add", pio0_iN_pvv_iN_i_fac },
     { "__atomic_fetch_add_1", sp_i8_pvv_i8_i::create },
     { "__atomic_fetch_add_2", sp_i16_pvv_i16_i::create },
     { "__atomic_fetch_add_4", sp_i32_pvv_i32_i::create },
     { "__atomic_fetch_add_8", sp_i64_pvv_i64_i::create },
     { "__atomic_fetch_add_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_fetch_sub", pio0_iN_pvv_iN_i::create },
+    { "__atomic_fetch_sub", pio0_iN_pvv_iN_i_fac },
     { "__atomic_fetch_sub_1", sp_i8_pvv_i8_i::create },
     { "__atomic_fetch_sub_2", sp_i16_pvv_i16_i::create },
     { "__atomic_fetch_sub_4", sp_i32_pvv_i32_i::create },
     { "__atomic_fetch_sub_8", sp_i64_pvv_i64_i::create },
     { "__atomic_fetch_sub_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_fetch_and", pio0_iN_pvv_iN_i::create },
+    { "__atomic_fetch_and", pio0_iN_pvv_iN_i_fac },
     { "__atomic_fetch_and_1", sp_i8_pvv_i8_i::create },
     { "__atomic_fetch_and_2", sp_i16_pvv_i16_i::create },
     { "__atomic_fetch_and_4", sp_i32_pvv_i32_i::create },
     { "__atomic_fetch_and_8", sp_i64_pvv_i64_i::create },
     { "__atomic_fetch_and_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_fetch_nand", pio0_iN_pvv_iN_i::create },
+    { "__atomic_fetch_nand", pio0_iN_pvv_iN_i_fac },
     { "__atomic_fetch_nand_1", sp_i8_pvv_i8_i::create },
     { "__atomic_fetch_nand_2", sp_i16_pvv_i16_i::create },
     { "__atomic_fetch_nand_4", sp_i32_pvv_i32_i::create },
     { "__atomic_fetch_nand_8", sp_i64_pvv_i64_i::create },
     { "__atomic_fetch_nand_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_fetch_xor", pio0_iN_pvv_iN_i::create },
+    { "__atomic_fetch_xor", pio0_iN_pvv_iN_i_fac },
     { "__atomic_fetch_xor_1", sp_i8_pvv_i8_i::create },
     { "__atomic_fetch_xor_2", sp_i16_pvv_i16_i::create },
     { "__atomic_fetch_xor_4", sp_i32_pvv_i32_i::create },
     { "__atomic_fetch_xor_8", sp_i64_pvv_i64_i::create },
     { "__atomic_fetch_xor_16", sp_i128_pvv_i128_i::create },
-    { "__atomic_fetch_or", pio0_iN_pvv_iN_i::create },
+    { "__atomic_fetch_or", pio0_iN_pvv_iN_i_fac },
     { "__atomic_fetch_or_1", sp_i8_pvv_i8_i::create },
     { "__atomic_fetch_or_2", sp_i16_pvv_i16_i::create },
     { "__atomic_fetch_or_4", sp_i32_pvv_i32_i::create },
