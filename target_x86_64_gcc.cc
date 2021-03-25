@@ -294,62 +294,6 @@ bool target_x86_64_gcc::is_bitfield_default_signed() const noexcept
   return true;
 }
 
-mpa::limbs::size_type
-target_x86_64_gcc::get_std_int_width(const types::std_int_type::kind k)
-  const noexcept
-{
-  switch (k) {
-  case types::std_int_type::kind::k_char:
-    return 8;
-
-  case types::std_int_type::kind::k_short:
-    return 16;
-
-  case types::std_int_type::kind::k_int:
-    return 32;
-
-  case types::std_int_type::kind::k_long:
-    return 64;
-
-  case types::std_int_type::kind::k_long_long:
-    return 64;
-
-  case types::std_int_type::kind::k_int128:
-    return 128;
-  };
-}
-
-mpa::limbs target_x86_64_gcc::
-get_std_int_size(const types::std_int_type::kind k) const
-{
-  return mpa::limbs::from_size_type(get_std_int_width(k) / 8);
-}
-
-mpa::limbs::size_type target_x86_64_gcc::
-get_std_int_alignment(const types::std_int_type::kind k) const
-{
-  return get_std_int_size(k).ffs() - 1;
-}
-
-mpa::limbs::size_type
-target_x86_64_gcc::get_ext_int_width(const types::ext_int_type::kind k)
-  const noexcept
-{
-  return _int_mode_to_width(static_cast<int_mode_kind>(static_cast<int>(k)));
-}
-
-mpa::limbs target_x86_64_gcc::
-get_ext_int_size(const types::ext_int_type::kind k) const
-{
-  return mpa::limbs::from_size_type(get_ext_int_width(k) / 8);
-}
-
-mpa::limbs::size_type target_x86_64_gcc::
-get_ext_int_alignment(const types::ext_int_type::kind k) const
-{
-  return get_ext_int_size(k).ffs() - 1;
-}
-
 mpa::limbs::size_type target_x86_64_gcc::
 get_float_significand_width(const types::std_float_type::kind k)
   const noexcept
@@ -410,16 +354,6 @@ get_float_alignment(const types::std_float_type::kind k) const
   return get_float_size(k).ffs() - 1;
 }
 
-mpa::limbs target_x86_64_gcc::get_pointer_size() const
-{
-  return mpa::limbs::from_size_type(8);
-}
-
-mpa::limbs::size_type target_x86_64_gcc::get_pointer_alignment() const
-{
-  return 3;
-}
-
 mpa::limbs::size_type target_x86_64_gcc::get_biggest_alignment_log2()
   const noexcept
 {
@@ -466,26 +400,22 @@ get_execution_charset_encoder(const execution_charset_encoding e) const
 					       false)));
 }
 
-types::std_int_type::kind
-target_x86_64_gcc::_int_mode_to_std_int_kind(const int_mode_kind m)
-  const noexcept
+void target_x86_64_gcc::_arch_register_int_modes()
 {
-  switch (m) {
-  case int_mode_kind::imk_QI:
-    return types::std_int_type::kind::k_char;
+  _int_mode_enable(int_mode_kind::imk_TI);
 
-  case int_mode_kind::imk_HI:
-    return types::std_int_type::kind::k_short;
-
-  case int_mode_kind::imk_SI:
-    return types::std_int_type::kind::k_int;
-
-  case int_mode_kind::imk_DI:
-    return types::std_int_type::kind::k_long;
-
-  case int_mode_kind::imk_TI:
-    return types::std_int_type::kind::k_int128;
-  }
+  _set_std_int_mode(types::std_int_type::kind::k_char,
+		    int_mode_kind::imk_QI);
+  _set_std_int_mode(types::std_int_type::kind::k_short,
+		    int_mode_kind::imk_HI);
+  _set_std_int_mode(types::std_int_type::kind::k_int,
+		    int_mode_kind::imk_SI);
+  _set_std_int_mode(types::std_int_type::kind::k_long,
+		    int_mode_kind::imk_DI);
+  _set_std_int_mode(types::std_int_type::kind::k_long_long,
+		    int_mode_kind::imk_DI);
+  _set_std_int_mode(types::std_int_type::kind::k_int128,
+		    int_mode_kind::imk_TI);
 }
 
 types::std_float_type::kind target_x86_64_gcc::
@@ -500,20 +430,20 @@ _float_mode_to_float_kind(const float_mode_kind m) const noexcept
   }
 }
 
-target_gcc::int_mode_kind target_x86_64_gcc::_get_pointer_mode() const noexcept
+types::ext_int_type::kind target_x86_64_gcc::_get_pointer_mode() const noexcept
 {
-  return int_mode_kind::imk_DI;
+  return types::ext_int_type::kind{static_cast<int>(int_mode_kind::imk_DI)};
 }
 
-target_gcc::int_mode_kind target_x86_64_gcc::_get_word_mode() const noexcept
+types::ext_int_type::kind target_x86_64_gcc::_get_word_mode() const noexcept
 {
-  return int_mode_kind::imk_DI;
+  return types::ext_int_type::kind{static_cast<int>(int_mode_kind::imk_DI)};
 }
 
 void target_x86_64_gcc::
 _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
 		    const bool packed,
-		    const int_mode_kind * const mode,
+		    const types::ext_int_type::kind * const mode,
 		    types::alignment &&user_align) const
 {
   // Inspect each enumerator and find the maximum required width

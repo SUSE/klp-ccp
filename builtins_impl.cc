@@ -135,13 +135,13 @@ klp::ccp::builtins::impl::mk_umax(const target &tgt)
 std::shared_ptr<const addressable_type>
 klp::ccp::builtins::impl::mk_sz(const target &tgt)
 {
-  return std_int_type::create(tgt.get_ptrdiff_kind(), false);
+  return tgt.create_ptrdiff_type(false);
 }
 
 std::shared_ptr<const addressable_type>
 klp::ccp::builtins::impl::mk_ssz(const target &tgt)
 {
-  return std_int_type::create(tgt.get_ptrdiff_kind(), true);
+  return tgt.create_ptrdiff_type(true);
 }
 
 std::shared_ptr<const addressable_type>

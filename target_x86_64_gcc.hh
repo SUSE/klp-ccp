@@ -42,26 +42,6 @@ namespace klp
       virtual bool is_bitfield_default_signed() const noexcept override;
 
       virtual mpa::limbs::size_type
-      get_std_int_width(const types::std_int_type::kind k) const noexcept
-	override;
-
-      virtual mpa::limbs get_std_int_size(const types::std_int_type::kind k)
-	const override;
-
-      virtual mpa::limbs::size_type
-      get_std_int_alignment(const types::std_int_type::kind k) const override;
-
-      virtual mpa::limbs::size_type
-      get_ext_int_width(const types::ext_int_type::kind k)
-	const noexcept override;
-
-      virtual mpa::limbs get_ext_int_size(const types::ext_int_type::kind k)
-	const override;
-
-      virtual mpa::limbs::size_type
-      get_ext_int_alignment(const types::ext_int_type::kind k) const override;
-
-      virtual mpa::limbs::size_type
       get_float_significand_width(const types::std_float_type::kind k)
 	const noexcept override;
 
@@ -75,10 +55,6 @@ namespace klp
       virtual mpa::limbs::size_type
       get_float_alignment(const types::std_float_type::kind k) const override;
 
-      virtual mpa::limbs get_pointer_size() const override;
-
-      virtual mpa::limbs::size_type get_pointer_alignment() const override;
-
       virtual mpa::limbs::size_type get_biggest_alignment_log2()
 	const noexcept override;
 
@@ -91,21 +67,23 @@ namespace klp
       virtual mpa::limbs::size_type get_va_list_alignment() const override;
 
     private:
-      virtual types::std_int_type::kind
-      _int_mode_to_std_int_kind(const int_mode_kind m) const noexcept override;
+      virtual void _arch_register_int_modes() override;
 
       virtual types::std_float_type::kind
       _float_mode_to_float_kind(const float_mode_kind m)
 	const noexcept override;
 
-      virtual int_mode_kind _get_pointer_mode() const noexcept override;
+      virtual types::ext_int_type::kind _get_pointer_mode()
+	const noexcept override;
 
-      virtual int_mode_kind _get_word_mode() const noexcept override;
+      virtual types::ext_int_type::kind _get_word_mode()
+	const noexcept override;
 
-      virtual void _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
-				       const bool packed,
-				       const int_mode_kind * const mode,
-				       types::alignment &&user_align)
+      virtual void
+      _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
+			  const bool packed,
+			  const types::ext_int_type::kind * const mode,
+			  types::alignment &&user_align)
 	const override;
 
       virtual void _layout_struct(types::struct_or_union_content &souc,

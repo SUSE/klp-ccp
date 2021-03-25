@@ -1039,6 +1039,11 @@ namespace klp
 	    return this->_tgt_id == rhs._tgt_id;
 	  }
 
+	  constexpr bool operator!=(const kind &rhs) const noexcept
+	  {
+	    return !(*this == rhs);
+	  }
+
 	private:
 	  int _tgt_id;
 	};

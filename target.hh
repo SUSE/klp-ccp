@@ -143,12 +143,10 @@ namespace klp
 	const = 0;
 
       virtual mpa::limbs::size_type
-      get_std_int_alignment(const types::std_int_type::kind k) const = 0;
-
+      get_std_int_alignment(const types::std_int_type::kind k)
+	const noexcept = 0;
 
       typedef std::map<std::string, types::ext_int_type::kind> ext_int_keywords;
-
-      virtual ext_int_keywords get_ext_int_keywords() const = 0;
 
       virtual mpa::limbs::size_type
       get_ext_int_width(const types::ext_int_type::kind k) const noexcept = 0;
@@ -157,7 +155,10 @@ namespace klp
 	const = 0;
 
       virtual mpa::limbs::size_type
-      get_ext_int_alignment(const types::ext_int_type::kind k) const = 0;
+      get_ext_int_alignment(const types::ext_int_type::kind k)
+	const noexcept = 0;
+
+      virtual ext_int_keywords get_ext_int_keywords() const = 0;
 
       virtual std::shared_ptr<const types::int_type>
       width_to_int_type(const mpa::limbs::size_type w, const bool is_signed,
@@ -178,11 +179,14 @@ namespace klp
       virtual mpa::limbs::size_type
       get_float_alignment(const types::std_float_type::kind k) const = 0;
 
-      virtual types::std_int_type::kind get_ptrdiff_kind() const noexcept = 0;
+      virtual std::shared_ptr<const types::int_type>
+      create_ptrdiff_type(const bool is_signed) const = 0;
+
+      virtual mpa::limbs::size_type get_ptrdiff_width() const noexcept = 0;
 
       virtual mpa::limbs get_pointer_size() const = 0;
 
-      virtual mpa::limbs::size_type get_pointer_alignment() const = 0;
+      virtual mpa::limbs::size_type get_pointer_alignment() const noexcept = 0;
 
       virtual mpa::limbs::size_type get_biggest_alignment_log2()
 	const noexcept = 0;

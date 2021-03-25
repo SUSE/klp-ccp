@@ -3609,7 +3609,7 @@ void expr_binop::_evaluate_ptr_sub(const pointer_type &pt_left,
   const mpa::limbs pointed_to_size =
     _check_pointer_arithmetic(a, pt_left, _left, tgt);
 
-  _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), true));
+  _set_type(tgt.create_ptrdiff_type(true));
 
   if (pointed_to_size && _left.is_constexpr() && _right.is_constexpr()) {
     const constexpr_value::address_constant &ac_left
@@ -3658,10 +3658,7 @@ void expr_binop::_evaluate_ptr_sub(const pointer_type &pt_left,
       if (negate)
 	distance = distance.complement();
 
-      const std_int_type::kind ptrdiff_kind = tgt.get_ptrdiff_kind();
-      const mpa::limbs::size_type ptrdiff_width =
-	tgt.get_std_int_width(ptrdiff_kind);
-
+      const mpa::limbs::size_type ptrdiff_width = tgt.get_ptrdiff_width();
       if (ptrdiff_width < (distance.width() - distance.clrsb())) {
 	code_remark remark
 	  (code_remark::severity::warning,
@@ -5333,8 +5330,7 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
 
 static target_int _limbs_to_size_t(const target &tgt, mpa::limbs &&ls)
 {
-  const mpa::limbs::size_type width
-    = tgt.get_std_int_width(tgt.get_ptrdiff_kind());
+  const mpa::limbs::size_type width = tgt.get_ptrdiff_width();
   ls.resize(mpa::limbs::width_to_size(width));
   ls.set_bits_at_and_above(width, false);
   return target_int{width, false, std::move(ls)};
@@ -5354,7 +5350,7 @@ void expr_sizeof_expr::evaluate_type(ast &a, const target &tgt)
 	     throw semantic_except(remark);
 	   }
 
-	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
+	   _set_type(tgt.create_ptrdiff_type(false));
 
 	   if (ot.is_size_constant()) {
 	     _set_value(constexpr_value::integer_constant_expr_tag{},
@@ -5364,20 +5360,16 @@ void expr_sizeof_expr::evaluate_type(ast &a, const target &tgt)
 	 },
 	 [&](const function_type &ft) {
 	   // GCC extension: sizeof(function type) == 1
-	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
+	   _set_type(tgt.create_ptrdiff_type(false));
 	   _set_value(constexpr_value::integer_constant_expr_tag{},
-		      (target_int::create_one
-		       (tgt.get_std_int_width(tgt.get_ptrdiff_kind()),
-			false)));
+		      target_int::create_one(tgt.get_ptrdiff_width(), false));
 
 	 },
 	 [&](const void_type&) {
 	   // GCC extension: sizeof(void) == 1
-	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
+	   _set_type(tgt.create_ptrdiff_type(false));
 	   _set_value(constexpr_value::integer_constant_expr_tag{},
-		      (target_int::create_one
-		       (tgt.get_std_int_width(tgt.get_ptrdiff_kind()),
-			false)));
+		      target_int::create_one(tgt.get_ptrdiff_width(), false));
 
 	 })),
        *_e.get_type());
@@ -5397,7 +5389,7 @@ void expr_sizeof_type_name::evaluate_type(ast &a, const target &tgt)
 	     throw semantic_except(remark);
 	   }
 
-	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
+	   _set_type(tgt.create_ptrdiff_type(false));
 
 	   if (ot.is_size_constant()) {
 	     _set_value(constexpr_value::integer_constant_expr_tag{},
@@ -5407,20 +5399,16 @@ void expr_sizeof_type_name::evaluate_type(ast &a, const target &tgt)
 	 },
 	 [&](const function_type &ft) {
 	   // GCC extension: sizeof(function type) == 1
-	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
+	   _set_type(tgt.create_ptrdiff_type(false));
 	   _set_value(constexpr_value::integer_constant_expr_tag{},
-		      (target_int::create_one
-		       (tgt.get_std_int_width(tgt.get_ptrdiff_kind()),
-			false)));
+		      target_int::create_one(tgt.get_ptrdiff_width(), false));
 
 	 },
 	 [&](const void_type&) {
 	   // GCC extension: sizeof(void) == 1
-	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
+	   _set_type(tgt.create_ptrdiff_type(false));
 	   _set_value(constexpr_value::integer_constant_expr_tag{},
-		      (target_int::create_one
-		       (tgt.get_std_int_width(tgt.get_ptrdiff_kind()),
-			false)));
+		      target_int::create_one(tgt.get_ptrdiff_width(), false));
 
 	 })),
        *_tn.get_type());
@@ -5440,7 +5428,7 @@ void expr_alignof_expr::evaluate_type(ast &a, const target &tgt)
 	     throw semantic_except(remark);
 	   }
 
-	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
+	   _set_type(tgt.create_ptrdiff_type(false));
 
 	   const mpa::limbs::size_type align_log2 =
 	     ot.get_effective_alignment(tgt);
@@ -5453,20 +5441,16 @@ void expr_alignof_expr::evaluate_type(ast &a, const target &tgt)
 	 },
 	 [&](const function_type &ft) {
 	   // GCC extension: __alignof__(function type) == 1
-	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
+	   _set_type(tgt.create_ptrdiff_type(false));
 	   _set_value(constexpr_value::integer_constant_expr_tag{},
-		      (target_int::create_one
-		       (tgt.get_std_int_width(tgt.get_ptrdiff_kind()),
-			false)));
+		      target_int::create_one(tgt.get_ptrdiff_width(), false));
 
 	 },
 	 [&](const void_type) {
 	   // GCC extension: __alignof__(void) == 1
-	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
+	   _set_type(tgt.create_ptrdiff_type(false));
 	   _set_value(constexpr_value::integer_constant_expr_tag{},
-		      (target_int::create_one
-		       (tgt.get_std_int_width(tgt.get_ptrdiff_kind()),
-			false)));
+		      target_int::create_one(tgt.get_ptrdiff_width(), false));
 
 	 })),
        *_e.get_type());
@@ -5486,7 +5470,7 @@ void expr_alignof_type_name::evaluate_type(ast &a, const target &tgt)
 	     throw semantic_except(remark);
 	   }
 
-	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
+	   _set_type(tgt.create_ptrdiff_type(false));
 
 	   const mpa::limbs::size_type align_log2 =
 	     ot.get_effective_alignment(tgt);
@@ -5499,20 +5483,16 @@ void expr_alignof_type_name::evaluate_type(ast &a, const target &tgt)
 	 },
 	 [&](const function_type &ft) {
 	   // GCC extension: __alignof__(function type) == 1
-	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
+	   _set_type(tgt.create_ptrdiff_type(false));
 	   _set_value(constexpr_value::integer_constant_expr_tag{},
-		      (target_int::create_one
-		       (tgt.get_std_int_width(tgt.get_ptrdiff_kind()),
-			false)));
+		      target_int::create_one(tgt.get_ptrdiff_width(), false));
 
 	 },
 	 [&](const void_type&) {
 	   // GCC extension: __alignof__(void) == 1
-	   _set_type(std_int_type::create(tgt.get_ptrdiff_kind(), false));
+	   _set_type(tgt.create_ptrdiff_type(false));
 	   _set_value(constexpr_value::integer_constant_expr_tag{},
-		      (target_int::create_one
-		       (tgt.get_std_int_width(tgt.get_ptrdiff_kind()),
-			false)));
+		      target_int::create_one(tgt.get_ptrdiff_width(), false));
 
 	 })),
        *_tn.get_type());
@@ -5668,12 +5648,11 @@ void expr_builtin_offsetof::evaluate_type(ast &a, const target &tgt)
 	}
       }));
 
-  const std_int_type::kind ptrdiff_kind = tgt.get_ptrdiff_kind();
-  _set_type(std_int_type::create(ptrdiff_kind, false));
+  _set_type(tgt.create_ptrdiff_type(false));
 
   if (offset_is_const) {
     mpa::limbs offset = ac.get_offset();
-    const mpa::limbs::size_type width = tgt.get_std_int_width(ptrdiff_kind);
+    const mpa::limbs::size_type width = tgt.get_ptrdiff_width();
     offset.resize(mpa::limbs::width_to_size(width));
     offset.set_bits_at_and_above(width, false);
     target_int result{width, false, std::move(offset)};

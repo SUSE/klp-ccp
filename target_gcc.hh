@@ -20,6 +20,9 @@
 #define TARGET_GCC_HH
 
 #include <bitset>
+#include <initializer_list>
+#include <vector>
+#include <map>
 #include "target.hh"
 #include "gcc_cmdline_parser.hh"
 #include "preprocessor.hh"
@@ -113,6 +116,28 @@ namespace klp
 
       virtual bool is_char_signed() const noexcept final;
 
+      virtual mpa::limbs::size_type
+      get_std_int_width(const types::std_int_type::kind k)
+	const noexcept override;
+
+      virtual mpa::limbs get_std_int_size(const types::std_int_type::kind k)
+	const override;
+
+      virtual mpa::limbs::size_type
+      get_std_int_alignment(const types::std_int_type::kind k)
+	const noexcept override;
+
+      virtual mpa::limbs::size_type
+      get_ext_int_width(const types::ext_int_type::kind k)
+	const noexcept override;
+
+      virtual mpa::limbs get_ext_int_size(const types::ext_int_type::kind k)
+	const override;
+
+      virtual mpa::limbs::size_type
+      get_ext_int_alignment(const types::ext_int_type::kind k)
+	const noexcept override;
+
       virtual ext_int_keywords get_ext_int_keywords() const override;
 
       virtual std::shared_ptr<const types::int_type>
@@ -120,7 +145,14 @@ namespace klp
 			const bool std_int_required)
 	const override;
 
-      virtual types::std_int_type::kind get_ptrdiff_kind()
+      virtual std::shared_ptr<const types::int_type>
+      create_ptrdiff_type(const bool is_signed) const override;
+
+      virtual mpa::limbs::size_type get_ptrdiff_width() const noexcept override;
+
+      virtual mpa::limbs get_pointer_size() const override;
+
+      virtual mpa::limbs::size_type get_pointer_alignment()
 	const noexcept override;
 
       virtual void
@@ -418,26 +450,95 @@ namespace klp
 	fmk_DF,
       };
 
-      static mpa::limbs::size_type _int_mode_to_width(const int_mode_kind m)
-	noexcept;
+    private:
+      struct int_mode
+      {
+	int_mode() noexcept;
+
+	int_mode(const types::ext_int_type::kind _mode,
+		 const mpa::limbs::size_type _width,
+		 const mpa::limbs::size_type _size,
+		 const mpa::limbs::size_type _alignment,
+		 const bool _enabled,
+		 const bool _create_int_n_type_specifier) noexcept;
+
+	types::ext_int_type::kind mode;
+	mpa::limbs::size_type width;
+	mpa::limbs::size_type size;
+	mpa::limbs::size_type alignment;
+	bool enabled;
+	bool create_int_n_type_specifier;
+	bool is_std_int;
+      };
+
+    protected:
+      void _register_int_mode(const types::ext_int_type::kind mode,
+			      const mpa::limbs::size_type width,
+			      const mpa::limbs::size_type size,
+			      const mpa::limbs::size_type alignment,
+			      const std::initializer_list<const char *> names,
+			      const bool create_int_n_type_specifier = false,
+			      const bool enabled = true);
+
+      void _register_int_mode(const int_mode_kind imk,
+			      const mpa::limbs::size_type width,
+			      const mpa::limbs::size_type size,
+			      const mpa::limbs::size_type alignment,
+			      const std::initializer_list<const char *> names,
+			      const bool create_int_n_type_specifier = false,
+			      const bool enabled = true);
+
+      void _int_mode_enable(const types::ext_int_type::kind mode);
+      void _int_mode_enable(const int_mode_kind imk);
+
+      void _set_std_int_mode(const types::std_int_type::kind std_int_kind,
+			     const types::ext_int_type::kind mode);
+      void _set_std_int_mode(const types::std_int_type::kind std_int_kind,
+			     const int_mode_kind imk);
 
     private:
-      static int_mode_kind _width_to_int_mode(const mpa::limbs::size_type w);
+      void _register_int_modes();
+      virtual void _arch_register_int_modes() = 0;
 
-      virtual types::std_int_type::kind
-      _int_mode_to_std_int_kind(const int_mode_kind m) const noexcept = 0;
+      std::shared_ptr<const types::int_type>
+      _int_mode_to_type(const types::ext_int_type::kind mode,
+			const bool is_signed,
+			const types::qualifiers &qs = types::qualifiers{})
+	const;
+
+      std::shared_ptr<const types::int_type>
+      _int_mode_to_type(const int_mode_kind imk,
+			const bool is_signed,
+			const types::qualifiers &qs = types::qualifiers{})
+	const;
+
+      const int_mode&
+      _std_int_kind_to_int_mode(const types::std_int_type::kind std_int_kind)
+	const noexcept;
+
+    protected:
+      mpa::limbs::size_type
+      _int_mode_to_width(const types::ext_int_type::kind mode) const;
+
+    private:
+      mpa::limbs::size_type
+      _int_mode_to_size(const types::ext_int_type::kind mode) const;
+
+      mpa::limbs::size_type
+      _int_mode_to_alignment(const types::ext_int_type::kind mode) const;
 
       virtual types::std_float_type::kind
       _float_mode_to_float_kind(const float_mode_kind m) const noexcept = 0;
 
-      virtual int_mode_kind _get_pointer_mode() const noexcept = 0;
+      virtual types::ext_int_type::kind _get_pointer_mode() const noexcept = 0;
 
-      virtual int_mode_kind _get_word_mode() const noexcept = 0;
+      virtual types::ext_int_type::kind _get_word_mode() const noexcept = 0;
 
-      virtual void _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
-				       const bool packed,
-				       const int_mode_kind * const mode,
-				       types::alignment &&user_align)
+      virtual void
+      _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
+			  const bool packed,
+			  const types::ext_int_type::kind * const mode,
+			  types::alignment &&user_align)
 	const = 0;
 
       virtual void _layout_struct(types::struct_or_union_content &souc,
@@ -489,6 +590,11 @@ namespace klp
 
       opts_common _opts_common;
       opts_c_family _opts_c_family;
+
+      std::vector<int_mode> _int_modes;
+      std::map<std::string, types::ext_int_type::kind> _int_mode_names;
+      std::vector<types::ext_int_type::kind> _std_int_modes;
+      std::vector<types::ext_int_type::kind> _int_modes_sorted_by_width;
 
       std::map<const std::string, const builtin_func::factory> _builtin_funcs;
     };

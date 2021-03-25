@@ -255,6 +255,8 @@ void target_gcc::parse_command_line
       }
     }
   }
+
+  _register_int_modes();
 }
 
 
@@ -438,8 +440,8 @@ public:
 
   bool operator()(const ast::attribute &attr);
 
-  const int_mode_kind* get_int_mode_result() const noexcept
-  { return _imk_set ? &_imk : nullptr; }
+  const types::ext_int_type::kind* get_int_mode_result() const noexcept
+  { return _im_set ? &_im : nullptr; }
 
   const float_mode_kind* get_float_mode_result() const noexcept
   { return _fmk_set ? &_fmk : nullptr; }
@@ -460,14 +462,14 @@ public:
 
   bool mode_attribute_found() const noexcept
   {
-    return _imk_set || _fmk_set;
+    return _im_set || _fmk_set;
   }
 
 private:
   ast::ast &_a;
   const target_gcc &_tgt;
-  int_mode_kind _imk;
-  bool _imk_set;
+  types::ext_int_type::kind _im;
+  bool _im_set;
   float_mode_kind _fmk;
   bool _fmk_set;
   pp_token_index _mode_tok;
@@ -475,7 +477,7 @@ private:
 
 target_gcc::_mode_attribute_finder::
 _mode_attribute_finder(ast::ast &a, const target_gcc &tgt) noexcept
-  : _a(a), _tgt(tgt), _imk_set(false), _fmk_set(false)
+  : _a(a), _tgt(tgt), _im_set(false), _fmk_set(false)
 {}
 
 bool target_gcc::_mode_attribute_finder::operator()(const ast::attribute &attr)
@@ -509,27 +511,16 @@ bool target_gcc::_mode_attribute_finder::operator()(const ast::attribute &attr)
   }
 
   const std::string &id = _a.get_pp_tokens()[e_id->get_id_tok()].get_value();
-  if (id == "QI" || id == "__QI__") {
-    _imk = int_mode_kind::imk_QI;
-    _imk_set = true;
-  } else if (id == "HI" || id == "__HI__" || id == "byte" || id == "__byte__") {
-    _imk = int_mode_kind::imk_HI;
-    _imk_set = true;
-  } else if (id == "SI" || id == "__SI__") {
-    _imk = int_mode_kind::imk_SI;
-    _imk_set = true;
-  } else if (id == "DI" || id == "__DI__") {
-    _imk = int_mode_kind::imk_DI;
-    _imk_set = true;
-  } else if (id == "TI" || id == "__TI__") {
-    _imk = int_mode_kind::imk_TI;
-    _imk_set = true;
+  const auto it_int_mode = _tgt._int_mode_names.find(id);
+  if (it_int_mode !=  _tgt._int_mode_names.cend()) {
+    _im = it_int_mode->second;
+    _im_set = true;
   } else if (id == "word" || id == "__word__") {
-    _imk = _tgt._get_word_mode();
-    _imk_set = true;
+    _im = _tgt._get_word_mode();
+    _im_set = true;
   } else if (id == "pointer" || id == "__pointer__") {
-    _imk = _tgt._get_pointer_mode();
-    _imk_set = true;
+    _im = _tgt._get_pointer_mode();
+    _im_set = true;
   } else if (id == "SF" || id == "__SF__") {
     _fmk = float_mode_kind::fmk_SF;
     _fmk_set = true;
@@ -544,7 +535,7 @@ bool target_gcc::_mode_attribute_finder::operator()(const ast::attribute &attr)
     throw semantic_except(remark);
   }
 
-  if (_imk_set && _fmk_set) {
+  if (_im_set && _fmk_set) {
     code_remark remark(code_remark::severity::fatal,
 		       "inconsistent 'mode' attribute specifier domains",
 		       _a.get_pp_result(), e_id->get_tokens_range());
@@ -564,7 +555,7 @@ apply_to_type(std::shared_ptr<const types::pointer_type> &&orig_t) const
   if (!this->mode_attribute_found())
     return std::move(orig_t);
 
-  if (!_imk_set || _imk != _tgt._get_pointer_mode()) {
+  if (!_im_set || _im != _tgt._get_pointer_mode()) {
     code_remark remark
       (code_remark::severity::fatal,
        "invalid 'mode' attribute specifier for pointer type",
@@ -583,7 +574,7 @@ apply_to_type(std::shared_ptr<const types::int_type> &&orig_t) const
   if (!this->mode_attribute_found())
     return std::move(orig_t);
 
-  if (!_imk_set) {
+  if (!_im_set) {
     code_remark remark
       (code_remark::severity::fatal,
        "invalid 'mode' attribute specifier for int type",
@@ -601,9 +592,8 @@ apply_to_type(std::shared_ptr<const types::int_type> &&orig_t) const
     throw semantic_except(remark);
   }
 
-  return (types::std_int_type::create
-	  (_tgt._int_mode_to_std_int_kind(_imk), orig_t->is_signed(_tgt),
-	   orig_t->get_qualifiers()));
+  return _tgt._int_mode_to_type(_im, orig_t->is_signed(_tgt),
+				orig_t->get_qualifiers());
 }
 
 std::shared_ptr<const types::addressable_type>
@@ -934,13 +924,73 @@ bool target_gcc::is_char_signed() const noexcept
   return _opts_c_family.flag_signed_char;
 }
 
+mpa::limbs::size_type
+target_gcc::get_std_int_width(const types::std_int_type::kind k) const noexcept
+{
+  const int_mode &im = _std_int_kind_to_int_mode(k);
+
+  return im.width;
+}
+
+mpa::limbs target_gcc::get_std_int_size(const types::std_int_type::kind k)
+  const
+{
+  const int_mode &im = _std_int_kind_to_int_mode(k);
+
+  return mpa::limbs::from_size_type(im.size);
+}
+
+mpa::limbs::size_type
+target_gcc::get_std_int_alignment(const types::std_int_type::kind k)
+  const noexcept
+{
+  const int_mode &im = _std_int_kind_to_int_mode(k);
+
+  return im.alignment;
+}
+
+mpa::limbs::size_type
+target_gcc::get_ext_int_width(const types::ext_int_type::kind k)
+  const noexcept
+{
+  const int m = static_cast<int>(k);
+  assert(m < _int_modes.size());
+  const int_mode &im = _int_modes[m];
+
+  return im.width;
+}
+
+mpa::limbs target_gcc::get_ext_int_size(const types::ext_int_type::kind k)
+	const
+{
+  const int m = static_cast<int>(k);
+  assert(m < _int_modes.size());
+  const int_mode &im = _int_modes[m];
+
+  return mpa::limbs::from_size_type(im.size);
+}
+
+mpa::limbs::size_type
+target_gcc::get_ext_int_alignment(const types::ext_int_type::kind k)
+  const noexcept
+{
+  const int m = static_cast<int>(k);
+  assert(m < _int_modes.size());
+  const int_mode &im = _int_modes[m];
+
+  return im.alignment;
+}
+
 target::ext_int_keywords target_gcc::get_ext_int_keywords() const
 {
   ext_int_keywords kws;
 
-  kws.emplace
-    ("__int128",
-     types::ext_int_type::kind{static_cast<int>(int_mode_kind::imk_TI)});
+  for (const auto &im : _int_modes) {
+    if (!im.enabled || !im.create_int_n_type_specifier)
+      continue;
+
+    kws.emplace("__int" + std::to_string(im.width), im.mode);
+  }
 
   return kws;
 }
@@ -950,13 +1000,68 @@ target_gcc::width_to_int_type(const mpa::limbs::size_type w,
 			      const bool is_signed,
 			      const bool std_int_required) const
 {
-  return (types::std_int_type::create
-	  (this->_int_mode_to_std_int_kind(_width_to_int_mode(w)), is_signed));
+  auto it_int_mode =
+    std::lower_bound(_int_modes_sorted_by_width.cbegin(),
+		     _int_modes_sorted_by_width.cend(),
+		     w,
+		     [this](const types::ext_int_type::kind mode,
+			    const mpa::limbs::size_type width) {
+		       const int m = static_cast<int>(mode);
+		       assert(m < _int_modes.size());
+		       return _int_modes[m].width < width;
+		     });
+
+  for (; it_int_mode != _int_modes_sorted_by_width.cend(); ++it_int_mode) {
+    const int m = static_cast<int>(*it_int_mode);
+    assert(m < _int_modes.size());
+    const int_mode &im = _int_modes[m];
+
+    if (!im.enabled || (std_int_required && !im.is_std_int))
+      continue;
+
+    return _int_mode_to_type(*it_int_mode, is_signed);
+  }
+
+  return nullptr;
 }
 
-types::std_int_type::kind target_gcc::get_ptrdiff_kind() const noexcept
+std::shared_ptr<const types::int_type>
+target_gcc::create_ptrdiff_type(const bool is_signed) const
 {
-  return this->_int_mode_to_std_int_kind(this->_get_pointer_mode());
+  const types::ext_int_type::kind mode = this->_get_pointer_mode();
+
+  return _int_mode_to_type(mode, is_signed);
+}
+
+
+mpa::limbs::size_type target_gcc::get_ptrdiff_width() const noexcept
+{
+  const types::ext_int_type::kind mode = this->_get_pointer_mode();
+  const int m = static_cast<int>(mode);
+  assert(m < _int_modes.size());
+  const int_mode &im = _int_modes[m];
+
+  return im.width;
+}
+
+mpa::limbs target_gcc::get_pointer_size() const
+{
+  const types::ext_int_type::kind mode = this->_get_pointer_mode();
+  const int m = static_cast<int>(mode);
+  assert(m < _int_modes.size());
+  const int_mode &im = _int_modes[m];
+
+  return mpa::limbs::from_size_type(im.size);
+}
+
+mpa::limbs::size_type target_gcc::get_pointer_alignment() const noexcept
+{
+  const types::ext_int_type::kind mode = this->_get_pointer_mode();
+  const int m = static_cast<int>(mode);
+  assert(m < _int_modes.size());
+  const int_mode &im = _int_modes[m];
+
+  return im.alignment;
 }
 
 void target_gcc::
@@ -1025,44 +1130,210 @@ layout_union(ast::ast &a,
   this->_layout_union(souc, aaf.grab_result());
 }
 
-mpa::limbs::size_type target_gcc::_int_mode_to_width(const int_mode_kind m)
-  noexcept
+
+target_gcc::int_mode::int_mode() noexcept
+  : mode(types::ext_int_type::kind{-1}),
+    width(0), size(0), alignment(0),
+    enabled(false), create_int_n_type_specifier(false), is_std_int(false)
+{}
+
+target_gcc::int_mode::int_mode(const types::ext_int_type::kind _mode,
+			       const mpa::limbs::size_type _width,
+			       const mpa::limbs::size_type _size,
+			       const mpa::limbs::size_type _alignment,
+			       const bool _enabled,
+			       const bool _create_int_n_type_specifier) noexcept
+  : mode(_mode), width(_width), size(_size), alignment(_alignment),
+    enabled(_enabled),
+    create_int_n_type_specifier(_create_int_n_type_specifier),
+    is_std_int(false)
+{}
+
+void
+target_gcc::_register_int_mode(const types::ext_int_type::kind mode,
+			       const mpa::limbs::size_type width,
+			       const mpa::limbs::size_type size,
+			       const mpa::limbs::size_type alignment,
+			       const std::initializer_list<const char *> names,
+			       const bool create_int_n_type_specifier,
+			       const bool enabled)
 {
-  switch (m) {
-  case int_mode_kind::imk_QI:
-    return 8;
+  const int m = static_cast<int>(mode);
 
-  case int_mode_kind::imk_HI:
-    return 16;
+  if (_int_modes.size() <= m)
+    _int_modes.resize(m + 1);
 
-  case int_mode_kind::imk_SI:
-    return 32;
+  _int_modes[m] =
+    int_mode{
+      mode, width, size, alignment, enabled, create_int_n_type_specifier
+    };
 
-  case int_mode_kind::imk_DI:
-    return 64;
+  const auto it_by_width =
+    std::upper_bound(_int_modes_sorted_by_width.begin(),
+		     _int_modes_sorted_by_width.end(),
+		     width,
+		     [this](const mpa::limbs::size_type width,
+			    const types::ext_int_type::kind mode) {
+		       const int m = static_cast<int>(mode);
+		       assert(m < _int_modes.size());
+		       return width < _int_modes[m].width;
+		     });
+  _int_modes_sorted_by_width.insert(it_by_width, mode);
 
-  case int_mode_kind::imk_TI:
-    return 128;
-  }
+  for (const auto &n : names)
+    _int_mode_names.emplace(std::string{n}, mode);
 }
 
-target_gcc::int_mode_kind
-target_gcc::_width_to_int_mode(const mpa::limbs::size_type w)
+void
+target_gcc::_register_int_mode(const int_mode_kind imk,
+			       const mpa::limbs::size_type width,
+			       const mpa::limbs::size_type size,
+			       const mpa::limbs::size_type alignment,
+			       const std::initializer_list<const char *> names,
+			       const bool create_int_n_type_specifier,
+			       const bool enabled)
 {
-  if (w > 128) {
-    throw std::overflow_error("no mode for integer width");
-  } else if (w > 64) {
-    return int_mode_kind::imk_TI;
-  } else if (w > 32) {
-    return int_mode_kind::imk_DI;
-  } else if (w > 16) {
-    return int_mode_kind::imk_SI;
-  } else if (w > 8) {
-    return int_mode_kind::imk_HI;
-  } else {
-    return int_mode_kind::imk_QI;
-  }
+  _register_int_mode(types::ext_int_type::kind{static_cast<int>(imk)},
+		     width, size, alignment, names,
+		     create_int_n_type_specifier, enabled);
 }
+
+void target_gcc::_int_mode_enable(const types::ext_int_type::kind mode)
+{
+  const int m = static_cast<int>(mode);
+
+  assert(m < _int_modes.size());
+  _int_modes[m].enabled = true;
+}
+
+void target_gcc::_int_mode_enable(const int_mode_kind imk)
+{
+  _int_mode_enable(types::ext_int_type::kind{static_cast<int>(imk)});
+}
+
+void target_gcc::_set_std_int_mode(const types::std_int_type::kind std_int_kind,
+				   const types::ext_int_type::kind mode)
+{
+  const int k = static_cast<int>(std_int_kind);
+  const int m = static_cast<int>(mode);
+
+  if (_std_int_modes.size() <= k)
+    _std_int_modes.resize(k + 1);
+
+  _std_int_modes[k] = mode;
+  assert(m < _int_modes.size());
+  assert(_int_modes[m].enabled);
+  _int_modes[m].is_std_int = true;
+}
+
+void target_gcc::_set_std_int_mode(const types::std_int_type::kind std_int_kind,
+				   const int_mode_kind imk)
+{
+  _set_std_int_mode(std_int_kind,
+		    types::ext_int_type::kind{static_cast<int>(imk)});
+}
+
+void target_gcc::_register_int_modes()
+{
+  _register_int_mode(int_mode_kind::imk_QI,
+		     8, 1, 0,
+		     {"QI", "__QI__", "byte", "__byte__"});
+  _register_int_mode(int_mode_kind::imk_HI,
+		     16, 2, 1,
+		     {"HI", "__HI__"});
+  _register_int_mode(int_mode_kind::imk_SI,
+		     32, 4, 2,
+		     {"SI", "__SI__"});
+  _register_int_mode(int_mode_kind::imk_DI,
+		     64, 8, 3,
+		     {"DI", "__DI__"});
+  _register_int_mode(int_mode_kind::imk_TI,
+		     128, 16, 4,
+		     {"TI", "__TI__"},
+		     true, false);
+
+  _arch_register_int_modes();
+}
+
+std::shared_ptr<const types::int_type>
+target_gcc::_int_mode_to_type(const types::ext_int_type::kind mode,
+			      const bool is_signed,
+			      const types::qualifiers &qs) const
+{
+  const int m = static_cast<int>(mode);
+  assert(m < _int_modes.size());
+  const int_mode &im = _int_modes[m];
+
+  // Prefer std_int_type, if there's a mapping.
+  if (im.is_std_int) {
+    const auto it =
+      std::find_if(_std_int_modes.cbegin(),
+		   _std_int_modes.cend(),
+		   [mode](const types::ext_int_type::kind std_int_mode) {
+		     return std_int_mode == mode;
+		   });
+    assert(it != _std_int_modes.cend());
+
+    const types::std_int_type::kind k =
+      static_cast<types::std_int_type::kind>(it - _std_int_modes.cbegin());
+    return types::std_int_type::create(k, is_signed, qs);
+  }
+
+  return types::ext_int_type::create(mode, is_signed, qs);
+}
+
+std::shared_ptr<const types::int_type>
+target_gcc::_int_mode_to_type(const int_mode_kind imk,
+			      const bool is_signed,
+			      const types::qualifiers &qs) const
+{
+  return _int_mode_to_type(types::ext_int_type::kind{static_cast<int>(imk)},
+			   is_signed, qs);
+}
+
+const target_gcc::int_mode& target_gcc::
+_std_int_kind_to_int_mode(const types::std_int_type::kind std_int_kind)
+  const noexcept
+{
+  const int k = static_cast<int>(std_int_kind);
+
+  assert(k < _std_int_modes.size());
+  const types::ext_int_type::kind mode = _std_int_modes[k];
+  const int m = static_cast<int>(mode);
+  assert(m < _int_modes.size());
+  return _int_modes[m];
+}
+
+mpa::limbs::size_type
+target_gcc::_int_mode_to_width(const types::ext_int_type::kind mode) const
+{
+  const int m = static_cast<int>(mode);
+  assert(m < _int_modes.size());
+  const int_mode &im = _int_modes[m];
+
+  return im.width;
+}
+
+mpa::limbs::size_type
+target_gcc::_int_mode_to_size(const types::ext_int_type::kind mode) const
+{
+  const int m = static_cast<int>(mode);
+  assert(m < _int_modes.size());
+  const int_mode &im = _int_modes[m];
+
+  return im.size;
+}
+
+mpa::limbs::size_type
+target_gcc::_int_mode_to_alignment(const types::ext_int_type::kind mode) const
+{
+  const int m = static_cast<int>(mode);
+  assert(m < _int_modes.size());
+  const int_mode &im = _int_modes[m];
+
+  return im.alignment;
+}
+
 
 void target_gcc::_init_options_struct() noexcept
 {
@@ -3105,7 +3376,7 @@ evaluate(klp::ccp::ast::ast &a, const target &tgt,
 		[&](const types::pointer_type&) {
 		  // Undocumented, but gcc also accepts pointers to pointers
 		  // for the atomic primitives.
-		  return tgt.get_std_int_width(tgt.get_ptrdiff_kind());
+		  return tgt.get_ptrdiff_width();
 		},
 		[&](const types::type&) -> mpa::limbs::size_type {
 		  code_remark remark
