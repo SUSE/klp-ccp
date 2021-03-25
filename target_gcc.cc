@@ -4425,8 +4425,8 @@ target_gcc::_register_builtin_funcs()
 	      sp_v_pvv_i128_i_fac);
 
 
-  static std::map<const std::string,
-		  const builtin_func::factory > m = {
+  std::map<const std::string,
+	   const builtin_func::factory > m = {
     // Category: math builtins.
     { "__builtin_acos", sp_d_d_fac },
     { "__builtin_acosf", sp_f_f_fac },
