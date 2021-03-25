@@ -440,6 +440,17 @@ types::ext_int_type::kind target_x86_64_gcc::_get_word_mode() const noexcept
   return types::ext_int_type::kind{static_cast<int>(int_mode_kind::imk_DI)};
 }
 
+types::ext_int_type::kind target_x86_64_gcc::_get_wint_mode() const noexcept
+{
+  return types::ext_int_type::kind{static_cast<int>(int_mode_kind::imk_DI)};
+}
+
+bool target_x86_64_gcc::_is_wint_signed() const noexcept
+{
+  return true;
+}
+
+
 void target_x86_64_gcc::
 _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
 		    const bool packed,
@@ -951,17 +962,6 @@ target_x86_64_gcc::create_builtin_va_list_type() const
   return (struct_or_union_type::create(struct_or_union_kind::souk_struct,
 				       soud->get_decl_list_node())
 	  ->derive_array(mpa::limbs::from_size_type(1)));
-}
-
-types::std_int_type::kind
-target_x86_64_gcc::get_wint_kind() const noexcept
-{
-  return std_int_type::kind::k_int;
-}
-
-bool target_x86_64_gcc::is_wint_signed() const noexcept
-{
-  return true;
 }
 
 types::std_int_type::kind target_x86_64_gcc::get_int_max_kind() const noexcept

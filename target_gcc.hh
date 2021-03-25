@@ -532,6 +532,9 @@ namespace klp
 
       virtual types::ext_int_type::kind _get_word_mode() const noexcept = 0;
 
+      virtual types::ext_int_type::kind _get_wint_mode() const noexcept = 0;
+      virtual bool _is_wint_signed() const noexcept = 0;
+
       virtual void
       _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
 			  const bool packed,

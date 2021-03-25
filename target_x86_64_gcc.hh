@@ -75,6 +75,10 @@ namespace klp
       virtual types::ext_int_type::kind _get_word_mode()
 	const noexcept override;
 
+      virtual types::ext_int_type::kind _get_wint_mode()
+	const noexcept override;
+      virtual bool _is_wint_signed() const noexcept override;
+
       virtual void
       _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
 			  const bool packed,
@@ -93,11 +97,6 @@ namespace klp
     public:
       virtual std::shared_ptr<const types::object_type>
       create_builtin_va_list_type() const override;
-
-      virtual types::std_int_type::kind
-      get_wint_kind() const noexcept override;
-
-      virtual bool is_wint_signed() const noexcept override;
 
       virtual types::std_int_type::kind
       get_int_max_kind() const noexcept override;
