@@ -448,28 +448,29 @@ types::alignment _aligned_attribute_finder::grab_result()
 }
 
 
-class target_gcc::_packed_attribute_finder
+namespace
 {
-public:
-  _packed_attribute_finder(ast::ast &a) noexcept;
+  class _packed_attribute_finder
+  {
+  public:
+    _packed_attribute_finder(ast::ast &a) noexcept;
 
-  bool operator()(const ast::attribute &attr);
+    bool operator()(const ast::attribute &attr);
 
-  bool get_result() const noexcept
-  { return _has_packed_attribute; }
+    bool get_result() const noexcept
+    { return _has_packed_attribute; }
 
-private:
-  ast::ast &_a;
-  bool _has_packed_attribute;
-};
+  private:
+    ast::ast &_a;
+    bool _has_packed_attribute;
+  };
+}
 
-target_gcc::_packed_attribute_finder::
-_packed_attribute_finder(ast::ast &a) noexcept
+_packed_attribute_finder::_packed_attribute_finder(ast::ast &a) noexcept
   : _a(a), _has_packed_attribute(false)
 {}
 
-bool target_gcc::_packed_attribute_finder::
-operator()(const ast::attribute &attr)
+bool _packed_attribute_finder::operator()(const ast::attribute &attr)
 {
   if (_a.get_pp_tokens()[attr.get_name_tok()].get_value() != "packed")
     return true;

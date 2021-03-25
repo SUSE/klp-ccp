@@ -180,9 +180,6 @@ namespace klp
       struct _impl_proxy;
       friend struct _impl_proxy;
 
-    private:
-      class _packed_attribute_finder;
-
     protected:
       struct opts_c_family;
 
