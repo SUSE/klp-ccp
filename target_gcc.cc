@@ -323,27 +323,30 @@ using int_mode_kind = _impl_proxy::int_mode_kind;
 using float_mode_kind = _impl_proxy::float_mode_kind;
 
 
-class target_gcc::_aligned_attribute_finder
+namespace
 {
-public:
-  _aligned_attribute_finder(ast::ast &a,
-			    const std::function<void(ast::expr&)> &_eval_expr,
-			    const target_gcc &tgt, const bool choose_max)
-  noexcept;
+  class _aligned_attribute_finder
+  {
+  public:
+    _aligned_attribute_finder(ast::ast &a,
+			      const std::function<void(ast::expr&)> &_eval_expr,
+			      const target_gcc &tgt, const bool choose_max)
+      noexcept;
 
-  bool operator()(ast::attribute &attr);
+    bool operator()(ast::attribute &attr);
 
-  types::alignment grab_result();
+    types::alignment grab_result();
 
-private:
-  types::alignment _result;
-  ast::ast &_a;
-  const std::function<void(ast::expr&)> &_eval_expr;
-  const target_gcc &_tgt;
-  const bool _choose_max;
-};
+  private:
+    types::alignment _result;
+    ast::ast &_a;
+    const std::function<void(ast::expr&)> &_eval_expr;
+    const target_gcc &_tgt;
+    const bool _choose_max;
+  };
+}
 
-target_gcc::_aligned_attribute_finder::
+_aligned_attribute_finder::
 _aligned_attribute_finder(klp::ccp::ast::ast &a,
 			const std::function<void(ast::expr&)> &eval_expr,
 			const target_gcc &tgt,
@@ -351,7 +354,7 @@ _aligned_attribute_finder(klp::ccp::ast::ast &a,
   : _a(a), _tgt(tgt), _eval_expr(eval_expr), _choose_max(choose_max)
 {}
 
-bool target_gcc::_aligned_attribute_finder::operator()(ast::attribute &attr)
+bool _aligned_attribute_finder::operator()(ast::attribute &attr)
 {
   if (_a.get_pp_tokens()[attr.get_name_tok()].get_value() != "aligned")
     return true;
@@ -439,7 +442,7 @@ bool target_gcc::_aligned_attribute_finder::operator()(ast::attribute &attr)
   return true;
 }
 
-types::alignment target_gcc::_aligned_attribute_finder::grab_result()
+types::alignment _aligned_attribute_finder::grab_result()
 {
   return std::move(_result);
 }

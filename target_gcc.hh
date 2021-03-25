@@ -181,7 +181,6 @@ namespace klp
       friend struct _impl_proxy;
 
     private:
-      class _aligned_attribute_finder;
       class _packed_attribute_finder;
 
     protected:
