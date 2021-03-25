@@ -1541,6 +1541,7 @@ evaluate_type(ast &a, const target &tgt)
       return;
     } else if (int_base_type == ibt_ext_int) {
       _set_type(ext_int_type::create(ext_int_kind, !is_unsigned, qs));
+      return;
     }
 
     assert(!(is_signed && is_unsigned));
