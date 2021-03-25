@@ -2061,7 +2061,6 @@ namespace klp
 	ps_char,
 	ps_short,
 	ps_int,
-	ps_int128,
 	ps_long,
 	ps_float,
 	ps_double,

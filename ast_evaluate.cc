@@ -1377,7 +1377,6 @@ evaluate_type(ast &a, const target &tgt)
     ibt_char,
     ibt_int,
     ibt_ext_int,
-    ibt_int128,
   } int_base_type = ibt_unknown;
 
   types::ext_int_type::kind ext_int_kind{-1};
@@ -1464,14 +1463,6 @@ evaluate_type(ast &a, const target &tgt)
 	   conflict = ((cls != cls_unknown && cls != cls_int) ||
 		       int_base_type != ibt_unknown);
 	   int_base_type = ibt_int;
-	   cls = cls_int;
-	   break;
-
-	 case pod_spec::ps_int128:
-	   conflict = ((cls != cls_unknown && cls != cls_int) ||
-		       is_short || is_long ||
-		       int_base_type != ibt_unknown);
-	   int_base_type = ibt_int128;
 	   cls = cls_int;
 	   break;
 
@@ -1568,10 +1559,6 @@ evaluate_type(ast &a, const target &tgt)
 	  k = std_int_type::kind::k_int;
 	}
 	break;
-
-      case ibt_int128:
-	  k = std_int_type::kind::k_int128;
-	  break;
       }
 
       _set_type(std_int_type::create(k, !is_unsigned, qs));

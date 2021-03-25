@@ -948,7 +948,6 @@ namespace klp
 	  k_int,
 	  k_long,
 	  k_long_long,
-	  k_int128,
 	};
 
 	virtual ~std_int_type() noexcept;

@@ -327,8 +327,6 @@ void target_x86_64_gcc::_arch_register_int_modes()
 		    int_mode_kind::imk_DI);
   _set_std_int_mode(types::std_int_type::kind::k_long_long,
 		    int_mode_kind::imk_DI);
-  _set_std_int_mode(types::std_int_type::kind::k_int128,
-		    int_mode_kind::imk_TI);
 }
 
 types::std_float_type::kind target_x86_64_gcc::

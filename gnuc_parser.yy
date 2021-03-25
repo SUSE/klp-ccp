@@ -180,7 +180,6 @@ static void empty(klp::ccp::pp_tokens_range &loc)
 %token TOK_KW_CHAR
 %token TOK_KW_SHORT
 %token TOK_KW_INT
-%token TOK_KW_INT128
 %token TOK_KW_LONG
 %token TOK_KW_FLOAT
 %token TOK_KW_DOUBLE
@@ -694,8 +693,6 @@ type_specifier_no_tdid:
 	  { $$ = new type_specifier_pod(@$, pod_spec::ps_short); }
 	| TOK_KW_INT
 	  { $$ = new type_specifier_pod(@$, pod_spec::ps_int); }
-	| TOK_KW_INT128
-	  { $$ = new type_specifier_pod(@$, pod_spec::ps_int128); }
 	| TOK_KW_LONG
 	  { $$ = new type_specifier_pod(@$, pod_spec::ps_long); }
 	| TOK_KW_FLOAT
