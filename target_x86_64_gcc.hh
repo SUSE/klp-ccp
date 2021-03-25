@@ -62,10 +62,6 @@ namespace klp
       get_execution_charset_encoder(const execution_charset_encoding e)
 	const override;
 
-      virtual mpa::limbs get_va_list_size() const override;
-
-      virtual mpa::limbs::size_type get_va_list_alignment() const override;
-
     private:
       virtual void _arch_register_int_modes() override;
 

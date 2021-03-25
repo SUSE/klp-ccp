@@ -548,16 +548,6 @@ _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
      });
 }
 
-mpa::limbs target_x86_64_gcc::get_va_list_size() const
-{
-  return mpa::limbs::from_size_type(24);
-}
-
-mpa::limbs::size_type target_x86_64_gcc::get_va_list_alignment() const
-{
-  return 3;
-}
-
 
 /*
  * Layout structs and unions as gcc does.
