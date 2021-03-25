@@ -183,7 +183,6 @@ namespace klp
     private:
       class _aligned_attribute_finder;
       class _packed_attribute_finder;
-      class _mode_attribute_finder;
 
     protected:
       struct opts_c_family;

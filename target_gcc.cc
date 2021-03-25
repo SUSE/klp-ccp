@@ -485,55 +485,58 @@ operator()(const ast::attribute &attr)
 }
 
 
-class target_gcc::_mode_attribute_finder
+namespace
 {
-public:
-  _mode_attribute_finder(ast::ast &a, const target_gcc &tgt)
-    noexcept;
-
-  bool operator()(const ast::attribute &attr);
-
-  const types::ext_int_type::kind* get_int_mode_result() const noexcept
-  { return _im_set ? &_im : nullptr; }
-
-  const float_mode_kind* get_float_mode_result() const noexcept
-  { return _fmk_set ? &_fmk : nullptr; }
-
-  pp_token_index get_mode_tok() const noexcept
-  { return _mode_tok; }
-
-  std::shared_ptr<const types::pointer_type>
-  apply_to_type(std::shared_ptr<const types::pointer_type> &&orig_t) const;
-
-  std::shared_ptr<const types::int_type>
-  apply_to_type(std::shared_ptr<const types::int_type> &&orig_t)
-    const;
-
-  std::shared_ptr<const types::addressable_type>
-  apply_to_type(std::shared_ptr<const types::addressable_type> &&orig_t)
-    const;
-
-  bool mode_attribute_found() const noexcept
+  class _mode_attribute_finder
   {
-    return _im_set || _fmk_set;
-  }
+  public:
+    _mode_attribute_finder(ast::ast &a, const target_gcc &tgt)
+      noexcept;
 
-private:
-  ast::ast &_a;
-  const target_gcc &_tgt;
-  types::ext_int_type::kind _im;
-  bool _im_set;
-  float_mode_kind _fmk;
-  bool _fmk_set;
-  pp_token_index _mode_tok;
-};
+    bool operator()(const ast::attribute &attr);
 
-target_gcc::_mode_attribute_finder::
+    const types::ext_int_type::kind* get_int_mode_result() const noexcept
+    { return _im_set ? &_im : nullptr; }
+
+    const float_mode_kind* get_float_mode_result() const noexcept
+    { return _fmk_set ? &_fmk : nullptr; }
+
+    pp_token_index get_mode_tok() const noexcept
+    { return _mode_tok; }
+
+    std::shared_ptr<const types::pointer_type>
+    apply_to_type(std::shared_ptr<const types::pointer_type> &&orig_t) const;
+
+    std::shared_ptr<const types::int_type>
+    apply_to_type(std::shared_ptr<const types::int_type> &&orig_t)
+      const;
+
+    std::shared_ptr<const types::addressable_type>
+    apply_to_type(std::shared_ptr<const types::addressable_type> &&orig_t)
+      const;
+
+    bool mode_attribute_found() const noexcept
+    {
+      return _im_set || _fmk_set;
+    }
+
+  private:
+    ast::ast &_a;
+    const target_gcc &_tgt;
+    types::ext_int_type::kind _im;
+    bool _im_set;
+    float_mode_kind _fmk;
+    bool _fmk_set;
+    pp_token_index _mode_tok;
+  };
+}
+
+_mode_attribute_finder::
 _mode_attribute_finder(ast::ast &a, const target_gcc &tgt) noexcept
   : _a(a), _tgt(tgt), _im_set(false), _fmk_set(false)
 {}
 
-bool target_gcc::_mode_attribute_finder::operator()(const ast::attribute &attr)
+bool _mode_attribute_finder::operator()(const ast::attribute &attr)
 {
   const std::string &attr_name =
     _a.get_pp_tokens()[attr.get_name_tok()].get_value();
@@ -602,8 +605,7 @@ bool target_gcc::_mode_attribute_finder::operator()(const ast::attribute &attr)
   return true;
 }
 
-std::shared_ptr<const types::pointer_type>
-target_gcc::_mode_attribute_finder::
+std::shared_ptr<const types::pointer_type> _mode_attribute_finder::
 apply_to_type(std::shared_ptr<const types::pointer_type> &&orig_t) const
 {
   if (!this->mode_attribute_found())
@@ -621,8 +623,7 @@ apply_to_type(std::shared_ptr<const types::pointer_type> &&orig_t) const
   return std::move(orig_t);
 }
 
-std::shared_ptr<const types::int_type>
-target_gcc::_mode_attribute_finder::
+std::shared_ptr<const types::int_type> _mode_attribute_finder::
 apply_to_type(std::shared_ptr<const types::int_type> &&orig_t) const
 {
   if (!this->mode_attribute_found())
@@ -650,8 +651,7 @@ apply_to_type(std::shared_ptr<const types::int_type> &&orig_t) const
 					     orig_t->get_qualifiers());
 }
 
-std::shared_ptr<const types::addressable_type>
-target_gcc::_mode_attribute_finder::
+std::shared_ptr<const types::addressable_type> _mode_attribute_finder::
 apply_to_type(std::shared_ptr<const types::addressable_type> &&orig_t) const
 {
   if (!this->mode_attribute_found())
