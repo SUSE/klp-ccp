@@ -270,6 +270,59 @@ target_gcc::lookup_builtin_func(const std::string &id) const noexcept
   return &it->second;
 }
 
+
+struct target_gcc::_impl_proxy
+{
+  constexpr _impl_proxy(const target_gcc &tgt) noexcept
+  : _tgt(tgt), _int_mode_names(tgt._int_mode_names)
+  {}
+
+  using int_mode_kind = target_gcc::int_mode_kind;
+  using float_mode_kind = target_gcc::float_mode_kind;
+
+  std::shared_ptr<const types::int_type>
+  _int_mode_to_type(const types::ext_int_type::kind mode,
+		    const bool is_signed,
+		    const types::qualifiers &qs = types::qualifiers{}) const
+  {
+    return _tgt._int_mode_to_type(mode, is_signed, qs);
+  }
+
+  std::shared_ptr<const types::int_type>
+  _int_mode_to_type(const int_mode_kind imk,
+		    const bool is_signed,
+		    const types::qualifiers &qs = types::qualifiers{}) const
+  {
+    return _tgt._int_mode_to_type(imk, is_signed, qs);
+  }
+
+  types::std_float_type::kind
+  _float_mode_to_float_kind(const float_mode_kind m) const noexcept
+  {
+    return _tgt._float_mode_to_float_kind(m);
+  }
+
+  types::ext_int_type::kind _get_pointer_mode() const noexcept
+  {
+    return _tgt._get_pointer_mode();
+  }
+
+  types::ext_int_type::kind _get_word_mode() const noexcept
+  {
+    return _tgt._get_word_mode();
+  }
+
+  const decltype(std::declval<target_gcc>()._int_mode_names) &_int_mode_names;
+
+private:
+  const target_gcc &_tgt;
+};
+
+using _impl_proxy = target_gcc::_impl_proxy;
+using int_mode_kind = _impl_proxy::int_mode_kind;
+using float_mode_kind = _impl_proxy::float_mode_kind;
+
+
 class target_gcc::_aligned_attribute_finder
 {
 public:
@@ -511,15 +564,16 @@ bool target_gcc::_mode_attribute_finder::operator()(const ast::attribute &attr)
   }
 
   const std::string &id = _a.get_pp_tokens()[e_id->get_id_tok()].get_value();
-  const auto it_int_mode = _tgt._int_mode_names.find(id);
-  if (it_int_mode !=  _tgt._int_mode_names.cend()) {
+  const _impl_proxy impl_proxy{_tgt};
+  const auto it_int_mode = impl_proxy._int_mode_names.find(id);
+  if (it_int_mode != impl_proxy._int_mode_names.cend()) {
     _im = it_int_mode->second;
     _im_set = true;
   } else if (id == "word" || id == "__word__") {
-    _im = _tgt._get_word_mode();
+    _im = impl_proxy._get_word_mode();
     _im_set = true;
   } else if (id == "pointer" || id == "__pointer__") {
-    _im = _tgt._get_pointer_mode();
+    _im = impl_proxy._get_pointer_mode();
     _im_set = true;
   } else if (id == "SF" || id == "__SF__") {
     _fmk = float_mode_kind::fmk_SF;
@@ -555,7 +609,7 @@ apply_to_type(std::shared_ptr<const types::pointer_type> &&orig_t) const
   if (!this->mode_attribute_found())
     return std::move(orig_t);
 
-  if (!_im_set || _im != _tgt._get_pointer_mode()) {
+  if (!_im_set || _im != _impl_proxy{_tgt}._get_pointer_mode()) {
     code_remark remark
       (code_remark::severity::fatal,
        "invalid 'mode' attribute specifier for pointer type",
@@ -592,8 +646,8 @@ apply_to_type(std::shared_ptr<const types::int_type> &&orig_t) const
     throw semantic_except(remark);
   }
 
-  return _tgt._int_mode_to_type(_im, orig_t->is_signed(_tgt),
-				orig_t->get_qualifiers());
+  return _impl_proxy{_tgt}._int_mode_to_type(_im, orig_t->is_signed(_tgt),
+					     orig_t->get_qualifiers());
 }
 
 std::shared_ptr<const types::addressable_type>
@@ -620,7 +674,8 @@ apply_to_type(std::shared_ptr<const types::addressable_type> &&orig_t) const
 	 }
 
 	 return (types::std_float_type::create
-		 (_tgt._float_mode_to_float_kind(_fmk), rft->get_qualifiers()));
+		 (_impl_proxy{_tgt}._float_mode_to_float_kind(_fmk),
+		  rft->get_qualifiers()));
        },
        [&](std::shared_ptr<const types::pointer_type> &&pt)
 		-> std::shared_ptr<const types::addressable_type> {

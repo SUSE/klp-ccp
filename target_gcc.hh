@@ -176,11 +176,14 @@ namespace klp
 		   ast::attribute_specifier_list * const soud_asl_after,
 		   types::struct_or_union_content &souc) const override;
 
+    public:
+      struct _impl_proxy;
+      friend struct _impl_proxy;
+
     private:
       class _aligned_attribute_finder;
       class _packed_attribute_finder;
       class _mode_attribute_finder;
-      friend class _mode_attribute_finder;
 
     protected:
       struct opts_c_family;
