@@ -171,118 +171,12 @@ static gcc_cmdline_parser::option gcc_opt_table_i386[] = {
 	{ nullptr }
 };
 
-namespace
-{
-  class _builtin_typedef_va_list final : public builtin_typedef
-  {
-  public:
-    virtual ~_builtin_typedef_va_list() noexcept override;
-
-    virtual std::shared_ptr<const types::addressable_type>
-    evaluate(ast::ast&, const target &tgt,
-	     const ast::type_specifier_tdid&) const override;
-
-    static std::unique_ptr<_builtin_typedef_va_list> create();
-  };
-}
-
-_builtin_typedef_va_list::~_builtin_typedef_va_list() noexcept = default;
-
-std::shared_ptr<const types::addressable_type> _builtin_typedef_va_list::
-evaluate(ast::ast&, const target &tgt,
-	 const ast::type_specifier_tdid&) const
-{
-  return tgt.create_builtin_va_list_type();
-}
-
-std::unique_ptr<_builtin_typedef_va_list> _builtin_typedef_va_list::create()
-{
-  return
-    std::unique_ptr<_builtin_typedef_va_list>{new _builtin_typedef_va_list()};
-}
-
-
-namespace
-{
-  class _builtin_typedef__int128 final : public builtin_typedef
-  {
-  public:
-    _builtin_typedef__int128(const bool is_signed) noexcept;
-
-    virtual ~_builtin_typedef__int128() noexcept override;
-
-    virtual std::shared_ptr<const types::addressable_type>
-    evaluate(ast::ast&, const target&,
-	     const ast::type_specifier_tdid&) const override;
-
-    static std::unique_ptr<_builtin_typedef__int128>
-    create_signed();
-
-    static std::unique_ptr<_builtin_typedef__int128>
-    create_unsigned();
-
-  private:
-    static std::unique_ptr<_builtin_typedef__int128>
-    _create(const bool is_signed);
-
-    bool _is_signed;
-  };
-}
-
-_builtin_typedef__int128::_builtin_typedef__int128(const bool is_signed)
-  noexcept
-  : _is_signed(is_signed)
-{}
-
-_builtin_typedef__int128::~_builtin_typedef__int128() noexcept = default;
-
-std::shared_ptr<const types::addressable_type>
-_builtin_typedef__int128::evaluate(ast::ast&, const target&,
-				   const ast::type_specifier_tdid&) const
-{
-  return std_int_type::create(std_int_type::kind::k_int128,
-			      _is_signed);
-}
-
-std::unique_ptr<_builtin_typedef__int128>
-_builtin_typedef__int128::create_signed()
-{
-  return _create(true);
-}
-
-std::unique_ptr<_builtin_typedef__int128>
-_builtin_typedef__int128::create_unsigned()
-{
-  return _create(false);
-}
-
-std::unique_ptr<_builtin_typedef__int128>
-_builtin_typedef__int128::_create(const bool is_signed)
-{
-  return std::unique_ptr<_builtin_typedef__int128>{
-		new _builtin_typedef__int128{is_signed}
-	 };
-}
-
 
 target_x86_64_gcc::target_x86_64_gcc(const char * const version)
   : target_gcc(version), _opts_x86(*this)
-{
-  _builtin_typedefs.emplace_back("__builtin_va_list",
-				 _builtin_typedef_va_list::create);
-  _builtin_typedefs.emplace_back("__int128_t",
-				 _builtin_typedef__int128::create_signed);
-  _builtin_typedefs.emplace_back("__uint128_t",
-				 _builtin_typedef__int128::create_unsigned);
-}
+{}
 
 target_x86_64_gcc::~target_x86_64_gcc() noexcept = default;
-
-const builtin_typedef::factories& target_x86_64_gcc::get_builtin_typedefs()
-  const noexcept
-{
-  return _builtin_typedefs;
-}
 
 bool target_x86_64_gcc::is_wchar_signed() const noexcept
 {
@@ -399,6 +293,25 @@ get_execution_charset_encoder(const execution_charset_encoding e) const
 					       std::string(target_code),
 					       false)));
 }
+
+
+struct target_x86_64_gcc::_impl_proxy
+{
+  constexpr _impl_proxy(const target_x86_64_gcc &tgt) noexcept
+  : _tgt(tgt)
+  {}
+
+  std::shared_ptr<const types::object_type> _create_builtin_va_list_type() const
+  {
+    return _tgt._create_builtin_va_list_type();
+  }
+
+private:
+  const target_x86_64_gcc &_tgt;
+};
+
+using _impl_proxy = target_x86_64_gcc::_impl_proxy;
+
 
 void target_x86_64_gcc::_arch_register_int_modes()
 {
@@ -940,7 +853,7 @@ _layout_union(types::struct_or_union_content &sc,
 }
 
 std::shared_ptr<const types::object_type>
-target_x86_64_gcc::create_builtin_va_list_type() const
+target_x86_64_gcc::_create_builtin_va_list_type() const
 {
   // Use a common dummy struct_or_union_def node such that all
   // struct_or_union_type instances created here refer to the same
@@ -970,13 +883,65 @@ target_x86_64_gcc::create_builtin_va_list_type() const
        ("reg_save_area",
 	void_type::create()->derive_pointer()));
 
-    this->_layout_struct(c, alignment{});
+    _layout_struct(c, alignment{});
   }
 
   return (struct_or_union_type::create(struct_or_union_kind::souk_struct,
 				       soud->get_decl_list_node())
 	  ->derive_array(mpa::limbs::from_size_type(1)));
 }
+
+
+namespace
+{
+  class _builtin_typedef_va_list final : public builtin_typedef
+  {
+  public:
+    _builtin_typedef_va_list(const target_x86_64_gcc &tgt) noexcept;
+
+    virtual ~_builtin_typedef_va_list() noexcept override;
+
+    virtual std::shared_ptr<const types::addressable_type>
+    evaluate(ast::ast&, const target &tgt,
+	     const ast::type_specifier_tdid&) const override;
+
+    static std::unique_ptr<_builtin_typedef_va_list>
+    create(const target_x86_64_gcc &tgt);
+
+  private:
+    const target_x86_64_gcc &_tgt;
+  };
+}
+
+_builtin_typedef_va_list::_builtin_typedef_va_list(const target_x86_64_gcc &tgt)
+  noexcept
+  : _tgt(tgt)
+{}
+
+_builtin_typedef_va_list::~_builtin_typedef_va_list() noexcept = default;
+
+std::shared_ptr<const types::addressable_type> _builtin_typedef_va_list::
+evaluate(ast::ast&, const target &tgt,
+	 const ast::type_specifier_tdid&) const
+{
+  return _impl_proxy{_tgt}._create_builtin_va_list_type();
+}
+
+std::unique_ptr<_builtin_typedef_va_list>
+_builtin_typedef_va_list::create(const target_x86_64_gcc &tgt)
+{
+  return
+    std::unique_ptr<_builtin_typedef_va_list>{
+		new _builtin_typedef_va_list(tgt)
+    };
+}
+
+void target_x86_64_gcc::_arch_register_builtin_typedefs()
+{
+  _register_builtin_typedef("__builtin_va_list",
+			    std::bind(_builtin_typedef_va_list::create, *this));
+}
+
 
 const gcc_cmdline_parser::option *
 target_x86_64_gcc::_arch_get_opt_table() const noexcept

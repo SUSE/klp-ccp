@@ -257,6 +257,7 @@ void target_gcc::parse_command_line
   }
 
   _register_int_modes();
+  _register_builtin_typedefs();
 }
 
 
@@ -268,6 +269,12 @@ target_gcc::lookup_builtin_func(const std::string &id) const noexcept
     return nullptr;
 
   return &it->second;
+}
+
+const builtin_typedef::factories&
+target_gcc::get_builtin_typedefs() const noexcept
+{
+  return _builtin_typedefs;
 }
 
 
@@ -330,6 +337,12 @@ struct target_gcc::_impl_proxy
   bool _is_pid_signed() const noexcept
   {
     return _tgt._is_pid_signed();
+  }
+
+  std::shared_ptr<const types::object_type>
+  _create_builtin_va_list_type() const
+  {
+    return _tgt._create_builtin_va_list_type();
   }
 
   const decltype(std::declval<target_gcc>()._int_mode_names) &_int_mode_names;
@@ -3317,10 +3330,10 @@ namespace
   }
 
   static std::shared_ptr<const types::addressable_type>
-  _mk_val(const target &tgt)
+  _mk_val(const target_gcc &tgt)
   {
     std::shared_ptr<const types::addressable_type> t =
-      tgt.create_builtin_va_list_type();
+      _impl_proxy{tgt}._create_builtin_va_list_type();
     types::handle_types<void>
       ((wrap_callables<default_action_nop>
 	([&](const types::array_type &at) {
@@ -5261,4 +5274,77 @@ target_gcc::_register_builtin_funcs()
   };
 
   return m;
+}
+
+
+void target_gcc::
+_register_builtin_typedef(const std::string &name,
+			  const builtin_typedef::factory::create_type &factory)
+{
+  _builtin_typedefs.emplace_back(name, factory);
+}
+
+namespace
+{
+  class _builtin_typedef__int128 final : public builtin_typedef
+  {
+  public:
+    _builtin_typedef__int128(const target_gcc &tgt,
+			     const bool is_signed) noexcept;
+
+    virtual ~_builtin_typedef__int128() noexcept override;
+
+    virtual std::shared_ptr<const types::addressable_type>
+    evaluate(ast::ast&, const target&,
+	     const ast::type_specifier_tdid&) const override;
+
+    static std::unique_ptr<_builtin_typedef__int128>
+    create(const std::reference_wrapper<const target_gcc> &tgt,
+	   const bool is_signed);
+
+  private:
+    const target_gcc &_tgt;
+    bool _is_signed;
+  };
+}
+
+_builtin_typedef__int128::_builtin_typedef__int128(const target_gcc &tgt,
+						   const bool is_signed)
+  noexcept
+  : _tgt(tgt), _is_signed(is_signed)
+{}
+
+_builtin_typedef__int128::~_builtin_typedef__int128() noexcept = default;
+
+std::shared_ptr<const types::addressable_type>
+_builtin_typedef__int128::evaluate(ast::ast&, const target&,
+				   const ast::type_specifier_tdid&) const
+{
+  return _impl_proxy{_tgt}._int_mode_to_type(int_mode_kind::imk_TI, _is_signed);
+}
+
+std::unique_ptr<_builtin_typedef__int128> _builtin_typedef__int128
+::create(const std::reference_wrapper<const target_gcc> &tgt,
+	 const bool is_signed)
+{
+  return std::unique_ptr<_builtin_typedef__int128>{
+		new _builtin_typedef__int128{tgt.get(), is_signed}
+	 };
+}
+
+void target_gcc::_register_builtin_typedefs()
+{
+  const int m_TI = static_cast<int>(int_mode_kind::imk_TI);
+  assert(m_TI < _int_modes.size());
+
+  if (_int_modes[m_TI].enabled) {
+    _register_builtin_typedef("__int128_t",
+			      std::bind(_builtin_typedef__int128::create,
+					std::cref(*this), true));
+    _register_builtin_typedef("__uint128_t",
+			      std::bind(_builtin_typedef__int128::create,
+					std::cref(*this), false));
+  }
+
+  _arch_register_builtin_typedefs();
 }

@@ -34,9 +34,6 @@ namespace klp
 
       virtual ~target_x86_64_gcc() noexcept override;
 
-      virtual const builtin_typedef::factories&
-      get_builtin_typedefs() const noexcept override;
-
       virtual bool is_wchar_signed() const noexcept override;
 
       virtual bool is_bitfield_default_signed() const noexcept override;
@@ -61,6 +58,10 @@ namespace klp
       virtual std::unique_ptr<execution_charset_encoder>
       get_execution_charset_encoder(const execution_charset_encoding e)
 	const override;
+
+    public:
+      struct _impl_proxy;
+      friend struct _impl_proxy;
 
     private:
       virtual void _arch_register_int_modes() override;
@@ -100,9 +101,10 @@ namespace klp
 				 const types::alignment &user_align)
 	const override;
 
-    public:
       virtual std::shared_ptr<const types::object_type>
-      create_builtin_va_list_type() const override;
+      _create_builtin_va_list_type() const override;
+
+      virtual void _arch_register_builtin_typedefs() override;
 
     private:
       virtual const gcc_cmdline_parser::option *
@@ -358,8 +360,6 @@ namespace klp
       };
 
       opts_x86 _opts_x86;
-
-      builtin_typedef::factories _builtin_typedefs;
     };
   }
 }

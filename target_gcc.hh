@@ -54,6 +54,9 @@ namespace klp
       virtual const builtin_func::factory*
       lookup_builtin_func(const std::string &id) const noexcept override;
 
+      virtual const builtin_typedef::factories&
+      get_builtin_typedefs() const noexcept override;
+
       virtual std::shared_ptr<const types::pointer_type>
       evaluate_attributes(ast::ast &a,
 			  const std::function<void(ast::expr&)> &eval_expr,
@@ -558,6 +561,9 @@ namespace klp
 				 const types::alignment &user_align)
 	const = 0;
 
+      virtual std::shared_ptr<const types::object_type>
+      _create_builtin_va_list_type() const = 0;
+
       static gcc_cmdline_parser::gcc_version
       _parse_version(const char * const version);
 
@@ -595,6 +601,15 @@ namespace klp
       std::map<const std::string, const builtin_func::factory>
       _register_builtin_funcs();
 
+    protected:
+      void _register_builtin_typedef
+		(const std::string &name,
+		 const builtin_typedef::factory::create_type &factory);
+
+    private:
+      void _register_builtin_typedefs();
+      virtual void _arch_register_builtin_typedefs() = 0;
+
       const gcc_cmdline_parser::gcc_version _gcc_version;
 
       opts_common _opts_common;
@@ -606,6 +621,7 @@ namespace klp
       std::vector<types::ext_int_type::kind> _int_modes_sorted_by_width;
 
       std::map<const std::string, const builtin_func::factory> _builtin_funcs;
+      builtin_typedef::factories _builtin_typedefs;
     };
   }
 }

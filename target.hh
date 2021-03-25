@@ -228,9 +228,6 @@ namespace klp
 		   ast::attribute_specifier_list * const soud_asl_after,
 		   types::struct_or_union_content &souc)
 	const = 0;
-
-      virtual std::shared_ptr<const types::object_type>
-      create_builtin_va_list_type() const = 0;
     };
   }
 }
