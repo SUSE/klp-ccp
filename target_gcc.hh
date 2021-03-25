@@ -439,13 +439,13 @@ namespace klp
       virtual void _arch_register_builtin_macros(preprocessor &pp) const = 0;
 
     protected:
-      enum class int_mode_kind
+      enum class common_int_mode_kind
       {
-	imk_QI,
-	imk_HI,
-	imk_SI,
-	imk_DI,
-	imk_TI,
+	cimk_QI,
+	cimk_HI,
+	cimk_SI,
+	cimk_DI,
+	cimk_TI,
       };
 
       enum class float_mode_kind
@@ -484,7 +484,7 @@ namespace klp
 			      const bool create_int_n_type_specifier = false,
 			      const bool enabled = true);
 
-      void _register_int_mode(const int_mode_kind imk,
+      void _register_int_mode(const common_int_mode_kind cimk,
 			      const mpa::limbs::size_type width,
 			      const mpa::limbs::size_type size,
 			      const mpa::limbs::size_type alignment,
@@ -493,12 +493,12 @@ namespace klp
 			      const bool enabled = true);
 
       void _int_mode_enable(const types::ext_int_type::kind mode);
-      void _int_mode_enable(const int_mode_kind imk);
+      void _int_mode_enable(const common_int_mode_kind cimk);
 
       void _set_std_int_mode(const types::std_int_type::kind std_int_kind,
 			     const types::ext_int_type::kind mode);
       void _set_std_int_mode(const types::std_int_type::kind std_int_kind,
-			     const int_mode_kind imk);
+			     const common_int_mode_kind cimk);
 
     private:
       void _register_int_modes();
@@ -511,7 +511,7 @@ namespace klp
 	const;
 
       std::shared_ptr<const types::int_type>
-      _int_mode_to_type(const int_mode_kind imk,
+      _int_mode_to_type(const common_int_mode_kind cimk,
 			const bool is_signed,
 			const types::qualifiers &qs = types::qualifiers{})
 	const;

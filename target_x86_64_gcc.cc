@@ -315,18 +315,18 @@ using _impl_proxy = target_x86_64_gcc::_impl_proxy;
 
 void target_x86_64_gcc::_arch_register_int_modes()
 {
-  _int_mode_enable(int_mode_kind::imk_TI);
+  _int_mode_enable(common_int_mode_kind::cimk_TI);
 
   _set_std_int_mode(types::std_int_type::kind::k_char,
-		    int_mode_kind::imk_QI);
+		    common_int_mode_kind::cimk_QI);
   _set_std_int_mode(types::std_int_type::kind::k_short,
-		    int_mode_kind::imk_HI);
+		    common_int_mode_kind::cimk_HI);
   _set_std_int_mode(types::std_int_type::kind::k_int,
-		    int_mode_kind::imk_SI);
+		    common_int_mode_kind::cimk_SI);
   _set_std_int_mode(types::std_int_type::kind::k_long,
-		    int_mode_kind::imk_DI);
+		    common_int_mode_kind::cimk_DI);
   _set_std_int_mode(types::std_int_type::kind::k_long_long,
-		    int_mode_kind::imk_DI);
+		    common_int_mode_kind::cimk_DI);
 }
 
 types::std_float_type::kind target_x86_64_gcc::
@@ -343,22 +343,30 @@ _float_mode_to_float_kind(const float_mode_kind m) const noexcept
 
 types::ext_int_type::kind target_x86_64_gcc::_get_int_max_mode() const noexcept
 {
-  return types::ext_int_type::kind{static_cast<int>(int_mode_kind::imk_DI)};
+  return types::ext_int_type::kind{
+		static_cast<int>(common_int_mode_kind::cimk_DI)
+	 };
 }
 
 types::ext_int_type::kind target_x86_64_gcc::_get_pointer_mode() const noexcept
 {
-  return types::ext_int_type::kind{static_cast<int>(int_mode_kind::imk_DI)};
+  return types::ext_int_type::kind{
+		static_cast<int>(common_int_mode_kind::cimk_DI)
+	 };
 }
 
 types::ext_int_type::kind target_x86_64_gcc::_get_word_mode() const noexcept
 {
-  return types::ext_int_type::kind{static_cast<int>(int_mode_kind::imk_DI)};
+  return types::ext_int_type::kind{
+		static_cast<int>(common_int_mode_kind::cimk_DI)
+	 };
 }
 
 types::ext_int_type::kind target_x86_64_gcc::_get_wint_mode() const noexcept
 {
-  return types::ext_int_type::kind{static_cast<int>(int_mode_kind::imk_DI)};
+  return types::ext_int_type::kind{
+		static_cast<int>(common_int_mode_kind::cimk_DI)
+	 };
 }
 
 bool target_x86_64_gcc::_is_wint_signed() const noexcept
@@ -368,7 +376,9 @@ bool target_x86_64_gcc::_is_wint_signed() const noexcept
 
 types::ext_int_type::kind target_x86_64_gcc::_get_pid_mode() const noexcept
 {
-  return types::ext_int_type::kind{static_cast<int>(int_mode_kind::imk_DI)};
+  return types::ext_int_type::kind{
+		static_cast<int>(common_int_mode_kind::cimk_DI)
+	 };
 }
 
 bool target_x86_64_gcc::_is_pid_signed() const noexcept

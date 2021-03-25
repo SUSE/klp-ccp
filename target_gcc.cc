@@ -284,7 +284,7 @@ struct target_gcc::_impl_proxy
   : _tgt(tgt), _int_mode_names(tgt._int_mode_names)
   {}
 
-  using int_mode_kind = target_gcc::int_mode_kind;
+  using common_int_mode_kind = target_gcc::common_int_mode_kind;
   using float_mode_kind = target_gcc::float_mode_kind;
 
   std::shared_ptr<const types::int_type>
@@ -296,11 +296,11 @@ struct target_gcc::_impl_proxy
   }
 
   std::shared_ptr<const types::int_type>
-  _int_mode_to_type(const int_mode_kind imk,
+  _int_mode_to_type(const common_int_mode_kind cimk,
 		    const bool is_signed,
 		    const types::qualifiers &qs = types::qualifiers{}) const
   {
-    return _tgt._int_mode_to_type(imk, is_signed, qs);
+    return _tgt._int_mode_to_type(cimk, is_signed, qs);
   }
 
   types::std_float_type::kind
@@ -352,7 +352,7 @@ private:
 };
 
 using _impl_proxy = target_gcc::_impl_proxy;
-using int_mode_kind = _impl_proxy::int_mode_kind;
+using common_int_mode_kind = _impl_proxy::common_int_mode_kind;
 using float_mode_kind = _impl_proxy::float_mode_kind;
 
 
@@ -1285,7 +1285,7 @@ target_gcc::_register_int_mode(const types::ext_int_type::kind mode,
 }
 
 void
-target_gcc::_register_int_mode(const int_mode_kind imk,
+target_gcc::_register_int_mode(const common_int_mode_kind cimk,
 			       const mpa::limbs::size_type width,
 			       const mpa::limbs::size_type size,
 			       const mpa::limbs::size_type alignment,
@@ -1293,7 +1293,7 @@ target_gcc::_register_int_mode(const int_mode_kind imk,
 			       const bool create_int_n_type_specifier,
 			       const bool enabled)
 {
-  _register_int_mode(types::ext_int_type::kind{static_cast<int>(imk)},
+  _register_int_mode(types::ext_int_type::kind{static_cast<int>(cimk)},
 		     width, size, alignment, names,
 		     create_int_n_type_specifier, enabled);
 }
@@ -1306,9 +1306,9 @@ void target_gcc::_int_mode_enable(const types::ext_int_type::kind mode)
   _int_modes[m].enabled = true;
 }
 
-void target_gcc::_int_mode_enable(const int_mode_kind imk)
+void target_gcc::_int_mode_enable(const common_int_mode_kind cimk)
 {
-  _int_mode_enable(types::ext_int_type::kind{static_cast<int>(imk)});
+  _int_mode_enable(types::ext_int_type::kind{static_cast<int>(cimk)});
 }
 
 void target_gcc::_set_std_int_mode(const types::std_int_type::kind std_int_kind,
@@ -1327,27 +1327,27 @@ void target_gcc::_set_std_int_mode(const types::std_int_type::kind std_int_kind,
 }
 
 void target_gcc::_set_std_int_mode(const types::std_int_type::kind std_int_kind,
-				   const int_mode_kind imk)
+				   const common_int_mode_kind cimk)
 {
   _set_std_int_mode(std_int_kind,
-		    types::ext_int_type::kind{static_cast<int>(imk)});
+		    types::ext_int_type::kind{static_cast<int>(cimk)});
 }
 
 void target_gcc::_register_int_modes()
 {
-  _register_int_mode(int_mode_kind::imk_QI,
+  _register_int_mode(common_int_mode_kind::cimk_QI,
 		     8, 1, 0,
 		     {"QI", "__QI__", "byte", "__byte__"});
-  _register_int_mode(int_mode_kind::imk_HI,
+  _register_int_mode(common_int_mode_kind::cimk_HI,
 		     16, 2, 1,
 		     {"HI", "__HI__"});
-  _register_int_mode(int_mode_kind::imk_SI,
+  _register_int_mode(common_int_mode_kind::cimk_SI,
 		     32, 4, 2,
 		     {"SI", "__SI__"});
-  _register_int_mode(int_mode_kind::imk_DI,
+  _register_int_mode(common_int_mode_kind::cimk_DI,
 		     64, 8, 3,
 		     {"DI", "__DI__"});
-  _register_int_mode(int_mode_kind::imk_TI,
+  _register_int_mode(common_int_mode_kind::cimk_TI,
 		     128, 16, 4,
 		     {"TI", "__TI__"},
 		     true, false);
@@ -1383,11 +1383,11 @@ target_gcc::_int_mode_to_type(const types::ext_int_type::kind mode,
 }
 
 std::shared_ptr<const types::int_type>
-target_gcc::_int_mode_to_type(const int_mode_kind imk,
+target_gcc::_int_mode_to_type(const common_int_mode_kind cimk,
 			      const bool is_signed,
 			      const types::qualifiers &qs) const
 {
-  return _int_mode_to_type(types::ext_int_type::kind{static_cast<int>(imk)},
+  return _int_mode_to_type(types::ext_int_type::kind{static_cast<int>(cimk)},
 			   is_signed, qs);
 }
 
@@ -3250,57 +3250,58 @@ void target_gcc::_register_builtin_macros(preprocessor &pp) const
 namespace
 {
   static std::shared_ptr<const types::addressable_type>
-  __mk_iM(const target_gcc &tgt, const int_mode_kind imk, const bool is_signed)
+  __mk_iM(const target_gcc &tgt, const common_int_mode_kind cimk,
+	  const bool is_signed)
   {
-    return _impl_proxy{tgt}._int_mode_to_type(imk, is_signed);
+    return _impl_proxy{tgt}._int_mode_to_type(cimk, is_signed);
   }
 
   static std::shared_ptr<const types::addressable_type>
   _mk_i8(const target_gcc &tgt)
   {
-    return __mk_iM(tgt, int_mode_kind::imk_QI, true);
+    return __mk_iM(tgt, common_int_mode_kind::cimk_QI, true);
   }
 
   static std::shared_ptr<const types::addressable_type>
   _mk_i16(const target_gcc &tgt)
   {
-    return __mk_iM(tgt, int_mode_kind::imk_HI, true);
+    return __mk_iM(tgt, common_int_mode_kind::cimk_HI, true);
   }
 
   static std::shared_ptr<const types::addressable_type>
   _mk_u16(const target_gcc &tgt)
   {
-    return __mk_iM(tgt, int_mode_kind::imk_HI, false);
+    return __mk_iM(tgt, common_int_mode_kind::cimk_HI, false);
   }
 
   static std::shared_ptr<const types::addressable_type>
   _mk_i32(const target_gcc &tgt)
   {
-    return __mk_iM(tgt, int_mode_kind::imk_SI, true);
+    return __mk_iM(tgt, common_int_mode_kind::cimk_SI, true);
   }
 
   static std::shared_ptr<const types::addressable_type>
   _mk_u32(const target_gcc &tgt)
   {
-    return __mk_iM(tgt, int_mode_kind::imk_SI, false);
+    return __mk_iM(tgt, common_int_mode_kind::cimk_SI, false);
   }
 
   static std::shared_ptr<const types::addressable_type>
   _mk_i64(const target_gcc &tgt)
   {
-    return __mk_iM(tgt, int_mode_kind::imk_DI, true);
+    return __mk_iM(tgt, common_int_mode_kind::cimk_DI, true);
   }
 
   static std::shared_ptr<const types::addressable_type>
   _mk_u64(const target_gcc &tgt)
   {
-    return __mk_iM(tgt, int_mode_kind::imk_DI, false);
+    return __mk_iM(tgt, common_int_mode_kind::cimk_DI, false);
   }
 
   static std::shared_ptr<const types::addressable_type>
   _mk_i128(const target_gcc &tgt)
   {
-    return __mk_iM(tgt, int_mode_kind::imk_TI, true);
+    return __mk_iM(tgt, common_int_mode_kind::cimk_TI, true);
   }
 
   static std::shared_ptr<const types::addressable_type>
@@ -5320,7 +5321,8 @@ std::shared_ptr<const types::addressable_type>
 _builtin_typedef__int128::evaluate(ast::ast&, const target&,
 				   const ast::type_specifier_tdid&) const
 {
-  return _impl_proxy{_tgt}._int_mode_to_type(int_mode_kind::imk_TI, _is_signed);
+  return _impl_proxy{_tgt}._int_mode_to_type(common_int_mode_kind::cimk_TI,
+					     _is_signed);
 }
 
 std::unique_ptr<_builtin_typedef__int128> _builtin_typedef__int128
@@ -5334,7 +5336,7 @@ std::unique_ptr<_builtin_typedef__int128> _builtin_typedef__int128
 
 void target_gcc::_register_builtin_typedefs()
 {
-  const int m_TI = static_cast<int>(int_mode_kind::imk_TI);
+  const int m_TI = static_cast<int>(common_int_mode_kind::cimk_TI);
   assert(m_TI < _int_modes.size());
 
   if (_int_modes[m_TI].enabled) {
