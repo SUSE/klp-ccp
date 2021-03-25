@@ -230,9 +230,6 @@ namespace klp
       create_builtin_va_list_type() const = 0;
 
       virtual types::std_int_type::kind get_int_max_kind() const noexcept = 0;
-
-      virtual types::std_int_type::kind get_pid_t_kind() const noexcept = 0;
-      virtual bool is_pid_t_signed() const noexcept = 0;
     };
   }
 }

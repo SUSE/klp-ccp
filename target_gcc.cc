@@ -322,6 +322,16 @@ struct target_gcc::_impl_proxy
     return _tgt._is_wint_signed();
   }
 
+  types::ext_int_type::kind _get_pid_mode() const noexcept
+  {
+    return _tgt._get_pid_mode();
+  }
+
+  bool _is_pid_signed() const noexcept
+  {
+    return _tgt._is_pid_signed();
+  }
+
   const decltype(std::declval<target_gcc>()._int_mode_names) &_int_mode_names;
 
 private:
@@ -3282,10 +3292,12 @@ namespace
   }
 
   static std::shared_ptr<const types::addressable_type>
-  _mk_pid(const target &tgt)
+  _mk_pid(const target_gcc &tgt)
   {
-    return types::std_int_type::create(tgt.get_pid_t_kind(),
-				       tgt.is_pid_t_signed());
+    const _impl_proxy impl_proxy{tgt};
+
+    return impl_proxy._int_mode_to_type(impl_proxy._get_pid_mode(),
+					impl_proxy._is_pid_signed());
   }
 
   static std::shared_ptr<const types::addressable_type>

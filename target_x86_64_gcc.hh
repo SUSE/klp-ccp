@@ -79,6 +79,9 @@ namespace klp
 	const noexcept override;
       virtual bool _is_wint_signed() const noexcept override;
 
+      virtual types::ext_int_type::kind _get_pid_mode() const noexcept override;
+      virtual bool _is_pid_signed() const noexcept override;
+
       virtual void
       _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
 			  const bool packed,
@@ -100,9 +103,6 @@ namespace klp
 
       virtual types::std_int_type::kind
       get_int_max_kind() const noexcept override;
-
-      virtual types::std_int_type::kind get_pid_t_kind() const noexcept override;
-      virtual bool is_pid_t_signed() const noexcept override;
 
     private:
       virtual const gcc_cmdline_parser::option *

@@ -450,6 +450,15 @@ bool target_x86_64_gcc::_is_wint_signed() const noexcept
   return true;
 }
 
+types::ext_int_type::kind target_x86_64_gcc::_get_pid_mode() const noexcept
+{
+  return types::ext_int_type::kind{static_cast<int>(int_mode_kind::imk_DI)};
+}
+
+bool target_x86_64_gcc::_is_pid_signed() const noexcept
+{
+  return true;
+}
 
 void target_x86_64_gcc::
 _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
@@ -967,16 +976,6 @@ target_x86_64_gcc::create_builtin_va_list_type() const
 types::std_int_type::kind target_x86_64_gcc::get_int_max_kind() const noexcept
 {
   return std_int_type::kind::k_long;
-}
-
-types::std_int_type::kind target_x86_64_gcc::get_pid_t_kind() const noexcept
-{
-  return std_int_type::kind::k_int;
-}
-
-bool target_x86_64_gcc::is_pid_t_signed() const noexcept
-{
-  return true;
 }
 
 const gcc_cmdline_parser::option *
