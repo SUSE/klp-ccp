@@ -146,6 +146,9 @@ namespace klp
 	const override;
 
       virtual std::shared_ptr<const types::int_type>
+      create_int_max_type(const bool is_signed) const override;
+
+      virtual std::shared_ptr<const types::int_type>
       create_ptrdiff_type(const bool is_signed) const override;
 
       virtual mpa::limbs::size_type get_ptrdiff_width() const noexcept override;
@@ -527,6 +530,8 @@ namespace klp
 
       virtual types::std_float_type::kind
       _float_mode_to_float_kind(const float_mode_kind m) const noexcept = 0;
+
+      virtual types::ext_int_type::kind _get_int_max_mode() const noexcept = 0;
 
       virtual types::ext_int_type::kind _get_pointer_mode() const noexcept = 0;
 

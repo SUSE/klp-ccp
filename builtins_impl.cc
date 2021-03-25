@@ -123,13 +123,13 @@ klp::ccp::builtins::impl::mk_b(const target&)
 std::shared_ptr<const addressable_type>
 klp::ccp::builtins::impl::mk_imax(const target &tgt)
 {
-  return std_int_type::create(tgt.get_int_max_kind(), true);
+  return tgt.create_int_max_type(true);
 }
 
 std::shared_ptr<const addressable_type>
 klp::ccp::builtins::impl::mk_umax(const target &tgt)
 {
-  return std_int_type::create(tgt.get_int_max_kind(), false);
+  return tgt.create_int_max_type(false);
 }
 
 std::shared_ptr<const addressable_type>

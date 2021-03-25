@@ -69,6 +69,9 @@ namespace klp
       _float_mode_to_float_kind(const float_mode_kind m)
 	const noexcept override;
 
+      virtual types::ext_int_type::kind _get_int_max_mode()
+	const noexcept override;
+
       virtual types::ext_int_type::kind _get_pointer_mode()
 	const noexcept override;
 
@@ -100,9 +103,6 @@ namespace klp
     public:
       virtual std::shared_ptr<const types::object_type>
       create_builtin_va_list_type() const override;
-
-      virtual types::std_int_type::kind
-      get_int_max_kind() const noexcept override;
 
     private:
       virtual const gcc_cmdline_parser::option *

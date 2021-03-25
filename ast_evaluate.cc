@@ -3826,11 +3826,10 @@ void expr_binop::_evaluate_bin_binop(const types::int_type &it_left,
 
 void expr_binop::_evaluate_logical_binop(const ast &a, const target &tgt)
 {
-  const std::shared_ptr<const std_int_type> it_result
-    = std_int_type::create((!a.is_pp_expr() ?
-			    std_int_type::kind::k_int :
-			    tgt.get_int_max_kind()),
-			   true);
+  const std::shared_ptr<const int_type> it_result
+    = (!a.is_pp_expr() ?
+       std_int_type::create(std_int_type::kind::k_int, true) :
+       tgt.create_int_max_type(true));
 
   if (_left.is_constexpr()) {
     const constexpr_value &cv_left = _left.get_constexpr_value();
@@ -4214,11 +4213,10 @@ void expr_binop::_evaluate_cmp(const types::arithmetic_type &at_left,
 			       const types::arithmetic_type &at_right,
 			       ast &a, const target &tgt)
 {
-  const std::shared_ptr<const std_int_type> it_result
-    = std_int_type::create((!a.is_pp_expr() ?
-			    std_int_type::kind::k_int :
-			    tgt.get_int_max_kind()),
-			   true);
+  const std::shared_ptr<const int_type> it_result
+    = (!a.is_pp_expr() ?
+       std_int_type::create(std_int_type::kind::k_int, true) :
+       tgt.create_int_max_type(true));
   _set_type(it_result);
 
   if (!(_left.is_constexpr() && _right.is_constexpr()))
@@ -5294,11 +5292,10 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
     check_enum_completeness_op();
 
     {
-      const std::shared_ptr<const std_int_type> it_result
-	= std_int_type::create((!a.is_pp_expr() ?
-				std_int_type::kind::k_int :
-				tgt.get_int_max_kind()),
-			       true);
+      const std::shared_ptr<const int_type> it_result
+	= (!a.is_pp_expr() ?
+	   std_int_type::create(std_int_type::kind::k_int, true) :
+	   tgt.create_int_max_type(true));
 
       if (_e.is_constexpr()) {
 	const constexpr_value &cv = _e.get_constexpr_value();
@@ -6311,10 +6308,11 @@ void expr_constant::evaluate_type(ast &a, const target &tgt)
       // implementation defined, c.f. the GNU cpp manual, sec. 11.1
       // "Implementation defined behavior.
       mpa::limbs value;
-      const std_int_type::kind target_int_kind
-	= !a.is_pp_expr() ? std_int_type::kind::k_int : tgt.get_int_max_kind();
-      const mpa::limbs::size_type target_int_width =
-	tgt.get_std_int_width(target_int_kind);
+      const std::shared_ptr<const int_type> it_result
+	= (!a.is_pp_expr() ?
+	   std_int_type::create(std_int_type::kind::k_int, true) :
+	   tgt.create_int_max_type(true));
+      const mpa::limbs::size_type target_int_width = it_result->get_width(tgt);
       if (encoded.size() == 1) {
 	value = encoded[0];
 	value.resize(mpa::limbs::width_to_size(target_int_width));
@@ -6351,7 +6349,7 @@ void expr_constant::evaluate_type(ast &a, const target &tgt)
 		   target_int(target_int_width - 1, true, std::move(value)));
       }
 
-      _set_type(types::std_int_type::create(target_int_kind, true));
+      _set_type(std::move(it_result));
       return;
 
     } else {
@@ -6364,12 +6362,11 @@ void expr_constant::evaluate_type(ast &a, const target &tgt)
 	throw semantic_except(remark);
       }
 
-      std_int_type::kind target_int_kind = target_char_kind;
-      mpa::limbs::size_type target_int_width = target_char_width;
-      if (a.is_pp_expr()) {
-	target_int_kind = tgt.get_int_max_kind();
-	target_int_width = tgt.get_std_int_width(target_char_kind);
-      }
+      std::shared_ptr<const int_type> it_result
+	= (!a.is_pp_expr() ?
+	   std_int_type::create(target_char_kind, target_char_is_signed) :
+	   tgt.create_int_max_type(target_char_is_signed));
+      const mpa::limbs::size_type target_int_width = it_result->get_width(tgt);
 
       mpa::limbs value = encoded[0];
       value.resize(mpa::limbs::width_to_size(target_int_width));
@@ -6383,8 +6380,7 @@ void expr_constant::evaluate_type(ast &a, const target &tgt)
       _set_value(constexpr_value::integer_constant_expr_tag{},
 		 target_int(target_int_width - target_char_is_signed,
 			    target_char_is_signed, std::move(value)));
-      _set_type(types::std_int_type::create(target_int_kind,
-					    target_char_is_signed));
+      _set_type(std::move(it_result));
       return;
     }
 
@@ -6711,9 +6707,6 @@ void expr_constant::evaluate_type(ast &a, const target &tgt)
       break;
   }
 
-  if (a.is_pp_expr())
-    k = tgt.get_int_max_kind();
-
   if (val_begin == it_int_suffix) {
     code_remark remark
       (code_remark::severity::fatal, "invalid integer constant format",
@@ -6739,24 +6732,29 @@ void expr_constant::evaluate_type(ast &a, const target &tgt)
     (!is_unsigned && b == base::dec) ? m.fls() + 1 : m.fls();
   mpa::limbs::size_type width = tgt.get_std_int_width(k);
   std::shared_ptr<const types::int_type> t;
-  if (width >= req_width) {
+  if (!a.is_pp_expr() && width >= req_width) {
     if (!is_unsigned && b != base::dec && m.is_any_set_at_or_above(width - 1))
       is_unsigned = true;
     t = types::std_int_type::create(k, !is_unsigned);
 
   } else {
-    try {
-      t = tgt.width_to_int_type(req_width, !is_unsigned, true);
-    } catch (const std::overflow_error &) {
-      code_remark remark (code_remark::severity::fatal,
-			  "integer constant overflow",
-			  a.get_pp_result(), _const_tok);
-      a.get_remarks().add(remark);
-      throw semantic_except(remark);
+    if (!a.is_pp_expr()) {
+      try {
+	t = tgt.width_to_int_type(req_width, !is_unsigned, true);
+      } catch (const std::overflow_error &) {
+	code_remark remark (code_remark::severity::fatal,
+			    "integer constant overflow",
+			    a.get_pp_result(), _const_tok);
+	a.get_remarks().add(remark);
+	throw semantic_except(remark);
+      }
+    } else {
+      t = tgt.create_int_max_type(true);
     }
 
     width = t->get_width(tgt);
-    if (!is_unsigned && b != base::dec && m.is_any_set_at_or_above(width - 1)) {
+    if (!is_unsigned && b != base::dec &&
+	m.is_any_set_at_or_above(width - 1)) {
       is_unsigned = true;
       t = t->to_unsigned();
     }

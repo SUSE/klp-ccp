@@ -1105,6 +1105,14 @@ target_gcc::width_to_int_type(const mpa::limbs::size_type w,
 }
 
 std::shared_ptr<const types::int_type>
+target_gcc::create_int_max_type(const bool is_signed) const
+{
+  const types::ext_int_type::kind mode = this->_get_pointer_mode();
+
+  return _int_mode_to_type(mode, is_signed);
+}
+
+std::shared_ptr<const types::int_type>
 target_gcc::create_ptrdiff_type(const bool is_signed) const
 {
   const types::ext_int_type::kind mode = this->_get_pointer_mode();
