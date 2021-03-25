@@ -3208,59 +3208,58 @@ void target_gcc::_register_builtin_macros(preprocessor &pp) const
 
 namespace
 {
-  template<unsigned int w, bool is_signed>
   static std::shared_ptr<const types::addressable_type>
-  __mk_iN(const target &tgt)
+  __mk_iM(const target_gcc &tgt, const int_mode_kind imk, const bool is_signed)
   {
-    return tgt.width_to_int_type(w, is_signed, false);
+    return _impl_proxy{tgt}._int_mode_to_type(imk, is_signed);
   }
 
   static std::shared_ptr<const types::addressable_type>
-  _mk_i8(const target &tgt)
+  _mk_i8(const target_gcc &tgt)
   {
-    return __mk_iN<8, true>(tgt);
+    return __mk_iM(tgt, int_mode_kind::imk_QI, true);
   }
 
   static std::shared_ptr<const types::addressable_type>
-  _mk_i16(const target &tgt)
+  _mk_i16(const target_gcc &tgt)
   {
-    return __mk_iN<16, true>(tgt);
+    return __mk_iM(tgt, int_mode_kind::imk_HI, true);
   }
 
   static std::shared_ptr<const types::addressable_type>
-  _mk_u16(const target &tgt)
+  _mk_u16(const target_gcc &tgt)
   {
-    return __mk_iN<16, false>(tgt);
+    return __mk_iM(tgt, int_mode_kind::imk_HI, false);
   }
 
   static std::shared_ptr<const types::addressable_type>
-  _mk_i32(const target &tgt)
+  _mk_i32(const target_gcc &tgt)
   {
-    return __mk_iN<32, true>(tgt);
+    return __mk_iM(tgt, int_mode_kind::imk_SI, true);
   }
 
   static std::shared_ptr<const types::addressable_type>
-  _mk_u32(const target &tgt)
+  _mk_u32(const target_gcc &tgt)
   {
-    return __mk_iN<32, false>(tgt);
+    return __mk_iM(tgt, int_mode_kind::imk_SI, false);
   }
 
   static std::shared_ptr<const types::addressable_type>
-  _mk_i64(const target &tgt)
+  _mk_i64(const target_gcc &tgt)
   {
-    return __mk_iN<64, true>(tgt);
+    return __mk_iM(tgt, int_mode_kind::imk_DI, true);
   }
 
   static std::shared_ptr<const types::addressable_type>
-  _mk_u64(const target &tgt)
+  _mk_u64(const target_gcc &tgt)
   {
-    return __mk_iN<64, false>(tgt);
+    return __mk_iM(tgt, int_mode_kind::imk_DI, false);
   }
 
   static std::shared_ptr<const types::addressable_type>
-  _mk_i128(const target &tgt)
+  _mk_i128(const target_gcc &tgt)
   {
-    return __mk_iN<128, true>(tgt);
+    return __mk_iM(tgt, int_mode_kind::imk_TI, true);
   }
 
   static std::shared_ptr<const types::addressable_type>
