@@ -99,6 +99,7 @@ static void empty(klp::ccp::pp_tokens_range &loc)
   klp::ccp::ast::unary_op_pre unary_op_pre;
   klp::ccp::types::struct_or_union_kind struct_or_union_kind;
   klp::ccp::types::ext_int_type::kind ext_int_kind;
+  klp::ccp::types::ext_float_type::kind ext_float_kind;
 
   klp::ccp::ast::expr *expr;
   klp::ccp::ast::offset_member_designator *offset_member_designator;
@@ -165,6 +166,7 @@ static void empty(klp::ccp::pp_tokens_range &loc)
 %destructor {} <unary_op_pre>
 %destructor {} <struct_or_union_kind>
 %destructor { $$.~kind(); } <ext_int_kind>
+%destructor { $$.~kind(); } <ext_float_kind>
 %destructor { delete $$; } <*>
 
 /* keyword tokens */
@@ -189,6 +191,7 @@ static void empty(klp::ccp::pp_tokens_range &loc)
 %token TOK_KW_COMPLEX
 
 %token<ext_int_kind> TOK_KW_EXT_INT
+%token<ext_float_kind> TOK_KW_EXT_FLOAT
 
 %token TOK_KW_STRUCT
 %token TOK_KW_UNION
@@ -709,6 +712,8 @@ type_specifier_no_tdid:
 	  { $$ = new type_specifier_pod(@$, pod_spec::ps_complex); }
 	| TOK_KW_EXT_INT
 	  { $$ = new type_specifier_ext_int(@$, $1); }
+	| TOK_KW_EXT_FLOAT
+	  { $$ = new type_specifier_ext_float(@$, $1); }
 	| struct_or_union_specifier
 	  { $$ =MV_P($1); }
 	| enum_specifier
