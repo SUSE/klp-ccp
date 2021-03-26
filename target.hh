@@ -172,11 +172,21 @@ namespace klp
       get_std_float_format(const types::std_float_type::kind k)
 	const noexcept = 0;
 
-      virtual mpa::limbs get_float_size(const types::std_float_type::kind k)
+      virtual mpa::limbs get_std_float_size(const types::std_float_type::kind k)
 	const = 0;
 
       virtual mpa::limbs::size_type
-      get_float_alignment(const types::std_float_type::kind k) const = 0;
+      get_std_float_alignment(const types::std_float_type::kind k) const = 0;
+
+      virtual types::real_float_type::format
+      get_ext_float_format(const types::ext_float_type::kind k)
+	const noexcept = 0;
+
+      virtual mpa::limbs get_ext_float_size(const types::ext_float_type::kind k)
+	const = 0;
+
+      virtual mpa::limbs::size_type
+      get_ext_float_alignment(const types::ext_float_type::kind k) const = 0;
 
       virtual std::shared_ptr<const types::int_type>
       create_ptrdiff_type(const bool is_signed) const = 0;

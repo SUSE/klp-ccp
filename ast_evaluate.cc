@@ -19,6 +19,7 @@
 #include <cassert>
 #include <algorithm>
 #include <stack>
+#include <stdexcept>
 #include "ast_impl.hh"
 #include "semantic_except.hh"
 #include "types_impl.hh"
@@ -3187,7 +3188,21 @@ void expr_conditional::evaluate_type(ast &a, const target &tgt)
 	 check_enum_completeness_t_false();
 
 	 const std::shared_ptr<const arithmetic_type> at_result
-	   = at_true.arithmetic_conversion(tgt, at_false);
+	   = [&]() {
+	       try {
+		 return at_true.arithmetic_conversion(tgt, at_false);
+	       } catch (const std::range_error &re) {
+		 code_remark remark
+		 (code_remark::severity::fatal,
+		  (std::string{
+		      "could not determine common type for ternary operator: "
+		   } +
+		   re.what()),
+		  a.get_pp_result(), this->get_tokens_range());
+		 a.get_remarks().add(remark);
+		 throw semantic_except(remark);
+	       }
+	     }();
 	 _set_type(at_result);
 
 	 if (cv_value) {
@@ -3241,7 +3256,22 @@ void expr_conditional::evaluate_type(ast &a, const target &tgt)
 	 check_enum_completeness_t_true();
 
 	 std::shared_ptr<const arithmetic_type> at_result
-	   = at_true.arithmetic_conversion(tgt, *bft_false.promote(tgt));
+	   = [&]() {
+	       try {
+		 return at_true.arithmetic_conversion(tgt,
+						      *bft_false.promote(tgt));
+	       } catch (const std::range_error &re) {
+		 code_remark remark
+		 (code_remark::severity::fatal,
+		  (std::string{
+		      "could not determine common type for ternary operator: "
+		   } +
+		   re.what()),
+		  a.get_pp_result(), this->get_tokens_range());
+		 a.get_remarks().add(remark);
+		 throw semantic_except(remark);
+	       }
+	     }();
 	 _set_type(std::move(at_result));
 
        },
@@ -3249,7 +3279,22 @@ void expr_conditional::evaluate_type(ast &a, const target &tgt)
 	 check_enum_completeness_t_false();
 
 	 std::shared_ptr<const arithmetic_type> at_result
-	   = at_false.arithmetic_conversion(tgt, *bft_true.promote(tgt));
+	   = [&]() {
+	       try {
+		 return at_false.arithmetic_conversion(tgt,
+						       *bft_true.promote(tgt));
+	       } catch (const std::range_error &re) {
+		 code_remark remark
+		 (code_remark::severity::fatal,
+		  (std::string{
+		      "could not determine common type for ternary operator: "
+		   } +
+		   re.what()),
+		  a.get_pp_result(), this->get_tokens_range());
+		 a.get_remarks().add(remark);
+		 throw semantic_except(remark);
+	       }
+	     }();
 	 _set_type(std::move(at_result));
 
        },
@@ -3257,8 +3302,22 @@ void expr_conditional::evaluate_type(ast &a, const target &tgt)
 	 check_enum_completeness_t_false();
 
 	 std::shared_ptr<const arithmetic_type> at_result
-	   = (bft_true.promote(tgt)
-	      ->arithmetic_conversion(tgt, *bft_false.promote(tgt)));
+	   = [&]() {
+	       try {
+		 return (bft_true.promote(tgt)
+			 ->arithmetic_conversion(tgt, *bft_false.promote(tgt)));
+	       } catch (const std::range_error &re) {
+		 code_remark remark
+		 (code_remark::severity::fatal,
+		  (std::string{
+		      "could not determine common type for ternary operator: "
+		   } +
+		   re.what()),
+		  a.get_pp_result(), this->get_tokens_range());
+		 a.get_remarks().add(remark);
+		 throw semantic_except(remark);
+	       }
+	     }();
 	 _set_type(std::move(at_result));
 
        },
@@ -3466,7 +3525,21 @@ void expr_binop::_evaluate_arith_binop(const arithmetic_type &at_left,
 				       ast &a, const target &tgt)
 {
   const std::shared_ptr<const arithmetic_type> at
-    = at_left.arithmetic_conversion(tgt, at_right);
+    = [&]() {
+	try {
+	  return at_left.arithmetic_conversion(tgt, at_right);
+	} catch (const std::range_error &re) {
+	  code_remark remark
+	  (code_remark::severity::fatal,
+	   (std::string{
+	       "could not determine common type for binary operation: "
+	    } +
+	    re.what()),
+	   a.get_pp_result(), this->get_tokens_range());
+	  a.get_remarks().add(remark);
+	  throw semantic_except(remark);
+	}
+      }();
 
   _set_type(at);
 
@@ -4217,7 +4290,21 @@ void expr_binop::_evaluate_cmp(const types::arithmetic_type &at_left,
   const constexpr_value &cv_right = _right.get_constexpr_value();
 
   const std::shared_ptr<const arithmetic_type> at
-    = at_left.arithmetic_conversion(tgt, at_right);
+    = [&]() {
+	try {
+	  return at_left.arithmetic_conversion(tgt, at_right);
+	} catch (const std::range_error &re) {
+	  code_remark remark
+	  (code_remark::severity::fatal,
+	   (std::string{
+	       "could not determine common type for comparison: "
+	    } +
+	    re.what()),
+	   a.get_pp_result(), this->get_tokens_range());
+	  a.get_remarks().add(remark);
+	  throw semantic_except(remark);
+	}
+      }();
 
   handle_types<void>
     ((wrap_callables<default_action_nop>

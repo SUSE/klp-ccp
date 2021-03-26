@@ -55,6 +55,7 @@ namespace klp
       class enum_type;
       class real_float_type;
       class std_float_type;
+      class ext_float_type;
       class complex_float_type;
       class struct_or_union_type;
       class array_type;
@@ -147,6 +148,7 @@ namespace klp
 	  tid_enum,
 	  tid_bitfield,
 	  tid_std_float,
+	  tid_ext_float,
 	  tid_complex_float,
 	  tid_builtin_func,
 	};
@@ -179,6 +181,9 @@ namespace klp
 					const bool ignore_qualifiers) const;
 	virtual bool is_compatible_with(const target &tgt,
 					const std_float_type &t,
+					const bool ignore_qualifiers) const;
+	virtual bool is_compatible_with(const target &tgt,
+					const ext_float_type &t,
 					const bool ignore_qualifiers) const;
 	virtual bool is_compatible_with(const target &tgt,
 					const complex_float_type &t,
@@ -1437,7 +1442,12 @@ namespace klp
 	real_float_conversion(const target &tgt,
 			      const std_float_type &ft) const = 0;
 
-	virtual std::shared_ptr<const real_float_type> promote() const = 0;
+	virtual std::shared_ptr<const real_float_type>
+	real_float_conversion(const target &tgt,
+			      const ext_float_type &ft) const = 0;
+
+	virtual std::shared_ptr<const real_float_type>
+	promote(const target &tgt) const = 0;
 
 	virtual format get_format(const target &tgt) const noexcept = 0;
 
@@ -1488,7 +1498,12 @@ namespace klp
 	real_float_conversion(const target &tgt,
 			      const std_float_type &ft) const override;
 
-	virtual std::shared_ptr<const real_float_type> promote() const override;
+	virtual std::shared_ptr<const real_float_type>
+	real_float_conversion(const target &tgt,
+			      const ext_float_type &ft) const override;
+
+	virtual std::shared_ptr<const real_float_type> promote(const target&)
+	  const override;
 
 	virtual format get_format(const target &tgt) const noexcept override;
 
@@ -1501,6 +1516,89 @@ namespace klp
 	std_float_type(const std_float_type&);
 
 	virtual std_float_type* _clone() const override;
+
+	kind _k;
+      };
+
+      class ext_float_type : public real_float_type
+      {
+      public:
+	class kind
+	{
+	public:
+	  kind() noexcept = default;
+
+	  constexpr explicit kind(const int tgt_id) noexcept
+	    : _tgt_id(tgt_id)
+	  {}
+
+	  constexpr kind(const kind &k) noexcept = default;
+
+	  constexpr explicit operator int() const
+	  { return _tgt_id; }
+
+	  kind& operator=(const kind &rhs) noexcept = default;
+
+	  constexpr bool operator==(const kind &rhs) const noexcept
+	  {
+	    return this->_tgt_id == rhs._tgt_id;
+	  }
+
+	  constexpr bool operator!=(const kind &rhs) const noexcept
+	  {
+	    return !(*this == rhs);
+	  }
+
+	private:
+	  int _tgt_id;
+	};
+
+	virtual ~ext_float_type() noexcept;
+
+	static std::shared_ptr<const ext_float_type>
+	create(const kind k, const qualifiers &qs = qualifiers{});
+
+	virtual type_id get_type_id() const noexcept override;
+
+	virtual bool is_compatible_with(const target &tgt, const type &t,
+					const bool ignore_qualifiers)
+	  const override;
+	virtual bool is_compatible_with(const target&,
+					const ext_float_type &t,
+					const bool ignore_qualifiers)
+	  const override;
+
+	virtual mpa::limbs get_size(const target &tgt) const override;
+
+	virtual mpa::limbs::size_type
+	get_type_alignment(const target &tgt) const noexcept override;
+
+	virtual std::shared_ptr<const real_float_type>
+	real_float_conversion(const target &tgt,
+			      const real_float_type &ft) const override;
+
+	virtual std::shared_ptr<const real_float_type>
+	real_float_conversion(const target &tgt,
+			      const std_float_type &ft) const override;
+
+	virtual std::shared_ptr<const real_float_type>
+	real_float_conversion(const target &tgt,
+			      const ext_float_type &ft) const override;
+
+	virtual std::shared_ptr<const real_float_type>
+	promote(const target &tgt) const override;
+
+	virtual format get_format(const target &tgt) const noexcept override;
+
+	kind get_kind() const noexcept
+	{ return _k; }
+
+      private:
+	ext_float_type(const kind k, const qualifiers &qs);
+
+	ext_float_type(const ext_float_type&);
+
+	virtual ext_float_type* _clone() const override;
 
 	kind _k;
       };
@@ -1542,7 +1640,8 @@ namespace klp
 	arithmetic_conversion(const target &tgt,
 			      const complex_float_type &ct) const override;
 
-	std::shared_ptr<const complex_float_type> promote() const;
+	std::shared_ptr<const complex_float_type> promote(const target &tgt)
+	  const;
 
       private:
 	complex_float_type(std::shared_ptr<const real_float_type> &&base_type,

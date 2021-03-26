@@ -42,11 +42,23 @@ namespace klp
       get_std_float_format(const types::std_float_type::kind k)
 	const noexcept override;
 
-      virtual mpa::limbs get_float_size(const types::std_float_type::kind k)
+      virtual mpa::limbs get_std_float_size(const types::std_float_type::kind k)
 	const override;
 
       virtual mpa::limbs::size_type
-      get_float_alignment(const types::std_float_type::kind k) const override;
+      get_std_float_alignment(const types::std_float_type::kind k)
+	const override;
+
+      virtual types::real_float_type::format
+      get_ext_float_format(const types::ext_float_type::kind k)
+	const noexcept override;
+
+      virtual mpa::limbs get_ext_float_size(const types::ext_float_type::kind k)
+	const override;
+
+      virtual mpa::limbs::size_type
+      get_ext_float_alignment(const types::ext_float_type::kind k)
+	const override;
 
       virtual mpa::limbs::size_type get_biggest_alignment_log2()
 	const noexcept override;

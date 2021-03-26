@@ -18,6 +18,7 @@
 
 #include <cassert>
 #include <algorithm>
+#include <stdexcept>
 #include "target.hh"
 #include "ast.hh"
 #include "callables_wrapper.hh"
@@ -183,6 +184,12 @@ bool type::is_compatible_with(const target&, const enum_type&,
 }
 
 bool type::is_compatible_with(const target&, const std_float_type&,
+			      const bool) const
+{
+  return false;
+}
+
+bool type::is_compatible_with(const target&, const ext_float_type&,
 			      const bool) const
 {
   return false;
@@ -739,10 +746,10 @@ is_compatible_with(const target &tgt,
 	       return it.is_compatible_with(tgt, *it.promote(tgt), true);
 	     },
 	     [&](const real_float_type &rft) {
-	       return rft.is_compatible_with(tgt, *rft.promote(), true);
+	       return rft.is_compatible_with(tgt, *rft.promote(tgt), true);
 	     },
 	     [&](const complex_float_type &cft) {
-	       return cft.is_compatible_with(tgt, *cft.promote(), true);
+	       return cft.is_compatible_with(tgt, *cft.promote(tgt), true);
 	     })),
 	   *pt))) {
       return false;
@@ -2531,13 +2538,13 @@ bool std_float_type::is_compatible_with(const target&,
 
 mpa::limbs std_float_type::get_size(const target &tgt) const
 {
-  return tgt.get_float_size(this->get_kind());
+  return tgt.get_std_float_size(this->get_kind());
 }
 
 mpa::limbs::size_type
 std_float_type::get_type_alignment(const target &tgt) const noexcept
 {
-  return tgt.get_float_alignment(this->get_kind());
+  return tgt.get_std_float_alignment(this->get_kind());
 }
 
 std::shared_ptr<const real_float_type>
@@ -2558,7 +2565,15 @@ std_float_type::real_float_conversion(const target &tgt,
   }
 }
 
-std::shared_ptr<const real_float_type> std_float_type::promote() const
+std::shared_ptr<const real_float_type>
+std_float_type::real_float_conversion(const target &tgt,
+				      const ext_float_type &ft) const
+{
+  return ft.real_float_conversion(tgt, *this);
+}
+
+std::shared_ptr<const real_float_type> std_float_type::promote(const target&)
+  const
 {
   if (this->get_kind() == kind::k_float)
     return std_float_type::create(kind::k_double, this->get_qualifiers());
@@ -2570,6 +2585,112 @@ real_float_type::format std_float_type::get_format(const target &tgt)
   const noexcept
 {
   return tgt.get_std_float_format(_k);
+}
+
+
+ext_float_type::ext_float_type(const kind k, const qualifiers &qs)
+  : type(qs), _k(k)
+{}
+
+ext_float_type::ext_float_type(const ext_float_type&) = default;
+
+ext_float_type::~ext_float_type() noexcept = default;
+
+ext_float_type* ext_float_type::_clone() const
+{
+  return new ext_float_type(*this);
+}
+
+std::shared_ptr<const ext_float_type>
+ext_float_type::create(const kind k, const qualifiers &qs)
+{
+  return (std::shared_ptr<const ext_float_type>
+	  (new ext_float_type(k, qs)));
+}
+
+type::type_id ext_float_type::get_type_id() const noexcept
+{
+  return type_id::tid_ext_float;
+}
+
+bool ext_float_type::is_compatible_with(const target &tgt, const type &t,
+					const bool ignore_qualifiers) const
+{
+  return t.is_compatible_with(tgt, *this, ignore_qualifiers);
+}
+
+bool ext_float_type::is_compatible_with(const target&,
+					const ext_float_type &t,
+					const bool ignore_qualifiers) const
+{
+  return (this->get_kind() == t.get_kind() &&
+	  (ignore_qualifiers ||
+	   (this->get_qualifiers() == t.get_qualifiers())));
+}
+
+mpa::limbs ext_float_type::get_size(const target &tgt) const
+{
+  return tgt.get_ext_float_size(this->get_kind());
+}
+
+mpa::limbs::size_type
+ext_float_type::get_type_alignment(const target &tgt) const noexcept
+{
+  return tgt.get_ext_float_alignment(this->get_kind());
+}
+
+std::shared_ptr<const real_float_type>
+ext_float_type::real_float_conversion(const target &tgt,
+				      const real_float_type &ft) const
+{
+  return ft.real_float_conversion(tgt, *this);
+}
+
+std::shared_ptr<const real_float_type>
+ext_float_type::real_float_conversion(const target &tgt,
+				      const std_float_type &ft) const
+{
+  const format &this_fmt = this->get_format(tgt);
+  const format &other_fmt = ft.get_format(tgt);
+
+  if (this_fmt <= other_fmt) {
+    return ft.real_float_type::strip_qualifiers();
+  } else if (other_fmt < this_fmt) {
+    return this->real_float_type::strip_qualifiers();
+  } else {
+    throw std::range_error("incompatible float ranges");
+  }
+}
+
+std::shared_ptr<const real_float_type>
+ext_float_type::real_float_conversion(const target &tgt,
+				      const ext_float_type &ft) const
+{
+  const format &this_fmt = this->get_format(tgt);
+  const format &other_fmt = ft.get_format(tgt);
+
+  if (this_fmt <= other_fmt) {
+    return ft.real_float_type::strip_qualifiers();
+  } else if (other_fmt < this_fmt) {
+    return this->real_float_type::strip_qualifiers();
+  } else {
+    throw std::range_error("incompatible float ranges");
+  }
+}
+
+std::shared_ptr<const real_float_type>
+ext_float_type::promote(const target &tgt) const
+{
+  // Only standard float gets promoted in the course of the default
+  // argument promotions. In particular, the extended floating types
+  // are left as-is.
+  return _self_ptr<real_float_type>();
+}
+
+real_float_type::format
+ext_float_type::get_format(const target &tgt) const noexcept
+{
+  return tgt.get_ext_float_format(_k);
 }
 
 
@@ -2659,9 +2780,10 @@ complex_float_type::arithmetic_conversion(const target &tgt,
 	  (this->_base_type->real_float_conversion(tgt, *ct._base_type)));
 }
 
-std::shared_ptr<const complex_float_type> complex_float_type::promote() const
+std::shared_ptr<const complex_float_type>
+complex_float_type::promote(const target &tgt) const
 {
-  return complex_float_type::create(this->_base_type->promote(),
+  return complex_float_type::create(this->_base_type->promote(tgt),
 				    this->get_qualifiers());
 }
 
