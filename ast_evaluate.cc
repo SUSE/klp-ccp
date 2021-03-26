@@ -1271,6 +1271,7 @@ evaluate_type(ast &a, const target &tgt)
   std::shared_ptr<const addressable_type> result;
   _tss[0].get().process<void, type_set<type_specifier_pod,
 				       type_specifier_ext_int,
+				       type_specifier_ext_float,
 				       type_specifier_tdid,
 				       struct_or_union_def,
 				       struct_or_union_ref,
@@ -1282,6 +1283,10 @@ evaluate_type(ast &a, const target &tgt)
        return;
       },
       [](const type_specifier_ext_int&) {
+       // Will be processed below
+       return;
+      },
+      [](const type_specifier_ext_float&) {
        // Will be processed below
        return;
       },
@@ -1386,7 +1391,10 @@ evaluate_type(ast &a, const target &tgt)
     fbt_unknown,
     fbt_float,
     fbt_double,
+    fbt_ext_float,
   } float_base_type = fbt_unknown;
+
+  types::ext_float_type::kind ext_float_kind{-1};
 
   for (auto ts : _tss) {
     ts.get().process<void, type_set<type_specifier_pod,
@@ -1436,7 +1444,9 @@ evaluate_type(ast &a, const target &tgt)
 			&& cls != cls_float) ||
 		       is_short ||
 		       (cls == cls_float &&
-			(is_long || float_base_type == fbt_float)) ||
+			(is_long ||
+			 (float_base_type != fbt_unknown &&
+			  float_base_type != fbt_double))) ||
 		       is_long > 1 ||
 		       (cls == cls_int && (int_base_type != ibt_unknown &&
 					   int_base_type != ibt_int)));
@@ -1477,7 +1487,8 @@ evaluate_type(ast &a, const target &tgt)
 
 	 case pod_spec::ps_double:
 	   conflict = ((cls != cls_unknown && cls != cls_float) ||
-		       float_base_type != fbt_unknown);
+		       float_base_type != fbt_unknown ||
+		       is_long > 1);
 	   float_base_type = fbt_double;
 	   cls = cls_float;
 	   break;
@@ -1505,6 +1516,22 @@ evaluate_type(ast &a, const target &tgt)
 	 cls = cls_int;
 	 int_base_type = ibt_ext_int;
 	 ext_int_kind = ts_ext_int.get_ext_int_kind();
+       },
+       [&](const type_specifier_ext_float &ts_ext_float) {
+	 if ((cls != cls_unknown && cls != cls_float) ||
+	     is_long ||
+	     float_base_type != fbt_unknown) {
+	   code_remark remark(code_remark::severity::fatal,
+			      "conflicting type specifier",
+			      a.get_pp_result(),
+			      ts_ext_float.get_tokens_range());
+	   a.get_remarks().add(remark);
+	   throw semantic_except(remark);
+	 }
+
+	 cls = cls_float;
+	 float_base_type = fbt_ext_float;
+	 ext_float_kind = ts_ext_float.get_ext_float_kind();
        },
        [&](const type_specifier &_ts) {
 	 code_remark remark(code_remark::severity::fatal,
@@ -1568,12 +1595,13 @@ evaluate_type(ast &a, const target &tgt)
 
   case cls_float:
     {
-      std_float_type::kind k;
+      std::shared_ptr<const real_float_type> rft;
+      const types::qualifiers &rt_qs = !is_complex ? qs : types::qualifiers{};
 
       switch (float_base_type) {
       case fbt_float:
 	assert(!is_long);
-	k = std_float_type::kind::k_float;
+	rft = std_float_type::create(std_float_type::kind::k_float, rt_qs);
 	break;
 
       case fbt_unknown:
@@ -1582,18 +1610,21 @@ evaluate_type(ast &a, const target &tgt)
       case fbt_double:
 	assert(is_long <= 1);
 	if (!is_long)
-	  k = std_float_type::kind::k_double;
+	  rft = std_float_type::create(std_float_type::kind::k_double, rt_qs);
 	else
-	  k = std_float_type::kind::k_long_double;
+	  rft = std_float_type::create(std_float_type::kind::k_long_double,
+				       rt_qs);
+	break;
 
+      case fbt_ext_float:
+	rft = ext_float_type::create(ext_float_kind, rt_qs);
 	break;
       }
 
       if (!is_complex)
-	_set_type(std_float_type::create(k, qs));
+	_set_type(std::move(rft));
       else
-	_set_type(complex_float_type::create(std_float_type::create(k),
-					     qs));
+	_set_type(complex_float_type::create(std::move(rft), qs));
 
       return;
     }
