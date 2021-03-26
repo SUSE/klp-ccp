@@ -1398,6 +1398,16 @@ namespace klp
       class real_float_type : public arithmetic_type
       {
       public:
+	struct format
+	{
+	  format(const mpa::limbs::size_type _significand_width,
+		 const mpa::limbs::size_type _exponent_width) noexcept;
+
+	  const mpa::limbs::size_type significand_width;
+	  const mpa::limbs::size_type exponent_width;
+	};
+
+
 	~real_float_type() noexcept = 0;
 
 	std::shared_ptr<const real_float_type> strip_qualifiers() const;
@@ -1425,11 +1435,7 @@ namespace klp
 
 	virtual std::shared_ptr<const real_float_type> promote() const = 0;
 
-	virtual mpa::limbs::size_type
-	get_significand_width(const target &tgt) const noexcept = 0;
-
-	virtual mpa::limbs::size_type
-	get_exponent_width(const target &tgt) const noexcept = 0;
+	virtual format get_format(const target &tgt) const noexcept = 0;
 
       protected:
 	real_float_type();
@@ -1480,11 +1486,7 @@ namespace klp
 
 	virtual std::shared_ptr<const real_float_type> promote() const override;
 
-	virtual mpa::limbs::size_type
-	get_significand_width(const target &tgt) const noexcept override;
-
-	virtual mpa::limbs::size_type
-	get_exponent_width(const target &tgt) const noexcept override;
+	virtual format get_format(const target &tgt) const noexcept override;
 
 	kind get_kind() const noexcept
 	{ return _k; }

@@ -325,16 +325,14 @@ target_int constexpr_value::convert_to(const target &tgt,
 target_float constexpr_value::convert_to(const target &tgt,
 					 const types::real_float_type &ft) const
 {
-  const mpa::limbs::size_type significand_width =
-    ft.get_significand_width(tgt);
-  const mpa::limbs::size_type exponent_width = ft.get_exponent_width(tgt);
+  const real_float_type::format &fmt = ft.get_format(tgt);
 
   switch(_value_kind) {
   case value_kind::vk_int:
-    return _ti.to_float(significand_width, exponent_width);
+    return _ti.to_float(fmt.significand_width, fmt.exponent_width);
 
   case value_kind::vk_float:
-    return _tf.convert(significand_width, exponent_width);
+    return _tf.convert(fmt.significand_width, fmt.exponent_width);
 
   case value_kind::vk_address:
     assert(0);

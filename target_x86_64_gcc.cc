@@ -188,35 +188,21 @@ bool target_x86_64_gcc::is_bitfield_default_signed() const noexcept
   return true;
 }
 
-mpa::limbs::size_type target_x86_64_gcc::
-get_float_significand_width(const types::std_float_type::kind k)
+types::real_float_type::format
+target_x86_64_gcc::get_std_float_format(const types::std_float_type::kind k)
   const noexcept
 {
+  using format = types::real_float_type::format;
+
   switch (k) {
   case types::std_float_type::kind::k_float:
-    return 24;
+    return format{24, 8};
 
   case types::std_float_type::kind::k_double:
-    return 53;
+    return format{53, 11};
 
   case types::std_float_type::kind::k_long_double:
-    return 113;
-  };
-}
-
-mpa::limbs::size_type target_x86_64_gcc::
-get_float_exponent_width(const types::std_float_type::kind k)
-  const noexcept
-{
-  switch (k) {
-  case types::std_float_type::kind::k_float:
-    return 8;
-
-  case types::std_float_type::kind::k_double:
-    return 11;
-
-  case types::std_float_type::kind::k_long_double:
-    return 15;
+    return format{113, 15};
   };
 }
 

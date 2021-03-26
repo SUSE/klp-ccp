@@ -38,12 +38,8 @@ namespace klp
 
       virtual bool is_bitfield_default_signed() const noexcept override;
 
-      virtual mpa::limbs::size_type
-      get_float_significand_width(const types::std_float_type::kind k)
-	const noexcept override;
-
-      virtual mpa::limbs::size_type
-      get_float_exponent_width(const types::std_float_type::kind k)
+      virtual types::real_float_type::format
+      get_std_float_format(const types::std_float_type::kind k)
 	const noexcept override;
 
       virtual mpa::limbs get_float_size(const types::std_float_type::kind k)

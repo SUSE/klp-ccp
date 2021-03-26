@@ -168,12 +168,8 @@ namespace klp
       virtual std::shared_ptr<const types::int_type>
       create_int_max_type(const bool is_signed) const = 0;
 
-     virtual mpa::limbs::size_type
-      get_float_significand_width(const types::std_float_type::kind k)
-	const noexcept = 0;
-
-      virtual mpa::limbs::size_type
-      get_float_exponent_width(const types::std_float_type::kind k)
+      virtual types::real_float_type::format
+      get_std_float_format(const types::std_float_type::kind k)
 	const noexcept = 0;
 
       virtual mpa::limbs get_float_size(const types::std_float_type::kind k)

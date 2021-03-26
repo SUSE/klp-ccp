@@ -6613,14 +6613,13 @@ void expr_constant::evaluate_type(ast &a, const target &tgt)
     }
 
 
-    const mpa::limbs::size_type f_width = tgt.get_float_significand_width(k);
-    const mpa::limbs::size_type e_width = tgt.get_float_exponent_width(k);
+    const real_float_type::format &fmt = tgt.get_std_float_format(k);
     assert(b == base::hex || b == base::dec);
     target_float flt =
       (b == base::hex ?
-       (target_float::from_base2_exp(f_width, e_width,
+       (target_float::from_base2_exp(fmt.significand_width, fmt.exponent_width,
 				     std::move(m), std::move(e))) :
-       (target_float::from_base10_exp(f_width, e_width,
+       (target_float::from_base10_exp(fmt.significand_width, fmt.exponent_width,
 				      std::move(m), std::move(e))));
 
     _set_value(constexpr_value::literal_fp_constant_tag{}, std::move(flt));

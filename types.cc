@@ -2419,6 +2419,13 @@ std::shared_ptr<const bitfield_type> bitfield_type::set_packed() const
 }
 
 
+real_float_type::format::
+format(const mpa::limbs::size_type _significand_width,
+       const mpa::limbs::size_type _exponent_width) noexcept
+  : significand_width(_significand_width),
+    exponent_width(_exponent_width)
+{}
+
 real_float_type::real_float_type() = default;
 
 real_float_type::real_float_type(const real_float_type&) = default;
@@ -2540,16 +2547,10 @@ std::shared_ptr<const real_float_type> std_float_type::promote() const
   return _self_ptr<real_float_type>();
 }
 
-mpa::limbs::size_type
-std_float_type::get_significand_width(const target &tgt) const noexcept
+real_float_type::format std_float_type::get_format(const target &tgt)
+  const noexcept
 {
-  return tgt.get_float_significand_width(_k);
-}
-
-mpa::limbs::size_type
-std_float_type::get_exponent_width(const target &tgt) const noexcept
-{
-  return tgt.get_float_exponent_width(_k);
+  return tgt.get_std_float_format(_k);
 }
 
 
