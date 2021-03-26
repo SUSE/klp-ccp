@@ -2426,6 +2426,25 @@ format(const mpa::limbs::size_type _significand_width,
     exponent_width(_exponent_width)
 {}
 
+bool real_float_type::format::operator==(const format &rhs) const noexcept
+{
+  return (this->significand_width == rhs.significand_width &&
+	  this->exponent_width == rhs.exponent_width);
+}
+
+bool real_float_type::format::operator<(const format &rhs) const noexcept
+{
+  return ((this->significand_width < rhs.significand_width &&
+	   this->exponent_width <= rhs.exponent_width) ||
+	  (this->significand_width <= rhs.significand_width &&
+	   this->exponent_width < rhs.exponent_width));
+}
+
+bool real_float_type::format::operator<=(const format &rhs) const noexcept
+{
+  return *this == rhs || *this < rhs;
+}
+
 real_float_type::real_float_type() = default;
 
 real_float_type::real_float_type(const real_float_type&) = default;

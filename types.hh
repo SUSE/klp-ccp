@@ -1403,6 +1403,10 @@ namespace klp
 	  format(const mpa::limbs::size_type _significand_width,
 		 const mpa::limbs::size_type _exponent_width) noexcept;
 
+	  bool operator==(const format &rhs) const noexcept;
+	  bool operator<(const format &rhs) const noexcept;
+	  bool operator<=(const format &rhs) const noexcept;
+
 	  const mpa::limbs::size_type significand_width;
 	  const mpa::limbs::size_type exponent_width;
 	};
