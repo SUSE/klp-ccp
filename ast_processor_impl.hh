@@ -366,6 +366,13 @@ namespace klp
       }
 
       template<typename ret_type, typename callable_type>
+      ret_type _processor<ret_type, callable_type>::
+      operator()(type_specifier_ext_float &e)
+      {
+	return _c(e);
+      }
+
+      template<typename ret_type, typename callable_type>
       ret_type
       _processor<ret_type, callable_type>::operator()(type_specifier_tdid &e)
       {
@@ -1164,6 +1171,13 @@ namespace klp
       template<typename ret_type, typename callable_type>
       ret_type _const_processor<ret_type, callable_type>::
       operator()(const type_specifier_ext_int &e)
+      {
+	return _c(e);
+      }
+
+      template<typename ret_type, typename callable_type>
+      ret_type _const_processor<ret_type, callable_type>::
+      operator()(const type_specifier_ext_float &e)
       {
 	return _c(e);
       }

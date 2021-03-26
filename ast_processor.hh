@@ -82,6 +82,7 @@ namespace klp
 	virtual ret_type operator()(type_qualifier_list&) = 0;
 	virtual ret_type operator()(type_specifier_pod&) = 0;
 	virtual ret_type operator()(type_specifier_ext_int&) = 0;
+	virtual ret_type operator()(type_specifier_ext_float&) = 0;
 	virtual ret_type operator()(type_specifier_tdid&) = 0;
 	virtual ret_type operator()(struct_declarator&) = 0;
 	virtual ret_type operator()(struct_declarator_list&) = 0;
@@ -214,6 +215,7 @@ namespace klp
 	virtual ret_type operator()(type_qualifier_list &e) override;
 	virtual ret_type operator()(type_specifier_pod &e) override;
 	virtual ret_type operator()(type_specifier_ext_int &e) override;
+	virtual ret_type operator()(type_specifier_ext_float &e) override;
 	virtual ret_type operator()(type_specifier_tdid &e) override;
 	virtual ret_type operator()(struct_declarator &e) override;
 	virtual ret_type operator()(struct_declarator_list &e) override;
@@ -351,6 +353,7 @@ namespace klp
 	virtual ret_type operator()(const type_qualifier_list&) = 0;
 	virtual ret_type operator()(const type_specifier_pod&) = 0;
 	virtual ret_type operator()(const type_specifier_ext_int&) = 0;
+	virtual ret_type operator()(const type_specifier_ext_float&) = 0;
 	virtual ret_type operator()(const type_specifier_tdid&) = 0;
 	virtual ret_type operator()(const struct_declarator&) = 0;
 	virtual ret_type operator()(const struct_declarator_list&) = 0;
@@ -484,6 +487,7 @@ namespace klp
 	virtual ret_type operator()(const type_qualifier_list &e) override;
 	virtual ret_type operator()(const type_specifier_pod &e) override;
 	virtual ret_type operator()(const type_specifier_ext_int &e) override;
+	virtual ret_type operator()(const type_specifier_ext_float &e) override;
 	virtual ret_type operator()(const type_specifier_tdid &e) override;
 	virtual ret_type operator()(const struct_declarator &e) override;
 	virtual ret_type operator()(const struct_declarator_list &e) override;

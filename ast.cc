@@ -3000,6 +3000,40 @@ bool type_specifier_ext_int::_process(const_processor<bool> &p) const
 }
 
 
+type_specifier_ext_float::
+type_specifier_ext_float(const pp_tokens_range &tr,
+			 const types::ext_float_type::kind &k) noexcept
+  : type_specifier(tr), _k(k)
+{}
+
+type_specifier_ext_float::~type_specifier_ext_float() noexcept = default;
+
+_ast_entity* type_specifier_ext_float::_get_child(const size_t) const noexcept
+{
+  return nullptr;
+}
+
+void type_specifier_ext_float::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+void type_specifier_ext_float::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
+bool type_specifier_ext_float::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool type_specifier_ext_float::_process(const_processor<bool> &p) const
+{
+  return p(*this);
+}
+
+
 type_specifier_tdid::resolved::resolved() noexcept
   : _kind(resolved_kind::none)
 {}

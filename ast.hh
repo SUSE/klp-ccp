@@ -2118,6 +2118,30 @@ namespace klp
 	types::ext_int_type::kind _k;
       };
 
+      class type_specifier_ext_float final : public type_specifier
+      {
+      public:
+	type_specifier_ext_float(const pp_tokens_range &tr,
+			       const types::ext_float_type::kind &k) noexcept;
+
+	virtual ~type_specifier_ext_float() noexcept override;
+
+	types::ext_float_type::kind get_ext_float_kind() const noexcept
+	{
+	  return _k;
+	}
+
+      private:
+	virtual _ast_entity* _get_child(const size_t) const noexcept override;
+
+	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
+	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
+
+	types::ext_float_type::kind _k;
+      };
+
       class type_specifier_tdid final : public type_specifier
       {
       public:
