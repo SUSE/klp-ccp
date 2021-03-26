@@ -151,6 +151,8 @@ namespace klp
       virtual std::shared_ptr<const types::int_type>
       create_int_max_type(const bool is_signed) const override;
 
+      virtual ext_float_keywords get_ext_float_keywords() const override;
+
       virtual std::shared_ptr<const types::int_type>
       create_ptrdiff_type(const bool is_signed) const override;
 

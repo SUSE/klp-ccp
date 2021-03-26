@@ -146,8 +146,6 @@ namespace klp
       get_std_int_alignment(const types::std_int_type::kind k)
 	const noexcept = 0;
 
-      typedef std::map<std::string, types::ext_int_type::kind> ext_int_keywords;
-
       virtual mpa::limbs::size_type
       get_ext_int_width(const types::ext_int_type::kind k) const noexcept = 0;
 
@@ -157,6 +155,8 @@ namespace klp
       virtual mpa::limbs::size_type
       get_ext_int_alignment(const types::ext_int_type::kind k)
 	const noexcept = 0;
+
+      typedef std::map<std::string, types::ext_int_type::kind> ext_int_keywords;
 
       virtual ext_int_keywords get_ext_int_keywords() const = 0;
 
@@ -187,6 +187,11 @@ namespace klp
 
       virtual mpa::limbs::size_type
       get_ext_float_alignment(const types::ext_float_type::kind k) const = 0;
+
+      typedef std::map<std::string, types::ext_float_type::kind>
+		ext_float_keywords;
+
+      virtual ext_float_keywords get_ext_float_keywords() const = 0;
 
       virtual std::shared_ptr<const types::int_type>
       create_ptrdiff_type(const bool is_signed) const = 0;

@@ -1125,6 +1125,11 @@ target_gcc::create_int_max_type(const bool is_signed) const
   return _int_mode_to_type(mode, is_signed);
 }
 
+target::ext_float_keywords target_gcc::get_ext_float_keywords() const
+{
+  return ext_float_keywords{};
+}
+
 std::shared_ptr<const types::int_type>
 target_gcc::create_ptrdiff_type(const bool is_signed) const
 {

@@ -101,6 +101,7 @@ namespace klp
 	bool _in_typedef;
 
 	const target::ext_int_keywords _ext_int_keywords;
+	const target::ext_float_keywords _ext_float_keywords;
 
 	friend class gnuc_parser;
       };
