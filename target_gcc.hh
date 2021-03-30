@@ -151,6 +151,28 @@ namespace klp
       virtual std::shared_ptr<const types::int_type>
       create_int_max_type(const bool is_signed) const override;
 
+      virtual types::real_float_type::format
+      get_std_float_format(const types::std_float_type::kind k)
+	const noexcept override;
+
+      virtual mpa::limbs get_std_float_size(const types::std_float_type::kind k)
+	const override;
+
+      virtual mpa::limbs::size_type
+      get_std_float_alignment(const types::std_float_type::kind k)
+	const override;
+
+      virtual types::real_float_type::format
+      get_ext_float_format(const types::ext_float_type::kind k)
+	const noexcept override;
+
+      virtual mpa::limbs get_ext_float_size(const types::ext_float_type::kind k)
+	const override;
+
+      virtual mpa::limbs::size_type
+      get_ext_float_alignment(const types::ext_float_type::kind k)
+	const override;
+
       virtual ext_float_keywords get_ext_float_keywords() const override;
 
       virtual std::shared_ptr<const types::int_type>
@@ -450,12 +472,6 @@ namespace klp
 	cimk_TI,
       };
 
-      enum class float_mode_kind
-      {
-	fmk_SF,
-	fmk_DF,
-      };
-
     private:
       struct int_mode
       {
@@ -533,8 +549,86 @@ namespace klp
       mpa::limbs::size_type
       _int_mode_to_alignment(const types::ext_int_type::kind mode) const;
 
-      virtual types::std_float_type::kind
-      _float_mode_to_float_kind(const float_mode_kind m) const noexcept = 0;
+    protected:
+      enum class float_mode_kind
+      {
+	fmk_SF,
+	fmk_DF,
+	fmk_LAST = fmk_DF,
+      };
+
+    private:
+      struct float_mode
+      {
+	float_mode() noexcept;
+
+	float_mode(const types::ext_float_type::kind _mode,
+		   const types::real_float_type::format &_format,
+		   const mpa::limbs::size_type _size,
+		   const mpa::limbs::size_type _alignment) noexcept;
+
+	types::ext_float_type::kind mode;
+	std::reference_wrapper<const types::real_float_type::format> format;
+	mpa::limbs::size_type size;
+	mpa::limbs::size_type alignment;
+	bool is_std_float;
+      };
+
+    protected:
+      static const types::real_float_type::format _ieee_single_format;
+      static const types::real_float_type::format _ieee_double_format;
+      static const types::real_float_type::format _ieee_quad_format;
+
+      void
+      _register_float_mode(const types::ext_float_type::kind mode,
+			   const types::real_float_type::format &format,
+			   const mpa::limbs::size_type size,
+			   const mpa::limbs::size_type alignment,
+			   const std::initializer_list<const char *> names);
+
+      void
+      _register_float_mode(const float_mode_kind fmk,
+			   const types::real_float_type::format &format,
+			   const mpa::limbs::size_type size,
+			   const mpa::limbs::size_type alignment,
+			   const std::initializer_list<const char *> names);
+
+      void _set_std_float_mode(const types::std_float_type::kind std_float_kind,
+			       const types::ext_float_type::kind mode);
+      void _set_std_float_mode(const types::std_float_type::kind std_float_kind,
+			       const float_mode_kind fmk);
+
+      void _set_float_n_mode(const unsigned int n, const bool extended,
+			     const types::ext_float_type::kind mode);
+      void _set_float_n_mode(const unsigned int n, const bool extended,
+			     const float_mode_kind fmk);
+
+      void _register_ext_float_type_specifier
+			(const char * const name,
+			 const types::ext_float_type::kind mode);
+
+    private:
+      void _register_float_modes();
+      virtual void _arch_register_float_modes() = 0;
+
+      std::shared_ptr<const types::real_float_type>
+      _float_mode_to_type(const types::ext_float_type::kind mode,
+			  const types::qualifiers &qs = types::qualifiers{})
+	const;
+
+      const float_mode&
+      _std_float_kind_to_float_mode
+		(const types::std_float_type::kind std_float_kind)
+	const noexcept;
+
+      const types::real_float_type::format&
+      _float_mode_to_format(const types::ext_float_type::kind mode) const;
+
+      mpa::limbs::size_type
+      _float_mode_to_size(const types::ext_float_type::kind mode) const;
+
+      mpa::limbs::size_type
+      _float_mode_to_alignment(const types::ext_float_type::kind mode) const;
 
       virtual types::ext_int_type::kind _get_int_max_mode() const noexcept = 0;
 
@@ -622,6 +716,15 @@ namespace klp
       std::vector<types::ext_int_type::kind> _std_int_modes;
       std::vector<types::ext_int_type::kind> _int_modes_sorted_by_width;
 
+      std::vector<float_mode> _float_modes;
+      std::map<std::string, types::ext_float_type::kind> _float_mode_names;
+      std::vector<types::ext_float_type::kind> _std_float_modes;
+      std::vector<std::tuple<unsigned int, bool, types::ext_float_type::kind>>
+	_float_n_modes;
+      std::vector<std::pair<const char *, types::ext_float_type::kind>>
+	_ext_float_type_specifiers;
+
+    private:
       std::map<const std::string, const builtin_func::factory> _builtin_funcs;
       builtin_typedef::factories _builtin_typedefs;
     };

@@ -188,91 +188,6 @@ bool target_x86_64_gcc::is_bitfield_default_signed() const noexcept
   return true;
 }
 
-types::real_float_type::format
-target_x86_64_gcc::get_std_float_format(const types::std_float_type::kind k)
-  const noexcept
-{
-  using format = types::real_float_type::format;
-
-  switch (k) {
-  case types::std_float_type::kind::k_float:
-    return format{24, 8};
-
-  case types::std_float_type::kind::k_double:
-    return format{53, 11};
-
-  case types::std_float_type::kind::k_long_double:
-    return format{113, 15};
-  };
-}
-
-mpa::limbs target_x86_64_gcc::
-get_std_float_size(const types::std_float_type::kind k) const
-{
-  mpa::limbs size;
-
-  switch (k) {
-  case std_float_type::kind::k_float:
-    size = mpa::limbs::from_size_type(4);
-    break;
-
-  case std_float_type::kind::k_double:
-    size = mpa::limbs::from_size_type(8);
-    break;
-
-  case std_float_type::kind::k_long_double:
-    size = mpa::limbs::from_size_type(16);
-    break;
-  };
-
-  return size;
-}
-
-mpa::limbs::size_type target_x86_64_gcc::
-get_std_float_alignment(const types::std_float_type::kind k) const
-{
-  return get_std_float_size(k).ffs() - 1;
-}
-
-types::real_float_type::format
-target_x86_64_gcc::get_ext_float_format(const types::ext_float_type::kind k)
-  const noexcept
-{
-  using format = types::real_float_type::format;
-
-  switch (static_cast<float_mode_kind>(static_cast<int>(k))) {
-  case float_mode_kind::fmk_SF:
-    return format{24, 8};
-
-  case float_mode_kind::fmk_DF:
-    return format{53, 11};
-  };
-}
-
-mpa::limbs target_x86_64_gcc::
-get_ext_float_size(const types::ext_float_type::kind k) const
-{
-  mpa::limbs size;
-
-  switch (static_cast<float_mode_kind>(static_cast<int>(k))) {
-  case float_mode_kind::fmk_SF:
-    size = mpa::limbs::from_size_type(4);
-    break;
-
-  case float_mode_kind::fmk_DF:
-    size = mpa::limbs::from_size_type(8);
-    break;
-  };
-
-  return size;
-}
-
-mpa::limbs::size_type target_x86_64_gcc::
-get_ext_float_alignment(const types::ext_float_type::kind k) const
-{
-  return get_ext_float_size(k).ffs() - 1;
-}
-
 mpa::limbs::size_type target_x86_64_gcc::get_biggest_alignment_log2()
   const noexcept
 {
@@ -354,16 +269,20 @@ void target_x86_64_gcc::_arch_register_int_modes()
 		    common_int_mode_kind::cimk_DI);
 }
 
-types::std_float_type::kind target_x86_64_gcc::
-_float_mode_to_float_kind(const float_mode_kind m) const noexcept
+void target_x86_64_gcc::_arch_register_float_modes()
 {
-  switch (m) {
-  case float_mode_kind::fmk_SF:
-    return types::std_float_type::kind::k_float;
+  const types::ext_float_type::kind
+    k_TF{static_cast<int>(float_mode_kind::fmk_TF)};
 
-  case float_mode_kind::fmk_DF:
-    return types::std_float_type::kind::k_double;
-  }
+  _register_float_mode(k_TF, _ieee_quad_format, 16, 4, {"TF", "__TF__"});
+
+  _set_float_n_mode(128, false, k_TF);
+
+  _set_std_float_mode(types::std_float_type::kind::k_float,
+		      target_gcc::float_mode_kind::fmk_SF);
+  _set_std_float_mode(types::std_float_type::kind::k_double,
+		      target_gcc::float_mode_kind::fmk_DF);
+  _set_std_float_mode(types::std_float_type::kind::k_long_double, k_TF);
 }
 
 types::ext_int_type::kind target_x86_64_gcc::_get_int_max_mode() const noexcept

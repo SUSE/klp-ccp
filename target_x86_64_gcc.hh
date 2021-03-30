@@ -38,28 +38,6 @@ namespace klp
 
       virtual bool is_bitfield_default_signed() const noexcept override;
 
-      virtual types::real_float_type::format
-      get_std_float_format(const types::std_float_type::kind k)
-	const noexcept override;
-
-      virtual mpa::limbs get_std_float_size(const types::std_float_type::kind k)
-	const override;
-
-      virtual mpa::limbs::size_type
-      get_std_float_alignment(const types::std_float_type::kind k)
-	const override;
-
-      virtual types::real_float_type::format
-      get_ext_float_format(const types::ext_float_type::kind k)
-	const noexcept override;
-
-      virtual mpa::limbs get_ext_float_size(const types::ext_float_type::kind k)
-	const override;
-
-      virtual mpa::limbs::size_type
-      get_ext_float_alignment(const types::ext_float_type::kind k)
-	const override;
-
       virtual mpa::limbs::size_type get_biggest_alignment_log2()
 	const noexcept override;
 
@@ -72,11 +50,14 @@ namespace klp
       friend struct _impl_proxy;
 
     private:
+      enum class float_mode_kind
+      {
+	fmk_TF = static_cast<int>(target_gcc::float_mode_kind::fmk_LAST) + 1,
+      };
+
       virtual void _arch_register_int_modes() override;
 
-      virtual types::std_float_type::kind
-      _float_mode_to_float_kind(const float_mode_kind m)
-	const noexcept override;
+      virtual void _arch_register_float_modes() override;
 
       virtual types::ext_int_type::kind _get_int_max_mode()
 	const noexcept override;

@@ -257,6 +257,7 @@ void target_gcc::parse_command_line
   }
 
   _register_int_modes();
+  _register_float_modes();
   _register_builtin_typedefs();
 }
 
@@ -281,7 +282,8 @@ target_gcc::get_builtin_typedefs() const noexcept
 struct target_gcc::_impl_proxy
 {
   constexpr _impl_proxy(const target_gcc &tgt) noexcept
-  : _tgt(tgt), _int_mode_names(tgt._int_mode_names)
+  : _tgt(tgt), _int_mode_names(tgt._int_mode_names),
+    _float_mode_names(tgt._float_mode_names)
   {}
 
   using common_int_mode_kind = target_gcc::common_int_mode_kind;
@@ -303,10 +305,11 @@ struct target_gcc::_impl_proxy
     return _tgt._int_mode_to_type(cimk, is_signed, qs);
   }
 
-  types::std_float_type::kind
-  _float_mode_to_float_kind(const float_mode_kind m) const noexcept
+  std::shared_ptr<const types::real_float_type>
+  _float_mode_to_type(const types::ext_float_type::kind mode,
+		      const types::qualifiers &qs = types::qualifiers{}) const
   {
-    return _tgt._float_mode_to_float_kind(m);
+    return _tgt._float_mode_to_type(mode, qs);
   }
 
   types::ext_int_type::kind _get_pointer_mode() const noexcept
@@ -346,6 +349,9 @@ struct target_gcc::_impl_proxy
   }
 
   const decltype(std::declval<target_gcc>()._int_mode_names) &_int_mode_names;
+
+  const decltype(std::declval<target_gcc>()._float_mode_names)
+		&_float_mode_names;
 
 private:
   const target_gcc &_tgt;
@@ -535,8 +541,8 @@ namespace
     const types::ext_int_type::kind* get_int_mode_result() const noexcept
     { return _im_set ? &_im : nullptr; }
 
-    const float_mode_kind* get_float_mode_result() const noexcept
-    { return _fmk_set ? &_fmk : nullptr; }
+    const types::ext_float_type::kind* get_float_mode_result() const noexcept
+    { return _fm_set ? &_fm : nullptr; }
 
     pp_token_index get_mode_tok() const noexcept
     { return _mode_tok; }
@@ -554,7 +560,7 @@ namespace
 
     bool mode_attribute_found() const noexcept
     {
-      return _im_set || _fmk_set;
+      return _im_set || _fm_set;
     }
 
   private:
@@ -562,15 +568,15 @@ namespace
     const target_gcc &_tgt;
     types::ext_int_type::kind _im;
     bool _im_set;
-    float_mode_kind _fmk;
-    bool _fmk_set;
+    types::ext_float_type::kind _fm;
+    bool _fm_set;
     pp_token_index _mode_tok;
   };
 }
 
 _mode_attribute_finder::
 _mode_attribute_finder(ast::ast &a, const target_gcc &tgt) noexcept
-  : _a(a), _tgt(tgt), _im_set(false), _fmk_set(false)
+  : _a(a), _tgt(tgt), _im_set(false), _fm_set(false)
 {}
 
 bool _mode_attribute_finder::operator()(const ast::attribute &attr)
@@ -609,27 +615,27 @@ bool _mode_attribute_finder::operator()(const ast::attribute &attr)
   if (it_int_mode != impl_proxy._int_mode_names.cend()) {
     _im = it_int_mode->second;
     _im_set = true;
-  } else if (id == "word" || id == "__word__") {
-    _im = impl_proxy._get_word_mode();
-    _im_set = true;
-  } else if (id == "pointer" || id == "__pointer__") {
-    _im = impl_proxy._get_pointer_mode();
-    _im_set = true;
-  } else if (id == "SF" || id == "__SF__") {
-    _fmk = float_mode_kind::fmk_SF;
-    _fmk_set = true;
-  } else if (id == "DF" || id == "__DF__") {
-    _fmk = float_mode_kind::fmk_DF;
-    _fmk_set = true;
   } else {
-    code_remark remark(code_remark::severity::fatal,
-		       "unrecognized 'mode' attribute specifier",
-		       _a.get_pp_result(), e_id->get_tokens_range());
-    _a.get_remarks().add(remark);
-    throw semantic_except(remark);
+    const auto it_float_mode = impl_proxy._float_mode_names.find(id);
+    if (it_float_mode != impl_proxy._float_mode_names.cend()) {
+      _fm = it_float_mode->second;
+      _fm_set = true;
+    } else if (id == "word" || id == "__word__") {
+      _im = impl_proxy._get_word_mode();
+      _im_set = true;
+    } else if (id == "pointer" || id == "__pointer__") {
+      _im = impl_proxy._get_pointer_mode();
+      _im_set = true;
+    } else {
+      code_remark remark(code_remark::severity::fatal,
+			 "unrecognized 'mode' attribute specifier",
+			 _a.get_pp_result(), e_id->get_tokens_range());
+      _a.get_remarks().add(remark);
+      throw semantic_except(remark);
+    }
   }
 
-  if (_im_set && _fmk_set) {
+  if (_im_set && _fm_set) {
     code_remark remark(code_remark::severity::fatal,
 		       "inconsistent 'mode' attribute specifier domains",
 		       _a.get_pp_result(), e_id->get_tokens_range());
@@ -701,7 +707,7 @@ apply_to_type(std::shared_ptr<const types::addressable_type> &&orig_t) const
 	return apply_to_type(std::move(it));
        },
        [&](const std::shared_ptr<const types::real_float_type> &rft) {
-	 if (!_fmk_set) {
+	 if (!_fm_set) {
 	   code_remark remark
 	     (code_remark::severity::fatal,
 	      "invalid 'mode' attribute specifier for float type",
@@ -710,9 +716,8 @@ apply_to_type(std::shared_ptr<const types::addressable_type> &&orig_t) const
 	   throw semantic_except(remark);
 	 }
 
-	 return (types::std_float_type::create
-		 (_impl_proxy{_tgt}._float_mode_to_float_kind(_fmk),
-		  rft->get_qualifiers()));
+	 return _impl_proxy{_tgt}._float_mode_to_type(_fm,
+						      rft->get_qualifiers());
        },
        [&](std::shared_ptr<const types::pointer_type> &&pt)
 		-> std::shared_ptr<const types::addressable_type> {
@@ -1125,9 +1130,79 @@ target_gcc::create_int_max_type(const bool is_signed) const
   return _int_mode_to_type(mode, is_signed);
 }
 
+types::real_float_type::format
+target_gcc::get_std_float_format(const types::std_float_type::kind k)
+  const noexcept
+{
+  const float_mode &fm = _std_float_kind_to_float_mode(k);
+
+  return fm.format.get();
+}
+
+mpa::limbs target_gcc::get_std_float_size(const types::std_float_type::kind k)
+  const
+{
+  const float_mode &fm = _std_float_kind_to_float_mode(k);
+
+  return mpa::limbs::from_size_type(fm.size);
+}
+
+mpa::limbs::size_type
+target_gcc::get_std_float_alignment(const types::std_float_type::kind k)
+  const
+{
+  const float_mode &fm = _std_float_kind_to_float_mode(k);
+
+  return fm.alignment;
+}
+
+types::real_float_type::format
+target_gcc::get_ext_float_format(const types::ext_float_type::kind k)
+  const noexcept
+{
+  const int m = static_cast<int>(k);
+  assert(m < _float_modes.size());
+  const float_mode &fm = _float_modes[m];
+
+  return fm.format.get();
+}
+
+mpa::limbs target_gcc::get_ext_float_size(const types::ext_float_type::kind k)
+  const
+{
+  const int m = static_cast<int>(k);
+  assert(m < _float_modes.size());
+  const float_mode &fm = _float_modes[m];
+
+  return mpa::limbs::from_size_type(fm.size);
+}
+
+mpa::limbs::size_type
+target_gcc::get_ext_float_alignment(const types::ext_float_type::kind k) const
+{
+  const int m = static_cast<int>(k);
+  assert(m < _float_modes.size());
+  const float_mode &fm = _float_modes[m];
+
+  return fm.alignment;
+}
+
 target::ext_float_keywords target_gcc::get_ext_float_keywords() const
 {
-  return ext_float_keywords{};
+  ext_float_keywords kws;
+
+  for (const auto &fn : _float_n_modes) {
+    std::string kw = "_Float" + std::to_string(std::get<0>(fn));
+    if (std::get<1>(fn))
+      kw += 'x';
+
+    kws.emplace(std::move(kw), std::get<2>(fn));
+  }
+
+  for (const auto &ts : _ext_float_type_specifiers)
+    kws.emplace(ts.first, ts.second);
+
+  return kws;
 }
 
 std::shared_ptr<const types::int_type>
@@ -1437,6 +1512,200 @@ target_gcc::_int_mode_to_alignment(const types::ext_int_type::kind mode) const
   const int_mode &im = _int_modes[m];
 
   return im.alignment;
+}
+
+static const types::real_float_type::format float_no_format{0, 0};
+
+target_gcc::float_mode::float_mode() noexcept
+  : mode(types::ext_float_type::kind{-1}),
+    format(float_no_format),
+    size(0), alignment(0), is_std_float(false)
+{}
+
+target_gcc::float_mode::
+float_mode(const types::ext_float_type::kind _mode,
+	   const types::real_float_type::format &_format,
+	   const mpa::limbs::size_type _size,
+	   const mpa::limbs::size_type _alignment) noexcept
+  : mode(_mode), format(_format), size(_size), alignment(_alignment),
+    is_std_float(false)
+{}
+
+const types::real_float_type::format target_gcc::_ieee_single_format{24, 8};
+const types::real_float_type::format target_gcc::_ieee_double_format{53, 11};
+const types::real_float_type::format target_gcc::_ieee_quad_format{113, 15};
+
+void target_gcc::
+_register_float_mode(const types::ext_float_type::kind mode,
+		     const types::real_float_type::format &format,
+		     const mpa::limbs::size_type size,
+		     const mpa::limbs::size_type alignment,
+		     const std::initializer_list<const char *> names)
+{
+  const int m = static_cast<int>(mode);
+
+  if (_float_modes.size() <= m)
+    _float_modes.resize(m + 1);
+
+  _float_modes[m] = float_mode{mode, format, size, alignment};
+
+  for (const auto &n : names)
+    _float_mode_names.emplace(std::string{n}, mode);
+}
+
+void target_gcc::
+_register_float_mode(const float_mode_kind fmk,
+		     const types::real_float_type::format &format,
+		     const mpa::limbs::size_type size,
+		     const mpa::limbs::size_type alignment,
+		     const std::initializer_list<const char *> names)
+{
+  _register_float_mode(types::ext_float_type::kind{static_cast<int>(fmk)},
+		       format, size, alignment, names);
+}
+
+void target_gcc::
+_set_std_float_mode(const types::std_float_type::kind std_float_kind,
+		    const types::ext_float_type::kind mode)
+{
+  const int k = static_cast<int>(std_float_kind);
+  const int m = static_cast<int>(mode);
+
+  if (_std_float_modes.size() <= k)
+    _std_float_modes.resize(k + 1);
+
+  _std_float_modes[k] = mode;
+  assert(m < _float_modes.size());
+  _float_modes[m].is_std_float = true;
+}
+
+void target_gcc::
+_set_std_float_mode(const types::std_float_type::kind std_float_kind,
+		    const float_mode_kind fmk)
+{
+  _set_std_float_mode(std_float_kind,
+		      types::ext_float_type::kind{static_cast<int>(fmk)});
+}
+
+void target_gcc::_set_float_n_mode(const unsigned int n, const bool extended,
+				   const types::ext_float_type::kind mode)
+{
+  using n_mode_type =
+    std::tuple<unsigned int, bool, types::ext_float_type::kind>;
+  const n_mode_type n_mode{n, extended, mode};
+
+  auto it = std::lower_bound(_float_n_modes.begin(),
+			     _float_n_modes.end(),
+			     n_mode,
+			     [](const n_mode_type &e,
+				const n_mode_type &value) {
+			       return (std::get<0>(e) < std::get<0>(value) ||
+				       (std::get<0>(e) == std::get<0>(value) &&
+					!std::get<1>(e) && std::get<1>(value)));
+			     });
+  assert(it == _float_n_modes.end() ||
+	 std::get<0>(*it) < n ||
+	 (std::get<0>(*it) == n && !std::get<1>(*it) && extended));
+
+  _float_n_modes.insert(it, n_mode);
+}
+
+void target_gcc::_set_float_n_mode(const unsigned int n, const bool extended,
+				   const float_mode_kind fmk)
+{
+  _set_float_n_mode(n, extended,
+		    types::ext_float_type::kind{static_cast<int>(fmk)});
+}
+
+void target_gcc::
+_register_ext_float_type_specifier(const char * const name,
+				   const types::ext_float_type::kind mode)
+{
+  _ext_float_type_specifiers.emplace_back(name, mode);
+}
+
+void target_gcc::_register_float_modes()
+{
+  _register_float_mode(float_mode_kind::fmk_SF, _ieee_single_format, 4, 2,
+		       {"SF", "__SF__"});
+  _register_float_mode(float_mode_kind::fmk_DF, _ieee_single_format, 8, 3,
+		       {"DF", "__DF__"});
+
+  _set_float_n_mode(32, false, float_mode_kind::fmk_SF);
+  _set_float_n_mode(64, false, float_mode_kind::fmk_DF);
+
+  _arch_register_float_modes();
+}
+
+std::shared_ptr<const types::real_float_type>
+target_gcc::_float_mode_to_type(const types::ext_float_type::kind mode,
+				const types::qualifiers &qs) const
+{
+  const int m = static_cast<int>(mode);
+  assert(m < _float_modes.size());
+  const float_mode &fm = _float_modes[m];
+
+  // Prefer std_float_type, if there's a mapping.
+  if (fm.is_std_float) {
+    const auto it =
+      std::find_if(_std_float_modes.cbegin(),
+		   _std_float_modes.cend(),
+		   [mode](const types::ext_float_type::kind std_float_mode) {
+		     return std_float_mode == mode;
+		   });
+    assert(it != _std_float_modes.cend());
+
+    const types::std_float_type::kind k =
+      static_cast<types::std_float_type::kind>(it - _std_float_modes.cbegin());
+    return types::std_float_type::create(k, qs);
+  }
+
+  return types::ext_float_type::create(mode, qs);
+}
+
+const target_gcc::float_mode& target_gcc::
+_std_float_kind_to_float_mode(const types::std_float_type::kind std_float_kind)
+  const noexcept
+{
+  const int k = static_cast<int>(std_float_kind);
+
+  assert(k < _std_float_modes.size());
+  const types::ext_float_type::kind mode = _std_float_modes[k];
+  const int m = static_cast<int>(mode);
+  assert(m < _float_modes.size());
+  return _float_modes[m];
+}
+
+const types::real_float_type::format&
+target_gcc::_float_mode_to_format(const types::ext_float_type::kind mode)
+  const
+{
+  const int m = static_cast<int>(mode);
+  assert(m < _float_modes.size());
+  const float_mode &fm = _float_modes[m];
+
+  return fm.format.get();
+}
+
+mpa::limbs::size_type
+target_gcc::_float_mode_to_size(const types::ext_float_type::kind mode) const
+{
+  const int m = static_cast<int>(mode);
+  assert(m < _float_modes.size());
+  const float_mode &fm = _float_modes[m];
+
+  return fm.size;
+}
+
+mpa::limbs::size_type
+target_gcc::_float_mode_to_alignment(const types::ext_float_type::kind mode)
+  const
+{
+  const int m = static_cast<int>(mode);
+  assert(m < _float_modes.size());
+  const float_mode &fm = _float_modes[m];
+
+  return fm.alignment;
 }
 
 
