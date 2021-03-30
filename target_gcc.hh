@@ -550,11 +550,11 @@ namespace klp
       _int_mode_to_alignment(const types::ext_int_type::kind mode) const;
 
     protected:
-      enum class float_mode_kind
+      enum class common_float_mode_kind
       {
-	fmk_SF,
-	fmk_DF,
-	fmk_LAST = fmk_DF,
+	cfmk_SF,
+	cfmk_DF,
+	cfmk_LAST = cfmk_DF,
       };
 
     private:
@@ -587,7 +587,7 @@ namespace klp
 			   const std::initializer_list<const char *> names);
 
       void
-      _register_float_mode(const float_mode_kind fmk,
+      _register_float_mode(const common_float_mode_kind cfmk,
 			   const types::real_float_type::format &format,
 			   const mpa::limbs::size_type size,
 			   const mpa::limbs::size_type alignment,
@@ -596,12 +596,12 @@ namespace klp
       void _set_std_float_mode(const types::std_float_type::kind std_float_kind,
 			       const types::ext_float_type::kind mode);
       void _set_std_float_mode(const types::std_float_type::kind std_float_kind,
-			       const float_mode_kind fmk);
+			       const common_float_mode_kind cfmk);
 
       void _set_float_n_mode(const unsigned int n, const bool extended,
 			     const types::ext_float_type::kind mode);
       void _set_float_n_mode(const unsigned int n, const bool extended,
-			     const float_mode_kind fmk);
+			     const common_float_mode_kind cfmk);
 
       void _register_ext_float_type_specifier
 			(const char * const name,

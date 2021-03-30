@@ -52,7 +52,7 @@ namespace klp
     private:
       enum class float_mode_kind
       {
-	fmk_TF = static_cast<int>(target_gcc::float_mode_kind::fmk_LAST) + 1,
+	fmk_TF = static_cast<int>(common_float_mode_kind::cfmk_LAST) + 1,
       };
 
       virtual void _arch_register_int_modes() override;

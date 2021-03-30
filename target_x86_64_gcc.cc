@@ -279,9 +279,9 @@ void target_x86_64_gcc::_arch_register_float_modes()
   _set_float_n_mode(128, false, k_TF);
 
   _set_std_float_mode(types::std_float_type::kind::k_float,
-		      target_gcc::float_mode_kind::fmk_SF);
+		      common_float_mode_kind::cfmk_SF);
   _set_std_float_mode(types::std_float_type::kind::k_double,
-		      target_gcc::float_mode_kind::fmk_DF);
+		      common_float_mode_kind::cfmk_DF);
   _set_std_float_mode(types::std_float_type::kind::k_long_double, k_TF);
 }
 

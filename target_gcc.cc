@@ -287,7 +287,7 @@ struct target_gcc::_impl_proxy
   {}
 
   using common_int_mode_kind = target_gcc::common_int_mode_kind;
-  using float_mode_kind = target_gcc::float_mode_kind;
+  using common_float_mode_kind = target_gcc::common_float_mode_kind;
 
   std::shared_ptr<const types::int_type>
   _int_mode_to_type(const types::ext_int_type::kind mode,
@@ -359,7 +359,7 @@ private:
 
 using _impl_proxy = target_gcc::_impl_proxy;
 using common_int_mode_kind = _impl_proxy::common_int_mode_kind;
-using float_mode_kind = _impl_proxy::float_mode_kind;
+using common_float_mode_kind = _impl_proxy::common_float_mode_kind;
 
 
 namespace
@@ -1554,13 +1554,13 @@ _register_float_mode(const types::ext_float_type::kind mode,
 }
 
 void target_gcc::
-_register_float_mode(const float_mode_kind fmk,
+_register_float_mode(const common_float_mode_kind cfmk,
 		     const types::real_float_type::format &format,
 		     const mpa::limbs::size_type size,
 		     const mpa::limbs::size_type alignment,
 		     const std::initializer_list<const char *> names)
 {
-  _register_float_mode(types::ext_float_type::kind{static_cast<int>(fmk)},
+  _register_float_mode(types::ext_float_type::kind{static_cast<int>(cfmk)},
 		       format, size, alignment, names);
 }
 
@@ -1581,10 +1581,10 @@ _set_std_float_mode(const types::std_float_type::kind std_float_kind,
 
 void target_gcc::
 _set_std_float_mode(const types::std_float_type::kind std_float_kind,
-		    const float_mode_kind fmk)
+		    const common_float_mode_kind cfmk)
 {
   _set_std_float_mode(std_float_kind,
-		      types::ext_float_type::kind{static_cast<int>(fmk)});
+		      types::ext_float_type::kind{static_cast<int>(cfmk)});
 }
 
 void target_gcc::_set_float_n_mode(const unsigned int n, const bool extended,
@@ -1611,10 +1611,10 @@ void target_gcc::_set_float_n_mode(const unsigned int n, const bool extended,
 }
 
 void target_gcc::_set_float_n_mode(const unsigned int n, const bool extended,
-				   const float_mode_kind fmk)
+				   const common_float_mode_kind cfmk)
 {
   _set_float_n_mode(n, extended,
-		    types::ext_float_type::kind{static_cast<int>(fmk)});
+		    types::ext_float_type::kind{static_cast<int>(cfmk)});
 }
 
 void target_gcc::
@@ -1626,13 +1626,13 @@ _register_ext_float_type_specifier(const char * const name,
 
 void target_gcc::_register_float_modes()
 {
-  _register_float_mode(float_mode_kind::fmk_SF, _ieee_single_format, 4, 2,
-		       {"SF", "__SF__"});
-  _register_float_mode(float_mode_kind::fmk_DF, _ieee_single_format, 8, 3,
-		       {"DF", "__DF__"});
+  _register_float_mode(common_float_mode_kind::cfmk_SF,
+		       _ieee_single_format, 4, 2, {"SF", "__SF__"});
+  _register_float_mode(common_float_mode_kind::cfmk_DF,
+		       _ieee_single_format, 8, 3, {"DF", "__DF__"});
 
-  _set_float_n_mode(32, false, float_mode_kind::fmk_SF);
-  _set_float_n_mode(64, false, float_mode_kind::fmk_DF);
+  _set_float_n_mode(32, false, common_float_mode_kind::cfmk_SF);
+  _set_float_n_mode(64, false, common_float_mode_kind::cfmk_DF);
 
   _arch_register_float_modes();
 }
