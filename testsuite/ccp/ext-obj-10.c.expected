@@ -1,0 +1,7 @@
+/* klp-ccp: from testsuite/ccp/ext-obj-10.c */
+static int (*klpe_espr_o);
+
+void klpp_pu_f(void)
+{
+	(*klpe_espr_o);
+}

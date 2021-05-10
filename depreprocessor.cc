@@ -244,7 +244,7 @@ copy_subrange(const pp_tokens_range &r, const bool need_whitespace_before,
     if (need_whitespace_before &&
 	!(it != _ops.begin() && (it - 1)->a == _op::action::insert_ws &&
 	  (it - 1)->r.end == r.begin)) {
-      it = _ops.emplace(it, r.begin, _op::sticky_side::right);
+      it = _ops.emplace(it, r.begin, _op::sticky_side::right) + 1;
     }
 
     it = _ops.emplace(it, r);
