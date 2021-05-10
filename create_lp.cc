@@ -4196,7 +4196,18 @@ void _ast_info_collector::_handle_expr(const ast::expr_id &e)
       auto it_fidi = _id_to_fidi.find(&id);
       if (it_fidi != _id_to_fidi.end()) {
 	if (!_in_sizeof_typeof) {
-	  _cur_deps->on_funs.add(dep_on_fun{it_fidi->second.get(), e});
+	  if (_cur_deps) {
+	    _cur_deps->on_funs.add(dep_on_fun{it_fidi->second.get(), e});
+	  } else {
+	      const pp_tokens &toks = _ai.atu.get_pp_result().get_pp_tokens();
+	      const std::string &name = toks[e.get_id_tok()].get_value();
+	      code_remark remark
+		(code_remark::severity::warning,
+		 ("dependency on function \"" + name +
+		  "\" not allowed in this context"),
+		 _ai.atu.get_pp_result(), e.get_tokens_range());
+	      _remarks.add(remark);
+	  }
 	} else {
 	  const ast::declarator &d = id.get_declarator();
 	  const types::addressable_type &t = *d.get_innermost_type();
@@ -4214,7 +4225,18 @@ void _ast_info_collector::_handle_expr(const ast::expr_id &e)
 	}
 
 	if (!_in_sizeof_typeof) {
-	  _cur_deps->on_objs.add(dep_on_obj{it_oidi->second.get(), e});
+	  if (_cur_deps) {
+	    _cur_deps->on_objs.add(dep_on_obj{it_oidi->second.get(), e});
+	  } else {
+	      const pp_tokens &toks = _ai.atu.get_pp_result().get_pp_tokens();
+	      const std::string &name = toks[e.get_id_tok()].get_value();
+	      code_remark remark
+		(code_remark::severity::warning,
+		 ("dependency on object \"" + name +
+		  "\" not allowed in this context"),
+		 _ai.atu.get_pp_result(), e.get_tokens_range());
+	      _remarks.add(remark);
+	  }
 	} else {
 	  const ast::declarator &d = id.get_declarator();
 	  const types::addressable_type &t = *d.get_innermost_type();
