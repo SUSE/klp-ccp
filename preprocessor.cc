@@ -258,11 +258,17 @@ pp_token_index preprocessor::read_next_token()
 	 ((prev_tok.is_punctuator(":") && next_tok.is_punctuator(":")) ||
 	  (prev_tok.is_punctuator(".") && next_tok.is_punctuator(".")) ||
 	  (prev_tok.is_punctuator("#") && next_tok.is_punctuator("#"))))))) {
-    _pp_token extra_ws_tok{
-		pp_token::type::ws, " ",
-		raw_pp_tokens_range{
-			next_tok.get_token_source().begin,
-			next_tok.get_token_source().begin}};
+
+    // Insert a ws token. Be careful to set the source range to keep
+    // the source ranges sorted, otherwise the lookup from
+    // raw_pp_tokens_ranges to pp_token_ranges will break.
+    const raw_pp_tokens_range r =
+      (prev_tok.get_token_source() == next_tok.get_token_source() ?
+       next_tok.get_token_source() :
+       raw_pp_tokens_range{next_tok.get_token_source().begin,
+			   next_tok.get_token_source().begin});
+
+    _pp_token extra_ws_tok{pp_token::type::ws, " ", r};
     extra_ws_tok.set_macro_invocation(next_tok.get_macro_invocation());
     _pending_tokens.push(std::move(extra_ws_tok));
   }
