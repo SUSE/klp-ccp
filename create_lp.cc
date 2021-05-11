@@ -3247,13 +3247,13 @@ namespace
     void _handle_expr(const ast::expr_member_deref &e);
     void _handle_expr(const ast::expr_cast &e);
     void _handle_expr(const ast::expr_compound_literal &e);
-    void _handle_expr(const ast::expr_func_invocation &e);
+    bool _handle_expr(const ast::expr_func_invocation &e);
     void _handle_expr(const ast::expr_unop_pre &e);
     void _handle_expr(const ast::expr_unop_post &e);
     void _handle_expr(const ast::expr_binop &e);
     void _handle_expr(const ast::expr_assignment &e);
     void _handle_expr(const ast::expr_array_subscript &e);
-    void _handle_expr(const ast::expr_conditional &e);
+    bool _handle_expr(const ast::expr_conditional &e);
     void _handle_expr(const ast::expr_id &e);
 
     void _handle_stmt(const ast::stmt_expr &s);
@@ -3277,6 +3277,15 @@ namespace
     void _push_unevaluated(const ast::_ast_entity &e);
     void _pop_unevaluated();
     bool _is_evaluated(const ast::expr &e) const noexcept;
+
+    enum class _constexpr_bool_value
+    {
+      unknown,
+      nonzero,
+      zero
+    };
+
+    static _constexpr_bool_value _expr_to_bool(const ast::expr &e) noexcept;
 
     static bool _is_non_local_linkage(const ast::linkage &l) noexcept;
 
@@ -3544,8 +3553,7 @@ void _ast_info_collector::operator()()
 	return false;
       },
       [this](const ast::expr_func_invocation &e) {
-	_handle_expr(e);
-	return false;
+	return _handle_expr(e);
       },
       [this](const ast::expr_unop_pre &e) {
 	_handle_expr(e);
@@ -3568,8 +3576,7 @@ void _ast_info_collector::operator()()
 	return false;
       },
       [this](const ast::expr_conditional &e) {
-	_handle_expr(e);
-	return false;
+	return _handle_expr(e);
       },
       [this](const ast::expr_id &e) {
 	_handle_expr(e);
@@ -3705,6 +3712,12 @@ void _ast_info_collector::operator()()
       [this](const ast::expr_alignof_expr&) {
 	_pop_unevaluated();
       },
+      [this](const ast::expr_func_invocation&) {
+	_pop_unevaluated();
+      },
+      [this](const ast::expr_conditional&) {
+	_pop_unevaluated();
+      },
       [&](const ast::struct_or_union_def&) {
 	_leave_souoed();
       },
@@ -3766,6 +3779,8 @@ void _ast_info_collector::operator()()
 	      const ast::typeof_expr,
 	      const ast::expr_sizeof_expr,
 	      const ast::expr_alignof_expr,
+	      const ast::expr_func_invocation,
+	      const ast::expr_conditional,
 	      const ast::struct_or_union_def,
 	      const ast::enum_def>>
     (std::move(pre), std::move(post));
@@ -4079,19 +4094,45 @@ void _ast_info_collector::_handle_expr(const ast::expr_compound_literal &e)
   _require_complete_type(*e.get_type_name().get_type());
 }
 
-void _ast_info_collector::_handle_expr(const ast::expr_func_invocation &e)
+bool _ast_info_collector::_handle_expr(const ast::expr_func_invocation &e)
 {
   // For a function invocation, the compiler will have to set things
   // up on the stack etc. and the return types as well as the
   // parameter types must all be complete.
-  types::handle_types<void>
-    ((wrap_callables<default_action_unreachable<void, type_set<> >::type>
+  return types::handle_types<bool>
+    ((wrap_callables<default_action_unreachable<bool, type_set<> >::type>
       ([&](const types::pointer_type &pt) {
 	 _require_complete_function_ret_and_param_types
 					(*pt.get_pointed_to_type());
+	 return false;
        },
-       [](const types::builtin_func_type&) {
-	 // Nothing required.
+       [&](const types::builtin_func_type &bft) {
+	 // See whether this is a __builtin_choose_expr() and
+	 // add the non-taken subexpression to the stack of unevaluated
+	 // expressions.
+	 if(!(builtins::impl::builtin_func_choose_expr::is_factory
+	      (bft.get_builtin_func_factory()))) {
+	   return false;
+	 }
+
+	 const ast::expr_list * const el = e.get_args();
+	 assert(el);
+	 assert(el->size() == 3);
+	 switch (_expr_to_bool((*el)[0])) {
+	 case _constexpr_bool_value::unknown:
+	   assert(0);
+	   return false;
+
+	 case _constexpr_bool_value::nonzero:
+	   _push_unevaluated((*el)[2]);
+	   break;
+
+	 case _constexpr_bool_value::zero:
+	   _push_unevaluated((*el)[1]);
+	   break;
+	 };
+
+	 return true;
        })),
      *e.get_func().get_type());
 }
@@ -4172,12 +4213,29 @@ void _ast_info_collector::_handle_expr(const ast::expr_array_subscript &e)
   _require_complete_pointed_to_type(*e.get_index().get_type());
 }
 
-void _ast_info_collector::_handle_expr(const ast::expr_conditional &e)
+bool _ast_info_collector::_handle_expr(const ast::expr_conditional &e)
 {
   _require_complete_type(*e.get_cond().get_type());
   if (e.get_expr_true())
     _require_complete_type(*e.get_expr_true()->get_type());
   _require_complete_type(*e.get_expr_false().get_type());
+
+  switch (_expr_to_bool(e.get_cond())) {
+  case _constexpr_bool_value::unknown:
+    return false;
+
+  case _constexpr_bool_value::nonzero:
+    _push_unevaluated(e.get_expr_false());
+    return true;
+
+  case _constexpr_bool_value::zero:
+    if (e.get_expr_true()) {
+      _push_unevaluated(*e.get_expr_true());
+      return true;
+    } else {
+      return false;
+    }
+  }
 }
 
 void _ast_info_collector::_handle_expr(const ast::expr_id &e)
@@ -4550,6 +4608,18 @@ bool _ast_info_collector::_is_evaluated(const ast::expr &e) const noexcept
   }
 
   return true;
+}
+
+_ast_info_collector::_constexpr_bool_value
+_ast_info_collector::_expr_to_bool(const ast::expr &e) noexcept
+{
+  if (!e.is_constexpr())
+    return _constexpr_bool_value::unknown;
+
+  if (e.get_constexpr_value().is_zero())
+    return _constexpr_bool_value::zero;
+  else
+    return _constexpr_bool_value::nonzero;
 }
 
 bool _ast_info_collector::_is_non_local_linkage(const ast::linkage &l) noexcept

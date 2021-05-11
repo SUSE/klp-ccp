@@ -1,6 +1,5 @@
 /* klp-ccp: from testsuite/ccp/builtin-choose-expr-1.c */
-static void g(void)
-{}
+void g(void);
 
 static void h(void)
 {}

@@ -1,0 +1,20 @@
+/* klp-ccp: from testsuite/ccp/unevaluated-3.c */
+static int i(void);
+
+static int j(void)
+{
+	return 1;
+}
+
+static int k(void)
+{
+	return 1;
+}
+
+static int l(void);
+
+void klpp_pu_f(void)
+{
+	__builtin_choose_expr(0, i(), j());
+	__builtin_choose_expr(1, k(), l());
+}

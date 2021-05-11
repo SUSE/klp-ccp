@@ -1,0 +1,42 @@
+/* klp-ccp: from testsuite/ccp/unevaluated-2.c */
+static int g(void)
+{
+	return 1;
+}
+
+static int h(void)
+{
+	return 1;
+}
+
+static int i(void);
+
+static int j(void)
+{
+	return 1;
+}
+
+static int k(void)
+{
+	return 1;
+}
+
+static int l(void);
+
+static int m(void)
+{
+	return 1;
+}
+
+static int n(void)
+{
+	return 1;
+}
+
+void klpp_pu_f(int x)
+{
+	x ? g() : h();
+	0 ? i() : j();
+	1 ? k() : l();
+	(m(), 0) ? : n();
+}
