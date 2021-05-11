@@ -3239,8 +3239,8 @@ namespace
     void _enter_ed(const ast::enum_def &ed);
     void _leave_souoed();
 
-    void _handle_expr(const ast::expr_sizeof_expr &e);
-    void _handle_expr(const ast::expr_alignof_expr &e);
+    bool _handle_expr(const ast::expr_sizeof_expr &e);
+    bool _handle_expr(const ast::expr_alignof_expr &e);
     void _handle_expr(const ast::expr_sizeof_type_name &e);
     void _handle_expr(const ast::expr_alignof_type_name &e);
     void _handle_expr(const ast::expr_builtin_offsetof &e);
@@ -3274,6 +3274,10 @@ namespace
     void _handle_enum_ref(const ast::enum_ref &er);
     void _handle_typedef_ref(const ast::type_specifier_tdid &ts_tdid);
 
+    void _push_unevaluated(const ast::_ast_entity &e);
+    void _pop_unevaluated();
+    bool _is_evaluated(const ast::expr &e) const noexcept;
+
     static bool _is_non_local_linkage(const ast::linkage &l) noexcept;
 
     ast_info &_ai;
@@ -3289,8 +3293,9 @@ namespace
 
     deps_on_types *_cur_deps_on_types;
     deps_on *_cur_deps;
-    std::size_t _in_sizeof_typeof;
     std::size_t _in_parameter_declaration_list;
+
+    std::stack<std::reference_wrapper<const ast::_ast_entity> > _unevaluated;
 
     struct _souoed_stack_entry
     {
@@ -3348,7 +3353,7 @@ _ast_info_collector::_ast_info_collector(ast_info &ai, code_remarks &remarks)
     _cur_initializer(nullptr),
     _cur_td_init_declarator(nullptr),
     _cur_deps_on_types(nullptr), _cur_deps(nullptr),
-    _in_sizeof_typeof(0), _in_parameter_declaration_list(0),
+    _in_parameter_declaration_list(0),
     _souoed_saved_deps(nullptr)
 {}
 
@@ -3504,19 +3509,15 @@ void _ast_info_collector::operator()()
 	_enter_ed(ed);
 	return true;
       },
-      [this](const ast::typeof_expr&) {
-	++_in_sizeof_typeof;
+      [this](const ast::typeof_expr &e) {
+	_push_unevaluated(e.get_expr());
 	return true;
       },
       [this](const ast::expr_sizeof_expr &e) {
-	++_in_sizeof_typeof;
-	_handle_expr(e);
-	return true;
+	return _handle_expr(e);
       },
       [this](const ast::expr_alignof_expr &e) {
-	++_in_sizeof_typeof;
-	_handle_expr(e);
-	return true;
+	return _handle_expr(e);
       },
       [this](const ast::expr_sizeof_type_name &e) {
 	_handle_expr(e);
@@ -3695,22 +3696,21 @@ void _ast_info_collector::operator()()
 	_cur_deps = nullptr;
 	_cur_deps_on_types = &_cur_obj_init_declarator->declarator_deps;
       },
+      [this](const ast::typeof_expr&) {
+	_pop_unevaluated();
+      },
       [this](const ast::expr_sizeof_expr&) {
-	--_in_sizeof_typeof;
+	_pop_unevaluated();
       },
       [this](const ast::expr_alignof_expr&) {
-	--_in_sizeof_typeof;
-      },
-      [this](const ast::typeof_expr&) {
-	--_in_sizeof_typeof;
+	_pop_unevaluated();
       },
       [&](const ast::struct_or_union_def&) {
 	_leave_souoed();
       },
       [&](const ast::enum_def&) {
 	_leave_souoed();
-      }
-      ));
+      }));
 
   _ai.atu.for_each_dfs_pre_and_po
     <type_set<const ast::function_definition,
@@ -3763,9 +3763,9 @@ void _ast_info_collector::operator()()
 	      const ast::init_declarator,
 	      const ast::initializer_expr,
 	      const ast::initializer,
+	      const ast::typeof_expr,
 	      const ast::expr_sizeof_expr,
 	      const ast::expr_alignof_expr,
-	      const ast::typeof_expr,
 	      const ast::struct_or_union_def,
 	      const ast::enum_def>>
     (std::move(pre), std::move(post));
@@ -4027,14 +4027,18 @@ void _ast_info_collector::_leave_souoed()
   }
 }
 
-void _ast_info_collector::_handle_expr(const ast::expr_sizeof_expr &e)
+bool _ast_info_collector::_handle_expr(const ast::expr_sizeof_expr &e)
 {
   _require_complete_type(*e.get_type());
+  _push_unevaluated(e);
+  return true;
 }
 
-void _ast_info_collector::_handle_expr(const ast::expr_alignof_expr &e)
+bool  _ast_info_collector::_handle_expr(const ast::expr_alignof_expr &e)
 {
   _require_complete_type(*e.get_type());
+  _push_unevaluated(e);
+  return true;
 }
 
 void _ast_info_collector::_handle_expr(const ast::expr_sizeof_type_name &e)
@@ -4195,7 +4199,7 @@ void _ast_info_collector::_handle_expr(const ast::expr_id &e)
       const ast::init_declarator &id = r.get_init_declarator();
       auto it_fidi = _id_to_fidi.find(&id);
       if (it_fidi != _id_to_fidi.end()) {
-	if (!_in_sizeof_typeof) {
+	if (_is_evaluated(e)) {
 	  if (_cur_deps) {
 	    _cur_deps->on_funs.add(dep_on_fun{it_fidi->second.get(), e});
 	  } else {
@@ -4224,7 +4228,7 @@ void _ast_info_collector::_handle_expr(const ast::expr_id &e)
 	  return;
 	}
 
-	if (!_in_sizeof_typeof) {
+	if (_is_evaluated(e)) {
 	  if (_cur_deps) {
 	    _cur_deps->on_objs.add(dep_on_obj{it_oidi->second.get(), e});
 	  } else {
@@ -4258,7 +4262,7 @@ void _ast_info_collector::_handle_expr(const ast::expr_id &e)
       auto it_fdi = _fd_to_fdi.find(&fd);
       assert(it_fdi != _fd_to_fdi.end());
 
-      if (!_in_sizeof_typeof) {
+      if (_is_evaluated(e)) {
 	_cur_deps->on_funs.add(dep_on_fun{it_fdi->second.get(), e});
       } else {
 	const ast::declarator &d = fd.get_declarator();
@@ -4519,6 +4523,33 @@ _handle_typedef_ref(const ast::type_specifier_tdid &ts_tdid)
 
   assert(_cur_deps_on_types);
   _cur_deps_on_types->on_typedefs.add(dep_on_typedef{it_tdidi->second.get()});
+}
+
+void _ast_info_collector::_push_unevaluated(const ast::_ast_entity &e)
+{
+  _unevaluated.push(std::cref(e));
+}
+
+void _ast_info_collector::_pop_unevaluated()
+{
+  assert(!_unevaluated.empty());
+  _unevaluated.pop();
+}
+
+bool _ast_info_collector::_is_evaluated(const ast::expr &e) const noexcept
+{
+  const ast::_ast_entity * c = &e;
+
+  if (_unevaluated.empty())
+    return true;
+
+  while (c) {
+    if (c == &_unevaluated.top().get())
+      return false;
+    c = c->get_parent();
+  }
+
+  return true;
 }
 
 bool _ast_info_collector::_is_non_local_linkage(const ast::linkage &l) noexcept

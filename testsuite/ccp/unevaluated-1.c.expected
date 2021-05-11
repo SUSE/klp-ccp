@@ -1,0 +1,7 @@
+/* klp-ccp: from testsuite/ccp/unevaluated-1.c */
+extern int espr_o;
+
+void klpp_pu_f(void)
+{
+	sizeof(espr_o), __alignof__(espr_o);
+}
