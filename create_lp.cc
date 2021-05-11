@@ -3250,7 +3250,7 @@ namespace
     bool _handle_expr(const ast::expr_func_invocation &e);
     void _handle_expr(const ast::expr_unop_pre &e);
     void _handle_expr(const ast::expr_unop_post &e);
-    void _handle_expr(const ast::expr_binop &e);
+    bool _handle_expr(const ast::expr_binop &e);
     void _handle_expr(const ast::expr_assignment &e);
     void _handle_expr(const ast::expr_array_subscript &e);
     bool _handle_expr(const ast::expr_conditional &e);
@@ -3564,8 +3564,7 @@ void _ast_info_collector::operator()()
 	return false;
       },
       [this](const ast::expr_binop &e) {
-	_handle_expr(e);
-	return false;
+	return _handle_expr(e);
       },
       [this](const ast::expr_assignment &e) {
 	_handle_expr(e);
@@ -3715,6 +3714,9 @@ void _ast_info_collector::operator()()
       [this](const ast::expr_func_invocation&) {
 	_pop_unevaluated();
       },
+      [this](const ast::expr_binop&) {
+	_pop_unevaluated();
+      },
       [this](const ast::expr_conditional&) {
 	_pop_unevaluated();
       },
@@ -3780,6 +3782,7 @@ void _ast_info_collector::operator()()
 	      const ast::expr_sizeof_expr,
 	      const ast::expr_alignof_expr,
 	      const ast::expr_func_invocation,
+	      const ast::expr_binop,
 	      const ast::expr_conditional,
 	      const ast::struct_or_union_def,
 	      const ast::enum_def>>
@@ -4177,8 +4180,11 @@ void _ast_info_collector::_handle_expr(const ast::expr_unop_post &e)
   _require_complete_type(*e.get_expr().get_type());
 }
 
-void _ast_info_collector::_handle_expr(const ast::expr_binop &e)
+bool _ast_info_collector::_handle_expr(const ast::expr_binop &e)
 {
+  _require_complete_type(*e.get_left_expr().get_type());
+  _require_complete_type(*e.get_right_expr().get_type());
+
   switch (e.get_op()) {
   case ast::binary_op::add:
     /* fall through */
@@ -4188,12 +4194,25 @@ void _ast_info_collector::_handle_expr(const ast::expr_binop &e)
     _require_complete_pointed_to_type(*e.get_right_expr().get_type());
     break;
 
+  case ast::binary_op::logical_and:
+    if (_expr_to_bool(e.get_left_expr()) == _constexpr_bool_value::zero) {
+      _push_unevaluated(e.get_right_expr());
+      return true;
+    }
+    break;
+
+  case ast::binary_op::logical_or:
+    if (_expr_to_bool(e.get_left_expr()) == _constexpr_bool_value::nonzero) {
+      _push_unevaluated(e.get_right_expr());
+      return true;
+    }
+    break;
+
   default:
     break;
   }
 
-  _require_complete_type(*e.get_left_expr().get_type());
-  _require_complete_type(*e.get_right_expr().get_type());
+  return false;
 }
 
 void _ast_info_collector::_handle_expr(const ast::expr_assignment &e)
