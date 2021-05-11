@@ -1130,7 +1130,7 @@ target_gcc::create_int_max_type(const bool is_signed) const
   return _int_mode_to_type(mode, is_signed);
 }
 
-types::real_float_type::format
+const types::real_float_type::format&
 target_gcc::get_std_float_format(const types::std_float_type::kind k)
   const noexcept
 {
@@ -1156,7 +1156,7 @@ target_gcc::get_std_float_alignment(const types::std_float_type::kind k)
   return fm.alignment;
 }
 
-types::real_float_type::format
+const types::real_float_type::format&
 target_gcc::get_ext_float_format(const types::ext_float_type::kind k)
   const noexcept
 {

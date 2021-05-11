@@ -168,7 +168,7 @@ namespace klp
       virtual std::shared_ptr<const types::int_type>
       create_int_max_type(const bool is_signed) const = 0;
 
-      virtual types::real_float_type::format
+      virtual const types::real_float_type::format&
       get_std_float_format(const types::std_float_type::kind k)
 	const noexcept = 0;
 
@@ -178,7 +178,7 @@ namespace klp
       virtual mpa::limbs::size_type
       get_std_float_alignment(const types::std_float_type::kind k) const = 0;
 
-      virtual types::real_float_type::format
+      virtual const types::real_float_type::format&
       get_ext_float_format(const types::ext_float_type::kind k)
 	const noexcept = 0;
 

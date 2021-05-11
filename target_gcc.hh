@@ -151,7 +151,7 @@ namespace klp
       virtual std::shared_ptr<const types::int_type>
       create_int_max_type(const bool is_signed) const override;
 
-      virtual types::real_float_type::format
+      virtual const types::real_float_type::format&
       get_std_float_format(const types::std_float_type::kind k)
 	const noexcept override;
 
@@ -162,7 +162,7 @@ namespace klp
       get_std_float_alignment(const types::std_float_type::kind k)
 	const override;
 
-      virtual types::real_float_type::format
+      virtual const types::real_float_type::format&
       get_ext_float_format(const types::ext_float_type::kind k)
 	const noexcept override;
 
