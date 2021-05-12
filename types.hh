@@ -1240,6 +1240,7 @@ namespace klp
 	  void convert_value(const mpa::limbs::size_type prec,
 			     const bool is_signed);
 
+	  void set_type(const std::shared_ptr<const int_type> &t) noexcept;
 	  void set_type(std::shared_ptr<const int_type> &&t) noexcept;
 
 	  const std::shared_ptr<const int_type>&

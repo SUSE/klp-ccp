@@ -199,12 +199,21 @@ namespace klp
 		    ast::attribute_specifier_list * const soud_asl_after,
 		    types::struct_or_union_content &souc) const override;
 
+    protected:
+      void _layout_struct(types::struct_or_union_content &souc,
+			  const types::alignment &user_align) const;
+
+    public:
       virtual void
       layout_union(ast::ast &a,
 		   const std::function<void(ast::expr&)> &eval_expr,
 		   ast::attribute_specifier_list * const soud_asl_before,
 		   ast::attribute_specifier_list * const soud_asl_after,
 		   types::struct_or_union_content &souc) const override;
+
+    protected:
+      void _layout_union(types::struct_or_union_content &souc,
+			 const types::alignment &user_align) const;
 
     public:
       struct _impl_proxy;
@@ -644,14 +653,6 @@ namespace klp
 
       virtual types::ext_int_type::kind _get_pid_mode() const noexcept = 0;
       virtual bool _is_pid_signed() const noexcept = 0;
-
-      virtual void _layout_struct(types::struct_or_union_content &souc,
-				  const types::alignment &user_align)
-	const = 0;
-
-      virtual void _layout_union(types::struct_or_union_content &souc,
-				 const types::alignment &user_align)
-	const = 0;
 
       virtual std::shared_ptr<const types::object_type>
       _create_builtin_va_list_type() const = 0;

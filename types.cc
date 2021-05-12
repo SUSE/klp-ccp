@@ -2134,6 +2134,12 @@ void enum_content::member::convert_value(const mpa::limbs::size_type prec,
     _value = _value.convert(prec, is_signed);
 }
 
+void enum_content::member::set_type(const std::shared_ptr<const int_type> &t)
+  noexcept
+{
+  _type = t;
+}
+
 void enum_content::member::set_type(std::shared_ptr<const int_type> &&t)
   noexcept
 {

@@ -75,14 +75,6 @@ namespace klp
       virtual types::ext_int_type::kind _get_pid_mode() const noexcept override;
       virtual bool _is_pid_signed() const noexcept override;
 
-      virtual void _layout_struct(types::struct_or_union_content &souc,
-				  const types::alignment &user_align)
-	const override;
-
-      virtual void _layout_union(types::struct_or_union_content &souc,
-				 const types::alignment &user_align)
-	const override;
-
       virtual std::shared_ptr<const types::object_type>
       _create_builtin_va_list_type() const override;
 

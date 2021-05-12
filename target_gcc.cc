@@ -29,6 +29,7 @@
 #include "target_gcc.hh"
 
 using namespace klp::ccp;
+using namespace klp::ccp::types;
 
 enum opt_code_common
 {
@@ -1378,6 +1379,337 @@ evaluate_enum_type(ast::ast &a,
      });
 }
 
+/*
+ * Layout structs and unions as gcc does.
+ *
+ * Relevant code is in gcc/stor-layout.c, entry point is
+ * layout_type().
+ */
+typedef int64_t hwi;
+typedef uint64_t uhwi;
+
+template <typename T>
+static inline mpa::limbs::size_type
+crop_ffs_like_gcc(const mpa::limbs::size_type ffs) noexcept
+{
+  if (ffs > std::numeric_limits<T>::digits)
+    return 0;
+
+  return ffs;
+}
+
+template <typename Tret, typename T>
+static inline Tret crop_like_gcc(const T val) noexcept
+{
+  return static_cast<Tret>(val);
+}
+
+namespace
+{
+  class record_layout_info
+  {
+  public:
+    record_layout_info(const target_gcc &tgt,
+		       const mpa::limbs::size_type user_align_ffs);
+
+    void place_struct_field(struct_or_union_content::member &m);
+    void place_union_field(struct_or_union_content::member &m);
+
+    void finish_record_layout(struct_or_union_content &sc);
+
+  private:
+    mpa::limbs::size_type
+    _layout_decl_field(const object_type &o_t) const;
+
+    mpa::limbs::size_type
+    _layout_decl_bitfield(const bitfield_type &bf_t) const;
+
+    mpa::limbs::size_type
+    _update_alignment_for_field(const object_type &o_t);
+
+    mpa::limbs::size_type
+    _update_alignment_for_bitfield(const struct_or_union_content::member &m,
+				   const bitfield_type &bf_t);
+
+    static bool
+    _excess_unit_span(const hwi byte_offset, const hwi bit_offset,
+		      const hwi size, const mpa::limbs::size_type align_log2,
+		      const uhwi type_size) noexcept;
+
+    void _normalize();
+
+    void _align_to_byte();
+
+    const target_gcc &_tgt;
+    mpa::limbs _offset;
+    mpa::limbs _bitpos;
+    mpa::limbs::size_type _record_align_ffs;
+    bool _is_size_constant;
+  };
+}
+
+record_layout_info::
+record_layout_info(const target_gcc &tgt,
+		   const mpa::limbs::size_type user_align_ffs)
+  : _tgt(tgt), _offset(0), _bitpos(),
+    _record_align_ffs(std::max(static_cast<mpa::limbs::size_type>(4),
+			       user_align_ffs + 3)),
+    _is_size_constant(true)
+{
+  // c.f. start_record_layout()
+}
+
+mpa::limbs::size_type record_layout_info::
+_layout_decl_field(const object_type &o_t) const
+{
+  // This already takes the packed and aligned attributes into
+  // account.
+  return 3 + o_t.get_effective_alignment(_tgt) + 1;
+}
+
+mpa::limbs::size_type record_layout_info::
+_layout_decl_bitfield(const bitfield_type &bf_t) const
+{
+  // With gcc, all declaration nodes' DECL_ALIGN() fields gets
+  // initialized to one, c.f. make_node_stat().
+  mpa::limbs::size_type desired_align_ffs = 1;
+  const alignment &user_align = bf_t.get_user_alignment();
+  if (user_align.is_set())
+    desired_align_ffs = 3 + user_align.get_log2_value() + 1;
+
+  if (!bf_t.get_width(_tgt)) {
+    // From gcc: A zero-length bit-field affects the alignment of the
+    // next field.  In essence such bit-fields are not influenced by
+    // any packing due to #pragma pack or attribute packed.
+    const std::shared_ptr<const int_type>& base_type = bf_t.get_base_type();
+    const mpa::limbs::size_type base_type_align_ffs =
+      3 + base_type->get_effective_alignment(_tgt) + 1;
+    desired_align_ffs = std::max(base_type_align_ffs, desired_align_ffs);
+
+    // Note that this won't affect ->record_align in
+    // _update_alignment_for_bitfield(), because zero-width bitfields
+    // are always unnamed. Odd.
+  }
+
+  return desired_align_ffs;
+}
+
+mpa::limbs::size_type record_layout_info::
+_update_alignment_for_field(const object_type &o_t)
+{
+  const mpa::limbs::size_type desired_align_ffs = _layout_decl_field(o_t);
+
+  _record_align_ffs = std::max(_record_align_ffs, desired_align_ffs);
+
+  return desired_align_ffs;
+}
+
+mpa::limbs::size_type record_layout_info::
+_update_alignment_for_bitfield(const struct_or_union_content::member &m,
+			       const bitfield_type &bf_t)
+{
+  const mpa::limbs::size_type desired_align_ffs =
+    _layout_decl_bitfield(bf_t);
+
+  if (!m.get_name().empty()) {
+    const std::shared_ptr<const int_type>& base_type = bf_t.get_base_type();
+    mpa::limbs::size_type type_align_ffs =
+      3 + base_type->get_effective_alignment(_tgt) + 1;
+
+    if (bf_t.get_width(_tgt) && bf_t.is_packed())
+      type_align_ffs = 3 + 1;
+
+    _record_align_ffs = std::max(_record_align_ffs, desired_align_ffs);
+    _record_align_ffs = std::max(_record_align_ffs, type_align_ffs);
+  }
+
+  return desired_align_ffs;
+}
+
+void record_layout_info::_normalize()
+{
+  // Split the bit position into a byte offset and a bit position.
+  if (_bitpos.is_any_set_at_or_above(3)) {
+    mpa::limbs offset_add = _bitpos;
+    offset_add.set_bits_below(3, false);
+    offset_add = offset_add.rshift(3, false);
+    _offset = _offset + offset_add;
+    _bitpos.set_bits_at_and_above(3, false);
+  }
+}
+
+void record_layout_info::_align_to_byte()
+{
+  if (!_bitpos)
+    return;
+
+  const mpa::limbs partial_bytes = _bitpos.align(3).rshift(3, false);
+  _offset = _offset + partial_bytes;
+  _bitpos = mpa::limbs::from_size_type(0);
+}
+
+bool record_layout_info::
+_excess_unit_span(const hwi byte_offset, const hwi bit_offset,
+		  const hwi size, const mpa::limbs::size_type align_log2,
+		  const uhwi type_size) noexcept
+{
+  uhwi offset = crop_like_gcc<uhwi>(byte_offset * 8 + bit_offset);
+  uhwi align = static_cast<uhwi>(1) << align_log2;
+
+  offset = offset % align;
+  return ((offset + crop_like_gcc<uhwi>(size) + align - 1) / align >
+	  type_size / align);
+}
+
+void record_layout_info::place_struct_field(struct_or_union_content::member &m)
+{
+  const std::shared_ptr<const type>& t = m.get_type();
+
+  const mpa::limbs::size_type desired_align_ffs =
+    (crop_ffs_like_gcc<unsigned int>
+     (handle_types<mpa::limbs::size_type>
+      ((wrap_callables<default_action_unreachable<mpa::limbs::size_type,
+						  type_set<> >::type>
+	([&](const bitfield_type &bf_t) {
+	   return _update_alignment_for_bitfield(m, bf_t);
+	 },
+	 [&](const object_type &o_t) {
+	   return _update_alignment_for_field(o_t);
+	 })),
+       *t)));
+
+  // Align the field as desired.
+  assert(desired_align_ffs == 1 || desired_align_ffs >= 4);
+  if (desired_align_ffs >= 3 + 1) {
+    _align_to_byte();
+    _offset = _offset.align(desired_align_ffs - 1 - 3);
+  }
+
+  // From gcc: Handle compatibility with PCC.  Note that if the record
+  // has any variable-sized fields, we need not worry about
+  // compatibility.
+  handle_types<void>
+    ((wrap_callables<default_action_nop>
+      ([&](const bitfield_type &bf_t) {
+	 if (!bf_t.is_packed() &&
+	     bf_t.get_width(_tgt) &&
+	     bf_t.get_width(_tgt) <= std::numeric_limits<uhwi>::max() &&
+	     _is_size_constant && _offset.fits_into_type<uhwi>() &&
+	     (bf_t.get_base_type()->get_size(_tgt).lshift(3)
+	      .fits_into_type<uhwi>())) {
+	   const std::shared_ptr<const int_type>& base_type =
+	     bf_t.get_base_type();
+	   const mpa::limbs::size_type type_align_ffs =
+	     3 + base_type->get_effective_alignment(_tgt) + 1;
+	   const hwi field_size =
+	     crop_like_gcc<hwi>(static_cast<uhwi>(bf_t.get_width(_tgt)));
+	   const hwi offset = crop_like_gcc<hwi>(_offset.to_type<uhwi>());
+	   const hwi bit_offset = crop_like_gcc<hwi>(_bitpos.to_type<uhwi>());
+	   const uhwi type_size =
+	     base_type->get_size(_tgt).lshift(3).to_type<uhwi>();
+
+	   // From gcc: A bit field may not span more units of alignment of
+	   // its type than its type itself.  Advance to next boundary if
+	   // necessary.
+	   if (_excess_unit_span(offset, bit_offset, field_size,
+				 type_align_ffs - 1, type_size)) {
+	     _bitpos = _bitpos.align(type_align_ffs - 1);
+	   }
+	 }
+       })),
+     *t);
+
+  // From gcc: Offset so far becomes the position of this field after
+  // normalizing.
+  _normalize();
+  m.set_offset(_offset);
+  m.set_bitpos(_bitpos);
+  m.set_has_constant_offset(_is_size_constant);
+
+  handle_types<void>
+    ((wrap_callables<default_action_unreachable<void, type_set<> >::type>
+      ([&](const object_type &o_t) {
+	 if (!o_t.is_complete()) {
+	   // From gcc: Do nothing.
+	   // Note that this handles the case of the last member being
+	   // a flexible array member.
+
+	 } else if (!o_t.is_size_constant()) {
+	   assert(!_bitpos);
+	   _is_size_constant = false;
+
+	 } else {
+	   _bitpos = _bitpos + o_t.get_size(_tgt).lshift(3);
+	   _normalize();
+	 }
+       },
+       [&](const bitfield_type &bf_t) {
+	 _bitpos = _bitpos + mpa::limbs::from_size_type(bf_t.get_width(_tgt));
+	 _normalize();
+       })),
+     *t);
+}
+
+void record_layout_info::place_union_field(struct_or_union_content::member &m)
+{
+  const std::shared_ptr<const type>& t = m.get_type();
+
+  handle_types<void>
+    ((wrap_callables<default_action_unreachable<void, type_set<> >::type>
+      ([&](const bitfield_type &bf_t) {
+	 _update_alignment_for_bitfield(m, bf_t);
+       },
+       [&](const object_type &o_t) {
+	 _update_alignment_for_field(o_t);
+       })),
+     *t);
+
+  m.set_offset(mpa::limbs::from_size_type(0));
+  m.set_bitpos(mpa::limbs::from_size_type(0));
+  m.set_has_constant_offset(true);
+
+  // From gcc: We assume the union's size will be a multiple of a byte
+  // so we don't bother with BITPOS.
+  mpa::limbs size =
+    handle_types<mpa::limbs>
+      ((wrap_callables<default_action_unreachable<mpa::limbs,
+						  type_set<> >::type>
+	([&](const bitfield_type &bf_t) {
+	   return (mpa::limbs::from_size_type(bf_t.get_width(_tgt))
+		   .align(3).rshift(3, false));
+	 },
+	 [&](const object_type &o_t) {
+	   if (o_t.is_size_constant()) {
+	     return o_t.get_size(_tgt);
+	   } else {
+	     _is_size_constant = false;
+	     return mpa::limbs{};
+	   }
+	 })),
+       *t);
+
+  if (_offset < size)
+    _offset = std::move(size);
+}
+
+void record_layout_info::finish_record_layout(struct_or_union_content &sc)
+{
+  _normalize();
+
+  const mpa::limbs unpadded_size = _offset.lshift(3) + _bitpos;
+  const mpa::limbs type_size = unpadded_size.align(_record_align_ffs - 1);
+  assert(!type_size.is_any_set_below(3));
+
+  assert(_record_align_ffs >= 4);
+  sc.set_alignment(_record_align_ffs - 3 - 1);
+  if (_is_size_constant) {
+    sc.set_size(type_size.rshift(3, false));
+    sc.set_size_constant(true);
+  } else {
+    sc.set_size_constant(false);
+  }
+}
+
 void target_gcc::
 layout_struct(ast::ast &a,
 	      const std::function<void(ast::expr&)> &eval_expr,
@@ -1391,7 +1723,23 @@ layout_struct(ast::ast &a,
   if (soud_asl_after)
     soud_asl_after->for_each_attribute(aaf);
 
-  this->_layout_struct(souc, aaf.grab_result());
+  _layout_struct(souc, aaf.grab_result());
+}
+
+void target_gcc::_layout_struct(types::struct_or_union_content &souc,
+				const types::alignment &user_align) const
+{
+  record_layout_info rli(*this,
+			 (user_align.is_set() ?
+			  user_align.get_log2_value() + 1 :
+			  0));
+
+  for (struct_or_union_content::member_iterator it_m = souc.members_begin();
+       it_m != souc.members_end(); ++it_m) {
+    rli.place_struct_field(*it_m);
+  }
+
+  rli.finish_record_layout(souc);
 }
 
 void target_gcc::
@@ -1407,7 +1755,23 @@ layout_union(ast::ast &a,
   if (soud_asl_after)
     soud_asl_after->for_each_attribute(aaf);
 
-  this->_layout_union(souc, aaf.grab_result());
+  _layout_union(souc, aaf.grab_result());
+}
+
+void target_gcc::_layout_union(types::struct_or_union_content &souc,
+			       const types::alignment &user_align) const
+{
+  record_layout_info rli(*this,
+			 (user_align.is_set() ?
+			  user_align.get_log2_value() + 1 :
+			  0));
+
+  for (struct_or_union_content::member_iterator it_m = souc.members_begin();
+       it_m != souc.members_end(); ++it_m) {
+    rli.place_union_field(*it_m);
+  }
+
+  rli.finish_record_layout(souc);
 }
 
 
