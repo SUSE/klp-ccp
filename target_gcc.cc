@@ -1097,29 +1097,12 @@ target_gcc::width_to_int_type(const mpa::limbs::size_type w,
 			      const bool is_signed,
 			      const bool std_int_required) const
 {
-  auto it_int_mode =
-    std::lower_bound(_int_modes_sorted_by_width.cbegin(),
-		     _int_modes_sorted_by_width.cend(),
-		     w,
-		     [this](const types::ext_int_type::kind mode,
-			    const mpa::limbs::size_type width) {
-		       const int m = static_cast<int>(mode);
-		       assert(m < _int_modes.size());
-		       return _int_modes[m].width < width;
-		     });
+  const int_mode * const im = _width_to_int_mode(w);
 
-  for (; it_int_mode != _int_modes_sorted_by_width.cend(); ++it_int_mode) {
-    const int m = static_cast<int>(*it_int_mode);
-    assert(m < _int_modes.size());
-    const int_mode &im = _int_modes[m];
+  if (!im || (std_int_required && !im->is_std_int))
+    return nullptr;
 
-    if (!im.enabled || (std_int_required && !im.is_std_int))
-      continue;
-
-    return _int_mode_to_type(*it_int_mode, is_signed);
-  }
-
-  return nullptr;
+  return _int_mode_to_type(im->mode, is_signed);
 }
 
 std::shared_ptr<const types::int_type>
@@ -1482,6 +1465,42 @@ _std_int_kind_to_int_mode(const types::std_int_type::kind std_int_kind)
   const int m = static_cast<int>(mode);
   assert(m < _int_modes.size());
   return _int_modes[m];
+}
+
+const target_gcc::int_mode*
+target_gcc::_width_to_int_mode(const mpa::limbs::size_type w) const noexcept
+{
+  // Search for integer modes with a width <= the requested one.
+  // Prefer modes of smaller width and ones which map to standard
+  // integer types.
+  const int_mode *found = nullptr;
+  auto it_int_mode =
+    std::lower_bound(_int_modes_sorted_by_width.cbegin(),
+		     _int_modes_sorted_by_width.cend(),
+		     w,
+		     [this](const types::ext_int_type::kind mode,
+			    const mpa::limbs::size_type width) {
+		       const int m = static_cast<int>(mode);
+		       assert(m < _int_modes.size());
+		       return _int_modes[m].width < width;
+		     });
+  for (; it_int_mode != _int_modes_sorted_by_width.cend(); ++it_int_mode) {
+    const int m = static_cast<int>(*it_int_mode);
+    assert(m < _int_modes.size());
+    const int_mode &im = _int_modes[m];
+
+    if (!im.enabled)
+      continue;
+
+    if (found && found->width < im.width)
+      break;
+
+    found = &im;
+    if (found->is_std_int)
+      break;
+  }
+
+  return found;
 }
 
 mpa::limbs::size_type

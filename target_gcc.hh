@@ -538,6 +538,9 @@ namespace klp
       _std_int_kind_to_int_mode(const types::std_int_type::kind std_int_kind)
 	const noexcept;
 
+      const int_mode* _width_to_int_mode(const mpa::limbs::size_type w)
+	const noexcept;
+
     protected:
       mpa::limbs::size_type
       _int_mode_to_width(const types::ext_int_type::kind mode) const;
