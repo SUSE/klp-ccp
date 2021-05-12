@@ -75,13 +75,6 @@ namespace klp
       virtual types::ext_int_type::kind _get_pid_mode() const noexcept override;
       virtual bool _is_pid_signed() const noexcept override;
 
-      virtual void
-      _evaluate_enum_type(ast::ast &a, types::enum_content &ec,
-			  const bool packed,
-			  const types::ext_int_type::kind * const mode,
-			  types::alignment &&user_align)
-	const override;
-
       virtual void _layout_struct(types::struct_or_union_content &souc,
 				  const types::alignment &user_align)
 	const override;

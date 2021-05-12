@@ -361,6 +361,11 @@ using _impl_proxy = target_gcc::_impl_proxy;
 using common_int_mode_kind = _impl_proxy::common_int_mode_kind;
 using common_float_mode_kind = _impl_proxy::common_float_mode_kind;
 
+static constexpr bool operator==(const types::ext_int_type::kind &lhs,
+				 const common_int_mode_kind rhs) noexcept
+{
+  return lhs == types::ext_int_type::kind{static_cast<int>(rhs)};
+}
 
 namespace
 {
@@ -1257,8 +1262,120 @@ evaluate_enum_type(ast::ast &a,
     throw semantic_except(remark);
   }
 
-  this->_evaluate_enum_type(a, ec, paf.get_result(),
-			    maf.get_int_mode_result(), aaf.grab_result());
+  const bool packed = paf.get_result();
+  const types::ext_int_type::kind * const user_mode = maf.get_int_mode_result();
+  types::alignment &&user_align = aaf.grab_result();
+
+  // Inspect each enumerator and find the maximum required width
+  // and signedness.
+  bool is_any_signed = false;
+  mpa::limbs::size_type min_prec = 0;
+  const types::enum_content::member *min_prec_m = nullptr;
+  mpa::limbs::size_type width = 0;
+
+  if (user_mode)
+      width = _int_mode_to_width(*user_mode);
+
+  ec.for_each_member
+    ([&](const types::enum_content::member &m) {
+      const target_int &v = m.get_value();
+      const bool v_is_negative = v.is_negative();
+      const mpa::limbs::size_type v_prec =
+	v.min_required_width() - v_is_negative;
+
+      if (v_prec > min_prec) {
+	min_prec = v_prec;
+	min_prec_m = &m;
+      }
+
+      is_any_signed = is_any_signed || v_is_negative;
+
+      if (user_mode && min_prec + is_any_signed > width) {
+	code_remark remark(code_remark::severity::fatal,
+			   "enumerator value exceeds specified integer mode",
+			   a.get_pp_result(),
+			   m.get_enumerator().get_tokens_range());
+	a.get_remarks().add(remark);
+	throw semantic_except(remark);
+
+      }
+    });
+
+  // Normalize the width.
+  const mpa::limbs::size_type int_width
+    = this->get_std_int_width(types::std_int_type::kind::k_int);
+  std::shared_ptr<const types::int_type> t;
+  if (!user_mode) {
+    width = min_prec + is_any_signed;
+
+    // See GCC's finish_enum().
+    if (packed || width > int_width) {
+
+      // This mimics GCC's c_common_type_for_size().
+      const int_mode *im = this->_width_to_int_mode(width);
+      if (!im->is_std_int) {
+	if (!(im->mode == common_int_mode_kind::cimk_QI ||
+	      im->mode == common_int_mode_kind::cimk_HI ||
+	      im->mode == common_int_mode_kind::cimk_SI ||
+	      im->mode == common_int_mode_kind::cimk_DI)) {
+	  if (im->width != width)
+	    im = NULL;
+	}
+      }
+
+      if (!im) {
+	code_remark remark (code_remark::severity::fatal,
+			    "enumerator value out of bounds",
+			    a.get_pp_result(),
+			    min_prec_m->get_enumerator().get_tokens_range());
+	a.get_remarks().add(remark);
+	throw semantic_except(remark);
+      }
+
+      t = this->_int_mode_to_type(im->mode, is_any_signed);
+      width = _int_mode_to_width(im->mode);
+
+    } else {
+      t = types::std_int_type::create(types::std_int_type::kind::k_int,
+				      is_any_signed);
+      width = int_width;
+
+    }
+  } else {
+    t = this->_int_mode_to_type(*user_mode, is_any_signed);
+
+  }
+
+  if (user_align.is_set()) {
+    const mpa::limbs::size_type align =
+      static_cast<mpa::limbs::size_type>(1) << user_align.get_log2_value();
+    if (align * 8 >= width) {
+      t = t->set_user_alignment(std::move(user_align));
+    }
+  }
+
+  ec.set_underlying_type(std::move(t));
+
+  // Finally, calculate each member's type and massage its value
+  // accordingly. If the value fits into an int, then that's the type,
+  // otherwise it'll be set to the underlying enum type: c.f. GCC's
+  // finish_enum().
+  ec.for_each_member
+    ([&](types::enum_content::member &m) {
+       const target_int &v = m.get_value();
+       const bool v_is_negative = v.is_negative();
+       const mpa::limbs::size_type v_prec =
+	 v.min_required_width() - v_is_negative;
+
+       if (v_prec < int_width) {
+	m.convert_value(int_width - 1, true);
+	m.set_type((types::std_int_type::create
+		    (types::std_int_type::kind::k_int, true)));
+      } else {
+	 m.convert_value(width - is_any_signed, is_any_signed);
+	 m.set_type(ec.get_underlying_type());
+       }
+     });
 }
 
 void target_gcc::
