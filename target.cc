@@ -34,5 +34,6 @@ target::sou_layouter::~sou_layouter() noexcept = default;
 std::unique_ptr<types::struct_or_union_content>
 target::sou_layouter::sou_layouter::grab_result() noexcept
 {
+  this->_finish();
   return std::move(_c);
 }

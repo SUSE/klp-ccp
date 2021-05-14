@@ -209,30 +209,6 @@ namespace klp
       class sou_layouter;
 
     public:
-      virtual void
-      layout_struct(ast::ast &a,
-		    const std::function<void(ast::expr&)> &eval_expr,
-		    ast::attribute_specifier_list * const soud_asl_before,
-		    ast::attribute_specifier_list * const soud_asl_after,
-		    types::struct_or_union_content &souc) const override;
-
-    protected:
-      void _layout_struct(types::struct_or_union_content &souc,
-			  const types::alignment &user_align) const;
-
-    public:
-      virtual void
-      layout_union(ast::ast &a,
-		   const std::function<void(ast::expr&)> &eval_expr,
-		   ast::attribute_specifier_list * const soud_asl_before,
-		   ast::attribute_specifier_list * const soud_asl_after,
-		   types::struct_or_union_content &souc) const override;
-
-    protected:
-      void _layout_union(types::struct_or_union_content &souc,
-			 const types::alignment &user_align) const;
-
-    public:
       struct _impl_proxy;
       friend struct _impl_proxy;
 

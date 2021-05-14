@@ -354,9 +354,7 @@ target_x86_64_gcc::_create_builtin_va_list_type() const
     l->add_member("overflow_arg_area", void_type::create()->derive_pointer());
     l->add_member("reg_save_area", void_type::create()->derive_pointer());
 
-    std::unique_ptr<struct_or_union_content> c{l->grab_result()};
-    _layout_struct(*c, alignment{});
-    soud->set_content(std::move(c));
+    soud->set_content(l->grab_result());
   }
 
   return (struct_or_union_type::create(struct_or_union_kind::souk_struct,

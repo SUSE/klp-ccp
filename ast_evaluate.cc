@@ -180,20 +180,6 @@ void _evaluator::operator()()
 	const auto souk = _sou_layouters.top()->get_tag_kind();
 	auto &&c = _sou_layouters.top()->grab_result();
 	_sou_layouters.pop();
-	switch (souk) {
-	case struct_or_union_kind::souk_struct:
-	  _tgt.layout_struct(_ast, _evaluator::make_expr_evaluator(_ast, _tgt),
-			     soud.get_asl_before(),
-			     soud.get_asl_after(), *c);
-	  break;
-
-	case struct_or_union_kind::souk_union:
-	  _tgt.layout_union(_ast, _evaluator::make_expr_evaluator(_ast, _tgt),
-			    soud.get_asl_before(),
-			    soud.get_asl_after(), *c);
-	  break;
-	}
-
 	soud.set_content(std::move(c));
 
       },
@@ -202,20 +188,6 @@ void _evaluator::operator()()
 	const auto souk = _sou_layouters.top()->get_tag_kind();
 	auto &&c = _sou_layouters.top()->grab_result();
 	_sou_layouters.pop();
-	switch (souk) {
-	case struct_or_union_kind::souk_struct:
-	  _tgt.layout_struct(_ast, _evaluator::make_expr_evaluator(_ast, _tgt),
-			     unnamed_sou.get_asl_before(),
-			     unnamed_sou.get_asl_after(), *c);
-	  break;
-
-	case struct_or_union_kind::souk_union:
-	  _tgt.layout_union(_ast, _evaluator::make_expr_evaluator(_ast, _tgt),
-			    unnamed_sou.get_asl_before(),
-			    unnamed_sou.get_asl_after(), *c);
-	  break;
-	}
-
 	unnamed_sou.set_content(std::move(c));
 	unnamed_sou.evaluate_type(_ast, _tgt);
       },

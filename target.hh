@@ -256,6 +256,9 @@ namespace klp
 
 	std::unique_ptr<types::struct_or_union_content> grab_result() noexcept;
 
+      private:
+	virtual void _finish() = 0;
+
       protected:
 	const types::struct_or_union_kind _souk;
 	std::unique_ptr<types::struct_or_union_content> _c;
@@ -267,21 +270,6 @@ namespace klp
 			  ast::attribute_specifier_list * const soud_asl_after,
 			  klp::ccp::ast::ast &a,
 			  const sou_layouter::expr_evaluator_type &expr_eval)
-	const = 0;
-
-      virtual void
-      layout_struct(ast::ast &a,
-		    const std::function<void(ast::expr&)> &eval_expr,
-		    ast::attribute_specifier_list * const soud_asl_before,
-		    ast::attribute_specifier_list * const soud_asl_after,
-		    types::struct_or_union_content &souc) const = 0;
-
-      virtual void
-      layout_union(ast::ast &a,
-		   const std::function<void(ast::expr&)> &eval_expr,
-		   ast::attribute_specifier_list * const soud_asl_before,
-		   ast::attribute_specifier_list * const soud_asl_after,
-		   types::struct_or_union_content &souc)
 	const = 0;
     };
   }

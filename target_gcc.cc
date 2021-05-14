@@ -1718,9 +1718,10 @@ public:
 	       ast::attribute_specifier_list * const soud_asl_before,
 	       ast::attribute_specifier_list * const soud_asl_after,
 	       klp::ccp::ast::ast &a,
+	       const target_gcc &tgt,
 	       const sou_layouter::expr_evaluator_type &expr_eval);
 
-  sou_layouter(const types::struct_or_union_kind souk);
+  sou_layouter(const types::struct_or_union_kind souk, const target_gcc &tgt);
 
   virtual ~sou_layouter() noexcept override;
 
@@ -1736,8 +1737,13 @@ public:
   add_member(std::shared_ptr<const types::struct_or_union_type> &&t) override;
 
 private:
+  virtual void _finish() override;
+
   klp::ccp::ast::ast * const _a;
+  const target_gcc &_tgt;
   const expr_evaluator_type _expr_eval;
+
+  types::alignment _user_align;
 };
 
 target_gcc::sou_layouter::
@@ -1745,12 +1751,22 @@ sou_layouter(const types::struct_or_union_kind souk,
 	     ast::attribute_specifier_list * const soud_asl_before,
 	     ast::attribute_specifier_list * const soud_asl_after,
 	     klp::ccp::ast::ast &a,
+	     const target_gcc &tgt,
 	     const sou_layouter::expr_evaluator_type &expr_eval)
-  : target::sou_layouter(souk), _a(&a), _expr_eval(expr_eval)
-{}
+  : target::sou_layouter(souk), _a(&a), _tgt(tgt), _expr_eval(expr_eval)
+{
+  _aligned_attribute_finder aaf(a, _expr_eval, _tgt, false);
+  if (soud_asl_before)
+    soud_asl_before->for_each_attribute(aaf);
+  if (soud_asl_after)
+    soud_asl_after->for_each_attribute(aaf);
 
-target_gcc::sou_layouter::sou_layouter(const types::struct_or_union_kind souk)
-  : target::sou_layouter(souk), _a(nullptr), _expr_eval(nullptr)
+  _user_align = aaf.grab_result();
+}
+
+target_gcc::sou_layouter::sou_layouter(const types::struct_or_union_kind souk,
+				       const target_gcc &tgt)
+  : target::sou_layouter(souk), _a(nullptr), _tgt(tgt), _expr_eval(nullptr)
 {}
 
 target_gcc::sou_layouter::~sou_layouter() noexcept = default;
@@ -1775,6 +1791,33 @@ add_member(std::shared_ptr<const types::struct_or_union_type> &&t)
   _c->add_member(struct_or_union_content::member{std::move(t)});
 }
 
+void target_gcc::sou_layouter::_finish()
+{
+  record_layout_info rli(_tgt,
+			 (_user_align.is_set() ?
+			  _user_align.get_log2_value() + 1 :
+			  0));
+
+  switch (_souk) {
+  case struct_or_union_kind::souk_struct:
+    for (struct_or_union_content::member_iterator it_m = _c->members_begin();
+	 it_m != _c->members_end(); ++it_m) {
+      rli.place_struct_field(*it_m);
+    }
+    break;
+
+  case struct_or_union_kind::souk_union:
+    for (struct_or_union_content::member_iterator it_m = _c->members_begin();
+	 it_m != _c->members_end(); ++it_m) {
+      rli.place_union_field(*it_m);
+    }
+    break;
+  };
+
+  rli.finish_record_layout(*_c);
+}
+
+
 std::unique_ptr<target::sou_layouter> target_gcc::
 create_sou_layouter(const types::struct_or_union_kind souk,
 		    ast::attribute_specifier_list * const soud_asl_before,
@@ -1784,7 +1827,7 @@ create_sou_layouter(const types::struct_or_union_kind souk,
   const
 {
   return std::unique_ptr<target::sou_layouter>{
-	    new sou_layouter{souk, soud_asl_before, soud_asl_after, a,
+	    new sou_layouter{souk, soud_asl_before, soud_asl_after, a, *this,
 			     expr_eval}
 	 };
 }
@@ -1792,71 +1835,7 @@ create_sou_layouter(const types::struct_or_union_kind souk,
 std::unique_ptr<target::sou_layouter> target_gcc::
 create_sou_layouter(const types::struct_or_union_kind souk) const
 {
-  return std::unique_ptr<target::sou_layouter>{new sou_layouter{souk}};
-}
-
-void target_gcc::
-layout_struct(ast::ast &a,
-	      const std::function<void(ast::expr&)> &eval_expr,
-	      ast::attribute_specifier_list * const soud_asl_before,
-	      ast::attribute_specifier_list * const soud_asl_after,
-	      types::struct_or_union_content &souc) const
-{
-  _aligned_attribute_finder aaf(a, eval_expr, *this, false);
-  if (soud_asl_before)
-    soud_asl_before->for_each_attribute(aaf);
-  if (soud_asl_after)
-    soud_asl_after->for_each_attribute(aaf);
-
-  _layout_struct(souc, aaf.grab_result());
-}
-
-void target_gcc::_layout_struct(types::struct_or_union_content &souc,
-				const types::alignment &user_align) const
-{
-  record_layout_info rli(*this,
-			 (user_align.is_set() ?
-			  user_align.get_log2_value() + 1 :
-			  0));
-
-  for (struct_or_union_content::member_iterator it_m = souc.members_begin();
-       it_m != souc.members_end(); ++it_m) {
-    rli.place_struct_field(*it_m);
-  }
-
-  rli.finish_record_layout(souc);
-}
-
-void target_gcc::
-layout_union(ast::ast &a,
-	     const std::function<void(ast::expr&)> &eval_expr,
-	     ast::attribute_specifier_list * const soud_asl_before,
-	     ast::attribute_specifier_list * const soud_asl_after,
-	     types::struct_or_union_content &souc) const
-{
-  _aligned_attribute_finder aaf(a, eval_expr, *this, false);
-  if (soud_asl_before)
-    soud_asl_before->for_each_attribute(aaf);
-  if (soud_asl_after)
-    soud_asl_after->for_each_attribute(aaf);
-
-  _layout_union(souc, aaf.grab_result());
-}
-
-void target_gcc::_layout_union(types::struct_or_union_content &souc,
-			       const types::alignment &user_align) const
-{
-  record_layout_info rli(*this,
-			 (user_align.is_set() ?
-			  user_align.get_log2_value() + 1 :
-			  0));
-
-  for (struct_or_union_content::member_iterator it_m = souc.members_begin();
-       it_m != souc.members_end(); ++it_m) {
-    rli.place_union_field(*it_m);
-  }
-
-  rli.finish_record_layout(souc);
+  return std::unique_ptr<target::sou_layouter>{new sou_layouter{souk, *this}};
 }
 
 
