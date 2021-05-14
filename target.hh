@@ -225,6 +225,50 @@ namespace klp
 			 ast::attribute_specifier_list * const ed_asl_after,
 			 types::enum_content &ec) const = 0;
 
+      class sou_layouter
+      {
+      public:
+	typedef std::function<void(ast::expr&)> expr_evaluator_type;
+
+	sou_layouter(const types::struct_or_union_kind souk);
+
+	virtual ~sou_layouter() noexcept = 0;
+
+	virtual void
+	add_member(std::string &&id,
+		   std::shared_ptr<const types::object_type> &&t) = 0;
+
+	virtual void
+	add_member(std::string &&id,
+		   std::shared_ptr<const types::bitfield_type> &&t) = 0;
+
+	virtual void
+	add_member(std::shared_ptr<const types::struct_or_union_type> &&t) = 0;
+
+	types::struct_or_union_kind get_tag_kind() const noexcept
+	{ return _souk; }
+
+	bool
+	lookup(const std::string &id) const noexcept
+	{
+	  return !_c->lookup(id).empty();
+	}
+
+	std::unique_ptr<types::struct_or_union_content> grab_result() noexcept;
+
+      protected:
+	const types::struct_or_union_kind _souk;
+	std::unique_ptr<types::struct_or_union_content> _c;
+      };
+
+      virtual std::unique_ptr<sou_layouter>
+      create_sou_layouter(const types::struct_or_union_kind souk,
+			  ast::attribute_specifier_list * const soud_asl_before,
+			  ast::attribute_specifier_list * const soud_asl_after,
+			  klp::ccp::ast::ast &a,
+			  const sou_layouter::expr_evaluator_type &expr_eval)
+	const = 0;
+
       virtual void
       layout_struct(ast::ast &a,
 		    const std::function<void(ast::expr&)> &eval_expr,

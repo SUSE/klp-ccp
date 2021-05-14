@@ -1710,6 +1710,91 @@ void record_layout_info::finish_record_layout(struct_or_union_content &sc)
   }
 }
 
+
+class target_gcc::sou_layouter : public target::sou_layouter
+{
+public:
+  sou_layouter(const types::struct_or_union_kind souk,
+	       ast::attribute_specifier_list * const soud_asl_before,
+	       ast::attribute_specifier_list * const soud_asl_after,
+	       klp::ccp::ast::ast &a,
+	       const sou_layouter::expr_evaluator_type &expr_eval);
+
+  sou_layouter(const types::struct_or_union_kind souk);
+
+  virtual ~sou_layouter() noexcept override;
+
+  virtual void
+  add_member(std::string &&id,
+	     std::shared_ptr<const types::object_type> &&t) override;
+
+  virtual void
+  add_member(std::string &&id,
+	     std::shared_ptr<const types::bitfield_type> &&t) override;
+
+  virtual void
+  add_member(std::shared_ptr<const types::struct_or_union_type> &&t) override;
+
+private:
+  klp::ccp::ast::ast * const _a;
+  const expr_evaluator_type _expr_eval;
+};
+
+target_gcc::sou_layouter::
+sou_layouter(const types::struct_or_union_kind souk,
+	     ast::attribute_specifier_list * const soud_asl_before,
+	     ast::attribute_specifier_list * const soud_asl_after,
+	     klp::ccp::ast::ast &a,
+	     const sou_layouter::expr_evaluator_type &expr_eval)
+  : target::sou_layouter(souk), _a(&a), _expr_eval(expr_eval)
+{}
+
+target_gcc::sou_layouter::sou_layouter(const types::struct_or_union_kind souk)
+  : target::sou_layouter(souk), _a(nullptr), _expr_eval(nullptr)
+{}
+
+target_gcc::sou_layouter::~sou_layouter() noexcept = default;
+
+void target_gcc::sou_layouter::
+add_member(std::string &&id,
+	   std::shared_ptr<const types::object_type> &&t)
+{
+  _c->add_member(struct_or_union_content::member{std::move(id), std::move(t)});
+}
+
+void target_gcc::sou_layouter::
+add_member(std::string &&id,
+	   std::shared_ptr<const types::bitfield_type> &&t)
+{
+  _c->add_member(struct_or_union_content::member{std::move(id), std::move(t)});
+}
+
+void target_gcc::sou_layouter::
+add_member(std::shared_ptr<const types::struct_or_union_type> &&t)
+{
+  _c->add_member(struct_or_union_content::member{std::move(t)});
+}
+
+std::unique_ptr<target::sou_layouter> target_gcc::
+create_sou_layouter(const types::struct_or_union_kind souk,
+		    ast::attribute_specifier_list * const soud_asl_before,
+		    ast::attribute_specifier_list * const soud_asl_after,
+		    klp::ccp::ast::ast &a,
+		    const sou_layouter::expr_evaluator_type &expr_eval)
+  const
+{
+  return std::unique_ptr<target::sou_layouter>{
+	    new sou_layouter{souk, soud_asl_before, soud_asl_after, a,
+			     expr_eval}
+	 };
+}
+
+std::unique_ptr<target::sou_layouter> target_gcc::
+create_sou_layouter(const types::struct_or_union_kind souk) const
+{
+  return std::unique_ptr<target::sou_layouter>{new sou_layouter{souk}};
+}
+
 void target_gcc::
 layout_struct(ast::ast &a,
 	      const std::function<void(ast::expr&)> &eval_expr,

@@ -32,6 +32,7 @@
 #include "builtins.hh"
 #include "pp_tokens_range.hh"
 #include "pp_result.hh"
+#include "target.hh"
 
 namespace klp
 {
@@ -2324,6 +2325,9 @@ namespace klp
 
 	virtual void evaluate_type(ast &a, const target &tgt) override;
 
+	types::struct_or_union_kind get_tag_kind() const noexcept
+	{ return _souk; }
+
 	attribute_specifier_list* get_asl_before() noexcept
 	{ return _asl_before; }
 
@@ -2343,8 +2347,6 @@ namespace klp
 	virtual void _process(const_processor<void> &p) const override;
 	virtual bool _process(processor<bool> &p) override;
 	virtual bool _process(const_processor<bool> &p) const override;
-
-	void _layout_content(ast &a, const target &tgt);
 
 	types::struct_or_union_kind _souk;
 	struct_declaration_list *_sdl;
@@ -2393,8 +2395,8 @@ namespace klp
 
 	void extend(struct_declaration* &&sd);
 
-	types::struct_or_union_content
-	create_content(ast &a, const types::struct_or_union_kind souk) const;
+	void
+	create_content(ast &a, target::sou_layouter &l) const;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -2569,8 +2571,6 @@ namespace klp
 
 	attribute_specifier_list *get_asl_after() noexcept
 	{ return _asl_after; }
-
-	void layout_content(ast &a, const target &tgt);
 
 	const types::struct_or_union_content* get_content() const noexcept;
 

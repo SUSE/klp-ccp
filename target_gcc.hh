@@ -192,6 +192,23 @@ namespace klp
 			 ast::attribute_specifier_list * const ed_asl_after,
 			 types::enum_content &ec) const override;
 
+    public:
+      virtual std::unique_ptr<target::sou_layouter>
+      create_sou_layouter(const types::struct_or_union_kind souk,
+			  ast::attribute_specifier_list * const soud_asl_before,
+			  ast::attribute_specifier_list * const soud_asl_after,
+			  klp::ccp::ast::ast &a,
+			  const sou_layouter::expr_evaluator_type &expr_eval)
+	const override;
+
+    protected:
+      std::unique_ptr<target::sou_layouter>
+      create_sou_layouter(const types::struct_or_union_kind souk) const;
+
+    private:
+      class sou_layouter;
+
+    public:
       virtual void
       layout_struct(ast::ast &a,
 		    const std::function<void(ast::expr&)> &eval_expr,

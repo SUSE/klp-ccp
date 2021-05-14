@@ -343,27 +343,19 @@ target_x86_64_gcc::_create_builtin_va_list_type() const
 					    struct_or_union_kind::souk_struct,
 					    nullptr, nullptr, nullptr));
 
-    std::unique_ptr<struct_or_union_content> c{new struct_or_union_content{}};
+    std::unique_ptr<target::sou_layouter> l{
+      this->create_sou_layouter(struct_or_union_kind::souk_struct)
+    };
 
-    c->add_member
-      (struct_or_union_content::member
-       ("gp_offset",
-	std_int_type::create(std_int_type::kind::k_int, false)));
-    c->add_member
-      (struct_or_union_content::member
-       ("fp_offset",
-	std_int_type::create(std_int_type::kind::k_int, false)));
-    c->add_member
-      (struct_or_union_content::member
-       ("overflow_arg_area",
-	void_type::create()->derive_pointer()));
-    c->add_member
-      (struct_or_union_content::member
-       ("reg_save_area",
-	void_type::create()->derive_pointer()));
+    l->add_member("gp_offset",
+		  std_int_type::create(std_int_type::kind::k_int, false));
+    l->add_member("fp_offset",
+		  std_int_type::create(std_int_type::kind::k_int, false));
+    l->add_member("overflow_arg_area", void_type::create()->derive_pointer());
+    l->add_member("reg_save_area", void_type::create()->derive_pointer());
 
+    std::unique_ptr<struct_or_union_content> c{l->grab_result()};
     _layout_struct(*c, alignment{});
-
     soud->set_content(std::move(c));
   }
 

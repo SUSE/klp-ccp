@@ -22,3 +22,17 @@
 using namespace klp::ccp;
 
 target::~target() noexcept = default;
+
+
+target::sou_layouter::
+sou_layouter(const types::struct_or_union_kind souk)
+  : _souk(souk), _c(new types::struct_or_union_content{})
+{}
+
+target::sou_layouter::~sou_layouter() noexcept = default;
+
+std::unique_ptr<types::struct_or_union_content>
+target::sou_layouter::sou_layouter::grab_result() noexcept
+{
+  return std::move(_c);
+}

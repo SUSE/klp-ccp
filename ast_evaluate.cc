@@ -57,7 +57,7 @@ namespace
 	       klp::ccp::ast::_ast_entity &ae,
 	       const target &tgt) noexcept;
 
-    void operator()() const;
+    void operator()();
 
     static std::function<void(klp::ccp::ast::expr&)>
     make_expr_evaluator(klp::ccp::ast::ast &a,
@@ -76,6 +76,7 @@ namespace
     klp::ccp::ast::ast &_ast;
     klp::ccp::ast::_ast_entity &_ae;
     const target &_tgt;
+    std::stack<std::unique_ptr<target::sou_layouter>> _sou_layouters;
   };
 }
 
@@ -85,7 +86,7 @@ _evaluator::_evaluator(klp::ccp::ast::ast &ast,
   : _ast(ast), _ae(ae), _tgt(tgt)
 {}
 
-void _evaluator::operator()() const
+void _evaluator::operator()()
 {
   auto &&pre =
     (wrap_callables<default_action_return_value<bool, false>::type>
@@ -116,6 +117,27 @@ void _evaluator::operator()() const
       [](enumerator&) {
 	return true;
       },
+      [](const struct_declaration_list&) {
+	return true;
+      },
+      [&](struct_or_union_def &soud) {
+	_sou_layouters.push((_tgt.create_sou_layouter
+			     (soud.get_tag_kind(),
+			      soud.get_asl_before(),
+			      soud.get_asl_after(),
+			      _ast,
+			      make_expr_evaluator(_ast, _tgt))));
+	return true;
+      },
+      [&](unnamed_struct_or_union &unnamed_sou) {
+	_sou_layouters.push((_tgt.create_sou_layouter
+			     (unnamed_sou.get_tag_kind(),
+			      unnamed_sou.get_asl_before(),
+			      unnamed_sou.get_asl_after(),
+			      _ast,
+			      make_expr_evaluator(_ast, _tgt))));
+	return true;
+      },
       [](init_declarator&) {
 	return true;
       },
@@ -139,6 +161,64 @@ void _evaluator::operator()() const
      ([this](enumerator &e) {
 	 e.register_at_parent(_ast, _tgt);
       },
+      [&](const struct_declaration_list &sdl) {
+	assert(!_sou_layouters.empty());
+	auto &l = *_sou_layouters.top();
+	sdl.create_content(_ast, l);
+      },
+      [&](struct_or_union_def &soud) {
+	assert(!_sou_layouters.empty());
+	// Don't evaluate twice, e.g. if the struct or union
+	// definition is evaluated as part of a function parameter
+	// list. Throw the reconstructed struct_or_union_content away
+	// in this case.
+	if (soud.get_content()) {
+	  _sou_layouters.pop();
+	  return;
+	}
+
+	const auto souk = _sou_layouters.top()->get_tag_kind();
+	auto &&c = _sou_layouters.top()->grab_result();
+	_sou_layouters.pop();
+	switch (souk) {
+	case struct_or_union_kind::souk_struct:
+	  _tgt.layout_struct(_ast, _evaluator::make_expr_evaluator(_ast, _tgt),
+			     soud.get_asl_before(),
+			     soud.get_asl_after(), *c);
+	  break;
+
+	case struct_or_union_kind::souk_union:
+	  _tgt.layout_union(_ast, _evaluator::make_expr_evaluator(_ast, _tgt),
+			    soud.get_asl_before(),
+			    soud.get_asl_after(), *c);
+	  break;
+	}
+
+	soud.set_content(std::move(c));
+
+      },
+      [&](unnamed_struct_or_union &unnamed_sou) {
+	assert(!_sou_layouters.empty());
+	const auto souk = _sou_layouters.top()->get_tag_kind();
+	auto &&c = _sou_layouters.top()->grab_result();
+	_sou_layouters.pop();
+	switch (souk) {
+	case struct_or_union_kind::souk_struct:
+	  _tgt.layout_struct(_ast, _evaluator::make_expr_evaluator(_ast, _tgt),
+			     unnamed_sou.get_asl_before(),
+			     unnamed_sou.get_asl_after(), *c);
+	  break;
+
+	case struct_or_union_kind::souk_union:
+	  _tgt.layout_union(_ast, _evaluator::make_expr_evaluator(_ast, _tgt),
+			    unnamed_sou.get_asl_before(),
+			    unnamed_sou.get_asl_after(), *c);
+	  break;
+	}
+
+	unnamed_sou.set_content(std::move(c));
+	unnamed_sou.evaluate_type(_ast, _tgt);
+      },
       [this](init_declarator &i) {
 	_complete_type_from_init(_ast, _tgt, i);
 	_check_type_completeness_local(_ast, i);
@@ -161,12 +241,18 @@ void _evaluator::operator()() const
 				       declarator,
 				       direct_declarator,
 				       enumerator,
+				       struct_declaration_list,
+				       struct_or_union_def,
+				       unnamed_struct_or_union,
 				       init_declarator,
 				       parameter_declaration_abstract,
 				       stmt_return,
 				       function_definition,
 				       _typed>,
 			      type_set<enumerator,
+				       struct_declaration_list,
+				       struct_or_union_def,
+				       unnamed_struct_or_union,
 				       init_declarator,
 				       parameter_declaration_abstract,
 				       stmt_return,
@@ -311,7 +397,7 @@ _check_function_definition(const klp::ccp::ast::function_definition &fd) const
 void _evaluator::_evaluate_expr(klp::ccp::ast::ast &a, const target &tgt,
 				klp::ccp::ast::expr &e)
 {
-  const _evaluator ev{a, e, tgt};
+  _evaluator ev{a, e, tgt};
   ev();
 }
 
@@ -1214,7 +1300,7 @@ _check_type_completeness_local(klp::ccp::ast::ast &a,
 
 void ast_translation_unit::evaluate(const target &tgt)
 {
-  const _evaluator ev{*this, *_tu, tgt};
+  _evaluator ev{*this, *_tu, tgt};
   ev();
 
   // Finally, sweep over all global objects defined in this
@@ -1237,7 +1323,7 @@ void ast_translation_unit::evaluate(const target &tgt)
 
 bool ast_pp_expr::evaluate(const target &tgt)
 {
-  const _evaluator ev{*this, *_e, tgt};
+  _evaluator ev{*this, *_e, tgt};
   ev();
 
   if (!_e->is_constexpr() ||
@@ -1310,7 +1396,6 @@ evaluate_type(ast &a, const target &tgt)
 	};
       },
       [&](struct_or_union_def &soud) {
-	soud.layout_content(a, tgt);
 	result = struct_or_union_type::create(soud.get_tag_kind(),
 					      soud.get_decl_list_node(), qs);
       },
@@ -2337,11 +2422,9 @@ void struct_declarator::evaluate_type(ast &a, const target &tgt)
   _set_type(std::move(bft));
 }
 
-types::struct_or_union_content struct_declaration_list::
-create_content(ast &a, const struct_or_union_kind souk) const
+void struct_declaration_list::
+create_content(ast &a, target::sou_layouter &l) const
 {
-  types::struct_or_union_content content;
-
   for (auto it = _sds.begin(); it != _sds.end(); ++it) {
     it->get().process<void, type_set<struct_declaration_c99,
 				     struct_declaration_unnamed_sou> >
@@ -2354,7 +2437,7 @@ create_content(ast &a, const struct_or_union_kind souk) const
 	      if (d) {
 		const pp_token &id_tok = a.get_pp_tokens()[d->get_id_tok()];
 		id = id_tok.get_value();
-		if (id.length() && !content.lookup(id).empty()) {
+		if (id.length() && l.lookup(id)) {
 		  code_remark remark(code_remark::severity::fatal,
 				     "member already declared",
 				     a.get_pp_result(), d->get_id_tok());
@@ -2369,7 +2452,7 @@ create_content(ast &a, const struct_or_union_kind souk) const
 		     if (!o_t->is_complete()) {
 		       // A struct's last member is allowed to be an
 		       // incomplete array
-		       if (!(souk == struct_or_union_kind::souk_struct &&
+		       if (!(l.get_tag_kind() == struct_or_union_kind::souk_struct &&
 			     (is_last && (it + 1 == _sds.end())) &&
 			     is_type<array_type>(*o_t))) {
 			 code_remark remark(code_remark::severity::fatal,
@@ -2381,12 +2464,10 @@ create_content(ast &a, const struct_or_union_kind souk) const
 		       }
 		     }
 
-		     content.add_member((struct_or_union_content::member
-					 (id, std::move(o_t))));
+		     l.add_member(std::move(id), std::move(o_t));
 		   },
 		   [&](std::shared_ptr<const bitfield_type> &&bf_t) {
-		     content.add_member((struct_or_union_content::member
-					 (id, std::move(bf_t))));
+		     l.add_member(std::move(id), std::move(bf_t));
 		   },
 		   [&](const std::shared_ptr<const type>&) {
 		     code_remark remark(code_remark::severity::fatal,
@@ -2405,8 +2486,7 @@ create_content(ast &a, const struct_or_union_kind souk) const
 	  assert(t->get_content());
 	  t->get_content()->for_each_member_flat
 	    ([&](const struct_or_union_content::member &m) {
-	       if (m.get_name().length() &&
-		   !content.lookup(m.get_name()).empty()) {
+	       if (m.get_name().length() && l.lookup(m.get_name())) {
 		 code_remark remark(code_remark::severity::fatal,
 				    "unnamed struct/union redeclares member",
 				    a.get_pp_result(),
@@ -2422,61 +2502,14 @@ create_content(ast &a, const struct_or_union_kind souk) const
 	    t = (std::dynamic_pointer_cast<const struct_or_union_type>
 		 (t->amend_qualifiers(qs)));
 	  }
-	  content.add_member(struct_or_union_content::member(std::move(t)));
+	  l.add_member(std::move(t));
 	}));
   }
-
-  return content;
-}
-
-void klp::ccp::ast::unnamed_struct_or_union::
-_layout_content(ast &a, const target &tgt)
-{
-  std::unique_ptr<struct_or_union_content> c{new struct_or_union_content{}};
-  if (_sdl)
-    *c = _sdl->create_content(a, _souk);
-
-  switch (_souk) {
-  case struct_or_union_kind::souk_struct:
-    tgt.layout_struct(a, _evaluator::make_expr_evaluator(a, tgt),
-		      _asl_before, _asl_after, *c);
-    break;
-
-  case struct_or_union_kind::souk_union:
-    tgt.layout_union(a, _evaluator::make_expr_evaluator(a, tgt),
-		     _asl_before, _asl_after, *c);
-    break;
-  }
-
-  this->set_content(std::move(c));
 }
 
 void unnamed_struct_or_union::evaluate_type(ast &a, const target &tgt)
 {
-  _layout_content(a, tgt);
   _set_type(struct_or_union_type::create(_souk, *_content));
-}
-
-void klp::ccp::ast::struct_or_union_def::
-layout_content(ast &a, const target &tgt)
-{
-  std::unique_ptr<struct_or_union_content> c{new struct_or_union_content{}};
-  if (_sdl)
-    *c = _sdl->create_content(a, _souk);
-
-  switch (_souk) {
-  case struct_or_union_kind::souk_struct:
-    tgt.layout_struct(a, _evaluator::make_expr_evaluator(a, tgt),
-		      _asl_before, _asl_after, *c);
-    break;
-
-  case struct_or_union_kind::souk_union:
-    tgt.layout_union(a, _evaluator::make_expr_evaluator(a, tgt),
-		     _asl_before, _asl_after, *c);
-    break;
-  }
-
-  this->set_content(std::move(c));
 }
 
 void enumerator::register_at_parent(ast &a, const target &tgt)
