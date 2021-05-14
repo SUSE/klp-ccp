@@ -3347,6 +3347,20 @@ unnamed_struct_or_union::~unnamed_struct_or_union() noexcept
   delete _asl_after;
 }
 
+const klp::ccp::types::struct_or_union_content&
+unnamed_struct_or_union::get_content() const noexcept
+{
+  assert(_content);
+  return *_content;
+}
+
+void unnamed_struct_or_union::
+set_content(std::unique_ptr<const types::struct_or_union_content> &&c) noexcept
+{
+  assert(!_content);
+  _content = std::move(c);
+}
+
 _ast_entity* unnamed_struct_or_union::_get_child(const size_t i) const noexcept
 {
   std::size_t _i = i;
@@ -3745,6 +3759,19 @@ struct_or_union_def::~struct_or_union_def() noexcept
   delete _sdl;
   delete _asl_before;
   delete _asl_after;
+}
+
+const klp::ccp::types::struct_or_union_content*
+struct_or_union_def::get_content() const noexcept
+{
+  return _content.get();
+}
+
+void struct_or_union_def::
+set_content(std::unique_ptr<const types::struct_or_union_content> &&c) noexcept
+{
+  assert(!_content);
+  _content = std::move(c);
 }
 
 _ast_entity* struct_or_union_def::_get_child(const size_t i) const noexcept

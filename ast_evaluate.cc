@@ -2432,45 +2432,51 @@ create_content(ast &a, const struct_or_union_kind souk) const
 void klp::ccp::ast::unnamed_struct_or_union::
 _layout_content(ast &a, const target &tgt)
 {
+  std::unique_ptr<struct_or_union_content> c{new struct_or_union_content{}};
   if (_sdl)
-    _content = _sdl->create_content(a, _souk);
+    *c = _sdl->create_content(a, _souk);
 
   switch (_souk) {
   case struct_or_union_kind::souk_struct:
     tgt.layout_struct(a, _evaluator::make_expr_evaluator(a, tgt),
-		      _asl_before, _asl_after, _content);
+		      _asl_before, _asl_after, *c);
     break;
 
   case struct_or_union_kind::souk_union:
     tgt.layout_union(a, _evaluator::make_expr_evaluator(a, tgt),
-		     _asl_before, _asl_after, _content);
+		     _asl_before, _asl_after, *c);
     break;
   }
+
+  this->set_content(std::move(c));
 }
 
 void unnamed_struct_or_union::evaluate_type(ast &a, const target &tgt)
 {
   _layout_content(a, tgt);
-  _set_type(struct_or_union_type::create(_souk, _content));
+  _set_type(struct_or_union_type::create(_souk, *_content));
 }
 
 void klp::ccp::ast::struct_or_union_def::
 layout_content(ast &a, const target &tgt)
 {
+  std::unique_ptr<struct_or_union_content> c{new struct_or_union_content{}};
   if (_sdl)
-    _content = _sdl->create_content(a, _souk);
+    *c = _sdl->create_content(a, _souk);
 
   switch (_souk) {
   case struct_or_union_kind::souk_struct:
     tgt.layout_struct(a, _evaluator::make_expr_evaluator(a, tgt),
-		      _asl_before, _asl_after, _content);
+		      _asl_before, _asl_after, *c);
     break;
 
   case struct_or_union_kind::souk_union:
     tgt.layout_union(a, _evaluator::make_expr_evaluator(a, tgt),
-		     _asl_before, _asl_after, _content);
+		     _asl_before, _asl_after, *c);
     break;
   }
+
+  this->set_content(std::move(c));
 }
 
 void enumerator::register_at_parent(ast &a, const target &tgt)

@@ -1410,14 +1410,9 @@ void struct_or_union_content::set_size_constant(const bool is_size_constant)
   _is_size_constant = is_size_constant;
 }
 
-bool struct_or_union_content::has_been_layout() const noexcept
-{
-  return _align_ffs;
-}
-
 bool struct_or_union_content::is_size_constant() const noexcept
 {
-  assert(has_been_layout());
+  assert(_has_been_layout());
   return _is_size_constant;
 }
 
@@ -1429,10 +1424,14 @@ const mpa::limbs& struct_or_union_content::get_size() const noexcept
 
 mpa::limbs::size_type struct_or_union_content::get_alignment() const noexcept
 {
-  assert(has_been_layout());
+  assert(_has_been_layout());
   return _align_ffs - 1;
 }
 
+bool struct_or_union_content::_has_been_layout() const noexcept
+{
+  return _align_ffs;
+}
 
 struct_or_union_type::
 struct_or_union_type(const struct_or_union_kind kind,
@@ -1511,7 +1510,7 @@ bool struct_or_union_type::is_complete() const noexcept
   if (!content)
     return false;
 
-  return content->has_been_layout();
+  return true;
 }
 
 bool struct_or_union_type::is_size_constant() const noexcept
@@ -1547,7 +1546,7 @@ const struct_or_union_content* struct_or_union_type::get_content()
   if (!soud)
     return nullptr;
 
-  _content = &soud->get_content();
+  _content = soud->get_content();
   return _content;
 }
 

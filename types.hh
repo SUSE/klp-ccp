@@ -785,8 +785,6 @@ namespace klp
 	void set_size(mpa::limbs &&size);
 	void set_size_constant(const bool is_size_constant) noexcept;
 
-	bool has_been_layout() const noexcept;
-
 	bool is_size_constant() const noexcept;
 
 	const mpa::limbs& get_size() const noexcept;
@@ -794,6 +792,8 @@ namespace klp
 	mpa::limbs::size_type get_alignment() const noexcept;
 
       private:
+	bool _has_been_layout() const noexcept;
+
 	std::vector<member> _members;
 	mpa::limbs::size_type _align_ffs;
 	mpa::limbs _size;

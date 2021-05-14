@@ -2330,8 +2330,11 @@ namespace klp
 	attribute_specifier_list* get_asl_after() noexcept
 	{ return _asl_after; }
 
-	const types::struct_or_union_content& get_content() const noexcept
-	{ return _content; }
+	const types::struct_or_union_content& get_content() const noexcept;
+
+	void
+	set_content(std::unique_ptr<const types::struct_or_union_content> &&c)
+	  noexcept;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -2348,7 +2351,7 @@ namespace klp
 	attribute_specifier_list *_asl_before;
 	attribute_specifier_list *_asl_after;
 
-	types::struct_or_union_content _content;
+	std::unique_ptr<const types::struct_or_union_content> _content;
       };
 
       class struct_declaration_unnamed_sou final : public struct_declaration
@@ -2569,11 +2572,11 @@ namespace klp
 
 	void layout_content(ast &a, const target &tgt);
 
-	const types::struct_or_union_content& get_content() const noexcept
-	{ return _content; }
+	const types::struct_or_union_content* get_content() const noexcept;
 
-	types::struct_or_union_content& get_content() noexcept
-	{ return _content; }
+	void
+	set_content(std::unique_ptr<const types::struct_or_union_content> &&c)
+	  noexcept;
 
       private:
 	struct_or_union_def(const pp_tokens_range &tr,
@@ -2599,7 +2602,7 @@ namespace klp
 	sou_decl_list_node _decl_list_node;
 	bool _id_tok_valid;
 
-	types::struct_or_union_content _content;
+	std::unique_ptr<const types::struct_or_union_content> _content;
       };
 
       class struct_or_union_ref final : public type_specifier

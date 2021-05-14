@@ -343,25 +343,28 @@ target_x86_64_gcc::_create_builtin_va_list_type() const
 					    struct_or_union_kind::souk_struct,
 					    nullptr, nullptr, nullptr));
 
-    struct_or_union_content &c = soud->get_content();
-    c.add_member
+    std::unique_ptr<struct_or_union_content> c{new struct_or_union_content{}};
+
+    c->add_member
       (struct_or_union_content::member
        ("gp_offset",
 	std_int_type::create(std_int_type::kind::k_int, false)));
-    c.add_member
+    c->add_member
       (struct_or_union_content::member
        ("fp_offset",
 	std_int_type::create(std_int_type::kind::k_int, false)));
-    c.add_member
+    c->add_member
       (struct_or_union_content::member
        ("overflow_arg_area",
 	void_type::create()->derive_pointer()));
-    c.add_member
+    c->add_member
       (struct_or_union_content::member
        ("reg_save_area",
 	void_type::create()->derive_pointer()));
 
-    _layout_struct(c, alignment{});
+    _layout_struct(*c, alignment{});
+
+    soud->set_content(std::move(c));
   }
 
   return (struct_or_union_type::create(struct_or_union_kind::souk_struct,
