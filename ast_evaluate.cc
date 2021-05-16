@@ -301,10 +301,6 @@ void _evaluator::_handle_sou_member(struct_declarator &sd)
 
   if (!sd.get_width()) {
     // Not a bitfield.
-    t = _tgt.evaluate_attributes(_ast,
-				 _evaluator::make_expr_evaluator(_ast, _tgt),
-				 std::move(t), soud_asl_before, soud_asl_after,
-				 *sql, sd.get_asl_before(), sd.get_asl_after());
     handle_types<void>
       ((wrap_callables<no_default_action>
 	([&](std::shared_ptr<const object_type> &&ot) {
@@ -322,7 +318,8 @@ void _evaluator::_handle_sou_member(struct_declarator &sd)
 	      throw semantic_except(remark);
 	    }
 	  }
-	  l.add_member(std::move(id), std::move(ot));
+	  l.add_member(std::move(id), std::move(ot),
+		       *sql, sd.get_asl_before(), sd.get_asl_after());
 	 },
 	 [&](const std::shared_ptr<const type>&) {
 	   code_remark remark(code_remark::severity::fatal,
@@ -430,11 +427,8 @@ void _evaluator::_handle_sou_member(struct_declarator &sd)
 
   std::shared_ptr<const bitfield_type> bft =
     bitfield_type::create(std::move(it), w);
-  bft = _tgt.evaluate_attributes(_ast,
-				 _evaluator::make_expr_evaluator(_ast, _tgt),
-				 std::move(bft), soud_asl_before, soud_asl_after,
-				 *sql, sd.get_asl_before(), sd.get_asl_after());
-  l.add_member(std::move(id), std::move(bft));
+  l.add_member(std::move(id), std::move(bft),
+	       *sql, sd.get_asl_before(), sd.get_asl_after());
 }
 
 void _evaluator::_handle_sou_member(unnamed_struct_or_union &unnamed_sou)

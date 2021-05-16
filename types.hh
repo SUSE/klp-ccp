@@ -356,6 +356,9 @@ namespace klp
 	std::shared_ptr<const object_type> amend_qualifiers(const qualifiers &qs)
 	  const;
 
+	std::shared_ptr<const object_type>
+	set_user_alignment(const alignment &user_align) const;
+
 	std::shared_ptr<const array_type>
 	derive_array(const ast::expr * const length_expr) const;
 

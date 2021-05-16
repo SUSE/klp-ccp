@@ -104,32 +104,6 @@ namespace klp
 			  ast::attribute_specifier_list * const asl_after)
 	const = 0;
 
-      // Final attributes application to non-bitfield struct/union
-      // member declarators.
-      virtual std::shared_ptr<const types::addressable_type>
-      evaluate_attributes(ast::ast &a,
-			  const std::function<void(ast::expr&)> &eval_expr,
-			  std::shared_ptr<const types::addressable_type> &&t,
-			  ast::attribute_specifier_list * const soud_asl_before,
-			  ast::attribute_specifier_list * const soud_asl_after,
-			  ast::specifier_qualifier_list &sql,
-			  ast::attribute_specifier_list * const asl_before,
-			  ast::attribute_specifier_list * const asl_after)
-	const = 0;
-
-      // Final attributes application to bitfield struct/union member
-      // declarators.
-      virtual std::shared_ptr<const types::bitfield_type>
-      evaluate_attributes(ast::ast &a,
-			  const std::function<void(ast::expr&)> &eval_expr,
-			  std::shared_ptr<const types::bitfield_type> &&t,
-			  ast::attribute_specifier_list * const soud_asl_before,
-			  ast::attribute_specifier_list * const soud_asl_after,
-			  ast::specifier_qualifier_list &sql,
-			  ast::attribute_specifier_list * const asl_before,
-			  ast::attribute_specifier_list * const asl_after)
-	const = 0;
-
 
       virtual bool is_char_signed() const noexcept = 0;
       virtual bool is_wchar_signed() const noexcept = 0;
@@ -236,11 +210,21 @@ namespace klp
 
 	virtual void
 	add_member(std::string &&id,
+		   std::shared_ptr<const types::object_type> &&t,
+		   ast::specifier_qualifier_list &sql,
+		   ast::attribute_specifier_list * const asl_before,
+		   ast::attribute_specifier_list * const asl_after) = 0;
+
+	virtual void
+	add_member(std::string &&id,
 		   std::shared_ptr<const types::object_type> &&t) = 0;
 
 	virtual void
 	add_member(std::string &&id,
-		   std::shared_ptr<const types::bitfield_type> &&t) = 0;
+		   std::shared_ptr<const types::bitfield_type> &&t,
+		   ast::specifier_qualifier_list &sql,
+		   ast::attribute_specifier_list * const asl_before,
+		   ast::attribute_specifier_list * const asl_after) = 0;
 
 	virtual void
 	add_member(std::shared_ptr<const types::struct_or_union_type> &&t) = 0;

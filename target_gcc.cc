@@ -560,6 +560,10 @@ namespace
     apply_to_type(std::shared_ptr<const types::int_type> &&orig_t)
       const;
 
+    std::shared_ptr<const types::object_type>
+    apply_to_type(std::shared_ptr<const types::object_type> &&orig_t)
+      const;
+
     std::shared_ptr<const types::addressable_type>
     apply_to_type(std::shared_ptr<const types::addressable_type> &&orig_t)
       const;
@@ -700,16 +704,16 @@ apply_to_type(std::shared_ptr<const types::int_type> &&orig_t) const
 					     orig_t->get_qualifiers());
 }
 
-std::shared_ptr<const types::addressable_type> _mode_attribute_finder::
-apply_to_type(std::shared_ptr<const types::addressable_type> &&orig_t) const
+std::shared_ptr<const types::object_type> _mode_attribute_finder::
+apply_to_type(std::shared_ptr<const types::object_type> &&orig_t) const
 {
   if (!this->mode_attribute_found())
     return std::move(orig_t);
 
-  return types::handle_types<std::shared_ptr<const types::addressable_type>>
+  return types::handle_types<std::shared_ptr<const types::object_type>>
     ((wrap_callables<no_default_action>
       ([&](std::shared_ptr<const types::int_type> &&it)
-		-> std::shared_ptr<const types::addressable_type> {
+		-> std::shared_ptr<const types::object_type> {
 	return apply_to_type(std::move(it));
        },
        [&](const std::shared_ptr<const types::real_float_type> &rft) {
@@ -726,8 +730,32 @@ apply_to_type(std::shared_ptr<const types::addressable_type> &&orig_t) const
 						      rft->get_qualifiers());
        },
        [&](std::shared_ptr<const types::pointer_type> &&pt)
-		-> std::shared_ptr<const types::addressable_type> {
+		-> std::shared_ptr<const types::object_type> {
 	 return apply_to_type(std::move(pt));
+       },
+       [&](const std::shared_ptr<const types::type>&)
+		-> std::shared_ptr<const types::object_type> {
+	 code_remark remark
+	   (code_remark::severity::fatal,
+	    "'mode' attribute specifier not applicable to type",
+	    _a.get_pp_result(), _mode_tok);
+	 _a.get_remarks().add(remark);
+	 throw semantic_except(remark);
+       })),
+     std::move(orig_t));
+}
+
+std::shared_ptr<const types::addressable_type> _mode_attribute_finder::
+apply_to_type(std::shared_ptr<const types::addressable_type> &&orig_t) const
+{
+  if (!this->mode_attribute_found())
+    return std::move(orig_t);
+
+  return types::handle_types<std::shared_ptr<const types::addressable_type>>
+    ((wrap_callables<no_default_action>
+      ([&](std::shared_ptr<const types::object_type> &&ot)
+		-> std::shared_ptr<const types::addressable_type> {
+	return apply_to_type(std::move(ot));
        },
        [&](const std::shared_ptr<const types::type>&)
 		-> std::shared_ptr<const types::addressable_type> {
@@ -892,135 +920,6 @@ evaluate_attributes(ast::ast &a,
 
   return std::move(t);
 }
-
-std::shared_ptr<const types::addressable_type> target_gcc::
-evaluate_attributes(ast::ast &a,
-		    const std::function<void(ast::expr&)> &eval_expr,
-		    std::shared_ptr<const types::addressable_type> &&t,
-		    ast::attribute_specifier_list * const soud_asl_before,
-		    ast::attribute_specifier_list * const soud_asl_after,
-		    ast::specifier_qualifier_list &sql,
-		    ast::attribute_specifier_list * const asl_before,
-		    ast::attribute_specifier_list * const asl_after) const
-{
-  // Process a non-bitfield struct declarator's attributes, including
-  // the ones from the enclosing declaration. Attributes of inner
-  // declarator derivations have already been handled.
-
-  // First, search for 'packed' attribute in surrounding struct/union
-  // definition: these are to be applied to each member individually.
-  bool packed = false;
-  if (soud_asl_before || soud_asl_after) {
-    _packed_attribute_finder paf(a);
-    if (soud_asl_before)
-      soud_asl_before->for_each_attribute(paf);
-    if (soud_asl_after)
-      soud_asl_after->for_each_attribute(paf);
-    packed = paf.get_result();
-  }
-
-  // Next process the struct declarator's attributes, including the
-  // ones from the enclosing declaration.
-  _mode_attribute_finder maf(a, *this);
-  _aligned_attribute_finder aaf(a, eval_expr, *this, true);
-  _packed_attribute_finder paf(a);
-  if (asl_after) {
-    asl_after->for_each_attribute(maf);
-    asl_after->for_each_attribute(aaf);
-    asl_after->for_each_attribute(paf);
-  }
-  if (asl_before) {
-    asl_before->for_each_attribute(maf);
-    asl_before->for_each_attribute(aaf);
-    asl_before->for_each_attribute(paf);
-  }
-  sql.for_each_attribute(maf);
-  sql.for_each_attribute(aaf);
-  sql.for_each_attribute(paf);
-
-  t = maf.apply_to_type(std::move(t));
-
-  packed |= paf.get_result();
-  types::alignment align = aaf.grab_result();
-  if (packed) {
-    if (align.is_set())
-      t = t->set_user_alignment(std::move(align));
-    else
-      t = t->set_user_alignment(types::alignment(0));
-
-  } else if (align.is_set()) {
-    if (t->get_effective_alignment(*this) <= align.get_log2_value())
-      t = t->set_user_alignment(std::move(align));
-  }
-
-  return std::move(t);
-}
-
-std::shared_ptr<const types::bitfield_type> target_gcc::
-evaluate_attributes(ast::ast &a,
-		    const std::function<void(ast::expr&)> &eval_expr,
-		    std::shared_ptr<const types::bitfield_type> &&t,
-		    ast::attribute_specifier_list * const soud_asl_before,
-		    ast::attribute_specifier_list * const soud_asl_after,
-		    ast::specifier_qualifier_list &sql,
-		    ast::attribute_specifier_list * const asl_before,
-		    ast::attribute_specifier_list * const asl_after) const
-{
-  // Process a bitfield struct declarator's attributes, including the
-  // ones from the enclosing declaration. Attributes of inner
-  // declarator derivations have already been handled.
-
-  // First, search for 'packed' attribute in surrounding struct/union
-  // definition: these are to be applied to each member individually.
-  bool packed = false;
-  if (soud_asl_before || soud_asl_after) {
-    _packed_attribute_finder paf(a);
-    if (soud_asl_before)
-      soud_asl_before->for_each_attribute(paf);
-    if (soud_asl_after)
-      soud_asl_after->for_each_attribute(paf);
-    packed = paf.get_result();
-  }
-
-  // Next process the struct declarator's attributes, including the
-  // ones from the enclosing declaration.
-  // For bitfields, GCC does apply the mode attribute to the
-  // underlying integer type, but only after the width has been set
-  // (and verified).
-  _mode_attribute_finder maf(a, *this);
-  _aligned_attribute_finder aaf(a, eval_expr, *this, true);
-  _packed_attribute_finder paf(a);
-  if (asl_after) {
-    asl_after->for_each_attribute(maf);
-    asl_after->for_each_attribute(aaf);
-    asl_after->for_each_attribute(paf);
-  }
-  if (asl_before) {
-    asl_before->for_each_attribute(maf);
-    asl_before->for_each_attribute(aaf);
-    asl_before->for_each_attribute(paf);
-  }
-  sql.for_each_attribute(maf);
-  sql.for_each_attribute(aaf);
-  sql.for_each_attribute(paf);
-
-  if (maf.mode_attribute_found()) {
-    std::shared_ptr<const types::int_type> base_t =
-      t->get_base_type();
-    base_t = maf.apply_to_type(std::move(base_t));
-    t = types::bitfield_type::create(std::move(base_t), t->get_width(*this));
-  }
-
-  packed |= paf.get_result();
-  types::alignment align = aaf.grab_result();
-  if (packed)
-    t = t->set_packed();
-  if (align.is_set())
-    t = t->set_user_alignment(std::move(align));
-
-  return std::move(t);
-}
-
 
 bool target_gcc::is_char_signed() const noexcept
 {
@@ -1727,11 +1626,21 @@ public:
 
   virtual void
   add_member(std::string &&id,
+	     std::shared_ptr<const types::object_type> &&t,
+	     ast::specifier_qualifier_list &sql,
+	     ast::attribute_specifier_list * const asl_before,
+	     ast::attribute_specifier_list * const asl_after) override;
+
+  virtual void
+  add_member(std::string &&id,
 	     std::shared_ptr<const types::object_type> &&t) override;
 
   virtual void
   add_member(std::string &&id,
-	     std::shared_ptr<const types::bitfield_type> &&t) override;
+	     std::shared_ptr<const types::bitfield_type> &&t,
+	     ast::specifier_qualifier_list &sql,
+	     ast::attribute_specifier_list * const asl_before,
+	     ast::attribute_specifier_list * const asl_after) override;
 
   virtual void
   add_member(std::shared_ptr<const types::struct_or_union_type> &&t) override;
@@ -1744,6 +1653,7 @@ private:
   const expr_evaluator_type _expr_eval;
 
   types::alignment _user_align;
+  bool _packed;
 };
 
 target_gcc::sou_layouter::
@@ -1753,15 +1663,24 @@ sou_layouter(const types::struct_or_union_kind souk,
 	     klp::ccp::ast::ast &a,
 	     const target_gcc &tgt,
 	     const sou_layouter::expr_evaluator_type &expr_eval)
-  : target::sou_layouter(souk), _a(&a), _tgt(tgt), _expr_eval(expr_eval)
+  : target::sou_layouter(souk), _a(&a), _tgt(tgt), _expr_eval(expr_eval),
+    _packed(false)
 {
   _aligned_attribute_finder aaf(a, _expr_eval, _tgt, false);
   if (soud_asl_before)
     soud_asl_before->for_each_attribute(aaf);
   if (soud_asl_after)
     soud_asl_after->for_each_attribute(aaf);
-
   _user_align = aaf.grab_result();
+
+  if (soud_asl_before || soud_asl_after) {
+    _packed_attribute_finder paf(*_a);
+    if (soud_asl_before)
+      soud_asl_before->for_each_attribute(paf);
+    if (soud_asl_after)
+      soud_asl_after->for_each_attribute(paf);
+    _packed = paf.get_result();
+  }
 }
 
 target_gcc::sou_layouter::sou_layouter(const types::struct_or_union_kind souk,
@@ -1773,15 +1692,105 @@ target_gcc::sou_layouter::~sou_layouter() noexcept = default;
 
 void target_gcc::sou_layouter::
 add_member(std::string &&id,
-	   std::shared_ptr<const types::object_type> &&t)
+	   std::shared_ptr<const types::object_type> &&t,
+	   ast::specifier_qualifier_list &sql,
+	   ast::attribute_specifier_list * const asl_before,
+	   ast::attribute_specifier_list * const asl_after)
+{
+  // First process the struct declarator's attributes. Attributes of
+  // inner declarator derivations have already been handled.
+  // 'packed' attributes at the enclosing struct/union definition
+  // apply to each member individually.
+  bool packed = _packed;
+
+  _mode_attribute_finder maf(*_a, _tgt);
+  _aligned_attribute_finder aaf(*_a, _expr_eval, _tgt, true);
+  _packed_attribute_finder paf(*_a);
+  if (asl_after) {
+    asl_after->for_each_attribute(maf);
+    asl_after->for_each_attribute(aaf);
+    asl_after->for_each_attribute(paf);
+  }
+  if (asl_before) {
+    asl_before->for_each_attribute(maf);
+    asl_before->for_each_attribute(aaf);
+    asl_before->for_each_attribute(paf);
+  }
+  sql.for_each_attribute(maf);
+  sql.for_each_attribute(aaf);
+  sql.for_each_attribute(paf);
+
+  t = maf.apply_to_type(std::move(t));
+
+  packed |= paf.get_result();
+  types::alignment align = aaf.grab_result();
+  if (packed) {
+    if (align.is_set())
+      t = t->set_user_alignment(std::move(align));
+    else
+      t = t->set_user_alignment(types::alignment(0));
+
+  } else if (align.is_set()) {
+    if (t->get_effective_alignment(_tgt) <= align.get_log2_value())
+      t = t->set_user_alignment(std::move(align));
+  }
+
+  _c->add_member(struct_or_union_content::member{std::move(id), std::move(t)});
+}
+
+void target_gcc::sou_layouter::
+add_member(std::string &&id, std::shared_ptr<const types::object_type> &&t)
 {
   _c->add_member(struct_or_union_content::member{std::move(id), std::move(t)});
 }
 
 void target_gcc::sou_layouter::
 add_member(std::string &&id,
-	   std::shared_ptr<const types::bitfield_type> &&t)
+	   std::shared_ptr<const types::bitfield_type> &&t,
+	   ast::specifier_qualifier_list &sql,
+	   ast::attribute_specifier_list * const asl_before,
+	   ast::attribute_specifier_list * const asl_after)
 {
+  // First process the struct declarator's attributes. Attributes of
+  // inner declarator derivations have already been handled.
+  // 'packed' attributes at the enclosing struct/union definition
+  // apply to each member individually.
+  bool packed = _packed;
+
+  _mode_attribute_finder maf(*_a, _tgt);
+  _aligned_attribute_finder aaf(*_a, _expr_eval, _tgt, true);
+  _packed_attribute_finder paf(*_a);
+  if (asl_after) {
+    asl_after->for_each_attribute(maf);
+    asl_after->for_each_attribute(aaf);
+    asl_after->for_each_attribute(paf);
+  }
+  if (asl_before) {
+    asl_before->for_each_attribute(maf);
+    asl_before->for_each_attribute(aaf);
+    asl_before->for_each_attribute(paf);
+  }
+  sql.for_each_attribute(maf);
+  sql.for_each_attribute(aaf);
+  sql.for_each_attribute(paf);
+
+  // For bitfields, GCC does apply the mode attribute to the
+  // underlying integer type, but only after the width has been set
+  // (and verified).
+  if (maf.mode_attribute_found()) {
+    std::shared_ptr<const types::int_type> base_t =
+      t->get_base_type();
+    base_t = maf.apply_to_type(std::move(base_t));
+    t = types::bitfield_type::create(std::move(base_t), t->get_width(_tgt));
+  }
+
+  packed |= paf.get_result();
+  types::alignment align = aaf.grab_result();
+  if (packed)
+    t = t->set_packed();
+  if (align.is_set())
+    t = t->set_user_alignment(std::move(align));
+
   _c->add_member(struct_or_union_content::member{std::move(id), std::move(t)});
 }
 
