@@ -3126,7 +3126,8 @@ struct_declarator::struct_declarator(const pp_tokens_range &tr,
   noexcept
   : typed_ast_entity(tr), _d(mv_p(std::move(d))),
     _width(mv_p(std::move(width))),
-    _asl_before(nullptr), _asl_after(mv_p(std::move(asl_after)))
+    _asl_before(nullptr), _asl_after(mv_p(std::move(asl_after))),
+    _is_last(false)
 {
   if (_d)
     _d->_set_parent(*this);
@@ -3151,6 +3152,11 @@ void struct_declarator::set_asl_before(attribute_specifier_list* &&asl_before)
   _asl_before = mv_p(std::move(asl_before));
   if (_asl_before)
     _asl_before->_set_parent(*this);
+}
+
+void struct_declarator::mark_last_member() noexcept
+{
+  _is_last = true;
 }
 
 _ast_entity* struct_declarator::_get_child(const size_t i) const noexcept
@@ -3242,6 +3248,14 @@ bool struct_declarator_list::empty() const noexcept
   return _sds.empty();
 }
 
+void struct_declarator_list::mark_last_member() noexcept
+{
+  if (_sds.empty())
+    return;
+
+  _sds.back().get().mark_last_member();
+}
+
 _ast_entity* struct_declarator_list::_get_child(const size_t i) const noexcept
 {
   if (i >= _sds.size())
@@ -3285,6 +3299,11 @@ struct_declaration_c99::struct_declaration_c99(const pp_tokens_range &tr,
 struct_declaration_c99::~struct_declaration_c99() noexcept
 {
   delete &_sdl;
+}
+
+void struct_declaration_c99::mark_last_member() noexcept
+{
+  _sdl.mark_last_member();
 }
 
 _ast_entity* struct_declaration_c99::_get_child(const size_t i) const noexcept
@@ -3428,6 +3447,12 @@ struct_declaration_unnamed_sou::~struct_declaration_unnamed_sou() noexcept
   delete &_unnamed_sou;
 }
 
+void struct_declaration_unnamed_sou::mark_last_member() noexcept
+{
+  // The ->is_last() information is only relevant for array members of
+  // unspecified length. Do nothing.
+}
+
 _ast_entity* struct_declaration_unnamed_sou::_get_child(const size_t i) const noexcept
 {
   if (!i) {
@@ -3492,6 +3517,14 @@ void struct_declaration_list::extend(struct_declaration* &&sd)
     throw;
   }
   _sd.get()._set_parent(*this);
+}
+
+void struct_declaration_list::mark_last_member() noexcept
+{
+  if (_sds.empty())
+    return;
+
+  _sds.back().get().mark_last_member();
 }
 
 _ast_entity* struct_declaration_list::_get_child(const size_t i) const noexcept

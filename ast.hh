@@ -2216,6 +2216,8 @@ namespace klp
 	  const noexcept
 	{ return _sql; }
 
+	virtual void mark_last_member() noexcept = 0;
+
       protected:
 	specifier_qualifier_list *_sql;
       };
@@ -2242,6 +2244,11 @@ namespace klp
 	const declarator* get_declarator() const noexcept
 	{ return _d; }
 
+	bool is_last() const noexcept
+	{ return _is_last; }
+
+	void mark_last_member() noexcept;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
@@ -2254,6 +2261,7 @@ namespace klp
 	expr *_width;
 	attribute_specifier_list *_asl_before;
 	attribute_specifier_list *_asl_after;
+	bool _is_last;
       };
 
       class struct_declarator_list final
@@ -2269,6 +2277,8 @@ namespace klp
 	void extend(struct_declarator* &&sd);
 
 	bool empty() const noexcept;
+
+	void mark_last_member() noexcept;
 
 	template <typename callable_type>
 	void for_each(callable_type &&c) const;
@@ -2296,6 +2306,8 @@ namespace klp
 	const struct_declarator_list& get_struct_declarator_list()
 	  const noexcept
 	{ return _sdl; }
+
+	virtual void mark_last_member() noexcept override;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -2370,6 +2382,8 @@ namespace klp
 	  const noexcept
 	{ return _unnamed_sou; }
 
+	virtual void mark_last_member() noexcept override;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
@@ -2397,6 +2411,8 @@ namespace klp
 
 	void
 	create_content(ast &a, target::sou_layouter &l) const;
+
+	void mark_last_member() noexcept;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;

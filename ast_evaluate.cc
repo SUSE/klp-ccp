@@ -117,7 +117,11 @@ void _evaluator::operator()()
       [](enumerator&) {
 	return true;
       },
-      [](const struct_declaration_list&) {
+      [](struct_declaration_list &sdl) {
+	// A struct's last member may be of array type of unspecified
+	// length. Mark the last member so that the type evaluation
+	// code can handle this.
+	sdl.mark_last_member();
 	return true;
       },
       [&](struct_or_union_def &soud) {
@@ -2425,7 +2429,7 @@ create_content(ast &a, target::sou_layouter &l) const
 		       // A struct's last member is allowed to be an
 		       // incomplete array
 		       if (!(l.get_tag_kind() == struct_or_union_kind::souk_struct &&
-			     (is_last && (it + 1 == _sds.end())) &&
+			     sd.is_last() &&
 			     is_type<array_type>(*o_t))) {
 			 code_remark remark(code_remark::severity::fatal,
 					    "incomplete type for member",
