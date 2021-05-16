@@ -3124,7 +3124,7 @@ struct_declarator::struct_declarator(const pp_tokens_range &tr,
 				     declarator* &&d, expr* &&width,
 				     attribute_specifier_list* &&asl_after)
   noexcept
-  : typed_ast_entity(tr), _d(mv_p(std::move(d))),
+  : ast_entity(tr), _d(mv_p(std::move(d))),
     _width(mv_p(std::move(width))),
     _asl_before(nullptr), _asl_after(mv_p(std::move(asl_after))),
     _is_last(false)

@@ -252,9 +252,6 @@ _evaluator::make_expr_evaluator(klp::ccp::ast::ast &a,
 
 void _evaluator::_handle_sou_member(struct_declarator &sd)
 {
-  if (!sd.is_evaluated())
-    sd.evaluate_type(_ast, _tgt);
-
   assert(!_sou_layouters.empty());
   target::sou_layouter &l = *_sou_layouters.top();
 
@@ -272,38 +269,172 @@ void _evaluator::_handle_sou_member(struct_declarator &sd)
     }
   }
 
-  handle_types<void>
-    ((wrap_callables<no_default_action>
-      ([&](std::shared_ptr<const object_type> &&o_t) {
-	if (!o_t->is_complete()) {
-	  // A struct's last member is allowed to be an
-	  // incomplete array
-	  if (!(l.get_tag_kind() == struct_or_union_kind::souk_struct &&
-		sd.is_last() &&
-		is_type<array_type>(*o_t))) {
-	    code_remark remark(code_remark::severity::fatal,
-			       "incomplete type for member",
-			       _ast.get_pp_result(),
-			       sd.get_tokens_range());
-	    _ast.get_remarks().add(remark);
-	    throw semantic_except(remark);
-	  }
-	}
+  struct_declaration_c99 &enclosing_decl =
+    (sd.get_unique_parent<struct_declarator_list>()
+     .get_unique_parent<struct_declaration_c99>());
+  specifier_qualifier_list * const sql =
+    enclosing_decl.get_specifier_qualifier_list();
+  assert(sql);
 
-	l.add_member(std::move(id), std::move(o_t));
+  std::shared_ptr<const addressable_type> t;
+  if (d)
+    t = d->get_innermost_type();
+  else
+    t = sql->get_type();
+
+  // Find the attributes associated with the containing struct/union
+  // definition as a whole.
+  attribute_specifier_list *soud_asl_before = nullptr;
+  attribute_specifier_list *soud_asl_after = nullptr;
+  struct_declaration_list &enclosing_decl_list
+    = enclosing_decl.get_unique_parent<struct_declaration_list>();
+  enclosing_decl_list.process_parent
+    (wrap_callables<no_default_action>
+     ([&](struct_or_union_def &soud) {
+       soud_asl_before = soud.get_asl_before();
+       soud_asl_after = soud.get_asl_after();
       },
-      [&](std::shared_ptr<const bitfield_type> &&bf_t) {
-	l.add_member(std::move(id), std::move(bf_t));
-      },
-      [&](const std::shared_ptr<const type>&) {
-	code_remark remark(code_remark::severity::fatal,
-			   "invalid type for member",
-			   _ast.get_pp_result(),
-			   sd.get_tokens_range());
-	_ast.get_remarks().add(remark);
-	throw semantic_except(remark);
-      })),
-     sd.get_type());
+      [&](unnamed_struct_or_union &unnamed_sou) {
+       soud_asl_before = unnamed_sou.get_asl_before();
+       soud_asl_after = unnamed_sou.get_asl_after();
+      }));
+
+  if (!sd.get_width()) {
+    // Not a bitfield.
+    t = _tgt.evaluate_attributes(_ast,
+				 _evaluator::make_expr_evaluator(_ast, _tgt),
+				 std::move(t), soud_asl_before, soud_asl_after,
+				 *sql, sd.get_asl_before(), sd.get_asl_after());
+    handle_types<void>
+      ((wrap_callables<no_default_action>
+	([&](std::shared_ptr<const object_type> &&ot) {
+	  if (!ot->is_complete()) {
+	    // A struct's last member is allowed to be an
+	    // incomplete array
+	    if (!(l.get_tag_kind() == struct_or_union_kind::souk_struct &&
+		  sd.is_last() &&
+		  is_type<array_type>(*ot))) {
+	      code_remark remark(code_remark::severity::fatal,
+				 "incomplete type for member",
+				 _ast.get_pp_result(),
+				 sd.get_tokens_range());
+	      _ast.get_remarks().add(remark);
+	      throw semantic_except(remark);
+	    }
+	  }
+	  l.add_member(std::move(id), std::move(ot));
+	 },
+	 [&](const std::shared_ptr<const type>&) {
+	   code_remark remark(code_remark::severity::fatal,
+			      "invalid type for member",
+			      _ast.get_pp_result(),
+			      sd.get_tokens_range());
+	   _ast.get_remarks().add(remark);
+	   throw semantic_except(remark);
+	 })),
+       std::move(t));
+    return;
+  }
+
+  // Bitfield
+  std::shared_ptr<const int_type> it
+    = (handle_types<std::shared_ptr<const int_type>>
+       ((wrap_callables<no_default_action>
+	 ([&](const std::shared_ptr<const enum_type> &et) {
+	    // Bitfield's base type is an enum type specifier.
+	    if (!et->is_complete()) {
+	      code_remark remark
+		(code_remark::severity::fatal,
+		 "bitfield base type is an incomplete enum type",
+		 _ast.get_pp_result(), sd.get_tokens_range());
+	      _ast.get_remarks().add(remark);
+	      throw semantic_except(remark);
+	    }
+	    return et->get_underlying_type();
+	  },
+	  [&](std::shared_ptr<const int_type> &&_it) {
+	    if (_it->is_signed(_tgt) && _tgt.is_bitfield_default_signed()) {
+	      if (!sql->is_signed_explicit()) {
+		// Whether or not a bitfield without an explicit
+		// 'signed' specifier is actually signed or not is
+		// implementation specific, i.e. determined by the
+		// target/ABI. In the evaluation of the specifier
+		// qualifier list, we chose the wrong default. Correct
+		// this.
+		return _it->to_unsigned();
+	      }
+	    }
+	    return std::move(_it);
+	  },
+	  [&](const std::shared_ptr<const type>&)
+		-> std::shared_ptr<const int_type> {
+	   code_remark remark(code_remark::severity::fatal,
+			      "invalid bitfield base type",
+			      _ast.get_pp_result(), sd.get_tokens_range());
+	   _ast.get_remarks().add(remark);
+	    throw semantic_except(remark);
+	  })),
+	std::move(t)));
+
+  const expr &width = *sd.get_width();
+  assert(width.is_evaluated());
+
+  if (!width.is_constexpr()) {
+    code_remark remark(code_remark::severity::fatal,
+		       "bit-field width is not a constant expression",
+		       _ast.get_pp_result(), width.get_tokens_range());
+    _ast.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  const constexpr_value &cv = width.get_constexpr_value();
+  if (!cv.has_constness(constness::c_integer_constant_expr)) {
+    code_remark remark
+      (code_remark::severity::fatal,
+       "bit-field width is not an integer constant expression",
+       _ast.get_pp_result(), width.get_tokens_range());
+    _ast.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  assert(cv.get_value_kind() == constexpr_value::value_kind::vk_int);
+  const target_int &ti_width = cv.get_int_value();
+  if (ti_width.is_negative()) {
+    code_remark remark(code_remark::severity::fatal,
+		       "negative bit-field width",
+		       _ast.get_pp_result(), width.get_tokens_range());
+    _ast.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  const mpa::limbs &ls_width = ti_width.get_limbs();
+  mpa::limbs::size_type w;
+  if (!ls_width.fits_into_type<mpa::limbs::size_type>() ||
+      ((w = ls_width.to_type<mpa::limbs::size_type>()) >
+       it->get_width(_tgt))) {
+    code_remark remark(code_remark::severity::fatal,
+		       "bit-field width exceeds underlying type's width",
+		       _ast.get_pp_result(), width.get_tokens_range());
+    _ast.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  if (d && !w) {
+    // 6.7.2.1(3)
+    code_remark remark(code_remark::severity::fatal,
+		       "zero width bit-field shall not have a declarator",
+		       _ast.get_pp_result(), width.get_tokens_range());
+    _ast.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  std::shared_ptr<const bitfield_type> bft =
+    bitfield_type::create(std::move(it), w);
+  bft = _tgt.evaluate_attributes(_ast,
+				 _evaluator::make_expr_evaluator(_ast, _tgt),
+				 std::move(bft), soud_asl_before, soud_asl_after,
+				 *sql, sd.get_asl_before(), sd.get_asl_after());
+  l.add_member(std::move(id), std::move(bft));
 }
 
 void _evaluator::_handle_sou_member(unnamed_struct_or_union &unnamed_sou)
@@ -2118,8 +2249,8 @@ evaluate_type(ast &a, const target &tgt)
     (wrap_callables<default_action_unreachable<void, type_set<> >::type>
      ([](const struct_declarator&) {
 	// For struct_declarator's, the alignment attributes are
-	// examined along with any bitfield width in
-	// struct_declarator::evaluate_type()
+	// examined along with any bitfield width in the course of
+	// struct/union member handling.
       },
       [&](init_declarator &id) {
 	declaration &enclosing_decl =
@@ -2344,147 +2475,6 @@ void type_name::evaluate_type(ast &a, const target &tgt)
 				std::move(t), _sql);
     _set_type(std::move(t));
   }
-}
-
-void struct_declarator::evaluate_type(ast &a, const target &tgt)
-{
-  struct_declaration_c99 &enclosing_decl =
-    (get_unique_parent<struct_declarator_list>()
-     .get_unique_parent<struct_declaration_c99>());
-  specifier_qualifier_list * const sql =
-    enclosing_decl.get_specifier_qualifier_list();
-  assert(sql);
-
-  std::shared_ptr<const addressable_type> t;
-  if (_d)
-    t = _d->get_innermost_type();
-  else
-    t = sql->get_type();
-
-  // Find the attributes associated with the containing struct/union
-  // definition as a whole.
-  attribute_specifier_list *soud_asl_before = nullptr;
-  attribute_specifier_list *soud_asl_after = nullptr;
-  struct_declaration_list &enclosing_decl_list
-    = enclosing_decl.get_unique_parent<struct_declaration_list>();
-  enclosing_decl_list.process_parent
-    (wrap_callables<no_default_action>
-     ([&](struct_or_union_def &soud) {
-       soud_asl_before = soud.get_asl_before();
-       soud_asl_after = soud.get_asl_after();
-      },
-      [&](unnamed_struct_or_union &unnamed_sou) {
-       soud_asl_before = unnamed_sou.get_asl_before();
-       soud_asl_after = unnamed_sou.get_asl_after();
-      }));
-
-  if (!_width) {
-    // Not a bitfield.
-    t = tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
-				std::move(t), soud_asl_before, soud_asl_after,
-				*sql, _asl_before, _asl_after);
-    _set_type(std::move(t));
-    return;
-  }
-
-  // Bitfield
-  std::shared_ptr<const int_type> it
-    = (handle_types<std::shared_ptr<const int_type>>
-       ((wrap_callables<no_default_action>
-	 ([&](const std::shared_ptr<const enum_type> &et) {
-	    // Bitfield's base type is an enum type specifier.
-	    if (!et->is_complete()) {
-	      code_remark remark
-		(code_remark::severity::fatal,
-		 "bitfield base type is an incomplete enum type",
-		 a.get_pp_result(), get_tokens_range());
-	      a.get_remarks().add(remark);
-	      throw semantic_except(remark);
-	    }
-	    return et->get_underlying_type();
-	  },
-	  [&](std::shared_ptr<const int_type> &&_it) {
-	    if (_it->is_signed(tgt) && tgt.is_bitfield_default_signed()) {
-	      if (!sql->is_signed_explicit()) {
-		// Whether or not a bitfield without an explicit
-		// 'signed' specifier is actually signed or not is
-		// implementation specific, i.e. determined by the
-		// target/ABI. In the evaluation of the specifier
-		// qualifier list, we chose the wrong default. Correct
-		// this.
-		return _it->to_unsigned();
-	      }
-	    }
-	    return std::move(_it);
-	  },
-	  [&](const std::shared_ptr<const type>&)
-		-> std::shared_ptr<const int_type> {
-	   code_remark remark(code_remark::severity::fatal,
-			      "invalid bitfield base type",
-			      a.get_pp_result(), get_tokens_range());
-	   a.get_remarks().add(remark);
-	    throw semantic_except(remark);
-	  })),
-	std::move(t)));
-
-  assert(_width->is_evaluated());
-
-  if (!_width->is_constexpr()) {
-    code_remark remark(code_remark::severity::fatal,
-		       "bit-field width is not a constant expression",
-		       a.get_pp_result(), _width->get_tokens_range());
-    a.get_remarks().add(remark);
-    throw semantic_except(remark);
-  }
-
-  const constexpr_value &cv = _width->get_constexpr_value();
-  if (!cv.has_constness(constness::c_integer_constant_expr)) {
-    code_remark remark
-      (code_remark::severity::fatal,
-       "bit-field width is not an integer constant expression",
-       a.get_pp_result(), _width->get_tokens_range());
-    a.get_remarks().add(remark);
-    throw semantic_except(remark);
-  }
-
-  assert(cv.get_value_kind() == constexpr_value::value_kind::vk_int);
-  const target_int &ti_width = cv.get_int_value();
-  if (ti_width.is_negative()) {
-    code_remark remark(code_remark::severity::fatal,
-		       "negative bit-field width",
-		       a.get_pp_result(), _width->get_tokens_range());
-    a.get_remarks().add(remark);
-    throw semantic_except(remark);
-  }
-
-  const mpa::limbs &ls_width = ti_width.get_limbs();
-  mpa::limbs::size_type width;
-  if (!ls_width.fits_into_type<mpa::limbs::size_type>() ||
-      ((width = ls_width.to_type<mpa::limbs::size_type>()) >
-       it->get_width(tgt))) {
-    code_remark remark(code_remark::severity::fatal,
-		       "bit-field width exceeds underlying type's width",
-		       a.get_pp_result(), _width->get_tokens_range());
-    a.get_remarks().add(remark);
-    throw semantic_except(remark);
-  }
-
-  if (_d && !width) {
-    // 6.7.2.1(3)
-    code_remark remark(code_remark::severity::fatal,
-		       "zero width bit-field shall not have a declarator",
-		       a.get_pp_result(), _width->get_tokens_range());
-    a.get_remarks().add(remark);
-    throw semantic_except(remark);
-  }
-
-  std::shared_ptr<const bitfield_type> bft =
-    bitfield_type::create(std::move(it), width);
-
-  bft = tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
-				std::move(bft), soud_asl_before, soud_asl_after,
-				*sql, _asl_before, _asl_after);
-  _set_type(std::move(bft));
 }
 
 void enumerator::register_at_parent(ast &a, const target &tgt)

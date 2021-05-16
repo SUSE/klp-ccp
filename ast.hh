@@ -2221,8 +2221,7 @@ namespace klp
 	specifier_qualifier_list *_sql;
       };
 
-      class struct_declarator final
-	: public typed_ast_entity<struct_declarator, types::type>
+      class struct_declarator final : public ast_entity<struct_declarator>
       {
       public:
 	typedef type_set<struct_declarator_list> parent_types;
@@ -2238,10 +2237,18 @@ namespace klp
 	const expr* get_width() const noexcept
 	{ return _width; }
 
-	virtual void evaluate_type(ast &a, const target &tgt) override;
-
 	const declarator* get_declarator() const noexcept
 	{ return _d; }
+
+	attribute_specifier_list* get_asl_before() noexcept
+	{
+	  return _asl_before;
+	}
+
+	attribute_specifier_list* get_asl_after() noexcept
+	{
+	  return _asl_after;
+	}
 
 	bool is_last() const noexcept
 	{ return _is_last; }
