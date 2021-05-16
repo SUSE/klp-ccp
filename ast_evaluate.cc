@@ -308,14 +308,10 @@ void _evaluator::_handle_sou_member(struct_declarator &sd)
 
 void _evaluator::_handle_sou_member(unnamed_struct_or_union &unnamed_sou)
 {
-  unnamed_sou.evaluate_type(_ast, _tgt);
-
   assert(!_sou_layouters.empty());
   target::sou_layouter &l = *_sou_layouters.top();
 
-  std::shared_ptr<const struct_or_union_type> t = unnamed_sou.get_type();
-  assert(t->get_content());
-  t->get_content()->for_each_member_flat
+  unnamed_sou.get_content().for_each_member_flat
     ([&](const struct_or_union_content::member &m) {
       if (m.get_name().length() && l.lookup(m.get_name())) {
 	code_remark remark(code_remark::severity::fatal,
@@ -326,6 +322,9 @@ void _evaluator::_handle_sou_member(unnamed_struct_or_union &unnamed_sou)
 	throw semantic_except(remark);
       }
     });
+
+  auto t = struct_or_union_type::create(unnamed_sou.get_tag_kind(),
+					unnamed_sou.get_content());
   const struct_declaration_unnamed_sou &p =
     unnamed_sou.get_unique_parent<struct_declaration_unnamed_sou>();
   const specifier_qualifier_list * const sql = p.get_specifier_qualifier_list();
@@ -2486,11 +2485,6 @@ void struct_declarator::evaluate_type(ast &a, const target &tgt)
 				std::move(bft), soud_asl_before, soud_asl_after,
 				*sql, _asl_before, _asl_after);
   _set_type(std::move(bft));
-}
-
-void unnamed_struct_or_union::evaluate_type(ast &a, const target &tgt)
-{
-  _set_type(struct_or_union_type::create(_souk, *_content));
 }
 
 void enumerator::register_at_parent(ast &a, const target &tgt)

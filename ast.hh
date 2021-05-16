@@ -2317,8 +2317,7 @@ namespace klp
       };
 
       class unnamed_struct_or_union final
-	: public typed_ast_entity<unnamed_struct_or_union,
-				  types::struct_or_union_type>
+	: public ast_entity<unnamed_struct_or_union>
       {
       public:
 	typedef type_set<struct_declaration_unnamed_sou> parent_types;
@@ -2330,8 +2329,6 @@ namespace klp
 				attribute_specifier_list* &&asl_after) noexcept;
 
 	virtual ~unnamed_struct_or_union() noexcept override;
-
-	virtual void evaluate_type(ast &a, const target &tgt) override;
 
 	types::struct_or_union_kind get_tag_kind() const noexcept
 	{ return _souk; }

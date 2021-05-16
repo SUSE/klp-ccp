@@ -3347,7 +3347,7 @@ unnamed_struct_or_union(const pp_tokens_range &tr,
 			struct_declaration_list* &&sdl,
 			attribute_specifier_list* &&asl_before,
 			attribute_specifier_list* &&asl_after) noexcept
-  : typed_ast_entity(tr), _souk(souk), _sdl(mv_p(std::move(sdl))),
+  : ast_entity(tr), _souk(souk), _sdl(mv_p(std::move(sdl))),
     _asl_before(mv_p(std::move(asl_before))),
     _asl_after(mv_p(std::move(asl_after)))
 {
