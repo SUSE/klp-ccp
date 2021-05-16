@@ -3268,8 +3268,7 @@ namespace
 
     void _handle_array_declarator(const types::addressable_type &t);
 
-    void _handle_struct_declarator(const ast::struct_declarator &sd);
-
+    void _handle_sou_def(const ast::struct_or_union_def &soud);
     void _handle_sou_ref(const ast::struct_or_union_ref &sour);
     void _handle_enum_ref(const ast::enum_ref &er);
     void _handle_typedef_ref(const ast::type_specifier_tdid &ts_tdid);
@@ -3500,10 +3499,12 @@ void _ast_info_collector::operator()()
 	  // or there's no tag. Either way, it can't get referred to
 	  // and there's no need to build this definition's
 	  // dependencies separately.
+	  _handle_sou_def(soud);
 	  return false;
 	}
 
 	_enter_soud(soud);
+	_handle_sou_def(soud);
 	return true;
       },
       [&](const ast::enum_def &ed) {
@@ -3623,10 +3624,6 @@ void _ast_info_collector::operator()()
       },
       [this](const ast::direct_abstract_declarator_array &dada) {
 	_handle_array_declarator(*dada.get_type());
-	return false;
-      },
-      [this](const ast::struct_declarator &sd) {
-	_handle_struct_declarator(sd);
 	return false;
       },
       [this](const ast::struct_or_union_ref &sour) {
@@ -3766,7 +3763,6 @@ void _ast_info_collector::operator()()
 	      const ast::asm_operand,
 	      const ast::direct_declarator_array,
 	      const ast::direct_abstract_declarator_array,
-	      const ast::struct_declarator,
 	      const ast::struct_or_union_ref,
 	      const ast::enum_ref,
 	      const ast::type_specifier_tdid>,
@@ -4460,20 +4456,23 @@ _handle_array_declarator(const types::addressable_type &t)
      t);
 }
 
-void _ast_info_collector::
-_handle_struct_declarator(const ast::struct_declarator &sd)
+void _ast_info_collector::_handle_sou_def(const ast::struct_or_union_def &soud)
 {
-  types::handle_types<void>
-    ((wrap_callables<no_default_action>
-      ([&](const types::bitfield_type &bft) {
-	 // If the bitfield's underlying type is an enum, its
-	 // definition will be needed.
-	 _require_complete_type(*bft.get_base_type());
-       },
-       [&](const types::type &t) {
-	 _require_complete_type(t);
-       })),
-     *sd.get_type());
+  assert(soud.get_content());
+  soud.get_content()->for_each_member_flat
+    ([&](const types::struct_or_union_content::member &m) {
+      types::handle_types<void>
+	((wrap_callables<no_default_action>
+	  ([&](const types::bitfield_type &bft) {
+	     // If the bitfield's underlying type is an enum, its
+	     // definition will be needed.
+	     _require_complete_type(*bft.get_base_type());
+	   },
+	   [&](const types::type &t) {
+	     _require_complete_type(t);
+	  })),
+	 *m.get_type());
+    });
 }
 
 void _ast_info_collector::_handle_sou_ref(const ast::struct_or_union_ref &sour)
