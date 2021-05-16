@@ -32,7 +32,6 @@
 #include "builtins.hh"
 #include "pp_tokens_range.hh"
 #include "pp_result.hh"
-#include "target.hh"
 
 namespace klp
 {
@@ -2280,9 +2279,6 @@ namespace klp
 
 	void mark_last_member() noexcept;
 
-	template <typename callable_type>
-	void for_each(callable_type &&c) const;
-
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
@@ -2408,9 +2404,6 @@ namespace klp
 	virtual ~struct_declaration_list() noexcept override;
 
 	void extend(struct_declaration* &&sd);
-
-	void
-	create_content(ast &a, target::sou_layouter &l) const;
 
 	void mark_last_member() noexcept;
 

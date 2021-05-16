@@ -64,6 +64,9 @@ namespace
 			const target &tgt) noexcept;
 
   private:
+    void _handle_sou_member(struct_declarator &sd);
+    void _handle_sou_member(unnamed_struct_or_union &unnamed_sou);
+
     void _check_return_stmt(const klp::ccp::ast::stmt_return &ret_stmt) const;
 
     void
@@ -117,27 +120,30 @@ void _evaluator::operator()()
       [](enumerator&) {
 	return true;
       },
+      [](const struct_declarator&) {
+	return true;
+      },
+      [this](unnamed_struct_or_union &unnamed_sou) {
+	_sou_layouters.push((_tgt.create_sou_layouter
+			     (unnamed_sou.get_tag_kind(),
+			      unnamed_sou.get_asl_before(),
+			      unnamed_sou.get_asl_after(),
+			      _ast,
+			      make_expr_evaluator(_ast, _tgt))));
+	return true;
+      },
       [](struct_declaration_list &sdl) {
 	// A struct's last member may be of array type of unspecified
 	// length. Mark the last member so that the type evaluation
 	// code can handle this.
 	sdl.mark_last_member();
-	return true;
+	return false;
       },
-      [&](struct_or_union_def &soud) {
+      [this](struct_or_union_def &soud) {
 	_sou_layouters.push((_tgt.create_sou_layouter
 			     (soud.get_tag_kind(),
 			      soud.get_asl_before(),
 			      soud.get_asl_after(),
-			      _ast,
-			      make_expr_evaluator(_ast, _tgt))));
-	return true;
-      },
-      [&](unnamed_struct_or_union &unnamed_sou) {
-	_sou_layouters.push((_tgt.create_sou_layouter
-			     (unnamed_sou.get_tag_kind(),
-			      unnamed_sou.get_asl_before(),
-			      unnamed_sou.get_asl_after(),
 			      _ast,
 			      make_expr_evaluator(_ast, _tgt))));
 	return true;
@@ -165,10 +171,16 @@ void _evaluator::operator()()
      ([this](enumerator &e) {
 	 e.register_at_parent(_ast, _tgt);
       },
-      [&](const struct_declaration_list &sdl) {
+      [this](struct_declarator &sd) {
+	_handle_sou_member(sd);
+      },
+      [this](unnamed_struct_or_union &unnamed_sou) {
 	assert(!_sou_layouters.empty());
-	auto &l = *_sou_layouters.top();
-	sdl.create_content(_ast, l);
+	const auto souk = _sou_layouters.top()->get_tag_kind();
+	auto &&c = _sou_layouters.top()->grab_result();
+	_sou_layouters.pop();
+	unnamed_sou.set_content(std::move(c));
+	_handle_sou_member(unnamed_sou);
       },
       [&](struct_or_union_def &soud) {
 	assert(!_sou_layouters.empty());
@@ -185,15 +197,6 @@ void _evaluator::operator()()
 	auto &&c = _sou_layouters.top()->grab_result();
 	_sou_layouters.pop();
 	soud.set_content(std::move(c));
-
-      },
-      [&](unnamed_struct_or_union &unnamed_sou) {
-	assert(!_sou_layouters.empty());
-	const auto souk = _sou_layouters.top()->get_tag_kind();
-	auto &&c = _sou_layouters.top()->grab_result();
-	_sou_layouters.pop();
-	unnamed_sou.set_content(std::move(c));
-	unnamed_sou.evaluate_type(_ast, _tgt);
       },
       [this](init_declarator &i) {
 	_complete_type_from_init(_ast, _tgt, i);
@@ -217,18 +220,19 @@ void _evaluator::operator()()
 				       declarator,
 				       direct_declarator,
 				       enumerator,
+				       struct_declarator,
+				       unnamed_struct_or_union,
 				       struct_declaration_list,
 				       struct_or_union_def,
-				       unnamed_struct_or_union,
 				       init_declarator,
 				       parameter_declaration_abstract,
 				       stmt_return,
 				       function_definition,
 				       _typed>,
 			      type_set<enumerator,
-				       struct_declaration_list,
-				       struct_or_union_def,
+				       struct_declarator,
 				       unnamed_struct_or_union,
+				       struct_or_union_def,
 				       init_declarator,
 				       parameter_declaration_abstract,
 				       stmt_return,
@@ -246,6 +250,92 @@ _evaluator::make_expr_evaluator(klp::ccp::ast::ast &a,
 		   std::placeholders::_1);
 }
 
+void _evaluator::_handle_sou_member(struct_declarator &sd)
+{
+  if (!sd.is_evaluated())
+    sd.evaluate_type(_ast, _tgt);
+
+  assert(!_sou_layouters.empty());
+  target::sou_layouter &l = *_sou_layouters.top();
+
+  std::string id;
+  const declarator * const d = sd.get_declarator();
+  if (d) {
+    const pp_token &id_tok = _ast.get_pp_tokens()[d->get_id_tok()];
+    id = id_tok.get_value();
+    if (id.length() && l.lookup(id)) {
+      code_remark remark(code_remark::severity::fatal,
+			 "member already declared",
+			 _ast.get_pp_result(), d->get_id_tok());
+      _ast.get_remarks().add(remark);
+      throw semantic_except(remark);
+    }
+  }
+
+  handle_types<void>
+    ((wrap_callables<no_default_action>
+      ([&](std::shared_ptr<const object_type> &&o_t) {
+	if (!o_t->is_complete()) {
+	  // A struct's last member is allowed to be an
+	  // incomplete array
+	  if (!(l.get_tag_kind() == struct_or_union_kind::souk_struct &&
+		sd.is_last() &&
+		is_type<array_type>(*o_t))) {
+	    code_remark remark(code_remark::severity::fatal,
+			       "incomplete type for member",
+			       _ast.get_pp_result(),
+			       sd.get_tokens_range());
+	    _ast.get_remarks().add(remark);
+	    throw semantic_except(remark);
+	  }
+	}
+
+	l.add_member(std::move(id), std::move(o_t));
+      },
+      [&](std::shared_ptr<const bitfield_type> &&bf_t) {
+	l.add_member(std::move(id), std::move(bf_t));
+      },
+      [&](const std::shared_ptr<const type>&) {
+	code_remark remark(code_remark::severity::fatal,
+			   "invalid type for member",
+			   _ast.get_pp_result(),
+			   sd.get_tokens_range());
+	_ast.get_remarks().add(remark);
+	throw semantic_except(remark);
+      })),
+     sd.get_type());
+}
+
+void _evaluator::_handle_sou_member(unnamed_struct_or_union &unnamed_sou)
+{
+  unnamed_sou.evaluate_type(_ast, _tgt);
+
+  assert(!_sou_layouters.empty());
+  target::sou_layouter &l = *_sou_layouters.top();
+
+  std::shared_ptr<const struct_or_union_type> t = unnamed_sou.get_type();
+  assert(t->get_content());
+  t->get_content()->for_each_member_flat
+    ([&](const struct_or_union_content::member &m) {
+      if (m.get_name().length() && l.lookup(m.get_name())) {
+	code_remark remark(code_remark::severity::fatal,
+			   "unnamed struct/union redeclares member",
+			   _ast.get_pp_result(),
+			   unnamed_sou.get_tokens_range());
+	_ast.get_remarks().add(remark);
+	throw semantic_except(remark);
+      }
+    });
+  const struct_declaration_unnamed_sou &p =
+    unnamed_sou.get_unique_parent<struct_declaration_unnamed_sou>();
+  const specifier_qualifier_list * const sql = p.get_specifier_qualifier_list();
+  if (sql) {
+    const qualifiers &qs = sql->get_qualifiers();
+    t = (std::dynamic_pointer_cast<const struct_or_union_type>
+	 (t->amend_qualifiers(qs)));
+  }
+  l.add_member(std::move(t));
+}
 
 void _evaluator::_check_return_stmt(const klp::ccp::ast::stmt_return &ret_stmt)
   const
@@ -2396,91 +2486,6 @@ void struct_declarator::evaluate_type(ast &a, const target &tgt)
 				std::move(bft), soud_asl_before, soud_asl_after,
 				*sql, _asl_before, _asl_after);
   _set_type(std::move(bft));
-}
-
-void struct_declaration_list::
-create_content(ast &a, target::sou_layouter &l) const
-{
-  for (auto it = _sds.begin(); it != _sds.end(); ++it) {
-    it->get().process<void, type_set<struct_declaration_c99,
-				     struct_declaration_unnamed_sou> >
-      (wrap_callables<default_action_unreachable<void, type_set<> >::type>
-       ([&](const struct_declaration_c99 &__sd) {
-	 __sd.get_struct_declarator_list().for_each
-	   ([&](const struct_declarator &sd, bool is_last) {
-	      std::string id;
-	      const declarator * const d = sd.get_declarator();
-	      if (d) {
-		const pp_token &id_tok = a.get_pp_tokens()[d->get_id_tok()];
-		id = id_tok.get_value();
-		if (id.length() && l.lookup(id)) {
-		  code_remark remark(code_remark::severity::fatal,
-				     "member already declared",
-				     a.get_pp_result(), d->get_id_tok());
-		  a.get_remarks().add(remark);
-		  throw semantic_except(remark);
-		}
-	      }
-
-	      handle_types<void>
-		((wrap_callables<no_default_action>
-		  ([&](std::shared_ptr<const object_type> &&o_t) {
-		     if (!o_t->is_complete()) {
-		       // A struct's last member is allowed to be an
-		       // incomplete array
-		       if (!(l.get_tag_kind() == struct_or_union_kind::souk_struct &&
-			     sd.is_last() &&
-			     is_type<array_type>(*o_t))) {
-			 code_remark remark(code_remark::severity::fatal,
-					    "incomplete type for member",
-					    a.get_pp_result(),
-					    sd.get_tokens_range());
-			 a.get_remarks().add(remark);
-			 throw semantic_except(remark);
-		       }
-		     }
-
-		     l.add_member(std::move(id), std::move(o_t));
-		   },
-		   [&](std::shared_ptr<const bitfield_type> &&bf_t) {
-		     l.add_member(std::move(id), std::move(bf_t));
-		   },
-		   [&](const std::shared_ptr<const type>&) {
-		     code_remark remark(code_remark::severity::fatal,
-					"invalid type for member",
-					a.get_pp_result(),
-					sd.get_tokens_range());
-		     a.get_remarks().add(remark);
-		     throw semantic_except(remark);
-		   })),
-		 sd.get_type());
-	    });
-	},
-	[&](const struct_declaration_unnamed_sou &sd) {
-	  std::shared_ptr<const struct_or_union_type> t =
-	    sd.get_unnamed_struct_or_union().get_type();
-	  assert(t->get_content());
-	  t->get_content()->for_each_member_flat
-	    ([&](const struct_or_union_content::member &m) {
-	       if (m.get_name().length() && l.lookup(m.get_name())) {
-		 code_remark remark(code_remark::severity::fatal,
-				    "unnamed struct/union redeclares member",
-				    a.get_pp_result(),
-				    sd.get_tokens_range());
-		 a.get_remarks().add(remark);
-		 throw semantic_except(remark);
-	       }
-	    });
-	  const specifier_qualifier_list * const sql =
-	    sd.get_specifier_qualifier_list();
-	  if (sql) {
-	    const qualifiers &qs = sql->get_qualifiers();
-	    t = (std::dynamic_pointer_cast<const struct_or_union_type>
-		 (t->amend_qualifiers(qs)));
-	  }
-	  l.add_member(std::move(t));
-	}));
-  }
 }
 
 void unnamed_struct_or_union::evaluate_type(ast &a, const target &tgt)

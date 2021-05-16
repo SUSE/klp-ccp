@@ -801,15 +801,6 @@ namespace klp
       }
 
       template <typename callable_type>
-      void struct_declarator_list::for_each(callable_type &&c) const
-      {
-	for (auto it = _sds.begin(); it != _sds.end(); ++it) {
-	  c(static_cast<const struct_declarator&>(it->get()),
-	    it + 1 == _sds.end());
-	}
-      }
-
-      template <typename callable_type>
       void designator_list::for_each(callable_type &&c) const
       {
 	for (auto d : _ds)
