@@ -4125,6 +4125,9 @@ bool _ast_info_collector::_handle_expr(const ast::expr_func_invocation &e)
 	   return false;
 	 }
 
+	 if (!_is_evaluated(e))
+	   return false;
+
 	 const ast::expr_list * const el = e.get_args();
 	 assert(el);
 	 assert(el->size() == 3);
@@ -4202,6 +4205,9 @@ bool _ast_info_collector::_handle_expr(const ast::expr_binop &e)
     break;
 
   case ast::binary_op::logical_and:
+    if (!_is_evaluated(e))
+      return false;
+
     if (_expr_to_bool(e.get_left_expr()) == _constexpr_bool_value::zero) {
       _push_unevaluated(e.get_right_expr());
       return true;
@@ -4209,6 +4215,9 @@ bool _ast_info_collector::_handle_expr(const ast::expr_binop &e)
     break;
 
   case ast::binary_op::logical_or:
+    if (!_is_evaluated(e))
+      return false;
+
     if (_expr_to_bool(e.get_left_expr()) == _constexpr_bool_value::nonzero) {
       _push_unevaluated(e.get_right_expr());
       return true;
@@ -4245,6 +4254,9 @@ bool _ast_info_collector::_handle_expr(const ast::expr_conditional &e)
   if (e.get_expr_true())
     _require_complete_type(*e.get_expr_true()->get_type());
   _require_complete_type(*e.get_expr_false().get_type());
+
+  if (!_is_evaluated(e))
+    return false;
 
   switch (_expr_to_bool(e.get_cond())) {
   case _constexpr_bool_value::unknown:
