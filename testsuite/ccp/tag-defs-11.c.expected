@@ -1,0 +1,26 @@
+/* klp-ccp: from testsuite/ccp/tag-defs-11.c */
+enum A
+{
+	a,
+};
+
+struct B
+{
+	enum A a;
+};
+
+enum C
+{
+	c,
+};
+
+struct D
+{
+	enum C c : 32;
+};
+
+void klpp_pu_f(struct B)
+{}
+
+void klpp_pu_g(struct D)
+{}

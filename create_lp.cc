@@ -3268,7 +3268,6 @@ namespace
 
     void _handle_array_declarator(const types::addressable_type &t);
 
-    void _handle_sou_def(const ast::struct_or_union_def &soud);
     void _handle_sou_ref(const ast::struct_or_union_ref &sour);
     void _handle_enum_ref(const ast::enum_ref &er);
     void _handle_typedef_ref(const ast::type_specifier_tdid &ts_tdid);
@@ -3491,6 +3490,9 @@ void _ast_info_collector::operator()()
 
 	return false;
       },
+      [](const ast::struct_declarator &) {
+	return true;
+      },
       [&](const ast::struct_or_union_def &soud) {
 	if ((_cur_function_definition && _cur_deps) ||
 	    _in_parameter_declaration_list ||
@@ -3499,12 +3501,10 @@ void _ast_info_collector::operator()()
 	  // or there's no tag. Either way, it can't get referred to
 	  // and there's no need to build this definition's
 	  // dependencies separately.
-	  _handle_sou_def(soud);
 	  return false;
 	}
 
 	_enter_soud(soud);
-	_handle_sou_def(soud);
 	return true;
       },
       [&](const ast::enum_def &ed) {
@@ -3637,8 +3637,7 @@ void _ast_info_collector::operator()()
       [this](const ast::type_specifier_tdid &ts_tdid) {
 	_handle_typedef_ref(ts_tdid);
 	return false;
-      }
-      ));
+      }));
 
   auto &&post =
     (wrap_callables<default_action_unreachable<void, type_set<>>::type>
@@ -3717,6 +3716,16 @@ void _ast_info_collector::operator()()
       [this](const ast::expr_conditional&) {
 	_pop_unevaluated();
       },
+      [&](const ast::struct_declarator &sd) {
+	const ast::declarator * const d = sd.get_declarator();
+	if (!d)
+	  return;
+
+	// For bitfields, this will add dependency to the underlying
+	// integer type, which is what is needed in case that's an
+	// enum type.
+	_require_complete_type(*d->get_innermost_type());
+      },
       [&](const ast::struct_or_union_def&) {
 	_leave_souoed();
       },
@@ -3733,6 +3742,7 @@ void _ast_info_collector::operator()()
 	      const ast::init_declarator,
 	      const ast::initializer_expr,
 	      const ast::initializer,
+	      const ast::struct_declarator,
 	      const ast::struct_or_union_def,
 	      const ast::enum_def,
 	      const ast::typeof_expr,
@@ -3780,6 +3790,7 @@ void _ast_info_collector::operator()()
 	      const ast::expr_func_invocation,
 	      const ast::expr_binop,
 	      const ast::expr_conditional,
+	      const ast::struct_declarator,
 	      const ast::struct_or_union_def,
 	      const ast::enum_def>>
     (std::move(pre), std::move(post));
@@ -4454,25 +4465,6 @@ _handle_array_declarator(const types::addressable_type &t)
 	 _require_complete_type(*pt.get_pointed_to_type());
        })),
      t);
-}
-
-void _ast_info_collector::_handle_sou_def(const ast::struct_or_union_def &soud)
-{
-  assert(soud.get_content());
-  soud.get_content()->for_each_member_flat
-    ([&](const types::struct_or_union_content::member &m) {
-      types::handle_types<void>
-	((wrap_callables<no_default_action>
-	  ([&](const types::bitfield_type &bft) {
-	     // If the bitfield's underlying type is an enum, its
-	     // definition will be needed.
-	     _require_complete_type(*bft.get_base_type());
-	   },
-	   [&](const types::type &t) {
-	     _require_complete_type(t);
-	  })),
-	 *m.get_type());
-    });
 }
 
 void _ast_info_collector::_handle_sou_ref(const ast::struct_or_union_ref &sour)
