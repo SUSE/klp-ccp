@@ -1,0 +1,9 @@
+/* klp-ccp: from ../../cp/testsuite/ccp/ext-obj-11.c */
+void ee_f(void);
+
+static void (*o)(void) = &ee_f;
+
+void klpp_pu_g(void)
+{
+	o;
+}
