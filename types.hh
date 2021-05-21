@@ -715,10 +715,6 @@ namespace klp
 	class member
 	{
 	public:
-	  member(const std::string &name, std::shared_ptr<const type> &&type);
-
-	  member(std::shared_ptr<const struct_or_union_type> &&sou_type);
-
 	  member(member &&m);
 
 	  ~member() noexcept;
@@ -736,16 +732,27 @@ namespace klp
 	  const std::shared_ptr<const struct_or_union_type>&
 	  get_sou_type() const noexcept;
 
-	  void set_offset(const mpa::limbs &offset);
 	  const mpa::limbs& get_offset() const noexcept;
 
-	  void set_bitpos(const mpa::limbs &bitpos);
 	  const mpa::limbs& get_bitpos() const noexcept;
 
-	  void set_has_constant_offset(const bool val) noexcept;
 	  bool has_constant_offset() const noexcept;
 
 	private:
+	  friend class struct_or_union_content;
+
+	  member(const std::string &name,
+		 const std::shared_ptr<const type> &type,
+		 mpa::limbs &&offset, mpa::limbs &&bitpos);
+
+	  member(const std::string &name,
+		 const std::shared_ptr<const type> &type);
+
+	  member(const std::shared_ptr<const struct_or_union_type> &sou_type,
+		 mpa::limbs &&offset);
+
+	  member(const std::shared_ptr<const struct_or_union_type> &sou_type);
+
 	  const std::string _name;
 	  union
 	  {
@@ -754,7 +761,6 @@ namespace klp
 	  };
 	  mpa::limbs _offset;
 	  mpa::limbs _bitpos;
-	  bool _has_constant_offset;
 	  bool _is_unnamed_sou;
 	};
 
@@ -765,7 +771,19 @@ namespace klp
 
 	struct_or_union_content();
 
-	void add_member(member &&m);
+	void add_member(const std::string &name,
+			const std::shared_ptr<const type> &type,
+			mpa::limbs &&offset, mpa::limbs &&bitpos);
+
+	void add_member(const std::string &name,
+			const std::shared_ptr<const type> &type);
+
+	void
+	add_member(const std::shared_ptr<const struct_or_union_type> &sou_type,
+		   mpa::limbs &&offset);
+
+	void
+	add_member(const std::shared_ptr<const struct_or_union_type> &sou_type);
 
 	lookup_result lookup(const std::string &name) const;
 

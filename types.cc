@@ -1254,24 +1254,37 @@ pointer_type::_construct_composite(const target &tgt,
 			    comp_user_align)));
 }
 
-
 struct_or_union_content::member::
-member(const std::string &name, std::shared_ptr<const type> &&type)
-  : _name(name), _type(std::move(type)), _has_constant_offset(false),
+member(const std::string &name, const std::shared_ptr<const type> &type,
+       mpa::limbs &&offset, mpa::limbs &&bitpos)
+  : _name(name), _type(type),
+    _offset(std::move(offset)), _bitpos(std::move(bitpos)),
     _is_unnamed_sou(false)
 {
+  assert(!_offset.empty());
 }
 
 struct_or_union_content::member::
-member(std::shared_ptr<const struct_or_union_type> &&sou_type)
-  : _sou_type(std::move(sou_type)), _has_constant_offset(false),
-    _is_unnamed_sou(true)
+member(const std::string &name, const std::shared_ptr<const type> &type)
+  : _name(name), _type(type), _is_unnamed_sou(false)
+{}
+
+struct_or_union_content::member::
+member(const std::shared_ptr<const struct_or_union_type> &sou_type,
+       mpa::limbs &&offset)
+  : _sou_type(sou_type), _offset(std::move(offset)), _is_unnamed_sou(true)
+{
+  assert(!_offset.empty());
+}
+
+struct_or_union_content::member::
+member(const std::shared_ptr<const struct_or_union_type> &sou_type)
+  : _sou_type(sou_type), _is_unnamed_sou(true)
 {}
 
 struct_or_union_content::member::member(member &&m)
   : _name(std::move(m._name)), _offset(std::move(m._offset)),
-    _bitpos(std::move(m._bitpos)), _has_constant_offset(m._has_constant_offset),
-    _is_unnamed_sou(m._is_unnamed_sou)
+    _bitpos(std::move(m._bitpos)), _is_unnamed_sou(m._is_unnamed_sou)
 {
   if (!_is_unnamed_sou) {
     new (&_type) std::shared_ptr<const type>(std::move(m._type));
@@ -1306,20 +1319,10 @@ struct_or_union_content::member::get_sou_type() const noexcept
   return _sou_type;
 }
 
-void struct_or_union_content::member::set_offset(const mpa::limbs &offset)
-{
-  _offset = offset;
-}
-
 const mpa::limbs& struct_or_union_content::member::get_offset() const noexcept
 {
   assert(!_offset.empty());
   return _offset;
-}
-
-void struct_or_union_content::member::set_bitpos(const mpa::limbs &bitpos)
-{
-  _bitpos = bitpos;
 }
 
 const mpa::limbs& struct_or_union_content::member::get_bitpos() const noexcept
@@ -1327,15 +1330,9 @@ const mpa::limbs& struct_or_union_content::member::get_bitpos() const noexcept
   return _bitpos;
 }
 
-void struct_or_union_content::member::
-set_has_constant_offset(const bool val) noexcept
-{
-  _has_constant_offset = val;
-}
-
 bool struct_or_union_content::member::has_constant_offset() const noexcept
 {
-  return _has_constant_offset;
+  return !_offset.empty();
 }
 
 
@@ -1343,9 +1340,32 @@ struct_or_union_content::struct_or_union_content()
   : _align_ffs(0), _size(0), _is_size_constant(false)
 {}
 
-void struct_or_union_content::add_member(member &&m)
+void struct_or_union_content::
+add_member(const std::string &name,
+	   const std::shared_ptr<const type> &type,
+	   mpa::limbs &&offset, mpa::limbs &&bitpos)
 {
-  _members.emplace_back(std::move(m));
+  _members.push_back(member{name, type, std::move(offset), std::move(bitpos)});
+}
+
+void struct_or_union_content::
+add_member(const std::string &name,
+	   const std::shared_ptr<const type> &type)
+{
+  _members.push_back(member{name, type});
+}
+
+void struct_or_union_content::
+add_member(const std::shared_ptr<const struct_or_union_type> &sou_type,
+	   mpa::limbs &&offset)
+{
+  _members.push_back(member{sou_type, std::move(offset)});
+}
+
+void struct_or_union_content::
+add_member(const std::shared_ptr<const struct_or_union_type> &sou_type)
+{
+  _members.push_back(member{sou_type});
 }
 
 struct_or_union_content::lookup_result
