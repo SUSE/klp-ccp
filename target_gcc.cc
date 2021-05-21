@@ -343,6 +343,12 @@ struct target_gcc::_impl_proxy
     return _tgt._is_pid_signed();
   }
 
+  mpa::limbs::size_type _biggest_alignment_bytes_log2()
+    const noexcept
+  {
+    return _tgt._biggest_alignment_bytes_log2();
+  }
+
   std::shared_ptr<const types::object_type>
   _create_builtin_va_list_type() const
   {
@@ -409,7 +415,7 @@ bool _aligned_attribute_finder::operator()(ast::attribute &attr)
   if (!params) {
     // An single 'aligned' attribute w/o any parameters
     // means the target's "biggest alignment".
-    log2_value = _tgt.get_biggest_alignment_log2();
+    log2_value = _impl_proxy{_tgt}._biggest_alignment_bytes_log2();
 
   } else {
     if (!params || params->size() != 1) {

@@ -188,12 +188,6 @@ bool target_x86_64_gcc::is_bitfield_default_signed() const noexcept
   return true;
 }
 
-mpa::limbs::size_type target_x86_64_gcc::get_biggest_alignment_log2()
-  const noexcept
-{
-  return 4;
-}
-
 std::unique_ptr<execution_charset_encoder> target_x86_64_gcc::
 get_execution_charset_encoder(const execution_charset_encoding e) const
 {
@@ -328,6 +322,12 @@ types::ext_int_type::kind target_x86_64_gcc::_get_pid_mode() const noexcept
 bool target_x86_64_gcc::_is_pid_signed() const noexcept
 {
   return true;
+}
+
+mpa::limbs::size_type target_x86_64_gcc::_biggest_alignment_bytes_log2()
+  const noexcept
+{
+  return 4;
 }
 
 std::shared_ptr<const types::object_type>

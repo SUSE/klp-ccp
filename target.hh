@@ -176,9 +176,6 @@ namespace klp
 
       virtual mpa::limbs::size_type get_pointer_alignment() const noexcept = 0;
 
-      virtual mpa::limbs::size_type get_biggest_alignment_log2()
-	const noexcept = 0;
-
       enum class execution_charset_encoding
       {
 	ecse_char,

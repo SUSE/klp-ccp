@@ -38,9 +38,6 @@ namespace klp
 
       virtual bool is_bitfield_default_signed() const noexcept override;
 
-      virtual mpa::limbs::size_type get_biggest_alignment_log2()
-	const noexcept override;
-
       virtual std::unique_ptr<execution_charset_encoder>
       get_execution_charset_encoder(const execution_charset_encoding e)
 	const override;
@@ -74,6 +71,9 @@ namespace klp
 
       virtual types::ext_int_type::kind _get_pid_mode() const noexcept override;
       virtual bool _is_pid_signed() const noexcept override;
+
+      virtual mpa::limbs::size_type _biggest_alignment_bytes_log2()
+	const noexcept override;
 
       virtual std::shared_ptr<const types::object_type>
       _create_builtin_va_list_type() const override;

@@ -624,6 +624,10 @@ namespace klp
       virtual types::ext_int_type::kind _get_pid_mode() const noexcept = 0;
       virtual bool _is_pid_signed() const noexcept = 0;
 
+      // Corresponds to GCC's BIGGEST_ALIGNMENT.
+      virtual mpa::limbs::size_type _biggest_alignment_bytes_log2()
+	const noexcept = 0;
+
       virtual std::shared_ptr<const types::object_type>
       _create_builtin_va_list_type() const = 0;
 
