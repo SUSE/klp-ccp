@@ -73,6 +73,9 @@ enum opt_code_common
   opt_code_common_funwind_tables,
   opt_code_common_fasynchronous_unwind_tables,
 
+  opt_code_common_fpack_struct,
+  opt_code_common_fpack_struct_,
+
   opt_code_common_fstack_protector,
   opt_code_common_fstack_protector_all,
   opt_code_common_fstack_protector_explicit,
@@ -2987,6 +2990,7 @@ target_gcc::opts_common::opts_common(const gcc_cmdline_parser::gcc_version &ver)
     flag_omit_frame_pointer(false), flag_omit_frame_pointer_set(false),
     flag_exceptions(false), flag_non_call_exceptions(false),
     flag_unwind_tables(false), flag_asynchronous_unwind_tables(false),
+    flag_pack_struct(false), initial_max_fld_align_ffs(0),
     flag_stack_protect(-1)
 {
   using gcc_version = gcc_cmdline_parser::gcc_version;
@@ -3536,6 +3540,32 @@ handle_opt(const gcc_cmdline_parser::option * const o,
 
   case opt_code_common_fasynchronous_unwind_tables:
     flag_asynchronous_unwind_tables = !negative;
+    break;
+
+  case opt_code_common_fpack_struct:
+    flag_pack_struct = !negative;
+    break;
+
+  case opt_code_common_fpack_struct_:
+    {
+      std::size_t endpos;
+      int _value = -1;
+
+      try {
+	_value = std::stoi(std::string{val}, &endpos);
+      } catch (...) {}
+
+      if (val[endpos] != '\0' || _value < 0)
+	throw cmdline_except{"invalid argument to -fpack-struct="};
+
+      const unsigned int value = _value;
+      if (value & (value - 1))
+	throw cmdline_except{"-fpack-struct= argument not a power of two"};
+      else if (value > 16)
+	throw cmdline_except{"-fpack-struct= argument too large"};
+
+      initial_max_fld_align_ffs = mpa::limb{value}.ffs();
+    }
     break;
 
   case opt_code_common_fstack_protector:

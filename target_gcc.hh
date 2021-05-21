@@ -274,6 +274,9 @@ namespace klp
 	bool flag_unwind_tables;
 	int flag_asynchronous_unwind_tables;
 
+	bool flag_pack_struct;
+	unsigned int initial_max_fld_align_ffs;
+
 	int flag_stack_protect;
 
 	enum sanitizer_flags_bit
