@@ -1356,8 +1356,9 @@ private:
 
   static bool
   _excess_unit_span(const hwi byte_offset, const hwi bit_offset,
-		    const hwi size, const mpa::limbs::size_type align_log2,
-		    const uhwi type_size) noexcept;
+		    const hwi size_bits,
+		    const mpa::limbs::size_type align_bits_log2,
+		    const uhwi type_size_bits) noexcept;
 
   void _normalize();
 
@@ -1383,9 +1384,9 @@ private:
   types::alignment _user_align;
   bool _packed;
 
-  mpa::limbs _offset;
+  mpa::limbs _byte_offset;
   mpa::limbs _bitpos;
-  mpa::limbs::size_type _record_align_ffs;
+  mpa::limbs::size_type _record_align_bits_ffs;
   bool _is_size_constant;
 };
 
@@ -1397,7 +1398,7 @@ sou_layouter(const types::struct_or_union_kind souk,
 	     const target_gcc &tgt,
 	     const sou_layouter::expr_evaluator_type &expr_eval)
   : target::sou_layouter(souk), _a(&a), _tgt(tgt), _expr_eval(expr_eval),
-  _packed(false), _offset(0), _bitpos(), _record_align_ffs(0),
+  _packed(false), _byte_offset(0), _bitpos(), _record_align_bits_ffs(0),
   _is_size_constant(true)
 {
   _aligned_attribute_finder aaf(a, _expr_eval, _tgt, false);
@@ -1417,15 +1418,15 @@ sou_layouter(const types::struct_or_union_kind souk,
   }
 
   if (_user_align.is_set())
-    _record_align_ffs = _user_align.get_log2_value() + 3 + 1;
+    _record_align_bits_ffs = _user_align.get_log2_value() + 3 + 1;
   else
-    _record_align_ffs = 3 + 1;
+    _record_align_bits_ffs = 3 + 1;
 }
 
 target_gcc::sou_layouter::sou_layouter(const types::struct_or_union_kind souk,
 				       const target_gcc &tgt)
   : target::sou_layouter(souk), _a(nullptr), _tgt(tgt), _expr_eval(),
-  _packed(false), _offset(0), _bitpos(), _record_align_ffs(3 + 1),
+  _packed(false), _byte_offset(0), _bitpos(), _record_align_bits_ffs(3 + 1),
   _is_size_constant(true)
 {}
 
@@ -1577,14 +1578,15 @@ void target_gcc::sou_layouter::_finish()
 {
   _normalize();
 
-  const mpa::limbs unpadded_size = _offset.lshift(3) + _bitpos;
-  const mpa::limbs type_size = unpadded_size.align(_record_align_ffs - 1);
-  assert(!type_size.is_any_set_below(3));
+  const mpa::limbs unpadded_size_bits = _byte_offset.lshift(3) + _bitpos;
+  const mpa::limbs type_size_bits =
+    unpadded_size_bits.align(_record_align_bits_ffs - 1);
+  assert(!type_size_bits.is_any_set_below(3));
 
-  assert(_record_align_ffs >= 4);
-  _c->set_alignment(_record_align_ffs - 3 - 1);
+  assert(_record_align_bits_ffs >= 4);
+  _c->set_alignment(_record_align_bits_ffs - 3 - 1);
   if (_is_size_constant) {
-    _c->set_size(type_size.rshift(3, false));
+    _c->set_size(type_size_bits.rshift(3, false));
     _c->set_size_constant(true);
   } else {
     _c->set_size_constant(false);
@@ -1604,70 +1606,76 @@ _layout_decl_bitfield(const bitfield_type &bf_t) const
 {
   // With gcc, all declaration nodes' DECL_ALIGN() fields gets
   // initialized to one, c.f. make_node_stat().
-  mpa::limbs::size_type desired_align_ffs = 1;
+  mpa::limbs::size_type desired_align_bits_ffs = 1;
   const alignment &user_align = bf_t.get_user_alignment();
   if (user_align.is_set())
-    desired_align_ffs = 3 + user_align.get_log2_value() + 1;
+    desired_align_bits_ffs = 3 + user_align.get_log2_value() + 1;
 
   if (!bf_t.get_width(_tgt)) {
     // From gcc: A zero-length bit-field affects the alignment of the
     // next field.  In essence such bit-fields are not influenced by
     // any packing due to #pragma pack or attribute packed.
     const std::shared_ptr<const int_type>& base_type = bf_t.get_base_type();
-    const mpa::limbs::size_type base_type_align_ffs =
+    const mpa::limbs::size_type base_type_align_bits_ffs =
       3 + base_type->get_effective_alignment(_tgt) + 1;
-    desired_align_ffs = std::max(base_type_align_ffs, desired_align_ffs);
+    desired_align_bits_ffs = std::max(base_type_align_bits_ffs,
+				      desired_align_bits_ffs);
 
     // Note that this won't affect ->record_align in
     // _update_alignment_for_bitfield(), because zero-width bitfields
     // are always unnamed. Odd.
   }
 
-  return desired_align_ffs;
+  return desired_align_bits_ffs;
 }
 
 mpa::limbs::size_type target_gcc::sou_layouter::
 _update_alignment_for_field(const object_type &o_t)
 {
-  const mpa::limbs::size_type desired_align_ffs = _layout_decl_field(o_t);
+  const mpa::limbs::size_type desired_align_bits_ffs = _layout_decl_field(o_t);
 
-  _record_align_ffs = std::max(_record_align_ffs, desired_align_ffs);
+  _record_align_bits_ffs = std::max(_record_align_bits_ffs,
+				    desired_align_bits_ffs);
 
-  return desired_align_ffs;
+  return desired_align_bits_ffs;
 }
 
 mpa::limbs::size_type target_gcc::sou_layouter::
 _update_alignment_for_field(const std::string &id, const bitfield_type &bf_t)
 {
-  const mpa::limbs::size_type desired_align_ffs =
+  const mpa::limbs::size_type desired_align_bits_ffs =
     _layout_decl_bitfield(bf_t);
 
   if (!id.empty()) {
     const std::shared_ptr<const int_type>& base_type = bf_t.get_base_type();
-    mpa::limbs::size_type type_align_ffs =
+    mpa::limbs::size_type type_align_bits_ffs =
       3 + base_type->get_effective_alignment(_tgt) + 1;
 
     if (bf_t.get_width(_tgt) && bf_t.is_packed())
-      type_align_ffs = 3 + 1;
+      type_align_bits_ffs = 3 + 1;
 
-    _record_align_ffs = std::max(_record_align_ffs, desired_align_ffs);
-    _record_align_ffs = std::max(_record_align_ffs, type_align_ffs);
+    _record_align_bits_ffs = std::max(_record_align_bits_ffs,
+				      desired_align_bits_ffs);
+    _record_align_bits_ffs = std::max(_record_align_bits_ffs,
+				      type_align_bits_ffs);
   }
 
-  return desired_align_ffs;
+  return desired_align_bits_ffs;
 }
 
 bool target_gcc::sou_layouter::
 _excess_unit_span(const hwi byte_offset, const hwi bit_offset,
-		  const hwi size, const mpa::limbs::size_type align_log2,
-		  const uhwi type_size) noexcept
+		  const hwi size_bits,
+		  const mpa::limbs::size_type align_bits_log2,
+		  const uhwi type_size_bits) noexcept
 {
-  uhwi offset = crop_like_gcc<uhwi>(byte_offset * 8 + bit_offset);
-  uhwi align = static_cast<uhwi>(1) << align_log2;
+  uhwi offset_bits = crop_like_gcc<uhwi>(byte_offset * 8 + bit_offset);
+  uhwi align_bits = static_cast<uhwi>(1) << align_bits_log2;
 
-  offset = offset % align;
-  return ((offset + crop_like_gcc<uhwi>(size) + align - 1) / align >
-	  type_size / align);
+  offset_bits = offset_bits % align_bits;
+  return (((offset_bits + crop_like_gcc<uhwi>(size_bits) + align_bits - 1) /
+	   align_bits) >
+	  type_size_bits / align_bits);
 }
 
 void target_gcc::sou_layouter::_normalize()
@@ -1677,7 +1685,7 @@ void target_gcc::sou_layouter::_normalize()
     mpa::limbs offset_add = _bitpos;
     offset_add.set_bits_below(3, false);
     offset_add = offset_add.rshift(3, false);
-    _offset = _offset + offset_add;
+    _byte_offset = _byte_offset + offset_add;
     _bitpos.set_bits_at_and_above(3, false);
   }
 }
@@ -1688,7 +1696,7 @@ void target_gcc::sou_layouter::_align_to_byte()
     return;
 
   const mpa::limbs partial_bytes = _bitpos.align(3).rshift(3, false);
-  _offset = _offset + partial_bytes;
+  _byte_offset = _byte_offset + partial_bytes;
   _bitpos = mpa::limbs::from_size_type(0);
 }
 
@@ -1696,21 +1704,21 @@ void target_gcc::sou_layouter::
 _place_struct_field(std::string &&id,
 		    std::shared_ptr<const types::object_type> &&ot)
 {
-  const mpa::limbs::size_type desired_align_ffs =
+  const mpa::limbs::size_type desired_align_bits_ffs =
     crop_ffs_like_gcc<unsigned int>(_update_alignment_for_field(*ot));
 
   // Align the field as desired.
-  assert(desired_align_ffs == 1 || desired_align_ffs >= 4);
-  if (desired_align_ffs >= 3 + 1) {
+  assert(desired_align_bits_ffs == 1 || desired_align_bits_ffs >= 4);
+  if (desired_align_bits_ffs >= 3 + 1) {
     _align_to_byte();
-    _offset = _offset.align(desired_align_ffs - 1 - 3);
+    _byte_offset = _byte_offset.align(desired_align_bits_ffs - 1 - 3);
   }
 
   // From gcc: Offset so far becomes the position of this field after
   // normalizing.
   _normalize();
   if (_is_size_constant) {
-    mpa::limbs offset = _offset;
+    mpa::limbs offset = _byte_offset;
     if (_bitpos) {
       assert(!_bitpos.is_any_set_below(3));
       offset += _bitpos.rshift(3, false);
@@ -1739,14 +1747,14 @@ void target_gcc::sou_layouter::
 _place_struct_field(std::string &&id,
 		    std::shared_ptr<const types::bitfield_type> &&bft)
 {
-  const mpa::limbs::size_type desired_align_ffs =
+  const mpa::limbs::size_type desired_align_bits_ffs =
     crop_ffs_like_gcc<unsigned int>(_update_alignment_for_field(id, *bft));
 
   // Align the field as desired.
-  assert(desired_align_ffs == 1 || desired_align_ffs >= 4);
-  if (desired_align_ffs >= 3 + 1) {
+  assert(desired_align_bits_ffs == 1 || desired_align_bits_ffs >= 4);
+  if (desired_align_bits_ffs >= 3 + 1) {
     _align_to_byte();
-    _offset = _offset.align(desired_align_ffs - 1 - 3);
+    _byte_offset = _byte_offset.align(desired_align_bits_ffs - 1 - 3);
   }
 
   // From gcc: Handle compatibility with PCC.  Note that if the record
@@ -1755,16 +1763,16 @@ _place_struct_field(std::string &&id,
   if (!bft->is_packed() &&
       bft->get_width(_tgt) &&
       bft->get_width(_tgt) <= std::numeric_limits<uhwi>::max() &&
-      _is_size_constant && _offset.fits_into_type<uhwi>() &&
+      _is_size_constant && _byte_offset.fits_into_type<uhwi>() &&
       (bft->get_base_type()->get_size(_tgt).lshift(3)
        .fits_into_type<uhwi>())) {
     const std::shared_ptr<const int_type>& base_type =
       bft->get_base_type();
-    const mpa::limbs::size_type type_align_ffs =
+    const mpa::limbs::size_type type_align_bits_ffs =
       3 + base_type->get_effective_alignment(_tgt) + 1;
     const hwi field_size =
       crop_like_gcc<hwi>(static_cast<uhwi>(bft->get_width(_tgt)));
-    const hwi offset = crop_like_gcc<hwi>(_offset.to_type<uhwi>());
+    const hwi offset = crop_like_gcc<hwi>(_byte_offset.to_type<uhwi>());
     const hwi bit_offset = crop_like_gcc<hwi>(_bitpos.to_type<uhwi>());
     const uhwi type_size =
       base_type->get_size(_tgt).lshift(3).to_type<uhwi>();
@@ -1773,8 +1781,8 @@ _place_struct_field(std::string &&id,
     // its type than its type itself.  Advance to next boundary if
     // necessary.
     if (_excess_unit_span(offset, bit_offset, field_size,
-			  type_align_ffs - 1, type_size)) {
-      _bitpos = _bitpos.align(type_align_ffs - 1);
+			  type_align_bits_ffs - 1, type_size)) {
+      _bitpos = _bitpos.align(type_align_bits_ffs - 1);
     }
   }
 
@@ -1783,7 +1791,7 @@ _place_struct_field(std::string &&id,
   _normalize();
   if (_is_size_constant)
     _c->add_member(std::move(id), bft,
-		   mpa::limbs{_offset}, mpa::limbs{_bitpos});
+		   mpa::limbs{_byte_offset}, mpa::limbs{_bitpos});
   else
     _c->add_member(std::move(id), bft);
 
@@ -1794,21 +1802,21 @@ _place_struct_field(std::string &&id,
 void target_gcc::sou_layouter::
 _place_struct_field(std::shared_ptr<const types::struct_or_union_type> &&sout)
 {
-  const mpa::limbs::size_type desired_align_ffs =
+  const mpa::limbs::size_type desired_align_bits_ffs =
     crop_ffs_like_gcc<unsigned int>(_update_alignment_for_field(*sout));
 
   // Align the field as desired.
-  assert(desired_align_ffs == 1 || desired_align_ffs >= 4);
-  if (desired_align_ffs >= 3 + 1) {
+  assert(desired_align_bits_ffs == 1 || desired_align_bits_ffs >= 4);
+  if (desired_align_bits_ffs >= 3 + 1) {
     _align_to_byte();
-    _offset = _offset.align(desired_align_ffs - 1 - 3);
+    _byte_offset = _byte_offset.align(desired_align_bits_ffs - 1 - 3);
   }
 
   // From gcc: Offset so far becomes the position of this field after
   // normalizing.
   _normalize();
   if (_is_size_constant) {
-    mpa::limbs offset = _offset;
+    mpa::limbs offset = _byte_offset;
     if (_bitpos) {
       assert(!_bitpos.is_any_set_below(3));
       offset += _bitpos.rshift(3, false);
@@ -1841,8 +1849,8 @@ _place_union_field(std::string &&id,
   _c->add_member(std::move(id), ot, mpa::limbs{0}, mpa::limbs{});
 
   if (_is_size_constant && ot->is_size_constant()) {
-    if (_offset < ot->get_size(_tgt))
-      _offset = ot->get_size(_tgt);
+    if (_byte_offset < ot->get_size(_tgt))
+      _byte_offset = ot->get_size(_tgt);
   } else {
     _is_size_constant = false;
   }
@@ -1858,8 +1866,8 @@ _place_union_field(std::string &&id,
   if (_is_size_constant) {
     mpa::limbs size = (mpa::limbs::from_size_type(bft->get_width(_tgt))
 		       .align(3).rshift(3, false));
-    if (_offset < size)
-      _offset = std::move(size);
+    if (_byte_offset < size)
+      _byte_offset = std::move(size);
   }
 }
 
@@ -1870,8 +1878,8 @@ _place_union_field(std::shared_ptr<const types::struct_or_union_type> &&sout)
   _c->add_member(sout, mpa::limbs{0});
 
   if (_is_size_constant && sout->is_size_constant()) {
-    if (_offset < sout->get_size(_tgt))
-      _offset = sout->get_size(_tgt);
+    if (_byte_offset < sout->get_size(_tgt))
+      _byte_offset = sout->get_size(_tgt);
   } else {
     _is_size_constant = false;
   }
