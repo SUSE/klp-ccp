@@ -1303,62 +1303,293 @@ static inline Tret crop_like_gcc(const T val) noexcept
   return static_cast<Tret>(val);
 }
 
-namespace
+class target_gcc::sou_layouter : public target::sou_layouter
 {
-  class record_layout_info
-  {
-  public:
-    record_layout_info(const target_gcc &tgt,
-		       const mpa::limbs::size_type user_align_ffs);
+public:
+  sou_layouter(const types::struct_or_union_kind souk,
+	       ast::attribute_specifier_list * const soud_asl_before,
+	       ast::attribute_specifier_list * const soud_asl_after,
+	       klp::ccp::ast::ast &a,
+	       const target_gcc &tgt,
+	       const sou_layouter::expr_evaluator_type &expr_eval);
 
-    void place_struct_field(struct_or_union_content::member &m);
-    void place_union_field(struct_or_union_content::member &m);
+  sou_layouter(const types::struct_or_union_kind souk, const target_gcc &tgt);
 
-    void finish_record_layout(struct_or_union_content &sc);
+  virtual ~sou_layouter() noexcept override;
 
-  private:
-    mpa::limbs::size_type
-    _layout_decl_field(const object_type &o_t) const;
+  virtual void
+  add_member(std::string &&id,
+	     std::shared_ptr<const types::object_type> &&t,
+	     ast::specifier_qualifier_list &sql,
+	     ast::attribute_specifier_list * const asl_before,
+	     ast::attribute_specifier_list * const asl_after) override;
 
-    mpa::limbs::size_type
-    _layout_decl_bitfield(const bitfield_type &bf_t) const;
+  virtual void
+  add_member(std::string &&id,
+	     std::shared_ptr<const types::object_type> &&t) override;
 
-    mpa::limbs::size_type
-    _update_alignment_for_field(const object_type &o_t);
+  virtual void
+  add_member(std::string &&id,
+	     std::shared_ptr<const types::bitfield_type> &&t,
+	     ast::specifier_qualifier_list &sql,
+	     ast::attribute_specifier_list * const asl_before,
+	     ast::attribute_specifier_list * const asl_after) override;
 
-    mpa::limbs::size_type
-    _update_alignment_for_bitfield(const struct_or_union_content::member &m,
-				   const bitfield_type &bf_t);
+  virtual void
+  add_member(std::shared_ptr<const types::struct_or_union_type> &&t) override;
 
-    static bool
-    _excess_unit_span(const hwi byte_offset, const hwi bit_offset,
-		      const hwi size, const mpa::limbs::size_type align_log2,
-		      const uhwi type_size) noexcept;
+private:
+  virtual void _finish() override;
 
-    void _normalize();
+  mpa::limbs::size_type
+  _layout_decl_field(const object_type &o_t) const;
 
-    void _align_to_byte();
+  mpa::limbs::size_type
+  _layout_decl_bitfield(const bitfield_type &bf_t) const;
 
-    const target_gcc &_tgt;
-    mpa::limbs _offset;
-    mpa::limbs _bitpos;
-    mpa::limbs::size_type _record_align_ffs;
-    bool _is_size_constant;
-  };
+  mpa::limbs::size_type
+  _update_alignment_for_field(const object_type &o_t);
+
+  mpa::limbs::size_type
+  _update_alignment_for_bitfield(const struct_or_union_content::member &m,
+				 const bitfield_type &bf_t);
+
+  static bool
+  _excess_unit_span(const hwi byte_offset, const hwi bit_offset,
+		    const hwi size, const mpa::limbs::size_type align_log2,
+		    const uhwi type_size) noexcept;
+
+  void _normalize();
+
+  void _align_to_byte();
+
+  void _place_struct_field(struct_or_union_content::member &m);
+  void _place_union_field(struct_or_union_content::member &m);
+
+  klp::ccp::ast::ast * const _a;
+  const target_gcc &_tgt;
+  const expr_evaluator_type _expr_eval;
+
+  types::alignment _user_align;
+  bool _packed;
+
+  mpa::limbs _offset;
+  mpa::limbs _bitpos;
+  mpa::limbs::size_type _record_align_ffs;
+  bool _is_size_constant;
+};
+
+target_gcc::sou_layouter::
+sou_layouter(const types::struct_or_union_kind souk,
+	     ast::attribute_specifier_list * const soud_asl_before,
+	     ast::attribute_specifier_list * const soud_asl_after,
+	     klp::ccp::ast::ast &a,
+	     const target_gcc &tgt,
+	     const sou_layouter::expr_evaluator_type &expr_eval)
+  : target::sou_layouter(souk), _a(&a), _tgt(tgt), _expr_eval(expr_eval),
+  _packed(false), _offset(0), _bitpos(), _record_align_ffs(0),
+  _is_size_constant(true)
+{
+  _aligned_attribute_finder aaf(a, _expr_eval, _tgt, false);
+  if (soud_asl_before)
+    soud_asl_before->for_each_attribute(aaf);
+  if (soud_asl_after)
+    soud_asl_after->for_each_attribute(aaf);
+  _user_align = aaf.grab_result();
+
+  if (soud_asl_before || soud_asl_after) {
+    _packed_attribute_finder paf(*_a);
+    if (soud_asl_before)
+      soud_asl_before->for_each_attribute(paf);
+    if (soud_asl_after)
+      soud_asl_after->for_each_attribute(paf);
+    _packed = paf.get_result();
+  }
+
+  if (_user_align.is_set())
+    _record_align_ffs = _user_align.get_log2_value() + 3 + 1;
+  else
+    _record_align_ffs = 3 + 1;
 }
 
-record_layout_info::
-record_layout_info(const target_gcc &tgt,
-		   const mpa::limbs::size_type user_align_ffs)
-  : _tgt(tgt), _offset(0), _bitpos(),
-    _record_align_ffs(std::max(static_cast<mpa::limbs::size_type>(4),
-			       user_align_ffs + 3)),
-    _is_size_constant(true)
+target_gcc::sou_layouter::sou_layouter(const types::struct_or_union_kind souk,
+				       const target_gcc &tgt)
+  : target::sou_layouter(souk), _a(nullptr), _tgt(tgt), _expr_eval(),
+  _packed(false), _offset(0), _bitpos(), _record_align_ffs(3 + 1),
+  _is_size_constant(true)
+{}
+
+target_gcc::sou_layouter::~sou_layouter() noexcept = default;
+
+void target_gcc::sou_layouter::
+add_member(std::string &&id,
+	   std::shared_ptr<const types::object_type> &&t,
+	   ast::specifier_qualifier_list &sql,
+	   ast::attribute_specifier_list * const asl_before,
+	   ast::attribute_specifier_list * const asl_after)
 {
-  // c.f. start_record_layout()
+  // First process the struct declarator's attributes. Attributes of
+  // inner declarator derivations have already been handled.
+  // 'packed' attributes at the enclosing struct/union definition
+  // apply to each member individually.
+  bool packed = _packed;
+
+  _mode_attribute_finder maf(*_a, _tgt);
+  _aligned_attribute_finder aaf(*_a, _expr_eval, _tgt, true);
+  _packed_attribute_finder paf(*_a);
+  if (asl_after) {
+    asl_after->for_each_attribute(maf);
+    asl_after->for_each_attribute(aaf);
+    asl_after->for_each_attribute(paf);
+  }
+  if (asl_before) {
+    asl_before->for_each_attribute(maf);
+    asl_before->for_each_attribute(aaf);
+    asl_before->for_each_attribute(paf);
+  }
+  sql.for_each_attribute(maf);
+  sql.for_each_attribute(aaf);
+  sql.for_each_attribute(paf);
+
+  t = maf.apply_to_type(std::move(t));
+
+  packed |= paf.get_result();
+  types::alignment align = aaf.grab_result();
+  if (packed) {
+    if (align.is_set())
+      t = t->set_user_alignment(std::move(align));
+    else
+      t = t->set_user_alignment(types::alignment(0));
+
+  } else if (align.is_set()) {
+    if (t->get_effective_alignment(_tgt) <= align.get_log2_value())
+      t = t->set_user_alignment(std::move(align));
+  }
+
+  _c->add_member(struct_or_union_content::member{std::move(id), std::move(t)});
+
+  switch (_souk) {
+  case struct_or_union_kind::souk_struct:
+    _place_struct_field(*(_c->members_end() - 1));
+    break;
+
+  case struct_or_union_kind::souk_union:
+    _place_union_field(*(_c->members_end() - 1));
+    break;
+  }
 }
 
-mpa::limbs::size_type record_layout_info::
+void target_gcc::sou_layouter::
+add_member(std::string &&id, std::shared_ptr<const types::object_type> &&t)
+{
+  _c->add_member(struct_or_union_content::member{std::move(id), std::move(t)});
+
+  switch (_souk) {
+  case struct_or_union_kind::souk_struct:
+    _place_struct_field(*(_c->members_end() - 1));
+    break;
+
+  case struct_or_union_kind::souk_union:
+    _place_union_field(*(_c->members_end() - 1));
+    break;
+  }
+}
+
+void target_gcc::sou_layouter::
+add_member(std::string &&id,
+	   std::shared_ptr<const types::bitfield_type> &&t,
+	   ast::specifier_qualifier_list &sql,
+	   ast::attribute_specifier_list * const asl_before,
+	   ast::attribute_specifier_list * const asl_after)
+{
+  // First process the struct declarator's attributes. Attributes of
+  // inner declarator derivations have already been handled.
+  // 'packed' attributes at the enclosing struct/union definition
+  // apply to each member individually.
+  bool packed = _packed;
+
+  _mode_attribute_finder maf(*_a, _tgt);
+  _aligned_attribute_finder aaf(*_a, _expr_eval, _tgt, true);
+  _packed_attribute_finder paf(*_a);
+  if (asl_after) {
+    asl_after->for_each_attribute(maf);
+    asl_after->for_each_attribute(aaf);
+    asl_after->for_each_attribute(paf);
+  }
+  if (asl_before) {
+    asl_before->for_each_attribute(maf);
+    asl_before->for_each_attribute(aaf);
+    asl_before->for_each_attribute(paf);
+  }
+  sql.for_each_attribute(maf);
+  sql.for_each_attribute(aaf);
+  sql.for_each_attribute(paf);
+
+  // For bitfields, GCC does apply the mode attribute to the
+  // underlying integer type, but only after the width has been set
+  // (and verified).
+  if (maf.mode_attribute_found()) {
+    std::shared_ptr<const types::int_type> base_t =
+      t->get_base_type();
+    base_t = maf.apply_to_type(std::move(base_t));
+    t = types::bitfield_type::create(std::move(base_t), t->get_width(_tgt));
+  }
+
+  packed |= paf.get_result();
+  types::alignment align = aaf.grab_result();
+  if (packed)
+    t = t->set_packed();
+  if (align.is_set())
+    t = t->set_user_alignment(std::move(align));
+
+  _c->add_member(struct_or_union_content::member{std::move(id), std::move(t)});
+
+  switch (_souk) {
+  case struct_or_union_kind::souk_struct:
+    _place_struct_field(*(_c->members_end() - 1));
+    break;
+
+  case struct_or_union_kind::souk_union:
+    _place_union_field(*(_c->members_end() - 1));
+    break;
+  }
+}
+
+void target_gcc::sou_layouter::
+add_member(std::shared_ptr<const types::struct_or_union_type> &&t)
+{
+  _c->add_member(struct_or_union_content::member{std::move(t)});
+
+  switch (_souk) {
+  case struct_or_union_kind::souk_struct:
+    _place_struct_field(*(_c->members_end() - 1));
+    break;
+
+  case struct_or_union_kind::souk_union:
+    _place_union_field(*(_c->members_end() - 1));
+    break;
+  }
+}
+
+void target_gcc::sou_layouter::_finish()
+{
+  _normalize();
+
+  const mpa::limbs unpadded_size = _offset.lshift(3) + _bitpos;
+  const mpa::limbs type_size = unpadded_size.align(_record_align_ffs - 1);
+  assert(!type_size.is_any_set_below(3));
+
+  assert(_record_align_ffs >= 4);
+  _c->set_alignment(_record_align_ffs - 3 - 1);
+  if (_is_size_constant) {
+    _c->set_size(type_size.rshift(3, false));
+    _c->set_size_constant(true);
+  } else {
+    _c->set_size_constant(false);
+  }
+}
+
+mpa::limbs::size_type target_gcc::sou_layouter::
 _layout_decl_field(const object_type &o_t) const
 {
   // This already takes the packed and aligned attributes into
@@ -1366,7 +1597,7 @@ _layout_decl_field(const object_type &o_t) const
   return 3 + o_t.get_effective_alignment(_tgt) + 1;
 }
 
-mpa::limbs::size_type record_layout_info::
+mpa::limbs::size_type target_gcc::sou_layouter::
 _layout_decl_bitfield(const bitfield_type &bf_t) const
 {
   // With gcc, all declaration nodes' DECL_ALIGN() fields gets
@@ -1393,7 +1624,7 @@ _layout_decl_bitfield(const bitfield_type &bf_t) const
   return desired_align_ffs;
 }
 
-mpa::limbs::size_type record_layout_info::
+mpa::limbs::size_type target_gcc::sou_layouter::
 _update_alignment_for_field(const object_type &o_t)
 {
   const mpa::limbs::size_type desired_align_ffs = _layout_decl_field(o_t);
@@ -1403,7 +1634,7 @@ _update_alignment_for_field(const object_type &o_t)
   return desired_align_ffs;
 }
 
-mpa::limbs::size_type record_layout_info::
+mpa::limbs::size_type target_gcc::sou_layouter::
 _update_alignment_for_bitfield(const struct_or_union_content::member &m,
 			       const bitfield_type &bf_t)
 {
@@ -1425,29 +1656,7 @@ _update_alignment_for_bitfield(const struct_or_union_content::member &m,
   return desired_align_ffs;
 }
 
-void record_layout_info::_normalize()
-{
-  // Split the bit position into a byte offset and a bit position.
-  if (_bitpos.is_any_set_at_or_above(3)) {
-    mpa::limbs offset_add = _bitpos;
-    offset_add.set_bits_below(3, false);
-    offset_add = offset_add.rshift(3, false);
-    _offset = _offset + offset_add;
-    _bitpos.set_bits_at_and_above(3, false);
-  }
-}
-
-void record_layout_info::_align_to_byte()
-{
-  if (!_bitpos)
-    return;
-
-  const mpa::limbs partial_bytes = _bitpos.align(3).rshift(3, false);
-  _offset = _offset + partial_bytes;
-  _bitpos = mpa::limbs::from_size_type(0);
-}
-
-bool record_layout_info::
+bool target_gcc::sou_layouter::
 _excess_unit_span(const hwi byte_offset, const hwi bit_offset,
 		  const hwi size, const mpa::limbs::size_type align_log2,
 		  const uhwi type_size) noexcept
@@ -1460,7 +1669,30 @@ _excess_unit_span(const hwi byte_offset, const hwi bit_offset,
 	  type_size / align);
 }
 
-void record_layout_info::place_struct_field(struct_or_union_content::member &m)
+void target_gcc::sou_layouter::_normalize()
+{
+  // Split the bit position into a byte offset and a bit position.
+  if (_bitpos.is_any_set_at_or_above(3)) {
+    mpa::limbs offset_add = _bitpos;
+    offset_add.set_bits_below(3, false);
+    offset_add = offset_add.rshift(3, false);
+    _offset = _offset + offset_add;
+    _bitpos.set_bits_at_and_above(3, false);
+  }
+}
+
+void target_gcc::sou_layouter::_align_to_byte()
+{
+  if (!_bitpos)
+    return;
+
+  const mpa::limbs partial_bytes = _bitpos.align(3).rshift(3, false);
+  _offset = _offset + partial_bytes;
+  _bitpos = mpa::limbs::from_size_type(0);
+}
+
+void target_gcc::sou_layouter::
+_place_struct_field(struct_or_union_content::member &m)
 {
   const std::shared_ptr<const type>& t = m.get_type();
 
@@ -1549,7 +1781,8 @@ void record_layout_info::place_struct_field(struct_or_union_content::member &m)
      *t);
 }
 
-void record_layout_info::place_union_field(struct_or_union_content::member &m)
+void target_gcc::sou_layouter::
+_place_union_field(struct_or_union_content::member &m)
 {
   const std::shared_ptr<const type>& t = m.get_type();
 
@@ -1589,241 +1822,6 @@ void record_layout_info::place_union_field(struct_or_union_content::member &m)
 
   if (_offset < size)
     _offset = std::move(size);
-}
-
-void record_layout_info::finish_record_layout(struct_or_union_content &sc)
-{
-  _normalize();
-
-  const mpa::limbs unpadded_size = _offset.lshift(3) + _bitpos;
-  const mpa::limbs type_size = unpadded_size.align(_record_align_ffs - 1);
-  assert(!type_size.is_any_set_below(3));
-
-  assert(_record_align_ffs >= 4);
-  sc.set_alignment(_record_align_ffs - 3 - 1);
-  if (_is_size_constant) {
-    sc.set_size(type_size.rshift(3, false));
-    sc.set_size_constant(true);
-  } else {
-    sc.set_size_constant(false);
-  }
-}
-
-
-class target_gcc::sou_layouter : public target::sou_layouter
-{
-public:
-  sou_layouter(const types::struct_or_union_kind souk,
-	       ast::attribute_specifier_list * const soud_asl_before,
-	       ast::attribute_specifier_list * const soud_asl_after,
-	       klp::ccp::ast::ast &a,
-	       const target_gcc &tgt,
-	       const sou_layouter::expr_evaluator_type &expr_eval);
-
-  sou_layouter(const types::struct_or_union_kind souk, const target_gcc &tgt);
-
-  virtual ~sou_layouter() noexcept override;
-
-  virtual void
-  add_member(std::string &&id,
-	     std::shared_ptr<const types::object_type> &&t,
-	     ast::specifier_qualifier_list &sql,
-	     ast::attribute_specifier_list * const asl_before,
-	     ast::attribute_specifier_list * const asl_after) override;
-
-  virtual void
-  add_member(std::string &&id,
-	     std::shared_ptr<const types::object_type> &&t) override;
-
-  virtual void
-  add_member(std::string &&id,
-	     std::shared_ptr<const types::bitfield_type> &&t,
-	     ast::specifier_qualifier_list &sql,
-	     ast::attribute_specifier_list * const asl_before,
-	     ast::attribute_specifier_list * const asl_after) override;
-
-  virtual void
-  add_member(std::shared_ptr<const types::struct_or_union_type> &&t) override;
-
-private:
-  virtual void _finish() override;
-
-  klp::ccp::ast::ast * const _a;
-  const target_gcc &_tgt;
-  const expr_evaluator_type _expr_eval;
-
-  types::alignment _user_align;
-  bool _packed;
-};
-
-target_gcc::sou_layouter::
-sou_layouter(const types::struct_or_union_kind souk,
-	     ast::attribute_specifier_list * const soud_asl_before,
-	     ast::attribute_specifier_list * const soud_asl_after,
-	     klp::ccp::ast::ast &a,
-	     const target_gcc &tgt,
-	     const sou_layouter::expr_evaluator_type &expr_eval)
-  : target::sou_layouter(souk), _a(&a), _tgt(tgt), _expr_eval(expr_eval),
-    _packed(false)
-{
-  _aligned_attribute_finder aaf(a, _expr_eval, _tgt, false);
-  if (soud_asl_before)
-    soud_asl_before->for_each_attribute(aaf);
-  if (soud_asl_after)
-    soud_asl_after->for_each_attribute(aaf);
-  _user_align = aaf.grab_result();
-
-  if (soud_asl_before || soud_asl_after) {
-    _packed_attribute_finder paf(*_a);
-    if (soud_asl_before)
-      soud_asl_before->for_each_attribute(paf);
-    if (soud_asl_after)
-      soud_asl_after->for_each_attribute(paf);
-    _packed = paf.get_result();
-  }
-}
-
-target_gcc::sou_layouter::sou_layouter(const types::struct_or_union_kind souk,
-				       const target_gcc &tgt)
-  : target::sou_layouter(souk), _a(nullptr), _tgt(tgt), _expr_eval(nullptr)
-{}
-
-target_gcc::sou_layouter::~sou_layouter() noexcept = default;
-
-void target_gcc::sou_layouter::
-add_member(std::string &&id,
-	   std::shared_ptr<const types::object_type> &&t,
-	   ast::specifier_qualifier_list &sql,
-	   ast::attribute_specifier_list * const asl_before,
-	   ast::attribute_specifier_list * const asl_after)
-{
-  // First process the struct declarator's attributes. Attributes of
-  // inner declarator derivations have already been handled.
-  // 'packed' attributes at the enclosing struct/union definition
-  // apply to each member individually.
-  bool packed = _packed;
-
-  _mode_attribute_finder maf(*_a, _tgt);
-  _aligned_attribute_finder aaf(*_a, _expr_eval, _tgt, true);
-  _packed_attribute_finder paf(*_a);
-  if (asl_after) {
-    asl_after->for_each_attribute(maf);
-    asl_after->for_each_attribute(aaf);
-    asl_after->for_each_attribute(paf);
-  }
-  if (asl_before) {
-    asl_before->for_each_attribute(maf);
-    asl_before->for_each_attribute(aaf);
-    asl_before->for_each_attribute(paf);
-  }
-  sql.for_each_attribute(maf);
-  sql.for_each_attribute(aaf);
-  sql.for_each_attribute(paf);
-
-  t = maf.apply_to_type(std::move(t));
-
-  packed |= paf.get_result();
-  types::alignment align = aaf.grab_result();
-  if (packed) {
-    if (align.is_set())
-      t = t->set_user_alignment(std::move(align));
-    else
-      t = t->set_user_alignment(types::alignment(0));
-
-  } else if (align.is_set()) {
-    if (t->get_effective_alignment(_tgt) <= align.get_log2_value())
-      t = t->set_user_alignment(std::move(align));
-  }
-
-  _c->add_member(struct_or_union_content::member{std::move(id), std::move(t)});
-}
-
-void target_gcc::sou_layouter::
-add_member(std::string &&id, std::shared_ptr<const types::object_type> &&t)
-{
-  _c->add_member(struct_or_union_content::member{std::move(id), std::move(t)});
-}
-
-void target_gcc::sou_layouter::
-add_member(std::string &&id,
-	   std::shared_ptr<const types::bitfield_type> &&t,
-	   ast::specifier_qualifier_list &sql,
-	   ast::attribute_specifier_list * const asl_before,
-	   ast::attribute_specifier_list * const asl_after)
-{
-  // First process the struct declarator's attributes. Attributes of
-  // inner declarator derivations have already been handled.
-  // 'packed' attributes at the enclosing struct/union definition
-  // apply to each member individually.
-  bool packed = _packed;
-
-  _mode_attribute_finder maf(*_a, _tgt);
-  _aligned_attribute_finder aaf(*_a, _expr_eval, _tgt, true);
-  _packed_attribute_finder paf(*_a);
-  if (asl_after) {
-    asl_after->for_each_attribute(maf);
-    asl_after->for_each_attribute(aaf);
-    asl_after->for_each_attribute(paf);
-  }
-  if (asl_before) {
-    asl_before->for_each_attribute(maf);
-    asl_before->for_each_attribute(aaf);
-    asl_before->for_each_attribute(paf);
-  }
-  sql.for_each_attribute(maf);
-  sql.for_each_attribute(aaf);
-  sql.for_each_attribute(paf);
-
-  // For bitfields, GCC does apply the mode attribute to the
-  // underlying integer type, but only after the width has been set
-  // (and verified).
-  if (maf.mode_attribute_found()) {
-    std::shared_ptr<const types::int_type> base_t =
-      t->get_base_type();
-    base_t = maf.apply_to_type(std::move(base_t));
-    t = types::bitfield_type::create(std::move(base_t), t->get_width(_tgt));
-  }
-
-  packed |= paf.get_result();
-  types::alignment align = aaf.grab_result();
-  if (packed)
-    t = t->set_packed();
-  if (align.is_set())
-    t = t->set_user_alignment(std::move(align));
-
-  _c->add_member(struct_or_union_content::member{std::move(id), std::move(t)});
-}
-
-void target_gcc::sou_layouter::
-add_member(std::shared_ptr<const types::struct_or_union_type> &&t)
-{
-  _c->add_member(struct_or_union_content::member{std::move(t)});
-}
-
-void target_gcc::sou_layouter::_finish()
-{
-  record_layout_info rli(_tgt,
-			 (_user_align.is_set() ?
-			  _user_align.get_log2_value() + 1 :
-			  0));
-
-  switch (_souk) {
-  case struct_or_union_kind::souk_struct:
-    for (struct_or_union_content::member_iterator it_m = _c->members_begin();
-	 it_m != _c->members_end(); ++it_m) {
-      rli.place_struct_field(*it_m);
-    }
-    break;
-
-  case struct_or_union_kind::souk_union:
-    for (struct_or_union_content::member_iterator it_m = _c->members_begin();
-	 it_m != _c->members_end(); ++it_m) {
-      rli.place_union_field(*it_m);
-    }
-    break;
-  };
-
-  rli.finish_record_layout(*_c);
 }
 
 
