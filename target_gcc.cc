@@ -326,6 +326,11 @@ struct target_gcc::_impl_proxy
     return _tgt._get_word_mode();
   }
 
+  types::ext_int_type::kind _get_unwind_word_mode() const noexcept
+  {
+    return _tgt._get_unwind_word_mode();
+  }
+
   types::ext_int_type::kind _get_wint_mode() const noexcept
   {
     return _tgt._get_wint_mode();
@@ -639,6 +644,9 @@ bool _mode_attribute_finder::operator()(const ast::attribute &attr)
     if (it_float_mode != impl_proxy._float_mode_names.cend()) {
       _fm = it_float_mode->second;
       _fm_set = true;
+    } else if (id == "unwind_word" || id == "__unwind_word__") {
+      _im = impl_proxy._get_unwind_word_mode();
+      _im_set = true;
     } else if (id == "word" || id == "__word__") {
       _im = impl_proxy._get_word_mode();
       _im_set = true;
