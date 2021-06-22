@@ -1674,6 +1674,7 @@ evaluate_type(ast &a, const target &tgt)
   for (auto ts : _tss) {
     ts.get().process<void, type_set<type_specifier_pod,
 				    type_specifier_ext_int,
+				    type_specifier_ext_float,
 				    type_specifier> >
       (wrap_callables<default_action_unreachable<void, type_set<> >
 		      ::template type>
