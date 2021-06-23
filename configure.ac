@@ -1,6 +1,6 @@
 AC_INIT([klp-ccp], [0.0.1], [nstange@suse.de])
 AC_CONFIG_AUX_DIR([config])
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([foreign])
 
 AC_PROG_CXX
 AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])

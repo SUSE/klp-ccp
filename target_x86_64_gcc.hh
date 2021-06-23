@@ -65,6 +65,9 @@ namespace klp
       virtual types::ext_int_type::kind _get_word_mode()
 	const noexcept override;
 
+      virtual types::ext_int_type::kind _get_unwind_word_mode()
+	const noexcept override;
+
       virtual types::ext_int_type::kind _get_wint_mode()
 	const noexcept override;
       virtual bool _is_wint_signed() const noexcept override;

@@ -300,6 +300,12 @@ types::ext_int_type::kind target_x86_64_gcc::_get_word_mode() const noexcept
 	 };
 }
 
+types::ext_int_type::kind target_x86_64_gcc::_get_unwind_word_mode() const noexcept
+{
+  // On x86_64, unwind_word is the same as word.
+  return this->_get_word_mode();
+}
+
 types::ext_int_type::kind target_x86_64_gcc::_get_wint_mode() const noexcept
 {
   return types::ext_int_type::kind{
