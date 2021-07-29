@@ -136,7 +136,8 @@ namespace klp
 	      const sticky_side _stickiness);
 	  _op(const pp_token_index pos, const sticky_side _stickiness);
 	  _op(const pp_result::conditional_inclusion_node &_c,
-	      const _cond_incl_transition_kind k);
+	      const _cond_incl_transition_kind k,
+	      const raw_pp_tokens_range &op_range_raw);
 	  _op(const pp_tokens_range &expanded_macro_range,
 	      const pp_result::macro_invocation *_rewritten_macro_invocation,
 	      replaced_macro_arg_toks_type &&_replaced_macro_arg_toks);
@@ -166,6 +167,7 @@ namespace klp
 
 	  const pp_result::conditional_inclusion_node *cond_incl_node;
 	  _cond_incl_transition_kind cond_incl_trans_kind;
+	  raw_pp_tokens_range cond_incl_op_range_raw;
 
 	  const pp_result::macro_invocation *rewritten_macro_invocation;
 	  replaced_macro_arg_toks_type replaced_macro_arg_toks;
@@ -266,7 +268,8 @@ namespace klp
 				    const pp_result &pp_result) const noexcept;
 
 	std::pair<_ops_type::iterator, _ops_type::iterator>
-	_find_overlapping_ops_range(const pp_tokens_range &r) noexcept;
+	_find_overlapping_ops_range(const raw_pp_tokens_range &r,
+				    const pp_result &pp_result) noexcept;
 
 	_pos_in_chunk _directive_range_to_pos_in_chunk
 			(const raw_pp_tokens_range &directive_range,

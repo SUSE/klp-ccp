@@ -412,22 +412,30 @@ _find_overlapping_ops_range(const raw_pp_tokens_range &r,
 std::pair<depreprocessor::transformed_input_chunk::_ops_type::iterator,
 	  depreprocessor::transformed_input_chunk::_ops_type::iterator>
 depreprocessor::transformed_input_chunk::
-_find_overlapping_ops_range(const pp_tokens_range &r) noexcept
+_find_overlapping_ops_range(const raw_pp_tokens_range &r,
+			    const pp_result &pp_result) noexcept
 {
   struct comp_op_range
   {
-    bool operator()(const _op &op, const pp_tokens_range &r)
+    comp_op_range(const class pp_result &_pp_result) noexcept
+      : pp_result(_pp_result)
+    {}
+
+    bool operator()(const _op &op, const raw_pp_tokens_range &r)
     {
-      return (op.r < r);
+      return (op.get_range_raw(pp_result) < r);
     }
 
-    bool operator()(const pp_tokens_range &r, const _op &op)
+    bool operator()(const raw_pp_tokens_range &r, const _op &op)
     {
-      return (r < op.r);
+      return (r < op.get_range_raw(pp_result));
     }
+
+    const class pp_result &pp_result;
   };
 
-  return std::equal_range(_ops.begin(), _ops.end(), r, comp_op_range{});
+  return std::equal_range(_ops.begin(), _ops.end(), r,
+			  comp_op_range{pp_result});
 }
 
 depreprocessor::transformed_input_chunk::_pos_in_chunk
@@ -436,10 +444,20 @@ _directive_range_to_pos_in_chunk(const raw_pp_tokens_range &directive_range,
 				 const pp_result &pp_result)
   const noexcept
 {
-  // Preprocessor directives' raw_pp_tokens_ranges never intersect
-  // with macro expansions and can always be associated with locations
-  // inbetween preprocessed pp_tokens and thus, with some
-  // _pos_in_chunk.
+  // In the case of conditional inclusions, a preprocessor directive's
+  // raw_pp_tokens_range can be encountered within some (func-like)
+  // macro invocation and there is no well-defined point within the
+  // expanded pp_token sequence corresponding to the directive. In
+  // this case the first in-chunk position associated with the the
+  // macro invocation's raw_pp_tokens_range will be returned. This is
+  // the position of either of
+  // - some non-copy op like replace or insert* spanning at most a
+  //   single pp_token,
+  // - a copy op's first pp_token originating from the the spanning
+  //   macro invocation's expansion or
+  // - some previously inserted conditional inclusion transition being
+  //   part of the very same macro invocation as the current
+  //   directive.
   const auto overlapping_ops = _find_overlapping_ops_range(directive_range,
 							   pp_result);
   if (overlapping_ops.first == _ops.end()) {
@@ -455,27 +473,41 @@ _directive_range_to_pos_in_chunk(const raw_pp_tokens_range &directive_range,
 	   };
   }
 
-  // The op at overlapping_ops.first is located neither completely before
-  // nor completely after directive_range. Hence it must span more
-  // than one pp_token and this is possible only for copy ops. Find
-  // the spot beween the two consecutive pp_tokens where the
-  // directive_range is located.
-  assert(overlapping_ops.second - overlapping_ops.first == 1);
-  assert(overlapping_ops.first->a == _op::action::copy);
+  // The op at overlapping_ops.first is located neither completely
+  // before nor completely after directive_range. For non-copy ops,
+  // this is possible only if the directive is part of a conditional
+  // inclusion overlapping with some func-like macro invocation.
+  if (overlapping_ops.first->a != _op::action::copy) {
+    assert(directive_range.is_contained_in
+	   (overlapping_ops.first->get_range_raw(pp_result)));
+    return _pos_in_chunk {
+	     static_cast<_ops_type::size_type>(overlapping_ops.first -
+					       _ops.begin()),
+	     0
+	   };
+  }
+
+  // It's a copy op. Find the first position within the pp_tokens
+  // range not originating from strictly before the directive. In the
+  // common case the pp_token at this position will originate from
+  // strictly after the directive, whereas in the case of the
+  // (conditional inclusion) directive intersecting with some
+  // (func-like) macro invocation, this pp_token will be the first one
+  // within the copy op range stemming from said macro expansion.
   const pp_tokens_range &op_range= overlapping_ops.first->r;
-  assert(op_range.end - op_range.begin > 1);
   const pp_tokens &toks = pp_result.get_pp_tokens();
-  auto it_first_tok_after
-    = std::upper_bound(toks.begin() + op_range.begin,
-		       toks.begin() + op_range.end,
-		       directive_range,
-		       [&](const raw_pp_tokens_range &r, const pp_token &tok) {
-			 return r < tok.get_token_source();
-		       });
+  const auto it_tok =
+    std::lower_bound(toks.begin() + op_range.begin,
+		     toks.begin() + op_range.end,
+		     directive_range,
+		     [](const pp_token &tok, const raw_pp_tokens_range &r) {
+		       return tok.get_token_source() < r;
+		     });
+  assert(it_tok != toks.end());
   return _pos_in_chunk {
 	   static_cast<_ops_type::size_type>(overlapping_ops.first -
 					     _ops.begin()),
-	   static_cast<pp_token_index>(it_first_tok_after - toks.begin())
+	   static_cast<pp_token_index>(it_tok - toks.begin())
 	 };
 }
 
@@ -637,27 +669,81 @@ _insert_cond_incl_transition(const pp_result::conditional_inclusion_node &c,
 			      const _cond_incl_transition_kind k,
 			      const pp_result &pp_result)
 {
+  // In the common case, a transformed_input_chunk's ops are sorted by
+  // the relative order of their resp. associated pp_tokens_range (and
+  // by extension, the raw_pp_tokens_range their associated
+  // pp_tokens_range maps to). Conditional inclusion transition ops
+  // are different in that they don't necessarily have a well-defined
+  // point within the pp_tokens sequence associated with them. That's
+  // because conditional inclusion directives can be found in the
+  // middle of some (func-like) macro invocation and thus, their
+  // relative position with respect to the expanded pp_token sequence
+  // is undefined. As a consequence, some additional rules need to be
+  // established in order to make the insertion point of a conditional
+  // inclusion transition op within the sequence of ops well-defined.
+  // Note that the sequence of ops must be kept sorted with respect to
+  // their associated raw_pp_tokens_range (as e.g. a prerequisite for
+  // std::equal_range()). The rules are:
+  // - The transition ops will get inserted at the first in-chunk
+  //   position associated with the spanning macro invocation's
+  //   raw_pp_tokens_range, if any. That is, loosely speaking these
+  //   get inserted right before the first non-transition op
+  //   associated with the given macro invocation.
+  // - In case multiple conditional inclusion transition ops happen
+  //   to get inserted at the same position with the chunk, their
+  //   relative order from the input is maintained.
+  // - To keep the sequence of ops sorted wrt. to their associated
+  //   raw_pp_tokens_range as required by std::equal_range(), the
+  //   corresponding directive's range is overriden and the transition
+  //   ops assume the range of their spanning macro invocation, if
+  //   any.
   const raw_pp_tokens_range range_raw =
     depreprocessor::_get_cond_incl_trans_range_raw(c, k);
-  const _pos_in_chunk insertion_pos =
+  raw_pp_tokens_range op_range_raw = range_raw;
+
+  const _pos_in_chunk first_pos_not_less =
     _directive_range_to_pos_in_chunk(range_raw, pp_result);
-  _ops_type::iterator insertion_it;
-  if (insertion_pos.op != _ops.size() &&
-      _ops[insertion_pos.op].a == _op::action::copy &&
-      _ops[insertion_pos.op].r.begin != insertion_pos.tok) {
-    // Split the copy operation.
-    assert(_ops[insertion_pos.op].r.end != insertion_pos.tok);
-    insertion_it = _ops.emplace(_ops.begin() + insertion_pos.op + 1,
-				pp_tokens_range{
-				  insertion_pos.tok,
-				  _ops[insertion_pos.op].r.end
-				});
-    (insertion_it - 1)->r.end = insertion_pos.tok;
-  } else {
-    insertion_it = _ops.begin() + insertion_pos.op;
+  _ops_type::iterator it_op = _ops.begin() + first_pos_not_less.op;
+  if (it_op == _ops.end() || range_raw < it_op->get_range_raw(pp_result)) {
+    _ops.emplace(it_op, c, k, op_range_raw);
+    return;
   }
 
-  _ops.emplace(insertion_it, c, k);
+  if (it_op->a != _op::action::copy) {
+    op_range_raw = it_op->get_range_raw(pp_result);
+    assert(range_raw.is_contained_in(op_range_raw));
+    while (it_op->a == _op::action::cond_incl_transition &&
+	   (depreprocessor::
+	    _get_cond_incl_trans_range_raw(*it_op->cond_incl_node,
+					   it_op->cond_incl_trans_kind)) <
+	   range_raw) {
+      assert(op_range_raw == it_op->get_range_raw(pp_result));
+      ++it_op;
+      assert(it_op != _ops.end());
+    }
+
+    _ops.emplace(it_op, c, k, op_range_raw);
+    return;
+  }
+
+  const pp_tokens &toks = pp_result.get_pp_tokens();
+  assert(it_op == _ops.begin() + first_pos_not_less.op);
+  const pp_token_index insertion_pos = first_pos_not_less.tok;
+  const raw_pp_tokens_range &tok_range_raw =
+    toks[insertion_pos].get_token_source();
+  if (!(range_raw < tok_range_raw))
+    op_range_raw = tok_range_raw;
+
+  if (insertion_pos == it_op->r.end) {
+    ++it_op;
+  } else if (insertion_pos != it_op->r.begin) {
+    // Split the copy operation.
+    it_op = _ops.emplace(it_op + 1,
+			 pp_tokens_range{insertion_pos, it_op->r.end});
+    (it_op - 1)->r.end = insertion_pos;
+  }
+
+  _ops.emplace(it_op, c, k, op_range_raw);
 }
 
 bool depreprocessor::transformed_input_chunk::
@@ -1060,13 +1146,27 @@ _try_rewrite_macro_arguments(const pp_result &pp_result,
   // For macro argument rewriting to be possible at all, all ops
   // overlapping with the expanded range must fully cover it without
   // holes and must be of type action::copy or action::replace.
-  const pp_tokens_range expanded_r =
-    pp_result.raw_pp_tokens_range_to_nonraw(mi.get_source_range());
-  auto overlapping_ops = _find_overlapping_ops_range(expanded_r);
+  const auto &range_raw = mi.get_source_range();
+  auto overlapping_ops = _find_overlapping_ops_range(range_raw, pp_result);
 
+  // Skip any leading conditional inclusion transition ops. Note that
+  // these are included in the range of overlapping_ops iff the
+  // corresponding directive is located within the given (func-like)
+  // macro invocation.
+  overlapping_ops.first =
+    std::find_if_not(overlapping_ops.first, overlapping_ops.second,
+		     [](const _op &op) {
+		       return op.a == _op::action::cond_incl_transition;
+		     });
+  assert(!std::any_of(overlapping_ops.first, overlapping_ops.second,
+		      [](const _op &op) {
+			return op.a == _op::action::cond_incl_transition;
+		      }));
   if (overlapping_ops.first == overlapping_ops.second)
     return;
 
+  const pp_tokens_range expanded_r =
+    pp_result.raw_pp_tokens_range_to_nonraw(range_raw);
   if (!(overlapping_ops.first->r.begin <= expanded_r.begin) ||
       !((overlapping_ops.second - 1)->r.end >= expanded_r.end))
     return;
@@ -1367,6 +1467,7 @@ _write(source_writer &writer, _output_state &state,
       }
     };
 
+  std::vector<_ops_type::size_type> cond_incl_trans_in_mi;
   const _pos_in_chunk end_pos = _end_pos_in_chunk();
   auto it_range_to_emit_expanded = _ranges_to_emit_expanded.cbegin();
   const auto directives = pp_result.find_overlapping_directives(range_raw);
@@ -1423,13 +1524,59 @@ _write(source_writer &writer, _output_state &state,
 							next_stop
 					       });
 
+	  auto it_cond_incl_trans_in_mi = cond_incl_trans_in_mi.begin();
+	  assert(cond_incl_trans_in_mi.empty() ||
+		 cur_pos.tok == op.r.begin);
+	  assert(std::all_of(cond_incl_trans_in_mi.begin(),
+			     cond_incl_trans_in_mi.end(),
+			     [&](const _ops_type::size_type &op_index) {
+			       const _op &trans_op = _ops[op_index];
+			       const raw_pp_tokens_range &r
+				 = (depreprocessor::
+				    _get_cond_incl_trans_range_raw
+				    (*trans_op.cond_incl_node,
+				     trans_op.cond_incl_trans_kind));
+			       return r.is_contained_in(batch_range_raw);
+			     }));
+
 	  while (batch_range_raw.begin != batch_range_raw.end) {
+	    if (at_beginning) {
+	      if (write_newlines) {
+		_write_newlines(writer, state, batch_range_raw.begin, false,
+				pp_result, source_reader_cache);
+	      }
+	      at_beginning = false;
+	      write_newlines = true;
+	    }
+
+	    raw_pp_token_index copy_end = batch_range_raw.end;
+	    if (it_cond_incl_trans_in_mi != cond_incl_trans_in_mi.end()) {
+	      const _op &trans_op = _ops[*it_cond_incl_trans_in_mi];
+	      const raw_pp_tokens_range &r =
+		(depreprocessor::_get_cond_incl_trans_range_raw
+		 (*trans_op.cond_incl_node, trans_op.cond_incl_trans_kind));
+	      if (batch_range_raw.begin == r.begin) {
+		depreprocessor::
+		  _write_cond_incl_transition(writer, state,
+					      *trans_op.cond_incl_node,
+					      trans_op.cond_incl_trans_kind,
+					      write_newlines,
+					      pp_result,
+					      source_reader_cache,
+					      remarks);
+		batch_range_raw.begin = r.end;
+		++it_cond_incl_trans_in_mi;
+		continue;
+	      } else {
+		assert(r.end <= copy_end);
+		copy_end = r.end;
+	      }
+	    }
+
 	    while (it_directive != directives.second &&
 		   it_directive->get_source_range() < batch_range_raw) {
 	      ++it_directive;
 	    }
-
-	    raw_pp_token_index copy_end = batch_range_raw.end;
 	    if (it_directive != directives.second) {
 	      const raw_pp_tokens_range &directive_range
 		= it_directive->get_source_range();
@@ -1439,15 +1586,6 @@ _write(source_writer &writer, _output_state &state,
 	      } else {
 		copy_end = std::min(directive_range.begin, copy_end);
 	      }
-	    }
-
-	    if (at_beginning) {
-	      if (write_newlines) {
-		_write_newlines(writer, state, batch_range_raw.begin, false,
-				pp_result, source_reader_cache);
-	      }
-	      at_beginning = false;
-	      write_newlines = true;
 	    }
 
 	    advance_source_to(batch_range_raw.begin);
@@ -1472,6 +1610,7 @@ _write(source_writer &writer, _output_state &state,
 					last_tok.is_ws() ||
 					state.last_was_newline);
 	  }
+	  cond_incl_trans_in_mi.clear();
 	  cur_pos.tok = next_stop;
 
 	} else {
@@ -1485,6 +1624,25 @@ _write(source_writer &writer, _output_state &state,
 	    at_beginning = false;
 	    write_newlines = true;
 	  }
+
+	  assert(cond_incl_trans_in_mi.empty() ||
+		 cur_pos.tok == op.r.begin);
+	  for (auto it_cond_incl_trans_in_mi = cond_incl_trans_in_mi.begin();
+	       it_cond_incl_trans_in_mi != cond_incl_trans_in_mi.end();
+	       ++it_cond_incl_trans_in_mi) {
+	    const _op &trans_op = _ops[*it_cond_incl_trans_in_mi];
+	    depreprocessor::
+	      _write_cond_incl_transition(writer, state,
+					  *trans_op.cond_incl_node,
+					  trans_op.cond_incl_trans_kind,
+					  write_newlines,
+					  pp_result,
+					  source_reader_cache,
+					  remarks);
+	    skip_following_insert_ws = true;
+	  }
+	  cond_incl_trans_in_mi.clear();
+
 	  const pp_tokens &toks = pp_result.get_pp_tokens();
 	  while (cur_pos.tok != it_range_to_emit_expanded->end) {
 	    const pp_token &tok = toks[cur_pos.tok];
@@ -1505,6 +1663,7 @@ _write(source_writer &writer, _output_state &state,
 					tok.is_ws() ||
 					state.last_was_newline);
 	  }
+
 	  state.last_input_pos_raw =
 	    std::numeric_limits<raw_pp_token_index>::max();
 	  ++it_range_to_emit_expanded;
@@ -1628,14 +1787,54 @@ _write(source_writer &writer, _output_state &state,
       break;
 
     case _op::action::cond_incl_transition:
-      depreprocessor::_write_cond_incl_transition(writer, state,
-						  *op.cond_incl_node,
-						  op.cond_incl_trans_kind,
-						  write_newlines,
-						  pp_result,
-						  source_reader_cache,
-						  remarks);
-      skip_following_insert_ws = true;
+      {
+	// Conditional inclusion transition ops corresponding to
+	// directives within some func-like macro invocation have all
+	// been sorted to before any other op associated with that
+	// invocation. In case such a macro invocation can be retained
+	// in the output, the conditional inclusion transitions should
+	// get emitted at their original location. Look ahead to
+	// determine whether that's potentially the case and collect
+	// the affected transition ops for deferred processing if so.
+	if (cond_incl_trans_in_mi.empty()) {
+	  const raw_pp_tokens_range &r = op.get_range_raw(pp_result);
+	  const _ops_type::size_type spanning_ops_end =
+	    (std::find_if_not
+	     (_ops.begin() + cur_pos.op + 1, _ops.end(),
+	      [&](const _op &cur_op) {
+	       const raw_pp_tokens_range &cur_r =
+		 cur_op.get_range_raw(pp_result);
+	       return (r.is_contained_in(cur_op.get_range_raw(pp_result)));
+	      }) - _ops.begin());
+
+	    if (spanning_ops_end > cur_pos.op + 1 &&
+		(_ops[spanning_ops_end - 1].a == _op::action::copy ||
+		 (_ops[spanning_ops_end - 1].a ==
+		  _op::action::rewrite_macro_invocation)) &&
+		std::all_of(_ops.begin() + cur_pos.op + 1,
+			    _ops.begin() + spanning_ops_end - 1,
+			    [&](const _op &cur_op) {
+			      return (cur_op.a ==
+				      _op::action::cond_incl_transition);
+			    })) {
+	      for (_ops_type::size_type cur_op = cur_pos.op;
+		   cur_op < spanning_ops_end - 1; ++cur_op) {
+		cond_incl_trans_in_mi.push_back(cur_op);
+	      }
+	    }
+	}
+
+	if (cond_incl_trans_in_mi.empty()) {
+	  depreprocessor::_write_cond_incl_transition(writer, state,
+						      *op.cond_incl_node,
+						      op.cond_incl_trans_kind,
+						      write_newlines,
+						      pp_result,
+						      source_reader_cache,
+						      remarks);
+	  skip_following_insert_ws = true;
+	}
+      }
       break;
 
     case _op::action::rewrite_macro_invocation:
@@ -1662,6 +1861,18 @@ _write(source_writer &writer, _output_state &state,
 	const _op::replaced_macro_arg_toks_type &replaced_arg_toks
 	  = op.replaced_macro_arg_toks;
 	auto it_replaced_macro_arg_tok = replaced_arg_toks.cbegin();
+	auto it_cond_incl_trans_in_mi = cond_incl_trans_in_mi.begin();
+	assert(std::all_of(cond_incl_trans_in_mi.begin(),
+			   cond_incl_trans_in_mi.end(),
+			   [&](const _ops_type::size_type &op_index) {
+			     const _op &trans_op = _ops[op_index];
+			     const raw_pp_tokens_range &r
+			       = (depreprocessor::
+				  _get_cond_incl_trans_range_raw
+				  (*trans_op.cond_incl_node,
+				   trans_op.cond_incl_trans_kind));
+			       return r.is_contained_in(op_range_raw);
+			   }));
 	raw_pp_token_index cur_tok = op_range_raw.begin;
 	while (cur_tok != op_range_raw.end) {
 	  if (it_replaced_macro_arg_tok != replaced_arg_toks.cend() &&
@@ -1677,10 +1888,48 @@ _write(source_writer &writer, _output_state &state,
 	    ++it_replaced_macro_arg_tok;
 
 	  } else {
-	    const raw_pp_token_index copy_end =
+	    raw_pp_token_index copy_end =
 	      (it_replaced_macro_arg_tok == replaced_arg_toks.cend() ?
 	       op_range_raw.end :
 	       it_replaced_macro_arg_tok->arg_tok);
+
+	    if (it_cond_incl_trans_in_mi != cond_incl_trans_in_mi.end()) {
+	      const _op &trans_op = _ops[*it_cond_incl_trans_in_mi];
+	      const raw_pp_tokens_range &r =
+		(depreprocessor::_get_cond_incl_trans_range_raw
+		 (*trans_op.cond_incl_node, trans_op.cond_incl_trans_kind));
+	      if (cur_tok == r.begin) {
+		depreprocessor::
+		  _write_cond_incl_transition(writer, state,
+					      *trans_op.cond_incl_node,
+					      trans_op.cond_incl_trans_kind,
+					      write_newlines,
+					      pp_result,
+					      source_reader_cache,
+					      remarks);
+		cur_tok = r.end;
+		++it_cond_incl_trans_in_mi;
+		continue;
+	      } else {
+		copy_end =std::min(r.end, copy_end);
+	      }
+	    }
+
+	    while (it_directive != directives.second &&
+		   it_directive->get_source_range().end <= cur_tok) {
+	      ++it_directive;
+	    }
+	    if (it_directive != directives.second) {
+	      const raw_pp_tokens_range &directive_range
+		= it_directive->get_source_range();
+	      if (directive_range.begin == cur_tok) {
+		cur_tok = directive_range.end;
+		continue;
+	      } else {
+		copy_end = std::min(directive_range.begin, copy_end);
+	      }
+	    }
+
 	    const raw_pp_tokens &raw_toks = pp_result.get_raw_tokens();
 	    writer.append
 	      (sr,
@@ -1689,8 +1938,14 @@ _write(source_writer &writer, _output_state &state,
 		 raw_toks[copy_end - 1].get_range_in_file().end
 	       });
 	    cur_tok = copy_end;
+
+	    const raw_pp_token& last_tok = raw_toks[copy_end - 1];
+	    state.last_input_pos_raw = copy_end;
+	    state.last_was_newline = last_tok.is_newline();
 	  }
 	}
+
+	cond_incl_trans_in_mi.clear();
 
 	state.last_input_pos_raw = op_range_raw.end;
 	state.last_was_newline = false;
@@ -1700,6 +1955,8 @@ _write(source_writer &writer, _output_state &state,
 
     cur_pos = _next_pos_in_chunk(cur_pos);
   }
+
+  assert(cond_incl_trans_in_mi.empty());
 }
 
 
@@ -1743,10 +2000,12 @@ depreprocessor::transformed_input_chunk::_op::_op(const pp_token_index pos,
 
 depreprocessor::transformed_input_chunk::_op::
 _op(const pp_result::conditional_inclusion_node &_c,
-    const _cond_incl_transition_kind k)
+    const _cond_incl_transition_kind k,
+    const raw_pp_tokens_range &op_range_raw)
   : a(action::cond_incl_transition), r(), stickiness(sticky_side::none),
     new_tok{pp_token::type::eof, std::string{}, raw_pp_tokens_range{}},
     add_pointer_deref(false), cond_incl_node(&_c), cond_incl_trans_kind(k),
+    cond_incl_op_range_raw(op_range_raw),
     rewritten_macro_invocation(nullptr)
 {}
 
@@ -1818,8 +2077,7 @@ get_range_raw(const pp_result &pp_result)
     }
 
   case action::cond_incl_transition:
-    return (depreprocessor::_get_cond_incl_trans_range_raw
-	    (*cond_incl_node, cond_incl_trans_kind));
+    return cond_incl_op_range_raw;
 
   case action::rewrite_macro_invocation:
     return this->rewritten_macro_invocation->get_source_range();

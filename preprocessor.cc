@@ -1660,6 +1660,15 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
       return tok;
     };
 
+    if (_cur_macro_invocation) {
+      code_remark remark(code_remark::severity::fatal,
+			 "#include directive in macro invocation",
+			 _raw_tok_it_to_source(it_raw_tok),
+			 raw_it_to_range_in_file(it_raw_tok));
+      _remarks.add(remark);
+      throw pp_except(remark);
+    }
+
     assert(_root_expansion_state.macro_instances.empty());
     assert(_root_expansion_state.pending_tokens.empty());
     auto exp_read_tok =
@@ -1850,8 +1859,28 @@ _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range)
       return tok;
     };
 
+  /*
+   * When encountering a conditional inclusion during func-like macro
+   * argument parsing, _cur_macro_invocation has already been
+   * set. Save it away and restore it after reading the condition
+   * expression. Note that if a macro invocation is currently being
+   * parsed, then its range has not been extended to cover the current
+   * position in the raw token stream. This is important, because the
+   * condition might involve the registration of new temporary macro
+   * invocations and the sequence must kept sorted at all times:
+   * otherwise e.g. the binary search in _drop_pp_tokens_tail() can
+   * get confused. Once _drop_pp_tokens_tail() got a chance to remove
+   * those temporary macro invocations again, it is safe to extend the
+   * currently pending outer invocation.
+   */
+  assert(!_cur_macro_invocation ||
+	 (_cur_macro_invocation->get_source_range().end <
+	  it_raw_tok - _pp_result->get_raw_tokens().cbegin()));
   assert(_root_expansion_state.macro_instances.empty());
   assert(_root_expansion_state.pending_tokens.empty());
+  pp_result::macro_invocation * const saved_cur_macro_invocation
+    = _cur_macro_invocation;
+  _cur_macro_invocation = nullptr;
   auto exp_read_tok =
     [&]() -> pp_token_index {
       _pp_token tok = _expand(_root_expansion_state, read_tok, true);
@@ -1872,6 +1901,7 @@ _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range)
     pd.get_remarks().clear();
     throw;
   }
+  _cur_macro_invocation = saved_cur_macro_invocation;
 
   ast::ast_pp_expr a = pd.grab_result();
   bool result;
