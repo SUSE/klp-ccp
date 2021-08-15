@@ -28,16 +28,243 @@
 
 using namespace klp::ccp;
 
+class preprocessor::_pp_token
+{
+private:
+  template <pp_token::type... types>
+  struct __is_type_any_of;
+
+public:
+  static constexpr raw_pp_token_index not_passed_through =
+    std::numeric_limits<raw_pp_token_index>::max();
+
+  _pp_token(const pp_token::type type, const std::string &value,
+	    const raw_pp_tokens_range &token_source,
+	    const pp_result::used_macros &eh,
+	    const raw_pp_token_index passed_through_raw_token
+		    = not_passed_through);
+
+  _pp_token(const pp_token::type type, const std::string &value,
+	    const raw_pp_tokens_range &token_source,
+	    const raw_pp_token_index passed_through_raw_token
+		    = not_passed_through);
+
+  _pp_token(const pp_token::type type, std::string &&value,
+	    const raw_pp_tokens_range &token_source,
+	    const raw_pp_token_index passed_through_raw_token
+		    = not_passed_through) noexcept;
+
+  pp_token::type get_type() const noexcept
+  {
+    return _type;
+  }
+
+  const std::string& get_value() const noexcept
+  {
+    return _value;
+  }
+
+  std::string&& grab_value() noexcept
+  {
+    return std::move(_value);
+  }
+
+  void set_type_and_value(const pp_token::type type,
+			  const std::string &value);
+
+  const class pp_result::used_macros& expansion_history() const noexcept
+  {
+    return _expansion_history;
+  }
+
+  class pp_result::used_macros& expansion_history() noexcept
+  {
+    return _expansion_history;
+  }
+
+  const raw_pp_tokens_range& get_token_source() const noexcept
+  {
+    return _token_source;
+  }
+
+  void set_macro_invocation(pp_result::macro_invocation *mi)
+    noexcept;
+
+  pp_result::macro_invocation * get_macro_invocation()
+    const noexcept;
+
+  raw_pp_token_index get_passed_through_raw_token() const noexcept
+  { return _passed_through_raw_token; }
+
+  operator bool() const noexcept
+  {
+    return _type != pp_token::type::eof;
+  }
+
+  template <typename T>
+  bool is_punctuator(T &&s) const noexcept
+  {
+    return (_type == pp_token::type::punctuator &&
+	    _value == std::forward<T>(s));
+  }
+
+  template <pp_token::type... types>
+  bool is_type_any_of() const noexcept
+  { return __is_type_any_of<types...>()(*this); }
+
+  bool is_id() const noexcept
+  {
+    return is_type_any_of<pp_token::type::id>();
+  }
+
+  bool is_ws() const noexcept
+  {
+    return is_type_any_of<pp_token::type::ws>();
+  }
+
+  bool is_newline() const noexcept
+  {
+    return is_type_any_of<pp_token::type::newline>();
+  }
+
+  bool is_eof() const noexcept
+  {
+    return is_type_any_of<pp_token::type::eof>();
+  }
+
+  bool is_empty() const noexcept
+  {
+    return is_type_any_of<pp_token::type::empty>();
+  }
+
+  std::string stringify() const;
+
+  void concat(const _pp_token &tok, preprocessor &p,
+	      code_remarks &remarks);
+
+private:
+  template <pp_token::type... types>
+  struct __is_type_any_of
+  {
+    // This is the sizeof...(types) == 0 case,
+    // c.f. the specialization below.
+    bool operator()(const _pp_token &) const noexcept
+    { return false; }
+  };
+
+  template <pp_token::type type0, pp_token::type... types>
+  struct __is_type_any_of<type0, types...>
+  {
+    bool operator()(const _pp_token &tok) const noexcept
+    {
+      return tok._type == type0 || __is_type_any_of<types...>()(tok);
+    }
+  };
+
+  pp_token::type _type;
+  std::string _value;
+  raw_pp_tokens_range _token_source;
+  pp_result::macro_invocation * _macro_invocation;
+  raw_pp_token_index _passed_through_raw_token;
+
+  // Used for avoiding macro recursion as appropriate.
+  pp_result::used_macros _expansion_history;
+};
+
+class preprocessor::_macro_instance
+{
+public:
+  _macro_instance(preprocessor &preprocessor,
+		  const pp_result::macro &macro,
+		  std::vector<_pp_tokens> &&args,
+		  std::vector<_pp_tokens> &&exp_args,
+		  const raw_pp_tokens_range &invocation_range);
+
+  _pp_token read_next_token();
+
+  const pp_result::macro& get_macro() const noexcept
+  { return _macro; }
+
+  code_remarks& get_remarks() noexcept
+  { return _remarks; }
+
+private:
+  const _pp_tokens*
+  _resolve_arg(const std::string &name, const bool expanded)
+    const noexcept;
+
+  pp_result::used_macros _tok_expansion_history_init() const;
+
+  bool _is_stringification(raw_pp_tokens::const_iterator it)
+    const noexcept;
+
+  raw_pp_tokens::const_iterator
+  _skip_stringification_or_single(const raw_pp_tokens::const_iterator &it)
+    const noexcept;
+
+  bool _is_concat_op(const raw_pp_tokens::const_iterator &it)
+    const noexcept;
+
+  _pp_token _handle_stringification();
+
+  void _add_concat_token(const _pp_token &tok);
+  void _add_concat_token(const raw_pp_token &raw_tok);
+  _pp_token _yield_concat_token();
+  _pp_token _yield_empty_token();
+
+  preprocessor &_preprocessor;
+  const pp_result::macro &_macro;
+  std::map<std::string,
+	   std::pair<_pp_tokens, _pp_tokens> > _args;
+  const raw_pp_tokens_range _invocation_range;
+  code_remarks _remarks;
+
+  raw_pp_tokens::const_iterator _it_repl;
+  const _pp_tokens *_cur_arg;
+  _pp_tokens::const_iterator _cur_arg_it;
+
+  std::unique_ptr<_pp_token> _concat_token;
+
+  bool _emit_empty_tok;
+  bool _last_tok_was_empty_or_ws;
+  bool _is_builtin_special;
+};
+
+struct preprocessor::_cond_incl_state
+{
+  _cond_incl_state(pp_result::conditional_inclusion_node &_incl_node);
+
+  std::reference_wrapper<pp_result::conditional_inclusion_node> incl_node;
+  pp_result::used_macros um;
+  pp_result::macro_nondef_constraints mnc;
+  pp_result::conditional_inclusion_node::directive_ranges_type
+	directive_ranges;
+  bool branch_active;
+  pp_result::conditional_inclusion_node::directive_ranges_type::size_type
+	taken_branch;
+  bool has_else_branch;
+};
+
+struct preprocessor::_expansion_state
+{
+  _expansion_state();
+
+  std::vector<_macro_instance> macro_instances;
+  std::queue<_pp_token> pending_tokens;
+};
+
+
 preprocessor::preprocessor(const header_resolver &header_resolver,
 			   const target &tgt)
   : _header_resolver(header_resolver), _tgt(tgt),
     _pp_result(new pp_result{}),
     _cur_header_inclusion_root(_pp_result->get_header_inclusion_roots()
 			       .begin()),
-    _cond_incl_nesting(0), _root_expansion_state(),
+    _cond_incl_nesting(0),
+    _root_expansion_state(new _expansion_state{}),
     _cur_macro_invocation(nullptr), __counter__(0),
-    _eof_tok(pp_token::type::empty, "", raw_pp_tokens_range()),
-    _maybe_pp_directive(true), _line_empty(true)
+    _maybe_pp_directive(true), _line_empty(true),
+    _eof(false), _eof_index(std::numeric_limits<raw_pp_token_index>::max())
 {
   // Populate the special builtin macros.
   for (const auto &name : { "__FILE__",
@@ -50,6 +277,10 @@ preprocessor::preprocessor(const header_resolver &header_resolver,
     _macros.insert(std::make_pair(m.get_name(), std::ref(m)));
   }
 }
+
+preprocessor::preprocessor(preprocessor &&pp) = default;
+
+preprocessor::~preprocessor() noexcept = default;
 
 void preprocessor::add_root_source(const std::string &filename,
 				   const bool is_preinclude)
@@ -114,12 +345,12 @@ pp_token_index preprocessor::read_next_token()
 						  pp_token::type::id>())));
 
  read_next:
-  auto next_tok = _expand(_root_expansion_state,
+  _pp_token next_tok = _expand(*_root_expansion_state,
 			std::bind(&preprocessor::_read_next_plain_token, this));
   bool empty_seen = false;
   while (next_tok.is_empty()) {
     empty_seen = true;
-    next_tok = _expand(_root_expansion_state,
+    next_tok = _expand(*_root_expansion_state,
 		       std::bind(&preprocessor::_read_next_plain_token, this));
   }
   next_tok.expansion_history().clear();
@@ -492,8 +723,10 @@ preprocessor::_pp_token preprocessor::_read_next_plain_token()
 {
  again:
   // Has the final eof token been seen?
-  if (_eof_tok.get_type() != pp_token::type::empty)
-    return _eof_tok;
+  if (_eof) {
+    return _pp_token{pp_token::type::eof, std::string{""},
+		     raw_pp_tokens_range{_eof_index, _eof_index}};
+  }
 
   if (_tokenizers.empty()) {
     // First time _read_next_plain_token() gets called.
@@ -574,9 +807,8 @@ void preprocessor::_handle_eof_from_tokenizer(raw_pp_token &&eof_tok)
   if (_tokenizers.empty()) {
     if (++_cur_header_inclusion_root ==
 	_pp_result->get_header_inclusion_roots().end()) {
-      const raw_pp_token_index eof_index = _pp_result->get_raw_tokens().size();
-      _eof_tok = _pp_token{eof_tok.get_type(), eof_tok.get_value(),
-			   raw_pp_tokens_range{eof_index, eof_index}};
+      _eof = true;
+      _eof_index = _pp_result->get_raw_tokens().size();
       return;
     }
 
@@ -971,7 +1203,7 @@ preprocessor::_expand(_expansion_state &state,
 		      const std::function<_pp_token()> &token_reader,
 		      const bool from_cond_incl_cond)
 {
-  const bool state_is_root = (&state == &_root_expansion_state);
+  const bool state_is_root = (&state == &*_root_expansion_state);
   bool raw_tokens_read = false;
   bool keep_cur_macro_invocation = false;
 
@@ -991,7 +1223,7 @@ preprocessor::_expand(_expansion_state &state,
 	  // _root_expansion_state, but _root_expansion_state still
 	  // being empty.
 	  if (state_is_root &&
-	      _root_expansion_state.macro_instances.empty() &&
+	      _root_expansion_state->macro_instances.empty() &&
 	      !keep_cur_macro_invocation) {
 	    _cur_macro_invocation = nullptr;
 	  }
@@ -1023,7 +1255,7 @@ preprocessor::_expand(_expansion_state &state,
       if (!m->second.get().is_func_like()) {
 	const raw_pp_tokens_range &tok_range = tok.get_token_source();
 	if (!_cur_macro_invocation) {
-	  assert(_root_expansion_state.macro_instances.empty());
+	  assert(_root_expansion_state->macro_instances.empty());
 	  assert(state_is_root);
 	  assert(tok_range.begin + 1 == tok_range.end);
 	  _cur_macro_invocation =
@@ -1669,11 +1901,11 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
       throw pp_except(remark);
     }
 
-    assert(_root_expansion_state.macro_instances.empty());
-    assert(_root_expansion_state.pending_tokens.empty());
+    assert(_root_expansion_state->macro_instances.empty());
+    assert(_root_expansion_state->pending_tokens.empty());
     auto exp_read_tok =
       [&]() -> pp_token_index {
-	_pp_token tok = _expand(_root_expansion_state, read_tok, false);
+	_pp_token tok = _expand(*_root_expansion_state, read_tok, false);
 	return _emit_pp_token(*_pp_result, std::move(tok));
       };
 
@@ -1876,14 +2108,14 @@ _eval_conditional_inclusion(const raw_pp_tokens_range &directive_range)
   assert(!_cur_macro_invocation ||
 	 (_cur_macro_invocation->get_source_range().end <
 	  it_raw_tok - _pp_result->get_raw_tokens().cbegin()));
-  assert(_root_expansion_state.macro_instances.empty());
-  assert(_root_expansion_state.pending_tokens.empty());
+  assert(_root_expansion_state->macro_instances.empty());
+  assert(_root_expansion_state->pending_tokens.empty());
   pp_result::macro_invocation * const saved_cur_macro_invocation
     = _cur_macro_invocation;
   _cur_macro_invocation = nullptr;
   auto exp_read_tok =
     [&]() -> pp_token_index {
-      _pp_token tok = _expand(_root_expansion_state, read_tok, true);
+      _pp_token tok = _expand(*_root_expansion_state, read_tok, true);
       return _emit_pp_token(*_pp_result, std::move(tok));
     };
 
