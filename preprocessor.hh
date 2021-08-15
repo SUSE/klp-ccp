@@ -86,8 +86,8 @@ namespace klp
 	 const std::function<void(const std::string)> &report_warning);
 
     private:
-      class _macro_instance;
-      friend class _macro_instance;
+      class _pending_macro_expansion;
+      friend class _pending_macro_expansion;
 
       class _pp_token;
       typedef std::vector<_pp_token> _pp_tokens;
@@ -128,11 +128,11 @@ namespace klp
 	      const std::function<_pp_token()> &token_reader,
 	      const bool from_cond_incl_cond = false);
 
-      _macro_instance
+      _pending_macro_expansion
       _handle_object_macro_invocation(const pp_result::macro &macro,
 				      _pp_token &&id_tok);
 
-      _macro_instance
+      _pending_macro_expansion
       _handle_func_macro_invocation(
 			const pp_result::macro &macro,
 			const raw_pp_token_index invocation_begin,
