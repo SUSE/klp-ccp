@@ -16,6 +16,17 @@ if [[ "x$enable_debug_parser" = xyes ]]; then
    AC_DEFINE([DEBUG_PARSER], [1], [bison parser state output])
 fi
 
+AC_CONFIG_HEADERS([config.h])
+
+bison_version=[`bison --version | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+'`]
+AX_COMPARE_VERSION(["$bison_version"], [lt], ["3.5.91"],
+        [AC_SUBST([BISON_YYLA_HAS_TYPE], [1])],
+        [AC_SUBST([BISON_YYLA_HAS_TYPE], [0])])
+
+AC_DEFINE_UNQUOTED([BISON_YYLA_HAS_TYPE], [$BISON_YYLA_HAS_TYPE],
+                   [Older versions of bison has .type entry in the lookahead
+                    token, which has been renamed to .kind_ in later versions])
+
 AC_CONFIG_FILES([Makefile
 		 arch/Makefile
 		 testsuite/Makefile
