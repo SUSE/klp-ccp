@@ -30,6 +30,7 @@
 #define YYDEBUG 1
 #endif
 
+#include "config.h"
 #include "types.hh"
 #include "ast.hh"
 
@@ -1946,9 +1947,16 @@ iteration_statement:
 	     * Ugly hack: recheck whether the lookahead token is
 	     * a typedef identifier.
 	     */
-	    if (yyla.type == by_type(token::TOK_IDENTIFIER).type) {
+	    if (yyla.type_get() == by_type(token::TOK_IDENTIFIER).type_get()) {
 	      if (pd.is_typedef_id(pd._pp.get_result().get_pp_tokens()[yyla.value.token_index].get_value())) {
-		yyla.type = by_type(token::TOK_TYPEDEF_IDENTIFIER).type;
+		/*
+		 * On bison 3.5.91, yyla.type has been renamed to yyla.kind_
+		 */
+	#if BISON_YYLA_HAS_TYPE == 1
+		yyla.type = by_type(token::TOK_TYPEDEF_IDENTIFIER).type_get();
+	#else
+		yyla.kind_ = by_type(token::TOK_TYPEDEF_IDENTIFIER).type_get();
+	#endif
 	      }
 	    }
 	    $$ = new stmt_for_init_decl(@$, std::move($3), std::move($4),
