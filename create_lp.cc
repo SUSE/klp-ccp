@@ -83,7 +83,7 @@ namespace
   public:
     deps_on_sou_decls& operator+=(const deps_on_sou_decls &rhs);
 
-    void add(const dep_on_sou_decl &d);
+    bool add(const dep_on_sou_decl &d);
 
     _container_type::const_iterator begin() const noexcept
     { return _deps.begin(); }
@@ -168,7 +168,7 @@ namespace
   public:
     deps_on_enum_decls& operator+=(const deps_on_enum_decls &rhs);
 
-    void add(const dep_on_enum_decl &d);
+    bool add(const dep_on_enum_decl &d);
 
     _container_type::const_iterator begin() const noexcept
     { return _deps.begin(); }
@@ -1840,21 +1840,23 @@ deps_on_sou_decls& deps_on_sou_decls::operator+=(const deps_on_sou_decls &rhs)
   return *this;
 }
 
-void deps_on_sou_decls::add(const dep_on_sou_decl &d)
+bool deps_on_sou_decls::add(const dep_on_sou_decl &d)
 {
   const auto it = _deps.find(d);
 
   if (it == _deps.end()) {
     _deps.insert(d);
-    return;
+    return true;
   }
 
   // See if d is visible from *it and replace it if so.
   if (d.get_decl_list_node().is_visible_from(it->get_decl_list_node())) {
     _deps.erase(it);
     _deps.insert(d);
+    return true;
   } else {
     assert(it->get_decl_list_node().is_visible_from(d.get_decl_list_node()));
+    return false;
   }
 }
 
@@ -1937,21 +1939,23 @@ deps_on_enum_decls::operator+=(const deps_on_enum_decls &rhs)
   return *this;
 }
 
-void deps_on_enum_decls::add(const dep_on_enum_decl &d)
+bool deps_on_enum_decls::add(const dep_on_enum_decl &d)
 {
   const auto it = _deps.find(d);
 
   if (it == _deps.end()) {
     _deps.insert(d);
-    return;
+    return true;
   }
 
   // See if d is visible from *it and replace it if so.
   if (d.get_decl_list_node().is_visible_from(it->get_decl_list_node())) {
     _deps.erase(it);
     _deps.insert(d);
+    return true;
   } else {
     assert(it->get_decl_list_node().is_visible_from(d.get_decl_list_node()));
+    return false;
   }
 }
 
@@ -7213,48 +7217,66 @@ void _lp_deps_resolver::operator()()
     }
   }
 
-
   // Finally, mark the tag declarations still not made available one
   // way or the other as needed.
   for (const auto &dep : _deps_on_sou_decls) {
     sou_info &soui = dep.get_sou_info();
     const auto &dn = dep.get_decl_list_node();
-    sou_def_info * const soudi = soui.get_soud();
-    if (soudi && (soudi->emit_def || soudi->emit_tag_decl)) {
-      if (soudi->soud.get_decl_list_node().is_visible_from(dn))
-	continue;
-    }
+    sou_def_info *soudi = soui.get_soud();
+
+    if (soudi && !soudi->soud.get_decl_list_node().is_visible_from(dn))
+      soudi = nullptr;
+
+    if (soudi && (soudi->emit_def || soudi->emit_tag_decl))
+      continue;
 
     bool found = false;
-    for (auto it_sour = soui.sours_begin(); it_sour != soui.sours_end();
+    for (auto it_sour = soui.sours_begin();
+	 (it_sour != soui.sours_end() &&
+	  it_sour->sour.get_decl_list_node().is_visible_from(dn));
 	 ++it_sour) {
-      if (it_sour->emit_tag_decl &&
-	  it_sour->sour.get_decl_list_node().is_visible_from(dn)) {
+      if (it_sour->emit_tag_decl) {
 	found = true;
 	break;
       }
     }
+    if (found)
+      continue;
 
-    if (!found) {
-      // The dep hasn't been bound to a tag decl _within_ some
-      // struct/union/enum definition coming first in file order
-      // (c.f. _queue_dep_on_tag_decl()).
-      // It follows that there exists some declaration of this tag
-      // which is not within some struct/union/enum definition and
-      // which is visible. Pick the first one in file order.
-      if (soudi && soudi->soud.get_decl_list_node().is_first()) {
-	soudi->emit_tag_decl = true;
-      } else {
-	for (auto it_sour = soui.sours_begin(); it_sour != soui.sours_end();
-	     ++it_sour) {
-	  if (it_sour->parent.k != tag_parent::kind::k_sou_def &&
-	      it_sour->parent.k != tag_parent::kind::k_enum_def) {
-	    assert(it_sour->sour.get_decl_list_node().is_visible_from(dn));
-	    it_sour->emit_tag_decl = true;
-	    break;
-	  }
-	}
+    // If all candidate tag declarations had lived within some
+    // struct/union/enum definition trees, the dependency queueing
+    // code in _queue_dep_on_tag_decl() would have taken care of this
+    // already (by emitting the whole first such tree). By now, it is
+    // guaranteed that there exists at least one declaration of this
+    // tag which is not within some struct/union/enum definition and
+    // which is visible. Pick the first one in file order.
+    if (soudi &&
+	(soudi->parent.k == tag_parent::kind::k_sou_def ||
+	 soudi->parent.k == tag_parent::kind::k_enum_def)) {
+      soudi = nullptr;
+    }
+
+    for (auto it_sour = soui.sours_begin();
+	 (it_sour != soui.sours_end() &&
+	  (!soudi ||
+	   !(soudi->soud.get_decl_list_node().is_visible_from
+	     (it_sour->sour.get_decl_list_node()))));
+	 ++it_sour) {
+      if (it_sour->parent.k != tag_parent::kind::k_sou_def &&
+	  it_sour->parent.k != tag_parent::kind::k_enum_def) {
+	assert(it_sour->sour.get_decl_list_node().is_visible_from(dn));
+	it_sour->emit_tag_decl = true;
+	found = true;
+	break;
       }
+    }
+    if (!found) {
+      assert(soudi);
+      assert(soudi->parent.k != tag_parent::kind::k_sou_def &&
+	     soudi->parent.k != tag_parent::kind::k_enum_def);
+      assert(soudi->soud.get_decl_list_node().is_visible_from(dn));
+      assert(!soudi->emit_def);
+      soudi->emit_tag_decl = true;
     }
   }
   _deps_on_sou_decls.clear();
@@ -7262,42 +7284,58 @@ void _lp_deps_resolver::operator()()
   for (const auto &dep : _deps_on_enum_decls) {
     enum_info &ei = dep.get_enum_info();
     const auto &dn = dep.get_decl_list_node();
-    enum_def_info * const edi = ei.get_ed();
-    if (edi && (edi->emit_def || edi->emit_tag_decl)) {
-      if (edi->ed.get_decl_list_node().is_visible_from(dn))
-	continue;
-    }
+    enum_def_info *edi = ei.get_ed();
+
+    if (edi && !edi->ed.get_decl_list_node().is_visible_from(dn))
+      edi = nullptr;
+
+    if (edi && (edi->emit_def || edi->emit_tag_decl))
+      continue;
 
     bool found = false;
+    for (auto it_er = ei.ers_begin();
+	 (it_er != ei.ers_end() &&
+	  it_er->er.get_decl_list_node().is_visible_from(dn));
+	 ++it_er) {
+      if (it_er->emit_tag_decl) {
+	found = true;
+	break;
+      }
+    }
+    if (found)
+      continue;
+
+    // If all candidate tag declarations had lived within some
+    // struct/union/enum definition trees, the dependency queueing
+    // code in _queue_dep_on_tag_decl() would have taken care of this
+    // already (by emitting the whole first such tree). By now, it is
+    // guaranteed that there exists at least one declaration of this
+    // tag which is not within some struct/union/enum definition and
+    // which is visible. Pick the first one in file order.
+    if (edi &&
+	(edi->parent.k == tag_parent::kind::k_sou_def ||
+	 edi->parent.k == tag_parent::kind::k_enum_def)) {
+      edi = nullptr;
+    }
+
     for (auto it_er = ei.ers_begin(); it_er != ei.ers_end();
 	 ++it_er) {
-      if (it_er->emit_tag_decl &&
-	  it_er->er.get_decl_list_node().is_visible_from(dn)) {
+      if (it_er->parent.k != tag_parent::kind::k_sou_def &&
+	  it_er->parent.k != tag_parent::kind::k_enum_def) {
+	assert(it_er->er.get_decl_list_node().is_visible_from(dn));
+	it_er->emit_tag_decl = true;
 	found = true;
 	break;
       }
     }
 
     if (!found) {
-      // The dep hasn't been bound to a tag decl _within_ some
-      // struct/union/enum definition coming first in file order
-      // (c.f. _queue_dep_on_tag_decl()).
-      // It follows that there exists some declaration of this tag
-      // which is not within some struct/union/enum definition and
-      // which is visible. Pick the first one in file order.
-      if (edi && edi->ed.get_decl_list_node().is_first()) {
-	edi->emit_tag_decl = true;
-      } else {
-	for (auto it_er = ei.ers_begin(); it_er != ei.ers_end();
-	     ++it_er) {
-	  if (it_er->parent.k != tag_parent::kind::k_sou_def &&
-	      it_er->parent.k != tag_parent::kind::k_enum_def) {
-	    assert(it_er->er.get_decl_list_node().is_visible_from(dn));
-	    it_er->emit_tag_decl = true;
-	    break;
-	  }
-	}
-      }
+      assert(edi);
+      assert(edi->parent.k != tag_parent::kind::k_sou_def &&
+	     edi->parent.k != tag_parent::kind::k_enum_def);
+      assert(edi->ed.get_decl_list_node().is_visible_from(dn));
+      assert(!edi->emit_def);
+      edi->emit_tag_decl = true;
     }
   }
   _deps_on_enum_decls.clear();
@@ -7441,68 +7479,94 @@ void _lp_deps_resolver::_emit_child_tag_decls(tags_infos &child_tags)
 
 void _lp_deps_resolver::_queue_dep_on_tag_decl(const dep_on_sou_decl &dep)
 {
-  // If the tag declaration in question is the first in file order and
-  // lives within some struct/union/enum definition, emit the whole
+  // If no update, return early.
+  if (!_deps_on_sou_decls.add(dep))
+    return;
+
+  // If all reachable tag declarations live within some
+  // struct/union/enum definition, emit the whole first such
   // definition tree.
-  if (dep.get_decl_list_node().is_first()) {
-    tag_parent *parent = nullptr;
-    switch (dep.k) {
-    case dep_on_sou_decl::kind::def:
-      parent = &dep.get_soud().parent;
-      break;
+  const auto &dn = dep.get_decl_list_node();
+  sou_info &soui = dep.get_sou_info();
+  tag_parent *first_parent = nullptr;
+  sou_def_info * const soudi = soui.get_soud();
 
-    case dep_on_sou_decl::kind::ref:
-      parent = &dep.get_sour().parent;
-      break;
+  if (soudi && soudi->soud.get_decl_list_node().is_visible_from(dn)) {
+    if (soudi->parent.k != tag_parent::kind::k_sou_def &&
+	soudi->parent.k != tag_parent::kind::k_enum_def) {
+      return;
     }
-
-    if (parent->k == tag_parent::kind::k_sou_def ||
-	parent->k == tag_parent::kind::k_enum_def) {
-      parent->on_outermost_tag_def
-	(wrap_callables<no_default_action>
-	 ([&](sou_def_info &outermost_soudi) {
-	    _queue_tag_defs_at_and_below(outermost_soudi);
-	  },
-	  [&](enum_def_info &outermost_edi) {
-	    _queue_tag_defs_at_and_below(outermost_edi);
-	  }));
-    }
+    if (soudi->soud.get_decl_list_node().is_first())
+      first_parent = &soudi->parent;
   }
 
-  _deps_on_sou_decls.add(dep);
+  for (auto it_sour = soui.sours_begin();
+       (it_sour != soui.sours_end() &&
+	it_sour->sour.get_decl_list_node().is_visible_from(dn));
+       ++it_sour) {
+    if (it_sour->parent.k != tag_parent::kind::k_sou_def &&
+	it_sour->parent.k != tag_parent::kind::k_enum_def) {
+      return;
+    }
+    if (!first_parent)
+      first_parent = &it_sour->parent;
+  }
+
+  assert(first_parent);
+  first_parent->on_outermost_tag_def
+    (wrap_callables<no_default_action>
+     ([&](sou_def_info &outermost_soudi) {
+	_queue_tag_defs_at_and_below(outermost_soudi);
+      },
+      [&](enum_def_info &outermost_edi) {
+	_queue_tag_defs_at_and_below(outermost_edi);
+      }));
 }
 
 void _lp_deps_resolver::_queue_dep_on_tag_decl(const dep_on_enum_decl &dep)
 {
-  // If the tag declaration in question is the first in file order and
-  // lives within some struct/union/enum definition, emit the whole
+  // If no update, return early.
+  if (!_deps_on_enum_decls.add(dep))
+    return;
+
+  // If all reachable tag declarations live within some
+  // struct/union/enum definition, emit the whole first such
   // definition tree.
-  if (dep.get_decl_list_node().is_first()) {
-    tag_parent *parent = nullptr;
-    switch (dep.k) {
-    case dep_on_enum_decl::kind::def:
-      parent = &dep.get_ed().parent;
-      break;
+  const auto &dn = dep.get_decl_list_node();
+  enum_info &ei = dep.get_enum_info();
+  tag_parent *first_parent = nullptr;
+  enum_def_info * const edi = ei.get_ed();
 
-    case dep_on_enum_decl::kind::ref:
-      parent = &dep.get_er().parent;
-      break;
+  if (edi && edi->ed.get_decl_list_node().is_visible_from(dn)) {
+    if (edi->parent.k != tag_parent::kind::k_sou_def &&
+	edi->parent.k != tag_parent::kind::k_enum_def) {
+      return;
     }
-
-    if (parent->k == tag_parent::kind::k_sou_def ||
-	parent->k == tag_parent::kind::k_enum_def) {
-      parent->on_outermost_tag_def
-	(wrap_callables<no_default_action>
-	 ([&](sou_def_info &outermost_soudi) {
-	    _queue_tag_defs_at_and_below(outermost_soudi);
-	  },
-	  [&](enum_def_info &outermost_edi) {
-	    _queue_tag_defs_at_and_below(outermost_edi);
-	  }));
-    }
+    if (edi->ed.get_decl_list_node().is_first())
+      first_parent = &edi->parent;
   }
 
-  _deps_on_enum_decls.add(dep);
+  for (auto it_er = ei.ers_begin();
+       (it_er != ei.ers_end() &&
+	it_er->er.get_decl_list_node().is_visible_from(dn));
+       ++it_er) {
+    if (it_er->parent.k != tag_parent::kind::k_sou_def &&
+	it_er->parent.k != tag_parent::kind::k_enum_def) {
+      return;
+    }
+    if (!first_parent)
+      first_parent = &it_er->parent;
+  }
+
+  assert(first_parent);
+  first_parent->on_outermost_tag_def
+    (wrap_callables<no_default_action>
+     ([&](sou_def_info &outermost_soudi) {
+	_queue_tag_defs_at_and_below(outermost_soudi);
+      },
+      [&](enum_def_info &outermost_edi) {
+	_queue_tag_defs_at_and_below(outermost_edi);
+      }));
 }
 
 void

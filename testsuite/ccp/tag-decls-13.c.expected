@@ -1,0 +1,13 @@
+/* klp-ccp: from testsuite/ccp/tag-decls-13.c */
+struct B;
+
+void klpp_pu_f(struct B*)
+{}
+
+struct C
+{
+	struct E *e;
+};
+
+void klpp_pu_g(struct E*)
+{}

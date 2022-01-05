@@ -1,0 +1,13 @@
+/* klp-ccp: from testsuite/ccp/tag-decls-14.c */
+enum B;
+
+void klpp_pu_f(enum B*)
+{}
+
+struct C
+{
+	enum E *e;
+};
+
+void klpp_pu_g(enum E*)
+{}
