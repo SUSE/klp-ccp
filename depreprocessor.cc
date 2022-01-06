@@ -1825,6 +1825,7 @@ _write(source_writer &writer, _output_state &state,
 	}
 
 	if (cond_incl_trans_in_mi.empty()) {
+	  write_mus_and_mds_at_cur_pos();
 	  depreprocessor::_write_cond_incl_transition(writer, state,
 						      *op.cond_incl_node,
 						      op.cond_incl_trans_kind,

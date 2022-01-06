@@ -1,0 +1,11 @@
+/* klp-ccp: from testsuite/ccp/macros-32.c */
+int klpp_pu_f(void)
+{
+#define A 1
+#if 0
+#error "klp-ccp: non-taken branch"
+#else
+#define B 2
+#endif
+	return A + B;
+}
