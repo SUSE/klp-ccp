@@ -516,7 +516,30 @@ _is_range_in_hole(const raw_pp_tokens_range &r,
 		  const pp_result &pp_result) const noexcept
 {
   auto overlapping_ops = _find_overlapping_ops_range(r, pp_result);
-  return (overlapping_ops.first == overlapping_ops.second);
+
+  if (overlapping_ops.first != overlapping_ops.second)
+    return false;
+
+  while (overlapping_ops.first != _ops.begin() &&
+	 (overlapping_ops.first - 1)->a != _op::action::copy &&
+	 (overlapping_ops.first - 1)->a != _op::action::replace &&
+	 (overlapping_ops.first - 1)->a != _op::action::insert) {
+    --overlapping_ops.first;
+  }
+
+  while (overlapping_ops.second != _ops.end() &&
+	 overlapping_ops.second->a != _op::action::copy &&
+	 overlapping_ops.second->a != _op::action::replace &&
+	 overlapping_ops.second->a != _op::action::insert) {
+    ++overlapping_ops.second;
+  }
+
+  if (overlapping_ops.first == _ops.begin() ||
+      overlapping_ops.second == _ops.end()) {
+    return true;
+  }
+
+  return overlapping_ops.first->r.end == overlapping_ops.second->r.begin;
 }
 
 depreprocessor::transformed_input_chunk::_ops_type::iterator

@@ -1,0 +1,41 @@
+/* klp-ccp: from cp/testsuite/ccp/condincl-4.c */
+void klpp_pu_f(void)
+{
+#if 0
+#error "klp-ccp: non-taken branch"
+#endif
+
+#if 0
+#error "klp-ccp: non-taken branch"
+#endif
+	0;
+
+#if 0
+#error "klp-ccp: non-taken branch"
+#endif
+
+#if 0
+#error "klp-ccp: non-taken branch"
+#endif
+
+#if 1
+#if 0
+#error "klp-ccp: non-taken branch"
+#endif
+#if 0
+#error "klp-ccp: non-taken branch"
+#endif
+	0;
+
+#if 0
+#error "klp-ccp: non-taken branch"
+#endif
+
+#if 0
+#error "klp-ccp: non-taken branch"
+#endif
+
+#else
+#error "klp-ccp: a preceeding branch should have been taken"
+#endif
+}
