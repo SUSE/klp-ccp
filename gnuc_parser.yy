@@ -209,6 +209,7 @@ static void empty(klp::ccp::pp_tokens_range &loc)
 %token TOK_KW_SIZEOF
 %token TOK_KW_ALIGNOF
 
+%token TOK_KW_BUILTIN_CHOOSE_EXPR
 %token TOK_KW_BUILTIN_OFFSETOF
 %token TOK_KW_BUILTIN_TYPES_COMPATIBLE_P
 %token TOK_KW_BUILTIN_VA_ARG
@@ -2393,6 +2394,12 @@ primary_expression:
 	  { $$ = new expr_string_literal(MV_P($1)); }
 	| TOK_LPAREN expression TOK_RPAREN
 	  { $$ = new expr_parenthesized(@$, std::move($2)); }
+	| TOK_KW_BUILTIN_CHOOSE_EXPR TOK_LPAREN assignment_expression TOK_COMMA
+		assignment_expression TOK_COMMA assignment_expression TOK_RPAREN
+	  {
+	    $$ = new expr_builtin_choose_expr(@$, std::move($3), std::move($5),
+					      std::move($7));
+	  }
 ;
 
 string_literal:

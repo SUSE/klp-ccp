@@ -33,7 +33,6 @@
 #include "lp_except.hh"
 #include "source_writer.hh"
 #include "depreprocessor.hh"
-#include "builtins_impl.hh"
 #include "create_lp.hh"
 
 using namespace klp::ccp;
@@ -3247,11 +3246,12 @@ namespace
     bool _handle_expr(const ast::expr_alignof_expr &e);
     void _handle_expr(const ast::expr_sizeof_type_name &e);
     void _handle_expr(const ast::expr_alignof_type_name &e);
+    bool _handle_expr(const ast::expr_builtin_choose_expr &e);
     void _handle_expr(const ast::expr_builtin_offsetof &e);
     void _handle_expr(const ast::expr_member_deref &e);
     void _handle_expr(const ast::expr_cast &e);
     void _handle_expr(const ast::expr_compound_literal &e);
-    bool _handle_expr(const ast::expr_func_invocation &e);
+    void _handle_expr(const ast::expr_func_invocation &e);
     void _handle_expr(const ast::expr_unop_pre &e);
     void _handle_expr(const ast::expr_unop_post &e);
     bool _handle_expr(const ast::expr_binop &e);
@@ -3541,6 +3541,9 @@ void _ast_info_collector::operator()()
 	_handle_expr(e);
 	return false;
       },
+      [this](const ast::expr_builtin_choose_expr &e) {
+	return _handle_expr(e);
+      },
       [this](const ast::expr_builtin_offsetof &e) {
 	_handle_expr(e);
 	return false;
@@ -3558,7 +3561,8 @@ void _ast_info_collector::operator()()
 	return false;
       },
       [this](const ast::expr_func_invocation &e) {
-	return _handle_expr(e);
+	_handle_expr(e);
+	return false;
       },
       [this](const ast::expr_unop_pre &e) {
 	_handle_expr(e);
@@ -3711,7 +3715,7 @@ void _ast_info_collector::operator()()
       [this](const ast::expr_alignof_expr&) {
 	_pop_unevaluated();
       },
-      [this](const ast::expr_func_invocation&) {
+      [this](const ast::expr_builtin_choose_expr&) {
 	_pop_unevaluated();
       },
       [this](const ast::expr_binop&) {
@@ -3754,6 +3758,7 @@ void _ast_info_collector::operator()()
 	      const ast::expr_alignof_expr,
 	      const ast::expr_sizeof_type_name,
 	      const ast::expr_alignof_type_name,
+	      const ast::expr_builtin_choose_expr,
 	      const ast::expr_builtin_offsetof,
 	      const ast::expr_member_deref,
 	      const ast::expr_cast,
@@ -3791,7 +3796,7 @@ void _ast_info_collector::operator()()
 	      const ast::typeof_expr,
 	      const ast::expr_sizeof_expr,
 	      const ast::expr_alignof_expr,
-	      const ast::expr_func_invocation,
+	      const ast::expr_builtin_choose_expr,
 	      const ast::expr_binop,
 	      const ast::expr_conditional,
 	      const ast::struct_declarator,
@@ -4080,6 +4085,28 @@ void _ast_info_collector::_handle_expr(const ast::expr_alignof_type_name &e)
   _require_complete_type(*e.get_type_name().get_type());
 }
 
+bool _ast_info_collector::_handle_expr(const ast::expr_builtin_choose_expr &e)
+{
+  if (!_is_evaluated(e))
+    return false;
+
+  switch (_expr_to_bool(e.get_cond())) {
+  case _constexpr_bool_value::unknown:
+    assert(0);
+    return false;
+
+  case _constexpr_bool_value::nonzero:
+    _push_unevaluated(e.get_expr_false());
+    break;
+
+  case _constexpr_bool_value::zero:
+    _push_unevaluated(e.get_expr_true());
+    break;
+  };
+
+  return true;
+}
+
 void _ast_info_collector::_handle_expr(const ast::expr_builtin_offsetof &e)
 {
   // Requiring an outermost complete type implies completeness of all
@@ -4108,48 +4135,16 @@ void _ast_info_collector::_handle_expr(const ast::expr_compound_literal &e)
   _require_complete_type(*e.get_type_name().get_type());
 }
 
-bool _ast_info_collector::_handle_expr(const ast::expr_func_invocation &e)
+void _ast_info_collector::_handle_expr(const ast::expr_func_invocation &e)
 {
   // For a function invocation, the compiler will have to set things
   // up on the stack etc. and the return types as well as the
   // parameter types must all be complete.
-  return types::handle_types<bool>
-    ((wrap_callables<default_action_unreachable<bool, type_set<> >::type>
+  types::handle_types<void>
+    ((wrap_callables<default_action_nop>
       ([&](const types::pointer_type &pt) {
 	 _require_complete_function_ret_and_param_types
 					(*pt.get_pointed_to_type());
-	 return false;
-       },
-       [&](const types::builtin_func_type &bft) {
-	 // See whether this is a __builtin_choose_expr() and
-	 // add the non-taken subexpression to the stack of unevaluated
-	 // expressions.
-	 if(!(builtins::impl::builtin_func_choose_expr::is_factory
-	      (bft.get_builtin_func_factory()))) {
-	   return false;
-	 }
-
-	 if (!_is_evaluated(e))
-	   return false;
-
-	 const ast::expr_list * const el = e.get_args();
-	 assert(el);
-	 assert(el->size() == 3);
-	 switch (_expr_to_bool((*el)[0])) {
-	 case _constexpr_bool_value::unknown:
-	   assert(0);
-	   return false;
-
-	 case _constexpr_bool_value::nonzero:
-	   _push_unevaluated((*el)[2]);
-	   break;
-
-	 case _constexpr_bool_value::zero:
-	   _push_unevaluated((*el)[1]);
-	   break;
-	 };
-
-	 return true;
        })),
      *e.get_func().get_type());
 }
@@ -5300,14 +5295,7 @@ _fun_expr_id_needs_externalization(const ast::expr_id &eid)
 	::add_type<ast::expr_statement>;
     p->process<void, handled_entities >
       (wrap_callables<no_default_action>
-       ([&](const ast::expr_list &e) {
-	  // Could be the argument list of some
-	  // __builtin_choose_expr() invocation. It will be decided in
-	  // the handling of expr_func_invocation below. Leave c
-	  // unchanged.
-	  p = e.get_parent();
-	},
-	[&](const ast::expr_cast &e) {
+       ([&](const ast::expr_cast &e) {
 	  c = &e;
 	  p = c->get_parent();
 	},
@@ -5357,6 +5345,16 @@ _fun_expr_id_needs_externalization(const ast::expr_id &eid)
 	  assert(0);
 	  __builtin_unreachable();
 	},
+	[&](const ast::expr_builtin_choose_expr &e) {
+	  if (c == &e.get_cond()) {
+	    // The condition is evaluated as a scalar.
+	    need_externalization = false;
+	    p = nullptr;
+	  } else {
+	    c = &e;
+	    p = c->get_parent();
+	  }
+	},
 	[&](const ast::offset_member_designator&) {
 	  // This shouldn't be possible except for complete nonsense
 	  // code involving casts.
@@ -5377,36 +5375,10 @@ _fun_expr_id_needs_externalization(const ast::expr_id &eid)
 	    return;
 	  }
 
-	  // Check for __builtin_choose_expr()
-	  bool is_bce = false;
-	  if (e.get_args() && e.get_args()->size() == 3) {
-	    is_bce =
-	      (types::handle_types<bool>
-	       (wrap_callables<default_action_return_value<bool, false>::type>
-		([&](const types::builtin_func_type &bft) {
-		  return (builtins::impl::builtin_func_choose_expr::is_factory
-			  (bft.get_builtin_func_factory()));
-		 }),
-		*e.get_func().get_type()));
-	  }
-
-	  if (!is_bce) {
-	    // Expression has been passed as an argument to some
-	    // function invocation.
-	    need_externalization = true;
-	    p = nullptr;
-	    return;
-	  }
-
-	  const ast::expr_list &el = *e.get_args();
-	  if (c == &el[0]) {
-	    // The condition is evaluated as a scalar.
-	    need_externalization = false;
-	    p = nullptr;
-	  } else {
-	    c = &e;
-	    p = c->get_parent();
-	  }
+	  // Expression has been passed as an argument to some
+	  // function invocation.
+	  need_externalization = true;
+	  p = nullptr;
 
 	},
 	[&](const ast::expr_member_deref&) {

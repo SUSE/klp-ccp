@@ -31,7 +31,6 @@
 #include "execution_charset_encoder.hh"
 #include "ast_evaluate.hh"
 #include "pp_token.hh"
-#include "builtins_impl.hh"
 
 using namespace klp::ccp;
 using namespace klp::ccp::ast;
@@ -2622,43 +2621,17 @@ void expr::_convert_type_for_expr_context()
 	[&](const initializer_expr &) {
 	  oc = operand_context::oc_initializer;
 	},
-	[&](const expr_list &el) {
+	[&](const expr_builtin_choose_expr &bce) {
 	  // Check whether this is the second or third argument of
 	  // a __builtin_func_choose_expr() invocation.
-	  if (el.size() != 3)
-	    return;
 
-	  if (!el.get_parent())
-	    return;
-	  const expr_func_invocation *efi = nullptr;
-	  el.get_parent()->process<void, type_set<expr_func_invocation> >
-	    (wrap_callables<default_action_nop>
-	     ([&](const expr_func_invocation &_efi) {
-		efi = &_efi;
-	      }));
-	  if (!efi)
-	    return;
-
-	  handle_types<void>
-	    ((wrap_callables<default_action_nop>
-	      ([&](const builtin_func_type &bft) {
-		 if(!(builtins::impl::builtin_func_choose_expr::is_factory
-		      (bft.get_builtin_func_factory()))) {
-		   return;
-		 }
-
-		 // Alright, this expression is some subexpression of a
-		 // __builtin_choose_expr() invocation.  Check that it
-		 // is a subexpression of either the second or third argument.
-		 for (const _ast_entity *p = this;
-		      p && p != &el; p = p->get_parent()) {
-		   if (p == &el[1] || p == &el[2]) {
-		     oc = operand_context::oc_builtin_choose_expr;
-		     break;
-		   }
-		 }
-	       })),
-	     *efi->get_func().get_type());
+	  for (const _ast_entity *p = this;
+	       p && p != &bce; p = p->get_parent()) {
+	    if (p == &bce.get_expr_true() || p == &bce.get_expr_false()) {
+	      oc = operand_context::oc_builtin_choose_expr;
+	      break;
+	    }
+	  }
 	}));
   }
 
@@ -5598,6 +5571,31 @@ void expr_alignof_type_name::evaluate_type(ast &a, const target &tgt)
 
 	 })),
        *_tn.get_type());
+}
+
+
+void expr_builtin_choose_expr::evaluate_type(ast &a, const target &tgt)
+{
+  // Note: GCC really requires an integer constant expression
+  // for the first argument.
+  if (!_cond.is_constexpr() ||
+      !(_cond.get_constexpr_value().has_constness
+	(constexpr_value::constness::c_integer_constant_expr))) {
+    code_remark remark
+      (code_remark::severity::warning,
+       "first argument to __builtin_choose_expr() is not a constant",
+       a.get_pp_result(), _cond.get_tokens_range());
+    a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  const constexpr_value &cv_cond = _cond.get_constexpr_value();
+  const expr &e_result = cv_cond.is_zero() ? _expr_false : _expr_true;
+  _set_type(e_result.get_type());
+  _set_lvalue(e_result.is_lvalue());
+  if (e_result.is_constexpr())
+    _set_value(e_result.get_constexpr_value().clone());
+  _convert_type_for_expr_context();
 }
 
 

@@ -295,6 +295,7 @@ namespace klp
       class expr_unop_pre;
       class expr_sizeof_expr;
       class expr_alignof_expr;
+      class expr_builtin_choose_expr;
       class offset_member_designator;
       class expr_builtin_offsetof;
       class expr_builtin_va_arg;
@@ -437,6 +438,7 @@ namespace klp
 	typedef type_set<expr_list,
 			 expr_cast, expr_unop_pre,
 			 expr_sizeof_expr, expr_alignof_expr,
+			 expr_builtin_choose_expr,
 			 offset_member_designator, expr_array_subscript,
 			 expr_func_invocation, expr_member_deref,
 			 expr_unop_post, expr_parenthesized, expr_comma,
@@ -861,6 +863,39 @@ namespace klp
 	virtual bool _process(const_processor<bool> &p) const override;
 
 	type_name &_tn;
+      };
+
+      class expr_builtin_choose_expr final : public expr
+      {
+      public:
+	expr_builtin_choose_expr(const pp_tokens_range &tr, expr *&&cond,
+				 expr *&&expr_true, expr *&&expr_false)
+	  noexcept;
+
+	virtual ~expr_builtin_choose_expr() noexcept override;
+
+	virtual void evaluate_type(ast &a, const target &tgt) override;
+
+	const expr& get_cond() const noexcept
+	{ return _cond; }
+
+	const expr& get_expr_true() const noexcept
+	{ return _expr_true; }
+
+	const expr& get_expr_false() const noexcept
+	{ return _expr_false; }
+
+      private:
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
+
+	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
+	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
+
+	expr &_cond;
+	expr &_expr_true;
+	expr &_expr_false;
       };
 
       class offset_member_designator

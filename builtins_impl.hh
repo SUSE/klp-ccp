@@ -186,24 +186,6 @@ namespace klp
 	mk_pld(const target&);
 
 
-	class builtin_func_choose_expr final : public builtin_func
-	{
-	public:
-	  virtual ~builtin_func_choose_expr() noexcept override;
-
-	  virtual evaluation_result_type
-	  evaluate(klp::ccp::ast::ast &a, const target &tgt,
-		   const ast::expr_func_invocation &efi) const override;
-
-	  static std::unique_ptr<builtin_func> create();
-
-	  static bool is_factory(const builtin_func::factory &fac) noexcept;
-
-	private:
-	  builtin_func_choose_expr() noexcept;
-	};
-
-
 	class builtin_func_constant_p final : public builtin_func
 	{
 	public:

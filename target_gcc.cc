@@ -5886,7 +5886,6 @@ target_gcc::_register_builtin_funcs()
     { "__builtin_bswap32", sp_u32_u32_fac },
     { "__builtin_bswap64", sp_u64_u64_fac },
     { "__builtin_calloc", sp_pv_sz_sz_fac },
-    { "__builtin_choose_expr", builtin_func_choose_expr::create },
     { "__builtin___clear_cache", sp_v_pv_pv_fac },
     { "__builtin_classify_type", sp_i_var_fac },
     { "__builtin_clz", sp_i_u_fac },

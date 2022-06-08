@@ -758,6 +758,64 @@ bool expr_alignof_type_name::_process(const_processor<bool> &p) const
 }
 
 
+expr_builtin_choose_expr::expr_builtin_choose_expr(const pp_tokens_range &tr,
+						   expr *&&cond,
+						   expr *&&expr_true,
+						   expr *&&expr_false) noexcept
+  : expr(tr), _cond(*mv_p(std::move(cond))),
+    _expr_true(*mv_p(std::move(expr_true))),
+    _expr_false(*mv_p(std::move(expr_false)))
+{
+  _cond._set_parent(*this);
+  _expr_true._set_parent(*this);
+  _expr_false._set_parent(*this);
+}
+
+expr_builtin_choose_expr::~expr_builtin_choose_expr() noexcept
+{
+  delete &_cond;
+  delete &_expr_true;
+  delete &_expr_false;
+}
+
+_ast_entity* expr_builtin_choose_expr::_get_child(const size_t i) const noexcept
+{
+  switch (i) {
+  case 0:
+    return &_cond;
+
+  case 1:
+    return &_expr_true;
+
+  case 2:
+    return &_expr_false;
+
+  default:
+    return nullptr;
+  }
+}
+
+void expr_builtin_choose_expr::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+void expr_builtin_choose_expr::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
+bool expr_builtin_choose_expr::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_builtin_choose_expr::_process(const_processor<bool> &p) const
+{
+  return p(*this);
+}
+
+
 offset_member_designator::member::
 member(const pp_token_index _member_tok, const bool _ptr_base) noexcept
   : member_tok(_member_tok), ptr_base(_ptr_base)

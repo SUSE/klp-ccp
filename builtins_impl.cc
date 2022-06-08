@@ -252,66 +252,6 @@ klp::ccp::builtins::impl::mk_pld(const target&)
 }
 
 
-builtin_func_choose_expr::builtin_func_choose_expr() noexcept = default;
-
-builtin_func_choose_expr::~builtin_func_choose_expr() noexcept = default;
-
-builtin_func::evaluation_result_type
-builtin_func_choose_expr::evaluate(klp::ccp::ast::ast &a, const target&,
-				   const expr_func_invocation &efi) const
-{
-  const expr_list * const args = efi.get_args();
-  const std::size_t n_args = !args ? 0 : args->size();
-
-  if (n_args != 3) {
-    code_remark remark
-      (code_remark::severity::warning,
-       "wrong number of arguments to __builtin_choose_expr()",
-       a.get_pp_result(), efi.get_tokens_range());
-    a.get_remarks().add(remark);
-    throw semantic_except(remark);
-  }
-
-  // Note: GCC really requires an integer constant expression
-  // for the first argument.
-  const expr &e_cond = (*args)[0];
-  if (!e_cond.is_constexpr() ||
-      !(e_cond.get_constexpr_value().has_constness
-	(constexpr_value::constness::c_integer_constant_expr))) {
-    code_remark remark
-      (code_remark::severity::warning,
-       "first argument to __builtin_choose_expr() is not a constant",
-       a.get_pp_result(), e_cond.get_tokens_range());
-    a.get_remarks().add(remark);
-    throw semantic_except(remark);
-  }
-
-  const constexpr_value &cv_cond = e_cond.get_constexpr_value();
-  const expr &e_result = cv_cond.is_zero() ? (*args)[2] : (*args)[1];
-  std::unique_ptr<constexpr_value> value;
-  if (e_result.is_constexpr()) {
-    value = e_result.get_constexpr_value().clone();
-  }
-
-  return evaluation_result_type{e_result.get_type(),
-				std::move(value),
-				e_result.is_lvalue()};
-}
-
-std::unique_ptr<builtin_func> builtin_func_choose_expr::create()
-{
-  return (std::unique_ptr<builtin_func_choose_expr>
-	  (new builtin_func_choose_expr()));
-}
-
-bool builtin_func_choose_expr::is_factory(const builtin_func::factory &fac)
-  noexcept
-{
-  const auto fac_target = fac.target<decltype(&create)>();
-  return fac_target && *fac_target == create;
-}
-
-
 builtin_func_constant_p::builtin_func_constant_p() noexcept = default;
 
 builtin_func_constant_p::~builtin_func_constant_p() noexcept = default;

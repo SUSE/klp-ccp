@@ -127,6 +127,13 @@ namespace klp
 
       template<typename ret_type, typename callable_type>
       ret_type _processor<ret_type, callable_type>::
+      operator()(expr_builtin_choose_expr &e)
+      {
+	return _c(e);
+      }
+
+      template<typename ret_type, typename callable_type>
+      ret_type _processor<ret_type, callable_type>::
       operator()(offset_member_designator &omd)
       {
 	return _c(omd);
@@ -926,6 +933,13 @@ namespace klp
       template<typename ret_type, typename callable_type>
       ret_type _const_processor<ret_type, callable_type>::
       operator()(const expr_alignof_type_name &e)
+      {
+	return _c(e);
+      }
+
+      template<typename ret_type, typename callable_type>
+      ret_type _const_processor<ret_type, callable_type>::
+      operator()(const expr_builtin_choose_expr &e)
       {
 	return _c(e);
       }
