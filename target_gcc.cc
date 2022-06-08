@@ -4307,7 +4307,7 @@ namespace
 
     virtual evaluation_result_type
     evaluate(klp::ccp::ast::ast &a, const target &tgt,
-	     const ast::expr_func_invocation &efi) const override;
+	     ast::expr_func_invocation &efi) const override;
 
   private:
     const unsigned int _pi_arg_index;
@@ -4348,7 +4348,7 @@ namespace
 
     virtual evaluation_result_type
     evaluate(klp::ccp::ast::ast &a, const target &tgt,
-	     const ast::expr_func_invocation &efi) const override;
+	     ast::expr_func_invocation &efi) const override;
 
     template <t_fac tfac, bool p_variant, op o>
     static std::unique_ptr<builtin_func> create();
@@ -4385,9 +4385,9 @@ _builtin_func_pi_overload::~_builtin_func_pi_overload() noexcept = default;
 
 builtin_func::evaluation_result_type _builtin_func_pi_overload::
 evaluate(klp::ccp::ast::ast &a, const target &tgt,
-	 const ast::expr_func_invocation &efi) const
+	 ast::expr_func_invocation &efi) const
 {
-  const ast::expr_list * const args = efi.get_args();
+  ast::expr_list * const args = efi.get_args();
   const std::size_t n_args = !args ? 0 : args->size();
 
   if (n_args <= _pi_arg_index) {
@@ -4398,6 +4398,8 @@ evaluate(klp::ccp::ast::ast &a, const target &tgt,
     a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
+
+  args->apply_lvalue_conversions(false);
 
   // The argument at index pi_arg_index shall have pointer to integer
   // type. Demultiplex according to that integer type's width.
@@ -4503,7 +4505,7 @@ std::unique_ptr<builtin_func> _builtin_overflow::create()
 
 builtin_func::evaluation_result_type
 _builtin_overflow::evaluate(klp::ccp::ast::ast &a, const target &tgt,
-			    const ast::expr_func_invocation &efi) const
+			    ast::expr_func_invocation &efi) const
 {
   auto &&myname =
     [this]() -> std::string {
@@ -4537,7 +4539,9 @@ _builtin_overflow::evaluate(klp::ccp::ast::ast &a, const target &tgt,
     throw semantic_except(remark);
   }
 
-  const ast::expr_list &args = *efi.get_args();
+  ast::expr_list &args = *efi.get_args();
+  args.apply_lvalue_conversions(false);
+
   bool types_ok = true;
   mpa::limbs::size_type target_width =
     std::numeric_limits<mpa::limbs::size_type>::max();

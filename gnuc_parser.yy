@@ -209,11 +209,12 @@ static void empty(klp::ccp::pp_tokens_range &loc)
 %token TOK_KW_SIZEOF
 %token TOK_KW_ALIGNOF
 
+%token TOK_KW_GENERIC
+
 %token TOK_KW_BUILTIN_CHOOSE_EXPR
 %token TOK_KW_BUILTIN_OFFSETOF
 %token TOK_KW_BUILTIN_TYPES_COMPATIBLE_P
 %token TOK_KW_BUILTIN_VA_ARG
-
 
 %token TOK_KW_ATTRIBUTE
 
@@ -2408,6 +2409,8 @@ string_literal:
 	| string_literal TOK_STRING_LITERAL
 	  { $$ = MV_P($1); $$->extend($2); }
 ;
+
+
 
 %%
 

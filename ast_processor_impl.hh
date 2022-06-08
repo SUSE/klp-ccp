@@ -126,6 +126,26 @@ namespace klp
       }
 
       template<typename ret_type, typename callable_type>
+      ret_type
+      _processor<ret_type, callable_type>::operator()(generic_association &ga)
+      {
+	return _c(ga);
+      }
+
+      template<typename ret_type, typename callable_type>
+      ret_type _processor<ret_type, callable_type>::
+      operator()(generic_association_list &gal)
+      {
+	return _c(gal);
+      }
+
+      template<typename ret_type, typename callable_type>
+      ret_type _processor<ret_type, callable_type>::operator()(expr_generic &e)
+      {
+	return _c(e);
+      }
+
+      template<typename ret_type, typename callable_type>
       ret_type _processor<ret_type, callable_type>::
       operator()(expr_builtin_choose_expr &e)
       {
@@ -933,6 +953,27 @@ namespace klp
       template<typename ret_type, typename callable_type>
       ret_type _const_processor<ret_type, callable_type>::
       operator()(const expr_alignof_type_name &e)
+      {
+	return _c(e);
+      }
+
+      template<typename ret_type, typename callable_type>
+      ret_type _const_processor<ret_type, callable_type>::
+      operator()(const generic_association &ga)
+      {
+	return _c(ga);
+      }
+
+      template<typename ret_type, typename callable_type>
+      ret_type _const_processor<ret_type, callable_type>::
+      operator()(const generic_association_list &gal)
+      {
+	return _c(gal);
+      }
+
+      template<typename ret_type, typename callable_type>
+      ret_type _const_processor<ret_type, callable_type>::
+      operator()(const expr_generic &e)
       {
 	return _c(e);
       }

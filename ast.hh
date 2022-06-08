@@ -295,6 +295,9 @@ namespace klp
       class expr_unop_pre;
       class expr_sizeof_expr;
       class expr_alignof_expr;
+      class generic_association;
+      class generic_association_list;
+      class expr_generic;
       class expr_builtin_choose_expr;
       class offset_member_designator;
       class expr_builtin_offsetof;
@@ -421,6 +424,8 @@ namespace klp
 
 	const expr& operator[](const std::size_t i) const noexcept;
 
+	void apply_lvalue_conversions(const bool only_decay);
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
@@ -438,6 +443,7 @@ namespace klp
 	typedef type_set<expr_list,
 			 expr_cast, expr_unop_pre,
 			 expr_sizeof_expr, expr_alignof_expr,
+			 generic_association, expr_generic,
 			 expr_builtin_choose_expr,
 			 offset_member_designator, expr_array_subscript,
 			 expr_func_invocation, expr_member_deref,
@@ -477,11 +483,10 @@ namespace klp
 
 	bool is_lvalue() const noexcept;
 
-	void decay_array_types();
+	void apply_lvalue_conversion(const bool only_decay);
 
       protected:
 	expr(const pp_tokens_range &tr) noexcept;
-
 
 	void _set_value(std::unique_ptr<constexpr_value> &&cv);
 
@@ -489,8 +494,6 @@ namespace klp
 	void _set_value(args_types&&... args);
 
 	void _set_lvalue(const bool is_lvalue) noexcept;
-
-	void _convert_type_for_expr_context();
 
       private:
 	std::unique_ptr<constexpr_value> _value;
@@ -865,6 +868,80 @@ namespace klp
 	type_name &_tn;
       };
 
+      class generic_association final : public ast_entity<generic_association>
+      {
+      public:
+	typedef type_set<generic_association_list> parent_types;
+
+	generic_association(const pp_tokens_range &tr,
+			    type_name* &&tn, expr *&&e) noexcept;
+
+	generic_association(const pp_tokens_range &tr, expr *&&e) noexcept;
+
+	generic_association(generic_association&&) = delete;
+
+	virtual ~generic_association() noexcept override;
+
+      private:
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
+
+	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
+	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
+
+	type_name *_tn;
+	expr &_e;
+      };
+
+      class generic_association_list final :
+	public ast_entity<generic_association_list>
+      {
+      public:
+	typedef type_set<expr_generic> parent_types;
+
+	generic_association_list(generic_association *&&ga);
+
+	generic_association_list(generic_association_list&&) = delete;
+
+	virtual ~generic_association_list() noexcept override;
+
+	void extend(generic_association *&&ga);
+
+      private:
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
+
+	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
+	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
+
+	std::vector<std::reference_wrapper<generic_association> > _gas;
+      };
+
+      class expr_generic final : public expr
+      {
+      public:
+	expr_generic(const pp_tokens_range &tr,
+		     expr *&&ctrl_e,
+		     generic_association_list *&&gal) noexcept;
+
+	virtual ~expr_generic() noexcept override;
+
+	virtual void evaluate_type(ast &a, const target &tgt) override;
+
+      private:
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
+
+	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
+	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
+
+	expr &_ctrl_e;
+	generic_association_list &_gal;
+      };
+
       class expr_builtin_choose_expr final : public expr
       {
       public:
@@ -1091,6 +1168,9 @@ namespace klp
 	{ return _func; }
 
 	const expr_list * get_args() const noexcept
+	{ return _args; }
+
+	expr_list * get_args() noexcept
 	{ return _args; }
 
 	virtual void evaluate_type(ast &a, const target &tgt) override;
@@ -1712,7 +1792,9 @@ namespace klp
       {
       public:
 	typedef type_set<typeof_type_name, expr_sizeof_type_name,
-			 expr_alignof_type_name, expr_builtin_offsetof,
+			 expr_alignof_type_name,
+			 generic_association,
+			 expr_builtin_offsetof,
 			 expr_builtin_types_compatible_p,
 			 expr_builtin_va_arg,
 			 expr_cast, expr_compound_literal,
@@ -2272,6 +2354,9 @@ namespace klp
 	const expr* get_width() const noexcept
 	{ return _width; }
 
+	expr* get_width() noexcept
+	{ return _width; }
+
 	const declarator* get_declarator() const noexcept
 	{ return _d; }
 
@@ -2745,6 +2830,9 @@ namespace klp
 
 	const types::enum_content::member& to_member(const ast &a)
 	  const noexcept;
+
+	expr* get_value_expr() noexcept
+	{ return _value; }
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -3903,6 +3991,9 @@ namespace klp
 
 	virtual ~stmt_case() noexcept override;
 
+	expr& get_expr() noexcept
+	{ return _e; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
@@ -3922,6 +4013,12 @@ namespace klp
 			expr* &&e_low, expr* &&e_high, stmt* &&s) noexcept;
 
 	virtual ~stmt_case_range() noexcept override;
+
+	expr& get_expr_lo() noexcept
+	{ return _e_low; }
+
+	expr& get_expr_hi() noexcept
+	{ return _e_high; }
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -4143,6 +4240,9 @@ namespace klp
 	const expr* get_expr() const noexcept
 	{ return _e; }
 
+	expr* get_expr() noexcept
+	{ return _e; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
@@ -4164,6 +4264,9 @@ namespace klp
 	virtual ~stmt_if() noexcept override;
 
 	const expr& get_cond() const noexcept
+	{ return _cond; }
+
+	expr& get_cond() noexcept
 	{ return _cond; }
 
       private:
@@ -4189,6 +4292,9 @@ namespace klp
 	const expr& get_expr() const noexcept
 	{ return _e; }
 
+	expr& get_expr() noexcept
+	{ return _e; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
@@ -4211,6 +4317,9 @@ namespace klp
 	const expr& get_cond() const noexcept
 	{ return _e; }
 
+	expr& get_cond() noexcept
+	{ return _e; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
@@ -4231,6 +4340,9 @@ namespace klp
 	virtual ~stmt_do() noexcept override;
 
 	const expr& get_cond() const noexcept
+	{ return _e; }
+
+	expr& get_cond() noexcept
 	{ return _e; }
 
       private:
@@ -4257,10 +4369,19 @@ namespace klp
 	const expr* get_init_expr() const noexcept
 	{ return _init; }
 
+	expr* get_init_expr() noexcept
+	{ return _init; }
+
 	const expr* get_cond() const noexcept
 	{ return _cond; }
 
+	expr* get_cond() noexcept
+	{ return _cond; }
+
 	const expr* get_next_expr() const noexcept
+	{ return _next; }
+
+	expr* get_next_expr() noexcept
 	{ return _next; }
 
       private:
@@ -4289,7 +4410,13 @@ namespace klp
 	const expr* get_cond() const noexcept
 	{ return _cond; }
 
+	expr* get_cond() noexcept
+	{ return _cond; }
+
 	const expr* get_next_expr() const noexcept
+	{ return _next; }
+
+	expr* get_next_expr() noexcept
 	{ return _next; }
 
       private:
@@ -4312,6 +4439,9 @@ namespace klp
 	stmt_goto(const pp_tokens_range &tr, expr* &&e) noexcept;
 
 	virtual ~stmt_goto() noexcept override;
+
+	expr& get_expr() noexcept
+	{ return _e; }
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -4364,6 +4494,9 @@ namespace klp
 	virtual ~stmt_return() noexcept override;
 
 	const expr *get_expr() const noexcept
+	{ return _e; }
+
+	expr *get_expr() noexcept
 	{ return _e; }
 
       private:
@@ -4458,6 +4591,9 @@ namespace klp
 	virtual ~asm_operand() noexcept override;
 
 	const expr& get_expr() const noexcept
+	{ return _e; }
+
+	expr& get_expr() noexcept
 	{ return _e; }
 
       private:

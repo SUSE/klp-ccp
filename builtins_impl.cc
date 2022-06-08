@@ -41,9 +41,9 @@ builtin_func_simple_proto::~builtin_func_simple_proto() noexcept = default;
 
 builtin_func::evaluation_result_type builtin_func_simple_proto::
 evaluate(klp::ccp::ast::ast &a, const target &tgt,
-	 const expr_func_invocation &efi) const
+	 expr_func_invocation &efi) const
 {
-  const expr_list * const args = efi.get_args();
+  expr_list * const args = efi.get_args();
   const std::size_t n_args = !args ? 0 : args->size();
 
   if (n_args < _exp_arg_types.size()) {
@@ -62,6 +62,9 @@ evaluate(klp::ccp::ast::ast &a, const target &tgt,
     a.get_remarks().add(remark);
     throw semantic_except(remark);
   }
+
+  if (args)
+    args->apply_lvalue_conversions(false);
 
   std::size_t i = 0;
   for (const auto &t : _exp_arg_types) {
@@ -258,7 +261,7 @@ builtin_func_constant_p::~builtin_func_constant_p() noexcept = default;
 
 builtin_func::evaluation_result_type
 builtin_func_constant_p::evaluate(klp::ccp::ast::ast &a, const target &tgt,
-				  const expr_func_invocation &efi) const
+				  expr_func_invocation &efi) const
 {
   const expr_list * const args = efi.get_args();
   const std::size_t n_args = !args ? 0 : args->size();

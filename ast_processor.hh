@@ -46,6 +46,9 @@ namespace klp
 	virtual ret_type operator()(expr_sizeof_type_name&) = 0;
 	virtual ret_type operator()(expr_alignof_expr&) = 0;
 	virtual ret_type operator()(expr_alignof_type_name&) = 0;
+	virtual ret_type operator()(generic_association&) = 0;
+	virtual ret_type operator()(generic_association_list&) = 0;
+	virtual ret_type operator()(expr_generic&) = 0;
 	virtual ret_type operator()(expr_builtin_choose_expr&) = 0;
 	virtual ret_type operator()(offset_member_designator&) = 0;
 	virtual ret_type operator()(expr_builtin_offsetof&) = 0;
@@ -176,6 +179,9 @@ namespace klp
 	virtual ret_type operator()(expr_sizeof_type_name &e) override;
 	virtual ret_type operator()(expr_alignof_expr &e) override;
 	virtual ret_type operator()(expr_alignof_type_name &e) override;
+	virtual ret_type operator()(generic_association&) override;
+	virtual ret_type operator()(generic_association_list&) override;
+	virtual ret_type operator()(expr_generic&) override;
 	virtual ret_type operator()(expr_builtin_choose_expr &e) override;
 	virtual ret_type operator()(offset_member_designator&) override;
 	virtual ret_type operator()(expr_builtin_offsetof &e) override;
@@ -318,6 +324,9 @@ namespace klp
 	virtual ret_type operator()(const expr_sizeof_type_name&) = 0;
 	virtual ret_type operator()(const expr_alignof_expr&) = 0;
 	virtual ret_type operator()(const expr_alignof_type_name&) = 0;
+	virtual ret_type operator()(const generic_association&) = 0;
+	virtual ret_type operator()(const generic_association_list&) = 0;
+	virtual ret_type operator()(const expr_generic&) = 0;
 	virtual ret_type operator()(const expr_builtin_choose_expr&) = 0;
 	virtual ret_type operator()(const offset_member_designator&) = 0;
 	virtual ret_type operator()(const expr_builtin_offsetof&) = 0;
@@ -450,6 +459,9 @@ namespace klp
 	virtual ret_type operator()(const expr_sizeof_type_name &e) override;
 	virtual ret_type operator()(const expr_alignof_expr &e) override;
 	virtual ret_type operator()(const expr_alignof_type_name &e) override;
+	virtual ret_type operator()(const generic_association&) override;
+	virtual ret_type operator()(const generic_association_list&) override;
+	virtual ret_type operator()(const expr_generic&) override;
 	virtual ret_type operator()(const expr_builtin_choose_expr &e) override;
 	virtual ret_type operator()(const offset_member_designator&) override;
 	virtual ret_type operator()(const expr_builtin_offsetof &e) override;

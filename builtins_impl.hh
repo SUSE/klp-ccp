@@ -42,7 +42,7 @@ namespace klp
 
 	  virtual evaluation_result_type
 	  evaluate(klp::ccp::ast::ast &a, const target &tgt,
-		   const ast::expr_func_invocation &efi) const override;
+		   ast::expr_func_invocation &efi) const override;
 
 	  template<typename target_type,
 		   typename ret_type_fac_type,
@@ -195,7 +195,7 @@ namespace klp
 
 	  virtual evaluation_result_type
 	  evaluate(klp::ccp::ast::ast &a, const target &tgt,
-		   const ast::expr_func_invocation &efi) const override;
+		   ast::expr_func_invocation &efi) const override;
 
 	  static std::unique_ptr<builtin_func> create();
 	};

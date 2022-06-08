@@ -65,7 +65,7 @@ namespace klp
 
       virtual evaluation_result_type
       evaluate(ast::ast &a, const target &tgt,
-	       const ast::expr_func_invocation &efi) const = 0;
+	       ast::expr_func_invocation &efi) const = 0;
     };
 
     class builtin_var

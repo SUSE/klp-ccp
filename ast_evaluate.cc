@@ -153,10 +153,43 @@ void _evaluator::operator()()
       [](parameter_declaration_abstract&) {
 	return true;
       },
+      [](const function_definition&) {
+	return true;
+      },
+      [](const stmt_case&) {
+	return true;
+      },
+      [](const stmt_case_range&) {
+	return true;
+      },
+      [](const stmt_expr&) {
+	return true;
+      },
+      [](const stmt_if&) {
+	return true;
+      },
+      [](const stmt_switch&) {
+	return true;
+      },
+      [](const stmt_while&) {
+	return true;
+      },
+      [](const stmt_do&) {
+	return true;
+      },
+      [](const stmt_for_init_expr&) {
+	return true;
+      },
+      [](const stmt_for_init_decl&) {
+	return true;
+      },
+      [](const stmt_goto&) {
+	return true;
+      },
       [](const stmt_return&) {
 	return true;
       },
-      [](const function_definition&) {
+      [](const asm_operand&) {
 	return true;
       },
       [](_typed &t) {
@@ -168,9 +201,19 @@ void _evaluator::operator()()
   auto &&post =
     (wrap_callables<default_action_nop>
      ([this](enumerator &e) {
+	 expr * const value_expr = e.get_value_expr();
+
+	 if (value_expr)
+	   value_expr->apply_lvalue_conversion(false);
+
 	 e.register_at_parent(_ast, _tgt);
       },
       [this](struct_declarator &sd) {
+	expr * const width_expr = sd.get_width();
+
+	if (width_expr)
+	  width_expr->apply_lvalue_conversion(false);
+
 	_handle_sou_member(sd);
       },
       [this](unnamed_struct_or_union &unnamed_sou) {
@@ -204,11 +247,71 @@ void _evaluator::operator()()
       [this](parameter_declaration_abstract &pda) {
 	pda.evaluate_type(_ast, _tgt);
       },
-      [this](const stmt_return &ret_stmt) {
-	_check_return_stmt(ret_stmt);
-      },
       [this](const function_definition &fd) {
 	_check_function_definition(fd);
+      },
+      [](stmt_case &s) {
+	s.get_expr().apply_lvalue_conversion(false);
+      },
+      [](stmt_case_range &s) {
+	s.get_expr_lo().apply_lvalue_conversion(false);
+	s.get_expr_hi().apply_lvalue_conversion(false);
+      },
+      [](stmt_expr &s) {
+	expr * const e = s.get_expr();
+
+	if (e)
+	  e->apply_lvalue_conversion(false);
+      },
+      [](stmt_if &s) {
+	s.get_cond().apply_lvalue_conversion(false);
+      },
+      [](stmt_switch &s) {
+	s.get_expr().apply_lvalue_conversion(false);
+      },
+      [](stmt_while &s) {
+	s.get_cond().apply_lvalue_conversion(false);
+      },
+      [](stmt_do &s) {
+	s.get_cond().apply_lvalue_conversion(false);
+      },
+      [](stmt_for_init_expr &s) {
+	expr * const init = s.get_init_expr();
+	expr * const cond = s.get_cond();
+	expr * const next = s.get_next_expr();
+
+	if (init)
+	  init->apply_lvalue_conversion(false);
+
+	if (cond)
+	  cond->apply_lvalue_conversion(false);
+
+	if (next)
+	  next->apply_lvalue_conversion(false);
+      },
+      [](stmt_for_init_decl &s) {
+	expr * const cond = s.get_cond();
+	expr * const next = s.get_next_expr();
+
+	if (cond)
+	  cond->apply_lvalue_conversion(false);
+
+	if (next)
+	  next->apply_lvalue_conversion(false);
+      },
+      [](stmt_goto &s) {
+	s.get_expr().apply_lvalue_conversion(false);
+      },
+      [this](stmt_return &s) {
+	expr * const e = s.get_expr();
+
+	if (e)
+	  e->apply_lvalue_conversion(false);
+
+	_check_return_stmt(s);
+      },
+      [](asm_operand &ao) {
+	ao.get_expr().apply_lvalue_conversion(false);
       },
       [this](_typed &t) {
 	t.evaluate_type(_ast, _tgt);
@@ -225,8 +328,13 @@ void _evaluator::operator()()
 				       struct_or_union_def,
 				       init_declarator,
 				       parameter_declaration_abstract,
-				       stmt_return,
 				       function_definition,
+				       stmt_case, stmt_case_range,
+				       stmt_expr, stmt_if, stmt_switch,
+				       stmt_while, stmt_do,
+				       stmt_for_init_expr, stmt_for_init_decl,
+				       stmt_goto, stmt_return,
+				       asm_operand,
 				       _typed>,
 			      type_set<enumerator,
 				       struct_declarator,
@@ -234,8 +342,13 @@ void _evaluator::operator()()
 				       struct_or_union_def,
 				       init_declarator,
 				       parameter_declaration_abstract,
-				       stmt_return,
 				       function_definition,
+				       stmt_case, stmt_case_range,
+				       stmt_expr, stmt_if, stmt_switch,
+				       stmt_while, stmt_do,
+				       stmt_for_init_expr, stmt_for_init_decl,
+				       stmt_goto, stmt_return,
+				       asm_operand,
 				       _typed> >
     (std::move(pre), std::move(post));
 }
@@ -1134,7 +1247,7 @@ _evaluate_array_init_from_string_literal (klp::ccp::ast::ast &a,
 static std::shared_ptr<const array_type>
 _evaluate_array_init(klp::ccp::ast::ast &a, const target &tgt,
 		     const array_type &at_target,
-		     const initializer_expr &ie)
+		     initializer_expr &ie)
 {
   // First, deal with the special case of the initializer expression
   // being a string literal.
@@ -1293,7 +1406,7 @@ _evaluate_init(klp::ccp::ast::ast &a, const target &tgt,
 	},
 	[&](const type &t) {
 	  expr &e_source = ie.get_expr();
-	  e_source.decay_array_types();
+	  e_source.apply_lvalue_conversion(false);
 	  check_types_assignment(a, tgt, t, e_source);
 	  return nullptr;
 	})),
@@ -1341,7 +1454,7 @@ _evaluate_init(klp::ccp::ast::ast &a, const target &tgt,
 	   return;
 	 }
 	 expr &e_source = unwrapped_ie->get_expr();
-	 e_source.decay_array_types();
+	 e_source.apply_lvalue_conversion(false);
 	 check_types_assignment(a, tgt, t_target, e_source);
        })),
      t_target);
@@ -1983,6 +2096,7 @@ static void evaluate_array_size_expr(expr &size, klp::ccp::ast::ast &a,
   _evaluator e(a, size, tgt);
   e();
 
+  size.apply_lvalue_conversion(false);
 
   if (!is_type<int_type>(*size.get_type()) &&
       !is_type<bitfield_type>(*size.get_type())) {
@@ -2528,135 +2642,23 @@ void enumerator::register_at_parent(ast &a, const target &tgt)
 }
 
 
-void expr::decay_array_types()
+void expr_list::apply_lvalue_conversions(const bool only_decay)
 {
-  handle_types<void>
-    ((wrap_callables<default_action_nop>
-      ([&](const array_type& a_t) {
-	 assert(!is_lvalue());
-
-	 if (this->is_dereferenced_const_addr())
-	   _value->get_address_value().undereference();
-	 _reset_type(a_t.get_element_type()->derive_pointer());
-       })),
-     *this->get_type());
+  for (auto &e : _exprs)
+    e.get().apply_lvalue_conversion(only_decay);
 }
 
-void expr::_convert_type_for_expr_context()
+
+void expr::apply_lvalue_conversion(const bool only_decay)
 {
   // Expression type conversions as specified in C99 6.3.2.1
-  const _ast_entity * const non_parens_parent =
-    this->get_non_parens_parent();
-
-  enum class operand_context
-  {
-    oc_sizeof,
-    oc_typeof,
-    oc_unary_address,
-    oc_inc_or_dec,
-    oc_nonptr_member_deref,
-    oc_assignment_lhs,
-    oc_initializer,
-    oc_builtin_choose_expr,
-    oc_other,
-  };
-
-  operand_context oc = operand_context::oc_other;
-  if (non_parens_parent) {
-    non_parens_parent->process<void,
-			       type_set<expr_sizeof_expr,
-					typeof_expr,
-					expr_unop_pre,
-					expr_unop_post,
-					expr_member_deref,
-					expr_assignment,
-					initializer_expr,
-					expr_list> >
-      (wrap_callables<default_action_nop>
-       ([&](const expr_sizeof_expr&) {
-	  oc = operand_context::oc_sizeof;
-	},
-	[&](const typeof_expr&) {
-	  oc = operand_context::oc_typeof;
-	},
-	[&](const expr_unop_pre &eup) {
-	  switch (eup.get_op()) {
-	  case unary_op_pre::inc:
-	    /* fall through */
-	  case unary_op_pre::dec:
-	    oc = operand_context::oc_inc_or_dec;
-	    break;
-
-	  case unary_op_pre::addr:
-	    oc = operand_context::oc_unary_address;
-	    break;
-
-	  default:
-	    break;
-	  };
-	},
-	[&](const expr_unop_post &eup) {
-	  switch (eup.get_op()) {
-	  case unary_op_post::inc:
-	    /* fall through */
-	  case unary_op_post::dec:
-	    oc = operand_context::oc_inc_or_dec;
-	    break;
-	  };
-	},
-	[&](const expr_member_deref &emd) {
-	  if (emd.get_deref_type() == member_deref_type::non_ptr_base)
-	    oc = operand_context::oc_nonptr_member_deref;
-	},
-	[&](const expr_assignment &ea) {
-	  // Check if this is the lhs.
-	  for (const _ast_entity *p = this; p != &ea;
-	       p = p->get_parent()) {
-	    if (p == &ea.get_lhs()) {
-	      oc = operand_context::oc_assignment_lhs;
-	      break;
-	    }
-	  }
-	},
-	[&](const initializer_expr &) {
-	  oc = operand_context::oc_initializer;
-	},
-	[&](const expr_builtin_choose_expr &bce) {
-	  // Check whether this is the second or third argument of
-	  // a __builtin_func_choose_expr() invocation.
-
-	  for (const _ast_entity *p = this;
-	       p && p != &bce; p = p->get_parent()) {
-	    if (p == &bce.get_expr_true() || p == &bce.get_expr_false()) {
-	      oc = operand_context::oc_builtin_choose_expr;
-	      break;
-	    }
-	  }
-	}));
-  }
-
-  if (oc == operand_context::oc_sizeof ||
-      oc == operand_context::oc_typeof ||
-      oc == operand_context::oc_unary_address ||
-      oc == operand_context::oc_builtin_choose_expr) {
-    return;
-  }
-
   handle_types<void>
-    ((wrap_callables<no_default_action>
+    ((wrap_callables<default_action_nop>
       ([&](const array_type &a_t) {
-	 _set_lvalue(false);
-
-	 // Keep the array type intact for the case that it's a string
-	 // or compound literal used to initialize an array.
-	 // If this turns out not to be the case later on, the
-	 // array -> pointer conversion will be done in decay_array_types().
-	 if (oc == operand_context::oc_initializer)
-	   return;
-
 	 if (this->is_dereferenced_const_addr())
 	   _value->get_address_value().undereference();
 	 _reset_type(a_t.get_element_type()->derive_pointer());
+	 _set_lvalue(false);
        },
        [&](const function_type &f_t) {
 	 if (this->is_dereferenced_const_addr())
@@ -2665,7 +2667,7 @@ void expr::_convert_type_for_expr_context()
 	 _set_lvalue(false);
        },
        [&](const type &t) {
-	 if (oc != operand_context::oc_other)
+	 if (only_decay)
 	   return;
 
 	 _reset_type(t.strip_qualifiers());
@@ -2677,6 +2679,9 @@ void expr::_convert_type_for_expr_context()
 
 void expr_comma::evaluate_type(ast&, const target&)
 {
+  _left.apply_lvalue_conversion(false);
+  _right.apply_lvalue_conversion(false);
+
   _set_type(_right.get_type());
   if (_right.is_constexpr()) {
     auto cv = _right.get_constexpr_value().clone();
@@ -2959,6 +2964,10 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 
 void expr_assignment::evaluate_type(ast &a, const target &tgt)
 {
+
+  _lhs.apply_lvalue_conversion(true);
+  _rhs.apply_lvalue_conversion(false);
+
   if (!_lhs.is_lvalue()) {
     code_remark remark(code_remark::severity::fatal,
 		       "assigment to something which is not a lvalue",
@@ -3009,7 +3018,6 @@ void expr_assignment::evaluate_type(ast &a, const target &tgt)
     {
       check_types_assignment(a, tgt, *t_lhs, _rhs);
       _set_type(t_lhs);
-      _convert_type_for_expr_context();
     }
     break;
 
@@ -3023,13 +3031,11 @@ void expr_assignment::evaluate_type(ast &a, const target &tgt)
 	      _check_pointer_arithmetic(a, pt_lhs, _lhs, tgt);
 	      check_enum_completeness_rhs();
 	      _set_type(pt_lhs.strip_qualifiers());
-	      _convert_type_for_expr_context();
 	      return true;
 	    },
 	    [&](const pointer_type &pt_lhs, const bitfield_type&) {
 	      _check_pointer_arithmetic(a, pt_lhs, _lhs, tgt);
 	      _set_type(pt_lhs.strip_qualifiers());
-	      _convert_type_for_expr_context();
 	      return true;
 	    })),
 	  *t_lhs, *t_rhs))) {
@@ -3048,26 +3054,22 @@ void expr_assignment::evaluate_type(ast &a, const target &tgt)
 
 	   // Ok
 	   _set_type(t_lhs);
-	   _convert_type_for_expr_context();
 	 },
 	 [&](const arithmetic_type&, const bitfield_type&) {
 	   check_enum_completeness_lhs();
 
 	   // Ok
 	   _set_type(t_lhs);
-	   _convert_type_for_expr_context();
 	 },
 	 [&](const bitfield_type&, const arithmetic_type&) {
 	   check_enum_completeness_rhs();
 
 	   // Ok
 	   _set_type(t_lhs);
-	   _convert_type_for_expr_context();
 	 },
 	 [&](const bitfield_type&, const bitfield_type&) {
 	   // Ok
 	   _set_type(t_lhs);
-	   _convert_type_for_expr_context();
 	 },
 	 [&](const type&, const type&) {
 	   code_remark remark
@@ -3094,23 +3096,19 @@ void expr_assignment::evaluate_type(ast &a, const target &tgt)
 	   check_enum_completeness_rhs();
 
 	   _set_type(t_lhs);
-	   _convert_type_for_expr_context();
 	 },
 	 [&](const int_type&, const bitfield_type&) {
 	   check_enum_completeness_lhs();
 
 	   _set_type(t_lhs);
-	   _convert_type_for_expr_context();
 	 },
 	 [&](const bitfield_type&, const int_type&) {
 	   check_enum_completeness_rhs();
 
 	   _set_type(t_lhs);
-	   _convert_type_for_expr_context();
 	 },
 	 [&](const bitfield_type&, const bitfield_type&) {
 	   _set_type(t_lhs);
-	   _convert_type_for_expr_context();
 	 },
 	 [&](const type&, const type&) {
 	   code_remark remark (code_remark::severity::fatal,
@@ -3127,6 +3125,11 @@ void expr_assignment::evaluate_type(ast &a, const target &tgt)
 
 void expr_conditional::evaluate_type(ast &a, const target &tgt)
 {
+  _cond.apply_lvalue_conversion(false);
+  if (_expr_true)
+    _expr_true->apply_lvalue_conversion(false);
+  _expr_false.apply_lvalue_conversion(false);
+
   if (!is_scalar_type(*_cond.get_type())) {
     code_remark remark
       (code_remark::severity::fatal,
@@ -3338,7 +3341,6 @@ void expr_conditional::evaluate_type(ast &a, const target &tgt)
 	      (constexpr_value::constness::c_address_constant)) &&
 	     expr_true.get_constexpr_value().is_zero()) {
 	  _set_type(t_false);
-	  _convert_type_for_expr_context();
 
 	 } else if (is_type<void_type>(pointed_to_type_false) &&
 		    !pointed_to_type_false.get_qualifiers().any() &&
@@ -3347,7 +3349,6 @@ void expr_conditional::evaluate_type(ast &a, const target &tgt)
 		     (constexpr_value::constness::c_address_constant)) &&
 		    _expr_false.get_constexpr_value().is_zero()) {
 	  _set_type(t_true);
-	  _convert_type_for_expr_context();
 
 	 } else if (is_type<void_type>(pointed_to_type_true) ||
 		    is_type<void_type>(pointed_to_type_false)) {
@@ -3386,7 +3387,6 @@ void expr_conditional::evaluate_type(ast &a, const target &tgt)
 	  qualifiers qs = pointed_to_type_true.get_qualifiers();
 	  qs.add(pointed_to_type_false.get_qualifiers());
 	  _set_type(comp_type->amend_qualifiers(qs)->derive_pointer());
-	  _convert_type_for_expr_context();
 	 }
 
 	 if (cv_value)
@@ -3409,7 +3409,6 @@ void expr_conditional::evaluate_type(ast &a, const target &tgt)
 	 check_enum_completeness_t_false();
 
 	 _set_type(t_true);
-	 _convert_type_for_expr_context();
 
 	 if (cv_value) {
 	   if (cv_value == &_expr_false.get_constexpr_value()) {
@@ -3449,7 +3448,6 @@ void expr_conditional::evaluate_type(ast &a, const target &tgt)
 	 check_enum_completeness_t_true();
 
 	 _set_type(t_false);
-	 _convert_type_for_expr_context();
 
 	 if (cv_value) {
 	   if (cv_value == &expr_true.get_constexpr_value()) {
@@ -3494,7 +3492,6 @@ void expr_conditional::evaluate_type(ast &a, const target &tgt)
 	 }
 
 	 _set_type(t_true);
-	 _convert_type_for_expr_context();
 
        },
        [&](const void_type&, const void_type&) {
@@ -4423,6 +4420,9 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
 	    *e_op.get_type());
     };
 
+  _left.apply_lvalue_conversion(false);
+  _right.apply_lvalue_conversion(false);
+
   switch(_op) {
   case binary_op::sub:
     handle_types<void>
@@ -4438,7 +4438,6 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
 	   check_enum_completeness_op(_right);
 
 	   _set_type(_left.get_type());
-	   _convert_type_for_expr_context();
 
 	   if (_left.is_constexpr() && _right.is_constexpr()) {
 	     _set_value(_do_pointer_arithmetic(_left.get_constexpr_value(),
@@ -4452,7 +4451,6 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
 	     _check_pointer_arithmetic(a, pt_left, *this, tgt);
 
 	   _set_type(_left.get_type());
-	   _convert_type_for_expr_context();
 	 },
 	 [&](const arithmetic_type &at_left, const arithmetic_type &at_right) {
 	   check_enum_completeness_op(_left);
@@ -4497,7 +4495,6 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
 	   check_enum_completeness_op(_right);
 
 	   _set_type(_left.get_type());
-	   _convert_type_for_expr_context();
 
 	   if (_left.is_constexpr() && _right.is_constexpr()) {
 	     _set_value(_do_pointer_arithmetic(_left.get_constexpr_value(),
@@ -4511,7 +4508,6 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
 	     _check_pointer_arithmetic(a, pt_left, *this, tgt);
 
 	   _set_type(_left.get_type());
-	   _convert_type_for_expr_context();
 
 	 },
 	 [&](const int_type &it_left, const pointer_type &pt_right) {
@@ -4521,7 +4517,6 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
 	   check_enum_completeness_op(_left);
 
 	   _set_type(_right.get_type());
-	   _convert_type_for_expr_context();
 
 	   if (_left.is_constexpr() && _right.is_constexpr()) {
 	     _set_value(_do_pointer_arithmetic(_right.get_constexpr_value(),
@@ -4535,7 +4530,6 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
 	     _check_pointer_arithmetic(a, pt_right, *this, tgt);
 
 	   _set_type(_right.get_type());
-	   _convert_type_for_expr_context();
 
 	 },
 	 [&](const arithmetic_type &at_left, const arithmetic_type &at_right) {
@@ -4780,7 +4774,7 @@ void expr_binop::evaluate_type(ast &a, const target &tgt)
 void expr_cast::evaluate_type(ast &a, const target &tgt)
 {
   const std::shared_ptr<const addressable_type> &t_target = _tn.get_type();
-  const std::shared_ptr<const type> t_source = _e.get_type();
+  const std::shared_ptr<const type> &t_source = _e.get_type();
 
   auto &&check_enum_completeness_target =
     [&]() {
@@ -4816,12 +4810,13 @@ void expr_cast::evaluate_type(ast &a, const target &tgt)
 	    *t_source);
     };
 
+  _e.apply_lvalue_conversion(false);
+
   handle_types<void>
     ((wrap_callables<no_default_action>
       ([&](const std::shared_ptr<const void_type> &vt_target,
 	   const std::shared_ptr<const type>&) {
 	 _set_type(vt_target);
-	 _convert_type_for_expr_context();
 
        },
        [&](const std::shared_ptr<const int_type> &it_target,
@@ -4831,7 +4826,6 @@ void expr_cast::evaluate_type(ast &a, const target &tgt)
 	 check_enum_completeness_target();
 
 	 _set_type(it_target);
-	 _convert_type_for_expr_context();
 
 	 if (!_e.is_constexpr())
 	   return;
@@ -4876,7 +4870,6 @@ void expr_cast::evaluate_type(ast &a, const target &tgt)
 	 check_enum_completeness_target();
 
 	 _set_type(it_target);
-	 _convert_type_for_expr_context();
 
 	 if (!_e.is_constexpr())
 	   return;
@@ -4911,7 +4904,6 @@ void expr_cast::evaluate_type(ast &a, const target &tgt)
 	 check_enum_completeness_target();
 
 	 _set_type(it_target);
-	 _convert_type_for_expr_context();
 
        },
        [&](const std::shared_ptr<const int_type> &it_target,
@@ -4919,7 +4911,6 @@ void expr_cast::evaluate_type(ast &a, const target &tgt)
 	 check_enum_completeness_target();
 
 	 _set_type(it_target);
-	 _convert_type_for_expr_context();
 
 	 if (!_e.is_constexpr())
 	   return;
@@ -4960,7 +4951,6 @@ void expr_cast::evaluate_type(ast &a, const target &tgt)
 	 check_enum_completeness_source();
 
 	 _set_type(rft_target);
-	 _convert_type_for_expr_context();
 
 	 if (!_e.is_constexpr())
 	   return;
@@ -4983,7 +4973,6 @@ void expr_cast::evaluate_type(ast &a, const target &tgt)
 	 check_enum_completeness_source();
 
 	 _set_type(cft_target);
-	 _convert_type_for_expr_context();
 
        },
        [&](const std::shared_ptr<const arithmetic_type> &at_target,
@@ -4992,7 +4981,6 @@ void expr_cast::evaluate_type(ast &a, const target &tgt)
 	 check_enum_completeness_source();
 
 	 _set_type(at_target);
-	 _convert_type_for_expr_context();
 
        },
        [&](const std::shared_ptr<const pointer_type> &pt_target,
@@ -5000,7 +4988,6 @@ void expr_cast::evaluate_type(ast &a, const target &tgt)
 	 check_enum_completeness_source();
 
 	 _set_type(pt_target);
-	 _convert_type_for_expr_context();
 
 	 if (!_e.is_constexpr())
 	   return;
@@ -5021,13 +5008,11 @@ void expr_cast::evaluate_type(ast &a, const target &tgt)
 	 check_enum_completeness_source();
 
 	 _set_type(pt_target);
-	 _convert_type_for_expr_context();
 
        },
        [&](const std::shared_ptr<const pointer_type> &pt_target,
 	   const std::shared_ptr<const pointer_type> &pt_source) {
 	 _set_type(pt_target);
-	 _convert_type_for_expr_context();
 
 	 if (!_e.is_constexpr())
 	   return;
@@ -5084,6 +5069,8 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
   case unary_op_pre::inc:
     /* fall through */
   case unary_op_pre::dec:
+    _e.apply_lvalue_conversion(true);
+
     if (!_e.is_lvalue()) {
       code_remark remark
 	(code_remark::severity::fatal,
@@ -5098,12 +5085,10 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
 	([&](const arithmetic_type&) {
 	   check_enum_completeness_op();
 	   _set_type(t);
-	   _convert_type_for_expr_context();
 
 	 },
 	 [&](const bitfield_type &bft) {
 	   _set_type(t);
-	   _convert_type_for_expr_context();
 
 	 },
 	 [&](const pointer_type &pt) {
@@ -5159,6 +5144,8 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
     break;
 
   case unary_op_pre::deref:
+    _e.apply_lvalue_conversion(false);
+
     handle_types<void>
       ((wrap_callables<no_default_action>
 	([&](const pointer_type &pt) {
@@ -5193,7 +5180,6 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
 
 	   _set_type(std::move(pointed_to_type));
 	   _set_lvalue(!is_local_label_ptr_deref);
-	   _convert_type_for_expr_context();
 	 },
 	 [&](const type &t) {
 	   // As an (undocumented!) extension, GCC allows computed gotos
@@ -5227,6 +5213,8 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
   case unary_op_pre::plus:
     /* fall through */
   case unary_op_pre::neg:
+    _e.apply_lvalue_conversion(false);
+
     handle_types<void>
       ((wrap_callables<no_default_action>
 	([&](const std::shared_ptr<const int_type> &it) {
@@ -5255,12 +5243,10 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
 	   }
 
 	   _set_type(std::move(it_result));
-	   _convert_type_for_expr_context();
 
 	 },
 	 [&](const std::shared_ptr<const bitfield_type> &bft) {
 	   _set_type(bft->promote(tgt));
-	   _convert_type_for_expr_context();
 
 	 },
 	 [&](std::shared_ptr<const real_float_type> &&ft) {
@@ -5281,12 +5267,10 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
 	   }
 
 	   _set_type(std::move(ft));
-	   _convert_type_for_expr_context();
 
 	 },
 	 [&](std::shared_ptr<const arithmetic_type> &&at) {
 	   _set_type(std::move(at));
-	   _convert_type_for_expr_context();
 
 	 },
 	 [&](const std::shared_ptr<const type>&) {
@@ -5303,6 +5287,8 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
     break;
 
   case unary_op_pre::bin_neg:
+    _e.apply_lvalue_conversion(false);
+
     handle_types<void>
       ((wrap_callables<no_default_action>
 	([&](const std::shared_ptr<const int_type> &it) {
@@ -5330,12 +5316,10 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
 	   }
 
 	   _set_type(std::move(it_result));
-	   _convert_type_for_expr_context();
 
 	 },
 	 [&](const std::shared_ptr<const bitfield_type> &bft) {
 	   _set_type(bft->promote(tgt));
-	   _convert_type_for_expr_context();
 
 	 },
 	 [&](const std::shared_ptr<const complex_float_type> &cft) {
@@ -5343,7 +5327,6 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
 	   // complex floats which results in their complex
 	   // conjugation.
 	   _set_type(cft);
-	   _convert_type_for_expr_context();
 
 	 },
 	 [&](const std::shared_ptr<const type>&) {
@@ -5359,6 +5342,8 @@ void expr_unop_pre::evaluate_type(ast &a, const target &tgt)
     break;
 
   case unary_op_pre::logical_not:
+    _e.apply_lvalue_conversion(false);
+
     if (!is_scalar_type(*t)) {
       code_remark remark(code_remark::severity::fatal,
 			 "logical not applied to non-integer type",
@@ -5595,7 +5580,6 @@ void expr_builtin_choose_expr::evaluate_type(ast &a, const target &tgt)
   _set_lvalue(e_result.is_lvalue());
   if (e_result.is_constexpr())
     _set_value(e_result.get_constexpr_value().clone());
-  _convert_type_for_expr_context();
 }
 
 
@@ -5786,7 +5770,6 @@ void expr_builtin_types_compatible_p::evaluate_type(ast&,
 void expr_builtin_va_arg::evaluate_type(ast&, const target&)
 {
   _set_type(_tn.get_type());
-  _convert_type_for_expr_context();
 }
 
 
@@ -5818,7 +5801,6 @@ void expr_array_subscript::_evaluate_type(ast &a, const target &tgt,
 
   _set_lvalue(true);
   _set_type(pt_base.get_pointed_to_type());
-  _convert_type_for_expr_context();
 }
 
 void expr_array_subscript::evaluate_type(ast &a, const target &tgt)
@@ -5839,6 +5821,9 @@ void expr_array_subscript::evaluate_type(ast &a, const target &tgt)
 	   })),
 	 *e_index.get_type());
     };
+
+  _base.apply_lvalue_conversion(false);
+  _index.apply_lvalue_conversion(false);
 
   handle_types<void>
     ((wrap_callables<default_action_nop>
@@ -5871,10 +5856,16 @@ void expr_array_subscript::evaluate_type(ast &a, const target &tgt)
 
 void expr_func_invocation::evaluate_type(ast &a, const target &tgt)
 {
+  _func.apply_lvalue_conversion(false);
+
   handle_types<void>
     ((wrap_callables<default_action_nop>
       ([&](const pointer_type &pt_func) {
 	 const std::size_t n_args = !_args ? 0 : _args->size();
+
+	 if (_args)
+	   _args->apply_lvalue_conversions(false);
+
 	 handle_types<void>
 	   ((wrap_callables<default_action_nop>
 	     ([&](const prototyped_function_type &pft) {
@@ -5896,12 +5887,11 @@ void expr_func_invocation::evaluate_type(ast &a, const target &tgt)
 		  a.get_remarks().add(remark);
 		  throw semantic_except(remark);
 		}
-
-		for(std::size_t i = 0; i < ptl.size(); ++i)
+		for(std::size_t i = 0; i < ptl.size(); ++i) {
 		  check_types_assignment(a, tgt, *ptl[i], (*_args)[i]);
+		}
 
 		_set_type(pft.get_return_type());
-		_convert_type_for_expr_context();
 
 	      },
 	      [&](const unprototyped_function_type &upft) {
@@ -5920,7 +5910,6 @@ void expr_func_invocation::evaluate_type(ast &a, const target &tgt)
 		}
 
 		_set_type(upft.get_return_type());
-		_convert_type_for_expr_context();
 
 	      },
 	      [&](const type&) {
@@ -5942,7 +5931,6 @@ void expr_func_invocation::evaluate_type(ast &a, const target &tgt)
 	   _set_value(std::move(result.value));
 	 if (result.is_lvalue)
 	   _set_lvalue(true);
-	 _convert_type_for_expr_context();
 
        },
        [&](const type&) {
@@ -5964,6 +5952,8 @@ void expr_member_deref::evaluate_type(ast &a, const target&)
     = [&]() -> const type& {
 	switch (_deref_type) {
 	case member_deref_type::ptr_base:
+	  _base.apply_lvalue_conversion(false);
+
 	  return
 	    handle_types<const addressable_type &>
 	      ((wrap_callables<default_action_nop>
@@ -5981,8 +5971,9 @@ void expr_member_deref::evaluate_type(ast &a, const target&)
 	       *_base.get_type());
 
 	case member_deref_type::non_ptr_base:
+	  _base.apply_lvalue_conversion(true);
+
 	  return *_base.get_type();
-	  break;
 	}
       }();
 
@@ -6039,7 +6030,7 @@ void expr_member_deref::evaluate_type(ast &a, const target&)
 	 // &b->a is an address constant, but with
 	 //   static struct { char a; } * b;
 	 // it is not. Disambiguate by the address_constant's
-	 // ->is_dereferenced(), c.f. _convert_type_for_expr_context().
+	 // ->is_dereferenced(), c.f. expr::apply_lvalue_conversion().
 	 const constexpr_value &cv_base = _base.get_constexpr_value();
 	 constexpr_value::address_constant ac = cv_base.get_address_value();
 	 if (_deref_type != member_deref_type::ptr_base ||
@@ -6083,12 +6074,13 @@ void expr_member_deref::evaluate_type(ast &a, const target&)
     _set_lvalue(_base.is_lvalue());
     break;
   }
-  _convert_type_for_expr_context();
 }
 
 
 void expr_unop_post::evaluate_type(ast &a, const target &tgt)
 {
+  _e.apply_lvalue_conversion(true);
+
   const std::shared_ptr<const type> &t = _e.get_type();
   if (!_e.is_lvalue()) {
     code_remark remark(code_remark::severity::fatal,
@@ -6116,11 +6108,9 @@ void expr_unop_post::evaluate_type(ast &a, const target &tgt)
 	    *at);
 
 	 _set_type(std::move(at));
-	 _convert_type_for_expr_context();
        },
        [&](const std::shared_ptr<const bitfield_type> &bft) {
 	 _set_type(bft);
-	 _convert_type_for_expr_context();
        },
        [&](const std::shared_ptr<const pointer_type> &pt) {
 	 _check_pointer_arithmetic(a, *pt, _e, tgt);
@@ -6168,7 +6158,6 @@ void expr_compound_literal::evaluate_type(ast &a, const target &tgt)
   }
 
   _set_lvalue(true);
-  _convert_type_for_expr_context();
 }
 
 
@@ -6215,7 +6204,6 @@ void expr_statement::evaluate_type(ast&, const target&)
 	     cv->drop_constness();
 	     _set_value(std::move(cv));
 	   }
-	   _convert_type_for_expr_context();
 	   return false;
 	 })));
   } while (is_stmt_labeled);
@@ -6256,7 +6244,6 @@ void expr_id::evaluate_type(ast &a, const target &tgt)
 	= _resolved.get_builtin_var_factory()()->evaluate(a, tgt, *this);
       _set_type(std::move(er.type));
       _set_lvalue(er.is_lvalue);
-      _convert_type_for_expr_context();
     }
     break;
 
@@ -6282,7 +6269,6 @@ void expr_id::evaluate_type(ast &a, const target &tgt)
 
       _set_type(ddid.get_type());
       _set_lvalue(true);
-      _convert_type_for_expr_context();
     }
     break;
 
@@ -6294,7 +6280,6 @@ void expr_id::evaluate_type(ast &a, const target &tgt)
 	pdd.get_declarator().get_direct_declarator_id();
       _set_type(ddid.get_type());
       _set_lvalue(true);
-      _convert_type_for_expr_context();
     }
     break;
 
@@ -6310,7 +6295,6 @@ void expr_id::evaluate_type(ast &a, const target &tgt)
 
       _set_type(ddid.get_type());
       _set_lvalue(true);
-      _convert_type_for_expr_context();
     }
     break;
 
@@ -6952,7 +6936,6 @@ void expr_string_literal::evaluate_type(ast &a, const target &tgt)
   _set_value(constexpr_value::address_constant_tag{},
 	     constexpr_value::address_constant{_sl, true});
   _set_lvalue(true);
-  _convert_type_for_expr_context();
 }
 
 
