@@ -3276,6 +3276,10 @@ namespace
     void _handle_enum_ref(const ast::enum_ref &er);
     void _handle_typedef_ref(const ast::type_specifier_tdid &ts_tdid);
 
+    typedef std::vector<std::reference_wrapper<const ast::_ast_entity>>
+	_unevaluated_stack_entry;
+
+    void _push_unevaluated(_unevaluated_stack_entry &&u);
     void _push_unevaluated(const ast::_ast_entity &e);
     void _pop_unevaluated();
     bool _is_evaluated(const ast::expr &e) const noexcept;
@@ -3306,7 +3310,7 @@ namespace
     deps_on *_cur_deps;
     std::size_t _in_parameter_declaration_list;
 
-    std::stack<std::reference_wrapper<const ast::_ast_entity> > _unevaluated;
+    std::stack<_unevaluated_stack_entry> _unevaluated_stack;
 
     struct _souoed_stack_entry
     {
@@ -4615,27 +4619,36 @@ _handle_typedef_ref(const ast::type_specifier_tdid &ts_tdid)
   _cur_deps_on_types->on_typedefs.add(dep_on_typedef{it_tdidi->second.get()});
 }
 
+void _ast_info_collector::_push_unevaluated(_unevaluated_stack_entry &&u)
+{
+  _unevaluated_stack.push(std::move(u));
+}
+
 void _ast_info_collector::_push_unevaluated(const ast::_ast_entity &e)
 {
-  _unevaluated.push(std::cref(e));
+  _unevaluated_stack_entry u = {std::cref(e)};
+  _push_unevaluated(std::move(u));
 }
 
 void _ast_info_collector::_pop_unevaluated()
 {
-  assert(!_unevaluated.empty());
-  _unevaluated.pop();
+  assert(!_unevaluated_stack.empty());
+  _unevaluated_stack.pop();
 }
 
 bool _ast_info_collector::_is_evaluated(const ast::expr &e) const noexcept
 {
   const ast::_ast_entity * c = &e;
 
-  if (_unevaluated.empty())
+  if (_unevaluated_stack.empty())
     return true;
 
+  const auto &stack_top = _unevaluated_stack.top();
   while (c) {
-    if (c == &_unevaluated.top().get())
-      return false;
+    for (const auto &u : stack_top) {
+      if (c == &u.get())
+	return false;
+    }
     c = c->get_parent();
   }
 
