@@ -758,6 +758,183 @@ bool expr_alignof_type_name::_process(const_processor<bool> &p) const
 }
 
 
+generic_association::generic_association(const pp_tokens_range &tr,
+					 type_name* &&tn, expr *&&e) noexcept
+  : ast_entity(tr), _tn(mv_p(std::move(tn))), _e(*mv_p(std::move(e)))
+{
+  _tn->_set_parent(*this);
+  _e._set_parent(*this);
+}
+
+generic_association::generic_association(const pp_tokens_range &tr, expr *&&e)
+  noexcept
+  : ast_entity(tr), _tn(nullptr), _e(*mv_p(std::move(e)))
+{
+  _e._set_parent(*this);
+}
+
+generic_association::~generic_association() noexcept
+{
+  if (_tn)
+    delete _tn;
+
+  delete &_e;
+}
+
+_ast_entity* generic_association::_get_child(const size_t i) const noexcept
+{
+  if (!_tn) {
+    if (!i)
+      return &_e;
+    else
+      return nullptr;
+  }
+
+  switch (i) {
+  case 0:
+    return _tn;
+
+  case 1:
+    return &_e;
+
+  default:
+    return nullptr;
+  }
+}
+
+void generic_association::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+void generic_association::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
+bool generic_association::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool generic_association::_process(const_processor<bool> &p) const
+{
+  return p(*this);
+}
+
+
+generic_association_list::generic_association_list(generic_association *&&ga)
+  : ast_entity(ga->get_tokens_range())
+{
+  auto _ga = std::ref(*mv_p(std::move(ga)));
+  try {
+    _gas.push_back(_ga);
+  } catch(...) {
+    delete &_ga.get();
+    throw;
+  }
+  _ga.get()._set_parent(*this);
+}
+
+generic_association_list::~generic_association_list() noexcept
+{
+  for (auto ga : _gas)
+    delete &ga.get();
+}
+
+void generic_association_list::extend(generic_association *&&ga)
+{
+  auto _ga = std::ref(*mv_p(std::move(ga)));
+  try {
+    _gas.push_back(_ga);
+  } catch(...) {
+    delete &_ga.get();
+    throw;
+  }
+  _ga.get()._set_parent(*this);
+  _extend_tokens_range(_ga.get().get_tokens_range());
+}
+
+_ast_entity* generic_association_list::_get_child(const size_t i) const noexcept
+{
+  if (i >= _gas.size())
+    return 0;
+
+  return &_gas[i].get();
+}
+
+void generic_association_list::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+void generic_association_list::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
+bool generic_association_list::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool generic_association_list::_process(const_processor<bool> &p) const
+{
+  return p(*this);
+}
+
+
+expr_generic::expr_generic(const pp_tokens_range &tr,
+			   expr *&&ctrl_e,
+			   generic_association_list *&&gal) noexcept
+  : expr(tr), _ctrl_e(*mv_p(std::move(ctrl_e))), _gal(*mv_p(std::move(gal)))
+{
+  _ctrl_e._set_parent(*this);
+  _gal._set_parent(*this);
+}
+
+expr_generic::~expr_generic() noexcept
+{
+  delete &_ctrl_e;
+  delete &_gal;
+}
+
+_ast_entity* expr_generic::_get_child(const size_t i) const noexcept
+{
+  switch (i) {
+  case 0:
+    return &_ctrl_e;
+
+  case 1:
+    return &_gal;
+
+  default:
+    return nullptr;
+  }
+}
+
+void expr_generic::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+void expr_generic::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
+bool expr_generic::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool expr_generic::_process(const_processor<bool> &p) const
+{
+  return p(*this);
+}
+
+
+
 expr_builtin_choose_expr::expr_builtin_choose_expr(const pp_tokens_range &tr,
 						   expr *&&cond,
 						   expr *&&expr_true,

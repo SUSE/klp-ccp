@@ -105,6 +105,8 @@ static void empty(klp::ccp::pp_tokens_range &loc)
   klp::ccp::ast::expr *expr;
   klp::ccp::ast::offset_member_designator *offset_member_designator;
   klp::ccp::ast::string_literal *string_literal;
+  klp::ccp::ast::generic_association_list *generic_association_list;
+  klp::ccp::ast::generic_association *generic_association;
   klp::ccp::ast::expr_list *expr_list;
   klp::ccp::ast::attribute *attribute;
   klp::ccp::ast::attribute_list *attribute_list;
@@ -468,6 +470,8 @@ static void empty(klp::ccp::pp_tokens_range &loc)
 %type <expr>	statement_expression
 %type <expr>	primary_expression
 %type <string_literal>	string_literal
+%type <generic_association_list> generic_association_list;
+%type <generic_association> generic_association;
 
 %%
 
@@ -2395,6 +2399,9 @@ primary_expression:
 	  { $$ = new expr_string_literal(MV_P($1)); }
 	| TOK_LPAREN expression TOK_RPAREN
 	  { $$ = new expr_parenthesized(@$, std::move($2)); }
+	| TOK_KW_GENERIC TOK_LPAREN assignment_expression TOK_COMMA
+		generic_association_list TOK_RPAREN
+	  { $$ = new expr_generic(@$, std::move($3), std::move($5)); }
 	| TOK_KW_BUILTIN_CHOOSE_EXPR TOK_LPAREN assignment_expression TOK_COMMA
 		assignment_expression TOK_COMMA assignment_expression TOK_RPAREN
 	  {
@@ -2410,7 +2417,19 @@ string_literal:
 	  { $$ = MV_P($1); $$->extend($2); }
 ;
 
+generic_association_list:
+	generic_association
+	  { $$ = new generic_association_list(std::move($1)); }
+	| generic_association_list TOK_COMMA generic_association
+	  { $$ = MV_P($1); $$->extend(std::move($3)); };
+;
 
+generic_association:
+	type_name TOK_COLON assignment_expression
+	  { $$ = new generic_association(@$, std::move($1), std::move($3)); }
+	| TOK_KW_DEFAULT TOK_COLON assignment_expression
+	  { $$ = new generic_association(@$, std::move($3)); }
+;
 
 %%
 

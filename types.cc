@@ -1171,7 +1171,8 @@ bool pointer_type::is_compatible_with(const target &tgt,
   if (!ignore_qualifiers && (this->get_qualifiers() != t.get_qualifiers()))
     return false;
 
-  return _pointed_to_type->is_compatible_with(tgt, *t._pointed_to_type, true);
+  return _pointed_to_type->is_compatible_with(tgt, *t._pointed_to_type,
+					      ignore_qualifiers);
 }
 
 mpa::limbs pointer_type::get_size(const target &tgt) const

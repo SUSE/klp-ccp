@@ -882,6 +882,12 @@ namespace klp
 
 	virtual ~generic_association() noexcept override;
 
+	const type_name *get_type_name() const noexcept
+	{ return _tn; }
+
+	const expr& get_expr() const noexcept
+	{ return _e; }
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
@@ -907,6 +913,9 @@ namespace klp
 	virtual ~generic_association_list() noexcept override;
 
 	void extend(generic_association *&&ga);
+
+	template <typename callable_type>
+	void for_each(callable_type &&c) const;
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;

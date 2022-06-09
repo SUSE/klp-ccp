@@ -5559,6 +5559,75 @@ void expr_alignof_type_name::evaluate_type(ast &a, const target &tgt)
 }
 
 
+void expr_generic::evaluate_type(ast &a, const target &tgt)
+{
+  _ctrl_e.apply_lvalue_conversion(false);
+
+  const type &ctrl_t = *_ctrl_e.get_type();
+  const generic_association *match = nullptr;
+  const generic_association *def = nullptr;
+  _gal.for_each
+    ([&](const generic_association &ga) {
+      const type_name * const tn = ga.get_type_name();
+
+      if (!tn) {
+	if (def) {
+	  code_remark remark
+	    (code_remark::severity::fatal,
+	     "multiple defaults in _Generic()",
+	     a.get_pp_result(), ga.get_tokens_range());
+	  a.get_remarks().add(remark);
+	  throw semantic_except(remark);
+	}
+
+	def = &ga;
+	return;
+      }
+
+      if (!tn->get_type()->is_complete()) {
+	  code_remark remark
+	    (code_remark::severity::fatal,
+	     "incomplete type in _Generic() selection",
+	     a.get_pp_result(), tn->get_tokens_range());
+	  a.get_remarks().add(remark);
+	  throw semantic_except(remark);
+      }
+
+      if (!ctrl_t.is_compatible_with(tgt, *tn->get_type(), false))
+	return;
+
+      if (match) {
+	  code_remark remark
+	    (code_remark::severity::fatal,
+	     "multiple matches in _Generic()",
+	     a.get_pp_result(), ga.get_tokens_range());
+	  a.get_remarks().add(remark);
+	  throw semantic_except(remark);
+      }
+
+      match = &ga;
+    });
+
+  if (!match && def) {
+    match = def;
+  } else if (!match) {
+    code_remark remark
+      (code_remark::severity::fatal, "no matches in _Generic()",
+       a.get_pp_result(), this->get_tokens_range());
+    a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+
+  const expr &e = match->get_expr();
+
+  if (e.is_constexpr() || e.is_dereferenced_const_addr())
+    _set_value(e.get_constexpr_value().clone());
+  _set_type(e.get_type());
+  _set_lvalue(e.is_lvalue());
+}
+
+
 void expr_builtin_choose_expr::evaluate_type(ast &a, const target &tgt)
 {
   // Note: GCC really requires an integer constant expression

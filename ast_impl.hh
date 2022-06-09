@@ -880,6 +880,13 @@ namespace klp
       }
 
       template <typename callable_type>
+      void generic_association_list::for_each(callable_type &&c) const
+      {
+	for (auto &ga : _gas)
+	  c(ga.get());
+      }
+
+      template <typename callable_type>
       void offset_member_designator::for_each(callable_type &&c) const
       {
 	for (auto &component : _components) {
