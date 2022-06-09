@@ -4551,6 +4551,7 @@ namespace klp
       {
 	aq_goto,
 	aq_volatile,
+	aq_inline,
       };
 
       class asm_qualifier_list final : public ast_entity<asm_qualifier_list>

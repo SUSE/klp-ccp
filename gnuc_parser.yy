@@ -2044,6 +2044,10 @@ asm_qualifier_list:
 	  { $$ = new asm_qualifier_list(@$, asm_qualifier::aq_volatile); }
 	| asm_qualifier_list TOK_KW_VOLATILE
 	  { $$ = MV_P($1); $$->extend(@2, asm_qualifier::aq_volatile); }
+	| TOK_KW_INLINE
+	  { $$ = new asm_qualifier_list(@$, asm_qualifier::aq_inline); }
+	| asm_qualifier_list TOK_KW_INLINE
+	  { $$ = MV_P($1); $$->extend(@2, asm_qualifier::aq_inline); }
 ;
 
 asm_operand_list_opt:
