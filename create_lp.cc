@@ -6108,9 +6108,10 @@ void _conflicting_header_finder::operator()()
 	}
 
       } else if (it_oi->in_closure && it_oidi->get_initializer() &&
-		 it_oidi->get_initializer()->rewrite_needed) {
-	// The object is in the closure and the initializer needs
-	// to get rewritten.
+		 it_oidi->get_initializer()->rewrite_needed &&
+		 !it_oidi->enclosing_declaration.enclosing_fd) {
+	// The object defined at file scope is in the closure and, the
+	// initializer needs to get rewritten.
 	_mark_headers_uneligible(di.declaration.get_tokens_range());
 
       } else if (!it_oi->in_closure && old_is_external &&
