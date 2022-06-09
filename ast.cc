@@ -887,7 +887,8 @@ bool generic_association_list::_process(const_processor<bool> &p) const
 expr_generic::expr_generic(const pp_tokens_range &tr,
 			   expr *&&ctrl_e,
 			   generic_association_list *&&gal) noexcept
-  : expr(tr), _ctrl_e(*mv_p(std::move(ctrl_e))), _gal(*mv_p(std::move(gal)))
+  : expr(tr), _ctrl_e(*mv_p(std::move(ctrl_e))), _gal(*mv_p(std::move(gal))),
+    _match(nullptr)
 {
   _ctrl_e._set_parent(*this);
   _gal._set_parent(*this);
@@ -897,6 +898,12 @@ expr_generic::~expr_generic() noexcept
 {
   delete &_ctrl_e;
   delete &_gal;
+}
+
+const expr& expr_generic::get_match() const noexcept
+{
+  assert(_match);
+  return *_match;
 }
 
 _ast_entity* expr_generic::_get_child(const size_t i) const noexcept

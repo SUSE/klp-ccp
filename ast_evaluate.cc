@@ -5620,7 +5620,7 @@ void expr_generic::evaluate_type(ast &a, const target &tgt)
 
 
   const expr &e = match->get_expr();
-
+  _match = &e;
   if (e.is_constexpr() || e.is_dereferenced_const_addr())
     _set_value(e.get_constexpr_value().clone());
   _set_type(e.get_type());

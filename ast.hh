@@ -939,6 +939,14 @@ namespace klp
 
 	virtual void evaluate_type(ast &a, const target &tgt) override;
 
+	const expr& get_control_expr() const noexcept
+	{ return _ctrl_e; }
+
+	const generic_association_list& get_association_list() const noexcept
+	{ return _gal; }
+
+	const expr& get_match() const noexcept;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
@@ -949,6 +957,7 @@ namespace klp
 
 	expr &_ctrl_e;
 	generic_association_list &_gal;
+	const expr *_match;
       };
 
       class expr_builtin_choose_expr final : public expr

@@ -3246,6 +3246,7 @@ namespace
     bool _handle_expr(const ast::expr_alignof_expr &e);
     void _handle_expr(const ast::expr_sizeof_type_name &e);
     void _handle_expr(const ast::expr_alignof_type_name &e);
+    bool _handle_expr(const ast::expr_generic &e);
     bool _handle_expr(const ast::expr_builtin_choose_expr &e);
     void _handle_expr(const ast::expr_builtin_offsetof &e);
     void _handle_expr(const ast::expr_member_deref &e);
@@ -3545,6 +3546,9 @@ void _ast_info_collector::operator()()
 	_handle_expr(e);
 	return false;
       },
+      [this](const ast::expr_generic &e) {
+	return _handle_expr(e);
+      },
       [this](const ast::expr_builtin_choose_expr &e) {
 	return _handle_expr(e);
       },
@@ -3719,6 +3723,9 @@ void _ast_info_collector::operator()()
       [this](const ast::expr_alignof_expr&) {
 	_pop_unevaluated();
       },
+      [this](const ast::expr_generic&) {
+	_pop_unevaluated();
+      },
       [this](const ast::expr_builtin_choose_expr&) {
 	_pop_unevaluated();
       },
@@ -3762,6 +3769,7 @@ void _ast_info_collector::operator()()
 	      const ast::expr_alignof_expr,
 	      const ast::expr_sizeof_type_name,
 	      const ast::expr_alignof_type_name,
+	      const ast::expr_generic,
 	      const ast::expr_builtin_choose_expr,
 	      const ast::expr_builtin_offsetof,
 	      const ast::expr_member_deref,
@@ -3800,6 +3808,7 @@ void _ast_info_collector::operator()()
 	      const ast::typeof_expr,
 	      const ast::expr_sizeof_expr,
 	      const ast::expr_alignof_expr,
+	      const ast::expr_generic,
 	      const ast::expr_builtin_choose_expr,
 	      const ast::expr_binop,
 	      const ast::expr_conditional,
@@ -4087,6 +4096,34 @@ void _ast_info_collector::_handle_expr(const ast::expr_sizeof_type_name &e)
 void _ast_info_collector::_handle_expr(const ast::expr_alignof_type_name &e)
 {
   _require_complete_type(*e.get_type_name().get_type());
+}
+
+bool _ast_info_collector::_handle_expr(const ast::expr_generic &e)
+{
+  _require_complete_type(*e.get_control_expr().get_type());
+
+  if (!_is_evaluated(e))
+    return false;
+
+  _unevaluated_stack_entry unevaluated = { std::cref(e.get_control_expr()) };
+  const ast::expr &match = e.get_match();
+  e.get_association_list().for_each
+    ([&](const ast::generic_association &ga) {
+      const ast::type_name * const tn = ga.get_type_name();
+
+      if (tn)
+	_require_complete_type(*tn->get_type());
+
+      const ast::expr &e = ga.get_expr();
+      if (&e != &match)
+	unevaluated.push_back(std::cref(e));
+    });
+
+  if (unevaluated.empty())
+    return false;
+
+  _push_unevaluated(std::move(unevaluated));
+  return true;
 }
 
 bool _ast_info_collector::_handle_expr(const ast::expr_builtin_choose_expr &e)
