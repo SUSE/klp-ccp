@@ -8,4 +8,4 @@ void pu_g(void)
 	o;
 }
 
-/* cp-out: warning: [^:]*: line 8, column 1: referenced object "o" cannot get externalized */
+/* cp-out: warning: [^:]*: line 4, columns 12-22: referenced object "o" cannot get externalized */

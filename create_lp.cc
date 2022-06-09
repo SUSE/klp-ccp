@@ -347,11 +347,13 @@ namespace
     dep_on_obj(object_init_declarator_info &_oidi,
 	       const ast::expr_id &_from_eid) noexcept;
 
+    dep_on_obj(object_init_declarator_info &_oidi) noexcept;
+
     object_info& get_object_info() noexcept;
     const object_info& get_object_info() const noexcept;
 
     std::reference_wrapper<object_init_declarator_info> oidi;
-    const ast::expr_id &from_eid;
+    const ast::expr_id * const from_eid;
 
     bool externalize;
   };
@@ -2199,7 +2201,11 @@ void deps_on_decl_types::add(const dep_on_decl_type &d)
 
 dep_on_obj::dep_on_obj(struct object_init_declarator_info &_oidi,
 		       const ast::expr_id &_from_eid) noexcept
-  : oidi(_oidi), from_eid(_from_eid), externalize(false)
+  : oidi(_oidi), from_eid(&_from_eid), externalize(false)
+{}
+
+dep_on_obj::dep_on_obj(object_init_declarator_info &_oidi) noexcept
+  : oidi(_oidi), from_eid(nullptr), externalize(false)
 {}
 
 object_info& dep_on_obj::get_object_info() noexcept
@@ -5052,12 +5058,13 @@ void _closure_builder::_construct_fd_id_closure()
 
 	      if (!oi.shall_externalize) {
 		const pp_tokens &toks = _ai.atu.get_pp_result().get_pp_tokens();
-		const std::string &name =
-		  toks[d.from_eid.get_id_tok()].get_value();
+		const ast::declarator &decl =
+		  d.oidi.get().init_declarator.get_declarator();
+		const std::string &name = toks[decl.get_id_tok()].get_value();
 		code_remark remark
 		  (code_remark::severity::warning,
 		   "referenced object \"" + name + "\" cannot get externalized",
-		   _ai.atu.get_pp_result(), d.from_eid.get_tokens_range());
+		   _ai.atu.get_pp_result(), decl.get_tokens_range());
 		_remarks.add(remark);
 	      }
 	    } else {
@@ -7852,7 +7859,10 @@ _lp_deps_resolver::_queue_deps_on_decls_from_header(const deps_on_objs &deps)
   // Transform dependencies on objects from included headers into
   // dependencies on declarations.
   for (const auto &d : deps) {
-    _orig_decls_wl.add(dep_on_decl_type{d.oidi.get(), false, d.from_eid},
+    if (!d.from_eid)
+      continue;
+
+    _orig_decls_wl.add(dep_on_decl_type{d.oidi.get(), false, *d.from_eid},
 		       false);
   }
 }
@@ -9577,12 +9587,15 @@ _rewrite_references(const deps_on_objs &deps,
 		    depreprocessor::transformed_input_chunk &tic)
 {
   for (const auto &d : deps) {
+    if (!d.from_eid)
+      continue;
+
     if (d.externalize) {
       const object_info &oi = d.oidi.get().oi;
       assert(oi.externalize);
       _apply_sym_mod_to_id_tok(oi.externalized_sym_mod.sym_mod,
 			       oi.externalized_sym_mod.make_pointer,
-			       d.from_eid.get_id_tok(),
+			       d.from_eid->get_id_tok(),
 			       tic);
     }
   }
