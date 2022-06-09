@@ -3987,6 +3987,17 @@ _ast_info_collector::_enter_init_declarator(const ast::init_declarator &id)
 	&_ai.create_info(id, *_cur_declaration, ast_info::object_tag{});
       _id_to_oidi.insert(std::make_pair(&id,
 					std::ref(*_cur_obj_init_declarator)));
+
+      if (_cur_declaration->enclosing_fd &&
+	  _cur_declaration->storage_class_specifier &&
+	  (_cur_declaration->storage_class_specifier->get_storage_class() ==
+	   ast::storage_class::sc_static)) {
+	// Force a dependency on the local static variable just in
+	// case no expr_id from the function references it.
+	_cur_function_definition
+	  ->body_deps.on_objs.add(dep_on_obj{*_cur_obj_init_declarator});
+      }
+
       _cur_deps_on_types = &_cur_obj_init_declarator->declarator_deps;
 
     }
