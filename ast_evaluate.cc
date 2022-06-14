@@ -5431,6 +5431,13 @@ void expr_sizeof_expr::evaluate_type(ast &a, const target &tgt)
 	   _set_value(constexpr_value::integer_constant_expr_tag{},
 		      target_int::create_one(tgt.get_ptrdiff_width(), false));
 
+	 },
+	 [&](const type&) {
+	   code_remark remark(code_remark::severity::fatal,
+			      "sizeof applied to invalid type",
+			      a.get_pp_result(), _e.get_tokens_range());
+	   a.get_remarks().add(remark);
+	   throw semantic_except(remark);
 	 })),
        *_e.get_type());
 }
@@ -5470,6 +5477,13 @@ void expr_sizeof_type_name::evaluate_type(ast &a, const target &tgt)
 	   _set_value(constexpr_value::integer_constant_expr_tag{},
 		      target_int::create_one(tgt.get_ptrdiff_width(), false));
 
+	 },
+	 [&](const type&) {
+	   code_remark remark(code_remark::severity::fatal,
+			      "sizeof applied to invalid type",
+			      a.get_pp_result(), _tn.get_tokens_range());
+	   a.get_remarks().add(remark);
+	   throw semantic_except(remark);
 	 })),
        *_tn.get_type());
 }
@@ -5510,10 +5524,17 @@ void expr_alignof_expr::evaluate_type(ast &a, const target &tgt)
 	   return 0;
 
 	 },
-	 [&](const void_type) {
+	 [&](const void_type&) {
 	   // GCC extension: __alignof__(void) == 1
 	   return 0;
 
+	 },
+	 [&](const type&) -> mpa::limbs::size_type {
+	   code_remark remark(code_remark::severity::fatal,
+			      "alignof applied to invalid type",
+			      a.get_pp_result(), _e.get_tokens_range());
+	   a.get_remarks().add(remark);
+	   throw semantic_except(remark);
 	 })),
        *_e.get_type());
 
@@ -5566,6 +5587,13 @@ void expr_alignof_type_name::evaluate_type(ast &a, const target &tgt)
 	   // GCC extension: __alignof__(void) == 1
 	   return 0;
 
+	 },
+	 [&](const type&) -> mpa::limbs::size_type {
+	   code_remark remark(code_remark::severity::fatal,
+			      "alignof applied to invalid type",
+			      a.get_pp_result(), _tn.get_tokens_range());
+	   a.get_remarks().add(remark);
+	   throw semantic_except(remark);
 	 })),
        *_tn.get_type());
 
