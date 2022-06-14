@@ -5477,9 +5477,23 @@ void expr_sizeof_type_name::evaluate_type(ast &a, const target &tgt)
 
 void expr_alignof_expr::evaluate_type(ast &a, const target &tgt)
 {
-    handle_types<void>
-      ((wrap_callables<default_action_unreachable<void, type_set<> >::type>
-	([&](const object_type &ot) {
+  const mpa::limbs::size_type align_log2 =
+    handle_types<mpa::limbs::size_type>
+      ((wrap_callables<default_action_unreachable<mpa::limbs::size_type,
+						  type_set<> >::type>
+	([&](const array_type &at) {
+	   if (!at.is_complete() && !at.get_element_type()->is_complete()) {
+	     code_remark remark(code_remark::severity::fatal,
+				"alignof applied to incomplete type",
+				a.get_pp_result(), _e.get_tokens_range());
+	     a.get_remarks().add(remark);
+	     throw semantic_except(remark);
+	   }
+
+	   return at.get_effective_alignment(tgt);
+
+	 },
+	 [&](const object_type &ot) {
 	   if (!ot.is_complete()) {
 	     code_remark remark(code_remark::severity::fatal,
 				"alignof applied to incomplete type",
@@ -5488,40 +5502,50 @@ void expr_alignof_expr::evaluate_type(ast &a, const target &tgt)
 	     throw semantic_except(remark);
 	   }
 
-	   _set_type(tgt.create_ptrdiff_type(false));
-
-	   const mpa::limbs::size_type align_log2 =
-	     ot.get_effective_alignment(tgt);
-	   mpa::limbs align;
-	   align.resize(mpa::limbs::width_to_size(align_log2 + 1));
-	   align.set_bit(align_log2, true);
-	   _set_value(constexpr_value::integer_constant_expr_tag{},
-		      _limbs_to_size_t(tgt, std::move(align)));
+	   return ot.get_effective_alignment(tgt);
 
 	 },
 	 [&](const function_type &ft) {
 	   // GCC extension: __alignof__(function type) == 1
-	   _set_type(tgt.create_ptrdiff_type(false));
-	   _set_value(constexpr_value::integer_constant_expr_tag{},
-		      target_int::create_one(tgt.get_ptrdiff_width(), false));
+	   return 0;
 
 	 },
 	 [&](const void_type) {
 	   // GCC extension: __alignof__(void) == 1
-	   _set_type(tgt.create_ptrdiff_type(false));
-	   _set_value(constexpr_value::integer_constant_expr_tag{},
-		      target_int::create_one(tgt.get_ptrdiff_width(), false));
+	   return 0;
 
 	 })),
        *_e.get_type());
+
+  _set_type(tgt.create_ptrdiff_type(false));
+
+  mpa::limbs align;
+  align.resize(mpa::limbs::width_to_size(align_log2 + 1));
+  align.set_bit(align_log2, true);
+  _set_value(constexpr_value::integer_constant_expr_tag{},
+	     _limbs_to_size_t(tgt, std::move(align)));
 }
 
 
 void expr_alignof_type_name::evaluate_type(ast &a, const target &tgt)
 {
-    handle_types<void>
-      ((wrap_callables<default_action_unreachable<void, type_set<> >::type>
-	([&](const object_type &ot) {
+  const mpa::limbs::size_type align_log2 =
+    handle_types<mpa::limbs::size_type>
+      ((wrap_callables<default_action_unreachable<mpa::limbs::size_type,
+						  type_set<> >::type>
+	([&](const array_type &at) {
+	   if (!at.is_complete() && !at.get_element_type()->is_complete()) {
+	     code_remark remark(code_remark::severity::fatal,
+				"alignof applied to incomplete type",
+				a.get_pp_result(), _tn.get_tokens_range());
+	     a.get_remarks().add(remark);
+	     throw semantic_except(remark);
+	   }
+
+	   return at.get_effective_alignment(tgt);
+
+	 },
+	 [&](const object_type &ot) {
 	   if (!ot.is_complete()) {
 	     code_remark remark(code_remark::severity::fatal,
 				"alignof applied to incomplete type",
@@ -5530,32 +5554,28 @@ void expr_alignof_type_name::evaluate_type(ast &a, const target &tgt)
 	     throw semantic_except(remark);
 	   }
 
-	   _set_type(tgt.create_ptrdiff_type(false));
-
-	   const mpa::limbs::size_type align_log2 =
-	     ot.get_effective_alignment(tgt);
-	   mpa::limbs align;
-	   align.resize(mpa::limbs::width_to_size(align_log2 + 1));
-	   align.set_bit(align_log2, true);
-	   _set_value(constexpr_value::integer_constant_expr_tag{},
-		      _limbs_to_size_t(tgt, std::move(align)));
+	   return ot.get_effective_alignment(tgt);
 
 	 },
 	 [&](const function_type &ft) {
 	   // GCC extension: __alignof__(function type) == 1
-	   _set_type(tgt.create_ptrdiff_type(false));
-	   _set_value(constexpr_value::integer_constant_expr_tag{},
-		      target_int::create_one(tgt.get_ptrdiff_width(), false));
+	   return 0;
 
 	 },
 	 [&](const void_type&) {
 	   // GCC extension: __alignof__(void) == 1
-	   _set_type(tgt.create_ptrdiff_type(false));
-	   _set_value(constexpr_value::integer_constant_expr_tag{},
-		      target_int::create_one(tgt.get_ptrdiff_width(), false));
+	   return 0;
 
 	 })),
        *_tn.get_type());
+
+  _set_type(tgt.create_ptrdiff_type(false));
+
+  mpa::limbs align;
+  align.resize(mpa::limbs::width_to_size(align_log2 + 1));
+  align.set_bit(align_log2, true);
+  _set_value(constexpr_value::integer_constant_expr_tag{},
+	     _limbs_to_size_t(tgt, std::move(align)));
 }
 
 
