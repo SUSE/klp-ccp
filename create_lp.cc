@@ -4122,7 +4122,9 @@ bool _ast_info_collector::_handle_expr(const ast::expr_generic &e)
   if (!_is_evaluated(e))
     return false;
 
-  _unevaluated_stack_entry unevaluated = { std::cref(e.get_control_expr()) };
+  _unevaluated_stack_entry unevaluated = {
+    std::cref<ast::_ast_entity>(e.get_control_expr())
+  };
   const ast::expr &match = e.get_match();
   e.get_association_list().for_each
     ([&](const ast::generic_association &ga) {
@@ -4133,7 +4135,7 @@ bool _ast_info_collector::_handle_expr(const ast::expr_generic &e)
 
       const ast::expr &e = ga.get_expr();
       if (&e != &match)
-	unevaluated.push_back(std::cref(e));
+	unevaluated.push_back(std::cref<ast::_ast_entity>(e));
     });
 
   if (unevaluated.empty())
