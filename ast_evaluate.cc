@@ -3767,7 +3767,7 @@ void expr_binop::_evaluate_shift(const types::int_type &it_left,
     }
 
     if (!i_right.get_limbs().fits_into_type<mpa::limbs::size_type>() ||
-	(i_right.get_limbs().to_type<mpa::limbs::size_type>() >
+	(i_right.get_limbs().to_type<mpa::limbs::size_type>() >=
 	 i_left.width())) {
       code_remark remark(code_remark::severity::warning,
 			 "shift distance exceeds integer width",
