@@ -16,6 +16,7 @@
  * along with klp-ccp. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <tuple>
 #include <dejagnu.h>
 #include "target_float.hh"
 #include "target_int.hh"
