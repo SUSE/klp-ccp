@@ -3795,13 +3795,16 @@ void expr_binop::_evaluate_shift(const types::int_type &it_left,
 	ls.resize(mpa::limbs::width_to_size(ls.fls() + distance));
 	ls = ls.lshift(distance);
 	ls.resize(mpa::limbs::width_to_size(i_left.width()));
-	// Propagate sign bit to high.
-	assert(i_left.is_signed());
-	if (i_left.width() < ls.width()) {
-	  ls.set_bits_at_and_above(i_left.width(),
-				   ls.test_bit(i_left.width() - 1));
+	if (i_left.is_signed()) {
+	  // Propagate sign bit to high.
+	  if (i_left.width() < ls.width()) {
+	    ls.set_bits_at_and_above(i_left.width(),
+				     ls.test_bit(i_left.width() - 1));
+	  }
+	  i_result = target_int(i_left.width() - 1, true, std::move(ls));
+	} else {
+	  i_result = target_int(i_left.width(), false, std::move(ls));
 	}
-	i_result = target_int(i_left.width() - 1, true, std::move(ls));
       }
     } else {
       assert(_op == binary_op::rshift);
