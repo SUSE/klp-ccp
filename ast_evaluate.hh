@@ -42,7 +42,8 @@ namespace klp
     void
     check_types_assignment(klp::ccp::ast::ast &a, const target &tgt,
 			   const types::type &t_target,
-			   const ast::expr &e_source);
+			   const ast::expr &e_source,
+			   const bool is_func_arg);
   }
 }
 

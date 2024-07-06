@@ -221,6 +221,11 @@ void _evaluator::operator()()
 	const auto souk = _sou_layouters.top()->get_tag_kind();
 	auto &&c = _sou_layouters.top()->grab_result();
 	_sou_layouters.pop();
+	_tgt.apply_sou_attributes(_ast, make_expr_evaluator(_ast, _tgt),
+				  souk,
+				  unnamed_sou.get_asl_before(),
+				  unnamed_sou.get_asl_after(),
+				  *c);
 	unnamed_sou.set_content(std::move(c));
 	_handle_sou_member(unnamed_sou);
       },
@@ -238,6 +243,11 @@ void _evaluator::operator()()
 	const auto souk = _sou_layouters.top()->get_tag_kind();
 	auto &&c = _sou_layouters.top()->grab_result();
 	_sou_layouters.pop();
+	_tgt.apply_sou_attributes(_ast, make_expr_evaluator(_ast, _tgt),
+				  souk,
+				  soud.get_asl_before(),
+				  soud.get_asl_after(),
+				  *c);
 	soud.set_content(std::move(c));
       },
       [this](init_declarator &i) {
@@ -621,7 +631,7 @@ void _evaluator::_check_return_stmt(const klp::ccp::ast::stmt_return &ret_stmt)
   const bool ret_type_is_void = is_type<void_type>(*ret_type);
   if (ret_e) {
     if (!ret_type_is_void) {
-      check_types_assignment(_ast, _tgt, *ret_type, *ret_e);
+      check_types_assignment(_ast, _tgt, *ret_type, *ret_e, false);
     } else if (!is_type<void_type>(*ret_e->get_type())) {
       // GCC still accepts this.
       code_remark remark(code_remark::severity::warning,
@@ -1407,7 +1417,7 @@ _evaluate_init(klp::ccp::ast::ast &a, const target &tgt,
 	[&](const type &t) {
 	  expr &e_source = ie.get_expr();
 	  e_source.apply_lvalue_conversion(false);
-	  check_types_assignment(a, tgt, t, e_source);
+	  check_types_assignment(a, tgt, t, e_source, false);
 	  return nullptr;
 	})),
       t_target));
@@ -1455,7 +1465,7 @@ _evaluate_init(klp::ccp::ast::ast &a, const target &tgt,
 	 }
 	 expr &e_source = unwrapped_ie->get_expr();
 	 e_source.apply_lvalue_conversion(false);
-	 check_types_assignment(a, tgt, t_target, e_source);
+	 check_types_assignment(a, tgt, t_target, e_source, false);
        })),
      t_target);
 
@@ -2754,11 +2764,64 @@ _do_pointer_arithmetic(const constexpr_value &cv_pointer,
   }
 }
 
+static bool _check_transparent_union_func_arg_assignment
+  (const target &tgt,
+   const struct_or_union_type &sou,
+   const expr &e_source) noexcept
+{
+  if (sou.get_kind() != struct_or_union_kind::souk_union)
+    return false;
+
+  const auto * union_content = sou.get_content();
+  if (!union_content)
+    return false;
+  for (auto it_member = union_content->members_begin();
+       it_member != union_content->members_end();
+       ++it_member) {
+    if (handle_types<bool>
+	((wrap_callables<default_action_return_value<bool, false>::type>
+	  ([&](const pointer_type &target, const pointer_type &source) {
+	     const addressable_type &pointed_to_type_target =
+	       *target.get_pointed_to_type();
+	     const addressable_type  &pointed_to_type_source =
+	       *source.get_pointed_to_type();
+
+	     if (!(pointed_to_type_source.get_qualifiers().is_subset_of
+		   (pointed_to_type_target.get_qualifiers()))) {
+	       return false;
+	     }
+
+	     return (is_type<void_type>(pointed_to_type_target) ||
+		     is_type<void_type>(pointed_to_type_source) ||
+		     (pointed_to_type_target
+		      .is_compatible_with(tgt, pointed_to_type_source,
+					  true)));
+	   },
+	   [&](const pointer_type &, const int_type &source) {
+	     // Source expression shall be a zero integer constant
+	     // expression.
+	     return (e_source.is_constexpr() &&
+		     e_source.get_constexpr_value().is_zero());
+	   },
+
+	   [&](const object_type &target, const object_type &source) {
+	     return (target.is_complete() && source.is_complete() &&
+		     target.is_compatible_with(tgt, source, true));
+
+	  })),
+	 *it_member->get_type(), *e_source.get_type())) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void
 klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 				 const target &tgt,
 				 const type &t_target,
-				 const expr &e_source)
+				 const expr &e_source,
+				 const bool is_func_arg)
 {
   auto &&check_enum_completeness_lhs =
     [&](const type &t_lhs) {
@@ -2940,7 +3003,14 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 	      a.get_pp_result(), e_source.get_tokens_range());
 	   a.get_remarks().add(remark);
 	   throw semantic_except(remark);
-	 } else if (!target.is_compatible_with(tgt, source, true)) {
+	 }
+
+	 if (!target.is_compatible_with(tgt, source, true) &&
+	     !(is_func_arg &&
+	       target.is_transparent_union() &&
+	       _check_transparent_union_func_arg_assignment(tgt,
+							    target,
+							    e_source))) {
 	   code_remark remark
 	     (code_remark::severity::fatal,
 	      "assignment from incompatible struct or union type",
@@ -2948,7 +3018,21 @@ klp::ccp::check_types_assignment(klp::ccp::ast::ast &a,
 	   a.get_remarks().add(remark);
 	   throw semantic_except(remark);
 	 }
-
+       },
+       [&](const struct_or_union_type &target,
+	   const type &source) {
+	 if (!(is_func_arg &&
+	       target.is_transparent_union() &&
+	       _check_transparent_union_func_arg_assignment(tgt,
+							    target,
+							    e_source))) {
+	   code_remark remark
+	     (code_remark::severity::fatal,
+	      "invalid type for assignment target",
+	      a.get_pp_result(), e_source.get_tokens_range());
+	   a.get_remarks().add(remark);
+	   throw semantic_except(remark);
+	 }
        },
        [&](const type&, const type&) {
 	 code_remark remark
@@ -3016,7 +3100,7 @@ void expr_assignment::evaluate_type(ast &a, const target &tgt)
   switch (_op) {
   case assign_op::set:
     {
-      check_types_assignment(a, tgt, *t_lhs, _rhs);
+      check_types_assignment(a, tgt, *t_lhs, _rhs, false);
       _set_type(t_lhs);
     }
     break;
@@ -6008,7 +6092,7 @@ void expr_func_invocation::evaluate_type(ast &a, const target &tgt)
 		  throw semantic_except(remark);
 		}
 		for(std::size_t i = 0; i < ptl.size(); ++i) {
-		  check_types_assignment(a, tgt, *ptl[i], (*_args)[i]);
+		  check_types_assignment(a, tgt, *ptl[i], (*_args)[i], true);
 		}
 
 		_set_type(pft.get_return_type());

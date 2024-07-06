@@ -1338,7 +1338,8 @@ bool struct_or_union_content::member::has_constant_offset() const noexcept
 
 
 struct_or_union_content::struct_or_union_content()
-  : _align_ffs(0), _size(0), _is_size_constant(false)
+  : _align_ffs{0}, _size{0}, _is_size_constant{false},
+    _is_transparent_union{false}
 {}
 
 void struct_or_union_content::
@@ -1457,6 +1458,16 @@ mpa::limbs::size_type struct_or_union_content::get_alignment() const noexcept
   return _align_ffs - 1;
 }
 
+bool struct_or_union_content::is_transparent_union() const noexcept
+{
+  return _is_transparent_union;
+}
+
+void struct_or_union_content::set_transparent_union() noexcept
+{
+  _is_transparent_union = true;
+}
+
 bool struct_or_union_content::_has_been_layout() const noexcept
 {
   return _align_ffs;
@@ -1466,13 +1477,17 @@ struct_or_union_type::
 struct_or_union_type(const struct_or_union_kind kind,
 		     const ast::sou_decl_list_node &decl_node,
 		     const qualifiers &qs)
-  : type(qs), _kind(kind), _decl_node(&decl_node), _content(nullptr)
+  : type{qs}, _kind{kind}, _decl_node{&decl_node},
+    _is_transparent_union{false},
+    _content{nullptr}
 {}
 
 struct_or_union_type::
 struct_or_union_type(const struct_or_union_kind kind,
 		     const struct_or_union_content &content)
-  : _kind(kind), _decl_node(nullptr), _content(&content)
+  : _kind{kind}, _decl_node{nullptr},
+    _is_transparent_union{false},
+    _content{&content}
 {}
 
 struct_or_union_type::struct_or_union_type(const struct_or_union_type&)
@@ -1577,6 +1592,26 @@ const struct_or_union_content* struct_or_union_type::get_content()
 
   _content = soud->get_content();
   return _content;
+}
+
+bool struct_or_union_type::is_transparent_union() const noexcept
+{
+  if (_kind != struct_or_union_kind::souk_union)
+    return false;
+
+  if (_is_transparent_union)
+    return true;
+
+  const auto *content = this->get_content();
+  return content && content->is_transparent_union();
+}
+
+std::shared_ptr<const struct_or_union_type>
+struct_or_union_type::set_transparent_union() const
+{
+  std::shared_ptr<struct_or_union_type> new_t(this->_clone());
+  new_t->_is_transparent_union = true;
+  return new_t;
 }
 
 

@@ -104,7 +104,6 @@ namespace klp
 			  ast::attribute_specifier_list * const asl_after)
 	const = 0;
 
-
       virtual bool is_char_signed() const noexcept = 0;
       virtual bool is_wchar_signed() const noexcept = 0;
 
@@ -195,6 +194,15 @@ namespace klp
 			 ast::attribute_specifier_list * const ed_asl_before,
 			 ast::attribute_specifier_list * const ed_asl_after,
 			 types::enum_content &ec) const = 0;
+
+
+      virtual void
+      apply_sou_attributes(ast::ast &a,
+			   const std::function<void(ast::expr&)> &eval_expr,
+			   const types::struct_or_union_kind souk,
+			   ast::attribute_specifier_list * const asl_before,
+			   ast::attribute_specifier_list * const asl_after,
+			   types::struct_or_union_content &t) const = 0;
 
       class sou_layouter
       {

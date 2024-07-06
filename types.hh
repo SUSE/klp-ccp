@@ -812,6 +812,9 @@ namespace klp
 
 	mpa::limbs::size_type get_alignment() const noexcept;
 
+	bool is_transparent_union() const noexcept;
+	void set_transparent_union() noexcept;
+
       private:
 	bool _has_been_layout() const noexcept;
 
@@ -819,6 +822,7 @@ namespace klp
 	mpa::limbs::size_type _align_ffs;
 	mpa::limbs _size;
 	bool _is_size_constant;
+	bool _is_transparent_union;
       };
 
       class struct_or_union_type final : public returnable_object_type
@@ -862,6 +866,11 @@ namespace klp
 	const ast::sou_decl_list_node* get_decl_list_node() const noexcept
 	{ return _decl_node; }
 
+	bool is_transparent_union() const noexcept;
+
+	std::shared_ptr<const struct_or_union_type>
+	set_transparent_union() const;
+
       private:
 	struct_or_union_type(const struct_or_union_kind kind,
 			     const ast::sou_decl_list_node &decl_node,
@@ -876,6 +885,8 @@ namespace klp
 
 	const struct_or_union_kind _kind;
 	const ast::sou_decl_list_node *_decl_node;
+
+	bool _is_transparent_union;
 
 	mutable const struct_or_union_content *_content;
       };

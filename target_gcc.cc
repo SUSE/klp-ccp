@@ -547,6 +547,48 @@ bool _packed_attribute_finder::operator()(const ast::attribute &attr)
   return false;
 }
 
+namespace
+{
+  class _transparent_union_attribute_finder
+  {
+  public:
+    _transparent_union_attribute_finder(ast::ast &a) noexcept;
+
+    bool operator()(const ast::attribute &attr);
+
+    bool get_result() const noexcept
+    { return _has_transparent_union_attribute; }
+
+  private:
+    ast::ast &_a;
+    bool _has_transparent_union_attribute;
+  };
+}
+
+_transparent_union_attribute_finder::
+_transparent_union_attribute_finder(ast::ast &a) noexcept
+  : _a(a), _has_transparent_union_attribute(false)
+{}
+
+bool _transparent_union_attribute_finder::operator()(const ast::attribute &attr)
+{
+  if (_a.get_pp_tokens()[attr.get_name_tok()].get_value() !=
+      "__transparent_union__") {
+    return true;
+  }
+
+  const ast::expr_list *params = attr.get_params();
+  if (params) {
+    code_remark remark(code_remark::severity::fatal,
+		       "unexpected parameters to 'transparent_union' attribute",
+		       _a.get_pp_result(), attr.get_tokens_range());
+    _a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  _has_transparent_union_attribute = true;
+  return false;
+}
 
 namespace
 {
@@ -882,13 +924,25 @@ evaluate_attributes(ast::ast &a,
   // already been handled.
   _mode_attribute_finder maf(a, *this);
   _aligned_attribute_finder aaf(a, eval_expr, *this, true);
+  _transparent_union_attribute_finder tuaf(a);
   sql.for_each_attribute(maf);
   sql.for_each_attribute(aaf);
+  sql.for_each_attribute(tuaf);
 
   t = maf.apply_to_type(std::move(t));
   types::alignment align = aaf.grab_result();
   if (align.is_set())
     t = t->set_user_alignment(std::move(align));
+
+  if (tuaf.get_result()) {
+    handle_types<void>
+      ((wrap_callables<default_action_nop>
+	([&](const types::struct_or_union_type &sout) {
+	   if (sout.get_kind() == struct_or_union_kind::souk_union)
+	     t = sout.set_transparent_union();
+	 })),
+       *t);
+  }
 
   return std::move(t);
 }
@@ -915,25 +969,40 @@ evaluate_attributes(ast::ast &a,
 
   _mode_attribute_finder maf(a, *this);
   _aligned_attribute_finder aaf(a, eval_expr, *this, true);
+  _transparent_union_attribute_finder tuaf(a);
   if (asl_after) {
     asl_after->for_each_attribute(maf);
     asl_after->for_each_attribute(aaf);
+    asl_after->for_each_attribute(tuaf);
   }
   if (asl_middle) {
     asl_middle->for_each_attribute(maf);
     asl_middle->for_each_attribute(aaf);
+    asl_middle->for_each_attribute(tuaf);
   }
   if (asl_before) {
     asl_before->for_each_attribute(maf);
     asl_before->for_each_attribute(aaf);
+    asl_before->for_each_attribute(tuaf);
   }
   ds.for_each_attribute(maf);
   ds.for_each_attribute(aaf);
+  ds.for_each_attribute(tuaf);
 
   t = maf.apply_to_type(std::move(t));
   types::alignment align = aaf.grab_result();
   if (align.is_set())
     t = t->set_user_alignment(std::move(align));
+
+  if (tuaf.get_result()) {
+    handle_types<void>
+      ((wrap_callables<default_action_nop>
+	([&](const types::struct_or_union_type &sout) {
+	   if (sout.get_kind() == struct_or_union_kind::souk_union)
+	     t = sout.set_transparent_union();
+	 })),
+     *t);
+  }
 
   return std::move(t);
 }
@@ -1294,6 +1363,35 @@ evaluate_enum_type(ast::ast &a,
        }
      });
 }
+
+void target_gcc::
+apply_sou_attributes(ast::ast &a,
+		     const std::function<void(ast::expr&)> &eval_expr,
+		     const types::struct_or_union_kind souk,
+		     ast::attribute_specifier_list * const asl_before,
+		     ast::attribute_specifier_list * const asl_after,
+		     types::struct_or_union_content &t) const
+{
+  switch (souk) {
+  case struct_or_union_kind::souk_struct:
+    break;
+
+  case struct_or_union_kind::souk_union:
+    {
+      _transparent_union_attribute_finder tuaf(a);
+      if (asl_before)
+	asl_before->for_each_attribute(tuaf);
+      if (asl_after)
+	asl_after->for_each_attribute(tuaf);
+
+      if (tuaf.get_result()) {
+	t.set_transparent_union();
+      }
+    }
+    break;
+  }
+}
+
 
 /*
  * Layout structs and unions as gcc does.

@@ -68,7 +68,7 @@ evaluate(klp::ccp::ast::ast &a, const target &tgt,
 
   std::size_t i = 0;
   for (const auto &t : _exp_arg_types) {
-    check_types_assignment(a, tgt, *t, (*args)[i]);
+    check_types_assignment(a, tgt, *t, (*args)[i], true);
     ++i;
   }
 

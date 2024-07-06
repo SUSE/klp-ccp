@@ -169,6 +169,14 @@ namespace klp
 			 ast::attribute_specifier_list * const ed_asl_after,
 			 types::enum_content &ec) const override;
 
+      virtual void
+      apply_sou_attributes(ast::ast &a,
+			   const std::function<void(ast::expr&)> &eval_expr,
+			   const types::struct_or_union_kind souk,
+			   ast::attribute_specifier_list * const asl_before,
+			   ast::attribute_specifier_list * const asl_after,
+			   types::struct_or_union_content &t) const override;
+
     public:
       virtual std::unique_ptr<target::sou_layouter>
       create_sou_layouter(const types::struct_or_union_kind souk,
