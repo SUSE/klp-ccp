@@ -5839,10 +5839,19 @@ void _symbol_modification_resolver::operator()()
       } else if (it_fi->in_closure) {
 	// Force linkage of non-externalized and non-patched functions
 	// within the closure to be internal.
+	//
+	// Also, if a function in the closure is extern, gnu_inline,
+	// but not always_inline, it needs to be made non-extern,
+	// because otherwise the compiler would be free to ignore this
+	// definition (based on its inlining decision) and create an
+	// external reference itself.
 	assert(!it_fi->externalize);
-	fdi->sym_mod.new_linkage =
-	  (lp_creation_policy::symbol_modification::linkage_change
-		::lc_make_static);
+	const ast::function_definition &fd = fdi->function_definition;
+	if (!(fd.is_gnu_inline() && fd.is_always_inline())) {
+	  fdi->sym_mod.new_linkage =
+	    (lp_creation_policy::symbol_modification::linkage_change
+	     ::lc_make_static);
+	}
       }
 
       // Force all dep_on_funs bound to "extern" declarations in
@@ -6132,9 +6141,11 @@ void _conflicting_header_finder::operator()()
     const function_definition_info * const fdi =
       it_fi->get_function_definition();
     if (fdi) {
+      const ast::function_definition &fd = fdi->function_definition;
       const bool is_old_external =
-	(fdi->function_definition.get_linkage().get_linkage_kind() ==
-	 ast::linkage::linkage_kind::external);
+	((fd.get_linkage().get_linkage_kind() ==
+	  ast::linkage::linkage_kind::external) &&
+	 !fd.is_gnu_inline());
 
       if (it_fi->externalize && !esm.sym_mod.is_rename()) {
 	  _mark_headers_uneligible(fdi->function_definition.get_tokens_range());
@@ -6456,14 +6467,16 @@ _check_header_ordering_constraints(const pp_result::header_inclusion_node &h)
 	if (!l.is_first_in_chain())
 	  return false;
 
-	if (l.get_linkage_kind() == ast::linkage::linkage_kind::internal)
+	if (l.get_linkage_kind() == ast::linkage::linkage_kind::internal) {
 	  return false;
+	}
 
 	const function_info &fi = fdi.fi;
 	// At this point, function definitions with external linkage
 	// in headers can be encountered only with ->in_closure.
-	assert(fi.in_closure && !fdi.rewrite_needed &&
-	       !fdi.sym_mod.is_rename());
+	assert((fi.in_closure && !fdi.rewrite_needed &&
+		!fdi.sym_mod.is_rename()) ||
+	       fdi.function_definition.is_gnu_inline());
 	return (fdi.sym_mod.new_linkage == linkage_change::lc_make_static);
       };
 
@@ -8369,24 +8382,26 @@ void _lp_writer::_emit_inclusion_sequence
 
 	assert(!fdi.fi.externalize ||
 	       fdi.fi.externalized_sym_mod.sym_mod.is_rename());
-	const ast::linkage &l = fdi.function_definition.get_linkage();
+	const ast::function_definition &fd = fdi.function_definition;
+	const ast::linkage &l = fd.get_linkage();
 	if (fdi.fi.in_closure && !fdi.rewrite_needed) {
 	  assert(!fdi.sym_mod.is_rename());
-	  assert(fdi.sym_mod.new_linkage ==
-		 (lp_creation_policy::symbol_modification::linkage_change
-			::lc_make_static));
-	  if (l.get_linkage_kind() != ast::linkage::linkage_kind::internal &&
+	  assert(fdi.sym_mod.new_linkage == linkage_change::lc_make_static ||
+		 (fd.is_gnu_inline() && fd.is_always_inline()));
+	  if (fdi.sym_mod.new_linkage == linkage_change::lc_make_static &&
+	      l.get_linkage_kind() != ast::linkage::linkage_kind::internal &&
 	      l.is_first_in_chain()) {
 	    depreprocessor::transformed_input_chunk tic =
 	      _prepare_tic_for_decl(fdi);
-	    const ast::declaration_specifiers &ds
-	      = fdi.function_definition.get_declaration_specifiers();
+	    const ast::declaration_specifiers &ds =
+	      fd.get_declaration_specifiers();
 	    _set_storage_class(ds, _find_scs(ds), ast::storage_class::sc_static,
 			       tic);
 	    _d.append(std::move(tic));
 	  }
 	} else {
-	  assert(l.get_linkage_kind() == ast::linkage::linkage_kind::internal);
+	  assert(l.get_linkage_kind() == ast::linkage::linkage_kind::internal ||
+		 fd.is_gnu_inline());
 	}
       }
       break;

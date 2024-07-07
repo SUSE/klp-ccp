@@ -869,8 +869,8 @@ void _id_resolver::_handle_fun_def(function_definition &fd)
       throw semantic_except(remark);
   }
 
-  const storage_class sc
-    = fd.get_declaration_specifiers().get_storage_class(_ast);
+  const declaration_specifiers &ds = fd.get_declaration_specifiers();
+  const storage_class sc= ds.get_storage_class(_ast);
 
   const bool is_at_file_scope = fd.is_at_file_scope();
   if (sc != storage_class::sc_none &&
@@ -969,6 +969,16 @@ void _id_resolver::_handle_fun_def(function_definition &fd)
       _try_resolve_pending_linkages(fd, linkage::linkage_kind::external);
       linkage::set_first_at_file_scope(fd);
     }
+
+    if (ds.is_inline()) {
+      if (_tgt.is_gnu_inline(_ast, fd))
+	fd.set_is_gnu_inline();
+    }
+  }
+
+  if (ds.is_inline()) {
+    if (_tgt.is_always_inline(_ast, fd))
+      fd.set_is_always_inline();
   }
 
   _scopes.back().register_id

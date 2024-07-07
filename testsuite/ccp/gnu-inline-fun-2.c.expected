@@ -1,0 +1,7 @@
+/* klp-ccp: from testsuite/ccp/gnu-inline-fun-2.c */
+#include "gnu-inline-fun-2.h"
+
+void klpp_pu_f(void)
+{
+	g();
+}

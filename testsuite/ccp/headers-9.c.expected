@@ -1,0 +1,7 @@
+/* klp-ccp: from testsuite/ccp/headers-9.c */
+#include "headers-9.h"
+
+void klpp_pu_f(void)
+{
+	g();
+}

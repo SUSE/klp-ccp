@@ -34,6 +34,7 @@ namespace klp
     {
       class ast;
       class expr;
+      class function_definition;
       class attribute_specifier_list;
       class type_qualifier_list;
       class specifier_qualifier_list;
@@ -103,6 +104,14 @@ namespace klp
 			  ast::attribute_specifier_list * const asl_middle,
 			  ast::attribute_specifier_list * const asl_after)
 	const = 0;
+
+      virtual bool
+      is_gnu_inline(ast::ast &a,
+		    ast::function_definition &fd) const = 0;
+
+      virtual bool
+      is_always_inline(ast::ast &a,
+		       ast::function_definition &fd) const = 0;
 
       virtual bool is_char_signed() const noexcept = 0;
       virtual bool is_wchar_signed() const noexcept = 0;

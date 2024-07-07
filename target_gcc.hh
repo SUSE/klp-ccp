@@ -94,6 +94,15 @@ namespace klp
 			  ast::attribute_specifier_list * const asl_after)
 	const override;
 
+
+      virtual bool
+      is_gnu_inline(ast::ast &a,
+		    ast::function_definition &fd) const final;
+
+      virtual bool
+      is_always_inline(ast::ast &a,
+		       ast::function_definition &fd) const final;
+
       virtual bool is_char_signed() const noexcept final;
 
       virtual mpa::limbs::size_type

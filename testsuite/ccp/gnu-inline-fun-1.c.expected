@@ -1,0 +1,12 @@
+/* klp-ccp: from testsuite/ccp/gnu-inline-fun-1.c */
+extern inline __attribute__((gnu_inline, always_inline)) void g(void)
+{}
+
+static inline __attribute__((gnu_inline)) void h(void)
+{}
+
+void klpp_pu_f(void)
+{
+	g();
+	h();
+}

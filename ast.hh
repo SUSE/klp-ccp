@@ -4753,9 +4753,15 @@ namespace klp
 	  const noexcept
 	{ return _ds; }
 
+	declaration_specifiers& get_declaration_specifiers() noexcept
+	{ return _ds; }
+
 	bool is_at_file_scope() const noexcept;
 
 	const attribute_specifier_list* get_asl() const noexcept
+	{ return _asl; }
+
+	attribute_specifier_list* get_asl() noexcept
 	{ return _asl; }
 
 	const declaration_list* get_declaration_list() const noexcept
@@ -4763,6 +4769,16 @@ namespace klp
 
 	const stmt_compound& get_stmt_compound() const noexcept
 	{ return _sc; }
+
+	void set_is_gnu_inline() noexcept;
+
+	bool is_gnu_inline() const noexcept
+	{ return _is_gnu_inline; }
+
+	void set_is_always_inline() noexcept;
+
+	bool is_always_inline() const noexcept
+	{ return _is_always_inline; }
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -4779,6 +4795,8 @@ namespace klp
 	stmt_compound &_sc;
 
 	linkage _linkage;
+	bool _is_gnu_inline;
+	bool _is_always_inline;
       };
 
       class external_declaration : public ast_entity<external_declaration>

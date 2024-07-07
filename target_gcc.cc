@@ -829,6 +829,96 @@ apply_to_type(std::shared_ptr<const types::addressable_type> &&orig_t) const
 }
 
 
+namespace
+{
+  class _gnu_inline_attribute_finder
+  {
+  public:
+    _gnu_inline_attribute_finder(ast::ast &a) noexcept;
+
+    bool operator()(const ast::attribute &attr);
+
+    bool get_result() const noexcept
+    { return _has_gnu_inline_attribute; }
+
+  private:
+    ast::ast &_a;
+    bool _has_gnu_inline_attribute;
+  };
+}
+
+_gnu_inline_attribute_finder::
+_gnu_inline_attribute_finder(ast::ast &a) noexcept
+  : _a(a), _has_gnu_inline_attribute(false)
+{}
+
+bool _gnu_inline_attribute_finder::operator()(const ast::attribute &attr)
+{
+  const std::string &attr_name =
+    _a.get_pp_tokens()[attr.get_name_tok()].get_value();
+  if (attr_name != "__gnu_inline__" && attr_name != "gnu_inline") {
+    return true;
+  }
+
+  const ast::expr_list *params = attr.get_params();
+  if (params) {
+    code_remark remark(code_remark::severity::fatal,
+		       "unexpected parameters to 'gnu_inline' attribute",
+		       _a.get_pp_result(), attr.get_tokens_range());
+    _a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  _has_gnu_inline_attribute = true;
+  return false;
+}
+
+
+namespace
+{
+  class _always_inline_attribute_finder
+  {
+  public:
+    _always_inline_attribute_finder(ast::ast &a) noexcept;
+
+    bool operator()(const ast::attribute &attr);
+
+    bool get_result() const noexcept
+    { return _has_always_inline_attribute; }
+
+  private:
+    ast::ast &_a;
+    bool _has_always_inline_attribute;
+  };
+}
+
+_always_inline_attribute_finder::
+_always_inline_attribute_finder(ast::ast &a) noexcept
+  : _a(a), _has_always_inline_attribute(false)
+{}
+
+bool _always_inline_attribute_finder::operator()(const ast::attribute &attr)
+{
+  const std::string &attr_name =
+    _a.get_pp_tokens()[attr.get_name_tok()].get_value();
+  if (attr_name != "__always_inline__" && attr_name != "always_inline") {
+    return true;
+  }
+
+  const ast::expr_list *params = attr.get_params();
+  if (params) {
+    code_remark remark(code_remark::severity::fatal,
+		       "unexpected parameters to 'always_inline' attribute",
+		       _a.get_pp_result(), attr.get_tokens_range());
+    _a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  _has_always_inline_attribute = true;
+  return false;
+}
+
+
 std::shared_ptr<const types::pointer_type> target_gcc::
 evaluate_attributes(ast::ast &a,
 		    const std::function<void(ast::expr&)> &eval_expr,
@@ -1005,6 +1095,30 @@ evaluate_attributes(ast::ast &a,
   }
 
   return std::move(t);
+}
+
+bool
+target_gcc::is_gnu_inline(ast::ast &a,
+			  ast::function_definition &fd) const
+{
+  _gnu_inline_attribute_finder giaf(a);
+  auto *fd_asl = fd.get_asl();
+  if (fd_asl)
+    fd_asl->for_each_attribute(giaf);
+  fd.get_declaration_specifiers().for_each_attribute(giaf);
+  return giaf.get_result();
+}
+
+bool
+target_gcc::is_always_inline(ast::ast &a,
+			     ast::function_definition &fd) const
+{
+  _always_inline_attribute_finder aiaf(a);
+  auto *fd_asl = fd.get_asl();
+  if (fd_asl)
+    fd_asl->for_each_attribute(aiaf);
+  fd.get_declaration_specifiers().for_each_attribute(aiaf);
+  return aiaf.get_result();
 }
 
 bool target_gcc::is_char_signed() const noexcept

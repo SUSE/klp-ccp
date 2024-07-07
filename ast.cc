@@ -7916,7 +7916,8 @@ function_definition::function_definition(const pp_tokens_range &tr,
 					 stmt_compound* &&sc) noexcept
   : ast_entity(tr), _ds(*mv_p(std::move(ds))), _d(*mv_p(std::move(d))),
     _asl(mv_p(std::move(asl))), _dl(mv_p(std::move(dl))),
-    _sc(*mv_p(std::move(sc)))
+    _sc(*mv_p(std::move(sc))),
+    _is_gnu_inline(false), _is_always_inline(false)
 {
   _ds._set_parent(*this);
   _d._set_parent(*this);
@@ -7941,6 +7942,15 @@ bool function_definition::is_at_file_scope() const noexcept
   return get_parent()->is_any_of<external_declaration_func>();
 }
 
+void function_definition::set_is_gnu_inline() noexcept
+{
+  _is_gnu_inline = true;
+}
+
+void function_definition::set_is_always_inline() noexcept
+{
+  _is_always_inline = true;
+}
 
 _ast_entity* function_definition::_get_child(const size_t i) const noexcept
 {
