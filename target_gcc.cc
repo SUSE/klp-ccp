@@ -2678,381 +2678,758 @@ void target_gcc::_default_options_optimization
 
   static const default_option default_options_table[] = {
     {
-      default_option::opt_levels_1_plus, "fcombine-stack-adjustments",
-      nullptr, false
+      .levels = default_option::opt_levels_1_plus,
+      .name = "fcombine-stack-adjustments",
+      .val = nullptr,
+      .negative = false
     },
-    { default_option::opt_levels_1_plus, "fcompare-elim", nullptr, false },
-    { default_option::opt_levels_1_plus, "fcprop-registers", nullptr, false },
-    { default_option::opt_levels_1_plus, "fdefer-pop", nullptr, false },
-    { default_option::opt_levels_1_plus, "fforward-propagate", nullptr, false },
     {
-      default_option::opt_levels_1_plus, "fguess-branch-probability",
-      nullptr, false
+      .levels = default_option::opt_levels_1_plus,
+      .name = "fcompare-elim",
+      .val = nullptr,
+      .negative = false
     },
-    { default_option::opt_levels_1_plus, "fipa-profile", nullptr, false },
-    { default_option::opt_levels_1_plus, "fipa-pure-const", nullptr, false },
-    { default_option::opt_levels_1_plus, "fipa-reference", nullptr, false },
     {
-      default_option::opt_levels_1_plus, "fipa-reference-addressable",
-      nullptr, false,
+      .levels = default_option::opt_levels_1_plus,
+      .name = "fcprop-registers",
+      .val = nullptr,
+      .negative = false
+    },
+    { .levels = default_option::opt_levels_1_plus,
+      .name = "fdefer-pop",
+      .val = nullptr,
+      .negative = false
+    },
+    { .levels = default_option::opt_levels_1_plus,
+      .name = "fforward-propagate",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_1_plus,
+      .name = "fguess-branch-probability",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_1_plus,
+      .name = "fipa-profile",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_1_plus,
+      .name = "fipa-pure-const",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_1_plus,
+      .name = "fipa-reference",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_1_plus,
+      .name = "fipa-reference-addressable",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {9, 1, 0},
     },
-    { default_option::opt_levels_1_plus, "fmerge-constants", nullptr, false },
     {
-      default_option::opt_levels_1_plus, "fomit-frame-pointer", nullptr, false,
+      .levels = default_option::opt_levels_1_plus,
+      .name = "fmerge-constants",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_1_plus,
+      .name = "fomit-frame-pointer",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {8, 1, 0},
     },
     {
-      default_option::opt_levels_2_plus, "freorder-blocks", nullptr, false,
+      .levels = default_option::opt_levels_2_plus,
+      .name = "freorder-blocks",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {0, 0, 0},
       .max_gcc_version = {5, 5, std::numeric_limits<unsigned int>::max()},
     },
     {
-      default_option::opt_levels_1_plus, "freorder-blocks", nullptr, false,
+      .levels = default_option::opt_levels_1_plus,
+      .name = "freorder-blocks",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {6, 1, 0},
     },
-    { default_option::opt_levels_1_plus, "fshrink-wrap", nullptr, false },
-    { default_option::opt_levels_1_plus, "fsplit-wide-types", nullptr, false },
     {
-      default_option::opt_levels_2_plus, "ftree-builtin-call-dce",
-      nullptr, false,
+      .levels = default_option::opt_levels_1_plus,
+      .name = "fshrink-wrap",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_1_plus,
+      .name = "fsplit-wide-types",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_2_plus,
+      .name = "ftree-builtin-call-dce",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {0, 0, 0},
       .max_gcc_version = {5, 5, std::numeric_limits<unsigned int>::max()},
     },
     {
-      default_option::opt_levels_1_plus, "ftree-builtin-call-dce",
-      nullptr, false,
+      .levels = default_option::opt_levels_1_plus,
+      .name = "ftree-builtin-call-dce",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {6, 1, 0},
     },
-    { default_option::opt_levels_1_plus, "ftree-ccp", nullptr, false },
-    { default_option::opt_levels_1_plus, "ftree-ch", nullptr, false },
     {
-      default_option::opt_levels_1_plus, "ftree-coalesce-vars", nullptr, false,
+      .levels = default_option::opt_levels_1_plus,
+      .name = "ftree-ccp",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_1_plus,
+      .name = "ftree-ch",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_1_plus,
+      .name = "ftree-coalesce-vars",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {6, 1, 0},
     },
-    { default_option::opt_levels_1_plus, "ftree-copy-prop", nullptr, false },
     {
-      default_option::opt_levels_1_plus, "ftree-copyrename", nullptr, false,
+      .levels = default_option::opt_levels_1_plus,
+      .name = "ftree-copy-prop",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_1_plus,
+      .name = "ftree-copyrename",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {0, 0, 0},
       .max_gcc_version = {5, 5, std::numeric_limits<unsigned int>::max()},
     },
-    { default_option::opt_levels_1_plus, "ftree-dce", nullptr, false },
     {
-      default_option::opt_levels_1_plus, "ftree-dominator-opts", nullptr, false
+      .levels = default_option::opt_levels_1_plus,
+      .name = "ftree-dce",
+      .val = nullptr,
+      .negative = false
     },
-    { default_option::opt_levels_1_plus, "ftree-dse", nullptr, false },
-    { default_option::opt_levels_1_plus, "ftree-fre", nullptr, false },
-    { default_option::opt_levels_1_plus, "ftree-sink", nullptr, false },
-    { default_option::opt_levels_1_plus, "ftree-slsr", nullptr, false },
-    { default_option::opt_levels_1_plus, "ftree-ter", nullptr, false },
     {
-      default_option::opt_levels_1_plus_not_debug, "fbranch-count-reg",
-      nullptr, false,
+      .levels = default_option::opt_levels_1_plus,
+      .name = "ftree-dominator-opts",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_1_plus,
+      .name = "ftree-dse",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_1_plus,
+      .name = "ftree-fre",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_1_plus,
+      .name = "ftree-sink",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_1_plus,
+      .name = "ftree-slsr",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_1_plus,
+      .name = "ftree-ter",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_1_plus_not_debug,
+      .name = "fbranch-count-reg",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {4, 9, 0},
     },
     {
-      default_option::opt_levels_1_plus, "fif-conversion",
-      nullptr, false,
+      .levels = default_option::opt_levels_1_plus,
+      .name = "fif-conversion",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {0, 0, 0},
       .max_gcc_version = {4, 8, 2},
     },
     {
-      default_option::opt_levels_1_plus_not_debug, "fif-conversion",
-      nullptr, false,
+      .levels = default_option::opt_levels_1_plus_not_debug,
+      .name = "fif-conversion",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {4, 8, 3},
       .max_gcc_version = {4, 8, 5},
     },
     {
-      default_option::opt_levels_1_plus, "fif-conversion",
-      nullptr, false,
+      .levels = default_option::opt_levels_1_plus,
+      .name = "fif-conversion",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {4, 9, 0},
       .max_gcc_version = {4, 9, 0},
     },
     {
-      default_option::opt_levels_1_plus_not_debug, "fif-conversion",
-      nullptr, false,
+      .levels = default_option::opt_levels_1_plus_not_debug,
+      .name = "fif-conversion",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {4, 9, 1},
     },
     {
-      default_option::opt_levels_1_plus, "fif-conversion2",
-      nullptr, false,
+      .levels = default_option::opt_levels_1_plus,
+      .name = "fif-conversion2",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {0, 0, 0},
       .max_gcc_version = {4, 8, 2},
     },
     {
-      default_option::opt_levels_1_plus_not_debug, "fif-conversion2",
-      nullptr, false,
+      .levels = default_option::opt_levels_1_plus_not_debug,
+      .name = "fif-conversion2",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {4, 8, 3},
       .max_gcc_version = {4, 8, 5},
     },
     {
-      default_option::opt_levels_1_plus, "fif-conversion2",
-      nullptr, false,
+      .levels = default_option::opt_levels_1_plus,
+      .name = "fif-conversion2",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {4, 9, 0},
       .max_gcc_version = {4, 9, 0},
     },
     {
-      default_option::opt_levels_1_plus_not_debug, "fif-conversion2",
-      nullptr, false,
+      .levels = default_option::opt_levels_1_plus_not_debug,
+      .name = "fif-conversion2",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {4, 9, 1},
     },
     {
-      default_option::opt_levels_1_plus_not_debug,
-      "finline-functions-called-once", nullptr, false
+      .levels = default_option::opt_levels_1_plus_not_debug,
+      .name = "finline-functions-called-once",
+      .val = nullptr,
+      .negative = false
     },
     {
-      default_option::opt_levels_1_plus_not_debug, "fmove-loop-invariants",
-      nullptr, false,
+      .levels = default_option::opt_levels_1_plus_not_debug,
+      .name = "fmove-loop-invariants",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {4, 9, 0},
     },
     {
-      default_option::opt_levels_1_plus_not_debug, "fssa-phiopt",
-      nullptr, false,
+      .levels = default_option::opt_levels_1_plus_not_debug,
+      .name = "fssa-phiopt",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {5, 1, 0},
     },
     {
-      default_option::opt_levels_1_plus, "ftree-bit-ccp",
-      nullptr, false,
+      .levels = default_option::opt_levels_1_plus,
+      .name = "ftree-bit-ccp",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {0, 0, 0},
       .max_gcc_version = {4, 9, 4},
     },
     {
-      default_option::opt_levels_1_plus_not_debug, "ftree-bit-ccp",
-      nullptr, false,
+      .levels = default_option::opt_levels_1_plus_not_debug,
+      .name = "ftree-bit-ccp",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {5, 1, 0},
     },
     {
-      default_option::opt_levels_1_plus_not_debug, "ftree-sra",
-      nullptr, false
+      .levels = default_option::opt_levels_1_plus_not_debug,
+      .name = "ftree-sra",
+      .val = nullptr,
+      .negative = false
     },
     {
-      default_option::opt_levels_1_plus_not_debug, "ftree-pta", nullptr, false,
-      .min_gcc_version = {4, 9, 0},
-    },
-    { default_option::opt_levels_2_plus, "fcaller-saves", nullptr, false },
-    {
-      default_option::opt_levels_2_plus, "fcode-hoisting", nullptr, false,
-      .min_gcc_version = {7, 1, 0},
-    },
-    { default_option::opt_levels_2_plus, "fcrossjumping", nullptr, false },
-    { default_option::opt_levels_2_plus, "fcse-follow-jumps", nullptr, false },
-    { default_option::opt_levels_2_plus, "fdevirtualize", nullptr, false },
-    {
-      default_option::opt_levels_2_plus, "fdevirtualize-speculatively",
-      nullptr, false,
+      .levels = default_option::opt_levels_1_plus_not_debug,
+      .name = "ftree-pta",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {4, 9, 0},
     },
     {
-      default_option::opt_levels_2_plus, "fexpensive-optimizations",
-      nullptr, false
-    },
-    { default_option::opt_levels_2_plus, "fgcse", nullptr, false },
-    {
-      default_option::opt_levels_2_plus, "fhoist-adjacent-loads",
-      nullptr, false
-    },
-    { default_option::opt_levels_2_plus, "findirect-inlining", nullptr, false },
-    {
-      default_option::opt_levels_2_plus, "finline-small-functions",
-      nullptr, false
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fcaller-saves",
+      .val = nullptr,
+      .negative = false
     },
     {
-      default_option::opt_levels_2_plus, "fipa-bit-cp", nullptr, false,
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fcode-hoisting",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {7, 1, 0},
     },
-    { default_option::opt_levels_2_plus, "fipa-cp", nullptr, false },
     {
-      default_option::opt_levels_2_plus, "fipa-cp-alignment", nullptr, false,
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fcrossjumping",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fcse-follow-jumps",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fdevirtualize",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fdevirtualize-speculatively",
+      .val = nullptr,
+      .negative = false,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fexpensive-optimizations",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fgcse",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fhoist-adjacent-loads",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_2_plus,
+      .name = "findirect-inlining",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_2_plus,
+      .name = "finline-small-functions",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fipa-bit-cp",
+      .val = nullptr,
+      .negative = false,
+      .min_gcc_version = {7, 1, 0},
+    },
+    {
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fipa-cp",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fipa-cp-alignment",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {5, 1, 0},
       .max_gcc_version = {6, 5, std::numeric_limits<unsigned int>::max()},
     },
     {
-      default_option::opt_levels_2_plus, "fipa-icf", nullptr, false,
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fipa-icf",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {5, 1, 0},
     },
     {
-      default_option::opt_levels_2_plus, "fipa-ra", nullptr, false,
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fipa-ra",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {5, 1, 0},
     },
-    { default_option::opt_levels_2_plus, "fipa-sra", nullptr, false },
     {
-      default_option::opt_levels_2_plus, "fipa-vrp", nullptr, false,
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fipa-sra",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fipa-vrp",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {7, 1, 0},
     },
     {
-      default_option::opt_levels_2_plus, "fisolate-erroneous-paths-dereference",
-      nullptr, false,
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fisolate-erroneous-paths-dereference",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {4, 9, 0},
     },
     {
-      default_option::opt_levels_2_plus, "flra-remat", nullptr, false,
+      .levels = default_option::opt_levels_2_plus,
+      .name = "flra-remat",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {5, 1, 0},
     },
     {
-      default_option::opt_levels_2_plus, "foptimize-sibling-calls",
-      nullptr, false
+      .levels = default_option::opt_levels_2_plus,
+      .name = "foptimize-sibling-calls",
+      .val = nullptr,
+      .negative = false
     },
-    { default_option::opt_levels_2_plus, "fpartial-inlining", nullptr, false },
-    { default_option::opt_levels_2_plus, "fpeephole2", nullptr, false },
     {
-      default_option::opt_levels_2_plus, "fregmove", nullptr, false,
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fpartial-inlining",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fpeephole2",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fregmove",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {0, 0, 0},
       .max_gcc_version = {4, 8, 5},
     },
-    { default_option::opt_levels_2_plus, "freorder-functions", nullptr, false },
     {
-      default_option::opt_levels_2_plus, "frerun-cse-after-loop", nullptr, false
+      .levels = default_option::opt_levels_2_plus,
+      .name = "freorder-functions",
+      .val = nullptr,
+      .negative = false
     },
-    { default_option::opt_levels_2_plus, "fschedule-insns2", nullptr, false },
-    { default_option::opt_levels_2_plus, "fstrict-aliasing", nullptr, false },
     {
-      default_option::opt_levels_2_plus, "fstrict-overflow", nullptr, false,
+      .levels = default_option::opt_levels_2_plus,
+      .name = "frerun-cse-after-loop",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fschedule-insns2",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fstrict-aliasing",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fstrict-overflow",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {0, 0, 0},
       .max_gcc_version = {7, 4, std::numeric_limits<unsigned int>::max()},
     },
     {
-      default_option::opt_levels_2_plus, "fstore-merging", nullptr, false,
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fstore-merging",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {7, 1, std::numeric_limits<unsigned int>::max()},
     },
-    { default_option::opt_levels_2_plus, "fthread-jumps", nullptr, false },
-    { default_option::opt_levels_2_plus, "ftree-pre", nullptr, false },
     {
-      default_option::opt_levels_2_plus, "ftree-switch-conversion",
-      nullptr, false
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fthread-jumps",
+      .val = nullptr,
+      .negative = false
     },
-    { default_option::opt_levels_2_plus, "ftree-tail-merge", nullptr, false },
-    { default_option::opt_levels_2_plus, "ftree-vrp", nullptr, false },
     {
-      default_option::opt_levels_2_plus, "fvect-cost-model=", "cheap", false,
+      .levels = default_option::opt_levels_2_plus,
+      .name = "ftree-pre",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_2_plus,
+      .name = "ftree-switch-conversion",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_2_plus,
+      .name = "ftree-tail-merge",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_2_plus,
+      .name = "ftree-vrp",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_2_plus,
+      .name = "fvect-cost-model=",
+      .val = "cheap",
+      .negative = false,
       .min_gcc_version = {4, 9, 0},
     },
     {
-      default_option::opt_levels_2_plus, "falign-functions",
-      nullptr, false,
+      .levels = default_option::opt_levels_2_plus,
+      .name = "falign-functions",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {0, 0, 0},
       .max_gcc_version = {8, 3, std::numeric_limits<unsigned int>::max()},
     },
     {
-      default_option::opt_levels_2_plus_speed_only, "falign-functions",
-      nullptr, false,
+      .levels = default_option::opt_levels_2_plus_speed_only,
+      .name = "falign-functions",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {9, 1, 0},
     },
     {
-      default_option::opt_levels_2_plus, "falign-jumps",
-      nullptr, false,
+      .levels = default_option::opt_levels_2_plus,
+      .name = "falign-jumps",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {0, 0, 0},
       .max_gcc_version = {8, 3, std::numeric_limits<unsigned int>::max()},
     },
     {
-      default_option::opt_levels_2_plus_speed_only, "falign-jumps",
-      nullptr, false,
+      .levels = default_option::opt_levels_2_plus_speed_only,
+      .name = "falign-jumps",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {9, 1, 0},
     },
     {
-      default_option::opt_levels_2_plus, "falign-labels",
-      nullptr, false,
+      .levels = default_option::opt_levels_2_plus,
+      .name = "falign-labels",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {0, 0, 0},
       .max_gcc_version = {8, 3, std::numeric_limits<unsigned int>::max()},
     },
     {
-      default_option::opt_levels_2_plus_speed_only, "falign-labels",
-      nullptr, false,
+      .levels = default_option::opt_levels_2_plus_speed_only,
+      .name = "falign-labels",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {9, 1, 0},
     },
     {
-      default_option::opt_levels_2_plus, "falign-loops",
-      nullptr, false,
+      .levels = default_option::opt_levels_2_plus,
+      .name = "falign-loops",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {0, 0, 0},
       .max_gcc_version = {8, 3, std::numeric_limits<unsigned int>::max()},
     },
     {
-      default_option::opt_levels_2_plus_speed_only, "falign-loops",
-      nullptr, false,
+      .levels = default_option::opt_levels_2_plus_speed_only,
+      .name = "falign-loops",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {9, 1, 0},
     },
     {
-      default_option::opt_levels_2_plus_speed_only, "foptimize-strlen",
-      nullptr, false
+      .levels = default_option::opt_levels_2_plus_speed_only,
+      .name = "foptimize-strlen",
+      .val = nullptr,
+      .negative = false
     },
     {
-      default_option::opt_levels_2_plus_speed_only,
-      "freorder-blocks-algorithm=", "stc", false,
+      .levels = default_option::opt_levels_2_plus_speed_only,
+      .name = "freorder-blocks-algorithm=",
+      .val = "stc",
+      .negative = false,
       .min_gcc_version = {6, 1, 0},
     },
     {
-      default_option::opt_levels_2_plus_speed_only, "fschedule-insns",
-      nullptr, false
+      .levels = default_option::opt_levels_2_plus_speed_only,
+      .name = "fschedule-insns",
+      .val = nullptr,
+      .negative = false
     },
     {
-      default_option::opt_levels_3_plus_and_size, "finline-functions",
-      nullptr, false
+      .levels = default_option::opt_levels_3_plus_and_size,
+      .name = "finline-functions",
+      .val = nullptr,
+      .negative = false
     },
-    { default_option::opt_levels_3_plus, "fgcse-after-reload", nullptr, false },
-    { default_option::opt_levels_3_plus, "fipa-cp-clone", nullptr, false },
     {
-      default_option::opt_levels_3_plus, "floop-interchange", nullptr, false,
+      .levels = default_option::opt_levels_3_plus,
+      .name = "fgcse-after-reload",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_3_plus,
+      .name = "fipa-cp-clone",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_3_plus,
+      .name = "floop-interchange",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {8, 1, 0},
     },
     {
-      default_option::opt_levels_3_plus, "floop-unroll-and-jam", nullptr, false,
+      .levels = default_option::opt_levels_3_plus,
+      .name = "floop-unroll-and-jam",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {8, 1, 0},
     },
     {
-      default_option::opt_levels_3_plus, "fpeel-loops", nullptr, false,
+      .levels = default_option::opt_levels_3_plus,
+      .name = "fpeel-loops",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {7, 1, 0},
     },
     {
-      default_option::opt_levels_3_plus, "fpredictive-commoning", nullptr, false
+      .levels = default_option::opt_levels_3_plus,
+      .name = "fpredictive-commoning",
+      .val = nullptr,
+      .negative = false
     },
     {
-      default_option::opt_levels_3_plus, "fsplit-loops", nullptr, false,
+      .levels = default_option::opt_levels_3_plus,
+      .name = "fsplit-loops",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {7, 1, 0},
     },
     {
-      default_option::opt_levels_3_plus, "fsplit-paths", nullptr, false,
+      .levels = default_option::opt_levels_3_plus,
+      .name = "fsplit-paths",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {6, 1, 0},
     },
     {
-      default_option::opt_levels_3_plus, "ftree-loop-distribute-patterns",
-      nullptr, false
+      .levels = default_option::opt_levels_3_plus,
+      .name = "ftree-loop-distribute-patterns",
+      .val = nullptr,
+      .negative = false
     },
     {
-      default_option::opt_levels_3_plus, "ftree-loop-distribution",
-      nullptr, false,
+      .levels = default_option::opt_levels_3_plus,
+      .name = "ftree-loop-distribution",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {8, 1, 0},
     },
     {
-      default_option::opt_levels_3_plus, "ftree-loop-vectorize", nullptr, false,
-      .min_gcc_version = {4, 9, 0},
-    },
-    { default_option::opt_levels_3_plus, "ftree-partial-pre", nullptr, false },
-    {
-      default_option::opt_levels_3_plus, "ftree-slp-vectorize", nullptr, false,
+      .levels = default_option::opt_levels_3_plus,
+      .name = "ftree-loop-vectorize",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {4, 9, 0},
     },
     {
-      default_option::opt_levels_3_plus, "ftree-vectorize", nullptr, false,
+      .levels = default_option::opt_levels_3_plus,
+      .name = "ftree-partial-pre",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_3_plus,
+      .name = "ftree-slp-vectorize",
+      .val = nullptr,
+      .negative = false,
+      .min_gcc_version = {4, 9, 0},
+    },
+    {
+      .levels = default_option::opt_levels_3_plus,
+      .name = "ftree-vectorize",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {0, 0, 0},
       .max_gcc_version = {4, 8, 5},
     },
-    { default_option::opt_levels_3_plus, "funswitch-loops", nullptr, false },
     {
-      default_option::opt_levels_3_plus, "fvect-cost-model", nullptr, false,
+      .levels = default_option::opt_levels_3_plus,
+      .name = "funswitch-loops",
+      .val = nullptr,
+      .negative = false
+    },
+    {
+      .levels = default_option::opt_levels_3_plus,
+      .name = "fvect-cost-model",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {0, 0, 0},
       .max_gcc_version = {4, 8, 5},
     },
     {
-      default_option::opt_levels_3_plus, "fvect-cost-model=", "dynamic", false,
+      .levels = default_option::opt_levels_3_plus,
+      .name = "fvect-cost-model=",
+      .val = "dynamic",
+      .negative = false,
       .min_gcc_version = {4, 9, 0},
     },
     {
-      default_option::opt_levels_3_plus, "fversion-loops-for-strides",
-      nullptr, false,
+      .levels = default_option::opt_levels_3_plus,
+      .name = "fversion-loops-for-strides",
+      .val = nullptr,
+      .negative = false,
       .min_gcc_version = {9, 1, 0},
     },
-    { default_option::opt_levels_fast, "ffast-math", nullptr, false },
+    {
+      .levels = default_option::opt_levels_fast,
+      .name = "ffast-math",
+      .val = nullptr,
+      .negative = false
+    },
 
-    { default_option::opt_levels_none }
+    { .levels = default_option::opt_levels_none }
   };
 
   _maybe_default_options(*default_options_table, p, opt_table_arch);
@@ -3372,149 +3749,150 @@ _get_valid_flags(const gcc_version &ver) noexcept
 const target_gcc::opts_common::_sanitizer_opts_impl::_table_entry
 target_gcc::opts_common::_sanitizer_opts_impl::_table[] = {
   {
-    "address",
-    __flags_set<sanitizer_flags_bit_address,
-		  sanitizer_flags_bit_user_address>::set,
+    .name = "address",
+    .set_flags = __flags_set<sanitizer_flags_bit_address,
+			     sanitizer_flags_bit_user_address>::set,
   },
   {
-    "kernel-address",
-    __flags_set<sanitizer_flags_bit_address,
-		  sanitizer_flags_bit_kernel_address>::set,
+    .name = "kernel-address",
+    .set_flags = __flags_set<sanitizer_flags_bit_address,
+			     sanitizer_flags_bit_kernel_address>::set,
     .min_gcc_version = {5, 1, 0},
   },
   {
-    "pointer-compare",
-    __flags_set<sanitizer_flags_bit_pointer_compare>::set,
+    .name = "pointer-compare",
+    .set_flags = __flags_set<sanitizer_flags_bit_pointer_compare>::set,
     .min_gcc_version = {8, 1, 0},
   },
   {
-    "pointer-subtract",
-    __flags_set<sanitizer_flags_bit_pointer_subtract>::set,
+    .name = "pointer-subtract",
+    .set_flags = __flags_set<sanitizer_flags_bit_pointer_subtract>::set,
     .min_gcc_version = {8, 1, 0},
   },
   {
-    "thread",
-    __flags_set<sanitizer_flags_bit_thread>::set,
+    .name = "thread",
+    .set_flags = __flags_set<sanitizer_flags_bit_thread>::set,
   },
   {
-    "leak",
-    __flags_set<sanitizer_flags_bit_leak>::set,
+    .name = "leak",
+    .set_flags = __flags_set<sanitizer_flags_bit_leak>::set,
     .min_gcc_version = {4, 9, 0},
   },
   {
-    "shift",
-    _flags_set_shift::set,
+    .name = "shift",
+    .set_flags = _flags_set_shift::set,
     .min_gcc_version = {4, 9, 0},
   },
   {
-    "shift-base",
-    __flags_set<sanitizer_flags_bit_shift_base>::set,
+    .name = "shift-base",
+    .set_flags = __flags_set<sanitizer_flags_bit_shift_base>::set,
     .min_gcc_version = {7, 1, 0},
   },
   {
-    "shift-exponent",
-    __flags_set<sanitizer_flags_bit_shift_exponent>::set,
+    .name = "shift-exponent",
+    .set_flags = __flags_set<sanitizer_flags_bit_shift_exponent>::set,
     .min_gcc_version = {7, 1, 0},
   },
   {
-    "integer-divide-by-zero",
-    __flags_set<sanitizer_flags_bit_divide>::set,
-   .min_gcc_version = {4, 9, 0},
-   },
-  {
-    "undefined",
-    _flags_set_undefined::set,
+    .name = "integer-divide-by-zero",
+    .set_flags = __flags_set<sanitizer_flags_bit_divide>::set,
     .min_gcc_version = {4, 9, 0},
   },
   {
-    "unreachable",
-    __flags_set<sanitizer_flags_bit_unreachable>::set,
+    .name = "undefined",
+    .set_flags = _flags_set_undefined::set,
     .min_gcc_version = {4, 9, 0},
   },
   {
-    "vla-bound",
-    __flags_set<sanitizer_flags_bit_vla>::set,
+    .name = "unreachable",
+    .set_flags = __flags_set<sanitizer_flags_bit_unreachable>::set,
     .min_gcc_version = {4, 9, 0},
   },
   {
-    "return",
-    __flags_set<sanitizer_flags_bit_return>::set,
+    .name = "vla-bound",
+    .set_flags = __flags_set<sanitizer_flags_bit_vla>::set,
     .min_gcc_version = {4, 9, 0},
   },
   {
-    "null",
-    __flags_set<sanitizer_flags_bit_null>::set,
+    .name = "return",
+    .set_flags = __flags_set<sanitizer_flags_bit_return>::set,
     .min_gcc_version = {4, 9, 0},
   },
   {
-    "signed-integer-overflow",
-    __flags_set<sanitizer_flags_bit_si_overflow>::set,
+    .name = "null",
+    .set_flags = __flags_set<sanitizer_flags_bit_null>::set,
     .min_gcc_version = {4, 9, 0},
   },
   {
-    "bool",
-    __flags_set<sanitizer_flags_bit_bool>::set,
+    .name = "signed-integer-overflow",
+    .set_flags = __flags_set<sanitizer_flags_bit_si_overflow>::set,
     .min_gcc_version = {4, 9, 0},
   },
   {
-    "enum",
-    __flags_set<sanitizer_flags_bit_enum>::set,
+    .name = "bool",
+    .set_flags = __flags_set<sanitizer_flags_bit_bool>::set,
     .min_gcc_version = {4, 9, 0},
   },
   {
-    "float-divide-by-zero",
-    __flags_set<sanitizer_flags_bit_float_divide>::set,
+    .name = "enum",
+    .set_flags = __flags_set<sanitizer_flags_bit_enum>::set,
+    .min_gcc_version = {4, 9, 0},
+  },
+  {
+    .name = "float-divide-by-zero",
+    .set_flags = __flags_set<sanitizer_flags_bit_float_divide>::set,
     .min_gcc_version = {5, 1, 0},
   },
   {
-    "float-cast-overflow",
-    __flags_set<sanitizer_flags_bit_float_cast>::set,
+    .name = "float-cast-overflow",
+    .set_flags = __flags_set<sanitizer_flags_bit_float_cast>::set,
     .min_gcc_version = {5, 1, 0},
   },
   {
-    "bounds",
-    __flags_set<sanitizer_flags_bit_bounds>::set,
+    .name = "bounds",
+    .set_flags = __flags_set<sanitizer_flags_bit_bounds>::set,
     .min_gcc_version = {5, 1, 0},
   },
   {
-    "bounds-strict",
-    __flags_set<sanitizer_flags_bit_bounds,
-		  sanitizer_flags_bit_bounds_strict>::set,
+    .name = "bounds-strict",
+    .set_flags = __flags_set<sanitizer_flags_bit_bounds,
+			     sanitizer_flags_bit_bounds_strict>::set,
     .min_gcc_version = {6, 1, 0},
   },
   {
-    "alignment",
-    __flags_set<sanitizer_flags_bit_alignment>::set,
+    .name = "alignment",
+    .set_flags = __flags_set<sanitizer_flags_bit_alignment>::set,
     .min_gcc_version = {5, 1, 0},
   },
   {
-    "nonnull-attribute",
-    __flags_set<sanitizer_flags_bit_nonnull_attribute>::set,
+    .name = "nonnull-attribute",
+    .set_flags = __flags_set<sanitizer_flags_bit_nonnull_attribute>::set,
     .min_gcc_version = {5, 1, 0},
   },
   {
-    "returns-nonnull-attribute",
-    __flags_set<sanitizer_flags_bit_returns_nonnull_attribute>::set,
+    .name = "returns-nonnull-attribute",
+    .set_flags =
+      __flags_set<sanitizer_flags_bit_returns_nonnull_attribute>::set,
     .min_gcc_version = {5, 1, 0},
   },
   {
-    "object-size",
-    __flags_set<sanitizer_flags_bit_object_size>::set,
+    .name = "object-size",
+    .set_flags = __flags_set<sanitizer_flags_bit_object_size>::set,
     .min_gcc_version = {5, 1, 0},
   },
   {
-    "vptr",
-    __flags_set<sanitizer_flags_bit_vptr>::set,
+    .name = "vptr",
+    .set_flags = __flags_set<sanitizer_flags_bit_vptr>::set,
     .min_gcc_version = {5, 1, 0},
   },
   {
-    "pointer-overflow",
-    __flags_set<sanitizer_flags_bit_pointer_overflow>::set,
+    .name = "pointer-overflow",
+    .set_flags = __flags_set<sanitizer_flags_bit_pointer_overflow>::set,
     .min_gcc_version = {8, 1, 0},
   },
   {
-    "builtin",
-    __flags_set<sanitizer_flags_bit_builtin>::set,
+    .name = "builtin",
+    .set_flags = __flags_set<sanitizer_flags_bit_builtin>::set,
     .min_gcc_version = {8, 1, 0},
   },
   { nullptr }
