@@ -1,6 +1,8 @@
+/* klp-ccp: from testsuite/ccp/headers-3.h */
 static void g(void)
 {}
 
+/* klp-ccp: from testsuite/ccp/headers-3.c */
 void klpp_pu_f(void)
 {
 	g();
