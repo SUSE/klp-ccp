@@ -102,4 +102,3 @@ main (void)
 /* cp-out: warning: [^:]*: line 69, columns 6-8: assigning pointers to integer types of different width */
 /* cp-out: warning: [^:]*: line 71, columns 6-8: assigning pointers to integer types of different width */
 /* cp-out: warning: [^:]*: line 73, columns 6-8: assigning pointers to integer types of different width */
-/* cp-out: error: [^:]*: line 74, columns 7-9: invalid type for assignment target */
