@@ -572,8 +572,10 @@ _transparent_union_attribute_finder(ast::ast &a) noexcept
 
 bool _transparent_union_attribute_finder::operator()(const ast::attribute &attr)
 {
-  if (_a.get_pp_tokens()[attr.get_name_tok()].get_value() !=
-      "__transparent_union__") {
+  const std::string &attr_name =
+    _a.get_pp_tokens()[attr.get_name_tok()].get_value();
+  if (attr_name != "transparent_union" &&
+      attr_name != "__transparent_union__") {
     return true;
   }
 
