@@ -4790,62 +4790,62 @@ void target_gcc::_register_builtin_macros(preprocessor &pp) const
 
 namespace
 {
-  static std::shared_ptr<const types::addressable_type>
+  static std::shared_ptr<const types::int_type>
   __mk_iM(const target_gcc &tgt, const common_int_mode_kind cimk,
 	  const bool is_signed)
   {
     return _impl_proxy{tgt}._int_mode_to_type(cimk, is_signed);
   }
 
-  static std::shared_ptr<const types::addressable_type>
+  static std::shared_ptr<const types::int_type>
   _mk_i8(const target_gcc &tgt)
   {
     return __mk_iM(tgt, common_int_mode_kind::cimk_QI, true);
   }
 
-  static std::shared_ptr<const types::addressable_type>
+  static std::shared_ptr<const types::int_type>
   _mk_i16(const target_gcc &tgt)
   {
     return __mk_iM(tgt, common_int_mode_kind::cimk_HI, true);
   }
 
-  static std::shared_ptr<const types::addressable_type>
+  static std::shared_ptr<const types::int_type>
   _mk_u16(const target_gcc &tgt)
   {
     return __mk_iM(tgt, common_int_mode_kind::cimk_HI, false);
   }
 
-  static std::shared_ptr<const types::addressable_type>
+  static std::shared_ptr<const types::int_type>
   _mk_i32(const target_gcc &tgt)
   {
     return __mk_iM(tgt, common_int_mode_kind::cimk_SI, true);
   }
 
-  static std::shared_ptr<const types::addressable_type>
+  static std::shared_ptr<const types::int_type>
   _mk_u32(const target_gcc &tgt)
   {
     return __mk_iM(tgt, common_int_mode_kind::cimk_SI, false);
   }
 
-  static std::shared_ptr<const types::addressable_type>
+  static std::shared_ptr<const types::int_type>
   _mk_i64(const target_gcc &tgt)
   {
     return __mk_iM(tgt, common_int_mode_kind::cimk_DI, true);
   }
 
-  static std::shared_ptr<const types::addressable_type>
+  static std::shared_ptr<const types::int_type>
   _mk_u64(const target_gcc &tgt)
   {
     return __mk_iM(tgt, common_int_mode_kind::cimk_DI, false);
   }
 
-  static std::shared_ptr<const types::addressable_type>
+  static std::shared_ptr<const types::int_type>
   _mk_i128(const target_gcc &tgt)
   {
     return __mk_iM(tgt, common_int_mode_kind::cimk_TI, true);
   }
 
-  static std::shared_ptr<const types::addressable_type>
+  static std::shared_ptr<const types::int_type>
   _mk_wi(const target_gcc &tgt)
   {
     const _impl_proxy impl_proxy{tgt};
@@ -4854,7 +4854,7 @@ namespace
 					impl_proxy._is_wint_signed());
   }
 
-  static std::shared_ptr<const types::addressable_type>
+  static std::shared_ptr<const types::int_type>
   _mk_pid(const target_gcc &tgt)
   {
     const _impl_proxy impl_proxy{tgt};
@@ -4959,6 +4959,29 @@ namespace
 
     _builtin_overflow(const t_fac expected_it_fac, const bool p_variant,
 		      const op op) noexcept;
+  };
+
+  class _builtin_bswap : public builtin_func
+  {
+  public:
+    typedef std::shared_ptr<const types::int_type>(*t_fac)(const target_gcc&);
+
+    virtual evaluation_result_type
+    evaluate(klp::ccp::ast::ast &a, const target &tgt,
+	     ast::expr_func_invocation &efi) const override;
+
+    template <t_fac tfac>
+    static builtin_func::factory factory(const target_gcc &tgt);
+
+  private:
+    _builtin_bswap(std::shared_ptr<const types::int_type> &&expected_it)
+      noexcept;
+
+    static std::unique_ptr<builtin_func>
+    _create(const std::reference_wrapper<const target_gcc> &tgt,
+	    const t_fac tfac);
+
+    std::shared_ptr<const types::int_type> _expected_it;
   };
 }
 
@@ -5421,6 +5444,104 @@ std::shared_ptr<const types::int_type> _builtin_overflow::fac_ull()
 }
 
 
+_builtin_bswap::
+_builtin_bswap(std::shared_ptr<const types::int_type> &&expected_it)
+  noexcept
+  : _expected_it{std::move(expected_it)}
+{}
+
+template <_builtin_bswap::t_fac tfac>
+builtin_func::factory _builtin_bswap::factory(const target_gcc &tgt)
+{
+  return std::bind(_builtin_bswap::_create, std::cref(tgt), tfac);
+}
+
+std::unique_ptr<builtin_func>
+_builtin_bswap::_create(const std::reference_wrapper<const target_gcc> &tgt,
+			const t_fac tfac)
+{
+  return std::unique_ptr<builtin_func>{
+    new _builtin_bswap{tfac(tgt.get())}
+  };
+}
+
+builtin_func::evaluation_result_type
+_builtin_bswap::evaluate(klp::ccp::ast::ast &a, const target &tgt,
+			 ast::expr_func_invocation &efi) const
+{
+  if (!efi.get_args() || efi.get_args()->size() != 1) {
+    code_remark remark
+      (code_remark::severity::warning,
+       "wrong number of arguments to __builtin_bswap()",
+       a.get_pp_result(), efi.get_tokens_range());
+    a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  ast::expr_list &args = *efi.get_args();
+  args.apply_lvalue_conversions(false);
+
+  types::handle_types<void>
+    ((wrap_callables<default_action_nop>
+      ([&](const std::shared_ptr<const types::arithmetic_type> &t) {
+	 types::handle_types<void>
+	   ((wrap_callables<default_action_nop>
+	     ([&](const types::enum_type &et) {
+		if (!et.is_complete()) {
+		  code_remark remark
+		    (code_remark::severity::fatal,
+		     ("argument to __builtin_bswap() has incomplete enum type"),
+		     a.get_pp_result(), args[0].get_tokens_range());
+		  a.get_remarks().add(remark);
+		  throw semantic_except(remark);
+		}
+	      })),
+	    *t);
+       },
+       [&](const std::shared_ptr<const types::bitfield_type> &) {
+       },
+       [&](const std::shared_ptr<const types::type>&) {
+	 code_remark remark
+	   (code_remark::severity::warning,
+	    "non-arithmetic argument to __builtin_bswap()",
+	    a.get_pp_result(), args[0].get_tokens_range());
+	 a.get_remarks().add(remark);
+       })),
+     args[0].get_type());
+
+  if (!args[0].is_constexpr() ||
+      (args[0].get_constexpr_value().get_value_kind() ==
+       ast::constexpr_value::value_kind::vk_address)) {
+    return evaluation_result_type{_expected_it, nullptr, false};
+  }
+
+  const ast::constexpr_value &cv0 = args[0].get_constexpr_value();
+  target_int i_result = cv0.convert_to(tgt, *_expected_it);
+  i_result = i_result.bswap();
+  std::unique_ptr<ast::constexpr_value> cv_result;
+  using constness = ast::constexpr_value::constness;
+  if (cv0.has_constness(constness::c_integer_constant_expr)) {
+    cv_result.reset
+      (new ast::constexpr_value {
+	 ast::constexpr_value::integer_constant_expr_tag{},
+	 std::move(i_result)
+       });
+  } else if (cv0.has_constness(constness::c_arithmetic_constant_expr)) {
+    cv_result.reset
+      (new ast::constexpr_value {
+	 ast::constexpr_value::arithmetic_constant_expr_tag{},
+	 std::move(i_result)
+       });
+  } else {
+    cv_result.reset(new ast::constexpr_value{std::move(i_result)});
+  }
+
+  return evaluation_result_type{
+    std::move(_expected_it), std::move(cv_result),
+    false
+  };
+}
+
 std::map<const std::string, const builtin_func::factory>
 target_gcc::_register_builtin_funcs()
 {
@@ -5604,13 +5725,6 @@ target_gcc::_register_builtin_funcs()
 
   auto sp_imax_imax_fac = (builtin_func_simple_proto::factory
 			   (*this, false, mk_imax, mk_imax));
-
-  auto sp_u16_u16_fac = (builtin_func_simple_proto::factory
-			 (*this, false, _mk_u16, _mk_u16));
-  auto sp_u32_u32_fac = (builtin_func_simple_proto::factory
-			 (*this, false, _mk_u32, _mk_u32));
-  auto sp_u64_u64_fac = (builtin_func_simple_proto::factory
-			 (*this, false, _mk_u64, _mk_u64));
 
   auto sp_wi_wi_fac = (builtin_func_simple_proto::factory
 		       (*this, false, _mk_wi, _mk_wi));
@@ -6478,9 +6592,9 @@ target_gcc::_register_builtin_funcs()
     { "__builtin_apply", sp_pv_pF_v_var__pv_sz_fac },
     { "__builtin_apply_args", sp_pv_var_fac },
     { "__builtin_assume_aligned", sp_pv_pcv_sz_var_fac },
-    { "__builtin_bswap16", sp_u16_u16_fac },
-    { "__builtin_bswap32", sp_u32_u32_fac },
-    { "__builtin_bswap64", sp_u64_u64_fac },
+    { "__builtin_bswap16", _builtin_bswap::factory<_mk_u16>(*this) },
+    { "__builtin_bswap32", _builtin_bswap::factory<_mk_u32>(*this) },
+    { "__builtin_bswap64", _builtin_bswap::factory<_mk_u64>(*this) },
     { "__builtin_calloc", sp_pv_sz_sz_fac },
     { "__builtin___clear_cache", sp_v_pv_pv_fac },
     { "__builtin_classify_type", sp_i_var_fac },
