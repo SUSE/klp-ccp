@@ -425,6 +425,12 @@ object_type::amend_qualifiers(const qualifiers &qs) const
   return new_t;
 }
 
+std::shared_ptr<const object_type> object_type::strip_qualifiers() const
+{
+  return _strip_qualifiers(_self_ptr<object_type>(),
+			   &object_type::_clone);
+}
+
 std::shared_ptr<const object_type>
 object_type::set_user_alignment(const alignment &user_align) const
 {

@@ -408,6 +408,14 @@ namespace klp
 
       template<typename ret_type, typename callable_type>
       ret_type
+      _processor<ret_type, callable_type>::
+      operator()(type_specifier_auto_type &e)
+      {
+	return _c(e);
+      }
+
+      template<typename ret_type, typename callable_type>
+      ret_type
       _processor<ret_type, callable_type>::operator()(struct_declarator &e)
       {
 	return _c(e);
@@ -1240,6 +1248,13 @@ namespace klp
       template<typename ret_type, typename callable_type>
       ret_type _const_processor<ret_type, callable_type>::
       operator()(const type_specifier_tdid &e)
+      {
+	return _c(e);
+      }
+
+      template<typename ret_type, typename callable_type>
+      ret_type _const_processor<ret_type, callable_type>::
+      operator()(const type_specifier_auto_type &e)
       {
 	return _c(e);
       }

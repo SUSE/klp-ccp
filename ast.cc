@@ -2582,6 +2582,11 @@ direct_declarator::_get_enclosing_type() const noexcept
 	pt = dd.get_type();
       },
       [&pt](const declarator& d) {
+	// If in an __auto_type declaration, the type will not be
+	// available until after the initializer has been evaluated.
+	if (!d.is_evaluated())
+	  return;
+
 	pt = d.get_type();
       }));
   return pt;
@@ -2981,6 +2986,10 @@ declarator::_get_enclosing_type() const noexcept
       },
       [&pt](const init_declarator &id) {
 	const declaration &d = id.get_containing_declaration();
+	const declaration_specifiers &ds = d.get_declaration_specifiers();
+	assert(ds.is_evaluated() || ds.is_auto_type());
+	if (!ds.is_evaluated())
+	  return;
 	pt = d.get_declaration_specifiers().get_type();
 	assert(pt);
       },
@@ -2994,6 +3003,13 @@ declarator::_get_enclosing_type() const noexcept
       }));
 
   return pt;
+}
+
+void declarator::
+_set_deduced_auto_type(std::shared_ptr<const types::addressable_type> &&t)
+  noexcept
+{
+  _set_type(std::move(t));
 }
 
 
@@ -3345,6 +3361,37 @@ bool type_specifier_tdid::_process(processor<bool> &p)
 }
 
 bool type_specifier_tdid::_process(const_processor<bool> &p) const
+{
+  return p(*this);
+}
+
+
+type_specifier_auto_type::
+type_specifier_auto_type(const pp_token_index auto_type_tok) noexcept
+  : type_specifier(pp_tokens_range{auto_type_tok, auto_type_tok + 1})
+{}
+
+type_specifier_auto_type::~type_specifier_auto_type() noexcept = default;
+
+_ast_entity* type_specifier_auto_type::_get_child(const size_t) const noexcept
+{
+  return nullptr;
+}
+
+void type_specifier_auto_type::_process(processor<void> &p)
+{
+  p(*this);
+}
+void type_specifier_auto_type::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
+bool type_specifier_auto_type::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+bool type_specifier_auto_type::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -4955,6 +5002,14 @@ bool specifier_qualifier_list::is_signed_explicit() const noexcept
   return false;
 }
 
+bool specifier_qualifier_list::is_auto_type() const noexcept
+{
+  if (_tss.size() == 1) {
+    const type_specifier &ts = _tss[0].get();
+    return typeid(ts) == typeid(type_specifier_auto_type);
+  }
+  return false;
+}
 
 std::size_t specifier_qualifier_list::_n_children() const noexcept
 {

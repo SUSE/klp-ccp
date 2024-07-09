@@ -54,6 +54,7 @@ static const _val_tok_map_entry kw_map_entries[] = {
   { "_Bool", gnuc_parser::token_type::TOK_KW_BOOL },
   { "_Complex", gnuc_parser::token_type::TOK_KW_COMPLEX },
   { "__complex__", gnuc_parser::token_type::TOK_KW_COMPLEX },
+  { "__auto_type", gnuc_parser::token_type::TOK_KW_AUTO_TYPE },
   { "struct", gnuc_parser::token_type::TOK_KW_STRUCT },
   { "union", gnuc_parser::token_type::TOK_KW_UNION },
   { "enum", gnuc_parser::token_type::TOK_KW_ENUM },

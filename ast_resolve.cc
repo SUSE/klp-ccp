@@ -125,6 +125,11 @@ const declaration& init_declarator::get_containing_declaration() const noexcept
 	  .get_unique_parent<declaration>());
 }
 
+declaration& init_declarator::get_containing_declaration() noexcept
+{
+  return (get_unique_parent<init_declarator_list>()
+	  .get_unique_parent<declaration>());
+}
 
 const _ast_entity& direct_declarator::get_first_non_declarator_parent()
   const noexcept
@@ -174,6 +179,7 @@ namespace
       const noexcept;
 
     void _handle_init_decl(init_declarator &id);
+    void _handle_auto_type_decl(declaration &d);
     void _handle_param_decl(parameter_declaration_declarator &pdd);
     void _handle_fun_def(function_definition &fd);
     void _handle_sou_ref(struct_or_union_ref &sour);
@@ -285,6 +291,9 @@ void _id_resolver::operator()()
 	// The function's scope gets entered only when the
 	// direct_declarator_id gets processed below.
 	return true;
+      },
+      [](const declaration &d) {
+	return d.get_declaration_specifiers().is_auto_type();
       },
       [this](const direct_declarator_id &ddid) {
 	ddid.process_context<void>
@@ -400,12 +409,16 @@ void _id_resolver::operator()()
 
   auto &&post =
     (wrap_callables<no_default_action>
-     ([this](const _ast_entity&) {
+     ([this](declaration &d) {
+	_handle_auto_type_decl(d);
+      },
+      [this](const _ast_entity&) {
 	_leave_scope();
       }));
 
   _ast.for_each_dfs_pre_and_po<
     type_set<function_definition,
+	     const declaration,
 	     const direct_declarator_id,
 	     const stmt_compound,
 	     const stmt_if,
@@ -427,7 +440,9 @@ void _id_resolver::operator()()
 	     expr_id,
 	     expr_label_addr,
 	     type_specifier_tdid>,
-    type_set<const _ast_entity> >(std::move(pre), std::move(post));
+    type_set<declaration,
+	     const _ast_entity>
+  >(std::move(pre), std::move(post));
 }
 
 void _id_resolver::_enter_scope()
@@ -568,6 +583,7 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
   const storage_class sc
     = d.get_declaration_specifiers().get_storage_class(_ast);
   const bool is_at_file_scope = d.is_at_file_scope();
+  const bool is_auto_type_decl = d.get_declaration_specifiers().is_auto_type();
 
   // Check for invalid 'auto' storage class at file scope.
   // In violation of C99 6.9(2), GCC accepts the 'register'
@@ -607,7 +623,13 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
 			 _ast.get_pp_result(), ddid.get_id_tok());
       _ast.get_remarks().add(remark);
       throw semantic_except(remark);
-    }
+    } else if (is_auto_type_decl) {
+      code_remark remark(code_remark::severity::fatal,
+			 "__auto_type in old-style parameter declaration",
+			 _ast.get_pp_result(), d.get_tokens_range());
+      _ast.get_remarks().add(remark);
+      throw semantic_except(remark);
+    };
 
     _scopes.back().register_id
       (_ast.get_pp_tokens()[ddid.get_id_tok()].get_value(),
@@ -624,7 +646,13 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
       storage_class::sc_typedef));
 
   if (sc == storage_class::sc_typedef) {
-    if (prev && prev_is_in_cur_scope) {
+    if (is_auto_type_decl) {
+	code_remark remark(code_remark::severity::fatal,
+			   "__auto_type in typedef declaration",
+			   _ast.get_pp_result(), ddid.get_id_tok());
+	_ast.get_remarks().add(remark);
+	throw semantic_except(remark);
+    } else if (prev && prev_is_in_cur_scope) {
       if (!prev_is_td_in_cur_scope) {
 	code_remark remark(code_remark::severity::fatal,
 			   "redeclaration of non-typedef symbol as typedef",
@@ -653,6 +681,7 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
   }
 
   const bool is_fun = ddid.is_function();
+  assert(!is_fun || !is_auto_type_decl);
   // The 'register' storage class is never allowed at function
   // declarations and function declarations at block scope
   // must be sc_none, sc_extern or, by GCC extension, sc_auto.
@@ -681,6 +710,11 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
   }
 
   if (no_linkage) {
+    // Defer registration of identifiers declared as __auto_type until
+    // after the initializer has been visited. It will be taken care
+    // of in the DFS post visit.
+    if (is_auto_type_decl)
+      return;
     _scopes.back().register_id
       (_ast.get_pp_tokens()[ddid.get_id_tok()].get_value(),
        expr_id::resolved(id));
@@ -831,9 +865,34 @@ void _id_resolver::_handle_init_decl(init_declarator &id)
     __builtin_unreachable();
   }
 
+  // Defer registration of identifiers declared as __auto_type until
+  // after the initializer has been visited. It will be taken care
+  // of in the DFS post visit.
+  if (is_auto_type_decl)
+    return;
   _scopes.back().register_id
     (_ast.get_pp_tokens()[ddid.get_id_tok()].get_value(),
      expr_id::resolved(id));
+}
+
+void _id_resolver::_handle_auto_type_decl(declaration &d)
+{
+  // Called from DFS post walk, to register identifiers declared as
+  // __auto_type only after the whole init_declarator, including the
+  // initializer, has been processed.
+  if (d.get_declaration_specifiers().is_auto_type()) {
+    // __auto_type declarations always have exactly one
+    // init_declarator.
+    assert(d.get_init_declarator_list());
+    d.get_init_declarator_list()->for_each
+      ([&](init_declarator &id) {
+	direct_declarator_id &ddid =
+	  id.get_declarator().get_direct_declarator_id();
+	_scopes.back().register_id
+	  (_ast.get_pp_tokens()[ddid.get_id_tok()].get_value(),
+	   expr_id::resolved{id});
+       });
+  }
 }
 
 void _id_resolver::_handle_param_decl(parameter_declaration_declarator &pdd)
@@ -1247,6 +1306,7 @@ void _id_resolver::_handle_enum_def(enum_def &ed)
 
   _scopes.back()._declared_enums.push_back(enum_decl_link(ed));
 }
+
 
 linkage::linkage_kind
 _id_resolver::_get_linkage_kind(const expr_id::resolved &resolved) noexcept

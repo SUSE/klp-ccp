@@ -1887,6 +1887,9 @@ namespace klp
 
 	virtual void evaluate_type(ast &a, const target &tgt) override;
 
+	void deduce_auto_type(ast &a, const target &tgt,
+			      init_declarator &id);
+
 	void complete_type(std::shared_ptr<const types::array_type> &&at);
 
 	template <typename ret_type, typename callables_wrapper_type>
@@ -2061,6 +2064,8 @@ namespace klp
 	get_innermost_type() const noexcept;
 
       private:
+	friend class direct_declarator_id;
+
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
 	virtual void _process(processor<void> &p) override;
@@ -2070,6 +2075,9 @@ namespace klp
 
 	std::shared_ptr<const types::addressable_type>
 	_get_enclosing_type() const noexcept;
+
+	void _set_deduced_auto_type
+	  (std::shared_ptr<const types::addressable_type> &&t) noexcept;
 
 	pointer *_pt;
 	direct_declarator &_dd;
@@ -2331,6 +2339,22 @@ namespace klp
 
 	pp_token_index _tdid_tok;
 	resolved _resolved;
+      };
+
+      class type_specifier_auto_type final : public type_specifier
+      {
+      public:
+	type_specifier_auto_type(const pp_token_index auto_type_tok) noexcept;
+
+	virtual ~type_specifier_auto_type() noexcept override;
+
+      private:
+	virtual _ast_entity* _get_child(const size_t) const noexcept override;
+
+	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
+	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
       };
 
       class struct_declaration : public ast_entity<struct_declaration>
@@ -3214,6 +3238,8 @@ namespace klp
 
 	bool is_signed_explicit() const noexcept;
 
+	bool is_auto_type() const noexcept;
+
 	template <typename callable_type>
 	bool for_each_attribute(callable_type &&c);
 
@@ -3663,6 +3689,8 @@ namespace klp
 
 	const declaration& get_containing_declaration() const noexcept;
 
+	declaration& get_containing_declaration() noexcept;
+
 	linkage& get_linkage() noexcept
 	{ return _linkage; }
 
@@ -3731,6 +3759,9 @@ namespace klp
 	template <typename callable_type>
 	void for_each(callable_type &&c) const;
 
+	template <typename callable_type>
+	void for_each(callable_type &&c);
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
@@ -3766,6 +3797,9 @@ namespace klp
 	{ return _ds; }
 
 	const init_declarator_list* get_init_declarator_list() const noexcept
+	{ return _idl; }
+
+	init_declarator_list* get_init_declarator_list() noexcept
 	{ return _idl; }
 
       private:

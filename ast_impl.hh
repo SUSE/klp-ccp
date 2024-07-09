@@ -865,6 +865,13 @@ namespace klp
 	  c(const_cast<const init_declarator&>(id.get()));
       }
 
+      template <typename callable_type>
+      void init_declarator_list::for_each(callable_type &&c)
+      {
+	for (auto id : _ids)
+	  c(id.get());
+      }
+
       template<typename callable_type>
       void parameter_declaration_list::for_each(callable_type&& c) const
       {

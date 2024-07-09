@@ -196,6 +196,8 @@ static void empty(klp::ccp::pp_tokens_range &loc)
 %token<ext_int_kind> TOK_KW_EXT_INT
 %token<ext_float_kind> TOK_KW_EXT_FLOAT
 
+%token TOK_KW_AUTO_TYPE
+
 %token TOK_KW_STRUCT
 %token TOK_KW_UNION
 %token TOK_KW_ENUM
@@ -334,6 +336,7 @@ static void empty(klp::ccp::pp_tokens_range &loc)
 %type <declaration_specifiers>	declaration_specifiers_w_non_att_no_ts
 %type <declaration_specifiers>	declaration_specifiers_ts_no_tdid
 %type <declaration_specifiers>	declaration_specifiers_ts
+%type <declaration_specifiers>	auto_type_declaration_specifiers
 %type <storage_class_specifier>	storage_class_specifier
 %type <type_specifier>	type_specifier_no_tdid
 %type <type_qualifier>	type_qualifier
@@ -409,6 +412,8 @@ static void empty(klp::ccp::pp_tokens_range &loc)
 %type <init_declarator_list>	init_declarator_list_tdid_opt
 %type <init_declarator_list>	init_declarator_list_tdid
 %type <init_declarator>	init_declarator_tdid
+%type <init_declarator_list>	auto_type_init_declarator_list
+%type <init_declarator>	auto_type_init_declarator
 %type <asm_label>	asm_label
 %type <initializer>	initializer
 %type <initializer_list>	initializer_list
@@ -585,6 +590,10 @@ declaration:
 	    pd.clear_in_typedef();
 	    $$ = new declaration(@$, std::move($1), std::move($2));
 	  }
+	| auto_type_declaration_specifiers auto_type_init_declarator_list TOK_SEMICOLON
+	  {
+	    $$ = new declaration(@$, std::move($1), std::move($2));
+	  }
 ;
 
 declaration_specifiers_no_ts_opt:
@@ -675,6 +684,26 @@ declaration_specifiers_ts:
 	      delete ts_tdid;
 	    }
 	    $$->extend(std::move($2));
+	  }
+;
+
+auto_type_declaration_specifiers:
+	declaration_specifiers_no_ts_opt TOK_KW_AUTO_TYPE declaration_specifiers_no_ts_opt
+	  {
+	    type_specifier_auto_type *ts_auto_type = new type_specifier_auto_type(@2.begin);
+	    if (!$1) {
+	      try {
+		$$ = new declaration_specifiers(std::move(ts_auto_type));
+	      } catch (...) {
+		delete ts_auto_type;
+	      }
+	      @$.begin = @2.begin;
+	    } else {
+	      $$ = MV_P($1);
+	      $$->extend(std::move(ts_auto_type));
+	    }
+	    if ($3)
+	      $$->extend(std::move($3));
 	  }
 ;
 
@@ -1776,6 +1805,56 @@ init_declarator_tdid:
 	    $$ = new init_declarator(@$, std::move($1), std::move($5),
 				     nullptr, std::move($2),
 				     std::move($6));
+	  }
+;
+
+auto_type_init_declarator_list:
+	auto_type_init_declarator
+	  { $$ = new init_declarator_list(std::move($1)); }
+;
+
+auto_type_init_declarator:
+	id_or_tdid asm_label attribute_specifier_list_opt
+	  TOK_EQ
+	  initializer attribute_specifier_list_opt
+	  {
+	    direct_declarator_id *ddid = new direct_declarator_id($1);
+	    declarator *d;
+	    try {
+	      d = new declarator(@1, nullptr, std::move(ddid));
+	    } catch (...) {
+	      delete ddid;
+	      throw;
+	    }
+	    try {
+	      $$ = new init_declarator(@$, std::move(d), std::move($5),
+				       std::move($2), std::move($3),
+				       std::move($6));
+	    } catch (...) {
+	      delete d;
+	      throw;
+	    }
+	  }
+	| id_or_tdid attribute_specifier_list_opt
+	  TOK_EQ
+	  initializer attribute_specifier_list_opt
+	  {
+	    direct_declarator_id *ddid = new direct_declarator_id($1);
+	    declarator *d;
+	    try {
+	      d = new declarator(@1, nullptr, std::move(ddid));
+	    } catch (...) {
+	      delete ddid;
+	      throw;
+	    }
+	    try {
+	      $$ = new init_declarator(@$, std::move(d), std::move($4),
+				       nullptr, std::move($2),
+				       std::move($5));
+	    } catch (...) {
+	      delete d;
+	      throw;
+	    }
 	  }
 ;
 

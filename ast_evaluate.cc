@@ -1493,20 +1493,28 @@ _evaluate_init(klp::ccp::ast::ast &a, const target &tgt,
 
 static void _complete_type_from_init(klp::ccp::ast::ast &a,
 				     const target &tgt,
-				     init_declarator &i)
+				     init_declarator &id)
 
 {
-  // The declarator might declare an array of unknown size which
-  // gets completed by its initializer.
-  if (!i.get_initializer())
+  direct_declarator_id &ddid = id.get_declarator().get_direct_declarator_id();
+  assert(ddid.is_evaluated() || id.get_initializer());
+
+  if (!id.get_initializer())
     return;
 
-  direct_declarator_id &ddid = i.get_declarator().get_direct_declarator_id();
-
-  std::shared_ptr<const array_type> completed_at =
-    _evaluate_init(a, tgt, *ddid.get_type(), *i.get_initializer());
-  if (static_cast<bool>(completed_at)) {
-    ddid.complete_type(std::move(completed_at));
+  if (ddid.is_evaluated()) {
+    // The declarator might declare an array of unknown size which
+    // gets completed by its initializer.
+    std::shared_ptr<const array_type> completed_at =
+      _evaluate_init(a, tgt, *ddid.get_type(), *id.get_initializer());
+    if (static_cast<bool>(completed_at)) {
+      ddid.complete_type(std::move(completed_at));
+    }
+  } else {
+    // Deduce the __auto_type from the initializer.
+    assert(id.get_containing_declaration()
+	   .get_declaration_specifiers().is_auto_type());
+    ddid.deduce_auto_type(a, tgt, id);
   }
 }
 
@@ -1667,10 +1675,12 @@ evaluate_type(ast &a, const target &tgt)
   }
 
   std::shared_ptr<const addressable_type> result;
+  bool is_auto_type = false;
   _tss[0].get().process<void, type_set<type_specifier_pod,
 				       type_specifier_ext_int,
 				       type_specifier_ext_float,
 				       type_specifier_tdid,
+				       type_specifier_auto_type,
 				       struct_or_union_def,
 				       struct_or_union_ref,
 				       enum_def, enum_ref,
@@ -1706,6 +1716,9 @@ evaluate_type(ast &a, const target &tgt)
 	  assert(0);
 	  __builtin_unreachable();
 	};
+      },
+      [&](const type_specifier_auto_type&) {
+	is_auto_type = true;
       },
       [&](struct_or_union_def &soud) {
 	result = struct_or_union_type::create(soud.get_tag_kind(),
@@ -1744,7 +1757,7 @@ evaluate_type(ast &a, const target &tgt)
 	result = to_tn.get_type_name().get_type()->amend_qualifiers(qs);
       }));
 
-  if (result.get()) {
+  if (result.get() || is_auto_type) {
     if (_tss.size() > 1) {
       const type_specifier &extra_ts = _tss[1].get();
       code_remark remark(code_remark::severity::fatal,
@@ -2371,9 +2384,16 @@ evaluate_type(ast &a, const target &tgt)
 	// struct/union member handling.
       },
       [&](init_declarator &id) {
+	l = &id.get_linkage();
+
 	declaration &enclosing_decl =
 	  (id.get_unique_parent<init_declarator_list>()
 	   .get_unique_parent<declaration>());
+
+	assert(a_t ||
+	       enclosing_decl.get_declaration_specifiers().is_auto_type());
+	if (!a_t)
+	  return;
 
 	a_t =
 	  tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
@@ -2382,7 +2402,6 @@ evaluate_type(ast &a, const target &tgt)
 				  id.get_asl_before(), id.get_asl_middle(),
 				  id.get_asl_after());
 
-	l = &id.get_linkage();
       },
       [&](parameter_declaration_declarator &pdd) {
 	// Decay parameters of array or function type to pointer types
@@ -2410,6 +2429,11 @@ evaluate_type(ast &a, const target &tgt)
 	// type.
 	l = &fd.get_linkage();
       }));
+
+  // For __auto_type declarations, the type will not be available
+  // until after the initializer has been processed.
+  if (!a_t)
+    return;
 
   // Examine any previous declaration relate by linkage.
   if (l && !l->is_first_in_chain()) {
@@ -2451,6 +2475,84 @@ evaluate_type(ast &a, const target &tgt)
 
   _set_type(std::move(a_t));
 }
+
+void direct_declarator_id::deduce_auto_type(ast &a, const target &tgt,
+					    init_declarator &id)
+{
+  assert(id.get_initializer());
+  const initializer_expr *ie = nullptr;
+  id.get_initializer()->process<void, type_set<const initializer_expr>>
+    (wrap_callables<default_action_nop>
+     ([&](const initializer_expr &_ie) {
+	ie = &_ie;
+      }));
+  if (!ie) {
+    code_remark remark(code_remark::severity::fatal,
+		       "__auto_type initializer not an expression",
+		       a.get_pp_result(), id.get_tokens_range());
+    a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  std::shared_ptr<const object_type> o_t;
+  handle_types<void>
+    ((wrap_callables<default_action_nop>
+      ([&](const std::shared_ptr<const object_type> &&_o_t) {
+	 o_t = std::move(_o_t);
+       })),
+     ie->get_expr().get_type());
+  if (!o_t) {
+    code_remark remark
+      (code_remark::severity::fatal,
+       "__auto_type initializer expression not of object type",
+       a.get_pp_result(), id.get_tokens_range());
+    a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  } else if (!o_t->is_complete()) {
+    code_remark remark
+      (code_remark::severity::fatal,
+       "__auto_type initializer expression of incompete type",
+       a.get_pp_result(), id.get_tokens_range());
+    a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  o_t = o_t->strip_qualifiers();
+
+  // Apply attributes from the enclosing context.
+  declaration &containing_decl = id.get_containing_declaration();
+  std::shared_ptr<const addressable_type> a_t =
+    tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
+			    std::move(o_t),
+			    containing_decl.get_declaration_specifiers(),
+			    id.get_asl_before(), id.get_asl_middle(),
+			    id.get_asl_after());
+
+  // Now that the __auto_type has been deduced, verify compatibility
+  // with previous declarations, if any.
+  const linkage &l = id.get_linkage();
+  if (!l.is_first_in_chain() &&
+      (l.get_link_target_kind() != linkage::link_target_kind::init_decl ||
+       !(a_t->is_compatible_with
+	 (tgt,
+	  (*l.get_target_init_declarator().get_declarator()
+	   .get_direct_declarator_id().get_type()),
+	  false)))) {
+    code_remark remark(code_remark::severity::warning,
+		       "incompatible redeclaration",
+		       a.get_pp_result(), id.get_tokens_range());
+    a.get_remarks().add(remark);
+  }
+
+  // Finally, assign the deduced type to the resp. AST entities.
+  // For consistency with how non-__auto_type declarations are
+  // handled, d receives the type without attributes from the
+  // surrounding context applied, and ddid the type with attributes
+  // taking effect.
+  id.get_declarator()._set_deduced_auto_type(std::move(o_t));
+  _set_type(std::move(a_t));
+}
+
 
 void direct_declarator_parenthesized::
 evaluate_type(ast &a, const target &tgt)
@@ -2566,6 +2668,10 @@ evaluate_type(ast &a, const target &tgt)
 void declarator::evaluate_type(ast &a, const target &tgt)
 {
   std::shared_ptr<const addressable_type> t = _get_enclosing_type();
+  // If an __auto_type declaration, then the type will not be available
+  // until the initializer has been processed.
+  if (!t)
+    return;
   if (_pt) {
     for (auto tql : _pt->get_type_qualifier_lists()) {
       if (!tql) {
