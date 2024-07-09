@@ -123,6 +123,19 @@ const double_limb limb::operator*(const limb &op) const noexcept
   return double_limb(high, low);
 }
 
+const limb limb::reverse(const unsigned int rev_unit_width_log2)
+  const noexcept
+{
+  assert((1u << rev_unit_width_log2) < width);
+  limb_type r = _value;
+  limb_type m = ~static_cast<limb_type>(0);
+  for (unsigned int d = width / 2; d >= (1u << rev_unit_width_log2); d >>= 1) {
+    m ^= m << d;
+    r = ((r & m) << d) | ((r >> d) & m);
+  }
+
+  return limb{r};
+}
 
 bool double_limb::add(const limb &op) noexcept
 {
@@ -1408,6 +1421,59 @@ limbs limbs::align_down(const mpa::limbs::size_type log2_align) const
   result.set_bits_below(log2_align, false);
 
   return result;
+}
+
+limbs limbs::reverse(const limbs::size_type n_rev_units,
+		     const unsigned int rev_unit_width_log2) const
+{
+  const unsigned int rev_unit_width = 1 << rev_unit_width_log2;
+  mpa::limbs::size_type result_width = n_rev_units << rev_unit_width_log2;
+  assert(!is_any_set_at_or_above(result_width));
+  limbs r{*this};
+  r.resize(width_to_size(result_width));
+
+  // First, shift everything left to align with the left (most
+  // significant) boundary.
+  if (rev_unit_width <= limb::width) {
+    const size_type lshift_distance = r.width() - result_width;
+    assert((lshift_distance & (rev_unit_width - 1)) == 0);
+    if (lshift_distance != 0) {
+      const size_type low_bits = lshift_distance % limb::width;
+      assert(low_bits != 0 && low_bits < limb::width);
+      for (size_type __j = size(); __j > 1; --__j) {
+	const size_type j = __j - 1;
+	const limb::limb_type value =
+	  ((r._limbs[j - 1].value() >> (limb::width - low_bits)) |
+	   (r._limbs[j].value() << low_bits));
+	r._limbs[j] = limb(value);
+      }
+      r._limbs[0] = r._limbs[0] << low_bits;
+    }
+
+    // Then reverse the limbs' order.
+    std::reverse(r._limbs.begin(), r._limbs.end());
+
+    // And finally, reverse each individual limb's rev_units.
+    if (rev_unit_width < limb::width) {
+      for (limb &l : r._limbs)
+	l = l.reverse(rev_unit_width_log2);
+    }
+
+  } else {
+    // Reverse chunks of limbs.
+    for (limbs::size_type i = 0; i < n_rev_units / 2; ++i) {
+      _limbs_type::iterator i0 =
+	r._limbs.begin() + (i << rev_unit_width_log2) / limb::width;
+      _limbs_type::iterator i1 =
+	r._limbs.end() - ((i + 1) << rev_unit_width_log2) / limb::width;
+      for (limbs::size_type j = 0; j < rev_unit_width / limb::width;
+	   ++j, ++i0, ++i1) {
+	std::swap(*i0, *i1);
+      }
+    }
+  }
+
+  return r;
 }
 
 limbs limbs::from_string(const std::string::const_iterator &begin,

@@ -126,6 +126,9 @@ namespace klp
 		      (static_cast<limb_type>(1) << w) - 1);
 	}
 
+	const limb reverse(const unsigned int rev_unit_width_log2)
+	  const noexcept;
+
       private:
 	limb_type _value;
       };
@@ -267,6 +270,9 @@ namespace klp
 
 	limbs align(const mpa::limbs::size_type log2_align) const;
 	limbs align_down(const mpa::limbs::size_type log2_align) const;
+
+	limbs reverse(const limbs::size_type n_rev_units,
+		      const unsigned int rev_unit_width_log2) const;
 
 	static constexpr size_type
 	width_to_size(const size_type width) noexcept

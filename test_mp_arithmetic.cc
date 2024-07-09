@@ -170,6 +170,35 @@ static int limb_test11()
 }
 
 
+static int limb_test12()
+{
+  limb::limb_type l = 0;
+
+  for (unsigned int rev_unit_width_log2 = 0;
+       (1u << rev_unit_width_log2) < limb::width;
+       ++rev_unit_width_log2) {
+    const unsigned int rev_unit_width =
+      1u << rev_unit_width_log2;
+    const limb::limb_type rev_unit_mask =
+      (static_cast<limb::limb_type>(1) << rev_unit_width) - 1;
+    for (unsigned int i = limb::width >> rev_unit_width_log2; i > 0; --i) {
+      l <<= rev_unit_width;
+      l |= i & rev_unit_mask;
+    }
+
+    l = limb{l}.reverse(rev_unit_width_log2).value();
+
+    for (unsigned int i = limb::width >> rev_unit_width_log2; i > 0; --i) {
+      if ((l & rev_unit_mask) != (i & rev_unit_mask))
+	return -1;
+      l >>= rev_unit_width;
+    }
+  }
+
+  return 0;
+}
+
+
 static int double_limb_test1()
 {
   double_limb v(~limb(0), ~limb(0));
@@ -1048,6 +1077,68 @@ static int limbs_test33()
 }
 
 
+static int limbs_test34()
+{
+  unsigned int rev_unit_width_log2;
+  for (rev_unit_width_log2 = 0;
+       (1u << rev_unit_width_log2) < limb::width; ++rev_unit_width_log2) {
+    const unsigned int units_per_limb = limb::width >> rev_unit_width_log2;
+    for (limbs::size_type n_rev_units = 1; n_rev_units < 16 * units_per_limb;
+	 ++n_rev_units) {
+      const unsigned int rev_unit_width = 1 << rev_unit_width_log2;
+      const limb::limb_type rev_unit_mask
+	= (static_cast<limb::limb_type>(1) << rev_unit_width) - 1;
+      limbs ls;
+      ls.resize(limbs::width_to_size(16 * limb::width));
+      for (limbs::size_type i = n_rev_units; i > 0; --i) {
+	const limbs::size_type j =
+	  ((i - 1) << rev_unit_width_log2) / limb::width;
+	ls[j] = ((ls[j] << rev_unit_width) |
+		 limb{static_cast<limb::limb_type>(i) & rev_unit_mask});
+      }
+
+      ls = ls.reverse(n_rev_units, rev_unit_width_log2);
+
+      for (limbs::size_type i = n_rev_units; i > 0; --i) {
+	const limbs::size_type j =
+	  ((n_rev_units - i) << rev_unit_width_log2) / limb::width;
+	if ((ls[j].value() & rev_unit_mask) !=
+	    (static_cast<limb::limb_type>(i) & rev_unit_mask)) {
+	  return -1;
+	}
+	ls[j] = ls[j] >> rev_unit_width;
+      }
+    }
+  }
+
+  assert((1u << rev_unit_width_log2) == limb::width);
+
+  for(; (1u << rev_unit_width_log2) < 8 * limb::width; ++rev_unit_width_log2) {
+    const unsigned int limbs_per_unit =
+      (1u << rev_unit_width_log2) / limb::width;
+    for (limbs::size_type n_rev_units = 1; n_rev_units < 12; ++n_rev_units) {
+      limbs ls;
+      ls.resize(n_rev_units * limbs_per_unit);
+      for (limbs::size_type i = 0; i < ls.size(); ++i)
+	ls[i] = limb{static_cast<limb::limb_type>(i + 1)};
+
+      ls = ls.reverse(n_rev_units, rev_unit_width_log2);
+
+      for (limbs::size_type i = 0; i < n_rev_units; ++i) {
+	for (unsigned int j = 0; j < limbs_per_unit; ++j) {
+	  const limbs::size_type k =
+	    (n_rev_units - i - 1) * limbs_per_unit + j;
+	  if (ls[k].value() != i * limbs_per_unit + j + 1)
+	    return -1;
+	}
+      }
+    }
+  }
+
+  return 0;
+}
+
+
 #define TEST_ENTRY(t)				\
   { "mpa:" #t, t }
 
@@ -1066,6 +1157,7 @@ static const struct test_entry {
   TEST_ENTRY(limb_test9),
   TEST_ENTRY(limb_test10),
   TEST_ENTRY(limb_test11),
+  TEST_ENTRY(limb_test12),
   TEST_ENTRY(double_limb_test1),
   TEST_ENTRY(double_limb_test2),
   TEST_ENTRY(double_limb_test3),
@@ -1105,6 +1197,7 @@ static const struct test_entry {
   TEST_ENTRY(limbs_test31),
   TEST_ENTRY(limbs_test32),
   TEST_ENTRY(limbs_test33),
+  TEST_ENTRY(limbs_test34),
   { NULL, NULL }
 };
 
