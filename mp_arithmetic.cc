@@ -1022,7 +1022,7 @@ limbs limbs::operator|(const limbs &op) const
 
 limbs limbs::lshift(const size_type distance) const
 {
-  if (!distance)
+  if (!distance || empty())
     return *this;
 
   _limbs_type result;
@@ -1040,15 +1040,22 @@ limbs limbs::lshift(const size_type distance) const
   assert(limb_offset >= 1);
 
   const size_type low_bits = distance % limb::width;
-  for (size_type __j = size(); __j > limb_offset; --__j) {
-    const size_type j = __j - 1;
-    const limb::limb_type value =
-      ((_limbs[j - limb_offset].value() >> (limb::width - low_bits)) |
-       (_limbs[j - limb_offset + 1].value() << low_bits));
-    result[j] = limb(value);
-  };
+  if (low_bits != 0) {
+    for (size_type __j = size(); __j > limb_offset; --__j) {
+      const size_type j = __j - 1;
+      const limb::limb_type value =
+	((_limbs[j - limb_offset].value() >> (limb::width - low_bits)) |
+	 (_limbs[j - limb_offset + 1].value() << low_bits));
+      result[j] = limb(value);
+    }
+    result[limb_offset - 1] = limb(_limbs[0].value() << low_bits);
+  } else {
+    for (size_type j = size() - 1; j >= limb_offset; --j) {
+      result[j] = _limbs[j - limb_offset];
+    }
+    result[limb_offset - 1] = limb(0);
+  }
 
-  result[limb_offset - 1] = limb(_limbs[0].value() << low_bits);
   for (size_type __j = limb_offset - 1; __j > 0; --__j) {
     const size_type j = __j - 1;
     result[j] = limb(0);
@@ -1059,7 +1066,7 @@ limbs limbs::lshift(const size_type distance) const
 
 limbs limbs::rshift(const size_type distance, const bool fill_value) const
 {
-  if (!distance)
+  if (!distance || empty())
     return *this;
 
   _limbs_type result;
@@ -1077,16 +1084,20 @@ limbs limbs::rshift(const size_type distance, const bool fill_value) const
   // bits from.
   const size_type limb_offset = distance / limb::width;
   const size_type high_bits = distance % limb::width;
-  for (size_type j = 0; j + limb_offset + 1 < size(); ++j) {
-    const limb::limb_type value =
-      ((_limbs[j + limb_offset].value() >> high_bits |
-	_limbs[j + limb_offset + 1].value() << (limb::width - high_bits)));
-    result[j] = limb(value);
+  if (high_bits != 0) {
+    for (size_type j = 0; j + limb_offset + 1 < size(); ++j) {
+      const limb::limb_type value =
+	((_limbs[j + limb_offset].value() >> high_bits |
+	  _limbs[j + limb_offset + 1].value() << (limb::width - high_bits)));
+      result[j] = limb(value);
+    }
+    result[size() - limb_offset - 1] =
+      limb((_limbs.back().value() >> high_bits) |
+	   (fill << (limb::width - high_bits)));
+  } else {
+    for (size_type j = 0; j + limb_offset < size(); ++j)
+      result[j] = _limbs[j + limb_offset];
   }
-
-  result[size() - limb_offset - 1] =
-    limb((_limbs.back().value() >> high_bits) |
-	 (fill << (limb::width - high_bits)));
 
   for (size_type j = size() - limb_offset; j < size(); ++j)
     result[j] = limb(fill);
