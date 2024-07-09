@@ -323,6 +323,24 @@ target_int target_int::operator>>(const target_int &op) const
   return target_int(_prec, _is_signed, std::move(ls));
 }
 
+target_int target_int::bswap() const
+{
+  mpa::limbs::size_type w = width();
+  if (w == 0)
+    return *this;
+
+  // When the width is not a multiple of 8 (which should not happen),
+  // it is pretty much unspecified what to do in a bswap() -- one
+  // could either append padding 0-bits to the head or the tail. Opt
+  // for adding (virtual) padding bits at the head, i.e. at the most
+  // significant position, before swapping byte order for simplicity
+  // Implement this by aligning the width upwards to a multiple of 8.
+  w += -w & 7;
+
+  mpa::limbs ls = _limbs.reverse(w >> 3, 3);
+  return target_int{_prec, _is_signed, std::move(ls)};
+}
+
 target_int target_int::convert(const mpa::limbs::size_type prec,
 			       const bool is_signed) const
 {

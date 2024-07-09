@@ -79,6 +79,8 @@ namespace klp
       target_int operator<<(const target_int &op) const;
       target_int operator>>(const target_int &op) const;
 
+      target_int bswap() const;
+
       target_int convert(const mpa::limbs::size_type prec,
 			 const bool is_signed) const;
 
