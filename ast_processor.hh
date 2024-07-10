@@ -94,6 +94,7 @@ namespace klp
 	virtual ret_type operator()(struct_declaration_c99&) = 0;
 	virtual ret_type operator()(unnamed_struct_or_union&) = 0;
 	virtual ret_type operator()(struct_declaration_unnamed_sou&) = 0;
+	virtual ret_type operator()(struct_declaration_static_assert&) = 0;
 	virtual ret_type operator()(struct_declaration_list&) = 0;
 	virtual ret_type operator()(struct_or_union_def&) = 0;
 	virtual ret_type operator()(struct_or_union_ref&) = 0;
@@ -116,6 +117,7 @@ namespace klp
 	virtual ret_type operator()(init_declarator&) = 0;
 	virtual ret_type operator()(init_declarator_list&) = 0;
 	virtual ret_type operator()(declaration&) = 0;
+	virtual ret_type operator()(static_assertion&) = 0;
 	virtual ret_type operator()(parameter_declaration_declarator&) = 0;
 	virtual ret_type operator()(parameter_declaration_abstract&) = 0;
 	virtual ret_type operator()(parameter_declaration_list&) = 0;
@@ -128,6 +130,7 @@ namespace klp
 	virtual ret_type operator()(local_label_declaration&) = 0;
 	virtual ret_type operator()(local_label_declaration_list&) = 0;
 	virtual ret_type operator()(block_item_decl&) = 0;
+	virtual ret_type operator()(block_item_static_assert&) = 0;
 	virtual ret_type operator()(block_item_stmt&) = 0;
 	virtual ret_type operator()(block_item_function_definition&) = 0;
 	virtual ret_type operator()(block_item_list&) = 0;
@@ -139,6 +142,7 @@ namespace klp
 	virtual ret_type operator()(stmt_do&) = 0;
 	virtual ret_type operator()(stmt_for_init_expr&) = 0;
 	virtual ret_type operator()(stmt_for_init_decl&) = 0;
+	virtual ret_type operator()(stmt_for_init_static_assert&) = 0;
 	virtual ret_type operator()(stmt_goto&) = 0;
 	virtual ret_type operator()(stmt_continue&) = 0;
 	virtual ret_type operator()(stmt_break&) = 0;
@@ -153,6 +157,7 @@ namespace klp
 	virtual ret_type operator()(asm_directive&) = 0;
 	virtual ret_type operator()(function_definition&) = 0;
 	virtual ret_type operator()(external_declaration_decl&) = 0;
+	virtual ret_type operator()(external_declaration_static_assert&) = 0;
 	virtual ret_type operator()(external_declaration_func&) = 0;
 	virtual ret_type operator()(external_declaration_asm&) = 0;
 	virtual ret_type operator()(translation_unit&) = 0;
@@ -232,6 +237,8 @@ namespace klp
 	virtual ret_type operator()(struct_declaration_c99 &e) override;
 	virtual ret_type operator()(unnamed_struct_or_union &e) override;
 	virtual ret_type operator()(struct_declaration_unnamed_sou &e) override;
+	virtual ret_type operator()(struct_declaration_static_assert &e)
+	  override;
 	virtual ret_type operator()(struct_declaration_list &e) override;
 	virtual ret_type operator()(struct_or_union_def &e) override;
 	virtual ret_type operator()(struct_or_union_ref &e) override;
@@ -254,6 +261,7 @@ namespace klp
 	virtual ret_type operator()(init_declarator &e) override;
 	virtual ret_type operator()(init_declarator_list &e) override;
 	virtual ret_type operator()(declaration &e) override;
+	virtual ret_type operator()(static_assertion &e) override;
 	virtual ret_type operator()(parameter_declaration_declarator &e)
 	  override;
 	virtual ret_type operator()(parameter_declaration_abstract &e) override;
@@ -267,6 +275,7 @@ namespace klp
 	virtual ret_type operator()(local_label_declaration &e) override;
 	virtual ret_type operator()(local_label_declaration_list &e) override;
 	virtual ret_type operator()(block_item_decl &e) override;
+	virtual ret_type operator()(block_item_static_assert &e) override;
 	virtual ret_type operator()(block_item_stmt &e) override;
 	virtual ret_type operator()(block_item_function_definition &e) override;
 	virtual ret_type operator()(block_item_list &e) override;
@@ -278,6 +287,7 @@ namespace klp
 	virtual ret_type operator()(stmt_do &e) override;
 	virtual ret_type operator()(stmt_for_init_expr &e) override;
 	virtual ret_type operator()(stmt_for_init_decl &e) override;
+	virtual ret_type operator()(stmt_for_init_static_assert &e) override;
 	virtual ret_type operator()(stmt_goto &e) override;
 	virtual ret_type operator()(stmt_continue &e) override;
 	virtual ret_type operator()(stmt_break &e) override;
@@ -292,6 +302,8 @@ namespace klp
 	virtual ret_type operator()(asm_directive &e) override;
 	virtual ret_type operator()(function_definition &e) override;
 	virtual ret_type operator()(external_declaration_decl &e) override;
+	virtual ret_type operator()(external_declaration_static_assert &e)
+	  override;
 	virtual ret_type operator()(external_declaration_func &e) override;
 	virtual ret_type operator()(external_declaration_asm &e) override;
 	virtual ret_type operator()(translation_unit &e) override;
@@ -375,6 +387,8 @@ namespace klp
 	virtual ret_type operator()(const struct_declaration_c99&) = 0;
 	virtual ret_type operator()(const unnamed_struct_or_union&) = 0;
 	virtual ret_type operator()(const struct_declaration_unnamed_sou&) = 0;
+	virtual ret_type operator()(const struct_declaration_static_assert&)
+	  = 0;
 	virtual ret_type operator()(const struct_declaration_list&) = 0;
 	virtual ret_type operator()(const struct_or_union_def&) = 0;
 	virtual ret_type operator()(const struct_or_union_ref&) = 0;
@@ -397,6 +411,7 @@ namespace klp
 	virtual ret_type operator()(const init_declarator&) = 0;
 	virtual ret_type operator()(const init_declarator_list&) = 0;
 	virtual ret_type operator()(const declaration&) = 0;
+	virtual ret_type operator()(const static_assertion&) = 0;
 	virtual ret_type operator()(const parameter_declaration_declarator&)
 	  = 0;
 	virtual ret_type operator()(const parameter_declaration_abstract&) = 0;
@@ -410,6 +425,7 @@ namespace klp
 	virtual ret_type operator()(const local_label_declaration&) = 0;
 	virtual ret_type operator()(const local_label_declaration_list&) = 0;
 	virtual ret_type operator()(const block_item_decl&) = 0;
+	virtual ret_type operator()(const block_item_static_assert&) = 0;
 	virtual ret_type operator()(const block_item_stmt&) = 0;
 	virtual ret_type operator()(const block_item_function_definition&) = 0;
 	virtual ret_type operator()(const block_item_list&) = 0;
@@ -421,6 +437,7 @@ namespace klp
 	virtual ret_type operator()(const stmt_do&) = 0;
 	virtual ret_type operator()(const stmt_for_init_expr&) = 0;
 	virtual ret_type operator()(const stmt_for_init_decl&) = 0;
+	virtual ret_type operator()(const stmt_for_init_static_assert&) = 0;
 	virtual ret_type operator()(const stmt_goto&) = 0;
 	virtual ret_type operator()(const stmt_continue&) = 0;
 	virtual ret_type operator()(const stmt_break&) = 0;
@@ -435,6 +452,8 @@ namespace klp
 	virtual ret_type operator()(const asm_directive&) = 0;
 	virtual ret_type operator()(const function_definition&) = 0;
 	virtual ret_type operator()(const external_declaration_decl&) = 0;
+	virtual ret_type operator()(const external_declaration_static_assert&)
+	  = 0;
 	virtual ret_type operator()(const external_declaration_func&) = 0;
 	virtual ret_type operator()(const external_declaration_asm&) = 0;
 	virtual ret_type operator()(const translation_unit&) = 0;
@@ -515,6 +534,8 @@ namespace klp
 	virtual ret_type operator()(const unnamed_struct_or_union &e) override;
 	virtual ret_type operator()(const struct_declaration_unnamed_sou &e)
 	  override;
+	virtual ret_type operator()(const struct_declaration_static_assert &e)
+	  override;
 	virtual ret_type operator()(const struct_declaration_list &e) override;
 	virtual ret_type operator()(const struct_or_union_def &e) override;
 	virtual ret_type operator()(const struct_or_union_ref &e) override;
@@ -537,6 +558,7 @@ namespace klp
 	virtual ret_type operator()(const init_declarator &e) override;
 	virtual ret_type operator()(const init_declarator_list &e) override;
 	virtual ret_type operator()(const declaration &e) override;
+	virtual ret_type operator()(const static_assertion &e) override;
 	virtual ret_type operator()(const parameter_declaration_declarator &e)
 	  override;
 	virtual ret_type operator()(const parameter_declaration_abstract &e)
@@ -553,6 +575,7 @@ namespace klp
 	virtual ret_type operator()(const local_label_declaration_list &e)
 	  override;
 	virtual ret_type operator()(const block_item_decl &e) override;
+	virtual ret_type operator()(const block_item_static_assert &e) override;
 	virtual ret_type operator()(const block_item_stmt &e) override;
 	virtual ret_type operator()(const block_item_function_definition &e)
 	  override;
@@ -565,6 +588,8 @@ namespace klp
 	virtual ret_type operator()(const stmt_do &e) override;
 	virtual ret_type operator()(const stmt_for_init_expr &e) override;
 	virtual ret_type operator()(const stmt_for_init_decl &e) override;
+	virtual ret_type operator()(const stmt_for_init_static_assert &e)
+	  override;
 	virtual ret_type operator()(const stmt_goto &e) override;
 	virtual ret_type operator()(const stmt_continue &e) override;
 	virtual ret_type operator()(const stmt_break &e) override;
@@ -579,6 +604,8 @@ namespace klp
 	virtual ret_type operator()(const asm_directive &e) override;
 	virtual ret_type operator()(const function_definition &e) override;
 	virtual ret_type operator()(const external_declaration_decl &e)
+	  override;
+	virtual ret_type operator()(const external_declaration_static_assert &e)
 	  override;
 	virtual ret_type operator()(const external_declaration_func &e)
 	  override;

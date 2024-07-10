@@ -183,6 +183,9 @@ void _evaluator::operator()()
       [](const stmt_for_init_decl&) {
 	return true;
       },
+      [](const stmt_for_init_static_assert&) {
+	return true;
+      },
       [](const stmt_goto&) {
 	return true;
       },
@@ -309,6 +312,16 @@ void _evaluator::operator()()
 	if (next)
 	  next->apply_lvalue_conversion(false);
       },
+      [](stmt_for_init_static_assert &s) {
+	expr * const cond = s.get_cond();
+	expr * const next = s.get_next_expr();
+
+	if (cond)
+	  cond->apply_lvalue_conversion(false);
+
+	if (next)
+	  next->apply_lvalue_conversion(false);
+      },
       [](stmt_goto &s) {
 	s.get_expr().apply_lvalue_conversion(false);
       },
@@ -342,7 +355,9 @@ void _evaluator::operator()()
 				       stmt_case, stmt_case_range,
 				       stmt_expr, stmt_if, stmt_switch,
 				       stmt_while, stmt_do,
-				       stmt_for_init_expr, stmt_for_init_decl,
+				       stmt_for_init_expr,
+				       stmt_for_init_decl,
+				       stmt_for_init_static_assert,
 				       stmt_goto, stmt_return,
 				       asm_operand,
 				       _typed>,
@@ -356,7 +371,9 @@ void _evaluator::operator()()
 				       stmt_case, stmt_case_range,
 				       stmt_expr, stmt_if, stmt_switch,
 				       stmt_while, stmt_do,
-				       stmt_for_init_expr, stmt_for_init_decl,
+				       stmt_for_init_expr,
+				       stmt_for_init_decl,
+				       stmt_for_init_static_assert,
 				       stmt_goto, stmt_return,
 				       asm_operand,
 				       _typed> >

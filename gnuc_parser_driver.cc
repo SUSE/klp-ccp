@@ -98,6 +98,7 @@ static const _val_tok_map_entry kw_map_entries[] = {
   { "continue", gnuc_parser::token_type::TOK_KW_CONTINUE },
   { "break", gnuc_parser::token_type::TOK_KW_BREAK },
   { "return", gnuc_parser::token_type::TOK_KW_RETURN },
+  { "_Static_assert", gnuc_parser::token_type::TOK_KW_STATIC_ASSERT },
   { nullptr, static_cast<gnuc_parser::token_type>(0) },
 };
 

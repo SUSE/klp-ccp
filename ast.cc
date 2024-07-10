@@ -3397,13 +3397,20 @@ bool type_specifier_auto_type::_process(const_processor<bool> &p) const
 }
 
 
-struct_declaration::struct_declaration(const pp_tokens_range &tr,
-				       specifier_qualifier_list* &&sql)
-  noexcept
-  : ast_entity(tr), _sql(mv_p(std::move(sql)))
+struct_declaration::struct_declaration(const pp_tokens_range &tr) noexcept
+  : ast_entity{tr}
 {}
 
-struct_declaration::~struct_declaration() noexcept
+struct_declaration::~struct_declaration() noexcept = default;
+
+
+struct_declaration_decl::
+struct_declaration_decl(const pp_tokens_range &tr,
+			specifier_qualifier_list* &&sql) noexcept
+  : struct_declaration{tr}, _sql{mv_p(std::move(sql))}
+{}
+
+struct_declaration_decl::~struct_declaration_decl() noexcept
 {
   delete _sql;
 }
@@ -3578,7 +3585,7 @@ struct_declaration_c99::struct_declaration_c99(const pp_tokens_range &tr,
 					       specifier_qualifier_list* &&sql,
 					       struct_declarator_list * &&sdl)
   noexcept
-  : struct_declaration(tr, std::move(sql)), _sdl(*mv_p(std::move(sdl)))
+  : struct_declaration_decl(tr, std::move(sql)), _sdl(*mv_p(std::move(sdl)))
 {
   if (get_specifier_qualifier_list())
     get_specifier_qualifier_list()->_set_parent(*this);
@@ -3723,7 +3730,7 @@ struct_declaration_unnamed_sou(const pp_tokens_range &tr,
 			       specifier_qualifier_list* &&sql,
 			       unnamed_struct_or_union* &&unnamed_sou)
   noexcept
-  : struct_declaration(tr, std::move(sql)),
+  : struct_declaration_decl(tr, std::move(sql)),
     _unnamed_sou(*mv_p(std::move(unnamed_sou)))
 {
   if (get_specifier_qualifier_list())
@@ -3772,6 +3779,59 @@ bool struct_declaration_unnamed_sou::_process(processor<bool> &p)
 }
 
 bool struct_declaration_unnamed_sou::_process(const_processor<bool> &p) const
+{
+  return p(*this);
+}
+
+
+struct_declaration_static_assert::
+struct_declaration_static_assert(static_assertion* &&sa) noexcept
+  : struct_declaration{sa->get_tokens_range()}, _sa{*mv_p(std::move(sa))}
+{
+  _sa._set_parent(*this);
+}
+
+struct_declaration_static_assert::~struct_declaration_static_assert() noexcept
+{
+  delete &_sa;
+}
+
+void struct_declaration_static_assert::mark_last_member() noexcept
+{
+  // The ->is_last() information is only relevant for array members of
+  // unspecified length. Do nothing.
+}
+
+_ast_entity* struct_declaration_static_assert::
+_get_child(const size_t i) const noexcept
+{
+  if (!i)
+    return &_sa;
+
+  return nullptr;
+}
+
+
+void struct_declaration_static_assert::
+_process(processor<void> &p)
+{
+  p(*this);
+}
+
+void struct_declaration_static_assert::
+_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
+bool struct_declaration_static_assert::
+_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool struct_declaration_static_assert::
+_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -6086,6 +6146,51 @@ bool declaration::_process(const_processor<bool> &p) const
 }
 
 
+static_assertion::static_assertion(const pp_tokens_range &tr, expr* &&cond,
+				   string_literal *&&msg) noexcept
+  : ast_entity{tr}, _cond{*mv_p(std::move(cond))}, _msg{*mv_p(std::move(msg))}
+{
+  _cond._set_parent(*this);
+  _msg._set_parent(*this);
+}
+
+static_assertion::~static_assertion() noexcept
+{
+  delete &_cond;
+  delete &_msg;
+}
+
+_ast_entity* static_assertion::_get_child(const size_t i) const noexcept
+{
+  if (!i)
+    return &_cond;
+  else if (i == 1)
+    return &_msg;
+
+  return nullptr;
+}
+
+void static_assertion::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+void static_assertion::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
+bool static_assertion::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool static_assertion::_process(const_processor<bool> &p) const
+{
+  return p(*this);
+}
+
+
 parameter_declaration::
 parameter_declaration(const pp_tokens_range &tr,
 		      declaration_specifiers* &&ds,
@@ -6783,6 +6888,47 @@ bool block_item_decl::_process(const_processor<bool> &p) const
 }
 
 
+block_item_static_assert::
+block_item_static_assert(static_assertion* &&sa) noexcept
+  : block_item(sa->get_tokens_range()), _sa(*mv_p(std::move(sa)))
+{
+  _sa._set_parent(*this);
+}
+
+block_item_static_assert::~block_item_static_assert() noexcept
+{
+  delete &_sa;
+}
+
+_ast_entity* block_item_static_assert::_get_child(const size_t i) const noexcept
+{
+  if (!i)
+    return &_sa;
+
+  return nullptr;
+}
+
+void block_item_static_assert::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+void block_item_static_assert::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
+bool block_item_static_assert::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool block_item_static_assert::_process(const_processor<bool> &p) const
+{
+  return p(*this);
+}
+
+
 block_item_stmt::block_item_stmt(stmt* &&s) noexcept
   : block_item(s->get_tokens_range()), _s(*mv_p(std::move(s)))
 {
@@ -7235,14 +7381,11 @@ bool stmt_do::_process(const_processor<bool> &p) const
 }
 
 
-stmt_for_init_expr::stmt_for_init_expr(const pp_tokens_range &tr,
-				       expr* &&init, expr* &&cond, expr* &&next,
-				       stmt* &&s) noexcept
-  : stmt(tr), _init(mv_p(std::move(init))), _cond(mv_p(std::move(cond))),
-    _next(mv_p(std::move(next))), _s(*mv_p(std::move(s)))
+stmt_for::stmt_for(const pp_tokens_range &tr, expr* &&cond, expr* &&next,
+		   stmt* &&s) noexcept
+  : stmt{tr}, _cond{mv_p(std::move(cond))}, _next{mv_p(std::move(next))},
+    _s{*mv_p(std::move(s))}
 {
-  if (_init)
-    _init->_set_parent(*this);
   if (_cond)
     _cond->_set_parent(*this);
   if (_next)
@@ -7250,12 +7393,29 @@ stmt_for_init_expr::stmt_for_init_expr(const pp_tokens_range &tr,
   _s._set_parent(*this);
 }
 
-stmt_for_init_expr::~stmt_for_init_expr() noexcept
+stmt_for::~stmt_for() noexcept
 {
-  delete _init;
   delete _cond;
   delete _next;
   delete &_s;
+}
+
+
+stmt_for_init_expr::stmt_for_init_expr(const pp_tokens_range &tr,
+				       expr* &&init, expr* &&cond, expr* &&next,
+				       stmt* &&s) noexcept
+  : stmt_for{
+      tr, std::move(cond), std::move(next), std::move(s)
+    },
+    _init(mv_p(std::move(init)))
+{
+  if (_init)
+    _init->_set_parent(*this);
+}
+
+stmt_for_init_expr::~stmt_for_init_expr() noexcept
+{
+  delete _init;
 }
 
 _ast_entity* stmt_for_init_expr::_get_child(const size_t i) const noexcept
@@ -7314,23 +7474,17 @@ stmt_for_init_decl::stmt_for_init_decl(const pp_tokens_range &tr,
 				       declaration* &&d,
 				       expr* &&cond, expr* &&next,
 				       stmt* &&s) noexcept
-  : stmt(tr), _d(*mv_p(std::move(d))), _cond(mv_p(std::move(cond))),
-    _next(mv_p(std::move(next))), _s(*mv_p(std::move(s)))
+  : stmt_for{
+      tr, std::move(cond), std::move(next), std::move(s)
+    },
+    _d(*mv_p(std::move(d)))
 {
   _d._set_parent(*this);
-  if (_cond)
-    _cond->_set_parent(*this);
-  if (_next)
-    _next->_set_parent(*this);
-  _s._set_parent(*this);
 }
 
 stmt_for_init_decl::~stmt_for_init_decl() noexcept
 {
   delete &_d;
-  delete _cond;
-  delete _next;
-  delete &_s;
 }
 
 _ast_entity* stmt_for_init_decl::_get_child(const size_t i) const noexcept
@@ -7375,6 +7529,72 @@ bool stmt_for_init_decl::_process(processor<bool> &p)
 }
 
 bool stmt_for_init_decl::_process(const_processor<bool> &p) const
+{
+  return p(*this);
+}
+
+
+stmt_for_init_static_assert::
+stmt_for_init_static_assert(const pp_tokens_range &tr,
+			    static_assertion* &&sa,
+			    expr* &&cond, expr* &&next,
+			    stmt* &&s) noexcept
+  : stmt_for{
+      tr, std::move(cond), std::move(next), std::move(s)
+    },
+    _sa(*mv_p(std::move(sa)))
+{
+  _sa._set_parent(*this);
+}
+
+stmt_for_init_static_assert::~stmt_for_init_static_assert() noexcept
+{
+  delete &_sa;
+}
+
+_ast_entity* stmt_for_init_static_assert::_get_child(const size_t i)
+  const noexcept
+{
+  if (!i)
+      return &_sa;
+
+  std::size_t _i = i - 1;
+  if (_cond) {
+    if (!_i)
+      return _cond;
+
+    --_i;
+  }
+
+  if (_next) {
+    if (!_i)
+      return _next;
+
+    --_i;
+  }
+
+  if (!_i)
+    return &_s;
+
+  return nullptr;
+}
+
+void stmt_for_init_static_assert::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+void stmt_for_init_static_assert::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
+bool stmt_for_init_static_assert::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool stmt_for_init_static_assert::_process(const_processor<bool> &p) const
 {
   return p(*this);
 }
@@ -8098,6 +8318,53 @@ bool external_declaration_decl::_process(processor<bool> &p)
 }
 
 bool external_declaration_decl::_process(const_processor<bool> &p) const
+{
+  return p(*this);
+}
+
+
+external_declaration_static_assert::
+external_declaration_static_assert(static_assertion* &&sa) noexcept
+  : external_declaration{sa->get_tokens_range()}, _sa{*mv_p(std::move(sa))}
+{
+  _sa._set_parent(*this);
+}
+
+external_declaration_static_assert::
+~external_declaration_static_assert() noexcept
+{
+  delete &_sa;
+}
+
+_ast_entity* external_declaration_static_assert::
+_get_child(const size_t i) const noexcept
+{
+  if (!i)
+    return &_sa;
+
+  return nullptr;
+}
+
+void external_declaration_static_assert::
+_process(processor<void> &p)
+{
+  p(*this);
+}
+
+void external_declaration_static_assert::
+_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
+bool external_declaration_static_assert::
+_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool external_declaration_static_assert::
+_process(const_processor<bool> &p) const
 {
   return p(*this);
 }

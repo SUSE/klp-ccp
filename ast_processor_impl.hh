@@ -451,6 +451,13 @@ namespace klp
 
       template<typename ret_type, typename callable_type>
       ret_type _processor<ret_type, callable_type>::
+      operator()(struct_declaration_static_assert &e)
+      {
+	return _c(e);
+      }
+
+      template<typename ret_type, typename callable_type>
+      ret_type _processor<ret_type, callable_type>::
       operator()(struct_declaration_list &e)
       {
 	return _c(e);
@@ -597,6 +604,13 @@ namespace klp
       }
 
       template<typename ret_type, typename callable_type>
+      ret_type
+      _processor<ret_type, callable_type>::operator()(static_assertion &e)
+      {
+	return _c(e);
+      }
+
+      template<typename ret_type, typename callable_type>
       ret_type _processor<ret_type, callable_type>::
       operator()(parameter_declaration_declarator &e)
       {
@@ -678,6 +692,13 @@ namespace klp
       }
 
       template<typename ret_type, typename callable_type>
+      ret_type _processor<ret_type, callable_type>::
+      operator()(block_item_static_assert &e)
+      {
+	return _c(e);
+      }
+
+      template<typename ret_type, typename callable_type>
       ret_type
       _processor<ret_type, callable_type>::operator()(block_item_stmt &e)
       {
@@ -744,6 +765,13 @@ namespace klp
       template<typename ret_type, typename callable_type>
       ret_type
       _processor<ret_type, callable_type>::operator()(stmt_for_init_decl &e)
+      {
+	return _c(e);
+      }
+
+      template<typename ret_type, typename callable_type>
+      ret_type _processor<ret_type, callable_type>::
+      operator()(stmt_for_init_static_assert &e)
       {
 	return _c(e);
       }
@@ -835,6 +863,13 @@ namespace klp
       template<typename ret_type, typename callable_type>
       ret_type _processor<ret_type, callable_type>::
       operator()(external_declaration_decl &e)
+      {
+	return _c(e);
+      }
+
+      template<typename ret_type, typename callable_type>
+      ret_type _processor<ret_type, callable_type>::
+      operator()(external_declaration_static_assert &e)
       {
 	return _c(e);
       }
@@ -1296,6 +1331,13 @@ namespace klp
 
       template<typename ret_type, typename callable_type>
       ret_type _const_processor<ret_type, callable_type>::
+      operator()(const struct_declaration_static_assert &e)
+      {
+	return _c(e);
+      }
+
+      template<typename ret_type, typename callable_type>
+      ret_type _const_processor<ret_type, callable_type>::
       operator()(const struct_declaration_list &e)
       {
 	return _c(e);
@@ -1450,6 +1492,13 @@ namespace klp
 
       template<typename ret_type, typename callable_type>
       ret_type _const_processor<ret_type, callable_type>::
+      operator()(const static_assertion &e)
+      {
+	return _c(e);
+      }
+
+      template<typename ret_type, typename callable_type>
+      ret_type _const_processor<ret_type, callable_type>::
       operator()(const parameter_declaration_declarator &e)
       {
 	return _c(e);
@@ -1534,6 +1583,13 @@ namespace klp
 
       template<typename ret_type, typename callable_type>
       ret_type _const_processor<ret_type, callable_type>::
+      operator()(const block_item_static_assert &e)
+      {
+	return _c(e);
+      }
+
+      template<typename ret_type, typename callable_type>
+      ret_type _const_processor<ret_type, callable_type>::
       operator()(const block_item_stmt &e)
       {
 	return _c(e);
@@ -1605,6 +1661,13 @@ namespace klp
       template<typename ret_type, typename callable_type>
       ret_type _const_processor<ret_type, callable_type>::
       operator()(const stmt_for_init_decl &e)
+      {
+	return _c(e);
+      }
+
+      template<typename ret_type, typename callable_type>
+      ret_type _const_processor<ret_type, callable_type>::
+      operator()(const stmt_for_init_static_assert &e)
       {
 	return _c(e);
       }
@@ -1703,6 +1766,13 @@ namespace klp
       template<typename ret_type, typename callable_type>
       ret_type _const_processor<ret_type, callable_type>::
       operator()(const external_declaration_decl &e)
+      {
+	return _c(e);
+      }
+
+      template<typename ret_type, typename callable_type>
+      ret_type _const_processor<ret_type, callable_type>::
+      operator()(const external_declaration_static_assert &e)
       {
 	return _c(e);
       }

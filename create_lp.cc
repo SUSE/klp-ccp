@@ -3274,6 +3274,7 @@ namespace
     void _handle_stmt(const ast::stmt_do &s);
     void _handle_stmt(const ast::stmt_for_init_expr &s);
     void _handle_stmt(const ast::stmt_for_init_decl &s);
+    void _handle_stmt(const ast::stmt_for_init_static_assert &s);
     void _handle_stmt(const ast::stmt_return &s);
     void _handle_asm_stmt_op(const ast::asm_operand &o);
 
@@ -3632,6 +3633,10 @@ void _ast_info_collector::operator()()
 	_handle_stmt(s);
 	return false;
       },
+      [this](const ast::stmt_for_init_static_assert &s) {
+	_handle_stmt(s);
+	return false;
+      },
       [this](const ast::stmt_return &s) {
 	_handle_stmt(s);
 	return false;
@@ -3796,6 +3801,7 @@ void _ast_info_collector::operator()()
 	      const ast::stmt_do,
 	      const ast::stmt_for_init_expr,
 	      const ast::stmt_for_init_decl,
+	      const ast::stmt_for_init_static_assert,
 	      const ast::stmt_return,
 	      const ast::asm_operand,
 	      const ast::direct_declarator_array,
@@ -4514,6 +4520,15 @@ void _ast_info_collector::_handle_stmt(const ast::stmt_for_init_expr &s)
 }
 
 void _ast_info_collector::_handle_stmt(const ast::stmt_for_init_decl &s)
+{
+  if (s.get_cond())
+    _require_complete_type(*s.get_cond()->get_type());
+  if (s.get_next_expr())
+    _require_complete_type(*s.get_next_expr()->get_type());
+}
+
+void _ast_info_collector::
+_handle_stmt(const ast::stmt_for_init_static_assert &s)
 {
   if (s.get_cond())
     _require_complete_type(*s.get_cond()->get_type());
@@ -5615,6 +5630,11 @@ _fun_expr_id_needs_externalization(const ast::expr_id &eid)
 	  p = nullptr;
 	},
 	[&](const ast::stmt_for_init_decl&) {
+	  last_stmt = nullptr;
+	  need_externalization = false;
+	  p = nullptr;
+	},
+	[&](const ast::stmt_for_init_static_assert&) {
 	  last_stmt = nullptr;
 	  need_externalization = false;
 	  p = nullptr;

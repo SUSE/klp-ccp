@@ -141,6 +141,7 @@ static void empty(klp::ccp::pp_tokens_range &loc)
   klp::ccp::ast::init_declarator *init_declarator;
   klp::ccp::ast::init_declarator_list *init_declarator_list;
   klp::ccp::ast::declaration *declaration;
+  klp::ccp::ast::static_assertion *static_assertion;
   klp::ccp::ast::parameter_declaration *parameter_declaration;
   klp::ccp::ast::parameter_declaration_list *parameter_declaration_list;
   klp::ccp::ast::identifier_list *identifier_list;
@@ -237,6 +238,8 @@ static void empty(klp::ccp::pp_tokens_range &loc)
 %token TOK_KW_CONTINUE
 %token TOK_KW_BREAK
 %token TOK_KW_RETURN
+
+%token TOK_KW_STATIC_ASSERT
 
 /* Preprocessor tokens. */
 %token <token_index> TOK_STRING_LITERAL
@@ -402,6 +405,7 @@ static void empty(klp::ccp::pp_tokens_range &loc)
 %type <declaration_list>	declaration_list_opt
 %type <declaration_list>	declaration_list
 %type <declaration>	declaration_not_starting_with_att
+%type <static_assertion>	static_assertion
 %type <declaration_specifiers>	declaration_specifiers_not_starting_with_att_no_ts_opt
 %type <declaration_specifiers>	declaration_specifiers_not_starting_with_att_no_ts
 %type <declaration_specifiers>	declaration_specifiers_not_starting_with_att_ts_no_tdid
@@ -506,6 +510,8 @@ external_declaration:
 	  { $$ = new external_declaration_func(std::move($1)); }
 	| declaration_ext
 	  { $$ = new external_declaration_decl(std::move($1)); }
+	| static_assertion
+	  { $$ = new external_declaration_static_assert(std::move($1)); }
 	| asm_directive
 	  { $$ = new external_declaration_asm(std::move($1)); }
 ;
@@ -559,6 +565,11 @@ function_definition_body:
 	    pd.leave_td_scope();
 	    $$ = new stmt_compound(@$, std::move($3), std::move($4));
 	  }
+;
+
+static_assertion:
+	TOK_KW_STATIC_ASSERT TOK_LPAREN expression TOK_COMMA string_literal TOK_RPAREN TOK_SEMICOLON
+	{ $$ = new static_assertion(@$, std::move($3), std::move($5)); }
 ;
 
 declaration_ext:
@@ -904,15 +915,19 @@ struct_declaration:
 	  { $$ = new struct_declaration_c99(@$, std::move($1), std::move($2)); }
 	| specifier_qualifier_list_ts struct_declarator_list_tdid TOK_SEMICOLON
 	  { $$ = new struct_declaration_c99(@$, std::move($1), std::move($2)); }
-	|  specifier_qualifier_list_no_ts unnamed_struct_or_union TOK_SEMICOLON
+	| specifier_qualifier_list_no_ts unnamed_struct_or_union TOK_SEMICOLON
 	  {
 	    $$ = new struct_declaration_unnamed_sou(@$, std::move($1),
 						    std::move($2));
 	  }
-	|  unnamed_struct_or_union TOK_SEMICOLON
+	| unnamed_struct_or_union TOK_SEMICOLON
 	  {
 	    $$ = new struct_declaration_unnamed_sou(@$, nullptr,
 						    std::move($1));
+	  }
+	| static_assertion
+	  {
+	    $$ = new struct_declaration_static_assert(std::move($1));
 	  }
 ;
 
@@ -1989,6 +2004,8 @@ block_item_list:
 block_item:
 	declaration
 	  { $$ = new block_item_decl(std::move($1)); }
+	| static_assertion
+	  { $$ = new block_item_static_assert(std::move($1)); }
 	| statement
 	  { $$ = new block_item_stmt(std::move($1)); }
 	| function_definition
@@ -2046,6 +2063,13 @@ iteration_statement:
 	    }
 	    $$ = new stmt_for_init_decl(@$, std::move($3), std::move($4),
 					std::move($6), std::move($8));
+	  }
+	| kw_for TOK_LPAREN static_assertion expression_opt TOK_SEMICOLON expression_opt TOK_RPAREN statement
+	  {
+	    pd.leave_td_scope();
+	    $$ = new stmt_for_init_static_assert(@$, std::move($3),
+						 std::move($4), std::move($6),
+						 std::move($8));
 	  }
 ;
 

@@ -266,6 +266,7 @@ namespace klp
       class asm_label;
       class init_declarator_list;
       class declaration;
+      class static_assertion;
       class parameter_declaration;
       class parameter_declaration_declarator;
       class parameter_declaration_abstract;
@@ -328,6 +329,7 @@ namespace klp
       class struct_declaration_c99;
       class unnamed_struct_or_union;
       class struct_declaration_unnamed_sou;
+      class struct_declaration_static_assert;
       class struct_declaration_list;
       class struct_or_union_def;
       class struct_or_union_ref;
@@ -376,6 +378,7 @@ namespace klp
       class local_label_declaration_list;
       class block_item;
       class block_item_decl;
+      class block_item_static_assert;
       class block_item_stmt;
       class block_item_function_definition;
       class block_item_list;
@@ -385,8 +388,10 @@ namespace klp
       class stmt_switch;
       class stmt_while;
       class stmt_do;
+      class stmt_for;
       class stmt_for_init_expr;
       class stmt_for_init_decl;
+      class stmt_for_init_static_assert;
       class stmt_goto;
       class stmt_continue;
       class stmt_break;
@@ -402,6 +407,7 @@ namespace klp
       class translation_unit;
       class external_declaration;
       class external_declaration_decl;
+      class external_declaration_static_assert;
       class external_declaration_func;
 
       class expr_list final : public ast_entity<expr_list>
@@ -457,10 +463,11 @@ namespace klp
 			 typeof_expr,
 			 initializer_expr,
 			 designator_array,
+			 static_assertion,
 			 stmt_case, stmt_case_range,
 			 stmt_expr, stmt_if, stmt_switch,
 			 stmt_while, stmt_do,
-			 stmt_for_init_expr, stmt_for_init_decl,
+			 stmt_for, stmt_for_init_expr,
 			 stmt_goto, stmt_return,
 			 asm_operand> parent_types;
 
@@ -1432,6 +1439,7 @@ namespace klp
       {
       public:
 	typedef type_set<expr_string_literal,
+			 static_assertion,
 			 asm_directive,
 			 asm_label,
 			 asm_operand,
@@ -2362,10 +2370,20 @@ namespace klp
       public:
 	typedef type_set<struct_declaration_list> parent_types;
 
-	struct_declaration(const pp_tokens_range &tr,
-			   specifier_qualifier_list* &&sql) noexcept;
+	struct_declaration(const pp_tokens_range &tr) noexcept;
 
 	virtual ~struct_declaration() noexcept = 0;
+
+	virtual void mark_last_member() noexcept = 0;
+      };
+
+      class struct_declaration_decl : public struct_declaration
+      {
+      public:
+	struct_declaration_decl(const pp_tokens_range &tr,
+				specifier_qualifier_list* &&sql) noexcept;
+
+	virtual ~struct_declaration_decl() noexcept = 0;
 
 	specifier_qualifier_list* get_specifier_qualifier_list() noexcept
 	{ return _sql; }
@@ -2373,8 +2391,6 @@ namespace klp
 	const specifier_qualifier_list* get_specifier_qualifier_list()
 	  const noexcept
 	{ return _sql; }
-
-	virtual void mark_last_member() noexcept = 0;
 
       protected:
 	specifier_qualifier_list *_sql;
@@ -2459,7 +2475,7 @@ namespace klp
 	std::vector<std::reference_wrapper<struct_declarator> > _sds;
       };
 
-      class struct_declaration_c99 final : public struct_declaration
+      class struct_declaration_c99 final : public struct_declaration_decl
       {
       public:
 	struct_declaration_c99(const pp_tokens_range &tr,
@@ -2530,7 +2546,8 @@ namespace klp
 	std::unique_ptr<const types::struct_or_union_content> _content;
       };
 
-      class struct_declaration_unnamed_sou final : public struct_declaration
+      class struct_declaration_unnamed_sou final :
+	public struct_declaration_decl
       {
       public:
 	struct_declaration_unnamed_sou(const pp_tokens_range &tr,
@@ -2555,6 +2572,26 @@ namespace klp
 	virtual bool _process(const_processor<bool> &p) const override;
 
 	unnamed_struct_or_union &_unnamed_sou;
+      };
+
+      class struct_declaration_static_assert final : public struct_declaration
+      {
+      public:
+	struct_declaration_static_assert(static_assertion* &&sa) noexcept;
+
+	virtual ~struct_declaration_static_assert() noexcept override;
+
+	virtual void mark_last_member() noexcept override;
+
+      private:
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
+
+	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
+	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
+
+	static_assertion &_sa;
       };
 
       class struct_declaration_list final
@@ -3814,6 +3851,31 @@ namespace klp
 	init_declarator_list *_idl;
       };
 
+      class static_assertion final : public ast_entity<static_assertion>
+      {
+      public:
+	typedef type_set<struct_declaration_static_assert,
+			 stmt_for_init_static_assert,
+			 block_item_static_assert,
+			 external_declaration_static_assert> parent_types;
+
+	static_assertion(const pp_tokens_range &tr, expr* &&cond,
+			 string_literal *&&msg) noexcept;
+
+	virtual ~static_assertion() noexcept override;
+
+      private:
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
+
+	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
+	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
+
+	expr &_cond;
+	string_literal &_msg;
+      };
+
       class parameter_declaration : public ast_entity<parameter_declaration>
       {
       public:
@@ -3996,8 +4058,7 @@ namespace klp
       public:
 	typedef type_set<stmt_labeled, stmt_case, stmt_case_range,
 			 stmt_default, stmt_if, stmt_switch,
-			 stmt_while, stmt_do,
-			 stmt_for_init_expr, stmt_for_init_decl,
+			 stmt_while, stmt_do, stmt_for,
 			 block_item_stmt, function_definition,
 			 expr_statement> parent_types;
 
@@ -4182,6 +4243,24 @@ namespace klp
 	virtual bool _process(const_processor<bool> &p) const override;
 
 	declaration &_d;
+      };
+
+      class block_item_static_assert final : public block_item
+      {
+      public:
+	block_item_static_assert(static_assertion* &&sa) noexcept;
+
+	virtual ~block_item_static_assert() noexcept override;
+
+      private:
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
+
+	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
+	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
+
+	static_assertion &_sa;
       };
 
       class block_item_stmt final : public block_item
@@ -4409,7 +4488,33 @@ namespace klp
 	stmt &_s;
       };
 
-      class stmt_for_init_expr final : public stmt
+      class stmt_for : public stmt
+      {
+      public:
+	stmt_for(const pp_tokens_range &tr, expr* &&cond, expr* &&next,
+		 stmt* &&s) noexcept;
+
+	virtual ~stmt_for() noexcept override = 0;
+
+	const expr* get_cond() const noexcept
+	{ return _cond; }
+
+	expr* get_cond() noexcept
+	{ return _cond; }
+
+	const expr* get_next_expr() const noexcept
+	{ return _next; }
+
+	expr* get_next_expr() noexcept
+	{ return _next; }
+
+      protected:
+	expr *_cond;
+	expr *_next;
+	stmt &_s;
+      };
+
+      class stmt_for_init_expr final : public stmt_for
       {
       public:
 	stmt_for_init_expr(const pp_tokens_range &tr,
@@ -4424,18 +4529,6 @@ namespace klp
 	expr* get_init_expr() noexcept
 	{ return _init; }
 
-	const expr* get_cond() const noexcept
-	{ return _cond; }
-
-	expr* get_cond() noexcept
-	{ return _cond; }
-
-	const expr* get_next_expr() const noexcept
-	{ return _next; }
-
-	expr* get_next_expr() noexcept
-	{ return _next; }
-
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
@@ -4445,31 +4538,17 @@ namespace klp
 	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr *_init;
-	expr *_cond;
-	expr *_next;
-	stmt &_s;
       };
 
-      class stmt_for_init_decl final : public stmt
+      class stmt_for_init_decl final : public stmt_for
       {
       public:
 	stmt_for_init_decl(const pp_tokens_range &tr,
-			   declaration* &&d, expr* &&cond, expr* &&next,
+			   declaration* &&d,
+			   expr* &&cond, expr* &&next,
 			   stmt* &&s) noexcept;
 
 	virtual ~stmt_for_init_decl() noexcept override;
-
-	const expr* get_cond() const noexcept
-	{ return _cond; }
-
-	expr* get_cond() noexcept
-	{ return _cond; }
-
-	const expr* get_next_expr() const noexcept
-	{ return _next; }
-
-	expr* get_next_expr() noexcept
-	{ return _next; }
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -4480,9 +4559,27 @@ namespace klp
 	virtual bool _process(const_processor<bool> &p) const override;
 
 	declaration &_d;
-	expr *_cond;
-	expr *_next;
-	stmt &_s;
+      };
+
+      class stmt_for_init_static_assert final : public stmt_for
+      {
+      public:
+	stmt_for_init_static_assert(const pp_tokens_range &tr,
+			   static_assertion* &&sa,
+			   expr* &&cond, expr* &&next,
+			   stmt* &&s) noexcept;
+
+	virtual ~stmt_for_init_static_assert() noexcept override;
+
+      private:
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
+
+	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
+	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
+
+	static_assertion &_sa;
       };
 
       class stmt_goto final : public stmt
@@ -4862,6 +4959,25 @@ namespace klp
 	virtual bool _process(const_processor<bool> &p) const override;
 
 	declaration &_d;
+      };
+
+      class external_declaration_static_assert final
+	: public external_declaration
+      {
+      public:
+	external_declaration_static_assert(static_assertion* &&sa) noexcept;
+
+	virtual ~external_declaration_static_assert() noexcept override;
+
+      private:
+	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
+
+	virtual void _process(processor<void> &p) override;
+	virtual void _process(const_processor<void> &p) const override;
+	virtual bool _process(processor<bool> &p) override;
+	virtual bool _process(const_processor<bool> &p) const override;
+
+	static_assertion &_sa;
       };
 
       class external_declaration_func final : public external_declaration

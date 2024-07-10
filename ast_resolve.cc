@@ -322,6 +322,10 @@ void _id_resolver::operator()()
 	_enter_scope();
 	return true;
       },
+      [this](const stmt_for_init_static_assert&) {
+	_enter_scope();
+	return true;
+      },
       [this](const stmt_for_init_expr&) {
 	_enter_scope();
 	return true;
@@ -338,7 +342,9 @@ void _id_resolver::operator()()
 	const _ast_entity * const p = s.get_parent();
 	assert(p);
 	if (p->is_any_of<stmt_if, stmt_switch,
-			 stmt_for_init_decl, stmt_for_init_expr,
+			 stmt_for_init_decl,
+			 stmt_for_init_static_assert,
+			 stmt_for_init_expr,
 			 stmt_while, stmt_do>()) {
 	  _enter_scope();
 	  return true;
@@ -424,6 +430,7 @@ void _id_resolver::operator()()
 	     const stmt_if,
 	     const stmt_switch,
 	     const stmt_for_init_decl,
+	     const stmt_for_init_static_assert,
 	     const stmt_for_init_expr,
 	     const stmt_while,
 	     const stmt_do,
