@@ -1,0 +1,5 @@
+/* klp-ccp: from testsuite/ccp/tag-defs-12.c */
+struct A { int a; };
+
+void klpp_pu_f(struct A)
+{}

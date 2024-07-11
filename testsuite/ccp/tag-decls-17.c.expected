@@ -1,0 +1,9 @@
+/* klp-ccp: from testsuite/ccp/tag-decls-17.c */
+struct A {
+	union {
+		_Static_assert(sizeof(struct B *) != 0, "");
+	};
+};
+
+void klpp_pu_f(struct B *)
+{}

@@ -463,6 +463,7 @@ _find_scs(const ast::declaration_specifiers &ds) noexcept;
 namespace
 {
   class declaration_info;
+  class static_assert_info;
   class initializer_info;
 
   class tag_parent
@@ -471,6 +472,7 @@ namespace
     enum class kind
     {
       k_declaration,
+      k_static_assert,
       k_function_definition,
       k_function_init_declarator,
       k_object_init_declarator,
@@ -489,6 +491,7 @@ namespace
     friend class ast_info;
 
     tag_parent(declaration_info &p) noexcept;
+    tag_parent(static_assert_info &p) noexcept;
     tag_parent(function_definition_info &p) noexcept;
     tag_parent(function_init_declarator_info &p) noexcept;
     tag_parent(object_init_declarator_info &p) noexcept;
@@ -500,6 +503,7 @@ namespace
     union
     {
       declaration_info * const _parent_decl;
+      static_assert_info * const _parent_sa;
       function_definition_info * const _parent_fd;
       function_init_declarator_info * const _parent_fid;
       object_init_declarator_info * const _parent_oid;
@@ -1012,6 +1016,202 @@ namespace
     _container_type _dis;
   };
 
+  class static_assert_info
+  {
+  public:
+    static_assert_info(const ast::static_assertion &sa) noexcept;
+
+    const ast::static_assertion &static_assertion;
+    deps_on_types deps;
+    tags_infos child_tags;
+  };
+
+  class static_asserts_infos
+  {
+  private:
+    typedef std::vector<std::unique_ptr<static_assert_info>> _container_type;
+
+  public:
+    class iterator
+      : public
+	  std::iterator<std::random_access_iterator_tag, static_assert_info>
+    {
+    public:
+	bool operator==(const iterator &rhs)
+	  const noexcept
+	{ return this->_it == rhs._it; }
+
+	bool operator!=(const iterator &rhs)
+	  const noexcept
+	{ return !(*this == rhs); }
+
+	reference operator*() const noexcept
+	{ return **_it; }
+
+	pointer operator->() const noexcept
+	{ return (*_it).get(); }
+
+	iterator& operator++() noexcept
+	{ ++_it; return *this; }
+
+	const iterator operator++(int) noexcept
+	{ return iterator{_it++}; }
+
+	iterator& operator--() noexcept
+	{ --_it; return *this; }
+
+	const iterator operator--(int) noexcept
+	{ return iterator{_it--}; }
+
+	iterator&
+	operator+=(const difference_type n) noexcept
+	{ _it += n; return *this; }
+
+	iterator&
+	operator-=(const difference_type n) noexcept
+	{ _it -= n; return *this; }
+
+	const iterator
+	operator+(const difference_type n) const noexcept
+	{ return iterator(_it + n); }
+
+	const iterator
+	operator-(const difference_type n) const noexcept
+	{ return iterator(_it - n); }
+
+	const difference_type
+	operator-(const iterator &op) const noexcept
+	{ return this->_it - op._it; }
+
+	reference operator[](const difference_type n) const noexcept
+	{ return *(*this + n); }
+
+	bool operator<(const iterator &op) const noexcept
+	{ return this->_it < op._it; }
+
+	bool operator>(const iterator &op) const noexcept
+	{ return this->_it > op._it; }
+
+	bool operator<=(const iterator &op) const noexcept
+	{ return this->_it <= op._it; }
+
+	bool operator>=(const iterator &op) const noexcept
+	{ return this->_it >= op._it; }
+
+      private:
+	friend class static_asserts_infos;
+
+	iterator(const _container_type::const_iterator &it) noexcept
+	  : _it(it)
+	{}
+
+	_container_type::const_iterator _it;
+    };
+
+    class const_iterator
+      : public std::iterator<std::random_access_iterator_tag,
+			     const static_assert_info>
+    {
+    public:
+	bool operator==(const const_iterator &rhs)
+	  const noexcept
+	{ return this->_it == rhs._it; }
+
+	bool operator!=(const const_iterator &rhs)
+	  const noexcept
+	{ return !(*this == rhs); }
+
+	reference operator*() const noexcept
+	{ return **_it; }
+
+	pointer operator->() const noexcept
+	{ return (*_it).get(); }
+
+	const_iterator& operator++() noexcept
+	{ ++_it; return *this; }
+
+	const const_iterator operator++(int) noexcept
+	{ return const_iterator{_it++}; }
+
+	const_iterator& operator--() noexcept
+	{ --_it; return *this; }
+
+	const const_iterator operator--(int) noexcept
+	{ return const_iterator{_it--}; }
+
+	const_iterator&
+	operator+=(const difference_type n) noexcept
+	{ _it += n; return *this; }
+
+	const_iterator&
+	operator-=(const difference_type n) noexcept
+	{ _it -= n; return *this; }
+
+	const const_iterator
+	operator+(const difference_type n) const noexcept
+	{ return const_iterator(_it + n); }
+
+	const const_iterator
+	operator-(const difference_type n) const noexcept
+	{ return const_iterator(_it - n); }
+
+	const difference_type
+	operator-(const const_iterator &op) const noexcept
+	{ return this->_it - op._it; }
+
+	reference operator[](const difference_type n) const noexcept
+	{ return *(*this + n); }
+
+	bool operator<(const const_iterator &op) const noexcept
+	{ return this->_it < op._it; }
+
+	bool operator>(const const_iterator &op) const noexcept
+	{ return this->_it > op._it; }
+
+	bool operator<=(const const_iterator &op) const noexcept
+	{ return this->_it <= op._it; }
+
+	bool operator>=(const const_iterator &op) const noexcept
+	{ return this->_it >= op._it; }
+
+      private:
+	friend class static_asserts_infos;
+
+	const_iterator(const _container_type::const_iterator &it) noexcept
+	  : _it(it)
+	{}
+
+	_container_type::const_iterator _it;
+    };
+
+    iterator begin() noexcept
+    { return iterator{_sais.begin()}; }
+
+    iterator end() noexcept
+    { return iterator{_sais.end()}; }
+
+    const_iterator begin() const noexcept
+    { return const_iterator{_sais.begin()}; }
+
+    const_iterator end() const noexcept
+    { return const_iterator{_sais.end()}; }
+
+    template <typename... args_types>
+    iterator emplace_back(args_types&&... args)
+    {
+      return (iterator{
+		_sais.insert
+		  (_sais.end(),
+		   std::unique_ptr<static_assert_info> {
+		     new static_assert_info{std::forward<args_types>(args)...}
+		   })
+	      });
+    }
+
+  private:
+    _container_type _sais;
+  };
+
   class function_init_declarator_info
   {
   public:
@@ -1428,10 +1628,12 @@ namespace
     enum class kind
     {
       declaration,
+      static_assertion,
       function_definition,
     };
 
     external_declaration_info(declaration_info &di) noexcept;
+    external_declaration_info(static_assert_info &di) noexcept;
     external_declaration_info(function_definition_info &fdi) noexcept;
 
     const kind k;
@@ -1439,12 +1641,14 @@ namespace
     const pp_tokens_range& get_tokens_range() const noexcept;
 
     declaration_info& get_declaration() noexcept;
+    static_assert_info& get_static_assert() noexcept;
     function_definition_info& get_function_definition() noexcept;
 
   private:
     union
     {
       declaration_info * const _di;
+      static_assert_info * const _sai;
       function_definition_info * const _fdi;
     };
   };
@@ -1500,6 +1704,8 @@ namespace
 
     declaration_info& create_info(const ast::declaration &d,
 				  function_definition_info &enclosing_fd);
+
+    static_assert_info& create_info(const ast::static_assertion &sa);
 
     struct function_tag{};
 
@@ -1763,6 +1969,7 @@ namespace
     enum_info& _create_info(const ast::enum_id &enum_id);
 
     declarations_infos _declarations_infos;
+    static_asserts_infos _static_asserts_infos;
     _function_info_container_type _lid_to_functions_infos;
     _object_info_container_type _lid_to_objects_infos;
     std::map<const ast::linkage::linkage_id,
@@ -2278,6 +2485,10 @@ tag_parent::tag_parent(declaration_info &p) noexcept
   : k(kind::k_declaration), _parent_decl(&p)
 {}
 
+tag_parent::tag_parent(static_assert_info &p) noexcept
+  : k(kind::k_static_assert), _parent_sa(&p)
+{}
+
 tag_parent::tag_parent(function_definition_info &p) noexcept
   : k(kind::k_function_definition), _parent_fd(&p)
 {}
@@ -2691,6 +2902,11 @@ void declaration_info::for_each_deps_on_types(callable_type &&c) const
 }
 
 
+static_assert_info::static_assert_info(const ast::static_assertion &sa) noexcept
+  : static_assertion{sa}
+{}
+
+
 function_init_declarator_info::
 function_init_declarator_info(const ast::init_declarator &id,
 			      declaration_info &enclosing_d,
@@ -2824,6 +3040,11 @@ external_declaration_info::external_declaration_info(declaration_info &di)
   : k(kind::declaration), _di(&di)
 {}
 
+external_declaration_info::external_declaration_info(static_assert_info &sai)
+  noexcept
+  : k(kind::static_assertion), _sai(&sai)
+{}
+
 external_declaration_info::
 external_declaration_info(function_definition_info &fdi) noexcept
   : k(kind::function_definition), _fdi(&fdi)
@@ -2836,6 +3057,9 @@ const pp_tokens_range& external_declaration_info::get_tokens_range()
   case kind::declaration:
     return _di->declaration.get_tokens_range();
 
+  case kind::static_assertion:
+    return _sai->static_assertion.get_tokens_range();
+
   case kind::function_definition:
     return _fdi->function_definition.get_tokens_range();
   }
@@ -2845,6 +3069,12 @@ declaration_info& external_declaration_info::get_declaration() noexcept
 {
   assert(k == kind::declaration);
   return *_di;
+}
+
+static_assert_info& external_declaration_info::get_static_assert() noexcept
+{
+  assert(k == kind::static_assertion);
+  return *_sai;
 }
 
 function_definition_info& external_declaration_info::get_function_definition()
@@ -2952,6 +3182,13 @@ declaration_info& ast_info::create_info(const ast::declaration &d)
   const auto it_di = _declarations_infos.emplace_back(d);
   _external_declaration_infos.emplace_back(*it_di);
   return *it_di;
+}
+
+static_assert_info& ast_info::create_info(const ast::static_assertion &sa)
+{
+  const auto it_sai = _static_asserts_infos.emplace_back(sa);
+  _external_declaration_infos.emplace_back(*it_sai);
+  return *it_sai;
 }
 
 declaration_info& ast_info::create_info(const ast::declaration &d,
@@ -3306,8 +3543,9 @@ namespace
     ast_info &_ai;
     code_remarks &_remarks;
 
-    function_definition_info *_cur_function_definition;
     declaration_info *_cur_declaration;
+    static_assert_info *_cur_static_assert;
+    function_definition_info *_cur_function_definition;
 
     function_init_declarator_info *_cur_fun_init_declarator;
     object_init_declarator_info *_cur_obj_init_declarator;
@@ -3370,7 +3608,9 @@ namespace
 _ast_info_collector::_ast_info_collector(ast_info &ai, code_remarks &remarks)
   noexcept
   : _ai(ai), _remarks(remarks),
-    _cur_declaration(nullptr), _cur_function_definition(nullptr),
+    _cur_declaration(nullptr),
+    _cur_static_assert(nullptr),
+    _cur_function_definition(nullptr),
     _cur_fun_init_declarator(nullptr),
     _cur_obj_init_declarator(nullptr),
     _cur_initializer(nullptr),
@@ -3387,6 +3627,7 @@ void _ast_info_collector::operator()()
     (wrap_callables<default_action_return_value<bool, false>::type>
      ([this](const ast::function_definition &fd) {
 	assert(!_cur_declaration);
+	assert(!_cur_static_assert);
 	assert(!_cur_obj_init_declarator && !_cur_fun_init_declarator &&
 	       !_cur_td_init_declarator);
 	if (_cur_function_definition) {
@@ -3438,6 +3679,7 @@ void _ast_info_collector::operator()()
       },
       [this](const ast::declaration &d) {
 	assert(!_cur_declaration);
+	assert(!_cur_static_assert);
 	assert(!_cur_fun_init_declarator && !_cur_obj_init_declarator &&
 	       !_cur_td_init_declarator);
 	if (_cur_function_definition) {
@@ -3464,6 +3706,19 @@ void _ast_info_collector::operator()()
 	assert(!_cur_deps_on_types);
 	assert(!_cur_deps);
 	_cur_deps_on_types = &_cur_declaration->declaration_specifiers_deps;
+	return true;
+      },
+      [this](const ast::static_assertion &sa) {
+	// If there's a containing function definition or declaration,
+	// use that for dependency recording. That is, only
+	// create records for _Static_assert() at file scope.
+	if (_cur_declaration || _cur_function_definition)
+	  return false;
+
+	_cur_static_assert = &_ai.create_info(sa);
+	assert(!_cur_deps_on_types);
+	assert(!_cur_deps);
+	_cur_deps_on_types = &_cur_static_assert->deps;
 	return true;
       },
       [this](const ast::init_declarator &id) {
@@ -3702,6 +3957,12 @@ void _ast_info_collector::operator()()
 	}
 	_cur_declaration = nullptr;
       },
+      [this](const ast::static_assertion&) {
+	assert(_cur_static_assert);
+	assert(!_cur_deps);
+	_cur_deps_on_types = nullptr;
+	_cur_static_assert = nullptr;
+      },
       [this](const ast::init_declarator&) {
 	assert((!!_cur_obj_init_declarator ^ !!_cur_fun_init_declarator ^
 		!!_cur_td_init_declarator) &&
@@ -3769,6 +4030,7 @@ void _ast_info_collector::operator()()
 	      const ast::stmt_compound,
 	      const ast::parameter_declaration_list,
 	      const ast::declaration,
+	      const ast::static_assertion,
 	      const ast::init_declarator,
 	      const ast::initializer_expr,
 	      const ast::initializer,
@@ -3814,6 +4076,7 @@ void _ast_info_collector::operator()()
 	      const ast::stmt_compound,
 	      const ast::parameter_declaration_list,
 	      const ast::declaration,
+	      const ast::static_assertion,
 	      const ast::init_declarator,
 	      const ast::initializer_expr,
 	      const ast::initializer,
@@ -4038,9 +4301,12 @@ _create_tag_info(const ast_entity_type &ast_entity)
   } else if (_cur_td_init_declarator) {
     return _ai.create_info(ast_entity, *_cur_td_init_declarator);
 
-  } else {
-    assert(_cur_declaration);
+  } else if (_cur_declaration) {
     return _ai.create_info(ast_entity, *_cur_declaration);
+
+  } else {
+    assert(_cur_static_assert);
+    return _ai.create_info(ast_entity, *_cur_static_assert);
 
   }
 }
@@ -6824,6 +7090,20 @@ _check_header_ordering_constraints(const pp_result::header_inclusion_node &h)
       }
       break;
 
+    case external_declaration_info::kind::static_assertion:
+      {
+	const static_assert_info &sai = it_ed->get_static_assert();
+	for (const auto &d : sai.deps.on_decl_types) {
+	  const auto * const esm = d.get_target_externalized_sym_mod();
+	  if (esm && esm->make_pointer && !esm->sym_mod.is_rename()) {
+	    hi.eligible = false;
+	    return;
+	  }
+	}
+	block_deps_on_tag_non_decls += sai.deps.on_tag_non_decls;
+      }
+      break;
+
     case external_declaration_info::kind::function_definition:
       {
 	const function_definition_info &fdi = it_ed->get_function_definition();
@@ -6955,6 +7235,9 @@ _check_header_ordering_constraints(const pp_result::header_inclusion_node &h)
 	  }
 	}
       }
+      break;
+
+    case external_declaration_info::kind::static_assertion:
       break;
 
     case external_declaration_info::kind::function_definition:
@@ -7803,6 +8086,13 @@ bool _lp_deps_resolver::_queue_includes_for(const pp_tokens_range &r)
 	}
 	break;
 
+      case external_declaration_info::kind::static_assertion:
+	{
+	  const static_assert_info &sai = it_ed->get_static_assert();
+	  queue_deps_from_header(sai.deps);
+	}
+	break;
+
       case external_declaration_info::kind::function_definition:
 	{
 	  function_definition_info &fdi = it_ed->get_function_definition();
@@ -8253,6 +8543,14 @@ void _lp_writer::operator()()
 	}
 	break;
 
+      case external_declaration_info::kind::static_assertion:
+	{
+	  static_assert_info &sai = it_ed->get_static_assert();
+	  if (_any_tag_needed(sai.child_tags))
+	    _emit_tags(sai.child_tags, nullptr);
+	}
+	break;
+
       case external_declaration_info::kind::function_definition:
 	{
 	  function_definition_info &fdi = it_ed->get_function_definition();
@@ -8394,6 +8692,9 @@ void _lp_writer::_emit_inclusion_sequence
       }
       break;
 
+    case external_declaration_info::kind::static_assertion:
+      break;
+
     case external_declaration_info::kind::function_definition:
       {
 	function_definition_info &fdi = it_ed->get_function_definition();
@@ -8514,6 +8815,9 @@ void _lp_writer::_emit_inclusion_sequence
 	    [&](typedef_init_declarator_info &tdidi) {
 	    }));
       }
+      break;
+
+    case external_declaration_info::kind::static_assertion:
       break;
 
     case external_declaration_info::kind::function_definition:

@@ -1,0 +1,9 @@
+/* klp-ccp: from testsuite/ccp/tag-decls-16.c */
+struct A;
+
+#include "tag-decls-16.h"
+
+void klpp_pu_f(void)
+{
+	g();
+}

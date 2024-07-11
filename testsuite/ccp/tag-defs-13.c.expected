@@ -1,0 +1,12 @@
+/* klp-ccp: from testsuite/ccp/tag-defs-13.c */
+struct A
+{
+	int a;
+};
+
+#include "tag-defs-13.h"
+
+void klpp_pu_f(void)
+{
+	g();
+}
