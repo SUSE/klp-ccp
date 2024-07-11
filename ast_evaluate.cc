@@ -156,6 +156,9 @@ void _evaluator::operator()()
       [](const function_definition&) {
 	return true;
       },
+      [](const static_assertion&) {
+	return true;
+      },
       [](const stmt_case&) {
 	return true;
       },
@@ -263,6 +266,9 @@ void _evaluator::operator()()
       [this](const function_definition &fd) {
 	_check_function_definition(fd);
       },
+      [&](const static_assertion &sa) {
+	sa.test_assertion(_ast, _tgt);
+      },
       [](stmt_case &s) {
 	s.get_expr().apply_lvalue_conversion(false);
       },
@@ -352,6 +358,7 @@ void _evaluator::operator()()
 				       init_declarator,
 				       parameter_declaration_abstract,
 				       function_definition,
+				       static_assertion,
 				       stmt_case, stmt_case_range,
 				       stmt_expr, stmt_if, stmt_switch,
 				       stmt_while, stmt_do,
@@ -368,6 +375,7 @@ void _evaluator::operator()()
 				       init_declarator,
 				       parameter_declaration_abstract,
 				       function_definition,
+				       static_assertion,
 				       stmt_case, stmt_case_range,
 				       stmt_expr, stmt_if, stmt_switch,
 				       stmt_while, stmt_do,
@@ -7272,4 +7280,26 @@ void expr_parenthesized::evaluate_type(ast&, const target&)
     _set_value(_e.get_constexpr_value().clone());
   _set_type(_e.get_type());
   _set_lvalue(_e.is_lvalue());
+}
+
+void static_assertion::test_assertion(ast &a, const target &tgt) const
+{
+  if (!_cond.is_constexpr()) {
+    code_remark remark
+      (code_remark::severity::warning,
+       "_Static_assert() condition does't evaluate to constant expression",
+       a.get_pp_result(), get_tokens_range());
+    a.get_remarks().add(remark);
+    return;
+  }
+
+  const constexpr_value &cv = _cond.get_constexpr_value();
+  if (cv.is_zero()) {
+    code_remark remark
+      (code_remark::severity::warning,
+       "_Static_assert() condition failure",
+       a.get_pp_result(), get_tokens_range());
+    a.get_remarks().add(remark);
+    return;
+  }
 }

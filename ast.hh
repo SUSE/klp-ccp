@@ -3864,6 +3864,8 @@ namespace klp
 
 	virtual ~static_assertion() noexcept override;
 
+	void test_assertion(ast &a, const target &tgt) const;
+
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
 
