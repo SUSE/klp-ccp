@@ -4983,6 +4983,98 @@ namespace
 
     std::shared_ptr<const types::int_type> _expected_it;
   };
+
+  class _builtin_clz : public builtin_func
+  {
+  public:
+    typedef std::shared_ptr<const types::int_type>(*t_fac)(const target&);
+
+    virtual evaluation_result_type
+    evaluate(klp::ccp::ast::ast &a, const target &tgt,
+	     ast::expr_func_invocation &efi) const override;
+
+    template <t_fac tfac>
+    static builtin_func::factory factory(const target_gcc &tgt);
+
+  private:
+    _builtin_clz(std::shared_ptr<const types::int_type> &&expected_it)
+      noexcept;
+
+    static std::unique_ptr<builtin_func>
+    _create(const std::reference_wrapper<const target_gcc> &tgt,
+	    const t_fac tfac);
+
+    std::shared_ptr<const types::int_type> _expected_it;
+  };
+
+  class _builtin_ctz : public builtin_func
+  {
+  public:
+    typedef std::shared_ptr<const types::int_type>(*t_fac)(const target&);
+
+    virtual evaluation_result_type
+    evaluate(klp::ccp::ast::ast &a, const target &tgt,
+	     ast::expr_func_invocation &efi) const override;
+
+    template <t_fac tfac>
+    static builtin_func::factory factory(const target_gcc &tgt);
+
+  private:
+    _builtin_ctz(std::shared_ptr<const types::int_type> &&expected_it)
+      noexcept;
+
+    static std::unique_ptr<builtin_func>
+    _create(const std::reference_wrapper<const target_gcc> &tgt,
+	    const t_fac tfac);
+
+    std::shared_ptr<const types::int_type> _expected_it;
+  };
+
+  class _builtin_clrsb : public builtin_func
+  {
+  public:
+    typedef std::shared_ptr<const types::int_type>(*t_fac)(const target&);
+
+    virtual evaluation_result_type
+    evaluate(klp::ccp::ast::ast &a, const target &tgt,
+	     ast::expr_func_invocation &efi) const override;
+
+    template <t_fac tfac>
+    static builtin_func::factory factory(const target_gcc &tgt);
+
+  private:
+    _builtin_clrsb(std::shared_ptr<const types::int_type> &&expected_it)
+      noexcept;
+
+    static std::unique_ptr<builtin_func>
+    _create(const std::reference_wrapper<const target_gcc> &tgt,
+	    const t_fac tfac);
+
+    std::shared_ptr<const types::int_type> _expected_it;
+  };
+
+  class _builtin_ffs : public builtin_func
+  {
+  public:
+    typedef std::shared_ptr<const types::int_type>(*t_fac)(const target&);
+
+    virtual evaluation_result_type
+    evaluate(klp::ccp::ast::ast &a, const target &tgt,
+	     ast::expr_func_invocation &efi) const override;
+
+    template <t_fac tfac>
+    static builtin_func::factory factory(const target_gcc &tgt);
+
+  private:
+    _builtin_ffs(std::shared_ptr<const types::int_type> &&expected_it)
+      noexcept;
+
+    static std::unique_ptr<builtin_func>
+    _create(const std::reference_wrapper<const target_gcc> &tgt,
+	    const t_fac tfac);
+
+    std::shared_ptr<const types::int_type> _expected_it;
+  };
 }
 
 _builtin_func_pi_overload::
@@ -5518,6 +5610,434 @@ _builtin_bswap::evaluate(klp::ccp::ast::ast &a, const target &tgt,
   const ast::constexpr_value &cv0 = args[0].get_constexpr_value();
   target_int i_result = cv0.convert_to(tgt, *_expected_it);
   i_result = i_result.bswap();
+  std::unique_ptr<ast::constexpr_value> cv_result;
+  using constness = ast::constexpr_value::constness;
+  if (cv0.has_constness(constness::c_integer_constant_expr)) {
+    cv_result.reset
+      (new ast::constexpr_value {
+	 ast::constexpr_value::integer_constant_expr_tag{},
+	 std::move(i_result)
+       });
+  } else if (cv0.has_constness(constness::c_arithmetic_constant_expr)) {
+    cv_result.reset
+      (new ast::constexpr_value {
+	 ast::constexpr_value::arithmetic_constant_expr_tag{},
+	 std::move(i_result)
+       });
+  } else {
+    cv_result.reset(new ast::constexpr_value{std::move(i_result)});
+  }
+
+  return evaluation_result_type{
+    std::move(_expected_it), std::move(cv_result),
+    false
+  };
+}
+
+_builtin_clz::
+_builtin_clz(std::shared_ptr<const types::int_type> &&expected_it)
+  noexcept
+  : _expected_it{std::move(expected_it)}
+{}
+
+template <_builtin_clz::t_fac tfac>
+builtin_func::factory _builtin_clz::factory(const target_gcc &tgt)
+{
+  return std::bind(_builtin_clz::_create, std::cref(tgt), tfac);
+}
+
+std::unique_ptr<builtin_func>
+_builtin_clz::_create(const std::reference_wrapper<const target_gcc> &tgt,
+			const t_fac tfac)
+{
+  return std::unique_ptr<builtin_func>{
+    new _builtin_clz{tfac(tgt.get())}
+  };
+}
+
+builtin_func::evaluation_result_type
+_builtin_clz::evaluate(klp::ccp::ast::ast &a, const target &tgt,
+			 ast::expr_func_invocation &efi) const
+{
+  if (!efi.get_args() || efi.get_args()->size() != 1) {
+    code_remark remark
+      (code_remark::severity::warning,
+       "wrong number of arguments to __builtin_clz()",
+       a.get_pp_result(), efi.get_tokens_range());
+    a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  ast::expr_list &args = *efi.get_args();
+  args.apply_lvalue_conversions(false);
+
+  types::handle_types<void>
+    ((wrap_callables<default_action_nop>
+      ([&](const std::shared_ptr<const types::arithmetic_type> &t) {
+	 types::handle_types<void>
+	   ((wrap_callables<default_action_nop>
+	     ([&](const types::enum_type &et) {
+		if (!et.is_complete()) {
+		  code_remark remark
+		    (code_remark::severity::fatal,
+		     ("argument to __builtin_clz() has incomplete enum type"),
+		     a.get_pp_result(), args[0].get_tokens_range());
+		  a.get_remarks().add(remark);
+		  throw semantic_except(remark);
+		}
+	      })),
+	    *t);
+       },
+       [&](const std::shared_ptr<const types::bitfield_type> &) {
+       },
+       [&](const std::shared_ptr<const types::type>&) {
+	 code_remark remark
+	   (code_remark::severity::warning,
+	    "non-arithmetic argument to __builtin_clz()",
+	    a.get_pp_result(), args[0].get_tokens_range());
+	 a.get_remarks().add(remark);
+       })),
+     args[0].get_type());
+
+  if (!args[0].is_constexpr() ||
+      (args[0].get_constexpr_value().get_value_kind() ==
+       ast::constexpr_value::value_kind::vk_address)) {
+    return evaluation_result_type{_expected_it, nullptr, false};
+  }
+
+  const ast::constexpr_value &cv0 = args[0].get_constexpr_value();
+  const target_int i_val = cv0.convert_to(tgt, *_expected_it);
+  const mpa::limbs::size_type clz_result =
+    i_val.width() - i_val.get_limbs().fls();
+  const target_int i_result =
+    target_int{
+      tgt.get_std_int_width(types::std_int_type::kind::k_int) - 1,
+      true,
+      mpa::limbs(clz_result),
+    };
+
+  std::unique_ptr<ast::constexpr_value> cv_result;
+  using constness = ast::constexpr_value::constness;
+  if (cv0.has_constness(constness::c_integer_constant_expr)) {
+    cv_result.reset
+      (new ast::constexpr_value {
+	 ast::constexpr_value::integer_constant_expr_tag{},
+	 std::move(i_result)
+       });
+  } else if (cv0.has_constness(constness::c_arithmetic_constant_expr)) {
+    cv_result.reset
+      (new ast::constexpr_value {
+	 ast::constexpr_value::arithmetic_constant_expr_tag{},
+	 std::move(i_result)
+       });
+  } else {
+    cv_result.reset(new ast::constexpr_value{std::move(i_result)});
+  }
+
+  return evaluation_result_type{
+    std::move(_expected_it), std::move(cv_result),
+    false
+  };
+}
+
+_builtin_ctz::
+_builtin_ctz(std::shared_ptr<const types::int_type> &&expected_it)
+  noexcept
+  : _expected_it{std::move(expected_it)}
+{}
+
+template <_builtin_ctz::t_fac tfac>
+builtin_func::factory _builtin_ctz::factory(const target_gcc &tgt)
+{
+  return std::bind(_builtin_ctz::_create, std::cref(tgt), tfac);
+}
+
+std::unique_ptr<builtin_func>
+_builtin_ctz::_create(const std::reference_wrapper<const target_gcc> &tgt,
+			const t_fac tfac)
+{
+  return std::unique_ptr<builtin_func>{
+    new _builtin_ctz{tfac(tgt.get())}
+  };
+}
+
+builtin_func::evaluation_result_type
+_builtin_ctz::evaluate(klp::ccp::ast::ast &a, const target &tgt,
+			 ast::expr_func_invocation &efi) const
+{
+  if (!efi.get_args() || efi.get_args()->size() != 1) {
+    code_remark remark
+      (code_remark::severity::warning,
+       "wrong number of arguments to __builtin_ctz()",
+       a.get_pp_result(), efi.get_tokens_range());
+    a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  ast::expr_list &args = *efi.get_args();
+  args.apply_lvalue_conversions(false);
+
+  types::handle_types<void>
+    ((wrap_callables<default_action_nop>
+      ([&](const std::shared_ptr<const types::arithmetic_type> &t) {
+	 types::handle_types<void>
+	   ((wrap_callables<default_action_nop>
+	     ([&](const types::enum_type &et) {
+		if (!et.is_complete()) {
+		  code_remark remark
+		    (code_remark::severity::fatal,
+		     ("argument to __builtin_ctz() has incomplete enum type"),
+		     a.get_pp_result(), args[0].get_tokens_range());
+		  a.get_remarks().add(remark);
+		  throw semantic_except(remark);
+		}
+	      })),
+	    *t);
+       },
+       [&](const std::shared_ptr<const types::bitfield_type> &) {
+       },
+       [&](const std::shared_ptr<const types::type>&) {
+	 code_remark remark
+	   (code_remark::severity::warning,
+	    "non-arithmetic argument to __builtin_ctz()",
+	    a.get_pp_result(), args[0].get_tokens_range());
+	 a.get_remarks().add(remark);
+       })),
+     args[0].get_type());
+
+  if (!args[0].is_constexpr() ||
+      (args[0].get_constexpr_value().get_value_kind() ==
+       ast::constexpr_value::value_kind::vk_address)) {
+    return evaluation_result_type{_expected_it, nullptr, false};
+  }
+
+  const ast::constexpr_value &cv0 = args[0].get_constexpr_value();
+  const target_int i_val = cv0.convert_to(tgt, *_expected_it);
+  mpa::limbs::size_type ctz_result =
+    i_val.get_limbs().ffs();
+  if (ctz_result != 0)
+    --ctz_result;
+  else
+    ctz_result = _expected_it->get_width(tgt);
+  const target_int i_result =
+    target_int{
+      tgt.get_std_int_width(types::std_int_type::kind::k_int) - 1,
+      true,
+      mpa::limbs(ctz_result),
+    };
+
+  std::unique_ptr<ast::constexpr_value> cv_result;
+  using constness = ast::constexpr_value::constness;
+  if (cv0.has_constness(constness::c_integer_constant_expr)) {
+    cv_result.reset
+      (new ast::constexpr_value {
+	 ast::constexpr_value::integer_constant_expr_tag{},
+	 std::move(i_result)
+       });
+  } else if (cv0.has_constness(constness::c_arithmetic_constant_expr)) {
+    cv_result.reset
+      (new ast::constexpr_value {
+	 ast::constexpr_value::arithmetic_constant_expr_tag{},
+	 std::move(i_result)
+       });
+  } else {
+    cv_result.reset(new ast::constexpr_value{std::move(i_result)});
+  }
+
+  return evaluation_result_type{
+    std::move(_expected_it), std::move(cv_result),
+    false
+  };
+}
+
+_builtin_clrsb::
+_builtin_clrsb(std::shared_ptr<const types::int_type> &&expected_it)
+  noexcept
+  : _expected_it{std::move(expected_it)}
+{}
+
+template <_builtin_clrsb::t_fac tfac>
+builtin_func::factory _builtin_clrsb::factory(const target_gcc &tgt)
+{
+  return std::bind(_builtin_clrsb::_create, std::cref(tgt), tfac);
+}
+
+std::unique_ptr<builtin_func>
+_builtin_clrsb::_create(const std::reference_wrapper<const target_gcc> &tgt,
+			const t_fac tfac)
+{
+  return std::unique_ptr<builtin_func>{
+    new _builtin_clrsb{tfac(tgt.get())}
+  };
+}
+
+builtin_func::evaluation_result_type
+_builtin_clrsb::evaluate(klp::ccp::ast::ast &a, const target &tgt,
+			 ast::expr_func_invocation &efi) const
+{
+  if (!efi.get_args() || efi.get_args()->size() != 1) {
+    code_remark remark
+      (code_remark::severity::warning,
+       "wrong number of arguments to __builtin_clrsb()",
+       a.get_pp_result(), efi.get_tokens_range());
+    a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  ast::expr_list &args = *efi.get_args();
+  args.apply_lvalue_conversions(false);
+
+  types::handle_types<void>
+    ((wrap_callables<default_action_nop>
+      ([&](const std::shared_ptr<const types::arithmetic_type> &t) {
+	 types::handle_types<void>
+	   ((wrap_callables<default_action_nop>
+	     ([&](const types::enum_type &et) {
+		if (!et.is_complete()) {
+		  code_remark remark
+		    (code_remark::severity::fatal,
+		     ("argument to __builtin_clrsb() has incomplete enum type"),
+		     a.get_pp_result(), args[0].get_tokens_range());
+		  a.get_remarks().add(remark);
+		  throw semantic_except(remark);
+		}
+	      })),
+	    *t);
+       },
+       [&](const std::shared_ptr<const types::bitfield_type> &) {
+       },
+       [&](const std::shared_ptr<const types::type>&) {
+	 code_remark remark
+	   (code_remark::severity::warning,
+	    "non-arithmetic argument to __builtin_clrsb()",
+	    a.get_pp_result(), args[0].get_tokens_range());
+	 a.get_remarks().add(remark);
+       })),
+     args[0].get_type());
+
+  if (!args[0].is_constexpr() ||
+      (args[0].get_constexpr_value().get_value_kind() ==
+       ast::constexpr_value::value_kind::vk_address)) {
+    return evaluation_result_type{_expected_it, nullptr, false};
+  }
+
+  const ast::constexpr_value &cv0 = args[0].get_constexpr_value();
+  const target_int i_val = cv0.convert_to(tgt, *_expected_it);
+  const mpa::limbs::size_type clrsb_result =
+    (_expected_it->get_width(tgt) -
+     (i_val.get_limbs().width() - i_val.get_limbs().clrsb()));
+  const target_int i_result =
+    target_int{
+      tgt.get_std_int_width(types::std_int_type::kind::k_int) - 1,
+      true,
+      mpa::limbs(clrsb_result),
+    };
+
+  std::unique_ptr<ast::constexpr_value> cv_result;
+  using constness = ast::constexpr_value::constness;
+  if (cv0.has_constness(constness::c_integer_constant_expr)) {
+    cv_result.reset
+      (new ast::constexpr_value {
+	 ast::constexpr_value::integer_constant_expr_tag{},
+	 std::move(i_result)
+       });
+  } else if (cv0.has_constness(constness::c_arithmetic_constant_expr)) {
+    cv_result.reset
+      (new ast::constexpr_value {
+	 ast::constexpr_value::arithmetic_constant_expr_tag{},
+	 std::move(i_result)
+       });
+  } else {
+    cv_result.reset(new ast::constexpr_value{std::move(i_result)});
+  }
+
+  return evaluation_result_type{
+    std::move(_expected_it), std::move(cv_result),
+    false
+  };
+}
+
+_builtin_ffs::
+_builtin_ffs(std::shared_ptr<const types::int_type> &&expected_it)
+  noexcept
+  : _expected_it{std::move(expected_it)}
+{}
+
+template <_builtin_ffs::t_fac tfac>
+builtin_func::factory _builtin_ffs::factory(const target_gcc &tgt)
+{
+  return std::bind(_builtin_ffs::_create, std::cref(tgt), tfac);
+}
+
+std::unique_ptr<builtin_func>
+_builtin_ffs::_create(const std::reference_wrapper<const target_gcc> &tgt,
+			const t_fac tfac)
+{
+  return std::unique_ptr<builtin_func>{
+    new _builtin_ffs{tfac(tgt.get())}
+  };
+}
+
+builtin_func::evaluation_result_type
+_builtin_ffs::evaluate(klp::ccp::ast::ast &a, const target &tgt,
+			 ast::expr_func_invocation &efi) const
+{
+  if (!efi.get_args() || efi.get_args()->size() != 1) {
+    code_remark remark
+      (code_remark::severity::warning,
+       "wrong number of arguments to __builtin_ffs()",
+       a.get_pp_result(), efi.get_tokens_range());
+    a.get_remarks().add(remark);
+    throw semantic_except(remark);
+  }
+
+  ast::expr_list &args = *efi.get_args();
+  args.apply_lvalue_conversions(false);
+
+  types::handle_types<void>
+    ((wrap_callables<default_action_nop>
+      ([&](const std::shared_ptr<const types::arithmetic_type> &t) {
+	 types::handle_types<void>
+	   ((wrap_callables<default_action_nop>
+	     ([&](const types::enum_type &et) {
+		if (!et.is_complete()) {
+		  code_remark remark
+		    (code_remark::severity::fatal,
+		     ("argument to __builtin_ffs() has incomplete enum type"),
+		     a.get_pp_result(), args[0].get_tokens_range());
+		  a.get_remarks().add(remark);
+		  throw semantic_except(remark);
+		}
+	      })),
+	    *t);
+       },
+       [&](const std::shared_ptr<const types::bitfield_type> &) {
+       },
+       [&](const std::shared_ptr<const types::type>&) {
+	 code_remark remark
+	   (code_remark::severity::warning,
+	    "non-arithmetic argument to __builtin_ffs()",
+	    a.get_pp_result(), args[0].get_tokens_range());
+	 a.get_remarks().add(remark);
+       })),
+     args[0].get_type());
+
+  if (!args[0].is_constexpr() ||
+      (args[0].get_constexpr_value().get_value_kind() ==
+       ast::constexpr_value::value_kind::vk_address)) {
+    return evaluation_result_type{_expected_it, nullptr, false};
+  }
+
+  const ast::constexpr_value &cv0 = args[0].get_constexpr_value();
+  const target_int i_val = cv0.convert_to(tgt, *_expected_it);
+  const mpa::limbs::size_type ffs_result = i_val.get_limbs().ffs();
+  const target_int i_result =
+    target_int{
+      tgt.get_std_int_width(types::std_int_type::kind::k_int) - 1,
+      true,
+      mpa::limbs(ffs_result),
+    };
+
   std::unique_ptr<ast::constexpr_value> cv_result;
   using constness = ast::constexpr_value::constness;
   if (cv0.has_constness(constness::c_integer_constant_expr)) {
@@ -6598,19 +7118,19 @@ target_gcc::_register_builtin_funcs()
     { "__builtin_calloc", sp_pv_sz_sz_fac },
     { "__builtin___clear_cache", sp_v_pv_pv_fac },
     { "__builtin_classify_type", sp_i_var_fac },
-    { "__builtin_clz", sp_i_u_fac },
-    { "__builtin_clzimax", sp_i_umax_fac },
-    { "__builtin_clzl", sp_i_ul_fac },
-    { "__builtin_clzll", sp_i_ull_fac },
+    { "__builtin_clz", _builtin_clz::factory<mk_u>(*this) },
+    { "__builtin_clzimax", _builtin_clz::factory<mk_umax>(*this) },
+    { "__builtin_clzl", _builtin_clz::factory<mk_ul>(*this) },
+    { "__builtin_clzll", _builtin_clz::factory<mk_ull>(*this) },
     { "__builtin_constant_p", builtin_func_constant_p::create },
-    { "__builtin_ctz", sp_i_u_fac },
-    { "__builtin_ctzimax", sp_i_umax_fac },
-    { "__builtin_ctzl", sp_i_ul_fac },
-    { "__builtin_ctzll", sp_i_ull_fac },
-    { "__builtin_clrsb", sp_i_i_fac },
-    { "__builtin_clrsbimax", sp_i_imax_fac },
-    { "__builtin_clrsbl", sp_i_l_fac },
-    { "__builtin_clrsbll", sp_i_ll_fac },
+    { "__builtin_ctz", _builtin_ctz::factory<mk_u>(*this) },
+    { "__builtin_ctzimax", _builtin_ctz::factory<mk_umax>(*this) },
+    { "__builtin_ctzl", _builtin_ctz::factory<mk_ul>(*this) },
+    { "__builtin_ctzll", _builtin_ctz::factory<mk_ull>(*this) },
+    { "__builtin_clrsb", _builtin_clrsb::factory<mk_i>(*this) },
+    { "__builtin_clrsbimax", _builtin_clrsb::factory<mk_imax>(*this) },
+    { "__builtin_clrsbl", _builtin_clrsb::factory<mk_l>(*this) },
+    { "__builtin_clrsbll", _builtin_clrsb::factory<mk_ll>(*this) },
     { "__builtin_dcgettext", sp_pc_pcc_pcc_i_fac },
     { "__builtin_dgettext", sp_pc_pcc_pcc_fac },
     { "__builtin_dwarf_cfa", sp_pv_fac },
@@ -6627,10 +7147,10 @@ target_gcc::_register_builtin_funcs()
     { "__builtin_expect", sp_l_l_l_fac },
     { "__builtin_extend_pointer", sp_sz_pv_fac },
     { "__builtin_extract_return_addr", sp_pv_pv_fac },
-    { "__builtin_ffs", sp_i_i_fac },
-    { "__builtin_ffsimax", sp_i_imax_fac },
-    { "__builtin_ffsl", sp_i_l_fac },
-    { "__builtin_ffsll", sp_i_ll_fac },
+    { "__builtin_ffs", _builtin_ffs::factory<mk_i>(*this) },
+    { "__builtin_ffsimax", _builtin_ffs::factory<mk_imax>(*this) },
+    { "__builtin_ffsl", _builtin_ffs::factory<mk_l>(*this) },
+    { "__builtin_ffsll", _builtin_ffs::factory<mk_ll>(*this) },
     { "__builtin_fork", sp_pid_fac },
     { "__builtin_frame_address", sp_pv_u_fac },
     { "__builtin_free", sp_v_pv_fac },
