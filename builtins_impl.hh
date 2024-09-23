@@ -104,37 +104,37 @@ namespace klp
 	std::shared_ptr<const types::addressable_type>
 	mk_v(const target&);
 
-	std::shared_ptr<const types::addressable_type>
+	std::shared_ptr<const types::int_type>
 	mk_i(const target&);
 
-	std::shared_ptr<const types::addressable_type>
+	std::shared_ptr<const types::int_type>
 	mk_u(const target&);
 
-	std::shared_ptr<const types::addressable_type>
+	std::shared_ptr<const types::int_type>
 	mk_l(const target&);
 
-	std::shared_ptr<const types::addressable_type>
+	std::shared_ptr<const types::int_type>
 	mk_ul(const target&);
 
-	std::shared_ptr<const types::addressable_type>
+	std::shared_ptr<const types::int_type>
 	mk_ll(const target&);
 
-	std::shared_ptr<const types::addressable_type>
+	std::shared_ptr<const types::int_type>
 	mk_ull(const target&);
 
 	std::shared_ptr<const types::addressable_type>
 	mk_b(const target&);
 
-	std::shared_ptr<const types::addressable_type>
+	std::shared_ptr<const types::int_type>
 	mk_imax(const target &tgt);
 
-	std::shared_ptr<const types::addressable_type>
+	std::shared_ptr<const types::int_type>
 	mk_umax(const target &tgt);
 
-	std::shared_ptr<const types::addressable_type>
+	std::shared_ptr<const types::int_type>
 	mk_sz(const target &tgt);
 
-	std::shared_ptr<const types::addressable_type>
+	std::shared_ptr<const types::int_type>
 	mk_ssz(const target &tgt);
 
 	std::shared_ptr<const types::addressable_type>

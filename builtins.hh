@@ -44,6 +44,7 @@ namespace klp
     {
       class type;
       class addressable_type;
+      class int_type;
     }
 
     class builtin_func

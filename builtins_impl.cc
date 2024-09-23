@@ -81,37 +81,37 @@ klp::ccp::builtins::impl::mk_v(const target&)
 {
   return void_type::create();
 }
-std::shared_ptr<const addressable_type>
+std::shared_ptr<const int_type>
 klp::ccp::builtins::impl::mk_i(const target&)
 {
   return std_int_type::create(std_int_type::kind::k_int, true);
 }
 
-std::shared_ptr<const addressable_type>
+std::shared_ptr<const int_type>
 klp::ccp::builtins::impl::mk_u(const target&)
 {
   return std_int_type::create(std_int_type::kind::k_int, false);
 }
 
-std::shared_ptr<const addressable_type>
+std::shared_ptr<const int_type>
 klp::ccp::builtins::impl::mk_l(const target&)
 {
   return std_int_type::create(std_int_type::kind::k_long, true);
 }
 
-std::shared_ptr<const addressable_type>
+std::shared_ptr<const int_type>
 klp::ccp::builtins::impl::mk_ul(const target&)
 {
   return std_int_type::create(std_int_type::kind::k_long, false);
 }
 
-std::shared_ptr<const addressable_type>
+std::shared_ptr<const int_type>
 klp::ccp::builtins::impl::mk_ll(const target&)
 {
   return std_int_type::create(std_int_type::kind::k_long_long, true);
 }
 
-std::shared_ptr<const addressable_type>
+std::shared_ptr<const int_type>
 klp::ccp::builtins::impl::mk_ull(const target&)
 {
   return std_int_type::create(std_int_type::kind::k_long_long, false);
@@ -123,25 +123,25 @@ klp::ccp::builtins::impl::mk_b(const target&)
   return bool_type::create();
 }
 
-std::shared_ptr<const addressable_type>
+std::shared_ptr<const int_type>
 klp::ccp::builtins::impl::mk_imax(const target &tgt)
 {
   return tgt.create_int_max_type(true);
 }
 
-std::shared_ptr<const addressable_type>
+std::shared_ptr<const int_type>
 klp::ccp::builtins::impl::mk_umax(const target &tgt)
 {
   return tgt.create_int_max_type(false);
 }
 
-std::shared_ptr<const addressable_type>
+std::shared_ptr<const int_type>
 klp::ccp::builtins::impl::mk_sz(const target &tgt)
 {
   return tgt.create_ptrdiff_type(false);
 }
 
-std::shared_ptr<const addressable_type>
+std::shared_ptr<const int_type>
 klp::ccp::builtins::impl::mk_ssz(const target &tgt)
 {
   return tgt.create_ptrdiff_type(true);
