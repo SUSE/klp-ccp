@@ -1,4 +1,4 @@
-SUBDIRS = . arch testsuite
+SUBDIRS = . arch lp-creation-python-policy testsuite
 
 AM_YFLAGS = -d
 BUILT_SOURCES = gnuc_parser.hh pp_expr_parser.hh stack.hh
@@ -31,7 +31,7 @@ noinst_HEADERS =				\
 	gnuc_parser_driver.hh			\
 	header_resolver.hh			\
 	lp_creation_policy.hh			\
-	lp_creation_policy_user_commands.hh	\
+	lp_creation_python_policy.hh		\
 	lp_except.hh				\
 	mp_arithmetic.hh			\
 	offset_to_line_col_map.hh		\
@@ -61,8 +61,7 @@ noinst_HEADERS =				\
 	target_int.hh				\
 	type_set.hh				\
 	types.hh				\
-	types_impl.hh				\
-	user_policy_command.hh
+	types_impl.hh
 
 noinst_LIBRARIES = libcp.a
 libcp_a_SOURCES =				\
@@ -84,7 +83,6 @@ libcp_a_SOURCES =				\
 	gnuc_parser_driver.cc			\
 	header_resolver.cc			\
 	lp_creation_policy.cc	\
-	lp_creation_policy_user_commands.cc	\
 	lp_except.cc				\
 	mp_arithmetic.cc			\
 	offset_to_line_col_map.cc		\
@@ -110,13 +108,22 @@ libcp_a_SOURCES =				\
 	target_x86_64_gcc.cc			\
 	target_float.cc			\
 	target_int.cc				\
-	types.cc				\
-	user_policy_command.cc
+	types.cc
 
-bin_PROGRAMS=klp-ccp
+# Compile into a separate intermediate library to allow for using the
+# python CPPFLAGS only for this.
+noinst_LIBRARIES += libklp-ccp-pypol.a
+
+pypoldir = $(pkglibdir)/lp-creation-python-policy
+libklp_ccp_pypol_a_SOURCES = lp_creation_python_policy.cc
+libklp_ccp_pypol_a_CPPFLAGS = \
+	-DKLP_CCP_PYPOL_DIR='"$(pypoldir)"' \
+	$(PYTHON3_EMBED_CFLAGS)
+
+bin_PROGRAMS = klp-ccp
 
 klp_ccp_SOURCES = klp_ccp.cc
-klp_ccp_LDADD = libcp.a
+klp_ccp_LDADD = libklp-ccp-pypol.a libcp.a $(PYTHON3_EMBED_LIBS)
 
 check_PROGRAMS = cpp_tokenize normalize_path dirname cpp cparse \
 	test_mp_arithmetic test_target_int test_target_float

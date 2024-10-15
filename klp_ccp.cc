@@ -23,7 +23,6 @@
 #include <vector>
 #include "target_x86_64_gcc.hh"
 #include "cmdline_except.hh"
-#include "user_policy_command.hh"
 #include "header_resolver.hh"
 #include "preprocessor.hh"
 #include "gnuc_parser_driver.hh"
@@ -31,7 +30,7 @@
 #include "parse_except.hh"
 #include "semantic_except.hh"
 #include "lp_except.hh"
-#include "lp_creation_policy_user_commands.hh"
+#include "lp_creation_python_policy.hh"
 #include "output_remarks.hh"
 #include "create_lp.hh"
 
@@ -39,21 +38,14 @@ using namespace klp::ccp;
 
 static const char prog_name[] = "klp-ccp";
 
-static const char optstr[] = ":hc:o:i:I:H:F:S:O:E:P:R:";
+static const char optstr[] = ":hc:o:i:P:";
 
 static const option longopts[] {
 	{ "help", 0, nullptr, 'h' },
 	{ "compiler", 1, nullptr, 'c' },
 	{ "outfile", 1, nullptr, 'o' },
 	{ "patched-functions", 1, nullptr, 'i' },
-	{ "pol-cmd-is-patched", 1, nullptr, 'I' },
-	{ "pol-cmd-may-include-header", 1, nullptr, 'H' },
-	{ "pol-cmd-can-externalize-fun", 1, nullptr, 'F' },
-	{ "pol-cmd-shall-externalize-fun", 1, nullptr, 'S' },
-	{ "pol-cmd-shall-externalize-obj", 1, nullptr, 'O' },
-	{ "pol-cmd-modify-externalized-sym", 1, nullptr, 'E' },
-	{ "pol-cmd-modify-patched-fun-sym", 1, nullptr, 'P' },
-	{ "pol-cmd-rename-rewritten-fun", 1, nullptr, 'R' },
+	{ "python-policy", 1, nullptr, 'P' },
 	{ nullptr, 0, nullptr, 0 }
 };
 
@@ -85,48 +77,9 @@ static void show_help(const char * const prog)
     << "\t\t\t\t\t\tfunctions."
     << std::endl;
   std::cout
-    << " -I, --pol-cmd-is-patched=CMD"
-    << "\t\t\tPolicy command determining set" << std::endl
-    << "\t\t\t\t\t\tof patched functions."
-    << std::endl;
-  std::cout
-    << " -H, --pol-cmd-may-include-header=CMD"
-    << "\t\tPolicy command determining" << std::endl
-    << "\t\t\t\t\t\theader file includability."
-    << std::endl;
-  std::cout
-    << " -F, --pol-cmd-can-externalize-fun=CMD"
-    << "\t\tPolicy command determining" << std::endl
-    << "\t\t\t\t\t\tfunction externalizability."
-    << std::endl;
-  std::cout
-    << " -S, --pol-cmd-shall-externalize-fun=CMD"
-    << "\tPolicy command determining" << std::endl
-    << "\t\t\t\t\t\tpreference on function" << std::endl
-    << "\t\t\t\t\t\texternalization."
-    << std::endl;
-  std::cout
-    << " -O, --pol-cmd-shall-externalize-obj=CMD"
-    << "\tPolicy command determining" << std::endl
-    << "\t\t\t\t\t\tobject externalization."
-    << std::endl;
-  std::cout
-    << " -E, --pol-cmd-modify-externalized-sym=CMD"
-    << "\tPolicy command determining" << std::endl
-    << "\t\t\t\t\t\tmodifications to externalized" << std::endl
-    << "\t\t\t\t\t\tsymbols."
-    << std::endl;
-  std::cout
-    << " -P, --pol-cmd-modify-patched-fun-sym=CMD"
-    << "\tPolicy command determining" << std::endl
-    << "\t\t\t\t\t\tmodifications to symbols" << std::endl
-    << "\t\t\t\t\t\tof patched functions."
-    << std::endl;
-  std::cout
-    << " -R, --pol-cmd-renamed-rewritten-fun=CMD"
-    << "\tPolicy command determining" << std::endl
-    << "\t\t\t\t\t\trenames to apply to rewritten," << std::endl
-    << "\t\t\t\t\t\tbut non-patched functions." << std::endl
+    << " -P, --python-policy=MOD"
+    << "\tFully qualified python class name implementing" << std::endl
+    << "\t\t\t\t\t\tlivepatch creation policies." << std::endl
     << std::endl;
 
   std::cout
@@ -192,19 +145,11 @@ static void split_patched_funs(const char *arg, std::vector<std::string> &funs)
 
 int main(int argc, char *argv[], char *envp[])
 {
-
   bool do_help = false;
   char *o_compiler = nullptr;
   const char *o_outfile = nullptr;
   std::vector<std::string> patched_funs;
-  const char *o_pol_cmd_is_patched = nullptr;
-  const char *o_pol_cmd_may_include_header = nullptr;
-  const char *o_pol_cmd_can_externalize_fun = nullptr;
-  const char *o_pol_cmd_shall_externalize_fun = nullptr;
-  const char *o_pol_cmd_shall_externalize_obj = nullptr;
-  const char *o_pol_cmd_mod_externalized_sym = nullptr;
-  const char *o_pol_cmd_mod_patched_fun_sym = nullptr;
-  const char *o_pol_cmd_rename_rewritten_fun = nullptr;
+  const char *o_python_policy_fq_cls = nullptr;
 
   int o;
   int longindex = -1;
@@ -235,68 +180,12 @@ int main(int argc, char *argv[], char *envp[])
       split_patched_funs(optarg, patched_funs);
       break;
 
-    case 'I':
-      if (o_pol_cmd_is_patched) {
-	show_opt_duplicate(prog_name, "--pol-cmd-is-patched");
-	return 1;
-      }
-      o_pol_cmd_is_patched = optarg;
-      break;
-
-    case 'H':
-      if (o_pol_cmd_may_include_header) {
-	show_opt_duplicate(prog_name, "--pol-cmd-may-include-header");
-	return 1;
-      }
-      o_pol_cmd_may_include_header = optarg;
-      break;
-
-    case 'F':
-      if (o_pol_cmd_can_externalize_fun) {
-	show_opt_duplicate(prog_name, "--pol-cmd-can-externalize-fun");
-	return 1;
-      }
-      o_pol_cmd_can_externalize_fun = optarg;
-      break;
-
-    case 'S':
-      if (o_pol_cmd_shall_externalize_fun) {
-	show_opt_duplicate(prog_name, "--pol-cmd-shall-externalize-fun");
-	return 1;
-      }
-      o_pol_cmd_shall_externalize_fun = optarg;
-      break;
-
-    case 'O':
-      if (o_pol_cmd_shall_externalize_obj) {
-	show_opt_duplicate(prog_name, "--pol-cmd-shall-externalize-obj");
-	return 1;
-      }
-      o_pol_cmd_shall_externalize_obj = optarg;
-      break;
-
-    case 'E':
-      if (o_pol_cmd_mod_externalized_sym) {
-	show_opt_duplicate(prog_name, "--pol-cmd-modify-externalized-sym");
-	return 1;
-      }
-      o_pol_cmd_mod_externalized_sym = optarg;
-      break;
-
     case 'P':
-      if (o_pol_cmd_mod_patched_fun_sym) {
-	show_opt_duplicate(prog_name, "--pol-cmd-modify-patched-fun-sym");
+      if (o_python_policy_fq_cls) {
+	show_opt_duplicate(prog_name, "--python-policy");
 	return 1;
       }
-      o_pol_cmd_mod_patched_fun_sym = optarg;
-      break;
-
-    case 'R':
-      if (o_pol_cmd_rename_rewritten_fun) {
-	show_opt_duplicate(prog_name, "--pol-cmd-rename-rewritten-fun");
-	return 1;
-      }
-      o_pol_cmd_rename_rewritten_fun = optarg;
+      o_python_policy_fq_cls = optarg;
       break;
 
     case '?':
@@ -357,170 +246,22 @@ int main(int argc, char *argv[], char *envp[])
     return 1;
   }
 
-  if (!o_pol_cmd_is_patched && patched_funs.empty()) {
-    std::cerr
-      << "command line error: "
-      << "either --patched-functions or --pol-cmd-is-patched is required"
-      << std::endl;
-    show_usage(prog_name);
+  if (!o_python_policy_fq_cls) {
+    show_opt_missing(prog_name, "--python-policy");
     return 1;
   }
-
-
-  std::unique_ptr<const user_policy_command> pol_cmd_is_patched;
-  if (o_pol_cmd_is_patched) {
-    try {
-      pol_cmd_is_patched.reset(new user_policy_command{o_pol_cmd_is_patched});
-
-    } catch (const user_policy_command::cmd_parse_except &e) {
-      std::cerr << "command line error: failed to parse policy command '"
-		<< o_pol_cmd_is_patched << "': "
-		<< e.what() << std::endl;
-      show_usage(prog_name);
-      return 1;
-    }
-  }
-
-  if (!o_pol_cmd_may_include_header) {
-    std::cerr
-      << "command line error: --pol-cmd-may-include-header is required"
-      << std::endl;
-    show_usage(prog_name);
+  const char * o_python_policy_cls =
+    std::strrchr(o_python_policy_fq_cls, '.');
+  if (!o_python_policy_cls) {
+    std::cerr << "command line error: "
+	      << "expected fully qualified \"MOD.CLS\" for "
+	      << "--python-policy"
+	      << std::endl;
     return 1;
   }
-  std::unique_ptr<user_policy_command> pol_cmd_may_include_header;
-  try {
-    pol_cmd_may_include_header.reset
-      (new user_policy_command{o_pol_cmd_may_include_header});
-
-  } catch (const user_policy_command::cmd_parse_except &e) {
-    std::cerr << "command line error: failed to parse policy command '"
-	      << o_pol_cmd_may_include_header << "': "
-	      << e.what() << std::endl;
-    show_usage(prog_name);
-    return 1;
-  }
-
-  if (!o_pol_cmd_can_externalize_fun) {
-    std::cerr
-      << "command line error: --pol-cmd-can-externalize-fun is required"
-      << std::endl;
-    show_usage(prog_name);
-    return 1;
-  }
-  std::unique_ptr<user_policy_command> pol_cmd_can_externalize_fun;
-  try {
-    pol_cmd_can_externalize_fun.reset
-      (new user_policy_command{o_pol_cmd_can_externalize_fun});
-
-  } catch (const user_policy_command::cmd_parse_except &e) {
-    std::cerr << "command line error: failed to parse policy command '"
-	      << o_pol_cmd_can_externalize_fun << "': "
-	      << e.what() << std::endl;
-    show_usage(prog_name);
-    return 1;
-  }
-
-  if (!o_pol_cmd_shall_externalize_fun) {
-    std::cerr
-      << "command line error: --pol-cmd-shall-externalize-fun is required"
-      << std::endl;
-    show_usage(prog_name);
-    return 1;
-  }
-  std::unique_ptr<user_policy_command> pol_cmd_shall_externalize_fun;
-  try {
-    pol_cmd_shall_externalize_fun.reset
-      (new user_policy_command{o_pol_cmd_shall_externalize_fun});
-
-  } catch (const user_policy_command::cmd_parse_except &e) {
-    std::cerr << "command line error: failed to parse policy command '"
-	      << o_pol_cmd_shall_externalize_fun << "': "
-	      << e.what() << std::endl;
-    show_usage(prog_name);
-    return 1;
-  }
-
-  if (!o_pol_cmd_shall_externalize_obj) {
-    std::cerr
-      << "command line error: --pol-cmd-shall-externalize-obj is required"
-      << std::endl;
-    show_usage(prog_name);
-    return 1;
-  }
-  std::unique_ptr<user_policy_command> pol_cmd_shall_externalize_obj;
-  try {
-    pol_cmd_shall_externalize_obj.reset
-      (new user_policy_command{o_pol_cmd_shall_externalize_obj});
-
-  } catch (const user_policy_command::cmd_parse_except &e) {
-    std::cerr << "command line error: failed to parse policy command '"
-	      << o_pol_cmd_shall_externalize_obj << "': "
-	      << e.what() << std::endl;
-    show_usage(prog_name);
-    return 1;
-  }
-
-  if (!o_pol_cmd_mod_externalized_sym) {
-    std::cerr
-      << "command line error: --pol-cmd-modify-externalized-sym is required"
-      << std::endl;
-    show_usage(prog_name);
-    return 1;
-  }
-  std::unique_ptr<user_policy_command> pol_cmd_mod_externalized_sym;
-  try {
-    pol_cmd_mod_externalized_sym.reset
-      (new user_policy_command{o_pol_cmd_mod_externalized_sym});
-
-  } catch (const user_policy_command::cmd_parse_except &e) {
-    std::cerr << "command line error: failed to parse policy command '"
-	      << o_pol_cmd_mod_externalized_sym << "': "
-	      << e.what() << std::endl;
-    show_usage(prog_name);
-    return 1;
-  }
-
-  if (!o_pol_cmd_mod_patched_fun_sym) {
-    std::cerr
-      << "command line error: --pol-cmd-modify-patched-fun-sym is required"
-      << std::endl;
-    show_usage(prog_name);
-    return 1;
-  }
-  std::unique_ptr<user_policy_command> pol_cmd_mod_patched_fun_sym;
-  try {
-    pol_cmd_mod_patched_fun_sym.reset
-      (new user_policy_command{o_pol_cmd_mod_patched_fun_sym});
-
-  } catch (const user_policy_command::cmd_parse_except &e) {
-    std::cerr << "command line error: failed to parse policy command '"
-	      << o_pol_cmd_mod_patched_fun_sym << "': "
-	      << e.what() << std::endl;
-    show_usage(prog_name);
-    return 1;
-  }
-
-  if (!o_pol_cmd_rename_rewritten_fun) {
-    std::cerr
-      << "command line error: --pol-cmd-rename-rewritten-fun is required"
-      << std::endl;
-    show_usage(prog_name);
-    return 1;
-  }
-  std::unique_ptr<user_policy_command> pol_cmd_rename_rewritten_fun;
-  try {
-    pol_cmd_rename_rewritten_fun.reset
-      (new user_policy_command{o_pol_cmd_rename_rewritten_fun});
-
-  } catch (const user_policy_command::cmd_parse_except &e) {
-    std::cerr << "command line error: failed to parse policy command '"
-	      << o_pol_cmd_rename_rewritten_fun << "': "
-	      << e.what() << std::endl;
-    show_usage(prog_name);
-    return 1;
-  }
-
+  const std::string o_python_policy_mod =
+    std::string{o_python_policy_fq_cls, o_python_policy_cls};
+  ++o_python_policy_cls;
 
   std::unique_ptr<target> tgt;
   if (!strcmp(o_compiler, "x86_64-gcc")) {
@@ -599,37 +340,37 @@ int main(int argc, char *argv[], char *envp[])
   if (r)
     return r;
 
-
-  lp_creation_policy_user_commands pol{
-	ast.get_pp_result(),
-	envp,
-	std::move(patched_funs),
-	std::move(pol_cmd_is_patched),
-	std::move(*pol_cmd_may_include_header),
-	std::move(*pol_cmd_can_externalize_fun),
-	std::move(*pol_cmd_shall_externalize_fun),
-	std::move(*pol_cmd_shall_externalize_obj),
-	std::move(*pol_cmd_mod_externalized_sym),
-	std::move(*pol_cmd_mod_patched_fun_sym),
-	std::move(*pol_cmd_rename_rewritten_fun),
-  };
-
   code_remarks iremarks;
   output_remarks oremarks;
   try {
+    lp_creation_python_policy pol{
+      ast.get_pp_result(),
+      std::move(patched_funs),
+      o_python_policy_mod.c_str(),
+      o_python_policy_cls
+    };
+
     create_lp(o_outfile, ast, pol, iremarks, oremarks);
 
   } catch (const lp_except&) {
     r = 3;
 
-  } catch (const user_policy_command::execution_except &e) {
-    std::cerr << "error: " << e.what() << std::endl;
-    return 4;
-
   } catch (const std::system_error &e) {
     std::cerr << "error: " << e.what() << std::endl;
-    return 5;
+    r = 4;
+
+  } catch (const python_except &e) {
+    std::cerr << "error: python policy failure: " << e.what() << std::endl;
+    handle_python_except();
+    r = 5;
+
   }
+
+  // Teardown python only now after exceptions had a chance to print
+  // their message. It's bad code architecture, but the API for
+  // embedding Python is what it is, i.e. AFAICT there's no way to
+  // obtain a formatted error message and print it ourselves.
+  lp_creation_python_policy::teardown_python();
 
   if (!iremarks.empty())
     std::cerr << iremarks;
@@ -640,8 +381,6 @@ int main(int argc, char *argv[], char *envp[])
   if (!oremarks.empty())
     std::cerr << oremarks;
   oremarks.clear();
-  if (r)
-    return r;
 
-  return 0;
+  return r;
 }

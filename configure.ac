@@ -27,8 +27,14 @@ AC_DEFINE_UNQUOTED([BISON_YYLA_HAS_TYPE], [$BISON_YYLA_HAS_TYPE],
                    [Older versions of bison has .type entry in the lookahead
                     token, which has been renamed to .kind_ in later versions])
 
+
+PKG_CHECK_MODULES([PYTHON3_EMBED], [python3-embed],
+		  [],
+		  AC_MSG_ERROR[Python development files not found])
+
 AC_CONFIG_FILES([Makefile
 		 arch/Makefile
+		 lp-creation-python-policy/Makefile
 		 testsuite/Makefile
 		 testsuite/lib/Makefile
 		 testsuite/lib/ccp-toy-policy/Makefile

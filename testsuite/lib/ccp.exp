@@ -12,17 +12,13 @@ proc run_ccp {test} {
     set cmd "$objdir/../klp-ccp"
     set outfile_base "$objdir/$subdir/[file tail $test]"
     set result_file "$outfile_base.result"
-    set pol_dir "$srcdir/lib/ccp-toy-policy"
+    set toy_pol_dir "$srcdir/lib/ccp-toy-policy"
+    set ::env(KLP_CCP_PYTHONPOLICY_PATH) \
+	"$toy_pol_dir:$srcdir/../lp-creation-python-policy"
+    set env(PYTHONDONTWRITEBYTECODE) 1
     if {[catch {spawn "$cmd" -c "x86_64-gcc-4.8.1" \
 		    -o "$result_file" \
-		    -I "$pol_dir/toy_pol_is_patched.sh" \
-		    -H "$pol_dir/toy_pol_may_include_header.sh" \
-		    -F "$pol_dir/toy_pol_can_externalize_fun.sh" \
-		    -S "$pol_dir/toy_pol_shall_externalize_fun.sh" \
-		    -O "$pol_dir/toy_pol_shall_externalize_obj.sh" \
-		    -E "$pol_dir/toy_pol_modify_externalized_sym.sh" \
-		    -P "$pol_dir/toy_pol_modify_patched_fun_sym.sh" \
-		    -R "$pol_dir/toy_pol_rename_rewritten_fun.sh" \
+		    -P "toy_pol.LpCreationPolicy" \
 		    -- "$test"}]} {
 	error "$test: failed to spawn $cmd"
     }
