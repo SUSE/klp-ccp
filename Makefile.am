@@ -50,6 +50,7 @@ noinst_HEADERS =				\
 	range_in_file.hh			\
 	raw_pp_token.hh			\
 	raw_pp_tokens.hh			\
+	raw_pp_tokens_range.hh			\
 	ret_type_invoker.hh			\
 	semantic_except.hh			\
 	source_reader.hh			\
