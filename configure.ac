@@ -19,7 +19,7 @@ fi
 AC_CONFIG_HEADERS([config.h])
 
 bison_version=[`bison --version | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+'`]
-AX_COMPARE_VERSION(["$bison_version"], [lt], ["3.5.91"],
+AX_COMPARE_VERSION(["$bison_version"], [lt], ["3.0.4"],
         [AC_SUBST([BISON_YYLA_HAS_TYPE], [1])],
         [AC_SUBST([BISON_YYLA_HAS_TYPE], [0])])
 

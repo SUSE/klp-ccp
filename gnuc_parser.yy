@@ -2052,7 +2052,7 @@ iteration_statement:
 	    if (yyla.type_get() == by_type(token::TOK_IDENTIFIER).type_get()) {
 	      if (pd.is_typedef_id(pd._pp.get_result().get_pp_tokens()[yyla.value.token_index].get_value())) {
 		/*
-		 * On bison 3.5.91, yyla.type has been renamed to yyla.kind_
+		 * On bison 3.0.4, yyla.type has been renamed to yyla.kind_
 		 */
 	#if BISON_YYLA_HAS_TYPE == 1
 		yyla.type = by_type(token::TOK_TYPEDEF_IDENTIFIER).type_get();
