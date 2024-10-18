@@ -3656,6 +3656,7 @@
 },
 {
   .name = "fdeduce-init-list",
+  .code = opt_code_c_family_unused,
   .comp = (gcc_cmdline_parser::option::comp_cxx |
 	   gcc_cmdline_parser::option::comp_objcxx),
   .arg = gcc_cmdline_parser::option::arg_none,
