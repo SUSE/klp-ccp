@@ -46,5 +46,8 @@ AC_CONFIG_FILES([Makefile
 		 testsuite/cparse/gcc.c-torture/compile/Makefile
 		 testsuite/cparse/gcc.c-torture/execute/Makefile
 		 testsuite/unit/Makefile
-		 testsuite/ccp/Makefile])
+		 testsuite/ccp/Makefile
+		 examples/Makefile
+		 examples/policies/Makefile
+		 examples/policies/suse/Makefile])
 AC_OUTPUT

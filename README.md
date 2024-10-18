@@ -108,7 +108,8 @@ such policies, in analogy to the well-known `$PYTHONPATH`.
 
 For an example of an `ccp.LpCreationPolicyAbc` refer to the toy
 policies used for running the testcases, implemented in
-`testsuite/lib/ccp-toy-policy/`.
+`testsuite/lib/ccp-toy-policy/`, or to a real one located in
+`examples/policies/suse/`.
 
 ## Known issues and limitations
 - klp-ccp is largely untested
