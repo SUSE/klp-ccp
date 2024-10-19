@@ -1,7 +1,7 @@
 
 Name:		klp-ccp
 Version:	0.0.1
-Release:	0
+Release:	1
 Summary:	SUSE klp-ccp
 License:	GPL-2.0
 Group:		Development/Tools/Building
@@ -57,6 +57,7 @@ done
 %package policy-suse-klp
 Summary:	SUSE klp-ccp kernel livepatch policy
 Requires:	klp-ccp == %{version}
+Requires:	python311-pyelftools
 
 %description policy-suse-klp
 klp-ccp policy implementation used by SUSE for creating kernel
