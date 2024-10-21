@@ -44,10 +44,6 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
         if not self._cfg_patched_obj_filename:
             raise KeyError('$KCP_PATCHED_OBJ not set')
 
-        self._cfg_patched_src_filename = os.getenv('KCP_PATCHED_SRC')
-        if not self._cfg_patched_src_filename:
-            raise KeyError('$KCP_PATCHED_SRC not set')
-
         self._cfg_patched_src_ipa_clones_filename = \
             os.getenv('KCP_IPA_CLONES_DUMP')
         if not self._cfg_patched_src_ipa_clones_filename:
