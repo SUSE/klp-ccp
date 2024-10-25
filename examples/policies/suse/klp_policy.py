@@ -453,8 +453,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                                  object_name,
                                  linkage,
                                  declaration_loc):
-        assert(linkage == ccp.Linkage.INTERNAL or
-               linkage == ccp.Linkage.EXTERNAL)
+        if linkage == ccp.Linkage.NONE:
+            return False
 
         if object_name in self._cfg_ext_blacklist:
             return False
@@ -464,6 +464,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                         ExternalizableSymbol(
                             object_name, 'vmlinux', True
                         )
+        assert(linkage == ccp.Linkage.INTERNAL or
+               linkage == ccp.Linkage.EXTERNAL)
 
         exporter = None
         if object_name in self._mod_symvers.symvers:
