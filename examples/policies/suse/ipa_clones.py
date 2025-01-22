@@ -317,7 +317,7 @@ class IpaClones:
                 v.on_scc_worklist = False
             scc_worklist = list(filter(lambda v:
                                         (v != node and
-                                         (not vm.removed or
+                                         (not v.removed or
                                           any(not edge.is_scc_edge
                                               for edge in v._out_edges))),
                                        node.sc_component))
