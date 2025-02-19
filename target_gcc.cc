@@ -22,6 +22,7 @@
 #include "preprocessor.hh"
 #include "ast.hh"
 #include "ast_impl.hh"
+#include "ast_evaluate.hh"
 #include "code_remark.hh"
 #include "semantic_except.hh"
 #include "constexpr_value.hh"
@@ -5699,10 +5700,14 @@ _builtin_clz::evaluate(klp::ccp::ast::ast &a, const target &tgt,
        })),
      args[0].get_type());
 
+  check_types_assignment(a, tgt, *_expected_it, args[0], true);
+
+  auto result_t = types::std_int_type::create(types::std_int_type::kind::k_int,
+					      true);
   if (!args[0].is_constexpr() ||
       (args[0].get_constexpr_value().get_value_kind() ==
        ast::constexpr_value::value_kind::vk_address)) {
-    return evaluation_result_type{_expected_it, nullptr, false};
+    return evaluation_result_type{std::move(result_t), nullptr, false};
   }
 
   const ast::constexpr_value &cv0 = args[0].get_constexpr_value();
@@ -5735,7 +5740,7 @@ _builtin_clz::evaluate(klp::ccp::ast::ast &a, const target &tgt,
   }
 
   return evaluation_result_type{
-    std::move(_expected_it), std::move(cv_result),
+    std::move(result_t), std::move(cv_result),
     false
   };
 }
@@ -5805,10 +5810,14 @@ _builtin_ctz::evaluate(klp::ccp::ast::ast &a, const target &tgt,
        })),
      args[0].get_type());
 
+  check_types_assignment(a, tgt, *_expected_it, args[0], true);
+
+  auto result_t = types::std_int_type::create(types::std_int_type::kind::k_int,
+					      true);
   if (!args[0].is_constexpr() ||
       (args[0].get_constexpr_value().get_value_kind() ==
        ast::constexpr_value::value_kind::vk_address)) {
-    return evaluation_result_type{_expected_it, nullptr, false};
+    return evaluation_result_type{std::move(result_t), nullptr, false};
   }
 
   const ast::constexpr_value &cv0 = args[0].get_constexpr_value();
@@ -5845,7 +5854,7 @@ _builtin_ctz::evaluate(klp::ccp::ast::ast &a, const target &tgt,
   }
 
   return evaluation_result_type{
-    std::move(_expected_it), std::move(cv_result),
+    std::move(result_t), std::move(cv_result),
     false
   };
 }
@@ -5915,10 +5924,14 @@ _builtin_clrsb::evaluate(klp::ccp::ast::ast &a, const target &tgt,
        })),
      args[0].get_type());
 
+  check_types_assignment(a, tgt, *_expected_it, args[0], true);
+
+  auto result_t = types::std_int_type::create(types::std_int_type::kind::k_int,
+					      true);
   if (!args[0].is_constexpr() ||
       (args[0].get_constexpr_value().get_value_kind() ==
        ast::constexpr_value::value_kind::vk_address)) {
-    return evaluation_result_type{_expected_it, nullptr, false};
+    return evaluation_result_type{std::move(result_t), nullptr, false};
   }
 
   const ast::constexpr_value &cv0 = args[0].get_constexpr_value();
@@ -5952,7 +5965,7 @@ _builtin_clrsb::evaluate(klp::ccp::ast::ast &a, const target &tgt,
   }
 
   return evaluation_result_type{
-    std::move(_expected_it), std::move(cv_result),
+    std::move(result_t), std::move(cv_result),
     false
   };
 }
@@ -6022,10 +6035,14 @@ _builtin_ffs::evaluate(klp::ccp::ast::ast &a, const target &tgt,
        })),
      args[0].get_type());
 
+  check_types_assignment(a, tgt, *_expected_it, args[0], true);
+
+  auto result_t = types::std_int_type::create(types::std_int_type::kind::k_int,
+					      true);
   if (!args[0].is_constexpr() ||
       (args[0].get_constexpr_value().get_value_kind() ==
        ast::constexpr_value::value_kind::vk_address)) {
-    return evaluation_result_type{_expected_it, nullptr, false};
+    return evaluation_result_type{std::move(result_t), nullptr, false};
   }
 
   const ast::constexpr_value &cv0 = args[0].get_constexpr_value();
@@ -6057,7 +6074,7 @@ _builtin_ffs::evaluate(klp::ccp::ast::ast &a, const target &tgt,
   }
 
   return evaluation_result_type{
-    std::move(_expected_it), std::move(cv_result),
+    std::move(result_t), std::move(cv_result),
     false
   };
 }
