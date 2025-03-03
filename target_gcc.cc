@@ -2221,6 +2221,23 @@ void target_gcc::_int_mode_enable(const common_int_mode_kind cimk)
   _int_mode_enable(types::ext_int_type::kind{static_cast<int>(cimk)});
 }
 
+bool target_gcc::_is_int_mode_enabled(const types::ext_int_type::kind mode)
+  const noexcept
+{
+  const int m = static_cast<int>(mode);
+
+  assert(m < _int_modes.size());
+  return _int_modes[m].enabled;
+}
+
+bool target_gcc::_is_int_mode_enabled(const common_int_mode_kind cimk)
+  const noexcept
+{
+  return _is_int_mode_enabled(types::ext_int_type::kind{
+				static_cast<int>(cimk)
+			      });
+}
+
 void target_gcc::_set_std_int_mode(const types::std_int_type::kind std_int_kind,
 				   const types::ext_int_type::kind mode)
 {
@@ -7534,10 +7551,7 @@ std::unique_ptr<_builtin_typedef__int128> _builtin_typedef__int128
 
 void target_gcc::_register_builtin_typedefs()
 {
-  const int m_TI = static_cast<int>(common_int_mode_kind::cimk_TI);
-  assert(m_TI < _int_modes.size());
-
-  if (_int_modes[m_TI].enabled) {
+  if (_is_int_mode_enabled(common_int_mode_kind::cimk_TI)) {
     _register_builtin_typedef("__int128_t",
 			      std::bind(_builtin_typedef__int128::create,
 					std::cref(*this), true));

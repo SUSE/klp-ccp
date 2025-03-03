@@ -512,6 +512,11 @@ namespace klp
       void _int_mode_enable(const types::ext_int_type::kind mode);
       void _int_mode_enable(const common_int_mode_kind cimk);
 
+      bool _is_int_mode_enabled(const types::ext_int_type::kind mode)
+	const noexcept;
+      bool _is_int_mode_enabled(const common_int_mode_kind cimk)
+	const noexcept;
+
       void _set_std_int_mode(const types::std_int_type::kind std_int_kind,
 			     const types::ext_int_type::kind mode);
       void _set_std_int_mode(const types::std_int_type::kind std_int_kind,
