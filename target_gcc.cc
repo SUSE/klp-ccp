@@ -170,6 +170,11 @@ void target_gcc::parse_command_line
   _decode_options(argc, argv, report_warning);
   _process_options();
 
+  // Register the builtin integer and float modes before registering
+  // the builtin macros.
+  _register_int_modes();
+  _register_float_modes();
+
   for (const auto dir : _opts_c_family.include_dirs_quoted)
     hr.append_search_dir_quoted(dir);
 
@@ -261,8 +266,6 @@ void target_gcc::parse_command_line
     }
   }
 
-  _register_int_modes();
-  _register_float_modes();
   _register_builtin_typedefs();
 }
 
