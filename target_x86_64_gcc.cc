@@ -544,6 +544,10 @@ void target_x86_64_gcc::_arch_register_builtin_macros(preprocessor &pp) const
 
   for (const auto &bom : builtin_object_macros)
     pp.register_builtin_macro(bom.first, bom.second);
+
+  if (_is_int_mode_enabled(common_int_mode_kind::cimk_TI)) {
+    pp.register_builtin_macro("__SIZEOF_INT128__", "sizeof(__int128)");
+  }
 }
 
 
