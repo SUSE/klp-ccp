@@ -35,7 +35,7 @@ class ExternalizableSymbol:
     is_exported: bool
 
 class KlpPolicy(ccp.LpCreationPolicyAbc):
-    def __init__(self):
+    def __init__(self, patched_funcs):
         self._cfg_mod_symvers_filename = os.getenv('KCP_MOD_SYMVERS')
         if not self._cfg_mod_symvers_filename:
             raise KeyError('$KCP_MOD_SYMVERS not set')
@@ -77,17 +77,12 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
         else:
             self._cfg_ext_blacklist = set()
 
-        patched_funcs = os.getenv('KCP_FUNC')
-        if patched_funcs:
-            self._cfg_patched_funcs = set(map(lambda e: e.strip(),
-                                              patched_funcs.split(',')))
-        else:
-            self._cfg_patched_funcs = []
-
         self._cfg_work_dir = os.getenv('KCP_WORK_DIR')
         if not self._cfg_work_dir:
             raise KeyError('$KCP_WORK_DIR not set')
 
+        assert isinstance(patched_funcs, list)
+        self._cfg_patched_funcs = set(patched_funcs)
 
         self._mod_symvers = ModuleSymvers(self._cfg_mod_symvers_filename)
         self._patched_obj_elf = TargetModElf(self._cfg_patched_obj_filename)
