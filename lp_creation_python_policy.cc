@@ -961,7 +961,17 @@ lp_creation_python_policy::lp_creation_python_policy
       "specified python policy class can't get instantiated"
     };
   }
-  PyObject *args = PyTuple_New(0);
+
+  // Allocate a python list with the patched functions
+  PyObject *patched_funcs_py_list = PyList_New(_patched_functions.size());
+  for (size_t i = 0; i < _patched_functions.size(); i++) {
+      PyObject *patched_func_py_str = PyUnicode_FromString(_patched_functions[i].c_str());
+      // Transfer items ownership to the list: no need to call Py_DECREF on them later on
+      PyList_SetItem(patched_funcs_py_list, i, patched_func_py_str);
+  }
+
+  PyObject *args = PyTuple_Pack(1, patched_funcs_py_list);
+  Py_DECREF(patched_funcs_py_list);
   if (!args) {
     Py_DECREF(pol_cls);
     throw python_except{
