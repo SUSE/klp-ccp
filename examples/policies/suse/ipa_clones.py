@@ -154,10 +154,9 @@ class IpaClones:
                 spawn = add_node(Node(spawn))
 
                 edge = Edge(original, spawn, edge_type)
-                if edge in edges:
-                    next
-                edges.add(edge)
-                edge._link_to_nodes()
+                if edge not in edges:
+                    edges.add(edge)
+                    edge._link_to_nodes()
 
             elif line[0] == 'Callgraph removal':
                 if len(line) != 6:
