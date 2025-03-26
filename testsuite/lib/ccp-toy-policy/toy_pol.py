@@ -22,7 +22,7 @@ from ccp import ExternalizedSymbolModification
 import re
 
 class LpCreationPolicy(LpCreationPolicyAbc):
-    def __init__(self):
+    def __init__(self, patched_funcs):
         self._re_fun_name = re.compile('(p[use]_)?(e[use](p)?(r)?_)?.*')
         self._re_obj_name = re.compile('(e[use](p)?(r)?_)?.*')
 
