@@ -7677,7 +7677,11 @@ void _lp_deps_resolver::operator()()
       edi = nullptr;
     }
 
-    for (auto it_er = ei.ers_begin(); it_er != ei.ers_end();
+    for (auto it_er = ei.ers_begin();
+	 (it_er != ei.ers_end() &&
+	 (!edi ||
+	  !(edi->ed.get_decl_list_node().is_visible_from
+	    (it_er->er.get_decl_list_node()))));
 	 ++it_er) {
       if (it_er->parent.k != tag_parent::kind::k_sou_def &&
 	  it_er->parent.k != tag_parent::kind::k_enum_def) {

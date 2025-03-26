@@ -1,0 +1,5 @@
+/* klp-ccp: from testsuite/ccp/tag-decls-18.c */
+enum B;
+
+void klpp_pu_f(enum B *)
+{}
