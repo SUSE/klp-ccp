@@ -7,8 +7,8 @@ License:	GPL-2.0
 Group:		Development/Tools/Building
 Url:		https://github.com/SUSE/klp-ccp
 Source:	klp-ccp-%{version}.tar.gz
-Requires:	python311
-BuildRequires:	python311-devel
+Requires:	python313
+BuildRequires:	python313-devel
 BuildRequires:	make
 BuildRequires:	gcc-c++
 BuildRequires:	pkgconfig
