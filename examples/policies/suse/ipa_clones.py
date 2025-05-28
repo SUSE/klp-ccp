@@ -145,6 +145,8 @@ class IpaClones:
                         edge_type = EdgeType.CONSTPROP
                     case 'part':
                         edge_type = EdgeType.PART
+                    case '(null)':
+                        continue
                     case _:
                         raise (ValueError
                                ('Unrecognized optimization \"' + line[-1] +
