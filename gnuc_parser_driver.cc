@@ -183,16 +183,11 @@ gnuc_parser_driver::~gnuc_parser_driver() noexcept
 
 void gnuc_parser_driver::parse()
 {
+#ifdef DEBUG_PARSER
+  _parser.set_debug_level(3);
+#endif
   _parser.parse();
 }
-
-#ifdef DEBUG_PARSER
-void gnuc_parser_driver::parse_debug()
-{
-  _parser.set_debug_level(1);
-  parse();
-}
-#endif
 
 ast_translation_unit gnuc_parser_driver::grab_result()
 {

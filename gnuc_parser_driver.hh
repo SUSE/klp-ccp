@@ -46,10 +46,6 @@ namespace klp
 
 	void parse();
 
-#ifdef DEBUG_PARSER
-	void parse_debug();
-#endif
-
 	code_remarks& get_remarks() noexcept
 	{ return _remarks; }
 
