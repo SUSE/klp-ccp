@@ -1440,7 +1440,7 @@ limbs limbs::reverse(const limbs::size_type n_rev_units,
     if (lshift_distance != 0) {
       const size_type low_bits = lshift_distance % limb::width;
       assert(low_bits != 0 && low_bits < limb::width);
-      for (size_type __j = size(); __j > 1; --__j) {
+      for (size_type __j = r.size(); __j > 1; --__j) {
 	const size_type j = __j - 1;
 	const limb::limb_type value =
 	  ((r._limbs[j - 1].value() >> (limb::width - low_bits)) |
