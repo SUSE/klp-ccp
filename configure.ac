@@ -13,7 +13,7 @@ AC_ARG_ENABLE([debug-parser],
 			      [enable bison parser state output (default no)])])
 
 if [[ "x$enable_debug_parser" = xyes ]]; then
-   AC_DEFINE([DEBUG_PARSER], [1], [bison parser state output])
+   AX_APPEND_FLAG([-DDEBUG_PARSER=1], [CPPFLAGS])
 fi
 
 AC_CONFIG_HEADERS([config.h])

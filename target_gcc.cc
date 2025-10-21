@@ -17,6 +17,7 @@
  */
 
 #include <cstring>
+#include <cstdint>
 #include "cmdline_except.hh"
 #include "pp_except.hh"
 #include "preprocessor.hh"

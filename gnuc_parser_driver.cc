@@ -183,16 +183,11 @@ gnuc_parser_driver::~gnuc_parser_driver() noexcept
 
 void gnuc_parser_driver::parse()
 {
+#ifdef DEBUG_PARSER
+  _parser.set_debug_level(3);
+#endif
   _parser.parse();
 }
-
-#ifdef DEBUG_PARSER
-void gnuc_parser_driver::parse_debug()
-{
-  _parser.set_debug_level(1);
-  parse();
-}
-#endif
 
 ast_translation_unit gnuc_parser_driver::grab_result()
 {
@@ -248,6 +243,11 @@ gnuc_parser_driver::lex(gnuc_parser::semantic_type *value,
   static const _val_tok_map_type punct_map =
     _initialize_val_tok_map(punct_map_entries);
   _val_tok_map_type::const_iterator it_tok_type;
+
+#if DEBUG_PARSER
+  std::cerr << "token value:" << tok.get_value() << std::endl;
+#endif
+
   switch (tok.get_type()) {
   case pp_token::type::pp_number:
     /* fall through */

@@ -104,11 +104,7 @@ int main(int argc, char* argv[])
   yy::gnuc_parser_driver pd{std::move(p), tgt};
 
   try {
-#ifdef DEBUG_PARSER
-    pd.parse_debug();
-#else
     pd.parse();
-#endif
   } catch (const pp_except&) {
     r = 2;
   } catch (const parse_except&) {
