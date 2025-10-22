@@ -1481,6 +1481,15 @@
   .arg = gcc_cmdline_parser::option::arg_none,
 },
 {
+  .name = "Wenum-conversion",
+  .code = opt_code_c_family_unused,
+  .comp = (gcc_cmdline_parser::option::comp_c |
+	   gcc_cmdline_parser::option::comp_objc |
+	   gcc_cmdline_parser::option::comp_cxx |
+	   gcc_cmdline_parser::option::comp_objcxx),
+  .arg = gcc_cmdline_parser::option::arg_none,
+},
+{
   .name = "Werror",
   .code = opt_code_c_family_unused,
   .comp = (gcc_cmdline_parser::option::comp_c |
@@ -4466,6 +4475,30 @@
   .comp = (gcc_cmdline_parser::option::comp_cxx |
 	   gcc_cmdline_parser::option::comp_objcxx),
   .arg = gcc_cmdline_parser::option::arg_none,
+},
+{
+  .name = "fstrict-flex-arrays",
+  .code = opt_code_c_family_unused,
+  .comp = (gcc_cmdline_parser::option::comp_c |
+	   gcc_cmdline_parser::option::comp_objc |
+	   gcc_cmdline_parser::option::comp_cxx |
+	   gcc_cmdline_parser::option::comp_objcxx),
+  .arg = gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = { "fstrict-flex-arrays=", "3", "0" },
+  .negative = nullptr,
+},
+{
+  .name = "fstrict-flex-arrays=",
+  .code = opt_code_c_family_unused,
+  .comp = (gcc_cmdline_parser::option::comp_c |
+	   gcc_cmdline_parser::option::comp_objc |
+	   gcc_cmdline_parser::option::comp_cxx |
+	   gcc_cmdline_parser::option::comp_objcxx),
+  .arg = gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+  .alias = {},
+  .negative = nullptr,
 },
 {
   .name = "fstrict-prototype",

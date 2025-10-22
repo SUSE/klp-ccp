@@ -892,6 +892,7 @@ limbs::operator/(const limbs &divisor) const
       r = u[j + n - 1];
       recheck = !r.add(v[n - 1]);
     }
+    recheck &= n > 1;
     while (recheck) {
       const double_limb tmp = _q.low() * v[n - 2];
       if (tmp.high() > r ||
@@ -1440,7 +1441,7 @@ limbs limbs::reverse(const limbs::size_type n_rev_units,
     if (lshift_distance != 0) {
       const size_type low_bits = lshift_distance % limb::width;
       assert(low_bits != 0 && low_bits < limb::width);
-      for (size_type __j = size(); __j > 1; --__j) {
+      for (size_type __j = r.size(); __j > 1; --__j) {
 	const size_type j = __j - 1;
 	const limb::limb_type value =
 	  ((r._limbs[j - 1].value() >> (limb::width - low_bits)) |
