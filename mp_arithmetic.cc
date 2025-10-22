@@ -892,6 +892,7 @@ limbs::operator/(const limbs &divisor) const
       r = u[j + n - 1];
       recheck = !r.add(v[n - 1]);
     }
+    recheck &= n > 1;
     while (recheck) {
       const double_limb tmp = _q.low() * v[n - 2];
       if (tmp.high() > r ||
