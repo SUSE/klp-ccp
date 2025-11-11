@@ -199,12 +199,12 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                     ccp.LpCreationPolicyWarning(
                         'ELF sym \"' + elf_sym.name + '\" shndx not an int'
                     ))
-        if shndx >= self._patched_objs_elf.elf.num_sections():
+        if shndx >= self._patched_obj_elf.elf.num_sections():
             return (False,
                     ccp.LpCreationPolicyWarning(
                         'ELF sym \"' + elf_sym.name + '\" shndx out of bounds'
                     ))
-        elf_sec = self._patched_objs_elf.get_section(shndx)
+        elf_sec = self._patched_obj_elf.elf.get_section(shndx)
         if elf_sec['sh_type'] != 'SHT_PROGBITS':
             return False
         elif not elf_sec['sh_flags'] & ELF_SH_FLAGS.SHF_EXECINSTR:
@@ -235,12 +235,12 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                     ccp.LpCreationPolicyWarning(
                         'ELF sym \"' + elf_sym.name + '\" shndx not an int'
                     ))
-        if shndx >= self._patched_objs_elf.elf.num_sections():
+        if shndx >= self._patched_obj_elf.elf.num_sections():
             return (False,
                     ccp.LpCreationPolicyWarning(
                         'ELF sym \"' + elf_sym.name + '\" shndx out of bounds'
                     ))
-        elf_sec = self._patched_objs_elf.get_section(shndx)
+        elf_sec = self._patched_obj_elf.elf.get_section(shndx)
         sh_type = elf_sec['sh_type']
         if sh_type != 'SHT_PROGBITS' and sh_type != 'SHT_NOBITS':
             return False
