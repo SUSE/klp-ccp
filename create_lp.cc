@@ -7292,6 +7292,7 @@ namespace
     void _require_allocatable_type(const types::addressable_type &at);
 
     bool _queue_includes_for(const pp_tokens_range &r);
+    void _queue_header_include(header_info &hi);
 
     std::pair<ast_info::external_declaration_iterator,
 	      ast_info::external_declaration_iterator>
@@ -7350,6 +7351,12 @@ _lp_deps_resolver::_lp_deps_resolver(ast_info &ai,
 
 void _lp_deps_resolver::operator()()
 {
+  // Retain all #includes from the input source file.
+  for (auto &hi : _ai.header_infos) {
+    if (hi.eligible)
+      _queue_header_include(hi);
+  }
+
   using linkage_change =
     lp_creation_policy::symbol_modification::linkage_change;
 
@@ -7984,11 +7991,19 @@ bool _lp_deps_resolver::_queue_includes_for(const pp_tokens_range &r)
       continue;
 
     from_header = true;
+    _queue_header_include(hi);
+  }
+
+  return from_header;
+}
+
+void _lp_deps_resolver::_queue_header_include(header_info &hi)
+{
 
     const auto ed_range = _add_include(hi);
     if (ed_range.first == ed_range.second) {
       // This header has already marked for inclusion
-      continue;
+      return;
     }
 
     auto &&queue_deps_from_header
@@ -8148,9 +8163,6 @@ bool _lp_deps_resolver::_queue_includes_for(const pp_tokens_range &r)
 	break;
       }
     }
-  }
-
-  return from_header;
 }
 
 std::pair<ast_info::external_declaration_iterator,
@@ -8174,7 +8186,6 @@ _lp_deps_resolver::_add_include(header_info &hi) const
   const raw_pp_tokens_range &r = topmost->get_range();
   auto ed_begin = _ai.intersecting_external_declarations_begin(r);
   auto ed_end = _ai.intersecting_external_declarations_end(r);
-  assert(ed_begin != ed_end);
 
   return std::make_pair(ed_begin, ed_end);
 }
@@ -10014,21 +10025,6 @@ void klp::ccp::create_lp(const std::string &outfile,
   // Recursively find all dependencies on types and declarations and
   // determine which headers are to be included from the live patch.
   _lp_deps_resolver{ai, pol, remarks}();
-
-  // Add #include directives for headers containing nothing but
-  // preprocessor directives and which haven't been included yet.
-  for (auto &hi : ai.header_infos) {
-    if (!hi.eligible || !hi.only_directives)
-      continue;
-
-    assert(!hi.include);
-    // See if any of the parents has been included;
-    const header_info *p = hi.parent;
-    while (p && !p->include)
-      p = p->parent;
-    if (!p)
-      hi.include = true;
-  }
 
   // Write the live patch.
   depreprocessor d{atu.get_pp_result(), output_remarks};

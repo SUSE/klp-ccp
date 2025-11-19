@@ -98,19 +98,10 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                 raise KeyError(
                     'invalid value for $KCP_NO_COMPLETE_PATCHED_FUNCS'
                 )
-        self._patched_funcs = set(self._cfg_patched_funcs)
         if not no_complete_patched_funcs:
-            for f in self._cfg_patched_funcs:
-                spawns = self._patched_src_ipa_clones.find_spawns_recursive(f)
-                if not spawns:
-                    continue
-                for (f, optimized) in spawns.items():
-                    if not optimized:
-                        self._patched_funcs.add(f)
-                    else:
-                        print('warning: optimized function \"' +
-                              f +'\" in callgraph', file=sys.stderr)
-
+            self._patched_funcs = self._get_patched_funcs(self._cfg_patched_funcs)
+            with open(self._cfg_work_dir + '/patched_funcs', "w") as file:
+                file.write('\n'.join(self._patched_funcs))
 
         patched_obj_ko = os.path.basename(self._cfg_patched_obj_filename)
         if patched_obj_ko.startswith('vmlinux'):
@@ -156,6 +147,29 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                                            'w')
         self._externalized_objs_fd = open(self._cfg_work_dir + '/obj_exts',
                                           'w')
+
+
+    def _get_patched_funcs(self, funcs):
+        patched = set()
+        for cfg_f in funcs:
+            spawns = self._patched_src_ipa_clones.find_spawns_recursive(cfg_f)
+            if not spawns or len(spawns) == 1:
+                # Not inlined
+                patched.add(cfg_f)
+                continue
+
+            # Filter out inlined functions and only save the callers
+            for (f, optimized) in spawns.items():
+                    if f == cfg_f:
+                        continue
+                    if not optimized:
+                        callers = self._get_patched_funcs([f])
+                        patched.update(callers)
+                    else:
+                        print('warning: optimized function \"' +
+                              f +'\" in callgraph', file=sys.stderr)
+
+        return patched
 
 
     def is_patched_fun(self, function_name):
