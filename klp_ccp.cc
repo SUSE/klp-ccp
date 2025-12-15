@@ -21,8 +21,8 @@
 #include <cstring>
 #include <iostream>
 #include <vector>
-#include "target_x86_64_gcc.hh"
-#include "cmdline_except.hh"
+#include "target/gcc/x86_64/target_x86_64_gcc.hh"
+#include "target/cmdline_except.hh"
 #include "header_resolver.hh"
 #include "preprocessor.hh"
 #include "gnuc_parser_driver.hh"

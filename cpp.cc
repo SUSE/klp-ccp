@@ -20,12 +20,12 @@
 #include <getopt.h>
 #include <cstring>
 #include <iostream>
-#include "preprocessor.hh"
-#include "cmdline_except.hh"
-#include "pp_except.hh"
 #include "parse_except.hh"
+#include "pp_except.hh"
+#include "preprocessor.hh"
 #include "semantic_except.hh"
-#include "target_x86_64_gcc.hh"
+#include "target/cmdline_except.hh"
+#include "target/gcc/x86_64/target_x86_64_gcc.hh"
 
 using namespace klp::ccp;
 
