@@ -22,7 +22,7 @@
 #include "pp_except.hh"
 #include "parse_except.hh"
 #include "semantic_except.hh"
-#include "target.hh"
+#include "target/target.hh"
 
 using namespace klp::ccp::yy;
 using namespace klp::ccp::ast;

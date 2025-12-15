@@ -20,8 +20,8 @@
 #define TARGET_X86_64_GCC_HH
 
 #include <bitset>
-#include "target_gcc.hh"
-#include "gcc_cmdline_parser.hh"
+#include "../target_gcc.hh"
+#include "../gcc_cmdline_parser.hh"
 
 namespace klp
 {

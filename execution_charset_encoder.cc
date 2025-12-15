@@ -20,7 +20,7 @@
 #include "execution_charset_encoder.hh"
 #include "ast.hh"
 #include "semantic_except.hh"
-#include "target.hh"
+#include "target/target.hh"
 #include "pp_token.hh"
 
 using namespace klp::ccp;

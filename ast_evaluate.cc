@@ -25,7 +25,7 @@
 #include "types_impl.hh"
 #include "callables_wrapper.hh"
 #include "type_set.hh"
-#include "target.hh"
+#include "target/target.hh"
 #include "mp_arithmetic.hh"
 #include "target_float.hh"
 #include "execution_charset_encoder.hh"
