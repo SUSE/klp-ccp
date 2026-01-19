@@ -32,6 +32,7 @@ incompatible changes.
 
 To build klp-ccp, run the common
 ```
+autoreconf --install
 ./configure
 make
 make check # optional
