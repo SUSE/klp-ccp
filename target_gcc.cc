@@ -7188,7 +7188,7 @@ target_gcc::_register_builtin_funcs()
     { "__builtin_ffs", _builtin_ffs::factory<mk_i>(*this) },
     { "__builtin_ffsimax", _builtin_ffs::factory<mk_imax>(*this) },
     { "__builtin_ffsl", _builtin_ffs::factory<mk_l>(*this) },
-    { "__builtin_ffsll", _builtin_ffs::factory<mk_ll>(*this) },
+    { "__builtin_ffsll", _builtin_ffs::factory<mk_ull>(*this) },
     { "__builtin_fork", sp_pid_fac },
     { "__builtin_frame_address", sp_pv_u_fac },
     { "__builtin_free", sp_v_pv_fac },
