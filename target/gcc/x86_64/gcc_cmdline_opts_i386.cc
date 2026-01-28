@@ -83,13 +83,6 @@
   .reject_negative = true,
 },
 {
-  .name = "mabi=",
-  .code = opt_code_i386_unused,
-  .comp = gcc_cmdline_parser::option::comp_target,
-  .arg = gcc_cmdline_parser::option::arg_joined,
-  .reject_negative = true,
-},
-{
   .name = "mabm",
   .code = opt_code_i386_mabm,
   .comp = gcc_cmdline_parser::option::comp_target,
