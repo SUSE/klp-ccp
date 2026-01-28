@@ -5223,6 +5223,13 @@
 	  gcc_cmdline_parser::option::arg_separate),
 },
 {
+  .name = "mabi=",
+  .code = opt_code_common_unused,
+  .comp = gcc_cmdline_parser::option::comp_target,
+  .arg = gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+},
+{
   .name = "n",
   .code = opt_code_common_unused,
   .comp = gcc_cmdline_parser::option::comp_driver,
