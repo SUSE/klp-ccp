@@ -45,6 +45,12 @@
   .min_gcc_version = {7, 1, 0},
 },
 {
+  .name = "mlittle-endian",
+  .code = opt_code_aarch64_unused,
+  .comp = gcc_cmdline_parser::option::comp_target,
+  .arg = gcc_cmdline_parser::option::arg_none,
+},
+{
   .name = "mstrict-align",
   .code = opt_code_aarch64_unused,
   .comp = gcc_cmdline_parser::option::comp_target,
