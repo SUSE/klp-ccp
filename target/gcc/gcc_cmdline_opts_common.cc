@@ -5230,6 +5230,12 @@
   .reject_negative = true,
 },
 {
+  .name = "mlittle-endian",
+  .code = opt_code_common_unused,
+  .comp = gcc_cmdline_parser::option::comp_target,
+  .arg = gcc_cmdline_parser::option::arg_none,
+},
+{
   .name = "mstack-protector-guard-offset=",
   .code = opt_code_common_unused,
   .comp = gcc_cmdline_parser::option::comp_target,
