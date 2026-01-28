@@ -26,6 +26,13 @@
   .negative = "march="
 },
 {
+  .name = "mbranch-protection=",
+  .code = opt_code_aarch64_unused,
+  .comp = gcc_cmdline_parser::option::comp_target,
+  .arg = gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+},
+{
   .name = "mcmodel=",
   .code = opt_code_aarch64_unused,
   .comp = gcc_cmdline_parser::option::comp_target,
