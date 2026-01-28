@@ -2879,6 +2879,13 @@
   .reject_negative = true,
 },
 {
+  .name = "fmin-function-alignment=",
+  .code = opt_code_common_unused,
+  .comp = gcc_cmdline_parser::option::comp_common,
+  .arg = gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+},
+{
   .name = "fmodulo-sched",
   .code = opt_code_common_unused,
   .comp = gcc_cmdline_parser::option::comp_common,
