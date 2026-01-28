@@ -27,6 +27,8 @@ using namespace klp::ccp::types;
 enum opt_code_aarch64
 {
   opt_code_aarch64_unused = 0,
+
+  opt_code_aarch64_mgeneral_regs_only,
 };
 
 static gcc_cmdline_parser::option gcc_opt_table_aarch64[] = {
@@ -475,6 +477,19 @@ opts_aarch64(target_aarch64_gcc &t) noexcept
 void target_aarch64_gcc::opts_aarch64::
 handle_opt(const gcc_cmdline_parser::option * const o,
 	   const char *val, const bool negative,
-	   const bool generated) { }
+	   const bool generated) {
+
+  using gcc_version = gcc_cmdline_parser::gcc_version;
+
+  assert(o);
+
+  switch (o->code) {
+  case opt_code_aarch64_unused:
+    break;
+
+  case opt_code_aarch64_mgeneral_regs_only:
+    assert(!negative); // NOTE: line just copied from x86_64
+  }
+}
 
 void target_aarch64_gcc::opts_aarch64::option_override() { }
