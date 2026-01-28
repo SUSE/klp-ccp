@@ -1279,6 +1279,18 @@
   .min_gcc_version = {7, 1, 0},
 },
 {
+  .name = "Wdangling-pointer",
+  .code = opt_code_c_family_unused,
+  .comp = (gcc_cmdline_parser::option::comp_c |
+	   gcc_cmdline_parser::option::comp_objc |
+	   gcc_cmdline_parser::option::comp_cxx |
+	   gcc_cmdline_parser::option::comp_objcxx),
+  .arg = gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .negative = nullptr,
+},
+{
   .name = "Wdate-time",
   .code = opt_code_c_family_unused,
   .comp = gcc_cmdline_parser::option::comp_common,
