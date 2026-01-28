@@ -5244,6 +5244,13 @@
   .reject_negative = true,
 },
 {
+  .name = "mbranch-protection=",
+  .code = opt_code_common_unused,
+  .comp = gcc_cmdline_parser::option::comp_target,
+  .arg = gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+},
+{
   .name = "mlittle-endian",
   .code = opt_code_common_unused,
   .comp = gcc_cmdline_parser::option::comp_target,
