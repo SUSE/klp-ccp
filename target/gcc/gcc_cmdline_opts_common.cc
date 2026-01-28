@@ -1463,6 +1463,13 @@
   .reject_negative = true,
 },
 {
+  .name = "fallow-store-data-races",
+  .code = opt_code_common_unused,
+  .comp = gcc_cmdline_parser::option::comp_common,
+  .arg = gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+},
+{
   .name = "fargument-alias",
   .code = opt_code_common_unused,
   .comp = gcc_cmdline_parser::option::comp_common,
