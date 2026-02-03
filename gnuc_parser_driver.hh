@@ -26,7 +26,7 @@
 #include "gnuc_parser.hh"
 #include "pp_tokens.hh"
 #include "preprocessor.hh"
-#include "target.hh"
+#include "target/target.hh"
 #include "code_remarks.hh"
 
 namespace klp

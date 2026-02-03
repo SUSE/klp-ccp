@@ -23,7 +23,7 @@
 #include <initializer_list>
 #include <vector>
 #include <map>
-#include "target.hh"
+#include "target/target.hh"
 #include "gcc_cmdline_parser.hh"
 #include "preprocessor.hh"
 

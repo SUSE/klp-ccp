@@ -1,4 +1,4 @@
-SUBDIRS = . arch examples lp-creation-python-policy testsuite
+SUBDIRS = target . arch examples lp-creation-python-policy testsuite
 
 AM_YFLAGS = -d
 BUILT_SOURCES = gnuc_parser.hh pp_expr_parser.hh stack.hh
@@ -16,18 +16,12 @@ noinst_HEADERS =				\
 	builtins.hh				\
 	builtins_impl.hh			\
 	callables_wrapper.hh			\
-	cmdline_except.hh			\
 	code_remark.hh				\
 	code_remarks.hh			\
 	constexpr_value.hh			\
 	create_lp.hh				\
 	depreprocessor.hh			\
 	execution_charset_encoder.hh		\
-	execution_charset_encoder_iconv.hh	\
-	gcc_cmdline_parser.hh			\
-	gcc_cmdline_opts_common.cc		\
-	gcc_cmdline_opts_c_family.cc		\
-	gcc_cmdline_opts_i386.cc		\
 	gnuc_parser_driver.hh			\
 	header_resolver.hh			\
 	lp_creation_policy.hh			\
@@ -55,9 +49,6 @@ noinst_HEADERS =				\
 	semantic_except.hh			\
 	source_reader.hh			\
 	source_writer.hh			\
-	target.hh				\
-	target_gcc.hh				\
-	target_x86_64_gcc.hh			\
 	target_float.hh			\
 	target_int.hh				\
 	type_set.hh				\
@@ -70,16 +61,12 @@ libcp_a_SOURCES =				\
 	ast_evaluate.cc			\
 	ast_resolve.cc				\
 	builtins.cc				\
-	builtins_impl.cc			\
-	cmdline_except.cc			\
 	code_remark.cc				\
 	code_remarks.cc			\
 	constexpr_value.cc			\
 	create_lp.cc				\
 	depreprocessor.cc			\
 	execution_charset_encoder.cc		\
-	execution_charset_encoder_iconv.cc	\
-	gcc_cmdline_parser.cc			\
 	gnuc_parser.yy				\
 	gnuc_parser_driver.cc			\
 	header_resolver.cc			\
@@ -104,9 +91,6 @@ libcp_a_SOURCES =				\
 	semantic_except.cc			\
 	source_reader.cc			\
 	source_writer.cc			\
-	target.cc				\
-	target_gcc.cc				\
-	target_x86_64_gcc.cc			\
 	target_float.cc			\
 	target_int.cc				\
 	types.cc
@@ -124,7 +108,7 @@ libklp_ccp_pypol_a_CPPFLAGS = \
 bin_PROGRAMS = klp-ccp
 
 klp_ccp_SOURCES = klp_ccp.cc
-klp_ccp_LDADD = libklp-ccp-pypol.a libcp.a $(PYTHON3_EMBED_LIBS)
+klp_ccp_LDADD = libklp-ccp-pypol.a libcp.a $(PYTHON3_EMBED_LIBS) target/libtarget.a
 
 check_PROGRAMS = cpp_tokenize normalize_path dirname cpp cparse \
 	test_mp_arithmetic test_target_int test_target_float
@@ -139,16 +123,16 @@ dirname_SOURCES = dirname.cc
 dirname_LDADD = libcp.a
 
 cpp_SOURCES = cpp.cc
-cpp_LDADD = libcp.a
+cpp_LDADD = libcp.a target/libtarget.a
 
 cparse_SOURCES = cparse.cc
-cparse_LDADD = libcp.a
+cparse_LDADD = libcp.a target/libtarget.a
 
 test_mp_arithmetic_SOURCES = test_mp_arithmetic.cc
-test_mp_arithmetic_LDADD = libcp.a
+test_mp_arithmetic_LDADD = libcp.a target/libtarget.a
 
 test_target_int_SOURCES = test_target_int.cc
-test_target_int_LDADD = libcp.a
+test_target_int_LDADD = libcp.a target/libtarget.a
 
 test_target_float_SOURCES = test_target_float.cc
-test_target_float_LDADD = libcp.a
+test_target_float_LDADD = libcp.a target/libtarget.a

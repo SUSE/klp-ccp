@@ -20,11 +20,11 @@
 #include <getopt.h>
 #include "gnuc_parser_driver.hh"
 #include "header_resolver.hh"
-#include "cmdline_except.hh"
-#include "pp_except.hh"
 #include "parse_except.hh"
+#include "pp_except.hh"
 #include "semantic_except.hh"
-#include "target_x86_64_gcc.hh"
+#include "target/cmdline_except.hh"
+#include "target/gcc/x86_64/target_x86_64_gcc.hh"
 
 using namespace klp::ccp;
 

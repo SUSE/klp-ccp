@@ -19,7 +19,7 @@
 #include <cassert>
 #include <functional>
 #include "preprocessor.hh"
-#include "target.hh"
+#include "target/target.hh"
 #include "pp_except.hh"
 #include "parse_except.hh"
 #include "semantic_except.hh"
