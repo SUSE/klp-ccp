@@ -16,4 +16,21 @@
  * along with klp-ccp. If not, see <https://www.gnu.org/licenses/>.
  */
 
-// TODO:populate with arm specific options
+{
+  .name = "march=",
+  .code = opt_code_aarch64_march,
+  .comp = gcc_cmdline_parser::option::comp_target,
+  .arg = gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+  .alias = {},
+  .negative = "march="
+},
+{
+  .name = "mtune=",
+  .code = opt_code_aarch64_unused,
+  .comp = gcc_cmdline_parser::option::comp_target,
+  .arg = gcc_cmdline_parser::option::arg_joined,
+  .reject_negative = true,
+  .alias = {},
+  .negative = "mtune="
+},

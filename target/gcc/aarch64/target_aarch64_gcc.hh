@@ -114,12 +114,19 @@ namespace klp
 
 	void option_override();
 
+	unsigned int get_arch_version() const noexcept;
+
       private:
 	// Kept for future use: needed when opts_aarch64 grows
 	// feature flag or tuning logic that calls back into the
 	// target (e.g. _t.get_gcc_version()).
 	target_aarch64_gcc &_t;
 
+	struct _arch_info;
+
+	const _arch_info *_arch;
+	std::string _arch_string;
+	unsigned int _arch_version;
       };
 
       opts_aarch64 _opts_aarch64;
