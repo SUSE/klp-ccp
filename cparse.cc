@@ -18,6 +18,8 @@
 
 #include <unistd.h>
 #include <getopt.h>
+#include <cstring>
+#include <memory>
 #include "gnuc_parser_driver.hh"
 #include "header_resolver.hh"
 #include "parse_except.hh"
@@ -25,21 +27,24 @@
 #include "semantic_except.hh"
 #include "target/cmdline_except.hh"
 #include "target/gcc/x86_64/target_x86_64_gcc.hh"
+#include "target/gcc/aarch64/target_aarch64_gcc.hh"
 
 using namespace klp::ccp;
 
 static const option options[] = {
+  { "compiler", true, nullptr, 'c' },
   { "include", true, nullptr, 'i' },
   { "help", true, nullptr, 'h' },
   {}
 };
 
-static const char optstring[] = "h";
+static const char optstring[] = "c:h";
 
 static void print_help()
 {
   std::cerr << "usage: "
-	    << "cparse [-include <file>] [-h] <file>" << std::endl;
+	    << "cparse [--compiler=ARCH-gcc-VERSION] [--include <file>] [-h]"
+	    << " <file>" << std::endl;
 }
 
 static void print_usage()
@@ -50,6 +55,7 @@ static void print_usage()
 int main(int argc, char* argv[])
 {
   int r = 0;
+  char *o_compiler = nullptr;
   std::vector<const char*> pre_includes;
 
   while(true) {
@@ -62,6 +68,10 @@ int main(int argc, char* argv[])
     case '?':
       print_usage();
       return 1;
+
+    case 'c':
+      o_compiler = optarg;
+      break;
 
     case 'h':
       print_help();
@@ -78,6 +88,45 @@ int main(int argc, char* argv[])
     return 1;
   }
 
+  // Parse the compiler specification, defaulting to x86_64-gcc-4.8.5
+  // for backward compatibility with existing tests.
+  const char *compiler_arch = "x86_64-gcc";
+  const char *compiler_version = "4.8.5";
+  std::string compiler_buf;
+  if (o_compiler) {
+    compiler_buf = o_compiler;
+    auto dash = compiler_buf.rfind('-');
+    if (dash == std::string::npos || dash == compiler_buf.size() - 1) {
+      std::cerr << "error: compiler version specification missing in '"
+		<< o_compiler << "'" << std::endl;
+      return 1;
+    }
+    compiler_buf[dash] = '\0';
+    compiler_arch = compiler_buf.c_str();
+    compiler_version = compiler_buf.c_str() + dash + 1;
+  }
+
+  std::unique_ptr<target> tgt;
+  if (!std::strcmp(compiler_arch, "x86_64-gcc")) {
+    try {
+      tgt.reset(new target_x86_64_gcc{compiler_version});
+    } catch (const cmdline_except &e) {
+      std::cerr << "error: " << e.what() << std::endl;
+      return 1;
+    }
+  } else if (!std::strcmp(compiler_arch, "aarch64-gcc")) {
+    try {
+      tgt.reset(new target_aarch64_gcc{compiler_version});
+    } catch (const cmdline_except &e) {
+      std::cerr << "error: " << e.what() << std::endl;
+      return 1;
+    }
+  } else {
+    std::cerr << "error: unrecognized compiler specification '"
+	      << compiler_arch << "'" << std::endl;
+    return 1;
+  }
+
   std::vector<const char*> gcc_argv;
   const char include_argv_str[] = "-include";
   for (const auto &pi : pre_includes) {
@@ -87,21 +136,20 @@ int main(int argc, char* argv[])
   gcc_argv.push_back(argv[optind]);
 
   header_resolver hr;
-  target_x86_64_gcc tgt{"4.8.5"};
-  preprocessor p{hr, tgt};
+  preprocessor p{hr, *tgt};
   try {
-    tgt.parse_command_line(gcc_argv.size(), &gcc_argv[0], hr, p,
-			   [](const std::string&) {
-			     assert(0);
-			     __builtin_unreachable();
-			   });
+    tgt->parse_command_line(gcc_argv.size(), &gcc_argv[0], hr, p,
+			    [](const std::string&) {
+			      assert(0);
+			      __builtin_unreachable();
+			    });
   } catch (const cmdline_except &e) {
     std::cerr << "internal compiler command line error: "
 	      << e.what() << std::endl;
     return 1;
   }
 
-  yy::gnuc_parser_driver pd{std::move(p), tgt};
+  yy::gnuc_parser_driver pd{std::move(p), *tgt};
 
   try {
     pd.parse();
@@ -120,7 +168,7 @@ int main(int argc, char* argv[])
 
   ast::ast_translation_unit ast(pd.grab_result());
   try {
-    ast.resolve(tgt);
+    ast.resolve(*tgt);
   } catch (const semantic_except&) {
     r = 5;
   }
@@ -131,7 +179,7 @@ int main(int argc, char* argv[])
     return r;
 
   try {
-    ast.evaluate(tgt);
+    ast.evaluate(*tgt);
   } catch (const semantic_except&) {
     r = 6;
   }
