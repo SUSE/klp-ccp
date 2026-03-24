@@ -1,0 +1,8 @@
+# Run aarch64-specific ccp test cases.
+set ccp_arch "aarch64"
+set ccp_compiler_version "9.1.0"
+
+foreach src [glob -nocomplain $srcdir/$subdir/aarch64-*.c] {
+    set testname $src
+    run_ccp $src
+}

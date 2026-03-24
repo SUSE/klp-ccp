@@ -1,3 +1,12 @@
+# Run the existing cparse test cases under the aarch64 target.
+set cparse_arch "aarch64"
+set cparse_compiler_version "9.1.0"
+
+foreach src [glob -nocomplain $srcdir/$subdir/aarch64/*.c] {
+    set testname $src
+    run_cparse $src
+}
+
 foreach src [glob -nocomplain $srcdir/$subdir/gcc.dg/*.c] {
     set testname $src
     run_cparse $src

@@ -1,0 +1,23 @@
+# Run the existing cparse test cases under the aarch64 target.
+set cparse_arch "x86_64"
+set cparse_compiler_version "4.8.5"
+
+foreach src [glob -nocomplain $srcdir/$subdir/x86_64/*.c] {
+    set testname $src
+    run_cparse $src
+}
+
+foreach src [glob -nocomplain $srcdir/$subdir/gcc.dg/*.c] {
+    set testname $src
+    run_cparse $src
+}
+
+foreach src [glob -nocomplain $srcdir/$subdir/gcc.c-torture/compile/*.c] {
+    set testname $src
+    run_cparse $src
+}
+
+foreach src [glob -nocomplain $srcdir/$subdir/gcc.c-torture/execute/*.c] {
+    set testname $src
+    run_cparse $src
+}
