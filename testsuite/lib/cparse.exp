@@ -9,7 +9,7 @@ proc run_cparse {test} {
     set is_xfailer [lindex $expected_result 1]
 
     set cmd "$objdir/../cparse"
-    if {[catch {spawn "$cmd" "--include=$srcdir/../arch/stddef-x86_64.h" "$test"}]} {
+    if {[catch {spawn "$cmd" "--include=$srcdir/../target/gcc/x86_64/stddef.h" "$test"}]} {
 	error "$test: failed to spawn $cmd"
     }
 

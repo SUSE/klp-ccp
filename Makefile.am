@@ -1,4 +1,4 @@
-SUBDIRS = target . arch examples lp-creation-python-policy testsuite
+SUBDIRS = target . examples lp-creation-python-policy testsuite
 
 AM_YFLAGS = -d
 BUILT_SOURCES = gnuc_parser.hh pp_expr_parser.hh stack.hh

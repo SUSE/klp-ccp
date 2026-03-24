@@ -9,7 +9,9 @@ noinst_HEADERS = \
 		 gcc/gcc_cmdline_opts_common.cc		\
 		 gcc/target_gcc.hh			\
 		 gcc/x86_64/gcc_cmdline_opts_i386.cc	\
+		 gcc/x86_64/stddef.h			\
 		 gcc/aarch64/gcc_cmdline_opts_aarch64.cc	\
+		 gcc/aarch64/stddef.h			\
 		 target.hh
 
 libtarget_a_SOURCES = \

@@ -34,7 +34,6 @@ PKG_CHECK_MODULES([PYTHON3_EMBED], [python3-embed],
 
 AC_CONFIG_FILES([Makefile
 		 target/Makefile
-		 arch/Makefile
 		 lp-creation-python-policy/Makefile
 		 testsuite/Makefile
 		 testsuite/lib/Makefile
