@@ -1,9 +1,17 @@
 source "$srcdir/lib/common.exp"
 
+# Default target architecture and compiler version.
+# These can be overridden by test driver .exp files before
+# calling run_ccp.
+if {![info exists ccp_arch]} { set ccp_arch "x86_64" }
+if {![info exists ccp_compiler_version]} { set ccp_compiler_version "4.8.1" }
+
 proc run_ccp {test} {
     global objdir
     global srcdir
     global subdir
+    global ccp_arch
+    global ccp_compiler_version
 
     set expected_result [get_expected_result "$test"]
     set expected_msgs [lindex $expected_result 0]
@@ -16,7 +24,7 @@ proc run_ccp {test} {
     set ::env(KLP_CCP_PYTHONPOLICY_PATH) \
 	"$toy_pol_dir:$srcdir/../lp-creation-python-policy"
     set env(PYTHONDONTWRITEBYTECODE) 1
-    if {[catch {spawn "$cmd" -c "x86_64-gcc-4.8.1" \
+    if {[catch {spawn "$cmd" -c "$ccp_arch-gcc-$ccp_compiler_version" \
 		    -o "$result_file" \
 		    -P "toy_pol.LpCreationPolicy" \
 		    -- "$test"}]} {
