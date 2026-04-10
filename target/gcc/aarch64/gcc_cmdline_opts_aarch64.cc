@@ -45,6 +45,15 @@
   .min_gcc_version = {7, 1, 0},
 },
 {
+  .name = "mstrict-align",
+  .code = opt_code_aarch64_unused,
+  .comp = gcc_cmdline_parser::option::comp_target,
+  .arg = gcc_cmdline_parser::option::arg_none,
+  .reject_negative = false,
+  .alias = {},
+  .negative = nullptr,
+},
+{
   .name = "mtune=",
   .code = opt_code_aarch64_unused,
   .comp = gcc_cmdline_parser::option::comp_target,
