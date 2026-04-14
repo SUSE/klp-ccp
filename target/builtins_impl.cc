@@ -21,7 +21,7 @@
 #include "ast_impl.hh"
 #include "ast_evaluate.hh"
 #include "constexpr_value.hh"
-#include "target.hh"
+#include "target/target.hh"
 #include "semantic_except.hh"
 
 using namespace klp::ccp;

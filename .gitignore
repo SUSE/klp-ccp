@@ -1,6 +1,8 @@
+.cache
 *.in
 aclocal.m4
 autom4te.cache
+compile_commands.json
 config
 configure
 __pycache__

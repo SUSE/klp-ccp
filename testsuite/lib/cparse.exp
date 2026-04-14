@@ -1,15 +1,26 @@
 source "$srcdir/lib/common.exp"
 
+# Default target architecture and compiler version.
+# These can be overridden by test driver .exp files before
+# calling run_cparse.
+if {![info exists cparse_arch]} { set cparse_arch "x86_64" }
+if {![info exists cparse_compiler_version]} { set cparse_compiler_version "4.8.5" }
+
 proc run_cparse {test} {
     global objdir
     global srcdir
+    global cparse_arch
+    global cparse_compiler_version
 
     set expected_result [get_expected_result "$test"]
     set expected_msgs [lindex $expected_result 0]
     set is_xfailer [lindex $expected_result 1]
 
     set cmd "$objdir/../cparse"
-    if {[catch {spawn "$cmd" "--include=$srcdir/../arch/stddef-x86_64.h" "$test"}]} {
+    if {[catch {spawn "$cmd" \
+		    "--compiler=$cparse_arch-gcc-$cparse_compiler_version" \
+		    "--include=$srcdir/../target/gcc/$cparse_arch/stddef.h" \
+		    "$test"}]} {
 	error "$test: failed to spawn $cmd"
     }
 

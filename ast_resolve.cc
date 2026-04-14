@@ -23,7 +23,7 @@
 #include "ast_impl.hh"
 #include "semantic_except.hh"
 #include "pp_token.hh"
-#include "target.hh"
+#include "target/target.hh"
 
 using namespace klp::ccp;
 using namespace klp::ccp::ast;

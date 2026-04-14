@@ -20,12 +20,13 @@
 #include <getopt.h>
 #include <cstring>
 #include <iostream>
-#include "preprocessor.hh"
-#include "cmdline_except.hh"
-#include "pp_except.hh"
 #include "parse_except.hh"
+#include "pp_except.hh"
+#include "preprocessor.hh"
 #include "semantic_except.hh"
-#include "target_x86_64_gcc.hh"
+#include "target/cmdline_except.hh"
+#include "target/gcc/x86_64/target_x86_64_gcc.hh"
+#include "target/gcc/aarch64/target_aarch64_gcc.hh"
 
 using namespace klp::ccp;
 
@@ -176,6 +177,14 @@ int main(int argc, char* argv[])
   if (!strcmp(o_compiler, "x86_64-gcc")) {
     try {
       tgt.reset(new target_x86_64_gcc{o_compiler_version});
+    } catch (const cmdline_except &e) {
+      std::cerr << "command line error: " << e.what() << std::endl;
+      show_usage(prog_name);
+      return 1;
+    }
+  } else if (!strcmp(o_compiler, "aarch64-gcc")) {
+    try {
+      tgt.reset(new target_aarch64_gcc{o_compiler_version});
     } catch (const cmdline_except &e) {
       std::cerr << "command line error: " << e.what() << std::endl;
       show_usage(prog_name);

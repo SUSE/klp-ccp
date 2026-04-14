@@ -19,7 +19,7 @@
 #include <cassert>
 #include <algorithm>
 #include <stdexcept>
-#include "target.hh"
+#include "target/target.hh"
 #include "ast.hh"
 #include "callables_wrapper.hh"
 #include "constexpr_value.hh"
