@@ -16,13 +16,26 @@
 # along with klp-ccp. If not, see <https://www.gnu.org/licenses/>.
 #
 
+import gzip
 import os.path
+
+import magic
+
 
 class ModuleSymvers:
     def __init__(self, filename):
-        f = open(filename)
+        # Decompress symvers file if needed
+        mime = magic.detect_from_filename(filename)
+        zipped = mime.encoding == "binary"
+
+        with open(filename, "rb" if zipped else "r") as f:
+            data = f.read()
+
+        if zipped:
+            data = gzip.decompress(data).decode()
+
         self.symvers = {}
-        for line in f:
+        for line in data.splitlines():
             line = line.strip()
             record = line.split('\t')
             if len(record) < 4 or len(record) > 5:
