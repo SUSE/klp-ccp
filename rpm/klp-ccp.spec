@@ -8,6 +8,7 @@ Group:		Development/Tools/Building
 Url:		https://github.com/SUSE/klp-ccp
 Source:	klp-ccp-%{version}.tar.gz
 Requires:	python313
+Requires:	python313-magic
 BuildRequires:	python313-devel
 BuildRequires:	make
 BuildRequires:	gcc-c++
