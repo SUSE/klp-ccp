@@ -110,13 +110,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
         if patched_obj_ko.startswith('vmlinux'):
             self._patched_obj_name = 'vmlinux'
         else:
-            patched_obj_ko = os.path.splitext(patched_obj_ko)
-            if patched_obj_ko[1] != '.ko':
-                raise ValueError('invalid module filename extension in \"' +
-                                 self._cfg_patched_obj_filename + '\"')
-            self._patched_obj_name = \
-                patched_obj_ko[0].translate({ord('-') : ord('_')})
-
+            patched_obj_ko = re.sub(r'(?:\.ko)?(?:\.gz|\.xz|\.zst)?$', '', patched_obj_ko)
+            self._patched_obj_name = patched_obj_ko.translate({ord("-"): ord("_")})
 
         self._re_eligible_header_filename = []
         self._re_eligible_header_filename.append(

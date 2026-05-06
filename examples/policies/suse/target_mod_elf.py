@@ -1,9 +1,35 @@
+import gzip
+import io
+import lzma
+
+import magic
+import zstandard
 from elftools.elf.elffile import ELFFile
+
 
 class TargetModElf:
     def __init__(self, filename):
-        self._f = open(filename, 'rb')
-        self.elf = ELFFile(self._f)
+        with open(filename, 'rb') as f:
+            data = f.read()
+
+        io_bytes = None
+
+        mime = magic.detect_from_filename(filename)
+
+        if "gzip" in mime.mime_type:
+            io_bytes = io.BytesIO(gzip.decompress(data))
+        elif "zstd" in mime.mime_type:
+            dctx = zstandard.ZstdDecompressor()
+            io_bytes = io.BytesIO(dctx.decompress(data))
+        elif "x-xz" in mime.mime_type:
+            io_bytes = io.BytesIO(lzma.decompress(data))
+        # Kernel modules are x-object, while vmlinux is x-executable
+        elif "x-object" in mime.mime_type or "x-executable" in mime.mime_type:
+            io_bytes = io.BytesIO(data)
+        else:
+            raise RuntimeError(f"File {filename} with unknown format: {mime.mime_type}")
+
+        self.elf = ELFFile(io_bytes)
 
         self.modinfo_deps = None
         modinfo_secndx = self.elf.get_section_index('.modinfo')
@@ -33,4 +59,3 @@ class TargetModElf:
                     self.elf_syms[sym.name] = [sym]
                 else:
                     self.elf_syms[sym.name].append(sym)
-
