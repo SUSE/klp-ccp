@@ -4193,11 +4193,10 @@ void expr_binop::_evaluate_cmp(const types::pointer_type &pt_left,
        [&](const addressable_type &at_left, const addressable_type &at_right) {
 	 if (!at_left.is_compatible_with(tgt, at_right, true)) {
 	   code_remark remark
-	     (code_remark::severity::fatal,
+	     (code_remark::severity::warning,
 	      "comparison between incompatible pointer types",
 	      a.get_pp_result(), get_tokens_range());
 	   a.get_remarks().add(remark);
-	   throw semantic_except(remark);
 	 }
        })),
      pointed_to_type_left, pointed_to_type_right);
