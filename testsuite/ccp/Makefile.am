@@ -180,4 +180,6 @@ EXTRA_DIST = ccp.exp				\
 	tag-defs-9.c				\
 	tag-defs-9.c.expected			\
 	tag-defs-10.c				\
-	tag-defs-10.c.expected
+	tag-defs-10.c.expected			\
+	tag-defs-15.c				\
+	tag-defs-15.c.expected
