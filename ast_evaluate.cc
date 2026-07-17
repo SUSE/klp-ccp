@@ -4565,10 +4565,35 @@ void expr_binop::_evaluate_cmp(const types::arithmetic_type &at_left,
 	 }
        },
        [&](const int_type &it) {
-	    // These don't overflow because the result type comes from
-	    // an arithmetic conversion.
-	    const target_int i_left = cv_left.convert_to(tgt, it);
-	    const target_int i_right = cv_right.convert_to(tgt, it);
+	    const mpa::limbs::size_type it_width = it.get_width(tgt);
+	    const bool it_is_signed = it.is_signed(tgt);
+
+	    auto convert_or_wrap =
+	      [&](const constexpr_value &cv) {
+		target_int result;
+		try {
+		  result = cv.convert_to(tgt, it);
+		} catch (const std::overflow_error&) {
+		  code_remark remark
+		    (code_remark::severity::warning,
+		     "integer overflow in implicit conversion for comparison",
+		     a.get_pp_result(), this->get_tokens_range());
+		  a.get_remarks().add(remark);
+		  // Do a wrapping bit-pattern conversion, consistent with
+		  // how GCC handles out-of-range implicit integer conversions.
+		  mpa::limbs ls = cv.get_int_value().get_limbs();
+		  ls.resize(mpa::limbs::width_to_size(it_width));
+		  ls.set_bits_at_and_above(it_width,
+					   it_is_signed &&
+					   ls.test_bit(it_width - 1));
+		  result = target_int(it_width - it_is_signed, it_is_signed,
+				      std::move(ls));
+		}
+		return result;
+	      };
+
+	    const target_int i_left = convert_or_wrap(cv_left);
+	    const target_int i_right = convert_or_wrap(cv_right);
 
 	    bool result;
 	    switch (_op) {
