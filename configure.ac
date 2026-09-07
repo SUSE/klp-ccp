@@ -19,13 +19,13 @@ fi
 AC_CONFIG_HEADERS([config.h])
 
 bison_version=[`bison --version | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+'`]
-AX_COMPARE_VERSION(["$bison_version"], [lt], ["3.0.4"],
+AX_COMPARE_VERSION(["$bison_version"], [lt], ["3.6"],
         [AC_SUBST([BISON_YYLA_HAS_TYPE], [1])],
         [AC_SUBST([BISON_YYLA_HAS_TYPE], [0])])
 
 AC_DEFINE_UNQUOTED([BISON_YYLA_HAS_TYPE], [$BISON_YYLA_HAS_TYPE],
-                   [Older versions of bison has .type entry in the lookahead
-                    token, which has been renamed to .kind_ in later versions])
+                   [Bison < 3.6 has a .type entry in the lookahead token,
+                    which was renamed to .kind_ in 3.6 (symbol_kind)])
 
 
 python3_embed_found=no
