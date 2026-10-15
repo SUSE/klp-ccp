@@ -319,7 +319,17 @@ convert_py_lp_creation_policy_warning
     throw;
   }
 
-  return instantiate(code_remark::severity::warning,
+  bool critical = false;
+  PyObject *critical_member = PyObject_GetAttrString(o, "_critical");
+  if (critical_member) {
+    critical = (PyObject_IsTrue(critical_member) == 1);
+    Py_DECREF(critical_member);
+  } else {
+    PyErr_Clear();
+  }
+
+  return instantiate(critical ? code_remark::severity::critical_warning
+			      : code_remark::severity::warning,
 		     std::move(msg));
 }
 

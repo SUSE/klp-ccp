@@ -48,8 +48,9 @@ class ExternalizedSymbolModification:
 
 
 class LpCreationPolicyWarning:
-    def __init__(self, msg):
+    def __init__(self, msg, critical=False):
         self._msg = msg
+        self._critical = critical
 
 
 class LpCreationPolicyError(Exception):
