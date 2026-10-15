@@ -146,6 +146,14 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
         self._externalized_objs_fd = open(self._cfg_work_dir + '/obj_exts',
                                           'w')
 
+        self._re_dead_code_patterns = [
+            re.compile(r'^__compiletime_assert_\d+$'),
+            re.compile(r'^__read_overflow\d*$'),
+            re.compile(r'^__write_overflow\d*$'),
+            re.compile(r'^__bad_size_call_parameter$'),
+            re.compile(r'^____wrong_branch_error$'),
+        ]
+
 
     def _complete_patched_funcs(self, funcs):
         patched = set(funcs)
@@ -284,6 +292,10 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
 
         return True
 
+    def is_undefined_function_ignorable(self, function_name):
+        return (function_name in self._cfg_ext_blacklist or
+                any(p.match(function_name) for p in self._re_dead_code_patterns))
+
     def is_function_externalizable(self,
                                    function_name,
                                    linkage,
@@ -299,7 +311,7 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
             case ccp.Linkage.NESTED_FUN_AUTO:
                 return False
 
-        if function_name in self._cfg_ext_blacklist:
+        if self.is_undefined_function_ignorable(function_name):
             return False
 
         exporter = None

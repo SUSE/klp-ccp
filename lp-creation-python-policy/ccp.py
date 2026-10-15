@@ -76,6 +76,9 @@ class LpCreationPolicyAbc(abc.ABC):
                                    definition_loc):
         pass
 
+    def is_undefined_function_ignorable(self, function_name):
+        return False
+
     @abc.abstractmethod
     def is_function_externalization_preferred(self,
                                               function_name,

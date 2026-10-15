@@ -32,6 +32,7 @@ namespace klp
       class direct_declarator_id;
       class init_declarator;
       class function_definition;
+      class expr_id;
     };
 
     class code_remarks;
@@ -60,6 +61,10 @@ namespace klp
       virtual bool
       is_function_externalizable(const ast::init_declarator &id,
 				 code_remarks &remarks) const = 0;
+
+      virtual bool
+      is_undefined_function_ignorable(const ast::expr_id &eid,
+				      code_remarks &remarks) const = 0;
 
       virtual bool
       is_function_externalization_preferred(const ast::function_definition &fd,

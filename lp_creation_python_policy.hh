@@ -69,6 +69,10 @@ namespace klp
 				 code_remarks &remarks) const override;
 
       virtual bool
+      is_undefined_function_ignorable(const ast::expr_id &eid,
+				      code_remarks &remarks) const override;
+
+      virtual bool
       is_function_externalization_preferred(const ast::function_definition &fd,
 					    const bool in_eligible_headers,
 					    code_remarks &remarks)
