@@ -39,7 +39,7 @@ using namespace klp::ccp;
 
 static const char prog_name[] = "klp-ccp";
 
-static const char optstr[] = ":hc:o:i:P:";
+static const char optstr[] = ":hc:o:i:P:W:";
 
 static const option longopts[] {
 	{ "help", 0, nullptr, 'h' },
@@ -47,6 +47,7 @@ static const option longopts[] {
 	{ "outfile", 1, nullptr, 'o' },
 	{ "patched-functions", 1, nullptr, 'i' },
 	{ "python-policy", 1, nullptr, 'P' },
+	{ "warning-level", 1, nullptr, 'W' },
 	{ nullptr, 0, nullptr, 0 }
 };
 
@@ -81,6 +82,10 @@ static void show_help(const char * const prog)
     << " -P, --python-policy=MOD"
     << "\tFully qualified python class name implementing" << std::endl
     << "\t\t\t\t\t\tlivepatch creation policies." << std::endl
+    << std::endl;
+  std::cout
+    << " -W, --warning-level=LEVEL"
+    << "\t\tWarning level: 'all' (default) or 'critical'."
     << std::endl;
 
   std::cout
@@ -151,6 +156,8 @@ int main(int argc, char *argv[], char *envp[])
   const char *o_outfile = nullptr;
   std::vector<std::string> patched_funs;
   const char *o_python_policy_fq_cls = nullptr;
+  code_remark::severity o_warning_level = code_remark::severity::warning;
+  bool o_warning_level_set = false;
 
   int o;
   int longindex = -1;
@@ -187,6 +194,25 @@ int main(int argc, char *argv[], char *envp[])
 	return 1;
       }
       o_python_policy_fq_cls = optarg;
+      break;
+
+    case 'W':
+      if (o_warning_level_set) {
+	show_opt_duplicate(prog_name, "--warning-level");
+	return 1;
+      }
+      if (!std::strcmp(optarg, "all")) {
+	o_warning_level = code_remark::severity::warning;
+      } else if (!std::strcmp(optarg, "critical")) {
+	o_warning_level = code_remark::severity::critical_warning;
+      } else {
+	std::cerr << "command line error: invalid warning level '"
+		  << optarg << "' (must be 'all' or 'critical')"
+		  << std::endl;
+	show_usage(prog_name);
+	return 1;
+      }
+      o_warning_level_set = true;
       break;
 
     case '?':
@@ -321,7 +347,7 @@ int main(int argc, char *argv[], char *envp[])
   }
 
   if (!pd.get_remarks().empty())
-    std::cerr << pd.get_remarks();
+    pd.get_remarks().print(std::cerr, o_warning_level);
   if (r)
     return r;
 
@@ -333,7 +359,7 @@ int main(int argc, char *argv[], char *envp[])
     r = 2;
   }
   if (!ast.get_remarks().empty())
-    std::cerr << ast.get_remarks();
+    ast.get_remarks().print(std::cerr, o_warning_level);
   ast.get_remarks().clear();
   if (r)
     return r;
@@ -344,7 +370,7 @@ int main(int argc, char *argv[], char *envp[])
     r = 2;
   }
   if (!ast.get_remarks().empty())
-    std::cerr << ast.get_remarks();
+    ast.get_remarks().print(std::cerr, o_warning_level);
   ast.get_remarks().clear();
   if (r)
     return r;
@@ -382,7 +408,7 @@ int main(int argc, char *argv[], char *envp[])
   lp_creation_python_policy::teardown_python();
 
   if (!iremarks.empty())
-    std::cerr << iremarks;
+    iremarks.print(std::cerr, o_warning_level);
   iremarks.clear();
   if (r)
     return r;
