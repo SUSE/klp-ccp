@@ -37,6 +37,8 @@ namespace klp
       bool empty() const noexcept;
       bool any_fatal() const noexcept;
 
+      void print(std::ostream &o, const code_remark::severity max_severity) const;
+
       code_remarks& operator+=(const code_remarks &remarks);
 
       friend std::ostream& operator<<(std::ostream &o, const code_remarks &rs);
