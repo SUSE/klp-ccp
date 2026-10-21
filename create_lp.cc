@@ -8999,9 +8999,9 @@ bool _lp_writer::_emit(object_init_declarator_info &oidi,
       break;
 
     case linkage_change::lc_make_static:
-      if (l.is_first_in_chain()) {
-	_set_storage_class(ds, scs, ast::storage_class::sc_static, tic);
-      }
+      // In C, objects do not inherit internal linkage from prior declarations,
+      // therefore enforce sc_static on all declarations 
+      _set_storage_class(ds, scs, ast::storage_class::sc_static, tic);
       break;
 
     case linkage_change::lc_make_extern:
