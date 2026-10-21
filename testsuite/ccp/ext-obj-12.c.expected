@@ -1,0 +1,9 @@
+/* klp-ccp: from testsuite/ccp/ext-obj-12.c */
+static int (*klpe_espr_foo)[];
+static int (*klpe_espr_foo)[3];
+
+unsigned long klpp_pu_f(void)
+{
+	(*klpe_espr_foo);
+	return sizeof((*klpe_espr_foo));
+}
