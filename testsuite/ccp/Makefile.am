@@ -55,6 +55,12 @@ EXTRA_DIST = ccp.exp				\
 	fun-closure-9.c.expected		\
 	fun-closure-10.c			\
 	fun-closure-10.c.expected		\
+	fun-closure-11.c			\
+	fun-closure-11.h			\
+	fun-closure-11.c.expected		\
+	fun-closure-12.c			\
+	fun-closure-12.h			\
+	fun-closure-12.c.expected		\
 	headers-1.c				\
 	headers-1-internal.h			\
 	headers-1.c.expected			\

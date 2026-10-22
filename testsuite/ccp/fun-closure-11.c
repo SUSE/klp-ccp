@@ -1,0 +1,16 @@
+#include "fun-closure-11.h"
+
+void pu_f(void)
+{
+	/*
+	 * The first reference doesn't strictly require externalization,
+	 * but the second one does. Thus, the non-externalizable
+	 * dependencies of ee_g() become disconnected from the closure and
+	 * no warnings must get emitted about them.
+	 */
+	void (*fp)(void);
+
+	ee_g();
+	fp = &ee_g;
+	fp();
+}

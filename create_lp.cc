@@ -5282,17 +5282,9 @@ void _closure_builder::_construct_fd_id_closure()
 	      assert(!fdi->is_patched);
 	      d.externalize = true;
 	    } else if (d.externalize && !fi.can_externalize) {
+	      // A warning will get emitted from the final walk below
+	      // in case this dependency remains reachable.
 	      d.externalize = false;
-
-	      const pp_tokens &toks = _ai.atu.get_pp_result().get_pp_tokens();
-	      const std::string &name =
-		toks[d.from_eid.get_id_tok()].get_value();
-	      code_remark remark
-		(code_remark::severity::critical_warning,
-		 ("required function externalization of \"" + name +
-		  "\" is impossible"),
-		 _ai.atu.get_pp_result(), d.from_eid.get_tokens_range());
-	      _remarks.add(remark);
 	    }
 
 	    fdi->init_walk_data(cur_walk_gen_nr);
@@ -5315,23 +5307,10 @@ void _closure_builder::_construct_fd_id_closure()
 	      fi.can_externalize_valid = true;
 	    }
 
-	    if (fi.can_externalize) {
-	      d.externalize = true;
-
-	    } else {
-	      d.externalize = false;
-
-	      const pp_tokens &toks = _ai.atu.get_pp_result().get_pp_tokens();
-	      const std::string &name =
-		toks[d.from_eid.get_id_tok()].get_value();
-	      code_remark remark
-		(code_remark::severity::critical_warning,
-		 ("function \"" + name +
-		  "\" without definition cannot get externalized"),
-		 _ai.atu.get_pp_result(), d.from_eid.get_tokens_range());
-	      _remarks.add(remark);
-	    }
-
+	    // In case externalization is impossible, a warning will
+	    // get emitted from the final walk below if this
+	    // dependency remains reachable.
+	    d.externalize = fi.can_externalize;
 	    return false;
 	  }
 	};
@@ -5349,18 +5328,9 @@ void _closure_builder::_construct_fd_id_closure()
 		(_pol.shall_externalize_object(d.oidi.get().init_declarator,
 					       _remarks));
 	      oi.shall_externalize_valid = true;
-
-	      if (!oi.shall_externalize) {
-		const pp_tokens &toks = _ai.atu.get_pp_result().get_pp_tokens();
-		const ast::declarator &decl =
-		  d.oidi.get().init_declarator.get_declarator();
-		const std::string &name = toks[decl.get_id_tok()].get_value();
-		code_remark remark
-		  (code_remark::severity::critical_warning,
-		   "referenced object \"" + name + "\" cannot get externalized",
-		   _ai.atu.get_pp_result(), decl.get_tokens_range());
-		_remarks.add(remark);
-	      }
+	      // In case externalization is impossible, a warning will
+	      // get emitted from the final walk below if this object
+	      // remains reachable.
 	    } else {
 	      // File scope declaration with 'register' storage class specifier.
 	      oi.shall_externalize = false;
@@ -5575,19 +5545,51 @@ update_reachable_incoming_er_edges:
   // definitions, i.e. set the ->externalize flag on all EO edges
   // pointing to externalized function definitions. Also set the
   // ->in_closure member of all function definitions reachable from
-  // the patched set and not externalized.
+  // the patched set and not externalized. Finally, warn about all
+  // dependencies reachable from the patched set which would require
+  // externalization, but for which that is impossible. Note that
+  // this can only be done now, after all externalization decisions
+  // have been made, because those can disconnect dependencies from
+  // the patched set.
   {
     auto &&dep_on_fun_visitor
       = [&](dep_on_fun &d) {
 	  function_info &fi = d.get_function_info();
 	  function_definition_info * const fdi = fi.get_function_definition();
+	  assert(fi.can_externalize_valid);
 
 	  if (!fdi) {
-	    if (d.externalize)
+	    if (d.externalize) {
 	      fi.externalize = true;
-	    else
+	    } else {
 	      fi.in_closure = true;
+
+	      assert(!fi.can_externalize);
+	      const pp_tokens &toks = _ai.atu.get_pp_result().get_pp_tokens();
+	      const std::string &name =
+		toks[d.from_eid.get_id_tok()].get_value();
+	      code_remark remark
+		(code_remark::severity::critical_warning,
+		 ("function \"" + name +
+		  "\" without definition cannot get externalized"),
+		 _ai.atu.get_pp_result(), d.from_eid.get_tokens_range());
+	      _remarks.add(remark);
+	    }
 	    return false;
+	  }
+
+	  if (!fi.can_externalize &&
+	      _fun_expr_id_needs_externalization(d.from_eid)) {
+	    assert(!d.externalize && !fi.externalize);
+	    const pp_tokens &toks = _ai.atu.get_pp_result().get_pp_tokens();
+	    const std::string &name =
+	      toks[d.from_eid.get_id_tok()].get_value();
+	    code_remark remark
+	      (code_remark::severity::critical_warning,
+	       ("required function externalization of \"" + name +
+		"\" is impossible"),
+	       _ai.atu.get_pp_result(), d.from_eid.get_tokens_range());
+	    _remarks.add(remark);
 	  }
 
 	  if (fdi->is_patched)
@@ -5608,6 +5610,24 @@ update_reachable_incoming_er_edges:
 	  assert(oi.shall_externalize_valid);
 	  if (!d.externalize) {
 	    assert(!oi.shall_externalize);
+	    if (!oi.in_closure) {
+	      const ast::storage_class_specifier * const scs =
+		d.oidi.get().enclosing_declaration.storage_class_specifier;
+	      if (!scs ||
+		  (scs->get_storage_class() !=
+		   ast::storage_class::sc_register)) {
+		const pp_tokens &toks = _ai.atu.get_pp_result().get_pp_tokens();
+		const ast::declarator &decl =
+		  d.oidi.get().init_declarator.get_declarator();
+		const std::string &name = toks[decl.get_id_tok()].get_value();
+		code_remark remark
+		  (code_remark::severity::critical_warning,
+		   ("referenced object \"" + name +
+		    "\" cannot get externalized"),
+		   _ai.atu.get_pp_result(), decl.get_tokens_range());
+		_remarks.add(remark);
+	      }
+	    }
 	    oi.in_closure = true;
 	    if (oi.get_initializing_init_declarator())
 	      return true;
