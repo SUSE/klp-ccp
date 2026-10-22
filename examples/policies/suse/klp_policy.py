@@ -108,10 +108,11 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
         self._patched_funcs = set(self._cfg_patched_funcs)
         if not no_complete_patched_funcs:
             self._patched_funcs = self._complete_patched_funcs(self._cfg_patched_funcs)
+
+        self._obj_patched_funcs = self._get_patched_funcs(self._patched_funcs)
+        if not no_complete_patched_funcs:
             with open(self._cfg_work_dir + '/patched_funcs', "w") as file:
-                file.write('\n'.join(
-                    self._get_patched_funcs(self._patched_funcs)
-                ))
+                file.write('\n'.join(self._obj_patched_funcs))
 
         patched_obj_ko = os.path.basename(self._cfg_patched_obj_filename)
         if patched_obj_ko.startswith('vmlinux'):
@@ -717,12 +718,17 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
     def get_sym_mod_for_patched_fun(self,
                                     function_name,
                                     allocated_ids):
+        if function_name in self._obj_patched_funcs:
+            linkage_change = ccp.SymbolModification.LinkageChange.MAKE_EXTERN
+        else:
+            linkage_change = ccp.SymbolModification.LinkageChange.MAKE_STATIC
+
         return ccp.SymbolModification(
             self._gen_unique_rename(
                 self._cfg_sym_rename_prefix + 'p_' + function_name,
                 allocated_ids
             ),
-            ccp.SymbolModification.LinkageChange.MAKE_STATIC
+            linkage_change
         )
 
 

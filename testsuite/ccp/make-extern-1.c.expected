@@ -1,0 +1,4 @@
+/* klp-ccp: from testsuite/ccp/make-extern-1.c */
+extern void klpp_pe_f(void)
+{
+}
