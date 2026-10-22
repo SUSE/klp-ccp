@@ -8999,9 +8999,9 @@ bool _lp_writer::_emit(object_init_declarator_info &oidi,
       break;
 
     case linkage_change::lc_make_static:
-      if (l.is_first_in_chain()) {
-	_set_storage_class(ds, scs, ast::storage_class::sc_static, tic);
-      }
+      // In C, objects do not inherit internal linkage from prior declarations,
+      // therefore enforce sc_static on all declarations 
+      _set_storage_class(ds, scs, ast::storage_class::sc_static, tic);
       break;
 
     case linkage_change::lc_make_extern:
@@ -9771,8 +9771,15 @@ void _lp_writer::_apply_linkage_change_for_fun
       break;
 
     case linkage_change::lc_make_static:
-      if (scs && scs->get_storage_class() != ast::storage_class::sc_static)
-	_set_storage_class(ds, scs, ast::storage_class::sc_none, tic);
+      if (make_pointer) {
+        // In C, variables do not inherit internal linkage from prior declarations,
+        // therefore enforce sc_static on all declarations when make_pointer is
+        // true and lc_make_static is requested.
+        _set_storage_class(ds, scs, ast::storage_class::sc_static, tic);
+      } else if (scs &&
+        	 scs->get_storage_class() != ast::storage_class::sc_static) {
+        _set_storage_class(ds, scs, ast::storage_class::sc_none, tic);
+      }
       break;
 
     case linkage_change::lc_make_extern:
