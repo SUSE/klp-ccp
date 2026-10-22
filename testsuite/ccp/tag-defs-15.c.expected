@@ -1,0 +1,18 @@
+/* klp-ccp: from testsuite/ccp/tag-defs-15.c */
+struct a
+{
+	char b;
+	int s;
+};
+
+struct ab
+{
+	struct a;
+	char d[74];
+};
+
+void *klpp_pu_f(void)
+{
+	struct a b;
+	struct ab test;
+}
