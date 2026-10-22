@@ -1,0 +1,14 @@
+/* klp-ccp: from testsuite/ccp/fun-closure-12.h */
+static void ee_g(void);
+
+/* klp-ccp: from testsuite/ccp/fun-closure-12.c */
+#include "fun-closure-12.h"
+
+void klpp_pu_f(void)
+{
+	/*
+	 * ee_g() remains in the closure and warnings about its
+	 * non-externalizable dependencies are expected.
+	 */
+	ee_g();
+}
