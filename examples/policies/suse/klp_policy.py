@@ -77,6 +77,13 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
         else:
             self._cfg_ext_blacklist = set()
 
+        header_blacklist = os.getenv('KCP_HEADER_BLACKLIST')
+        if header_blacklist:
+            self._cfg_header_blacklist = set(map(lambda e: e.strip(),
+                                                 header_blacklist.split(',')))
+        else:
+            self._cfg_header_blacklist = set()
+
         self._cfg_work_dir = os.getenv('KCP_WORK_DIR')
         if not self._cfg_work_dir:
             raise KeyError('$KCP_WORK_DIR not set')
@@ -133,6 +140,11 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
         self._re_eligible_header_filename.append(
             re.compile('/usr/lib64/gcc/')
         )
+
+        self._re_header_blacklist = []
+        for pat in self._cfg_header_blacklist:
+            if pat:
+                self._re_header_blacklist.append(re.compile(pat))
 
         self._externalizable_funcs = {}
         self._externalizable_objs = {}
@@ -200,6 +212,11 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
 
     def is_header_eligible(self, header, is_pre_include):
         header = os.path.abspath(header)
+        if any(r.search(header) for r in self._re_header_blacklist):
+            return (False,
+                    ccp.LpCreationPolicyWarning(
+                        'header \"' + header + '\" blacklisted'
+                    ))
         is_eligible = any(r.match(header)
                           for r in self._re_eligible_header_filename)
         if is_eligible:
