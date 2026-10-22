@@ -4633,7 +4633,7 @@ void _ast_info_collector::_handle_expr(const ast::expr_id &e)
 	      const pp_tokens &toks = _ai.atu.get_pp_result().get_pp_tokens();
 	      const std::string &name = toks[e.get_id_tok()].get_value();
 	      code_remark remark
-		(code_remark::severity::warning,
+		(code_remark::severity::critical_warning,
 		 ("dependency on function \"" + name +
 		  "\" not allowed in this context"),
 		 _ai.atu.get_pp_result(), e.get_tokens_range());
@@ -4662,7 +4662,7 @@ void _ast_info_collector::_handle_expr(const ast::expr_id &e)
 	      const pp_tokens &toks = _ai.atu.get_pp_result().get_pp_tokens();
 	      const std::string &name = toks[e.get_id_tok()].get_value();
 	      code_remark remark
-		(code_remark::severity::warning,
+		(code_remark::severity::critical_warning,
 		 ("dependency on object \"" + name +
 		  "\" not allowed in this context"),
 		 _ai.atu.get_pp_result(), e.get_tokens_range());
@@ -4696,7 +4696,7 @@ void _ast_info_collector::_handle_expr(const ast::expr_id &e)
 	      const pp_tokens &toks = _ai.atu.get_pp_result().get_pp_tokens();
 	      const std::string &name = toks[e.get_id_tok()].get_value();
 	      code_remark remark
-		(code_remark::severity::warning,
+		(code_remark::severity::critical_warning,
 		 ("dependency on function \"" + name +
 		  "\" not allowed in this context"),
 		 _ai.atu.get_pp_result(), e.get_tokens_range());
@@ -5288,7 +5288,7 @@ void _closure_builder::_construct_fd_id_closure()
 	      const std::string &name =
 		toks[d.from_eid.get_id_tok()].get_value();
 	      code_remark remark
-		(code_remark::severity::warning,
+		(code_remark::severity::critical_warning,
 		 ("required function externalization of \"" + name +
 		  "\" is impossible"),
 		 _ai.atu.get_pp_result(), d.from_eid.get_tokens_range());
@@ -5325,7 +5325,7 @@ void _closure_builder::_construct_fd_id_closure()
 	      const std::string &name =
 		toks[d.from_eid.get_id_tok()].get_value();
 	      code_remark remark
-		(code_remark::severity::warning,
+		(code_remark::severity::critical_warning,
 		 ("function \"" + name +
 		  "\" without definition cannot get externalized"),
 		 _ai.atu.get_pp_result(), d.from_eid.get_tokens_range());
@@ -5356,7 +5356,7 @@ void _closure_builder::_construct_fd_id_closure()
 		  d.oidi.get().init_declarator.get_declarator();
 		const std::string &name = toks[decl.get_id_tok()].get_value();
 		code_remark remark
-		  (code_remark::severity::warning,
+		  (code_remark::severity::critical_warning,
 		   "referenced object \"" + name + "\" cannot get externalized",
 		   _ai.atu.get_pp_result(), decl.get_tokens_range());
 		_remarks.add(remark);

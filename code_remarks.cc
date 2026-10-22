@@ -59,10 +59,18 @@ code_remarks& code_remarks::operator+=(const code_remarks &remarks)
   return *this;
 }
 
+void code_remarks::print(std::ostream &o,
+			 const code_remark::severity max_severity) const
+{
+  for (auto &&r : _remarks) {
+    if (r.get_severity() <= max_severity) {
+      o << r;
+    }
+  }
+}
+
 std::ostream& klp::ccp::operator<<(std::ostream &o, const code_remarks &rs)
 {
-  for(auto &&r : rs._remarks) {
-    o << r;
-  }
+  rs.print(o, code_remark::severity::warning);
   return o;
 }

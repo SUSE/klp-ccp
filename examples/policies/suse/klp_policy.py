@@ -146,6 +146,14 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
         self._externalized_objs_fd = open(self._cfg_work_dir + '/obj_exts',
                                           'w')
 
+        self._re_dead_code_patterns = [
+            re.compile(r'^__compiletime_assert_\d+$'),
+            re.compile(r'^__read_overflow\d*$'),
+            re.compile(r'^__write_overflow\d*$'),
+            re.compile(r'^__bad_size_call_parameter$'),
+            re.compile(r'^____wrong_branch_error$'),
+        ]
+
 
     def _complete_patched_funcs(self, funcs):
         patched = set(funcs)
@@ -226,12 +234,14 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
         except:
             return (False,
                     ccp.LpCreationPolicyWarning(
-                        'ELF sym \"' + elf_sym.name + '\" shndx not an int'
+                        'ELF sym \"' + elf_sym.name + '\" shndx not an int',
+                        critical=True
                     ))
         if shndx >= self._patched_obj_elf.elf.num_sections():
             return (False,
                     ccp.LpCreationPolicyWarning(
-                        'ELF sym \"' + elf_sym.name + '\" shndx out of bounds'
+                        'ELF sym \"' + elf_sym.name + '\" shndx out of bounds',
+                        critical=True
                     ))
         elf_sec = self._patched_obj_elf.elf.get_section(shndx)
         if elf_sec['sh_type'] != 'SHT_PROGBITS':
@@ -262,12 +272,14 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
         except:
             return (False,
                     ccp.LpCreationPolicyWarning(
-                        'ELF sym \"' + elf_sym.name + '\" shndx not an int'
+                        'ELF sym \"' + elf_sym.name + '\" shndx not an int',
+                        critical=True
                     ))
         if shndx >= self._patched_obj_elf.elf.num_sections():
             return (False,
                     ccp.LpCreationPolicyWarning(
-                        'ELF sym \"' + elf_sym.name + '\" shndx out of bounds'
+                        'ELF sym \"' + elf_sym.name + '\" shndx out of bounds',
+                        critical=True
                     ))
         elf_sec = self._patched_obj_elf.elf.get_section(shndx)
         sh_type = elf_sec['sh_type']
@@ -279,6 +291,10 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
             return False
 
         return True
+
+    def is_undefined_function_ignorable(self, function_name):
+        return (function_name in self._cfg_ext_blacklist or
+                any(p.match(function_name) for p in self._re_dead_code_patterns))
 
     def is_function_externalizable(self,
                                    function_name,
@@ -295,7 +311,7 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
             case ccp.Linkage.NESTED_FUN_AUTO:
                 return False
 
-        if function_name in self._cfg_ext_blacklist:
+        if self.is_undefined_function_ignorable(function_name):
             return False
 
         exporter = None
@@ -314,7 +330,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                 return (False,
                         ccp.LpCreationPolicyWarning(
                             'no ELF symbol entry in \"' + self._patched_obj_name
-                            + '\" for extern \"' + function_name + '\"'
+                            + '\" for extern \"' + function_name + '\"',
+                            critical=True
                         ))
             return False
 
@@ -349,7 +366,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
             warnings.append(
                 ccp.LpCreationPolicyWarning(
                     'conflicting definitions for symbol \"' +
-                    function_name + '\" found in ELF'
+                    function_name + '\" found in ELF',
+                    critical=True
                 ))
 
         assert(not any_is_fun_def or bindings)
@@ -358,7 +376,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                 ccp.LpCreationPolicyWarning(
                     'conflicting bindings for symbol \"' +
                     function_name + '\" found in ELF \"' +
-                    self._cfg_patched_obj_filename + '\"'
+                    self._cfg_patched_obj_filename + '\"',
+                    critical=True
                 ))
         if linkage == ccp.Linkage.INTERNAL:
             if not any_is_fun_def:
@@ -369,7 +388,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                     ccp.LpCreationPolicyWarning(
                         'expected STB_LOCAL binding for symbol \"' +
                         function_name + '\" in ELF \"' +
-                        self._cfg_patched_obj_filename + '\"'
+                        self._cfg_patched_obj_filename + '\"',
+                        critical=True
                     ))
 
             if exporter and exporter == self._patched_obj_name:
@@ -377,7 +397,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                     ccp.LpCreationPolicyWarning(
                         'unexpected local linkage for \"' +
                         function_name + '\" exported by \"' +
-                        self._cfg_patched_obj_filename + '\"'
+                        self._cfg_patched_obj_filename + '\"',
+                        critical=True
                     ))
             else:
                 # A symbol with the same name might have been exported
@@ -403,7 +424,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                         'no ELF symbol entry for \"' +
                         function_name + '\" in \"' +
                         self._cfg_patched_obj_filename + '\"' +
-                        ' (hint: blacklist if subject to dead code elimination)'
+                        ' (hint: blacklist if subject to dead code elimination)',
+                        critical=True
                 ))
                 return (False, warnings, )
 
@@ -412,7 +434,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                     ccp.LpCreationPolicyWarning(
                         'expected ELF symbol entry for extern \"' +
                         function_name + '\" with definition in \"' +
-                        self._cfg_patched_obj_filename + '\"'
+                        self._cfg_patched_obj_filename + '\"',
+                        critical=True
                     ))
 
             if any_is_fun_def:
@@ -421,7 +444,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                         ccp.LpCreationPolicyWarning(
                             'expected STB_GLOBAL or STB_LOCAL binding'
                             ' for symbol \"' + function_name + '\" in ELF \"' +
-                            self._cfg_patched_obj_filename + '\"'
+                            self._cfg_patched_obj_filename + '\"',
+                            critical=True
                         ))
 
                 if exporter and exporter != self._patched_obj_name:
@@ -443,7 +467,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                         ccp.LpCreationPolicyWarning(
                             'no export for undefined symbol \"' + object_name +
                             '\" from \"' + self._cfg_patched_obj_filename +
-                            '\" found'
+                            '\" found',
+                            critical=True
                     ))
                     return (False, warnings, )
 
@@ -455,7 +480,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                             '\" exported from \"' + exporter +
                             '\", which is  not among the modinfo' +
                             ' dependencies of \"' +
-                            self._cfg_patched_obj_filename + '\"'
+                            self._cfg_patched_obj_filename + '\"',
+                            critical=True
                     ))
                     return (False, warnings, )
 
@@ -500,7 +526,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                 return (False,
                         ccp.LpCreationPolicyWarning(
                             'no ELF symbol entry in \"' + self._patched_obj_name
-                            + '\" for extern \"' + object_name + '\"'
+                            + '\" for extern \"' + object_name + '\"',
+                            critical=True
                         ))
             return False
 
@@ -535,7 +562,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
             warnings.append(
                 ccp.LpCreationPolicyWarning(
                     'conflicting definitions for symbol \"' +
-                    object_name + '\" found in ELF'
+                    object_name + '\" found in ELF',
+                    critical=True
                 ))
 
         assert(not any_is_obj_def or bindings)
@@ -544,7 +572,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                 ccp.LpCreationPolicyWarning(
                     'conflicting bindings for symbol \"' +
                     object_name + '\" found in ELF \"' +
-                    self._cfg_patched_obj_filename + '\"'
+                    self._cfg_patched_obj_filename + '\"',
+                    critical=True
                 ))
 
         if linkage == ccp.Linkage.INTERNAL:
@@ -554,7 +583,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                         'object symbol \"' + object_name +
                         '\" with internal linkage not found in ELF \"' +
                         self._cfg_patched_obj_filename + '\" ' +
-                        ' (hint: blacklist if subject to dead code elimination)'
+                        ' (hint: blacklist if subject to dead code elimination)',
+                        critical=True
                     ))
                 return (False, warnings, )
 
@@ -563,7 +593,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                     ccp.LpCreationPolicyWarning(
                         'expected STB_LOCAL binding for symbol \"' +
                         object_name + '\" in ELF \"' +
-                        self._cfg_patched_obj_filename + '\"'
+                        self._cfg_patched_obj_filename + '\"',
+                        critical=True
                     ))
 
             if exporter and exporter == self._patched_obj_name:
@@ -571,7 +602,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                     ccp.LpCreationPolicyWarning(
                         'unexpected local linkage for \"' +
                         object_name + '\" exported by \"' +
-                        self._cfg_patched_obj_filename + '\"'
+                        self._cfg_patched_obj_filename + '\"',
+                        critical=True
                     ))
             else:
                 # A symbol with the same name might have been exported
@@ -597,7 +629,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                         'no ELF symbol entry for \"' +
                         object_name + '\" in \"' +
                         self._cfg_patched_obj_filename + '\"' +
-                        ' (hint: blacklist if subject to dead code elimination)'
+                        ' (hint: blacklist if subject to dead code elimination)',
+                        critical=True
                 ))
                 return (False, warnings, )
 
@@ -607,8 +640,9 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                         ccp.LpCreationPolicyWarning(
                             'expected STB_GLOBAL or STB_LOCAL binding'
                             ' for symbol \"' + object_name + '\" in ELF \"' +
-                            self._cfg_patched_obj_filename + '\"'
-                    ))
+                            self._cfg_patched_obj_filename + '\"',
+                            critical=True
+                        ))
 
                 if exporter and exporter != self._patched_obj_name:
                     # A symbol with the same name has been exported
@@ -629,7 +663,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                         ccp.LpCreationPolicyWarning(
                             'no export for undefined symbol \"' + object_name +
                             '\" from \"' + self._cfg_patched_obj_filename +
-                            '\" found'
+                            '\" found',
+                            critical=True
                     ))
                     return (False, warnings, )
 
@@ -641,7 +676,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                             '\" exported from \"' + exporter +
                             '\", which is  not among the modinfo' +
                             ' dependencies of \"' +
-                            self._cfg_patched_obj_filename + '\"'
+                            self._cfg_patched_obj_filename + '\"',
+                            critical=True
                     ))
                     return (False, warnings, )
 

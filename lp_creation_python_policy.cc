@@ -319,7 +319,17 @@ convert_py_lp_creation_policy_warning
     throw;
   }
 
-  return instantiate(code_remark::severity::warning,
+  bool critical = false;
+  PyObject *critical_member = PyObject_GetAttrString(o, "_critical");
+  if (critical_member) {
+    critical = (PyObject_IsTrue(critical_member) == 1);
+    Py_DECREF(critical_member);
+  } else {
+    PyErr_Clear();
+  }
+
+  return instantiate(critical ? code_remark::severity::critical_warning
+			      : code_remark::severity::warning,
 		     std::move(msg));
 }
 
@@ -1081,6 +1091,42 @@ is_function_externalizable(const ast::init_declarator &id,
 				     id.get_linkage().get_linkage_kind(),
 				     false,
 				     remarks);
+}
+
+bool lp_creation_python_policy::
+is_undefined_function_ignorable(const ast::expr_id &eid,
+				code_remarks &remarks) const
+{
+  const pp_token_index id_tok = eid.get_id_tok();
+  const auto &instantiate_remark =
+    [&](const code_remark::severity severity,
+	std::string &&e) {
+      return code_remark{
+	severity,
+	std::move(e),
+	_pp_result,
+	id_tok,
+      };
+    };
+
+  PyObject *r =
+    PyObject_CallMethod(_d->pol_obj, "is_undefined_function_ignorable", "s",
+			_pp_result.get_pp_tokens()[id_tok].get_value().c_str());
+
+  r = _d->unwrap_py_lp_creation_policy_call_result(r, instantiate_remark,
+						   remarks);
+  assert(r != nullptr);
+  if (!PyBool_Check(r)) {
+    Py_DECREF(r);
+    throw python_except{
+      ("expected Bool result from python"
+       " \"LpCreationPolicyAbc.is_undefined_function_ignorable()\""
+       " policy implementation")
+    };
+  }
+  bool result = Py_IsTrue(r);
+  Py_DECREF(r);
+  return result;
 }
 
 bool lp_creation_python_policy::

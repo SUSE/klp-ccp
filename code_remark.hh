@@ -39,6 +39,7 @@ namespace klp
       enum class severity
 	{
 	  fatal,
+	  critical_warning,
 	  warning,
 	};
 
