@@ -135,6 +135,10 @@ EXTRA_DIST = ccp.exp				\
 	macros-23.c				\
 	macros-23.h				\
 	macros-23.c.expected			\
+	make-extern-1.c			\
+	make-extern-1.c.expected		\
+	make-extern-2.c			\
+	make-extern-2.c.expected		\
 	simple.c				\
 	simple.c.expected			\
 	tag-decls-1.c				\
