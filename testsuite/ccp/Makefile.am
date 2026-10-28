@@ -56,6 +56,22 @@ EXTRA_DIST = ccp.exp				\
 	ext-fun-2.c.expected			\
 	ext-fun-3.c				\
 	ext-fun-3.c.expected			\
+	force-macro-rename-1.c			\
+	force-macro-rename-1.c.expected		\
+	force-macro-rename-2.c			\
+	force-macro-rename-2.c.expected		\
+	force-macro-rename-3.c			\
+	force-macro-rename-3.h			\
+	force-macro-rename-3.c.expected		\
+	force-macro-rename-4.c			\
+	force-macro-rename-4.h			\
+	force-macro-rename-4.c.expected		\
+	force-macro-rename-5.c			\
+	force-macro-rename-5.c.expected		\
+	force-macro-rename-6.c			\
+	force-macro-rename-6.c.expected		\
+	force-macro-rename-7.c			\
+	force-macro-rename-7.c.expected		\
 	fun-attrs-1.c				\
 	fun-attrs-1.c.expected			\
 	fun-attrs-2.c				\

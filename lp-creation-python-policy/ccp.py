@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024  SUSE Software Solutions Germany GmbH
+# Copyright (C) 2024, 2026  SUSE Software Solutions Germany GmbH
 #
 # This file is part of klp-ccp.
 #
@@ -125,3 +125,10 @@ class LpCreationPolicyAbc(abc.ABC):
                                multiple,
                                allocated_ids):
         pass
+
+    # Names of macros whose invocations are all to get renamed in the
+    # live patch, even if their definitions wouldn't need any rewrite
+    # otherwise. The renamed definitions of otherwise unmodified
+    # macros forward to the original ones. Queried once.
+    def get_forced_macro_renames(self):
+        return []

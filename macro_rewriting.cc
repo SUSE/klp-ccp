@@ -330,16 +330,87 @@ rewritten_macro_definition::
 rewritten_macro_definition(const pp_result::macro &orig_m,
 			   _ops_container_type &&ops,
 			   std::vector<std::string> &&arg_names,
-			   const pp_result &pp_result)
-  : _ops{std::move(ops)}, _orig_m{orig_m}, _arg_names{std::move(arg_names)}
+			   const pp_result &pp_result,
+			   const bool forwarding)
+  : _ops{std::move(ops)}, _orig_m{orig_m}, _arg_names{std::move(arg_names)},
+    _forwarding{forwarding}
 {
-  normalize_ws(pp_result);
+  // Forwarding definitions are synthesized from scratch, there's no
+  // whitespace from the original replacement list to normalize.
+  if (!_forwarding)
+    normalize_ws(pp_result);
+}
+
+rewritten_macro_definition
+rewritten_macro_definition::make_forwarding(const pp_result::macro &orig_m,
+					    const pp_result &pp_result)
+{
+  // The forwarding definition's replacement list is an invocation of
+  // the original macro with all parameters passed through, i.e.
+  //   #define <new name>(a, b) <orig name>(a, b)
+  // for function-like and
+  //   #define <new name> <orig name>
+  // for object-like macros. A variadic parameter gets forwarded
+  // through its name (__VA_ARGS__ for an unnamed one), pasted to the
+  // preceding comma with the GNU ", ## __VA_ARGS__" extension if
+  // there is any: an invocation leaving the variadic arguments out
+  // must get forwarded with them left out as well, because the
+  // original definition might rely on that very extension and an
+  // explicitly empty argument wouldn't swallow the comma.
+  std::vector<std::string> arg_names = orig_m.get_arg_names();
+
+  // A parameter named like the macro itself would get substituted
+  // for the forwarding invocation's name token, rename it.
+  const auto it_self = std::find(arg_names.begin(), arg_names.end(),
+				 orig_m.get_name());
+  if (it_self != arg_names.end()) {
+    std::string new_name = *it_self;
+    do {
+      new_name += '_';
+    } while (std::find(arg_names.begin(), arg_names.end(), new_name) !=
+	     arg_names.end());
+    *it_self = std::move(new_name);
+  }
+
+  std::vector<rewritten_macro_token> toks;
+  toks.emplace_back(pp_token{pp_token::type::id, orig_m.get_name()});
+  if (orig_m.is_func_like()) {
+    toks.emplace_back(pp_token{pp_token::type::punctuator, "("});
+    for (auto it_arg = arg_names.begin(); it_arg != arg_names.end();
+	 ++it_arg) {
+      if (it_arg != arg_names.begin()) {
+	toks.emplace_back(pp_token{pp_token::type::punctuator, ","});
+	toks.emplace_back(pp_token{pp_token::type::ws, " "});
+	if (orig_m.is_variadic() && it_arg + 1 == arg_names.end()) {
+	  toks.emplace_back(pp_token{pp_token::type::punctuator, "##"},
+			    rewritten_macro_token::pp_operator_tag{});
+	}
+      }
+      toks.emplace_back(pp_token{pp_token::type::id, *it_arg});
+    }
+    toks.emplace_back(pp_token{pp_token::type::punctuator, ")"});
+  }
+
+  // Replace the whole original replacement list, if any.
+  const raw_pp_tokens_range repl_range{0, orig_m.get_repl().size()};
+  _ops_container_type ops;
+  if (repl_range.begin != repl_range.end) {
+    ops.push_back(_op{_op::action::replace, repl_range, sticky_side::none,
+		      std::move(toks)});
+  } else {
+    ops.push_back(_op{_op::action::insert, repl_range, sticky_side::none,
+		      std::move(toks)});
+  }
+
+  return rewritten_macro_definition{orig_m, std::move(ops),
+				    std::move(arg_names), pp_result, true};
 }
 
 bool rewritten_macro_definition::
 operator==(const rewritten_macro_definition &rhs) const noexcept
 {
   return (&this->_orig_m == &rhs._orig_m &&
+	  this->_forwarding == rhs._forwarding &&
 	  this->_arg_names == rhs._arg_names &&
 	  this->_ops == rhs._ops);
 }
@@ -2345,19 +2416,30 @@ public:
 
   // forced_renames lists macros all of whose invocations within the
   // rewritten forest must get renamed, even if their definitions
-  // don't need any modification.
+  // don't need any modification. Those from forwarding_renames get
+  // a forwarding definition in this case
+  // (rewritten_macro_definition::make_forwarding()), those from
+  // copy_renames an identical copy of the original definition. The
+  // latter takes precedence in case a macro is listed in both.
   rewritten_expansion_forest
     (const pp_result &pp_result,
      const macro_invocation &mi,
      rewritten_macro_definitions_pool &pool,
      const std::map<std::string, bool> &macro_ids,
-     const std::set<const pp_result::macro*> &forced_renames);
+     const std::set<const pp_result::macro*> &copy_renames,
+     const std::set<const pp_result::macro*> &forwarding_renames);
+
+  bool is_copy_rename_forced(const pp_result::macro &m) const noexcept
+  { return _copy_renames.count(&m) != 0; }
+
+  bool is_forwarding_rename_forced(const pp_result::macro &m) const noexcept
+  { return _forwarding_renames.count(&m) != 0; }
 
   bool is_rename_forced(const pp_result::macro &m) const noexcept
-  { return _forced_renames.count(&m) != 0; }
+  { return is_copy_rename_forced(m) || is_forwarding_rename_forced(m); }
 
   bool has_forced_renames() const noexcept
-  { return !_forced_renames.empty(); }
+  { return !_copy_renames.empty() || !_forwarding_renames.empty(); }
 
   // Whether the given subtree, including any nested argument trees,
   // contains an invocation of a macro whose rename is forced.
@@ -2456,7 +2538,8 @@ private:
   const expansion_forest &_original_forest;
   rewritten_macro_definitions_pool &_pool;
   const std::map<std::string, bool> &_macro_ids;
-  const std::set<const pp_result::macro*> &_forced_renames;
+  const std::set<const pp_result::macro*> &_copy_renames;
+  const std::set<const pp_result::macro*> &_forwarding_renames;
   _rewritten_forest_nodes _rewritten_forest;
 
   unexpanded_macro_id_out_tokens _unexpanded_macro_id_out_tokens;
@@ -2834,10 +2917,13 @@ rewritten_expansion_forest(const pp_result &pp_result,
 			   rewritten_macro_definitions_pool &pool,
 			   const std::map<std::string, bool> &macro_ids,
 			   const std::set<const pp_result::macro*>
-			     &forced_renames)
+			     &copy_renames,
+			   const std::set<const pp_result::macro*>
+			     &forwarding_renames)
   : _pp_result{pp_result}, _mi{mi},
     _original_forest{mi.get_expansion_forest()},
-    _pool{pool}, _macro_ids{macro_ids}, _forced_renames{forced_renames},
+    _pool{pool}, _macro_ids{macro_ids}, _copy_renames{copy_renames},
+    _forwarding_renames{forwarding_renames},
     _rewritten_forest{_original_forest},
     _counter_invocations{}
 {
@@ -3303,7 +3389,9 @@ private:
   friend bool klp::ccp::rewrite_macro_invocation
     (const pp_result&, const pp_result::macro_invocation&,
      const std::vector<macro_invocation_output_edit_script_op>&, const bool,
-     const std::map<std::string, bool>&, rewritten_macro_definitions_pool&,
+     const std::map<std::string, bool>&,
+     const std::set<const pp_result::macro*>&,
+     rewritten_macro_definitions_pool&,
      rewritten_macro_invocation&, std::string&);
 
   rescan_macro_invocation_edit_script_op
@@ -9323,14 +9411,35 @@ rescan_macro_invocation_rewriter::_impl::finalize()
       push_insertion_edit(dli.first, dli.second);
   }
 
-  const bool force_rename = _forest.is_rename_forced(m);
-  if (!rewritten_m_builder.empty() || force_rename) {
+  // A forced rename yields a rewritten definition even if the edits
+  // didn't require one: an identical copy if the macro must not be
+  // referenced by its original name (conflicts with macro nondef
+  // constraints) and a definition forwarding to the original macro
+  // otherwise.
+  const bool force_copy_rename = _forest.is_copy_rename_forced(m);
+  const bool force_forwarding_rename = _forest.is_forwarding_rename_forced(m);
+  // Note that an empty builder is taken as the definite sign of
+  // identity: is_identity() can give false negatives after
+  // whitespace normalization, e.g. with continuation lines.
+  bool need_forwarding = false;
+  if (!rewritten_m_builder.empty() || force_copy_rename) {
     rewritten_macro_definition d =
       std::move(rewritten_m_builder).finalize(_forest.get_pp_result());
-    if (force_rename || !d.is_identity()) {
+    if (force_copy_rename || !d.is_identity()) {
       const auto rewritten_m = _forest.get_pool().insert(std::move(d));
       _rrmi.set_rewritten_macro(rewritten_m);
+    } else {
+      need_forwarding = force_forwarding_rename;
     }
+  } else {
+    need_forwarding = force_forwarding_rename;
+  }
+  if (need_forwarding) {
+    const auto rewritten_m =
+      _forest.get_pool().insert
+	(rewritten_macro_definition::make_forwarding
+	   (m, _forest.get_pp_result()));
+    _rrmi.set_rewritten_macro(rewritten_m);
   }
   const bool renamed =
     _rrmi.get_rewritten_macro() != invalid_rewritten_macro_definition_id;
@@ -9663,6 +9772,14 @@ collect_result(rewritten_macro_invocation &result,
       result.add_used_macro(rewritten_macro_invocation::used_macro{
 	  nullptr, node._rewritten_m
 	});
+      // A forwarding definition invokes the original macro by its
+      // name when getting expanded.
+      const rewritten_macro_definition &d = _pool[node._rewritten_m];
+      if (d.is_forwarding()) {
+	result.add_used_macro(rewritten_macro_invocation::used_macro{
+	    &d.get_orig_macro(), invalid_rewritten_macro_definition_id
+	  });
+      }
     } else {
       result.add_used_macro(rewritten_macro_invocation::used_macro{
 	  &_original_forest[node._original].get_macro(),
@@ -9690,6 +9807,7 @@ bool rewrite_macro_invocation
 	 const std::vector<macro_invocation_output_edit_script_op> &out_edits,
 	 const bool next_tok_is_lparen,
 	 const std::map<std::string, bool> &macro_ids,
+	 const std::set<const pp_result::macro*> &forced_renames,
 	 rewritten_macro_definitions_pool &pool,
 	 rewritten_macro_invocation &result,
 	 std::string &error_msg)
@@ -9703,14 +9821,16 @@ bool rewrite_macro_invocation
     // rewritten forest, that's a conflict: the constraint would
     // demand an #undef right at the point of use. Resolve such
     // conflicts by forcing a rename of all that macro's invocations
-    // and redoing the rewrite.
-    std::set<const pp_result::macro*> forced_renames;
+    // to identical copies and redoing the rewrite. Note that this
+    // includes macros from forced_renames whose forwarding
+    // definitions would reference the original name.
+    std::set<const pp_result::macro*> copy_renames;
     while (true) {
       const std::size_t pool_size_before = pool.size();
       rewritten_macro_invocation attempt;
       {
 	rewritten_expansion_forest forest{pp_result, mi, pool, macro_ids,
-					  forced_renames};
+					  copy_renames, forced_renames};
 
 	rescan_macro_invocation_edit_script script;
 	for (const auto &e : out_edits) {
@@ -9806,7 +9926,7 @@ bool rewrite_macro_invocation
 	return true;
       }
 
-      if (std::includes(forced_renames.begin(), forced_renames.end(),
+      if (std::includes(copy_renames.begin(), copy_renames.end(),
 			conflicting.begin(), conflicting.end())) {
 	// Should not happen, renaming all of a macro's invocations
 	// removes it from the set of used macros.
@@ -9815,7 +9935,7 @@ bool rewrite_macro_invocation
 	   (*conflicting.begin())->get_name() + "\"")
 	};
       }
-      forced_renames.insert(conflicting.begin(), conflicting.end());
+      copy_renames.insert(conflicting.begin(), conflicting.end());
       pool.truncate(pool_size_before);
     }
 

@@ -1,0 +1,19 @@
+/* klp-ccp: from testsuite/ccp/force-macro-rename-5.c */
+extern int (*klpe_eepr_o);
+
+#define klpr_fr_a0 ((*klpe_eepr_o) + 1)
+
+#define fr_a (eepr_o + 1)
+
+void klpp_pu_f(void)
+{
+	int i = klpr_fr_a0;
+}
+
+#define klpr_fr_a1 fr_a
+
+void klpp_pu_g(void)
+{
+	int eepr_o = 0;
+	int i = klpr_fr_a1;
+}

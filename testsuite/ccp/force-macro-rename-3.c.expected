@@ -1,0 +1,37 @@
+/* klp-ccp: from testsuite/ccp/force-macro-rename-3.c */
+#include "force-macro-rename-3.h"
+
+/* klp-ccp: from testsuite/ccp/force-macro-rename-3.h */
+#define klpr_fr_a(x) fr_a(x)
+
+static inline int klpr_h1(void)
+{
+	return klpr_fr_a(1);
+}
+
+#define KLPR_FR_B FR_B
+
+extern int o1 KLPR_FR_B;
+
+extern int ee_o3 KLPR_FR_B;
+extern void ee_f1(void) KLPR_FR_B;
+
+#define KLPR_DECL_PAIR(name)				\
+	static inline int klpr_##get_##name(void)	\
+	{					\
+		return klpr_fr_a(name);		\
+	}
+
+KLPR_DECL_PAIR(o4)
+
+/* klp-ccp: from testsuite/ccp/force-macro-rename-3.c */
+void klpp_pu_f(void)
+{
+	int i = klpr_h1() + h2();
+	o1 = i;
+	o2 = i;
+	ee_o3 = i;
+	ee_f1();
+	ee_f2();
+	o4 = klpr_get_o4();
+}

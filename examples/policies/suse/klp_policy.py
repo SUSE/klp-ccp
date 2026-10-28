@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024  SUSE Software Solutions Germany GmbH
+# Copyright (C) 2024, 2026  SUSE Software Solutions Germany GmbH
 #
 # This file is part of klp-ccp.
 #
@@ -756,6 +756,18 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
         if multiple:
             name += str(index)
         return self._gen_unique_rename(name, allocated_ids)
+
+    def get_forced_macro_renames(self):
+        # Static keys and static calls externalized with make-extern
+        # cannot get used as-is from a live patch, rename the
+        # relevant macros so that such sites can get spotted during
+        # post-processing. With static call support configured,
+        # static_call(), static_call_cond() and static_call_mod() all
+        # expand to __raw_static_call(). Otherwise, static_call() and
+        # static_call_cond(), by means of __static_call_cond(), read
+        # the key's ->func directly.
+        return ['static_key_true', 'static_key_false', 'static_call',
+                '__raw_static_call', '__static_call_cond']
 
     def get_sym_mod_for_externalized_obj(self,
                                          object_name,

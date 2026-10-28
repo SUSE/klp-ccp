@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2024, 2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -108,6 +108,9 @@ namespace klp
       get_sym_mod_for_externalized_obj(const ast::init_declarator &id,
 				       const allocated_ids_type &allocated_ids,
 				       code_remarks &remarks) const override;
+
+      virtual std::set<std::string>
+      get_forced_macro_renames(code_remarks &remarks) const override;
 
       static void teardown_python() noexcept;
 

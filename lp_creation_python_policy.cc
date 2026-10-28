@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2024, 2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -1436,6 +1436,86 @@ rename_rewritten_macro(const pp_result::macro &m,
     throw;
   }
   return new_name;
+}
+
+std::set<std::string> lp_creation_python_policy::
+get_forced_macro_renames(code_remarks &remarks) const
+{
+  // There's no particular input location to attribute remarks to,
+  // use the beginning of the main source file.
+  const auto &roots = _pp_result.get_header_inclusion_roots();
+  assert(!roots.empty());
+  const pp_result::header_inclusion_root &main_root = *roots.begin();
+  const auto &instantiate_remark =
+    [&](const code_remark::severity severity,
+	std::string &&e) {
+      return code_remark{
+	severity,
+	std::move(e),
+	main_root, range_in_file{0}
+      };
+    };
+
+  PyObject *r =
+    PyObject_CallMethod(_d->pol_obj, "get_forced_macro_renames", nullptr);
+
+  r = _d->unwrap_py_lp_creation_policy_call_result(r, instantiate_remark,
+						   remarks);
+  assert(r != nullptr);
+  PyObject *it = PyObject_GetIter(r);
+  Py_DECREF(r);
+  if (!it) {
+    PyErr_Clear();
+    throw python_except {
+      ("expected iterable result from python"
+       " \"LpCreationPolicyAbc.get_forced_macro_renames()\""
+       " policy implementation")
+    };
+  }
+
+  std::set<std::string> names;
+  try {
+    PyObject *item;
+    while ((item = PyIter_Next(it))) {
+      if (!PyUnicode_Check(item)) {
+	Py_DECREF(item);
+	throw python_except {
+	  ("expected string entries in result from python"
+	   " \"LpCreationPolicyAbc.get_forced_macro_renames()\""
+	   " policy implementation")
+	};
+      }
+      const char *pname = PyUnicode_AsUTF8(item);
+      if (!pname) {
+	Py_DECREF(item);
+	throw python_except {
+	  ("couldn't obtain string value from result returned by"
+	   " \"LpCreationPolicyAbc.get_forced_macro_renames()\""
+	   " policy implementation")
+	};
+      }
+      try {
+	names.insert(pname);
+      } catch (...) {
+	Py_DECREF(item);
+	throw;
+      }
+      Py_DECREF(item);
+    }
+    if (PyErr_Occurred()) {
+      PyErr_Clear();
+      throw python_except {
+	("failed to iterate over result returned by"
+	 " \"LpCreationPolicyAbc.get_forced_macro_renames()\""
+	 " policy implementation")
+      };
+    }
+  } catch (...) {
+    Py_DECREF(it);
+    throw;
+  }
+  Py_DECREF(it);
+  return names;
 }
 
 lp_creation_python_policy::externalized_symbol_modification

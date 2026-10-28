@@ -21,6 +21,7 @@
 
 #include <string>
 #include <map>
+#include <set>
 #include <functional>
 #include "pp_result.hh"
 #include "macro_rewriting.hh"
@@ -340,9 +341,13 @@ namespace klp
 	_macro_defines_to_emit_type _macro_defines_to_emit;
       };
 
+      // All invocations of the macros in forced_macro_renames get
+      // rewritten to renamed definitions, even where not hit by any
+      // edit, c.f. rewrite_macro_invocation().
       depreprocessor(const pp_result &pp_result,
 		     const lp_creation_policy &pol,
 		     lp_creation_policy::allocated_ids_type &&allocated_ids,
+		     std::set<const pp_result::macro*> &&forced_macro_renames,
 		     code_remarks &code_remarks,
 		     output_remarks &remarks);
 
@@ -735,9 +740,15 @@ namespace klp
 
       _cond_incl_stack_type _cond_incl_stack;
 
+      // Whether the given macro invocation involves any of the macros
+      // whose rename is forced.
+      bool _invokes_forced_macro_rename
+	(const pp_result::macro_invocation &mi) const noexcept;
+
       // Macro rewriting state: all macro names known to the pp_result,
       // mapping to whether or not there's any function-like definition.
       std::map<std::string, bool> _macro_ids;
+      std::set<const pp_result::macro*> _forced_macro_renames;
       rewritten_macro_definitions_pool _rewritten_macro_defs;
       std::vector<rewritten_macro_invocation> _rewritten_mis;
     };

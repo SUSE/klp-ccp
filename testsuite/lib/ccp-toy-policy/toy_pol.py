@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024  SUSE Software Solutions Germany GmbH
+# Copyright (C) 2024, 2026  SUSE Software Solutions Germany GmbH
 #
 # This file is part of klp-ccp.
 #
@@ -154,3 +154,8 @@ class LpCreationPolicy(LpCreationPolicyAbc):
         if multiple:
             return prefix + macro_name + str(index)
         return prefix + macro_name
+
+    def get_forced_macro_renames(self):
+        # Macros named fr_a..fr_d resp. FR_A..FR_D get force-renamed.
+        return ['fr_a', 'fr_b', 'fr_c', 'fr_d',
+                'FR_A', 'FR_B', 'FR_C', 'FR_D']

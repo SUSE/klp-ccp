@@ -1,0 +1,17 @@
+/* klp-ccp: from testsuite/ccp/force-macro-rename-4.h */
+#define KLPR_FR_A FR_A
+
+#define FR_A 1
+
+static const int so = KLPR_FR_A;
+
+static inline int h(void)
+{
+	return 1;
+}
+
+/* klp-ccp: from testsuite/ccp/force-macro-rename-4.c */
+void klpp_pu_f(void)
+{
+	int i = so + h();
+}

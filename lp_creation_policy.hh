@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2019, 2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -142,6 +142,14 @@ namespace klp
 			     const bool multiple,
 			     const allocated_ids_type &allocated_ids,
 			     code_remarks &remarks) const = 0;
+
+      // Names of macros whose invocations within the live patch are
+      // all to get renamed, even where the definition wouldn't need
+      // any rewrite otherwise. In the latter case, the renamed
+      // definition forwards to the original macro. Queried once per
+      // live patch creation.
+      virtual std::set<std::string>
+      get_forced_macro_renames(code_remarks &remarks) const = 0;
     };
   }
 }

@@ -1249,7 +1249,10 @@ _rewrite_macro_invocation(const pp_result &pp_result,
   pp_token_index eff_end = expanded_r.end;
   while (eff_end > eff_begin && toks[eff_end - 1].is_empty())
     --eff_end;
-  if (eff_begin == eff_end)
+  // Invocations involving any macro whose rename is forced must get
+  // rewritten even if not affected by any edit.
+  const bool forced_rename = d._invokes_forced_macro_rename(mi);
+  if (eff_begin == eff_end && !forced_rename)
     return;
 
   // Collect the ops touching the expanded range. Insertion ops at
@@ -1263,7 +1266,8 @@ _rewrite_macro_invocation(const pp_result &pp_result,
     case _op::action::copy:
       if (it_op->r.end <= expanded_r.begin || it_op->r.begin >= expanded_r.end)
 	continue;
-      if (it_op->r.begin <= eff_begin && it_op->r.end >= eff_end) {
+      if (!forced_rename &&
+	  it_op->r.begin <= eff_begin && it_op->r.end >= eff_end) {
 	// The macro invocation's output is completely covered by a
 	// single copy op and can be retained as is.
 	return;
@@ -1319,7 +1323,7 @@ _rewrite_macro_invocation(const pp_result &pp_result,
     if (covered_end != eff_end)
       any_edit = true;
   }
-  if (!any_edit)
+  if (!any_edit && !forced_rename)
     return;
 
   // Build the output edit script.
@@ -1432,7 +1436,8 @@ _rewrite_macro_invocation(const pp_result &pp_result,
   d._rewritten_mis.emplace_back();
   std::string error_msg;
   if (!rewrite_macro_invocation(pp_result, mi, out_edits, next_tok_is_lparen,
-				d._macro_ids, d._rewritten_macro_defs,
+				d._macro_ids, d._forced_macro_renames,
+				d._rewritten_macro_defs,
 				d._rewritten_mis.back(), error_msg)) {
     // Can't happen for valid input and the edits the live patch
     // writer produces, c.f. the commit introducing this.
@@ -3001,16 +3006,33 @@ depreprocessor::depreprocessor(const pp_result &pp_result,
 			       const lp_creation_policy &pol,
 			       lp_creation_policy::allocated_ids_type
 				 &&allocated_ids,
+			       std::set<const pp_result::macro*>
+				 &&forced_macro_renames,
 			       code_remarks &code_remarks,
 			       output_remarks &remarks)
   : _pp_result(pp_result), _pol(pol), _allocated_ids(std::move(allocated_ids)),
-    _code_remarks(code_remarks), _remarks(remarks)
+    _code_remarks(code_remarks), _remarks(remarks),
+    _forced_macro_renames(std::move(forced_macro_renames))
 {
   for (auto it_m = _pp_result.macros_begin(); it_m != _pp_result.macros_end();
        ++it_m) {
     auto &e = _macro_ids[it_m->get_name()];
     e |= it_m->is_func_like();
   }
+}
+
+bool depreprocessor::
+_invokes_forced_macro_rename(const pp_result::macro_invocation &mi)
+  const noexcept
+{
+  if (_forced_macro_renames.empty())
+    return false;
+
+  for (const pp_result::macro &m : mi.get_used_macros()) {
+    if (_forced_macro_renames.count(&m))
+      return true;
+  }
+  return false;
 }
 
 void depreprocessor::append(transformed_input_chunk &&tic)
