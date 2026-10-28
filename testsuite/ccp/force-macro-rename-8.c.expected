@@ -1,0 +1,22 @@
+/* klp-ccp: not from file */
+#define klpr_fr_a fr_a
+#define klpr_fr_b fr_b
+#define klpr_fr_c fr_c
+
+/* klp-ccp: from testsuite/ccp/force-macro-rename-8.c */
+#include "force-macro-rename-8.h"
+
+#define CALL(f) f(3)
+
+static int fr_c(int x)
+{
+	return x;
+}
+
+void klpp_pu_f(void)
+{
+	int i = klpr_fr_a(1);
+	i += klpr_fr_b(i);
+	i += klpr_fr_c(i);
+	i += CALL(klpr_fr_c);
+}

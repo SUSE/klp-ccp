@@ -132,3 +132,12 @@ class LpCreationPolicyAbc(abc.ABC):
     # macros forward to the original ones. Queried once.
     def get_forced_macro_renames(self):
         return []
+
+    # Name of a macro forwarding to a function whose rename is forced
+    # (c.f. get_forced_macro_renames()), but which isn't a macro:
+    # references to the function get replaced by the macro's name.
+    def rename_function_forwarding_macro(self,
+                                         function_name,
+                                         allocated_ids):
+        return self.rename_rewritten_macro(function_name, 0, False,
+                                           allocated_ids)

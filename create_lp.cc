@@ -1459,12 +1459,22 @@ namespace
     const function_definition_info* get_function_definition() const noexcept
     { return _fdi.get(); }
 
+    // The declarator id of the definition or, if there's none, of
+    // the first declaration.
+    const ast::direct_declarator_id& get_direct_declarator_id() const noexcept;
+
     bool can_externalize_valid;
     bool can_externalize;
 
     bool externalize;
     bool in_closure;
     lp_creation_policy::externalized_symbol_modification externalized_sym_mod;
+
+    // Set if the policy forces a rename of the function's name as if
+    // it were a macro: references not renamed otherwise get replaced
+    // by forwarding_macro, a macro forwarding to the original name.
+    bool force_ref_rename;
+    std::string forwarding_macro;
 
   private:
     friend class ast_info;
@@ -3003,8 +3013,20 @@ void function_definition_info::for_each_deps_on_types(callable_type &&c) const
 
 function_info::function_info()
   : _fdi(nullptr), can_externalize_valid(false), can_externalize(false),
-    externalize(false), in_closure(false)
+    externalize(false), in_closure(false), force_ref_rename(false)
 {}
+
+const ast::direct_declarator_id& function_info::get_direct_declarator_id()
+  const noexcept
+{
+  if (_fdi) {
+    return (_fdi->function_definition.get_declarator()
+	    .get_direct_declarator_id());
+  }
+  assert(!_idis.empty());
+  return _idis.front()->init_declarator.get_declarator()
+    .get_direct_declarator_id();
+}
 
 object_info::object_info()
   : _initializing_id(nullptr), shall_externalize_valid(false),
@@ -3506,6 +3528,32 @@ namespace
 	    (di.storage_class_specifier->get_storage_class() ==
 	     ast::storage_class::sc_extern) &&
 	    !id.get_initializer());
+  }
+
+  // The symbol modification applying to a reference to some
+  // function, if any.
+  const lp_creation_policy::symbol_modification*
+  _fun_ref_sym_mod(const dep_on_fun &d) noexcept
+  {
+    const function_info &fi = d.get_function_info();
+    if (d.externalize)
+      return &fi.externalized_sym_mod.sym_mod;
+    const function_definition_info * const fdi = fi.get_function_definition();
+    if (fdi)
+      return &fdi->sym_mod;
+    return nullptr;
+  }
+
+  // Whether a reference to some function is to get replaced by the
+  // function's forwarding macro, i.e. whether the function's rename
+  // is forced and the reference won't get renamed otherwise.
+  bool _fun_ref_needs_forwarding_macro(const dep_on_fun &d) noexcept
+  {
+    if (!d.get_function_info().force_ref_rename)
+      return false;
+    const lp_creation_policy::symbol_modification * const sym_mod =
+      _fun_ref_sym_mod(d);
+    return !sym_mod || !sym_mod->is_rename();
   }
 }
 
@@ -6305,7 +6353,8 @@ void _symbol_modification_resolver::operator()()
 	       (target_fi.externalized_sym_mod.sym_mod.is_rename() ||
 		target_fi.externalized_sym_mod.make_pointer)) ||
 	      (!d.externalize && target_fdi &&
-	       target_fdi->sym_mod.is_rename()));
+	       target_fdi->sym_mod.is_rename()) ||
+	      _fun_ref_needs_forwarding_macro(d));
     };
 
   // Function definitions invoking any macro whose rename is forced
@@ -8758,6 +8807,12 @@ namespace
 
     void operator()();
 
+    // The functions whose forwarding macro has actually been
+    // referenced from the output, in order of first use.
+    const std::vector<const function_info*>&
+    get_used_forwarding_macros() const noexcept
+    { return _used_forwarding_macros; }
+
   private:
     void _emit_inclusion_sequence
        (const ast_info::external_declaration_iterator &sequence_eds_begin,
@@ -8900,6 +8955,7 @@ namespace
 
     ast_info &_ai;
     depreprocessor &_d;
+    std::vector<const function_info*> _used_forwarding_macros;
     code_remarks &_remarks;
   };
 }
@@ -10982,16 +11038,28 @@ _rewrite_references(const deps_on_funs &deps,
     const function_info &fi = d.get_function_info();
     const function_definition_info * const fdi = fi.get_function_definition();
     assert(fi.externalize || fi.in_closure || (fdi && fdi->is_patched));
-    if (d.externalize) {
-      assert(fi.externalize);
-      _apply_sym_mod_to_id_tok(fi.externalized_sym_mod.sym_mod,
-			       fi.externalized_sym_mod.make_pointer,
-			       d.from_eid.get_id_tok(),
-			       tic);
-    } else if (fdi) {
-      _apply_sym_mod_to_id_tok(fdi->sym_mod, false,
-			       d.from_eid.get_id_tok(),
-			       tic);
+    assert(!d.externalize || fi.externalize);
+    const lp_creation_policy::symbol_modification * const sym_mod =
+      _fun_ref_sym_mod(d);
+    const bool make_pointer =
+      d.externalize && fi.externalized_sym_mod.make_pointer;
+    if (_fun_ref_needs_forwarding_macro(d)) {
+      // Replace the reference by the forwarding macro's name.
+      assert(!fi.forwarding_macro.empty());
+      if (std::find(_used_forwarding_macros.begin(),
+		    _used_forwarding_macros.end(), &fi) ==
+	  _used_forwarding_macros.end()) {
+	_used_forwarding_macros.push_back(&fi);
+      }
+      _apply_sym_mod_to_id_tok
+	(lp_creation_policy::symbol_modification{
+	   std::string{fi.forwarding_macro},
+	   lp_creation_policy::symbol_modification::linkage_change::lc_none
+	 },
+	 make_pointer, d.from_eid.get_id_tok(), tic);
+    } else if (sym_mod) {
+      _apply_sym_mod_to_id_tok(*sym_mod, make_pointer,
+			       d.from_eid.get_id_tok(), tic);
     }
   }
 }
@@ -11020,7 +11088,8 @@ void klp::ccp::create_lp(const std::string &outfile,
   _closure_builder{ai, pol, remarks}();
 
   // Resolve the names of the macros whose rename is forced by the
-  // policy.
+  // policy. Functions of such a name get their references replaced
+  // by a forwarding macro.
   {
     const std::set<std::string> names = pol.get_forced_macro_renames(remarks);
     const pp_result &ppr = atu.get_pp_result();
@@ -11030,11 +11099,64 @@ void klp::ccp::create_lp(const std::string &outfile,
       if (names.count(it_m->get_name()))
 	ai.forced_macro_renames.insert(&*it_m);
     }
+
+    const pp_tokens &toks = ppr.get_pp_tokens();
+    for (auto it_fi = ai.functions_begin(); it_fi != ai.functions_end();
+	 ++it_fi) {
+      const pp_token_index id_tok =
+	it_fi->get_direct_declarator_id().get_id_tok();
+      if (names.count(toks[id_tok].get_value()))
+	it_fi->force_ref_rename = true;
+    }
   }
 
   // Recursively rename rewritten resp. externalized functions and
   // objects.
   _symbol_modification_resolver{ai, pol, remarks}();
+
+  // Name the forwarding macros for functions whose rename is forced
+  // and some references to which can end up not being renamed
+  // otherwise.
+  for (auto it_fi = ai.functions_begin(); it_fi != ai.functions_end();
+       ++it_fi) {
+    if (!it_fi->force_ref_rename)
+      continue;
+
+    const function_definition_info * const fdi =
+      it_fi->get_function_definition();
+    const bool needed =
+      ((it_fi->externalize &&
+	!it_fi->externalized_sym_mod.sym_mod.is_rename()) ||
+       !(fdi && fdi->sym_mod.is_rename()));
+    if (!needed)
+      continue;
+
+    const ast::direct_declarator_id &ddid = it_fi->get_direct_declarator_id();
+    const pp_token_index id_tok = ddid.get_id_tok();
+    const pp_result &ppr = atu.get_pp_result();
+    std::string macro_name =
+      pol.rename_function_forwarding_macro(ddid, ai.get_allocated_ids(),
+					   remarks);
+    if (macro_name.empty() ||
+	macro_name == ppr.get_pp_tokens()[id_tok].get_value() ||
+	ai.get_allocated_ids().count(macro_name)) {
+      code_remark remark{
+	code_remark::severity::fatal,
+	("invalid name \"" + macro_name + "\" chosen by policy for"
+	 " forwarding macro of function \"" +
+	 ppr.get_pp_tokens()[id_tok].get_value() + "\""),
+	ppr, id_tok
+      };
+      remarks.add(remark);
+      throw lp_except(remark);
+    }
+    it_fi->forwarding_macro = macro_name;
+    ai.register_sym_mod
+      (lp_creation_policy::symbol_modification{
+	 std::move(macro_name),
+	 lp_creation_policy::symbol_modification::linkage_change::lc_none
+       });
+  }
 
   // Determine which of the headers from the original input
   // can be included from the live patch.
@@ -11051,6 +11173,18 @@ void klp::ccp::create_lp(const std::string &outfile,
     std::set<const pp_result::macro*>{ai.forced_macro_renames},
     remarks, output_remarks
   };
-  _lp_writer{ai, d, remarks}();
+  _lp_writer writer{ai, d, remarks};
+  writer();
+
+  // Define the forwarding macros actually referenced.
+  {
+    const pp_tokens &toks = atu.get_pp_result().get_pp_tokens();
+    for (const function_info * const fi : writer.get_used_forwarding_macros()) {
+      d.add_leading_macro_define
+	(fi->forwarding_macro,
+	 toks[fi->get_direct_declarator_id().get_id_tok()].get_value());
+    }
+  }
+
   d(outfile);
 }

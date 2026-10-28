@@ -1365,6 +1365,65 @@ rename_rewritten_closure_fun(const ast::function_definition &fd,
 }
 
 std::string lp_creation_python_policy::
+rename_function_forwarding_macro(const ast::direct_declarator_id &ddid,
+				 const allocated_ids_type &allocated_ids,
+				 code_remarks &remarks) const
+{
+  const pp_token_index id_tok = _get_id_tok(ddid);
+  const auto &instantiate_remark =
+    [&](const code_remark::severity severity,
+	std::string &&e) {
+      return code_remark{
+	severity,
+	std::move(e),
+	_pp_result,
+	id_tok,
+      };
+    };
+
+  PyObject *wrapped_allocated_ids = _d->wrap_allocated_ids(allocated_ids);
+  PyObject *r =
+    PyObject_CallMethod(_d->pol_obj, "rename_function_forwarding_macro",
+			"sO",
+			_pp_result.get_pp_tokens()[id_tok].get_value().c_str(),
+			wrapped_allocated_ids);
+  (reinterpret_cast<struct allocated_ids *>
+   (wrapped_allocated_ids))
+    ->_wrapped_ids = nullptr;
+  Py_DECREF(wrapped_allocated_ids);
+
+  r = _d->unwrap_py_lp_creation_policy_call_result(r, instantiate_remark,
+						   remarks);
+  assert(r != nullptr);
+  if (!PyUnicode_Check(r)) {
+    Py_DECREF(r);
+    throw python_except {
+      ("expected string result from python"
+       " \"LpCreationPolicyAbc.rename_function_forwarding_macro()\""
+       " policy implementation")
+    };
+  }
+  const char *pnew_name = PyUnicode_AsUTF8(r);
+  if (!pnew_name) {
+    Py_DECREF(r);
+    throw python_except {
+      ("couldn't obtain string value from result returned by"
+       " \"LpCreationPolicyAbc.rename_function_forwarding_macro()\""
+       " policy implementation")
+    };
+  }
+  std::string new_name;
+  try {
+    new_name = pnew_name;
+    Py_DECREF(r);
+  } catch (...) {
+    Py_DECREF(r);
+    throw;
+  }
+  return new_name;
+}
+
+std::string lp_creation_python_policy::
 rename_rewritten_macro(const pp_result::macro &m,
 		       const std::size_t index,
 		       const bool multiple,

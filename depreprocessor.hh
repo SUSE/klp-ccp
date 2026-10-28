@@ -355,6 +355,11 @@ namespace klp
       void append(const pp_result::header_inclusion_child &include);
       void append(const pp_result::header_inclusion_root &hir);
 
+      // Emit an object-like macro definition not stemming from the
+      // input in front of everything else.
+      void add_leading_macro_define(const std::string &name,
+				    const std::string &repl);
+
       void operator()(const std::string &outfile);
 
     private:
@@ -739,6 +744,9 @@ namespace klp
       output_remarks &_remarks;
 
       _cond_incl_stack_type _cond_incl_stack;
+
+      std::vector<std::pair<std::string, std::string>>
+	_leading_macro_defines;
 
       // Whether the given macro invocation involves any of the macros
       // whose rename is forced.

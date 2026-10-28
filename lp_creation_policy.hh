@@ -150,6 +150,16 @@ namespace klp
       // live patch creation.
       virtual std::set<std::string>
       get_forced_macro_renames(code_remarks &remarks) const = 0;
+
+      // Choose the name of a macro forwarding to the function
+      // identified by ddid, whose rename is forced
+      // (c.f. get_forced_macro_renames()) even though it's not a
+      // macro. References to the function not renamed otherwise get
+      // replaced by the macro's name.
+      virtual std::string
+      rename_function_forwarding_macro(const ast::direct_declarator_id &ddid,
+				       const allocated_ids_type &allocated_ids,
+				       code_remarks &remarks) const = 0;
     };
   }
 }

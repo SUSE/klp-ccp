@@ -3035,6 +3035,12 @@ _invokes_forced_macro_rename(const pp_result::macro_invocation &mi)
   return false;
 }
 
+void depreprocessor::add_leading_macro_define(const std::string &name,
+					      const std::string &repl)
+{
+  _leading_macro_defines.emplace_back(name, repl);
+}
+
 void depreprocessor::append(transformed_input_chunk &&tic)
 {
   tic._trim();
@@ -3068,6 +3074,21 @@ void depreprocessor::operator()(const std::string &outfile)
   bool is_first_chunk = true;
   _output_state state;
   bool write_newlines_before;
+
+  if (!_leading_macro_defines.empty()) {
+    // Not attributable to any input file, c.f. _set_input_file().
+    assert(!state.last_input_file);
+    writer.append("/* klp-ccp: not from file */");
+    writer.append(source_writer::newline_tag{});
+    for (const auto &md : _leading_macro_defines) {
+      writer.append("#define " + md.first + " " + md.second);
+      writer.append(source_writer::newline_tag{});
+    }
+    state.last_input_pos_raw = std::numeric_limits<raw_pp_token_index>::max();
+    state.last_was_newline = true;
+    is_first_chunk = false;
+  }
+
   for (auto it_c = _chunks.cbegin(); it_c != _chunks.cend(); ++it_c) {
     switch (it_c->k) {
     case _chunk::kind::transformed_input:

@@ -112,6 +112,11 @@ namespace klp
       virtual std::set<std::string>
       get_forced_macro_renames(code_remarks &remarks) const override;
 
+      virtual std::string
+      rename_function_forwarding_macro(const ast::direct_declarator_id &ddid,
+				       const allocated_ids_type &allocated_ids,
+				       code_remarks &remarks) const override;
+
       static void teardown_python() noexcept;
 
     private:
