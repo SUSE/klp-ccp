@@ -183,16 +183,31 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
 
         return patched
 
+    def _sym_has_fun_def_in_elf(self, name):
+        # Report whether name has a function definition symbol in the
+        # patched object.
+        elf_syms = self._patched_obj_elf.elf_syms.get(name)
+        if not elf_syms:
+            return False
+        for s in elf_syms:
+            is_fun_def = self._elf_sym_is_fun_def_sym(s)
+            if isinstance(is_fun_def, tuple):
+                # (False, warning) error case. This helper runs at policy
+                # construction time, where there's no warnings channel back
+                # to the framework, so surface a critical warning by raising.
+                is_fun_def, warning = is_fun_def
+                if warning._critical:
+                    raise ccp.LpCreationPolicyError(warning._msg, [warning])
+            if is_fun_def:
+                return True
+        return False
+
     def _get_patched_funcs(self, funcs):
         patched = set()
         for f in funcs:
             # Filter out fully inlined functions and return only
             # those with a corresponding symbol in the obj.
-            elf_syms = self._patched_obj_elf.elf_syms.get(f)
-            if not elf_syms:
-                continue
-            in_elf = any([self._elf_sym_is_fun_def_sym(s) for s in elf_syms])
-            if not in_elf:
+            if not self._sym_has_fun_def_in_elf(f):
                 continue
 
             # If there's one or more symbols use the IPA to catch
