@@ -177,9 +177,23 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
             for (f, optimized) in spawns.items():
                 if not optimized:
                     patched.add(f)
-                else:
+                elif self._sym_has_fun_def_in_elf(f):
+                    # Note this match is by name only. In a linked
+                    # multi-TU object two distinct base functions can
+                    # each spawn an identically suffixed clone (e.g.
+                    # foo.constprop.0): if ours was dropped but the
+                    # other TU's survived, the surviving symbol is
+                    # matched here and we over-warn. That's harmless,
+                    # as f is not added to patched regardless;
+                    # disambiguating would need debug info to correlate
+                    # the symbol with its defining TU, which the symtab
+                    # doesn't carry.
                     print('warning: optimized function \"' +
                           f +'\" in callgraph', file=sys.stderr)
+                # else: the optimized clone has no function definition
+                # symbol in the object. It must have been dropped after
+                # the IPA clones dump was written, so don't warn about
+                # it.
 
         return patched
 
