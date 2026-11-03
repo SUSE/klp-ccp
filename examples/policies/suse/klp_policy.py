@@ -364,7 +364,7 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
         for elf_sym in elf_syms:
             is_fun_def = self._elf_sym_is_fun_def_sym(elf_sym)
             if isinstance(is_fun_def, tuple):
-                warnings += is_fun_def[1]
+                warnings.append(is_fun_def[1])
                 is_fun_def = is_fun_def[0]
             if is_fun_def:
                 any_is_fun_def = True
