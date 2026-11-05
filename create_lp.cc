@@ -7662,10 +7662,36 @@ _lp_deps_resolver::_lp_deps_resolver(ast_info &ai,
 
 void _lp_deps_resolver::operator()()
 {
-  // Retain all #includes from the input source file.
+  // Retain all #includes from the input source file, but only those
+  // which don't extend into some external declaration from the
+  // outside, like an #include placed within a function body. For
+  // these, retaining the #include would require emitting the
+  // enclosing external declarations as well, even if not needed
+  // otherwise. Note that such headers still get included if some
+  // dependency on their contents is found.
+  const pp_result &ppr = _ai.atu.get_pp_result();
   for (auto &hi : _ai.header_infos) {
-    if (hi.eligible)
-      _queue_header_include(hi);
+    // Only consider the topmost eligible headers: including any
+    // eligible descendant would amount to including the topmost one
+    // anyway, c.f. _add_include().
+    if (!hi.eligible || (hi.parent && hi.parent->eligible))
+      continue;
+
+    // The external declarations are sorted and don't overlap. Only
+    // the first and the last one intersecting with the header can
+    // extend beyond it.
+    const raw_pp_tokens_range &r = hi.get_range();
+    const auto ed_begin = _ai.intersecting_external_declarations_begin(r);
+    const auto ed_end = _ai.intersecting_external_declarations_end(r);
+    if (ed_begin != ed_end &&
+	(!(ppr.pp_tokens_range_to_raw(ed_begin->get_tokens_range())
+	   .is_contained_in(r)) ||
+	 !(ppr.pp_tokens_range_to_raw(std::prev(ed_end)->get_tokens_range())
+	   .is_contained_in(r)))) {
+      continue;
+    }
+
+    _queue_header_include(hi);
   }
 
   using linkage_change =

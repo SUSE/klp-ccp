@@ -141,6 +141,16 @@ EXTRA_DIST = ccp.exp				\
 	headers-7.c				\
 	headers-7.h				\
 	headers-7.c.expected			\
+	headers-8.c				\
+	headers-8.h				\
+	headers-8.c.expected			\
+	headers-9.c				\
+	headers-9.h				\
+	headers-9.c.expected			\
+	headers-10.c				\
+	headers-10.h				\
+	headers-10-1.h			\
+	headers-10.c.expected			\
 	macros-1.c				\
 	macros-1.c.expected			\
 	macros-2.c				\
