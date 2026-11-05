@@ -1,0 +1,13 @@
+/* klp-ccp: from testsuite/ccp/ext-obj-14.h */
+static int es_a;
+
+/* klp-ccp: from testsuite/ccp/ext-obj-14-1.h */
+static int es_b;
+
+/* klp-ccp: from testsuite/ccp/ext-obj-14.c */
+#include "ext-obj-14-1.h"
+
+int klpp_pu_f(void)
+{
+	return es_a + es_b;
+}

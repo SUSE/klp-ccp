@@ -6637,7 +6637,11 @@ void _conflicting_header_finder::operator()()
   // i.e. in
   //  static int a;
   //  extern int a;
-  // 'a' will have internal linkage.
+  // 'a' will have internal linkage. This doesn't work for object
+  // declarations without any storage class specifier though: in
+  //  static int a;
+  //  int a;
+  // the second declaration conflicts with the first one.
   //
   // It might still be the case that such an extra declaration
   // conflicts with other constraints required for a particular header
@@ -6670,6 +6674,11 @@ void _conflicting_header_finder::operator()()
 		      ast::storage_class::sc_static)) {
 	    // Any declaration having a 'static' storage class
 	    // will conflict with a (preceeding) 'extern'.
+	    _mark_headers_uneligible(di.declaration.get_tokens_range());
+
+	  } else if (!new_is_external && !di.storage_class_specifier) {
+	    // A declaration without storage class specifier will
+	    // conflict with a preceeding 'static'.
 	    _mark_headers_uneligible(di.declaration.get_tokens_range());
 
 	  } else if (esm.make_pointer) {
