@@ -9313,9 +9313,17 @@ void _lp_writer::_emit_inclusion_sequence
 		     tic);
 		  _d.append(std::move(tic));
 		} else {
+		  // The header's declaration can be retained as is: it's
+		  // either an 'extern' one or, if the resulting linkage
+		  // is internal, a 'static' one, c.f. the header
+		  // eligibility rules in _conflicting_header_finder.
 		  assert(di.storage_class_specifier &&
-			 (di.storage_class_specifier->get_storage_class() ==
-			  ast::storage_class::sc_extern));
+			 ((di.storage_class_specifier->get_storage_class() ==
+			   ast::storage_class::sc_extern) ||
+			  ((di.storage_class_specifier->get_storage_class() ==
+			    ast::storage_class::sc_static) &&
+			   (oi.externalized_sym_mod.sym_mod.new_linkage !=
+			    linkage_change::lc_make_extern))));
 		  assert(!oidi.get_initializer());
 		}
 	      } else {

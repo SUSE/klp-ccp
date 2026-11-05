@@ -1,0 +1,7 @@
+/* klp-ccp: from testsuite/ccp/ext-obj-13.c */
+#include "ext-obj-13.h"
+
+int klpp_pu_f(void)
+{
+	return es_a + eu_b;
+}
