@@ -16,6 +16,10 @@ proc run_ccp {test} {
     set expected_result [get_expected_result "$test"]
     set expected_msgs [lindex $expected_result 0]
     set is_xfailer [lindex $expected_result 1]
+    set include_opts [list]
+    foreach d [lindex $expected_result 2] {
+	lappend include_opts "-I" "$d"
+    }
 
     set cmd "$objdir/../klp-ccp"
     set outfile_base "$objdir/$subdir/[file tail $test]"
@@ -27,7 +31,7 @@ proc run_ccp {test} {
     if {[catch {spawn "$cmd" -c "$ccp_arch-gcc-$ccp_compiler_version" \
 		    -o "$result_file" \
 		    -P "toy_pol.LpCreationPolicy" \
-		    -- "$test"}]} {
+		    -- {*}$include_opts "$test"}]} {
 	error "$test: failed to spawn $cmd"
     }
 

@@ -1,0 +1,11 @@
+/* klp-ccp: from testsuite/ccp/headers-12-inc/sub/headers-12.h */
+extern int ee_a;
+#include "sub/headers-12-1.h"
+#include "headers-12-2.h"
+#include "sub/headers-12-3.h"
+
+/* klp-ccp: from testsuite/ccp/headers-12.c */
+headers_12_1_t klpp_pu_f(headers_12_2_t a, headers_12_3_t b)
+{
+	return ee_a + a + b;
+}

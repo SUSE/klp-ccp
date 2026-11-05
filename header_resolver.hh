@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2019, 2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -52,6 +52,13 @@ namespace klp
       std::string resolve(const std::string &header) const;
       std::string resolve(const std::string &header,
 			  const std::string &referring_file) const;
+
+      // Like the above, but report through relative_to_referring
+      // whether the header has been found relative to the referring
+      // file's location rather than in some search directory.
+      std::string resolve(const std::string &header,
+			  const std::string &referring_file,
+			  bool &relative_to_referring) const;
 
       static const struct cwd_tag
       {

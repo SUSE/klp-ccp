@@ -26,9 +26,53 @@
 #include "code_remarks.hh"
 #include "code_remark.hh"
 #include "lp_except.hh"
+#include "path.hh"
 #include <tuple>
 
 using namespace klp::ccp;
+
+// Find a header name the header from the given #include directive can
+// be reached under through the search directories when emitted into
+// some other file, or return an empty string if there's none. Headers
+// found relative to the including file's location get reached
+// relative to the name the including file is reachable under in
+// turn. The main source file isn't reachable at all, but the
+// -include'd files are through their filename, which is how they get
+// emitted.
+static std::string
+_find_search_path_header_name(const pp_result::header_inclusion_child &h)
+{
+  const std::string &name = h.get_header_name();
+  if (!h.is_resolved_relative_to_parent())
+    return name;
+
+  const pp_result::header_inclusion_node &parent =
+    h.get_parent()->get_containing_header();
+  std::string parent_name;
+  if (!parent.get_parent()) {
+    const pp_result::header_inclusion_root &root =
+      static_cast<const pp_result::header_inclusion_root&>(parent);
+    if (!root.is_preinclude())
+      return std::string{};
+    parent_name = root.get_filename();
+  } else {
+    parent_name =
+      (_find_search_path_header_name
+       (static_cast<const pp_result::header_inclusion_child&>(parent)));
+    if (parent_name.empty())
+      return std::string{};
+  }
+
+  const std::string parent_dir = dirname(parent_name);
+  std::string result =
+    (parent_dir.empty() ? name : normalize_path(parent_dir + '/' + name));
+  // Don't escape from the search directory the parent is in.
+  if (!path_is_absolute(result) &&
+      (result == ".." || !result.compare(0, 3, "../"))) {
+    return std::string{};
+  }
+  return result;
+}
 
 macro_ref::macro_ref(const pp_result::macro &m) noexcept
   : _m{&m}, _pool{nullptr}, _id{invalid_rewritten_macro_definition_id}
@@ -2739,8 +2783,47 @@ write(source_writer &writer, _output_state &state,
 	depreprocessor::_write_newlines(writer, state, directive_range.begin,
 					true, pp_result, source_reader_cache);
       }
-      _write_directive(writer, state, directive_range, pp_result,
-		       source_reader_cache);
+
+      // An #include "..." from within some header having been
+      // resolved relative to that header's location won't
+      // necessarily resolve to the same file from the output. Use a
+      // header name reaching it through the search directories
+      // instead, if any. #includes from the main source file are
+      // left alone, the output takes the main source file's place.
+      const pp_result::header_inclusion_child &h = *this->_child_node;
+      const pp_result::header_inclusion_node &parent =
+	h.get_parent()->get_containing_header();
+      const bool parent_is_main =
+	(!parent.get_parent() &&
+	 !(static_cast<const pp_result::header_inclusion_root&>(parent)
+	   .is_preinclude()));
+      std::string output_header_name;
+      if (h.is_resolved_relative_to_parent() && !parent_is_main) {
+	output_header_name = _find_search_path_header_name(h);
+	if (output_header_name.empty()) {
+	  remarks.add(output_remark{
+	      output_remark::severity::warning,
+	      writer.get_cur_line(),
+	      ("header \"" + h.get_filename() +
+	       "\" is not reachable through the search path,"
+	       " #include might not resolve")
+	    });
+	} else if (output_header_name == h.get_header_name()) {
+	  output_header_name.clear();
+	}
+      }
+
+      if (output_header_name.empty()) {
+	_write_directive(writer, state, directive_range, pp_result,
+			 source_reader_cache);
+      } else {
+	auto it_source = pp_result.intersecting_sources_begin(directive_range);
+	assert(it_source !=
+	       pp_result.intersecting_sources_end(directive_range));
+	_set_input_file(writer, state, &*it_source);
+	writer.append("#include \"" + output_header_name + "\"");
+	writer.append(source_writer::newline_tag{});
+      }
     }
     break;
 
