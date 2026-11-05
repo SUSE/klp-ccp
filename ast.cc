@@ -7250,21 +7250,31 @@ bool stmt_compound::_process(const_processor<bool> &p) const
 
 
 stmt_expr::stmt_expr(const pp_tokens_range &tr, expr* &&e) noexcept
-  : stmt(tr), _e(mv_p(std::move(e)))
+  : stmt(tr), _e(mv_p(std::move(e))), _asl(nullptr)
 {
   if (_e)
     _e->_set_parent(*this);
 }
 
+stmt_expr::stmt_expr(const pp_tokens_range &tr,
+		     attribute_specifier_list* &&asl) noexcept
+  : stmt(tr), _e(nullptr), _asl(mv_p(std::move(asl)))
+{
+  if (_asl)
+    _asl->_set_parent(*this);
+}
+
 stmt_expr::~stmt_expr() noexcept
 {
   delete _e;
+  delete _asl;
 }
 
 _ast_entity* stmt_expr::_get_child(const size_t i) const noexcept
 {
+  // At most one of _e and _asl is non-NULL.
   if (!i)
-    return _e;
+    return _e ? static_cast<_ast_entity*>(_e) : _asl;
 
   return nullptr;
 }

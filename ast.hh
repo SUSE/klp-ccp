@@ -1614,6 +1614,7 @@ namespace klp
 			 specifier_qualifier_list,
 			 init_declarator,
 			 stmt_labeled,
+			 stmt_expr,
 			 function_definition,
 			 parameter_declaration_declarator,
 			 parameter_declaration_abstract> parent_types;
@@ -4430,6 +4431,11 @@ namespace klp
       public:
 	stmt_expr(const pp_tokens_range &tr, expr* &&e) noexcept;
 
+	// An attribute statement, i.e. a null statement with
+	// attributes like __attribute__((fallthrough));.
+	stmt_expr(const pp_tokens_range &tr,
+		  attribute_specifier_list* &&asl) noexcept;
+
 	virtual ~stmt_expr() noexcept override;
 
 	const expr* get_expr() const noexcept
@@ -4437,6 +4443,12 @@ namespace klp
 
 	expr* get_expr() noexcept
 	{ return _e; }
+
+	const attribute_specifier_list* get_asl() const noexcept
+	{ return _asl; }
+
+	attribute_specifier_list* get_asl() noexcept
+	{ return _asl; }
 
       private:
 	virtual _ast_entity* _get_child(const size_t i) const noexcept override;
@@ -4447,6 +4459,7 @@ namespace klp
 	virtual bool _process(const_processor<bool> &p) const override;
 
 	expr *_e;
+	attribute_specifier_list *_asl;
       };
 
       class stmt_if final : public stmt

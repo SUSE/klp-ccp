@@ -8,6 +8,8 @@ EXTRA_DIST = ccp.exp				\
 	aarch64-va-list-1.c.expected		\
 	aarch64-types-1.c			\
 	aarch64-types-1.c.expected		\
+	attr-stmt-1.c				\
+	attr-stmt-1.c.expected		\
 	builtin-choose-expr-1.c		\
 	builtin-choose-expr-1.c.expected	\
 	builtin-choose-expr-2.c		\

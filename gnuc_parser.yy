@@ -333,6 +333,16 @@ static void empty(klp::ccp::pp_tokens_range &loc)
 %nonassoc TOK_DUMMY_PRIO_GREEDY_ATTR_LIST
 %nonassoc TOK_KW_ATTRIBUTE
 
+/*
+ * Define precedence for resolving the shift/reduce conflict between
+ * an attribute statement, i.e. a null statement with attributes like
+ * __attribute__((fallthrough));, and a declaration with only
+ * attributes for its declaration specifiers within a block: like GCC,
+ * favor the attribute statement.
+ */
+%nonassoc TOK_DUMMY_PRIO_ATTR_ONLY_DECL_SPECS
+%nonassoc TOK_SEMICOLON
+
 %type <translation_unit>	translation_unit
 %type <external_declaration>	external_declaration
 %type <function_definition>	function_definition
@@ -442,6 +452,7 @@ static void empty(klp::ccp::pp_tokens_range &loc)
 %type <block_item_list>	block_item_list
 %type <block_item>	block_item
 %type <stmt>	expression_statement
+%type <stmt>	attribute_statement
 %type <stmt>	selection_statement
 %type <stmt>	iteration_statement
 %type <stmt>	jump_statement
@@ -624,7 +635,7 @@ declaration_specifiers_no_ts_opt:
 declaration_specifiers_no_ts:
 	declaration_specifiers_w_non_att_no_ts
 	  { $$ = MV_P($1); }
-	| attribute_specifier_list
+	| attribute_specifier_list %prec TOK_DUMMY_PRIO_ATTR_ONLY_DECL_SPECS
 	  { $$ = new declaration_specifiers(std::move($1)); }
 ;
 
@@ -1988,6 +1999,8 @@ statement:
 	  { $$ = MV_P($1); }
 	| asm_statement
 	  { $$ = MV_P($1); }
+	| attribute_statement
+	  { $$ = MV_P($1); }
 ;
 
 labeled_statement:
@@ -2059,6 +2072,11 @@ expression_statement:
 	      @$.begin = @2.begin;
 	    $$ = new stmt_expr(@$, std::move($1));
 	  }
+;
+
+attribute_statement:
+	attribute_specifier_list TOK_SEMICOLON
+	  { $$ = new stmt_expr(@$, std::move($1)); }
 ;
 
 
