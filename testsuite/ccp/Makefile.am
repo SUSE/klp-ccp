@@ -295,6 +295,15 @@ EXTRA_DIST = ccp.exp				\
 	make-extern-1.c.expected		\
 	make-extern-2.c			\
 	make-extern-2.c.expected		\
+	obj-init-replacement-1.c	\
+	obj-init-replacement-1.c.expected	\
+	obj-init-replacement-2.c	\
+	obj-init-replacement-2.c.expected	\
+	obj-init-replacement-3.c	\
+	obj-init-replacement-3.c.expected	\
+	obj-init-replacement-4.c	\
+	obj-init-replacement-4.h	\
+	obj-init-replacement-4.c.expected	\
 	simple.c				\
 	simple.c.expected			\
 	tag-decls-1.c				\

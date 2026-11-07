@@ -60,6 +60,14 @@ class LpCreationPolicy(LpCreationPolicyAbc):
             espec = m.group(1)
         return espec is not None and espec is not None
 
+    def get_obj_initializer_replacement(self,
+                                        object_name,
+                                        linkage,
+                                        declaration_loc):
+        if object_name.startswith('ri_'):
+            return 'klpr_invalid_expression'
+        return None
+
     def get_sym_mod_for_externalized_fun(self,
                                          function_name,
                                          allocated_ids):

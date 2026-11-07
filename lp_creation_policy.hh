@@ -75,6 +75,17 @@ namespace klp
       shall_externalize_object(const ast::init_declarator &id,
 			       code_remarks &remarks) const = 0;
 
+      // Queried for object definitions with an initializer which
+      // are not to get externalized. A non-empty return value
+      // denotes an identifier to replace the whole initializer
+      // with in the live patch, e.g. a common sentinel to be taken
+      // care of during post-processing. The original initializer's
+      // dependencies won't get included in the closure then. An
+      // empty return value retains the initializer.
+      virtual std::string
+      get_obj_initializer_replacement(const ast::init_declarator &id,
+				      code_remarks &remarks) const = 0;
+
       struct symbol_modification
       {
 	enum class linkage_change

@@ -94,6 +94,18 @@ class LpCreationPolicyAbc(abc.ABC):
                                  declaration_loc):
         pass
 
+    # Queried for object definitions with an initializer which won't
+    # get externalized. Return an identifier to replace the whole
+    # initializer with, e.g. a common sentinel to be taken care of
+    # during post-processing, or None to retain it. The original
+    # initializer's dependencies won't get included in the live
+    # patch if replaced.
+    def get_obj_initializer_replacement(self,
+                                        object_name,
+                                        linkage,
+                                        declaration_loc):
+        return None
+
     @abc.abstractmethod
     def get_sym_mod_for_externalized_fun(self,
                                          function_name,

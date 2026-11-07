@@ -1,0 +1,15 @@
+/* klp-ccp: from testsuite/ccp/obj-init-replacement-4.c */
+#include "obj-init-replacement-4.h"
+
+/* klp-ccp: from testsuite/ccp/obj-init-replacement-4.h */
+static inline int klpr_g(void)
+{
+	static int ri_x = klpr_invalid_expression;
+	return ri_x;
+}
+
+/* klp-ccp: from testsuite/ccp/obj-init-replacement-4.c */
+void klpp_pu_f(void)
+{
+	klpr_g();
+}

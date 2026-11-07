@@ -1284,6 +1284,10 @@ namespace
 
     bool rewrite_needed;
 
+    // Identifier provided by the policy to replace the initializer's
+    // tokens with in the output, if non-empty.
+    std::string replacement;
+
   private:
     friend class object_init_declarator_info;
     initializer_info(object_init_declarator_info &_enclosing_id);
@@ -1958,6 +1962,9 @@ namespace
     // Macros whose rename within the live patch is forced by the
     // policy.
     std::set<const pp_result::macro*> forced_macro_renames;
+
+    // Identifiers chosen by the policy for initializer replacements.
+    std::set<std::string> initializer_replacements;
 
     typedef std::vector<header_info> header_infos_type;
     header_infos_type header_infos;
@@ -5224,6 +5231,7 @@ namespace
     };
 
     void _construct_fd_id_closure();
+    void _query_initializer_replacement(object_init_declarator_info &oidi);
     static bool _fun_expr_id_needs_externalization(const ast::expr_id &eid);
     bool _is_range_within_eligible_headers(const raw_pp_tokens_range &r) const;
 
@@ -5775,6 +5783,9 @@ update_reachable_incoming_er_edges:
 		_remarks.add(remark);
 	      }
 	    }
+	    if (!oi.in_closure && oi.get_initializing_init_declarator())
+	      _query_initializer_replacement
+		(*oi.get_initializing_init_declarator());
 	    oi.in_closure = true;
 	    if (oi.get_initializing_init_declarator())
 	      return true;
@@ -5793,6 +5804,85 @@ update_reachable_incoming_er_edges:
     walker.walk(patched_set, cur_walk_gen_nr);
     _ai.finish_walk();
   }
+}
+
+static bool _is_identifier(const std::string &s) noexcept
+{
+  if (s.empty())
+    return false;
+
+  auto &&is_alpha =
+    [](const char c) {
+      return ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_');
+    };
+
+  if (!is_alpha(s[0]))
+    return false;
+
+  return std::all_of(s.begin() + 1, s.end(),
+		     [&](const char c) {
+		       return is_alpha(c) || (c >= '0' && c <= '9');
+		     });
+}
+
+void _closure_builder::
+_query_initializer_replacement(object_init_declarator_info &oidi)
+{
+  initializer_info * const ii = oidi.get_initializer();
+  assert(ii);
+  assert(ii->replacement.empty());
+
+  const ast::init_declarator &id = oidi.init_declarator;
+  std::string repl = _pol.get_obj_initializer_replacement(id, _remarks);
+  if (repl.empty())
+    return;
+
+  const pp_result &ppr = _ai.atu.get_pp_result();
+  const pp_token_index id_tok = id.get_declarator().get_id_tok();
+  const std::string &name = ppr.get_pp_tokens()[id_tok].get_value();
+
+  // The same replacement may get used for any number of objects, but
+  // it must not clash with any other identifier.
+  if (!_is_identifier(repl) ||
+      (!_ai.initializer_replacements.count(repl) &&
+       _ai.get_allocated_ids().count(repl))) {
+    code_remark remark{
+      code_remark::severity::fatal,
+      ("invalid initializer replacement \"" + repl + "\" chosen by policy"
+       " for object \"" + name + "\""),
+      ppr, id_tok
+    };
+    _remarks.add(remark);
+    throw lp_except(remark);
+  }
+
+  if (!ii->child_tags.empty()) {
+    // Tags defined from within the initializer could be referenced
+    // from elsewhere.
+    code_remark remark{
+      code_remark::severity::warning,
+      ("not replacing initializer of object \"" + name + "\""
+       " defining tags"),
+      ppr, id_tok
+    };
+    _remarks.add(remark);
+    return;
+  }
+
+  if (_ai.initializer_replacements.insert(repl).second) {
+    _ai.register_sym_mod
+      (lp_creation_policy::symbol_modification{
+	 std::string{repl},
+	 lp_creation_policy::symbol_modification::linkage_change::lc_none
+       });
+  }
+
+  // Only the initializer's tokens get replaced in the output, its
+  // dependencies are retained as they are. In particular,
+  // declarations of externalized symbols referenced from the
+  // original initializer still get emitted.
+  ii->replacement = std::move(repl);
+  ii->rewrite_needed = true;
 }
 
 bool _closure_builder::
@@ -6440,6 +6530,9 @@ void _symbol_modification_resolver::operator()()
 
 	      } else if (oidi_in_fd.get_initializer()) {
 		const initializer_info &ii = *oidi_in_fd.get_initializer();
+
+		if (!ii.replacement.empty())
+		  fdi->rewrite_needed = true;
 
 		for (auto &d : ii.deps.on_objs) {
 		  if (dep_on_obj_requires_rewrite(d))
@@ -8844,6 +8937,13 @@ namespace
 			  const bool strip_initializer,
 			  const bool need_decl_type);
 
+    void _insert_completed_array_length
+	(const ast::init_declarator &id,
+	 depreprocessor::transformed_input_chunk &tic);
+
+    void _replace_initializer(const object_init_declarator_info &oidi,
+			      depreprocessor::transformed_input_chunk &tic);
+
     depreprocessor::transformed_input_chunk
     _prepare_tic_for_decl(typedef_init_declarator_info &tdidi);
 
@@ -9489,8 +9589,10 @@ bool _lp_writer::_emit(object_init_declarator_info &oidi,
       = _prepare_tic_for_decl(oidi, false, oidi.need_decl_type);
     _rewrite_references(di.declaration_specifiers_deps, tic);
     _rewrite_references(oidi.declarator_deps, tic);
-    if (oidi.get_initializer())
+    if (oidi.get_initializer() &&
+	oidi.get_initializer()->replacement.empty()) {
       _rewrite_references(oidi.get_initializer()->deps, tic);
+    }
     _d.append(std::move(tic));
     anything_emitted = true;
 
@@ -9730,7 +9832,10 @@ bool _lp_writer::_emit(function_definition_info &fdi,
 		   oidi_in_fd_oi.externalized_sym_mod.make_pointer,
 		   id_tok_pos, tic);
 	      } else if (oidi_in_fd.get_initializer()) {
-		_rewrite_references(oidi_in_fd.get_initializer()->deps, tic);
+		if (!oidi_in_fd.get_initializer()->replacement.empty())
+		  _replace_initializer(oidi_in_fd, tic);
+		else
+		  _rewrite_references(oidi_in_fd.get_initializer()->deps, tic);
 	      }
 	    },
 	    [&](const typedef_init_declarator_info &tdidi) {
@@ -9836,7 +9941,8 @@ bool _lp_writer::_emit(function_definition_info &fdi,
 		    id.get_asl_after()},
 		   false, oidi_in_fd_oi.externalized_sym_mod.make_pointer,
 		   di_in_fd.declaration.get_tokens_range(), decl_tic);
-	      } else if (oidi_in_fd.get_initializer()) {
+	      } else if (oidi_in_fd.get_initializer() &&
+			 oidi_in_fd.get_initializer()->replacement.empty()) {
 		_rewrite_references(oidi_in_fd.get_initializer()->deps,
 				    decl_tic);
 	      }
@@ -10167,6 +10273,75 @@ _lp_writer::_prepare_tic_for_decl(function_init_declarator_info &fidi)
   return tic;
 }
 
+void _lp_writer::
+_insert_completed_array_length(const ast::init_declarator &id,
+			       depreprocessor::transformed_input_chunk &tic)
+{
+  const pp_tokens &toks = _ai.atu.get_pp_result().get_pp_tokens();
+  const ast::direct_declarator_id &ddid
+    = id.get_declarator().get_direct_declarator_id();
+
+  const types::array_type * const at =
+    (types::handle_types<const types::array_type*>
+     ((wrap_callables<default_action_return_value
+			<const types::array_type*, nullptr>::type>
+       ([](const types::array_type &_at) -> const types::array_type* {
+	  return &_at;
+	})),
+      *ddid.get_type()));
+  if (!at)
+    return;
+
+  assert(at->is_complete());
+
+  const ast::direct_declarator_array *dda = nullptr;
+  ddid.for_each_ancestor<type_set<ast::direct_declarator_array,
+				  ast::declarator,
+				  ast::direct_declarator_func>>
+    (wrap_callables<no_default_action>
+     ([&](const ast::direct_declarator_array &_dda) {
+	dda = &_dda;
+      },
+      [&](const ast::declarator&) {},
+      [&](const ast::direct_declarator_func&) {}));
+  if (dda && !dda->get_size()) {
+    std::string length = at->get_length().to_string(mpa::limb{10});
+    assert(dda->get_tokens_range().end);
+    const raw_pp_token_index insert_pos =
+      dda->get_tokens_range().end - 1;
+    assert(toks[insert_pos].is_punctuator("]"));
+    tic.insert_token(insert_pos,
+		     pp_token{
+		       pp_token::type::pp_number,
+		       std::move(length)
+		     },
+		     true, false);
+  }
+}
+
+void _lp_writer::
+_replace_initializer(const object_init_declarator_info &oidi,
+		     depreprocessor::transformed_input_chunk &tic)
+{
+  const initializer_info * const ii = oidi.get_initializer();
+  assert(ii && !ii->replacement.empty());
+  assert(ii->child_tags.empty());
+
+  const ast::init_declarator &id = oidi.init_declarator;
+  const pp_tokens_range initializer_range =
+    id.get_initializer()->get_tokens_range();
+  tic.purge_subrange(initializer_range, false);
+  tic.insert_token(initializer_range.begin,
+		   pp_token{
+		     pp_token::type::id,
+		     std::string{ii->replacement}
+		   },
+		   true, false);
+
+  // The original initializer might have completed an array type.
+  _insert_completed_array_length(id, tic);
+}
+
 depreprocessor::transformed_input_chunk
 _lp_writer::_prepare_tic_for_decl(object_init_declarator_info &oidi,
 				  const bool strip_initializer,
@@ -10203,46 +10378,11 @@ _lp_writer::_prepare_tic_for_decl(object_init_declarator_info &oidi,
       // The initializer's length might have completed an array type.
       // If so (and if it's needed), insert the length for the direct
       // array declarator's length expression.
-      if (need_decl_type) {
-	const ast::direct_declarator_id &ddid
-	  = id.get_declarator().get_direct_declarator_id();
+      if (need_decl_type)
+	_insert_completed_array_length(id, tic);
 
-	const types::array_type * const at =
-	  (types::handle_types<const types::array_type*>
-	   ((wrap_callables<default_action_return_value
-				<const types::array_type*, nullptr>::type>
-	     ([](const types::array_type &_at) -> const types::array_type* {
-		return &_at;
-	      })),
-	   *ddid.get_type()));
-	if (at) {
-	  assert(at->is_complete());
-
-	  const ast::direct_declarator_array *dda = nullptr;
-	  ddid.for_each_ancestor<type_set<ast::direct_declarator_array,
-					  ast::declarator,
-					  ast::direct_declarator_func>>
-	    (wrap_callables<no_default_action>
-	     ([&](const ast::direct_declarator_array &_dda) {
-		dda = &_dda;
-	      },
-	      [&](const ast::declarator&) {},
-	      [&](const ast::direct_declarator_func&) {}));
-	  if (dda && !dda->get_size()) {
-	    std::string length = at->get_length().to_string(mpa::limb{10});
-	    assert(dda->get_tokens_range().end);
-	    const raw_pp_token_index insert_pos =
-	      dda->get_tokens_range().end - 1;
-	    assert(toks[insert_pos].is_punctuator("]"));
-	    tic.insert_token(insert_pos,
-			     pp_token{
-			       pp_token::type::pp_number,
-			       std::move(length)
-			     },
-			     true, false);
-	  }
-	}
-      }
+    } else if (!ii->replacement.empty()) {
+      _replace_initializer(oidi, tic);
 
     } else {
       _handle_emitted_tags(ii->child_tags, tic);

@@ -82,6 +82,10 @@ namespace klp
       shall_externalize_object(const ast::init_declarator &id,
 			       code_remarks &remarks) const override;
 
+      virtual std::string
+      get_obj_initializer_replacement(const ast::init_declarator &id,
+				      code_remarks &remarks) const override;
+
       virtual externalized_symbol_modification
       get_sym_mod_for_externalized_fun(const ast::direct_declarator_id &ddid,
 				       const allocated_ids_type &allocated_ids,

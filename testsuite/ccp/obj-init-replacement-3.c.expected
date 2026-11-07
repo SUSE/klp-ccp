@@ -1,0 +1,10 @@
+/* klp-ccp: from testsuite/ccp/obj-init-replacement-3.c */
+extern int (*klpe_eepr_a);
+extern int (*klpe_eepr_b);
+
+static int *ri_arr[2] = klpr_invalid_expression;
+
+void klpp_pu_f(void)
+{
+	ri_arr[0] = 0;
+}

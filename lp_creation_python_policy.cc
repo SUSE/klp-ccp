@@ -1218,6 +1218,70 @@ shall_externalize_object(const ast::init_declarator &id,
   return result;
 }
 
+std::string lp_creation_python_policy::
+get_obj_initializer_replacement(const ast::init_declarator &id,
+				code_remarks &remarks) const
+{
+  const pp_token_index id_tok = _get_id_tok(id);
+
+  const auto &instantiate_remark =
+    [&](const code_remark::severity severity,
+	std::string &&e) {
+      return code_remark{
+	severity,
+	std::move(e),
+	_pp_result,
+	id_tok,
+      };
+    };
+
+  PyObject *linkage_enum_member =
+    _d->get_py_linkage_enum_member(id.get_linkage().get_linkage_kind());
+  PyObject *declaration_loc = _d->build_py_loc(id_tok, _pp_result);
+  PyObject *r =
+    PyObject_CallMethod(_d->pol_obj, "get_obj_initializer_replacement",
+			"sOO",
+			_pp_result.get_pp_tokens()[id_tok].get_value().c_str(),
+			linkage_enum_member,
+			declaration_loc);
+  Py_DECREF(declaration_loc);
+
+  r = _d->unwrap_py_lp_creation_policy_call_result(r, instantiate_remark,
+						   remarks);
+  assert(r != nullptr);
+  if (r == Py_None) {
+    Py_DECREF(r);
+    return std::string{};
+  }
+
+  if (!PyUnicode_Check(r)) {
+    Py_DECREF(r);
+    throw python_except {
+      ("expected string or None result from python"
+       " \"LpCreationPolicyAbc.get_obj_initializer_replacement()\""
+       " policy implementation")
+    };
+  }
+  const char *prepl = PyUnicode_AsUTF8(r);
+  if (!prepl) {
+    Py_DECREF(r);
+    throw python_except {
+      ("couldn't obtain string value from result returned by"
+       " \"LpCreationPolicyAbc.get_obj_initializer_replacement()\""
+       " policy implementation")
+    };
+  }
+  std::string repl;
+  try {
+    repl = prepl;
+    Py_DECREF(r);
+  } catch (...) {
+    Py_DECREF(r);
+    throw;
+  }
+  return repl;
+}
+
 lp_creation_python_policy::externalized_symbol_modification
 lp_creation_python_policy::
 get_sym_mod_for_externalized_fun(const ast::direct_declarator_id &ddid,

@@ -706,6 +706,28 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
 
             return (True, warnings, )
 
+    # The objects defined by the kernel's __ADDRESSABLE(sym) macro are
+    # named __UNIQUE_ID___addressable_<sym><n>.
+    _re_addressable_obj = re.compile('__UNIQUE_ID___addressable_')
+
+    def get_obj_initializer_replacement(self,
+                                        object_name,
+                                        linkage,
+                                        declaration_loc):
+        # Objects defined through __ADDRESSABLE(sym) have a
+        # (void *)&sym initializer, which won't be a constant
+        # expression anymore if sym got externalized by means of a
+        # pointer and must get taken care of during post-processing
+        # anyway. Replace it with a common sentinel, so that all
+        # rewritten __ADDRESSABLE() definitions are the same. With
+        # klp-convert style externalizations, sym remains directly
+        # addressable and the initializer valid.
+        if self._cfg_use_klp_convert_exts:
+            return None
+        if self._re_addressable_obj.match(object_name):
+            return self._cfg_sym_rename_prefix + 'r_invalid_expression'
+        return None
+
     def get_sym_mod_for_externalized_fun(self,
                                          function_name,
                                          allocated_ids):
