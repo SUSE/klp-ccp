@@ -8699,6 +8699,12 @@ namespace
 	 const pp_tokens_range &bounding_range,
 	 depreprocessor::transformed_input_chunk &tic);
 
+    void _make_orig_decl_of_undefined_fun_valid
+	(const ast::declaration_specifiers &ds,
+	 const ast::storage_class_specifier * const scs,
+	 const pp_tokens_range &bounding_range,
+	 depreprocessor::transformed_input_chunk &tic);
+
     void _rewrite_references(const deps_on &deps,
 			     depreprocessor::transformed_input_chunk &tic);
 
@@ -9107,6 +9113,11 @@ bool _lp_writer::_emit(function_init_declarator_info &fidi,
     depreprocessor::transformed_input_chunk tic = _prepare_tic_for_decl(fidi);
     _rewrite_references(di.declaration_specifiers_deps, tic);
     _rewrite_references(fidi.declarator_deps, tic);
+    if (fdi) {
+      _make_orig_decl_of_undefined_fun_valid
+	(di.declaration.get_declaration_specifiers(),
+	 di.storage_class_specifier, di.declaration.get_tokens_range(), tic);
+    }
     _d.append(std::move(tic));
     fidi.emit_orig_decl = false;
     anything_emitted = true;
@@ -9284,6 +9295,10 @@ bool _lp_writer::_emit(function_definition_info &fdi,
     assert(!(fi.in_closure || fdi.is_patched) || fdi.sym_mod.is_rename());
     depreprocessor::transformed_input_chunk tic = _prepare_tic_for_decl(fdi);
     _rewrite_references(fdi.declarator_deps, tic);
+    const ast::function_definition &fd = fdi.function_definition;
+    const ast::declaration_specifiers &ds = fd.get_declaration_specifiers();
+    _make_orig_decl_of_undefined_fun_valid(ds, _find_scs(ds),
+					   fd.get_tokens_range(), tic);
     _d.append(std::move(tic));
     fdi.emit_orig_decl = false;
     anything_emitted = true;
@@ -10535,6 +10550,52 @@ void _lp_writer::_remove_function_specifiers
        }
        tic.purge_subrange(r, false);
      });
+}
+
+// Adjust a declaration of a function defined in the original
+// translation unit, but whose definition won't get emitted to the
+// live patch under its original name. Such declarations are needed
+// only for making uses from some included header's code not
+// reachable from the closure compile. However, if the function had
+// been declared 'static' or 'inline', GCC would complain about it
+// being used but never defined. Make it a plain declaration of an
+// external function: as the using code isn't reachable from the
+// closure, the compiler would never emit any reference to it.
+void _lp_writer::_make_orig_decl_of_undefined_fun_valid
+	(const ast::declaration_specifiers &ds,
+	 const ast::storage_class_specifier * const scs,
+	 const pp_tokens_range &bounding_range,
+	 depreprocessor::transformed_input_chunk &tic)
+{
+  pp_tokens_range fs_bounding_range = bounding_range;
+  if (scs && scs->get_storage_class() == ast::storage_class::sc_static) {
+    _set_storage_class(ds, scs, ast::storage_class::sc_none, tic);
+
+    // The removal of the storage class specifier above also took the
+    // whitespace following it. Make a directly following 'inline'
+    // get removed together with its trailing whitespace then, rather
+    // than the (already gone) preceding one. Only do this if no
+    // function specifier precedes the storage class specifier, the
+    // bounding range must cover all of them.
+    bool any_fs_before_scs = false;
+    ds.for_each_function_specifier
+      ([&](const ast::function_specifier &fs) {
+	 if (fs.get_tokens_range().begin < scs->get_tokens_range().begin)
+	   any_fs_before_scs = true;
+       });
+
+    if (!any_fs_before_scs) {
+      const pp_tokens &toks = _ai.atu.get_pp_result().get_pp_tokens();
+      pp_token_index i = scs->get_tokens_range().end;
+      while (i != ds.get_tokens_range().end &&
+	     toks[i].is_type_any_of<pp_token::type::ws,
+				    pp_token::type::newline>()) {
+	++i;
+      }
+      fs_bounding_range.begin = i;
+    }
+  }
+  _remove_function_specifiers(ds, fs_bounding_range, tic);
 }
 
 void _lp_writer::

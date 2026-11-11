@@ -1,5 +1,5 @@
 /* klp-ccp: from testsuite/ccp/unevaluated-3.c */
-static int i(void);
+int i(void);
 
 static int j(void)
 {
@@ -11,7 +11,7 @@ static int k(void)
 	return 1;
 }
 
-static int l(void);
+int l(void);
 
 void klpp_pu_f(void)
 {

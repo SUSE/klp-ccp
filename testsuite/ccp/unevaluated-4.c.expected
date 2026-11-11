@@ -4,14 +4,14 @@ static int g(void)
 	return 1;
 }
 
-static int h(void);
+int h(void);
 
 static int i(void)
 {
 	return 1;
 }
 
-static int j(void);
+int j(void);
 
 static int k(void)
 {
