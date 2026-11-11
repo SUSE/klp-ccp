@@ -8430,6 +8430,17 @@ namespace
     unsupported,
   };
 
+  // GCC accepts attribute names enclosed in double underscores,
+  // normalize.
+  std::string _normalize_attr_name(const std::string &name)
+  {
+    if (name.size() > 4 && name.compare(0, 2, "__") == 0 &&
+	name.compare(name.size() - 2, 2, "__") == 0) {
+      return name.substr(2, name.size() - 4);
+    }
+    return name;
+  }
+
   bool _attr_in_set(const std::string &name,
 		    const std::initializer_list<const char*> &set) noexcept
   {
@@ -8475,13 +8486,7 @@ namespace
 				 const bool make_pointer,
 				 bool &unknown)
   {
-    // GCC accepts attribute names enclosed in double underscores,
-    // normalize.
-    std::string name = attr_name;
-    if (name.size() > 4 && name.compare(0, 2, "__") == 0 &&
-	name.compare(name.size() - 2, 2, "__") == 0) {
-      name = name.substr(2, name.size() - 4);
-    }
+    const std::string name = _normalize_attr_name(attr_name);
     unknown = false;
 
     if (!is_function) {
@@ -8702,6 +8707,7 @@ namespace
     void _make_orig_decl_of_undefined_fun_valid
 	(const ast::declaration_specifiers &ds,
 	 const ast::storage_class_specifier * const scs,
+	 const _attribute_specifier_lists &asls,
 	 const pp_tokens_range &bounding_range,
 	 depreprocessor::transformed_input_chunk &tic);
 
@@ -9114,9 +9120,12 @@ bool _lp_writer::_emit(function_init_declarator_info &fidi,
     _rewrite_references(di.declaration_specifiers_deps, tic);
     _rewrite_references(fidi.declarator_deps, tic);
     if (fdi) {
+      const ast::init_declarator &id = fidi.init_declarator;
       _make_orig_decl_of_undefined_fun_valid
 	(di.declaration.get_declaration_specifiers(),
-	 di.storage_class_specifier, di.declaration.get_tokens_range(), tic);
+	 di.storage_class_specifier,
+	 {id.get_asl_before(), id.get_asl_middle(), id.get_asl_after()},
+	 di.declaration.get_tokens_range(), tic);
     }
     _d.append(std::move(tic));
     fidi.emit_orig_decl = false;
@@ -9297,7 +9306,7 @@ bool _lp_writer::_emit(function_definition_info &fdi,
     _rewrite_references(fdi.declarator_deps, tic);
     const ast::function_definition &fd = fdi.function_definition;
     const ast::declaration_specifiers &ds = fd.get_declaration_specifiers();
-    _make_orig_decl_of_undefined_fun_valid(ds, _find_scs(ds),
+    _make_orig_decl_of_undefined_fun_valid(ds, _find_scs(ds), {fd.get_asl()},
 					   fd.get_tokens_range(), tic);
     _d.append(std::move(tic));
     fdi.emit_orig_decl = false;
@@ -10458,11 +10467,8 @@ _make_function_definition_attr_removal_predicate(const bool internal_linkage)
 {
   return [this, internal_linkage](const ast::attribute &attr) {
     const pp_tokens &toks = _ai.atu.get_pp_result().get_pp_tokens();
-    std::string name = toks[attr.get_name_tok()].get_value();
-    if (name.size() > 4 && name.compare(0, 2, "__") == 0 &&
-	name.compare(name.size() - 2, 2, "__") == 0) {
-      name = name.substr(2, name.size() - 4);
-    }
+    const std::string name =
+      _normalize_attr_name(toks[attr.get_name_tok()].get_value());
 
     if (_attr_in_set(name, {
 	  "alias", "constructor", "destructor", "ifunc", "section", "symver",
@@ -10560,42 +10566,111 @@ void _lp_writer::_remove_function_specifiers
 // been declared 'static' or 'inline', GCC would complain about it
 // being used but never defined. Make it a plain declaration of an
 // external function: as the using code isn't reachable from the
-// closure, the compiler would never emit any reference to it.
+// closure, the compiler would never emit any reference to it. With
+// 'inline' gone, any 'gnu_inline' attribute must go as well, GCC
+// would warn about it being ignored otherwise.
 void _lp_writer::_make_orig_decl_of_undefined_fun_valid
 	(const ast::declaration_specifiers &ds,
 	 const ast::storage_class_specifier * const scs,
+	 const _attribute_specifier_lists &asls,
 	 const pp_tokens_range &bounding_range,
 	 depreprocessor::transformed_input_chunk &tic)
 {
-  pp_tokens_range fs_bounding_range = bounding_range;
-  if (scs && scs->get_storage_class() == ast::storage_class::sc_static) {
-    _set_storage_class(ds, scs, ast::storage_class::sc_none, tic);
+  const pp_tokens &toks = _ai.atu.get_pp_result().get_pp_tokens();
 
-    // The removal of the storage class specifier above also took the
-    // whitespace following it. Make a directly following 'inline'
-    // get removed together with its trailing whitespace then, rather
-    // than the (already gone) preceding one. Only do this if no
-    // function specifier precedes the storage class specifier, the
-    // bounding range must cover all of them.
-    bool any_fs_before_scs = false;
-    ds.for_each_function_specifier
-      ([&](const ast::function_specifier &fs) {
-	 if (fs.get_tokens_range().begin < scs->get_tokens_range().begin)
-	   any_fs_before_scs = true;
-       });
+  auto &&is_ws =
+    [&](const pp_token_index i) {
+      return toks[i].is_type_any_of<pp_token::type::ws,
+				    pp_token::type::newline>();
+    };
 
-    if (!any_fs_before_scs) {
-      const pp_tokens &toks = _ai.atu.get_pp_result().get_pp_tokens();
-      pp_token_index i = scs->get_tokens_range().end;
-      while (i != ds.get_tokens_range().end &&
-	     toks[i].is_type_any_of<pp_token::type::ws,
-				    pp_token::type::newline>()) {
+  auto &&is_gnu_inline =
+    [&](const ast::attribute &attr) {
+      return (_normalize_attr_name(toks[attr.get_name_tok()].get_value()) ==
+	      "gnu_inline");
+    };
+
+  // Collect the declaration specifiers to get removed as a whole:
+  // a 'static' storage class specifier, all function specifiers and
+  // any attribute specifier consisting only of 'gnu_inline'
+  // attributes.
+  std::vector<pp_tokens_range> ds_items;
+  if (scs && scs->get_storage_class() == ast::storage_class::sc_static)
+    ds_items.push_back(scs->get_tokens_range());
+
+  ds.for_each_function_specifier
+    ([&](const ast::function_specifier &fs) {
+       ds_items.push_back(fs.get_tokens_range());
+     });
+
+  ds.for_each_attribute_specifier_list
+    ([&](const ast::attribute_specifier_list &asl) {
+       asl.for_each_attribute_specifier
+	 ([&](const ast::attribute_specifier &as) {
+	    bool any_gnu_inline = false;
+	    const bool all_gnu_inline =
+	      as.get_attribute_list().for_each_attribute
+		([&](const ast::attribute &attr) {
+		   if (!is_gnu_inline(attr))
+		     return false;
+		   any_gnu_inline = true;
+		   return true;
+		 });
+	    if (any_gnu_inline && all_gnu_inline)
+	      ds_items.push_back(as.get_tokens_range());
+	    return true;
+	  });
+       return true;
+     });
+
+  std::sort(ds_items.begin(), ds_items.end(),
+	    [](const pp_tokens_range &a, const pp_tokens_range &b) {
+	      return a.begin < b.begin;
+	    });
+
+  // Remove runs of these separated only by whitespace in one go,
+  // together with the whitespace separating the run from what
+  // precedes it, or, for a run at the beginning of the declaration,
+  // from what follows it. This avoids leaving stray whitespace
+  // behind when several adjacent items get removed.
+  const pp_tokens_range &ds_r = ds.get_tokens_range();
+  for (auto it = ds_items.begin(); it != ds_items.end();) {
+    pp_tokens_range r = *it;
+    for (++it; it != ds_items.end(); ++it) {
+      pp_token_index i = r.end;
+      while (i != it->begin && is_ws(i))
 	++i;
-      }
-      fs_bounding_range.begin = i;
+      if (i != it->begin)
+	break;
+      r.end = it->end;
     }
+
+    if (r.begin != ds_r.begin) {
+      while (r.begin != ds_r.begin && is_ws(r.begin - 1))
+	--r.begin;
+    } else {
+      while (r.end != bounding_range.end && is_ws(r.end))
+	++r.end;
+    }
+    tic.purge_subrange(r, false);
   }
-  _remove_function_specifiers(ds, fs_bounding_range, tic);
+
+  // Finally remove the remaining 'gnu_inline' attributes, i.e. those
+  // sharing their attribute specifier with others, as well as those
+  // from the declarator's attribute specifier lists. Leave the
+  // attribute specifiers removed as a whole above alone.
+  _remove_attrs
+    (ds, asls,
+     [&](const ast::attribute &attr) {
+       if (!is_gnu_inline(attr))
+	 return false;
+       const pp_tokens_range &attr_r = attr.get_tokens_range();
+       return std::none_of(ds_items.cbegin(), ds_items.cend(),
+			   [&](const pp_tokens_range &item_r) {
+			     return attr_r.is_contained_in(item_r);
+			   });
+     },
+     bounding_range, tic);
 }
 
 void _lp_writer::

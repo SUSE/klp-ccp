@@ -326,6 +326,12 @@ EXTRA_DIST = ccp.exp				\
 	undefined-fun-decl-2.c			\
 	undefined-fun-decl-2.h			\
 	undefined-fun-decl-2.c.expected		\
+	undefined-fun-decl-3.c			\
+	undefined-fun-decl-3.h			\
+	undefined-fun-decl-3.c.expected		\
+	undefined-fun-decl-4.c			\
+	undefined-fun-decl-4.h			\
+	undefined-fun-decl-4.c.expected		\
 	x86_64-addrspace-make-pointer-1.c	\
 	x86_64-addrspace-make-pointer-1.c.expected	\
 	x86_64-addrspace-make-pointer-2.c	\
