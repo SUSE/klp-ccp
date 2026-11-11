@@ -787,9 +787,13 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
         # static_call(), static_call_cond() and static_call_mod() all
         # expand to __raw_static_call(). Otherwise, static_call() and
         # static_call_cond(), by means of __static_call_cond(), read
-        # the key's ->func directly.
+        # the key's ->func directly. Likewise, static_branch_likely()
+        # and static_branch_unlikely() emit jump label entries
+        # referencing the static key, which is no good for a key
+        # externalized with make-extern either.
         return ['static_key_true', 'static_key_false', 'static_call',
-                '__raw_static_call', '__static_call_cond']
+                '__raw_static_call', '__static_call_cond',
+                'static_branch_likely', 'static_branch_unlikely']
 
     def get_sym_mod_for_externalized_obj(self,
                                          object_name,
