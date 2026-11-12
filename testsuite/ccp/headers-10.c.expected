@@ -1,0 +1,15 @@
+/* klp-ccp: from testsuite/ccp/headers-10.c */
+#define OP(x) int ee_##x;
+
+/* klp-ccp: from testsuite/ccp/headers-10.h */
+extern OP(a)
+
+/* klp-ccp: from testsuite/ccp/headers-10.c */
+struct s {
+#include "headers-10-1.h"
+};
+
+int klpp_pu_f(struct s *p)
+{
+	return ee_a + p->a;
+}

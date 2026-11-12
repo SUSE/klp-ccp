@@ -36,6 +36,13 @@ EXTRA_DIST = ccp.exp				\
 	ext-obj-9.c.expected			\
 	ext-obj-12.c				\
 	ext-obj-12.c.expected			\
+	ext-obj-13.c				\
+	ext-obj-13.h				\
+	ext-obj-13.c.expected			\
+	ext-obj-14.c				\
+	ext-obj-14.h				\
+	ext-obj-14-1.h			\
+	ext-obj-14.c.expected			\
 	ext-attrs-1.c			\
 	ext-attrs-1.c.expected		\
 	ext-attrs-2.c			\
@@ -141,6 +148,27 @@ EXTRA_DIST = ccp.exp				\
 	headers-7.c				\
 	headers-7.h				\
 	headers-7.c.expected			\
+	headers-8.c				\
+	headers-8.h				\
+	headers-8.c.expected			\
+	headers-9.c				\
+	headers-9.h				\
+	headers-9.c.expected			\
+	headers-10.c				\
+	headers-10.h				\
+	headers-10-1.h			\
+	headers-10.c.expected			\
+	headers-11.c				\
+	headers-11/headers-11.h		\
+	headers-11/headers-11-1.h		\
+	headers-11.c.expected			\
+	headers-12.c				\
+	headers-12-inc/headers-12-2.h		\
+	headers-12-inc/headers-12-3.h		\
+	headers-12-inc/sub/headers-12.h	\
+	headers-12-inc/sub/headers-12-1.h	\
+	headers-12-inc/sub/headers-12-3.h	\
+	headers-12.c.expected			\
 	macros-1.c				\
 	macros-1.c.expected			\
 	macros-2.c				\

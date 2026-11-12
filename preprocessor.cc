@@ -2474,11 +2474,13 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
       _pp_result->_drop_pp_tokens_tail(temp_tokens_tail_begin);
   }
 
+  bool is_resolved_relative_to_parent = false;
   std::string resolved
     = (is_qstr ?
        _header_resolver.resolve(unresolved,
 				(_tokenizers.top().get_header_inclusion_node()
-				 .get_filename())) :
+				 .get_filename()),
+				is_resolved_relative_to_parent) :
        _header_resolver.resolve(unresolved));
 
   if (resolved.empty()) {
@@ -2491,11 +2493,9 @@ void preprocessor::_handle_include(const raw_pp_tokens_range &directive_range)
   }
 
   pp_result::header_inclusion_child &new_header_inclusion_node
-    = _inclusions.top().get()._add_header_inclusion(resolved,
-						    directive_range,
-						    std::move(um),
-						    std::move(mnc),
-						    *_pp_result);
+    = (_inclusions.top().get()._add_header_inclusion
+       (resolved, directive_range, std::move(um), std::move(mnc),
+	std::move(unresolved), is_resolved_relative_to_parent, *_pp_result));
   _tokenizers.emplace(new_header_inclusion_node);
   _inclusions.emplace(std::ref(new_header_inclusion_node));
 }

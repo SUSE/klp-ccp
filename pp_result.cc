@@ -4257,6 +4257,8 @@ _add_header_inclusion(const std::string &filename,
 		      const raw_pp_tokens_range &directive_range,
 		      used_macros &&used_macros,
 		      macro_nondef_constraints &&macro_nondef_constraints,
+		      std::string &&header_name,
+		      const bool is_resolved_relative_to_parent,
 		      pp_result &container)
 {
   std::unique_ptr<header_inclusion_child> new_child
@@ -4264,6 +4266,8 @@ _add_header_inclusion(const std::string &filename,
 				 directive_range,
 				 std::move(used_macros),
 				 std::move(macro_nondef_constraints),
+				 std::move(header_name),
+				 is_resolved_relative_to_parent,
 				 container._next_header_node_id++));
   header_inclusion_child &_new_child = *new_child;
   _children.emplace_back(std::move(new_child));
@@ -4496,11 +4500,15 @@ header_inclusion_child(inclusion_node &parent,
 		       const raw_pp_tokens_range &directive_range,
 		       used_macros &&used_macros,
 		       macro_nondef_constraints &&macro_nondef_constraints,
+		       std::string &&header_name,
+		       const bool is_resolved_relative_to_parent,
 		       const unsigned long id)
   : header_inclusion_node(parent, directive_range.end, filename, id),
     _directive_range(directive_range),
     _used_macros(std::move(used_macros)),
-    _macro_nondef_constraints(std::move(macro_nondef_constraints))
+    _macro_nondef_constraints(std::move(macro_nondef_constraints)),
+    _header_name(std::move(header_name)),
+    _is_resolved_relative_to_parent(is_resolved_relative_to_parent)
 {}
 
 pp_result::header_inclusion_child::~header_inclusion_child() noexcept = default;

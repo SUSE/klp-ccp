@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2019, 2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -40,6 +40,16 @@ std::string header_resolver::resolve(const std::string &header,
 				     const std::string &referring_file)
   const
 {
+  bool relative_to_referring;
+  return resolve(header, referring_file, relative_to_referring);
+}
+
+std::string header_resolver::resolve(const std::string &header,
+				     const std::string &referring_file,
+				     bool &relative_to_referring)
+  const
+{
+  relative_to_referring = false;
   if (path_is_absolute(header)) {
     if (!file_readable(header))
       return std::string{};
@@ -53,8 +63,10 @@ std::string header_resolver::resolve(const std::string &header,
   else
     p = header;
 
-  if (file_readable(p))
+  if (file_readable(p)) {
+    relative_to_referring = true;
     return p;
+  }
 
   p = _resolve(header, _search_dirs_quoted);
   if (p.empty())

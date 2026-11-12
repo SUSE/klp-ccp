@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2019, 2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -2546,6 +2546,8 @@ namespace klp
 			const raw_pp_tokens_range &directive_range,
 			used_macros &&used_macros,
 			macro_nondef_constraints &&macro_nondef_constraints,
+			std::string &&header_name,
+			const bool is_resolved_relative_to_parent,
 			pp_result &container);
 
 	conditional_inclusion_node&
@@ -2636,6 +2638,19 @@ namespace klp
 	  const noexcept
 	{ return _macro_nondef_constraints; }
 
+	// The header name from the #include directive, after macro
+	// expansion, if any, and without the enclosing quotes or angle
+	// brackets.
+	const std::string& get_header_name() const noexcept
+	{ return _header_name; }
+
+	// Whether the header has been found relative to the including
+	// file's location rather than in some -iquote or -I search
+	// directory. This implies an #include directive of the "..."
+	// form.
+	bool is_resolved_relative_to_parent() const noexcept
+	{ return _is_resolved_relative_to_parent; }
+
       private:
 	friend class inclusion_node;
 
@@ -2644,11 +2659,15 @@ namespace klp
 			const raw_pp_tokens_range &directive_range,
 			used_macros &&used_macros,
 			macro_nondef_constraints &&macro_nondef_constraints,
+			std::string &&header_name,
+			const bool is_resolved_relative_to_parent,
 			const unsigned long id);
 
 	raw_pp_tokens_range _directive_range;
 	used_macros _used_macros;
 	macro_nondef_constraints _macro_nondef_constraints;
+	std::string _header_name;
+	bool _is_resolved_relative_to_parent;
       };
 
       class conditional_inclusion_node final : public inclusion_node

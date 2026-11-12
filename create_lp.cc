@@ -6637,7 +6637,11 @@ void _conflicting_header_finder::operator()()
   // i.e. in
   //  static int a;
   //  extern int a;
-  // 'a' will have internal linkage.
+  // 'a' will have internal linkage. This doesn't work for object
+  // declarations without any storage class specifier though: in
+  //  static int a;
+  //  int a;
+  // the second declaration conflicts with the first one.
   //
   // It might still be the case that such an extra declaration
   // conflicts with other constraints required for a particular header
@@ -6670,6 +6674,11 @@ void _conflicting_header_finder::operator()()
 		      ast::storage_class::sc_static)) {
 	    // Any declaration having a 'static' storage class
 	    // will conflict with a (preceeding) 'extern'.
+	    _mark_headers_uneligible(di.declaration.get_tokens_range());
+
+	  } else if (!new_is_external && !di.storage_class_specifier) {
+	    // A declaration without storage class specifier will
+	    // conflict with a preceeding 'static'.
 	    _mark_headers_uneligible(di.declaration.get_tokens_range());
 
 	  } else if (esm.make_pointer) {
@@ -7662,10 +7671,36 @@ _lp_deps_resolver::_lp_deps_resolver(ast_info &ai,
 
 void _lp_deps_resolver::operator()()
 {
-  // Retain all #includes from the input source file.
+  // Retain all #includes from the input source file, but only those
+  // which don't extend into some external declaration from the
+  // outside, like an #include placed within a function body. For
+  // these, retaining the #include would require emitting the
+  // enclosing external declarations as well, even if not needed
+  // otherwise. Note that such headers still get included if some
+  // dependency on their contents is found.
+  const pp_result &ppr = _ai.atu.get_pp_result();
   for (auto &hi : _ai.header_infos) {
-    if (hi.eligible)
-      _queue_header_include(hi);
+    // Only consider the topmost eligible headers: including any
+    // eligible descendant would amount to including the topmost one
+    // anyway, c.f. _add_include().
+    if (!hi.eligible || (hi.parent && hi.parent->eligible))
+      continue;
+
+    // The external declarations are sorted and don't overlap. Only
+    // the first and the last one intersecting with the header can
+    // extend beyond it.
+    const raw_pp_tokens_range &r = hi.get_range();
+    const auto ed_begin = _ai.intersecting_external_declarations_begin(r);
+    const auto ed_end = _ai.intersecting_external_declarations_end(r);
+    if (ed_begin != ed_end &&
+	(!(ppr.pp_tokens_range_to_raw(ed_begin->get_tokens_range())
+	   .is_contained_in(r)) ||
+	 !(ppr.pp_tokens_range_to_raw(std::prev(ed_end)->get_tokens_range())
+	   .is_contained_in(r)))) {
+      continue;
+    }
+
+    _queue_header_include(hi);
   }
 
   using linkage_change =
@@ -9287,9 +9322,17 @@ void _lp_writer::_emit_inclusion_sequence
 		     tic);
 		  _d.append(std::move(tic));
 		} else {
+		  // The header's declaration can be retained as is: it's
+		  // either an 'extern' one or, if the resulting linkage
+		  // is internal, a 'static' one, c.f. the header
+		  // eligibility rules in _conflicting_header_finder.
 		  assert(di.storage_class_specifier &&
-			 (di.storage_class_specifier->get_storage_class() ==
-			  ast::storage_class::sc_extern));
+			 ((di.storage_class_specifier->get_storage_class() ==
+			   ast::storage_class::sc_extern) ||
+			  ((di.storage_class_specifier->get_storage_class() ==
+			    ast::storage_class::sc_static) &&
+			   (oi.externalized_sym_mod.sym_mod.new_linkage !=
+			    linkage_change::lc_make_extern))));
 		  assert(!oidi.get_initializer());
 		}
 	      } else {
