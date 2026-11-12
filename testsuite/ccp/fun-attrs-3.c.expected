@@ -1,0 +1,23 @@
+/* klp-ccp: from testsuite/ccp/fun-attrs-3.c */
+static int f(int x);
+static int f(int x)
+{
+	return x;
+}
+
+static int g(int x);
+static int g(int x);
+static int g(int x)
+{
+	return x;
+}
+
+int ee_h(int x) __attribute__((section(".init.text")));
+
+int klpp_pu_f(int x)
+{
+	extern int f(int x);
+	extern int ee_h(int x) __attribute__((section(".init.text")));
+
+	return f(x) + g(x) + ee_h(x);
+}

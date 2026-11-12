@@ -1,10 +1,15 @@
 EXTRA_DIST = ccp.exp				\
 	ccp-aarch64.exp			\
 	ccp-aarch64-specific.exp		\
+	ccp-x86_64-specific.exp		\
+	aarch64-has-attribute-1.c		\
+	aarch64-has-attribute-1.c.expected	\
 	aarch64-va-list-1.c		\
 	aarch64-va-list-1.c.expected		\
 	aarch64-types-1.c			\
 	aarch64-types-1.c.expected		\
+	attr-stmt-1.c				\
+	attr-stmt-1.c.expected		\
 	builtin-choose-expr-1.c		\
 	builtin-choose-expr-1.c.expected	\
 	builtin-choose-expr-2.c		\
@@ -31,9 +36,35 @@ EXTRA_DIST = ccp.exp				\
 	ext-obj-9.c.expected			\
 	ext-obj-12.c				\
 	ext-obj-12.c.expected			\
+	ext-attrs-1.c			\
+	ext-attrs-1.c.expected		\
+	ext-attrs-2.c			\
+	ext-attrs-2.c.expected		\
+	ext-attrs-3.c			\
+	ext-attrs-3.c.expected		\
+	ext-attrs-4.c			\
+	ext-attrs-4.c.expected		\
+	ext-attrs-5.c			\
+	ext-attrs-5.c.expected		\
+	ext-attrs-6.c			\
+	ext-attrs-6.c.expected		\
+	ext-attrs-7.c			\
+	ext-attrs-7.c.expected		\
 	ext-fun-1.c				\
 	ext-fun-1.c.expected			\
-	fun-closure-1.c			\
+	ext-fun-2.c				\
+	ext-fun-2.c.expected			\
+	ext-fun-3.c				\
+	ext-fun-3.c.expected			\
+	fun-attrs-1.c				\
+	fun-attrs-1.c.expected			\
+	fun-attrs-2.c				\
+	fun-attrs-2.c.expected			\
+	fun-attrs-3.c				\
+	fun-attrs-3.c.expected			\
+	fun-attrs-4.c				\
+	fun-attrs-4.c.expected			\
+	fun-closure-1.c				\
 	fun-closure-1.c.expected		\
 	fun-closure-2.c			\
 	fun-closure-2.c.expected		\
@@ -288,4 +319,37 @@ EXTRA_DIST = ccp.exp				\
 	tag-defs-9.c				\
 	tag-defs-9.c.expected			\
 	tag-defs-10.c				\
-	tag-defs-10.c.expected
+	tag-defs-10.c.expected		\
+	undefined-fun-decl-1.c			\
+	undefined-fun-decl-1.h			\
+	undefined-fun-decl-1.c.expected		\
+	undefined-fun-decl-2.c			\
+	undefined-fun-decl-2.h			\
+	undefined-fun-decl-2.c.expected		\
+	undefined-fun-decl-3.c			\
+	undefined-fun-decl-3.h			\
+	undefined-fun-decl-3.c.expected		\
+	undefined-fun-decl-4.c			\
+	undefined-fun-decl-4.h			\
+	undefined-fun-decl-4.c.expected		\
+	x86_64-addrspace-make-pointer-1.c	\
+	x86_64-addrspace-make-pointer-1.c.expected	\
+	x86_64-addrspace-make-pointer-2.c	\
+	x86_64-addrspace-make-pointer-2.c.expected	\
+	x86_64-addrspace-make-pointer-3.c	\
+	x86_64-addrspace-make-pointer-3.c.expected	\
+	x86_64-addrspace-make-extern-1.c	\
+	x86_64-addrspace-make-extern-1.c.expected	\
+	x86_64-addrspace-make-extern-2.c	\
+	x86_64-addrspace-make-extern-2.c.expected	\
+	x86_64-addrspace-make-extern-3.c	\
+	x86_64-addrspace-make-extern-3.c.expected	\
+	x86_64-has-attribute-1.c		\
+	x86_64-has-attribute-1.c.expected	\
+	x86_64-has-attribute-2.c		\
+	x86_64-has-attribute-2.c.expected	\
+	x86_64-has-attribute-3.c		\
+	x86_64-has-attribute-4.c		\
+	x86_64-has-attribute-5.c		\
+	x86_64-has-builtin-1.c		\
+	x86_64-has-builtin-1.c.expected

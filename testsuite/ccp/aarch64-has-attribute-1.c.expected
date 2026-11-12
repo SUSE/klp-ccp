@@ -1,0 +1,27 @@
+/* klp-ccp: from testsuite/ccp/aarch64-has-attribute-1.c */
+int klpp_pu_f(void)
+{
+	int r = 0;
+#if __has_attribute(unused)
+	r += 1;
+#else
+#error "klp-ccp: a preceeding branch should have been taken"
+#endif
+#if __has_attribute(aarch64_vector_pcs)
+	r += 2;
+#else
+#error "klp-ccp: a preceeding branch should have been taken"
+#endif
+#if __has_attribute(__aarch64_vector_pcs__)
+	r += 4;
+#else
+#error "klp-ccp: a preceeding branch should have been taken"
+#endif
+#if __has_attribute(ms_abi)
+#error "klp-ccp: non-taken branch"
+#endif
+#if __has_attribute(arm_sve_vector_bits)
+#error "klp-ccp: non-taken branch"
+#endif
+	return r;
+}

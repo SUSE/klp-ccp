@@ -1,0 +1,15 @@
+/* klp-ccp: from testsuite/ccp/ext-attrs-4.c */
+extern __attribute__((cold)) void ee_f(void);
+
+extern inline int ee_g(int x);
+
+void __attribute__((section("x"))) klpe_eer_h(void);
+
+int __attribute__((noinline)) ee_i(int x);
+
+int klpp_pu_f(void)
+{
+	ee_f();
+	klpe_eer_h();
+	return ee_g(1) + ee_i(2);
+}

@@ -1,0 +1,20 @@
+/* klp-ccp: from testsuite/ccp/ext-attrs-5.c */
+#define __ro_after_init __attribute__((section(".data..ro_after_init")))
+#define __cold __attribute__((cold))
+#define __aligned(x) __attribute__((aligned(x)))
+
+static int (*klpe_espr_a) ;
+static int (*klpe_espr_b)  ;
+extern int ee_c __ro_after_init;
+extern int ee_d __ro_after_init __aligned(64);
+
+static  void (*klpe_espr_f)(void);
+
+extern __cold void ee_g(void);
+
+int klpp_pu_f(void)
+{
+	(*klpe_espr_f)();
+	ee_g();
+	return (*klpe_espr_a) + (*klpe_espr_b) + ee_c + ee_d;
+}

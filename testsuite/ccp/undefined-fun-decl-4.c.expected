@@ -1,0 +1,16 @@
+/* klp-ccp: from testsuite/ccp/undefined-fun-decl-4.c */
+#define klpr_inline __attribute__((unused))
+
+#define __gnu_inline __attribute__((__gnu_inline__))
+#define inline inline __gnu_inline __attribute__((unused))
+
+klpr_inline int f(int a);
+
+__attribute__((cold)) klpr_inline int g(int a);
+
+#include "undefined-fun-decl-4.h"
+
+int klpp_pu_h(void)
+{
+	return i();
+}

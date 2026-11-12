@@ -1,0 +1,20 @@
+/* klp-ccp: from testsuite/ccp/ext-attrs-3.c */
+static __attribute__((noreturn)) void (*klpe_espr_f)(void);
+
+static int __attribute__((const)) (*klpe_espr_g)(int x);
+
+static void (*klpe_espr_h)(void);
+
+static void (*klpe_espr_h)(void);
+
+static int __attribute__((format(printf, 1, 2)))
+(*klpe_espr_i)(const char *fmt, ...);
+
+int klpp_pu_f(void)
+{
+	(*klpe_espr_h)();
+	(*klpe_espr_i)("%d", 1);
+	if ((*klpe_espr_g)(1))
+		(*klpe_espr_f)();
+	return (*klpe_espr_g)(2);
+}

@@ -1,0 +1,17 @@
+/* klp-ccp: from testsuite/ccp/ext-attrs-6.c */
+#define klpr___cold_noreturn __attribute__((noreturn))
+
+static klpr___cold_noreturn void (*klpe_espr_f)(void);
+
+static int (*klpe_espr_a) ;
+
+#define klpr___used_aligned(x) __attribute__((aligned(x)))
+
+extern int ee_b klpr___used_aligned(64);
+
+int klpp_pu_f(void)
+{
+	if ((*klpe_espr_a) + ee_b)
+		(*klpe_espr_f)();
+	return 0;
+}

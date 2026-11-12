@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2018-2022, 2024-2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -601,7 +601,7 @@ void _evaluator::_handle_sou_member(unnamed_struct_or_union &unnamed_sou)
     unnamed_sou.get_unique_parent<struct_declaration_unnamed_sou>();
   const specifier_qualifier_list * const sql = p.get_specifier_qualifier_list();
   if (sql) {
-    const qualifiers &qs = sql->get_qualifiers();
+    const qualifiers &qs = sql->get_qualifiers(_ast);
     t = (std::dynamic_pointer_cast<const struct_or_union_type>
 	 (t->amend_qualifiers(qs)));
   }
@@ -1689,15 +1689,30 @@ bool ast_pp_expr::evaluate(const target &tgt)
 void klp::ccp::ast::specifier_qualifier_list::
 evaluate_type(ast &a, const target &tgt)
 {
-  types::qualifiers qs;
-
-  for (auto q : _tqs)
-    qs.add(q.get().get_kind());
+  const types::qualifiers qs = get_qualifiers(a);
 
   if (_tss.empty()) {
     _set_type(std_int_type::create(std_int_type::kind::k_int, true, qs));
     return;
   }
+
+  // The specifier list's qualifiers get added to the types named by
+  // typedef names or typeof() constructs. A type can live in at
+  // most one named address space though, report conflicts between
+  // the list's and the named type's address spaces like GCC does.
+  const auto &amend_qualifiers_checked =
+    [&](const addressable_type &t, const _ast_entity &ts) {
+      const types::address_space t_as = t.get_qualifiers().get_address_space();
+      if (!t_as.is_generic() && !qs.get_address_space().is_generic() &&
+	  t_as != qs.get_address_space()) {
+	code_remark remark(code_remark::severity::fatal,
+			   "conflicting named address spaces",
+			   a.get_pp_result(), ts.get_tokens_range());
+	a.get_remarks().add(remark);
+	throw semantic_except(remark);
+      }
+      return t.amend_qualifiers(qs);
+    };
 
   std::shared_ptr<const addressable_type> result;
   bool is_auto_type = false;
@@ -1727,14 +1742,17 @@ evaluate_type(ast &a, const target &tgt)
 	const type_specifier_tdid::resolved &r = ts_tdid.get_resolved();
 	switch (r.get_kind()) {
 	case type_specifier_tdid::resolved::resolved_kind::builtin_typedef:
-	  result = (r.get_builtin_typedef_factory().create()
-		    ->evaluate(a, tgt, ts_tdid)->amend_qualifiers(qs));
+	  result = (amend_qualifiers_checked
+		    (*r.get_builtin_typedef_factory().create()
+		     ->evaluate(a, tgt, ts_tdid),
+		     ts_tdid));
 	  break;
 
 	case type_specifier_tdid::resolved::resolved_kind::init_declarator:
-	  result = (r.get_init_declarator().get_declarator()
-		    .get_direct_declarator_id()
-		    .get_type()->amend_qualifiers(qs));
+	  result = (amend_qualifiers_checked
+		    (*r.get_init_declarator().get_declarator()
+		     .get_direct_declarator_id().get_type(),
+		     ts_tdid));
 	  break;
 
 	case type_specifier_tdid::resolved::resolved_kind::none:
@@ -1766,7 +1784,7 @@ evaluate_type(ast &a, const target &tgt)
 	handle_types<void>
 	  ((wrap_callables<no_default_action>
 	    ([&](const addressable_type &a_t) {
-	       result = a_t.amend_qualifiers(qs);
+	       result = amend_qualifiers_checked(a_t, to_e);
 	     },
 	     [&](const type&) {
 	       code_remark remark(code_remark::severity::fatal,
@@ -1779,7 +1797,8 @@ evaluate_type(ast &a, const target &tgt)
 	   *to_e.get_expr().get_type());
       },
       [&](const typeof_type_name &to_tn) {
-	result = to_tn.get_type_name().get_type()->amend_qualifiers(qs);
+	result = amend_qualifiers_checked(*to_tn.get_type_name().get_type(),
+					  to_tn);
       }));
 
   if (result.get() || is_auto_type) {
@@ -2220,7 +2239,7 @@ evaluate_type(ast &a, const target &tgt)
       // type to "pointer to element type".
       qualifiers qs;
       if (_tql)
-	qs = _tql->get_qualifiers();
+	qs = _tql->get_qualifiers(a);
 
       std::shared_ptr<const addressable_type> t = o_et.derive_pointer(qs);
       t = tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
@@ -2344,7 +2363,7 @@ evaluate_type(ast &a, const target &tgt)
       if (!tql) {
 	t = t->derive_pointer(qualifiers{});
       } else {
-	const qualifiers qs = tql->get_qualifiers();
+	const qualifiers qs = tql->get_qualifiers(a);
 	std::shared_ptr<const pointer_type> pt = t->derive_pointer(qs);
 	t = tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
 				    std::move(pt), *tql);
@@ -2702,7 +2721,7 @@ void declarator::evaluate_type(ast &a, const target &tgt)
       if (!tql) {
 	t = t->derive_pointer(qualifiers{});
       } else {
-	const qualifiers qs = tql->get_qualifiers();
+	const qualifiers qs = tql->get_qualifiers(a);
 	std::shared_ptr<const pointer_type> pt = t->derive_pointer(qs);
 	t = tgt.evaluate_attributes(a, _evaluator::make_expr_evaluator(a, tgt),
 				    std::move(pt), *tql);

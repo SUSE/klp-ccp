@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2017-2019, 2021-2022, 2024, 2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -83,6 +83,7 @@ namespace klp
 	virtual ret_type operator()(declarator&) = 0;
 	virtual ret_type operator()(storage_class_specifier&) = 0;
 	virtual ret_type operator()(type_qualifier&) = 0;
+	virtual ret_type operator()(address_space&) = 0;
 	virtual ret_type operator()(type_qualifier_list&) = 0;
 	virtual ret_type operator()(type_specifier_pod&) = 0;
 	virtual ret_type operator()(type_specifier_ext_int&) = 0;
@@ -226,6 +227,7 @@ namespace klp
 	virtual ret_type operator()(declarator &e) override;
 	virtual ret_type operator()(storage_class_specifier &e) override;
 	virtual ret_type operator()(type_qualifier &e) override;
+	virtual ret_type operator()(address_space &e) override;
 	virtual ret_type operator()(type_qualifier_list &e) override;
 	virtual ret_type operator()(type_specifier_pod &e) override;
 	virtual ret_type operator()(type_specifier_ext_int &e) override;
@@ -376,6 +378,7 @@ namespace klp
 	virtual ret_type operator()(const declarator&) = 0;
 	virtual ret_type operator()(const storage_class_specifier&) = 0;
 	virtual ret_type operator()(const type_qualifier&) = 0;
+	virtual ret_type operator()(const address_space&) = 0;
 	virtual ret_type operator()(const type_qualifier_list&) = 0;
 	virtual ret_type operator()(const type_specifier_pod&) = 0;
 	virtual ret_type operator()(const type_specifier_ext_int&) = 0;
@@ -522,6 +525,7 @@ namespace klp
 	virtual ret_type operator()(const declarator &e) override;
 	virtual ret_type operator()(const storage_class_specifier &e) override;
 	virtual ret_type operator()(const type_qualifier &e) override;
+	virtual ret_type operator()(const address_space &e) override;
 	virtual ret_type operator()(const type_qualifier_list &e) override;
 	virtual ret_type operator()(const type_specifier_pod &e) override;
 	virtual ret_type operator()(const type_specifier_ext_int &e) override;

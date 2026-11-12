@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2025-2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -3305,7 +3305,7 @@
 },
 {
   .name = "fbuiltin",
-  .code = opt_code_c_family_unused,
+  .code = opt_code_c_family_fbuiltin,
   .comp = (gcc_cmdline_parser::option::comp_c |
 	   gcc_cmdline_parser::option::comp_objc |
 	   gcc_cmdline_parser::option::comp_cxx |
@@ -3314,7 +3314,7 @@
 },
 {
   .name = "fbuiltin-",
-  .code = opt_code_c_family_unused,
+  .code = opt_code_c_family_fbuiltin_,
   .comp = (gcc_cmdline_parser::option::comp_c |
 	   gcc_cmdline_parser::option::comp_objc |
 	   gcc_cmdline_parser::option::comp_cxx |

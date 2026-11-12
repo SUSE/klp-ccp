@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2017-2022, 2024, 2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -695,11 +695,49 @@ namespace klp
       }
 
       template <typename callable_type>
+      bool attribute_list::for_each_attribute(callable_type &&c) const
+      {
+	for (const auto a : _attributes) {
+	  if (a) {
+	    if (!c(*a))
+	      return false;
+	  }
+	}
+
+	return true;
+      }
+
+      template <typename callable_type>
       bool attribute_specifier_list::for_each_attribute(callable_type &&c)
       {
 	for (auto as : _ass) {
 	  if (!as.get().get_attribute_list().for_each_attribute(c))
 	   return false;
+	}
+
+	return true;
+      }
+
+      template <typename callable_type>
+      bool attribute_specifier_list::for_each_attribute(callable_type &&c) const
+      {
+	for (const auto as : _ass) {
+	  const attribute_specifier &_as = as.get();
+	  if (!_as.get_attribute_list().for_each_attribute(c))
+	   return false;
+	}
+
+	return true;
+      }
+
+      template <typename callable_type>
+      bool attribute_specifier_list::
+      for_each_attribute_specifier(callable_type &&c) const
+      {
+	for (const auto as : _ass) {
+	  const attribute_specifier &_as = as.get();
+	  if (!c(_as))
+	    return false;
 	}
 
 	return true;
@@ -793,11 +831,32 @@ namespace klp
       }
 
       template <typename callable_type>
+      bool specifier_qualifier_list::
+      for_each_attribute_specifier_list(callable_type &&c) const
+      {
+	for (const auto asl : _asls) {
+	  const attribute_specifier_list &_asl = asl.get();
+	  if (!c(_asl))
+	    return false;
+	}
+
+	return true;
+      }
+
+      template <typename callable_type>
       void declaration_specifiers::
       for_each_storage_class_specifier(callable_type &&c) const
       {
 	for (auto scs : _scss)
 	  c(const_cast<const storage_class_specifier&>(scs.get()));
+      }
+
+      template <typename callable_type>
+      void declaration_specifiers::
+      for_each_function_specifier(callable_type &&c) const
+      {
+	for (auto fs : _fss)
+	  c(const_cast<const function_specifier&>(fs.get()));
       }
 
       template <typename callable_type>

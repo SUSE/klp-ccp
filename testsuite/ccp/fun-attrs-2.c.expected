@@ -1,0 +1,31 @@
+/* klp-ccp: from testsuite/ccp/fun-attrs-2.c */
+static int f(int x)
+{
+	return x;
+}
+
+static __attribute__((indirect_branch("thunk")))
+int g(int x)
+{
+	return x;
+}
+
+static int h(int x)
+{
+	return x;
+}
+
+static int i(int x)
+{
+	return x;
+}
+
+__attribute__((externally_visible, visibility("default"))) int klpp_pe_f(int x)
+{
+	return f(x) + g(x) + h(x) + i(x);
+}
+
+static int klpp_ps_g(int x)
+{
+	return x;
+}

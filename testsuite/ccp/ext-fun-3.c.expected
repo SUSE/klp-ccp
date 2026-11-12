@@ -1,0 +1,17 @@
+/* klp-ccp: from testsuite/ccp/ext-fun-3.c */
+#define klpr_inline __attribute__((unused))
+
+#define klpr___always_inline klpr_inline
+
+#define inline inline __attribute__((unused)) __attribute__((no_instrument_function))
+
+static klpr___always_inline int (*klpe_espr_f)(int x);
+
+static klpr_inline int (*klpe_espr_g)(int x);
+
+extern inline int ee_h(int x);
+
+int klpp_pu_f(void)
+{
+	return (*klpe_espr_f)(1) + (*klpe_espr_g)(2) + ee_h(3);
+}

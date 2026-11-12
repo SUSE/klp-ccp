@@ -1,0 +1,9 @@
+# Run the x86_64 cparse test cases requiring a more recent GCC version
+# than the 4.8.5 default used by cparse-x86_64.exp.
+set cparse_arch "x86_64"
+set cparse_compiler_version "9.1.0"
+
+foreach src [glob -nocomplain $srcdir/$subdir/x86_64-gcc-9.1.0/*.c] {
+    set testname $src
+    run_cparse $src
+}

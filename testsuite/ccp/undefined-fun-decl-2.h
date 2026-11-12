@@ -1,0 +1,9 @@
+static inline int i(void)
+{
+	return 1;
+}
+
+static inline int j(void)
+{
+	return f(1) + ps_g(2);
+}

@@ -1,0 +1,13 @@
+/* klp-ccp: from testsuite/ccp/undefined-fun-decl-1.c */
+int f(int a);
+
+int g(int a);
+
+int k(int a);
+
+#include "undefined-fun-decl-1.h"
+
+int klpp_pu_h(void)
+{
+	return i();
+}

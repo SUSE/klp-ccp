@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2017-2022, 2024-2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -186,6 +186,28 @@ register_builtin_macro(const std::string &name,
     assert(0);
 }
 
+void preprocessor::
+register_builtin_special_macro(const std::string &name,
+			       const std::initializer_list<const char *>
+				 &arg_list,
+			       builtin_special_macro_handler &&handler)
+{
+  std::vector<std::string> _arg_list;
+  _arg_list.reserve(arg_list.size());
+  for (const auto a : arg_list)
+    _arg_list.emplace_back(a);
+
+  const pp_result::macro &m =
+    _pp_result->_add_macro(name, std::move(_arg_list),
+			   pp_result::macro::builtin_special_tag{});
+  if (!_macros.insert(std::make_pair(m.get_name(), std::ref(m))).second)
+    assert(0);
+  if (!_builtin_special_macro_handlers.insert
+	(std::make_pair(m.get_name(), std::move(handler))).second) {
+    assert(0);
+  }
+}
+
 void preprocessor::register_predefined_macro
 	(const std::string &signature,
 	 const std::string &repl,
@@ -260,8 +282,17 @@ void preprocessor::register_predefined_macro
 			   pp_result::macro::predefined_user_tag{});
 
   const auto it_existing = _macros.find(name);
-  if (it_existing != _macros.end() && it_existing->second.get() != m) {
-    throw report_fatal("macro redefined in an incompatible way");
+  if (it_existing != _macros.end()) {
+    if (it_existing->second.get().is_builtin_special()) {
+      // GCC accepts redefinitions of its builtin macros from the
+      // command line with a warning and lets the user's definition
+      // take precedence.
+      report_warning("\"" + name + "\" redefined");
+      it_existing->second = std::cref(m);
+      return;
+    } else if (it_existing->second.get() != m) {
+      throw report_fatal("macro redefined in an incompatible way");
+    }
   }
 
   _macros.insert(std::make_pair(m.get_name(), std::ref(m)));
@@ -1651,7 +1682,8 @@ _expand_one(_macro_expansion_forest::_rescan_macro_invocation &rmi,
   const pp_result::macro &m = rmi.get_macro();
 
   if (m.is_builtin_special()) {
-    return _expand_one_builtin_special(rmi, std::move(args), invocation_range);
+    return _expand_one_builtin_special(rmi, std::move(args),
+				       std::move(exp_args), invocation_range);
   }
 
   // This is the core of macro expansion.
@@ -2019,6 +2051,7 @@ std::vector<pp_token> preprocessor::
 _expand_one_builtin_special
 			(_macro_expansion_forest::_rescan_macro_invocation &rmi,
 			 std::vector<std::vector<pp_token>> &&args,
+			 std::vector<std::vector<pp_token>> &&exp_args,
 			 const raw_pp_tokens_range &invocation_range)
 {
   const pp_result::macro &m = rmi.get_macro();
@@ -2077,9 +2110,24 @@ _expand_one_builtin_special
     out_fragments._add_fragment(1, out_fragment::builtin_special_tag{});
 
   } else {
-      assert(0);
-      __builtin_unreachable();
-    }
+    // A builtin special macro registered through
+    // register_builtin_special_macro(), e.g. __has_attribute(): the
+    // target computes the value from the expanded arguments.
+    const auto it_handler = _builtin_special_macro_handlers.find(m.get_name());
+    assert(it_handler != _builtin_special_macro_handlers.end());
+    assert(exp_args.size() == m.get_arg_names().size());
+    const auto report_fatal =
+      [&](const std::string &msg) {
+	code_remark remark
+	  (code_remark::severity::fatal, msg,
+	   _raw_pp_tokens_range_to_source(invocation_range),
+	   _raw_pp_tokens_range_to_range_in_file(invocation_range));
+	_remarks.add(remark);
+	return pp_except(remark);
+      };
+    result.push_back(it_handler->second(exp_args, report_fatal));
+    out_fragments._add_fragment(1, out_fragment::builtin_special_tag{});
+  }
 
   return result;
 }

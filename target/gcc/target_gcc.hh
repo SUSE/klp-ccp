@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2019-2021, 2024-2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -23,6 +23,7 @@
 #include <initializer_list>
 #include <vector>
 #include <map>
+#include <set>
 #include "target/target.hh"
 #include "gcc_cmdline_parser.hh"
 #include "preprocessor.hh"
@@ -160,6 +161,11 @@ namespace klp
 	const override;
 
       virtual ext_float_keywords get_ext_float_keywords() const override;
+
+      // Named address spaces are an architecture specific extension,
+      // none by default.
+      virtual address_space_keywords get_address_space_keywords()
+	const override;
 
       virtual std::shared_ptr<const types::int_type>
       create_ptrdiff_type(const bool is_signed) const override;
@@ -363,6 +369,11 @@ namespace klp
 	bool is_iso() const noexcept;
 	bool is_std_geq_c99() const noexcept;
 
+	// The ISO C standard revision selected, as an ordinal for
+	// comparisons: 0 for C89, 1 for C94, 2 for C99, 3 for C11/C17
+	// and 4 for C2X/C23.
+	unsigned int std_revision() const noexcept;
+
 	std::vector<std::string> pre_includes;
 	std::vector<std::string> include_dirs;
 	std::vector<std::string> include_dirs_quoted;
@@ -400,6 +411,8 @@ namespace klp
 
 	bool flag_openacc;
 	bool flag_openmp;
+	bool flag_no_builtin;
+	std::set<std::string> disabled_builtins;
 
 	bool flag_hosted;
 
@@ -460,6 +473,110 @@ namespace klp
       virtual void _arch_option_override() = 0;
 
       virtual void _arch_register_builtin_macros(preprocessor &pp) const = 0;
+
+    protected:
+      // Entry of a table of names known to a range of GCC releases,
+      // >= since and, unless until is zero, < until. Used for the
+      // attribute and builtin tables consulted by __has_attribute()
+      // and __has_builtin().
+      struct versioned_name_table_entry
+      {
+	const char *name;
+	gcc_cmdline_parser::gcc_version since;
+	gcc_cmdline_parser::gcc_version until;
+      };
+
+      bool
+      _lookup_versioned_name_table(const versioned_name_table_entry *begin,
+				   const versioned_name_table_entry *end,
+				   const std::string &name) const noexcept;
+
+    private:
+      // Whether the attribute with the given (canonicalized, i.e.
+      // with enclosing double underscores stripped) name in attribute
+      // namespace ns is known to the architecture specific GCC
+      // backend.
+      virtual bool _arch_has_attribute(const std::string &ns,
+				       const std::string &name)
+	const noexcept = 0;
+
+      bool _has_attribute(const std::string &ns, const std::string &name)
+	const noexcept;
+
+      static const versioned_name_table_entry _common_gnu_attributes[];
+      static const versioned_name_table_entry _common_clang_attributes[];
+
+      pp_token
+      _eval_has_attribute
+	(const std::vector<std::vector<pp_token>> &exp_args,
+	 const std::function<pp_except(const std::string&)> &report_fatal)
+	const;
+
+      // Classification of the entries in the builtin tables consulted
+      // by the __has_builtin() implementation, c.f. the DEF_*_BUILTIN
+      // macros from gcc/builtins.def and def_builtin_1() from
+      // gcc/c-family/c-common.c(c): the entry's name is the
+      // "__builtin_" prefixed one (or the __sync_/__atomic_ one) and
+      // the kind determines whether the plain library name is
+      // available as well.
+      enum class builtin_function_kind
+      {
+	bfk_gcc,		// No plain name.
+	bfk_sync,		// Name as is, no plain name.
+	bfk_gcc_floatn_nx,	// Name + _FloatN/_FloatNx suffix, no
+				// plain name.
+	bfk_lib,		// Plain name available.
+	bfk_ext_lib,		// Plain name unless strict ISO.
+	bfk_ext_lib_floatn_nx,	// Name + _FloatN/_FloatNx suffix, plain
+				// name unless strict ISO.
+	bfk_c94,		// Plain name unless strict ISO < C94.
+	bfk_c99,		// Plain name unless strict ISO < C99.
+	bfk_c11,		// Plain name unless strict ISO < C11.
+	bfk_c23,		// Plain name unless strict ISO < C23.
+	bfk_c2y,		// Plain name unless strict ISO < C2Y.
+	bfk_keyword,		// Reserved word recognized by
+				// names_builtin_p().
+	bfk_keyword_c23,	// Reserved word in C23 modes only.
+      };
+
+      // Entry of a builtin table: the builtin is known to GCC
+      // releases >= since and, unless until is zero, < until.
+      struct builtin_table_entry
+      {
+	const char *name;
+	builtin_function_kind kind;
+	gcc_cmdline_parser::gcc_version since;
+	gcc_cmdline_parser::gcc_version until;
+      };
+
+      bool _lookup_builtin_table(const builtin_table_entry *begin,
+				 const builtin_table_entry *end,
+				 const std::string &name) const noexcept;
+
+      // Whether the builtin with the given name is known to the
+      // architecture specific GCC backend. Only the builtins declared
+      // unconditionally are reported, c.f. _arch_has_builtin()'s
+      // implementations.
+      virtual bool _arch_has_builtin(const std::string &name)
+	const noexcept = 0;
+
+      bool _builtin_plain_name_available(const builtin_function_kind kind,
+					 const std::string &name)
+	const noexcept;
+
+      bool _has_float_n_type(const unsigned int n, const bool extended)
+	const noexcept;
+
+      bool _names_builtin_p(const std::string &name) const noexcept;
+
+      static const builtin_table_entry _common_builtins[];
+      static const builtin_table_entry _common_builtin_keywords[];
+
+      pp_token
+      _eval_has_builtin
+	(const std::vector<std::vector<pp_token>> &exp_args,
+	 const std::function<pp_except(const std::string&)> &report_fatal)
+	const;
 
     protected:
       enum class common_int_mode_kind

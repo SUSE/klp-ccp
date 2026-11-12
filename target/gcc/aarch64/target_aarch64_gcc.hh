@@ -103,6 +103,18 @@ namespace klp
       virtual void _arch_register_builtin_macros(preprocessor &pp)
 	const override;
 
+      virtual bool _arch_has_attribute(const std::string &ns,
+				       const std::string &name)
+	const noexcept override;
+
+      static const versioned_name_table_entry _gnu_attributes[];
+      static const versioned_name_table_entry _arm_attributes[];
+
+      virtual bool _arch_has_builtin(const std::string &name)
+	const noexcept override;
+
+      static const versioned_name_table_entry _builtins[];
+
       struct opts_aarch64
       {
       public:

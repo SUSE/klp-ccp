@@ -1,0 +1,17 @@
+/* klp-ccp: from testsuite/ccp/ext-attrs-7.c */
+static int (*klpe_espr_a);
+extern int ee_b __attribute__((aligned(64)));
+static void (*klpe_espr_f)(void);
+void ee_g(void) __attribute__((cold));
+
+int klpp_pu_f(void)
+{
+	extern int (*klpe_espr_a);
+	extern int ee_b __attribute__((aligned(64)));
+	extern void (*klpe_espr_f)(void);
+	extern void ee_g(void) __attribute__((cold));
+
+	(*klpe_espr_f)();
+	ee_g();
+	return (*klpe_espr_a) + ee_b;
+}

@@ -1,0 +1,10 @@
+/* klp-ccp: from testsuite/ccp/x86_64-addrspace-make-pointer-3.c */
+typedef __seg_gs int gs_int;
+static gs_int (*klpe_espr_o);
+static typeof((*klpe_espr_o)) (*klpe_espr_p);
+static const gs_int (*klpe_espr_q);
+
+int klpp_pu_f(void)
+{
+	return (*klpe_espr_o) + (*klpe_espr_p) + (*klpe_espr_q);
+}

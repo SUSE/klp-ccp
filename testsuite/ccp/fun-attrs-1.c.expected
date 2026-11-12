@@ -1,0 +1,33 @@
+/* klp-ccp: from testsuite/ccp/fun-attrs-1.c */
+static __attribute__((cold)) int f(int x)
+{
+	return x;
+}
+
+static int g(void)
+{
+	return 1;
+}
+
+static int h(int x) __attribute__((noinline));
+
+static int h(int x)
+{
+	return x;
+}
+
+static __attribute__((noinline))
+int i(int x)
+{
+	return x;
+}
+
+static int j(int x)
+{
+	return x;
+}
+
+int klpp_pu_f(int x)
+{
+	return f(x) + g() + h(x) + i(x) + j(x);
+}

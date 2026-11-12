@@ -1,0 +1,8 @@
+/* klp-ccp: from testsuite/ccp/x86_64-addrspace-make-pointer-2.c */
+static __seg_gs int (*klpe_espr_a)[4];
+static __seg_gs int *(*klpe_espr_p);
+
+int klpp_pu_f(void)
+{
+	return (*klpe_espr_a)[1] + *(*klpe_espr_p) + sizeof((*klpe_espr_a));
+}

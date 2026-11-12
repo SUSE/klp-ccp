@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2018-2022, 2024-2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -34,11 +34,16 @@ template class std::shared_ptr<const types::struct_or_union_type>;
 
 
 qualifiers::qualifiers() noexcept
-  : _qs{}
+  : _qs{}, _as{}
 {}
 
 qualifiers::qualifiers(const std::initializer_list<qualifier> &il) noexcept
-  : qualifiers{}
+  : qualifiers{il, address_space{}}
+{}
+
+qualifiers::qualifiers(const std::initializer_list<qualifier> &il,
+		       const address_space as) noexcept
+  : _qs{}, _as{as}
 {
   for (qualifier q : il) {
     _qs[static_cast<std::size_t>(q)] = true;
@@ -47,7 +52,7 @@ qualifiers::qualifiers(const std::initializer_list<qualifier> &il) noexcept
 
 bool qualifiers::operator==(const qualifiers &qs) const noexcept
 {
-  return _qs == qs._qs;
+  return _qs == qs._qs && _as == qs._as;
 }
 
 void qualifiers::add(const qualifier q)
@@ -55,19 +60,34 @@ void qualifiers::add(const qualifier q)
   _qs[static_cast<std::size_t>(q)] = true;
 }
 
-void qualifiers::add(const qualifiers qs)
+bool qualifiers::add(const qualifiers qs) noexcept
 {
   auto new_it = qs._qs.cbegin();
 
   for (auto my_it = _qs.begin(); my_it != _qs.end(); ++my_it, ++new_it)
     if (*new_it)
       *my_it = true;
+
+  return set_address_space(qs._as);
+}
+
+bool qualifiers::set_address_space(const address_space as) noexcept
+{
+  if (as.is_generic())
+    return true;
+
+  if (!_as.is_generic())
+    return _as == as;
+
+  _as = as;
+  return true;
 }
 
 bool qualifiers::any() const noexcept
 {
-  return std::any_of(_qs.cbegin(), _qs.cend(),
-		     [](const bool enabled) { return enabled; });
+  return (!_as.is_generic() ||
+	  std::any_of(_qs.cbegin(), _qs.cend(),
+		      [](const bool enabled) { return enabled; }));
 }
 
 bool qualifiers::is_subset_of(const qualifiers &qs) const noexcept

@@ -9,7 +9,7 @@ static int h(void)
 	return 1;
 }
 
-static int i(void);
+int i(void);
 
 static int j(void)
 {
@@ -21,7 +21,7 @@ static int k(void)
 	return 1;
 }
 
-static int l(void);
+int l(void);
 
 static int m(void)
 {

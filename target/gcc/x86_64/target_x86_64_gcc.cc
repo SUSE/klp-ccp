@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2018-2021, 2025-2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -186,6 +186,20 @@ bool target_x86_64_gcc::is_wchar_signed() const noexcept
 bool target_x86_64_gcc::is_bitfield_default_signed() const noexcept
 {
   return true;
+}
+
+target::address_space_keywords
+target_x86_64_gcc::get_address_space_keywords() const
+{
+  address_space_keywords kws;
+
+  // Named address spaces came with GCC 6.1 on x86.
+  if (gcc_cmdline_parser::gcc_version{6, 1, 0} <= get_gcc_version()) {
+    kws.emplace("__seg_gs", address_space_seg_gs);
+    kws.emplace("__seg_fs", address_space_seg_fs);
+  }
+
+  return kws;
 }
 
 std::unique_ptr<execution_charset_encoder> target_x86_64_gcc::
@@ -474,6 +488,109 @@ void target_x86_64_gcc::_arch_option_override()
   _opts_x86.option_override();
 }
 
+// Extracted from the ix86_attribute_table (ix86_gnu_attributes as
+// of GCC 14) array in gcc/config/i386/i386.c resp.
+// i386-options.c(c) of the GCC X.1.0 releases, X = 5 ... 16,
+// omitting the entries conditional on
+// TARGET_DLLIMPORT_DECL_ATTRIBUTES, which is not set for Linux
+// targets, as well as attributes whose names are not valid
+// identifiers.
+const target_gcc::versioned_name_table_entry
+target_x86_64_gcc::_gnu_attributes[] = {
+  { "callee_pop_aggregate_return", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "cdecl", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "cf_check", { 9, 1, 0 }, { 0, 0, 0 } },
+  { "fastcall", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "fentry_name", { 9, 1, 0 }, { 0, 0, 0 } },
+  { "fentry_section", { 9, 1, 0 }, { 0, 0, 0 } },
+  { "force_align_arg_pointer", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "function_return", { 8, 1, 0 }, { 0, 0, 0 } },
+  { "gcc_struct", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "indirect_branch", { 8, 1, 0 }, { 0, 0, 0 } },
+  { "indirect_return", { 9, 1, 0 }, { 0, 0, 0 } },
+  { "interrupt", { 7, 1, 0 }, { 0, 0, 0 } },
+  { "ms_abi", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "ms_hook_prologue", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "ms_struct", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "naked", { 8, 1, 0 }, { 0, 0, 0 } },
+  { "no_callee_saved_registers", { 14, 1, 0 }, { 0, 0, 0 } },
+  { "no_caller_saved_registers", { 7, 1, 0 }, { 0, 0, 0 } },
+  { "nodirect_extern_access", { 12, 1, 0 }, { 0, 0, 0 } },
+  { "preserve_none", { 16, 1, 0 }, { 0, 0, 0 } },
+  { "regparm", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "sseregparm", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "stdcall", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "sysv_abi", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "thiscall", { 5, 1, 0 }, { 0, 0, 0 } },
+};
+
+bool target_x86_64_gcc::_arch_has_attribute(const std::string &ns,
+					    const std::string &name)
+  const noexcept
+{
+  if (ns != "gnu")
+    return false;
+
+  return _lookup_versioned_name_table(std::begin(_gnu_attributes),
+				 std::end(_gnu_attributes), name);
+}
+
+// The x86 builtins declared independently of the enabled ISA
+// extensions, extracted from the entries with zero ISA masks in
+// gcc/config/i386/i386-builtin.def and from ix86_init_builtins() &
+// co. in gcc/config/i386/i386-builtins.c(c) of the GCC X.1.0
+// releases, X = 10 ... 16. All other __builtin_ia32_* builtins get
+// declared only if their ISA extension is enabled and are not
+// reported by __has_builtin() for now.
+const target_gcc::versioned_name_table_entry target_x86_64_gcc::_builtins[] = {
+  { "__builtin_copysignq", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cpu_init", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cpu_is", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cpu_supports", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fabsq", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_huge_valq", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_addcarryx_u32", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_addcarryx_u64", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_bsrdi", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_bsrsi", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_fldenv", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_fnclex", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_fnstenv", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_fnstsw", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_pause", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_prefetch", { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_rdpmc", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_rdtsc", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_rdtscp", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_readeflags_u32", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_readeflags_u64", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_rolhi", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_rolqi", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_rorhi", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_rorqi", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_sbb_u32", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_sbb_u64", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_wbinvd", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_writeeflags_u32", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ia32_writeeflags_u64", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_infq", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ms_va_copy", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ms_va_end", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ms_va_start", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nanq", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nansq", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sysv_va_copy", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sysv_va_end", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sysv_va_start", { 10, 1, 0 }, { 0, 0, 0 } },
+};
+
+bool target_x86_64_gcc::_arch_has_builtin(const std::string &name)
+  const noexcept
+{
+  return _lookup_versioned_name_table(std::begin(_builtins),
+				      std::end(_builtins), name);
+}
+
 void target_x86_64_gcc::_arch_register_builtin_macros(preprocessor &pp) const
 {
   const std::initializer_list<std::pair<const char *, const char*>>
@@ -547,6 +664,13 @@ void target_x86_64_gcc::_arch_register_builtin_macros(preprocessor &pp) const
 
   if (_is_int_mode_enabled(common_int_mode_kind::cimk_TI)) {
     pp.register_builtin_macro("__SIZEOF_INT128__", "16");
+  }
+
+  // GCC >= 6.1 announces its support for the __seg_fs and __seg_gs
+  // named address spaces, c.f. get_address_space_keywords().
+  if (gcc_cmdline_parser::gcc_version{6, 1, 0} <= get_gcc_version()) {
+    pp.register_builtin_macro("__SEG_FS", "1");
+    pp.register_builtin_macro("__SEG_GS", "1");
   }
 }
 

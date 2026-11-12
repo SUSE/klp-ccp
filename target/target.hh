@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2018-2021, 2024-2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -174,6 +174,14 @@ namespace klp
 		ext_float_keywords;
 
       virtual ext_float_keywords get_ext_float_keywords() const = 0;
+
+      // The named address space qualifier keywords supported by the
+      // target, if any, mapping to their respective address space
+      // ids. The generic address space has no keyword.
+      typedef std::map<std::string, types::address_space>
+		address_space_keywords;
+
+      virtual address_space_keywords get_address_space_keywords() const = 0;
 
       virtual std::shared_ptr<const types::int_type>
       create_ptrdiff_type(const bool is_signed) const = 0;

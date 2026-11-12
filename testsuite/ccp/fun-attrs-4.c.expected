@@ -1,0 +1,28 @@
+/* klp-ccp: from testsuite/ccp/fun-attrs-4.c */
+#define klpr___init __cold
+
+#define __cold __attribute__((cold))
+
+static int klpr___init f(int x)
+{
+	return x;
+}
+
+#define klpr___exit __cold
+
+static int klpr___exit g(int x)
+{
+	return x;
+}
+
+#define klpr___ref __attribute__((noinline))
+
+static int klpr___ref h(int x)
+{
+	return x;
+}
+
+int klpr___init klpp_pu_f(int x)
+{
+	return f(x) + g(x) + h(x);
+}

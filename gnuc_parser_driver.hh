@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2017-2019, 2021, 2025-2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -98,6 +98,7 @@ namespace klp
 
 	const target::ext_int_keywords _ext_int_keywords;
 	const target::ext_float_keywords _ext_float_keywords;
+	const target::address_space_keywords _address_space_keywords;
 
 	friend class gnuc_parser;
       };

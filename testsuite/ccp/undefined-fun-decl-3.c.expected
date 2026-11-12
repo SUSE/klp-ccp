@@ -1,0 +1,17 @@
+/* klp-ccp: from testsuite/ccp/undefined-fun-decl-3.c */
+int f(int a);
+
+int g(int a);
+
+__attribute__((cold)) int k(int a);
+
+int l(int a) __attribute__((unused));
+
+extern int m(int a);
+
+#include "undefined-fun-decl-3.h"
+
+int klpp_pu_h(void)
+{
+	return i();
+}

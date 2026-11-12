@@ -1,0 +1,10 @@
+/* klp-ccp: from testsuite/ccp/x86_64-addrspace-make-extern-3.c */
+typedef __seg_gs int gs_int;
+extern gs_int ee_o;
+extern typeof(ee_o) ee_p;
+extern const gs_int ee_q;
+
+int klpp_pu_f(void)
+{
+	return ee_o + ee_p + ee_q;
+}

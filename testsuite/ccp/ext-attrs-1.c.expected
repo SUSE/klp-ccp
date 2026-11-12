@@ -1,0 +1,11 @@
+/* klp-ccp: from testsuite/ccp/ext-attrs-1.c */
+static int (*klpe_espr_a);
+static int (*klpe_espr_b);
+static int __attribute__((deprecated)) (*klpe_espr_c);
+static int * __attribute__((aligned(16))) (*klpe_espr_d);
+static char (*klpe_espr_e)[8] __attribute__((unused));
+
+int klpp_pu_f(void)
+{
+	return (*klpe_espr_a) + (*klpe_espr_b) + (*klpe_espr_c) + *(*klpe_espr_d) + (*klpe_espr_e)[0];
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2019, 2022, 2024-2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -71,7 +71,12 @@ pp_result::macro::macro(const std::string &name,
     _predefinition_pos(predefinition_pos),
     _func_like(true),
     _variadic(false)
-{}
+{
+  // Builtin special macros taking arguments, like __has_attribute(),
+  // get their arguments macro expanded (except for the defined
+  // operator, which is handled specially by the preprocessor).
+  _do_expand_args.assign(_arg_names.size(), true);
+}
 
 pp_result::macro::macro(const std::string &name,
 			const bool func_like,

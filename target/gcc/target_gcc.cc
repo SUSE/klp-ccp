@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2019-2022, 2024-2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -16,6 +16,7 @@
  * along with klp-ccp. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
 #include <cstring>
 #include <cstdint>
 #include "cmdline_except.hh"
@@ -112,6 +113,8 @@ enum opt_code_c_family
   opt_code_c_family_fopenmp,
   opt_code_c_family_fhosted,
   opt_code_c_family_ffreestanding,
+  opt_code_c_family_fbuiltin,
+  opt_code_c_family_fbuiltin_,
 
   opt_code_c_family_ansi,
 
@@ -1298,6 +1301,11 @@ target::ext_float_keywords target_gcc::get_ext_float_keywords() const
     kws.emplace(ts.first, ts.second);
 
   return kws;
+}
+
+target::address_space_keywords target_gcc::get_address_space_keywords() const
+{
+  return address_space_keywords{};
 }
 
 std::shared_ptr<const types::int_type>
@@ -4381,7 +4389,8 @@ void target_gcc::opts_common::_set_fast_math_flags(const bool set) noexcept
 target_gcc::opts_c_family::opts_c_family() noexcept
   : flag_undef(false), c_std(c_lang_kind::clk_gnuc89),
     flag_gnu89_inline(-1), flag_signed_char(false),
-    flag_openacc(false), flag_openmp(false), flag_hosted(true)
+    flag_openacc(false), flag_openmp(false), flag_no_builtin(false),
+    flag_hosted(true)
 {}
 
 void target_gcc::opts_c_family::init_options_struct(const target_gcc &target)
@@ -4487,10 +4496,25 @@ opts_c_family::handle_opt(const gcc_cmdline_parser::option * const o,
 
   case opt_code_c_family_fhosted:
     flag_hosted = !negative;
+    flag_no_builtin = !flag_hosted;
     break;
 
   case opt_code_c_family_ffreestanding:
     flag_hosted = negative;
+    flag_no_builtin = !flag_hosted;
+    break;
+
+  case opt_code_c_family_fbuiltin:
+    flag_no_builtin = negative;
+    break;
+
+  case opt_code_c_family_fbuiltin_:
+    if (!negative) {
+      throw cmdline_except{
+	      std::string{"unrecognized gcc option '-fbuiltin-"} + val + "'"
+	    };
+    }
+    disabled_builtins.insert(val);
     break;
 
   case opt_code_c_family_ansi:
@@ -4657,6 +4681,38 @@ bool target_gcc::opts_c_family::is_std_geq_c99() const noexcept
   }
 }
 
+unsigned int target_gcc::opts_c_family::std_revision() const noexcept
+{
+  switch (c_std) {
+  case c_lang_kind::clk_stdc89:
+    /* fall through */
+  case c_lang_kind::clk_gnuc89:
+    return 0;
+
+  case c_lang_kind::clk_stdc94:
+    return 1;
+
+  case c_lang_kind::clk_stdc99:
+    /* fall through */
+  case c_lang_kind::clk_gnuc99:
+    return 2;
+
+  case c_lang_kind::clk_stdc11:
+    /* fall through */
+  case c_lang_kind::clk_stdc17:
+    /* fall through */
+  case c_lang_kind::clk_gnuc11:
+    /* fall through */
+  case c_lang_kind::clk_gnuc17:
+    return 3;
+
+  case c_lang_kind::clk_stdc2x:
+    /* fall through */
+  case c_lang_kind::clk_gnuc2x:
+    return 4;
+  }
+}
+
 void target_gcc::opts_c_family::_set_std_c89(const bool c94, const bool iso)
   noexcept
 {
@@ -4807,7 +4863,1569 @@ void target_gcc::_register_builtin_macros(preprocessor &pp) const
   for (const auto &bom : builtin_object_macros)
     pp.register_builtin_macro(bom.first, bom.second);
 
+  // The __has_attribute() special builtin macro exists since GCC 5.
+  if (gcc_cmdline_parser::gcc_version{5, 1, 0} <= _gcc_version) {
+    pp.register_builtin_special_macro
+      ("__has_attribute", {"attribute"},
+       [this](const std::vector<std::vector<pp_token>> &exp_args,
+	      const std::function<pp_except(const std::string&)> &report_fatal) {
+	 return this->_eval_has_attribute(exp_args, report_fatal);
+       });
+  }
+
+  // The __has_builtin() special builtin macro exists since GCC 10.
+  if (gcc_cmdline_parser::gcc_version{10, 1, 0} <= _gcc_version) {
+    pp.register_builtin_special_macro
+      ("__has_builtin", {"builtin"},
+       [this](const std::vector<std::vector<pp_token>> &exp_args,
+	      const std::function<pp_except(const std::string&)> &report_fatal) {
+	 return this->_eval_has_builtin(exp_args, report_fatal);
+       });
+  }
+
   this->_arch_register_builtin_macros(pp);
+}
+
+// The attribute tables below have been extracted from the
+// c_common_attribute_table (c_common_gnu_attributes as of GCC 14),
+// c_common_format_attribute_table and c_common_clang_attributes
+// arrays in gcc/c-family/c-common.c resp. c-attribs.c(c) of the GCC
+// X.1.0 releases, X = 5 ... 16. Attributes whose names are not valid
+// identifiers (e.g. "no vops") are omitted, because they cannot be
+// queried through __has_attribute(). The C frontend's standard
+// attributes (std_attribute_table in gcc/c/c-decl.c(c)) are
+// registered without a namespace and thus, are not reachable through
+// __has_attribute() at all, c.f. _eval_has_attribute().
+//
+// Attributes from the "gnu" namespace.
+const target_gcc::versioned_name_table_entry
+target_gcc::_common_gnu_attributes[] = {
+  { "NSObject", { 11, 1, 0 }, { 0, 0, 0 } },
+  { "access", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "alias", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "aligned", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "alloc_align", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "alloc_size", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "always_inline", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "artificial", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "assume", { 13, 1, 0 }, { 0, 0, 0 } },
+  { "assume_aligned", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "bnd_instrument", { 5, 1, 0 }, { 9, 1, 0 } },
+  { "bnd_legacy", { 5, 1, 0 }, { 9, 1, 0 } },
+  { "bnd_variable_size", { 5, 1, 0 }, { 9, 1, 0 } },
+  { "btf_decl_tag", { 16, 1, 0 }, { 0, 0, 0 } },
+  { "btf_type_tag", { 16, 1, 0 }, { 0, 0, 0 } },
+  { "cleanup", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "cold", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "common", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "const", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "constructor", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "copy", { 9, 1, 0 }, { 0, 0, 0 } },
+  { "counted_by", { 15, 1, 0 }, { 0, 0, 0 } },
+  { "deprecated", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "designated_init", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "destructor", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "error", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "expected_throw", { 14, 1, 0 }, { 0, 0, 0 } },
+  { "externally_visible", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "fallthrough", { 7, 1, 0 }, { 0, 0, 0 } },
+  { "fd_arg", { 13, 1, 0 }, { 0, 0, 0 } },
+  { "fd_arg_read", { 13, 1, 0 }, { 0, 0, 0 } },
+  { "fd_arg_write", { 13, 1, 0 }, { 0, 0, 0 } },
+  { "flag_enum", { 15, 1, 0 }, { 0, 0, 0 } },
+  { "flatten", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "format", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "format_arg", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "gnu_inline", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "hardbool", { 14, 1, 0 }, { 0, 0, 0 } },
+  { "hot", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "ifunc", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "leaf", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "malloc", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "may_alias", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "mode", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "musttail", { 15, 1, 0 }, { 0, 0, 0 } },
+  { "no_address_safety_analysis", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "no_icf", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "no_instrument_function", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "no_profile_instrument_function", { 7, 1, 0 }, { 0, 0, 0 } },
+  { "no_reorder", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "no_sanitize", { 8, 1, 0 }, { 0, 0, 0 } },
+  { "no_sanitize_address", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "no_sanitize_coverage", { 12, 1, 0 }, { 0, 0, 0 } },
+  { "no_sanitize_thread", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "no_sanitize_undefined", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "no_split_stack", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "no_stack_limit", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "no_stack_protector", { 11, 1, 0 }, { 0, 0, 0 } },
+  { "nocf_check", { 8, 1, 0 }, { 0, 0, 0 } },
+  { "noclone", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "nocommon", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "noinit", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "noinline", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "noipa", { 8, 1, 0 }, { 0, 0, 0 } },
+  { "nonnull", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "nonnull_if_nonzero", { 15, 1, 0 }, { 0, 0, 0 } },
+  { "nonstring", { 8, 1, 0 }, { 0, 0, 0 } },
+  { "noplt", { 6, 1, 0 }, { 0, 0, 0 } },
+  { "noreturn", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "nothrow", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "null_terminated_string_arg", { 14, 1, 0 }, { 0, 0, 0 } },
+  { "objc_nullability", { 11, 1, 0 }, { 0, 0, 0 } },
+  { "objc_root_class", { 11, 1, 0 }, { 0, 0, 0 } },
+  { "optimize", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "packed", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "patchable_function_entry", { 8, 1, 0 }, { 0, 0, 0 } },
+  { "persistent", { 11, 1, 0 }, { 0, 0, 0 } },
+  { "pure", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "reproducible", { 15, 1, 0 }, { 0, 0, 0 } },
+  { "retain", { 11, 1, 0 }, { 0, 0, 0 } },
+  { "returns_nonnull", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "returns_twice", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "scalar_storage_order", { 6, 1, 0 }, { 0, 0, 0 } },
+  { "section", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "sentinel", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "signed_bool_precision", { 11, 1, 0 }, { 0, 0, 0 } },
+  { "simd", { 6, 1, 0 }, { 0, 0, 0 } },
+  { "stack_protect", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "strict_flex_array", { 13, 1, 0 }, { 0, 0, 0 } },
+  { "strub", { 14, 1, 0 }, { 0, 0, 0 } },
+  { "symver", { 10, 1, 0 }, { 0, 0, 0 } },
+  { "tainted_args", { 12, 1, 0 }, { 0, 0, 0 } },
+  { "target", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "target_clones", { 6, 1, 0 }, { 0, 0, 0 } },
+  { "target_version", { 14, 1, 0 }, { 0, 0, 0 } },
+  { "tls_model", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "transaction_callable", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "transaction_may_cancel_outer", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "transaction_pure", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "transaction_safe", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "transaction_safe_dynamic", { 6, 1, 0 }, { 0, 0, 0 } },
+  { "transaction_unsafe", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "transaction_wrap", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "transparent_union", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "unavailable", { 12, 1, 0 }, { 0, 0, 0 } },
+  { "uninitialized", { 12, 1, 0 }, { 0, 0, 0 } },
+  { "unsequenced", { 15, 1, 0 }, { 0, 0, 0 } },
+  { "unused", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "used", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "vector_mask", { 12, 1, 0 }, { 0, 0, 0 } },
+  { "vector_size", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "visibility", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "volatile", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "warn_if_not_aligned", { 8, 1, 0 }, { 0, 0, 0 } },
+  { "warn_unused", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "warn_unused_result", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "warning", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "weak", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "weakref", { 5, 1, 0 }, { 0, 0, 0 } },
+  { "zero_call_used_regs", { 11, 1, 0 }, { 0, 0, 0 } },
+};
+
+// Attributes from the "clang" namespace.
+const target_gcc::versioned_name_table_entry
+target_gcc::_common_clang_attributes[] = {
+  { "flag_enum", { 15, 1, 0 }, { 0, 0, 0 } },
+  { "musttail", { 15, 1, 0 }, { 0, 0, 0 } },
+};
+
+namespace
+{
+  // Whether a token can be ignored when parsing an argument.
+  static bool _is_arg_ws(const pp_token &tok) noexcept
+  {
+    return tok.is_ws() || tok.is_newline() || tok.is_empty();
+  }
+
+  // GCC's canonicalize_attr_name() resp. extract_attribute_substring():
+  // strip leading and trailing double underscores.
+  static std::string _canonicalize_attr_name(const std::string &name)
+  {
+    if (name.length() > 4 &&
+	name.compare(0, 2, "__") == 0 &&
+	name.compare(name.length() - 2, 2, "__") == 0) {
+      return name.substr(2, name.length() - 4);
+    }
+    return name;
+  }
+}
+
+bool target_gcc::
+_lookup_versioned_name_table(const versioned_name_table_entry *begin,
+			     const versioned_name_table_entry *end,
+			     const std::string &name) const noexcept
+{
+  for (const versioned_name_table_entry *e = begin; e != end; ++e) {
+    if (name != e->name)
+      continue;
+    if (!(e->since <= _gcc_version))
+      continue;
+    if (e->until.maj && !(_gcc_version < e->until))
+      continue;
+    return true;
+  }
+  return false;
+}
+
+bool target_gcc::_has_attribute(const std::string &ns,
+				const std::string &name) const noexcept
+{
+  // Mirror GCC's lookup_scoped_attribute_spec(): an attribute is
+  // found only in its own namespace.
+  if (ns == "gnu") {
+    if (_lookup_versioned_name_table(std::begin(_common_gnu_attributes),
+				std::end(_common_gnu_attributes), name)) {
+      return true;
+    }
+  } else if (ns == "clang") {
+    if (_lookup_versioned_name_table(std::begin(_common_clang_attributes),
+				std::end(_common_clang_attributes), name)) {
+      return true;
+    }
+  }
+
+  return this->_arch_has_attribute(ns, name);
+}
+
+pp_token target_gcc::
+_eval_has_attribute(const std::vector<std::vector<pp_token>> &exp_args,
+		    const std::function<pp_except(const std::string&)> &report_fatal)
+  const
+{
+  // This mirrors c_common_has_attribute() from gcc/c-family/c-lex.c(c)
+  // in C mode.
+  assert(exp_args.size() == 1);
+  const std::vector<pp_token> &arg = exp_args[0];
+  // Indices of the operand's tokens which are not whitespace.
+  std::vector<std::size_t> toks;
+  for (std::size_t j = 0; j < arg.size(); ++j) {
+    if (!_is_arg_ws(arg[j]))
+      toks.push_back(j);
+  }
+  const auto tok = [&](const std::size_t i) -> const pp_token& {
+    return arg[toks[i]];
+  };
+
+  std::size_t i = 0;
+  if (i == toks.size() || !tok(i).is_id())
+    throw report_fatal("macro \"__has_attribute\" requires an identifier");
+
+  std::string name = _canonicalize_attr_name(tok(i).get_value());
+  ++i;
+
+  // The C frontend's __has_attribute() recognizes scoped attribute
+  // names since GCC 11, provided the operand's "::" has been lexed
+  // into a single scope token, which libcpp does only for the C2X
+  // language standards before GCC 14. Since GCC 14, two adjacent
+  // colons are accepted in all C modes. klp-ccp's tokenizer always
+  // emits two individual colon tokens, considered adjacent if
+  // nothing but placeholder empties sit inbetween.
+  const bool scope_supported =
+    (gcc_cmdline_parser::gcc_version{14, 1, 0} <= _gcc_version ||
+     (gcc_cmdline_parser::gcc_version{11, 1, 0} <= _gcc_version &&
+      (_opts_c_family.c_std == opts_c_family::c_lang_kind::clk_stdc2x ||
+       _opts_c_family.c_std == opts_c_family::c_lang_kind::clk_gnuc2x)));
+  bool scoped = false;
+  std::string ns;
+  if (scope_supported && i + 1 < toks.size() &&
+      tok(i).is_punctuator(":") && tok(i + 1).is_punctuator(":") &&
+      (std::all_of(arg.begin() + toks[i] + 1, arg.begin() + toks[i + 1],
+		   [](const pp_token &t) { return t.is_empty(); }))) {
+    i += 2;
+    if (i == toks.size() || !tok(i).is_id())
+      throw report_fatal("attribute identifier required after scope");
+    ns = std::move(name);
+    name = _canonicalize_attr_name(tok(i).get_value());
+    ++i;
+    scoped = true;
+  }
+
+  if (i != toks.size())
+    throw report_fatal("missing ')' after \"__has_attribute\"");
+
+  unsigned long result = 0;
+  if (!scoped) {
+    // Standard attributes queried without a scope evaluate to the
+    // date of the C standard revision introducing them rather than
+    // to 1, with the actual set depending on the GCC version.
+    const auto is_one_of =
+      [&](const std::initializer_list<const char *> &names) {
+	return (std::find_if(names.begin(), names.end(),
+			     [&](const char *n) { return name == n; })
+		!= names.end());
+      };
+    typedef gcc_cmdline_parser::gcc_version gcc_version;
+    if (_gcc_version < gcc_version{7, 1, 0}) {
+      if (name == "noreturn")
+	result = 200809;
+      else if (name == "deprecated")
+	result = 201309;
+    } else if (_gcc_version < gcc_version{11, 1, 0}) {
+      // Plain lookup results only.
+    } else if (_gcc_version < gcc_version{13, 1, 0}) {
+      if (is_one_of({"deprecated", "maybe_unused", "fallthrough"}))
+	result = 201904;
+      else if (name == "nodiscard")
+	result = 202003;
+    } else if (_gcc_version < gcc_version{14, 1, 0}) {
+      if (name == "deprecated")
+	result = 201904;
+      else if (name == "fallthrough")
+	result = 201910;
+      else if (name == "nodiscard")
+	result = 202003;
+      else if (name == "maybe_unused")
+	result = 202106;
+      else if (is_one_of({"noreturn", "_Noreturn"}))
+	result = 202202;
+    } else if (_gcc_version < gcc_version{15, 1, 0}) {
+      if (is_one_of({"deprecated", "fallthrough", "maybe_unused",
+		     "nodiscard", "noreturn", "_Noreturn"})) {
+	result = 202311;
+      }
+    } else {
+      if (is_one_of({"deprecated", "fallthrough", "maybe_unused",
+		     "nodiscard", "noreturn", "_Noreturn",
+		     "reproducible", "unsequenced"})) {
+	result = 202311;
+      }
+    }
+    ns = "gnu";
+  }
+
+  if (!result && _has_attribute(ns, name))
+    result = 1;
+
+  return pp_token{pp_token::type::pp_number, std::to_string(result)};
+}
+
+// The builtin function table below has been extracted from
+// gcc/builtins.def and gcc/sync-builtins.def of the GCC X.1.0
+// releases, X = 10 ... 16, the first one providing __has_builtin().
+// Entries of the *_FLOATN_NX kinds stand for the set of names formed
+// by appending the _FloatN resp. _FloatNx type suffix to the given
+// name. Builtins available only with -fopenmp, -fopenacc,
+// -fsanitize=..., -fgnu-tm or -fcoroutines (omp-builtins.def &
+// friends) as well as those not declared for Linux targets (TLS
+// emulation) are omitted.
+const target_gcc::builtin_table_entry target_gcc::_common_builtins[] = {
+  { "__atomic_add_fetch", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_add_fetch_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_add_fetch_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_add_fetch_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_add_fetch_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_add_fetch_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_always_lock_free", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_and_fetch", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_and_fetch_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_and_fetch_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_and_fetch_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_and_fetch_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_and_fetch_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_clear", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_compare_exchange", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_compare_exchange_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_compare_exchange_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_compare_exchange_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_compare_exchange_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_compare_exchange_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_compare_exchange_n", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_exchange", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_exchange_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_exchange_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_exchange_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_exchange_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_exchange_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_exchange_n", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_feraiseexcept", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_add", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_add_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_add_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_add_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_add_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_add_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_and", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_and_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_and_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_and_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_and_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_and_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_nand", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_nand_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_nand_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_nand_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_nand_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_nand_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_or", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_or_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_or_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_or_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_or_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_or_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_sub", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_sub_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_sub_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_sub_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_sub_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_sub_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_xor", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_xor_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_xor_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_xor_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_xor_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_fetch_xor_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_is_lock_free", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_load", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_load_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_load_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_load_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_load_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_load_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_load_n", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_nand_fetch", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_nand_fetch_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_nand_fetch_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_nand_fetch_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_nand_fetch_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_nand_fetch_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_or_fetch", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_or_fetch_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_or_fetch_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_or_fetch_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_or_fetch_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_or_fetch_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_signal_fence", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_store", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_store_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_store_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_store_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_store_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_store_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_store_n", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_sub_fetch", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_sub_fetch_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_sub_fetch_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_sub_fetch_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_sub_fetch_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_sub_fetch_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_test_and_set", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_thread_fence", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_xor_fetch", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_xor_fetch_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_xor_fetch_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_xor_fetch_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_xor_fetch_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__atomic_xor_fetch_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_FILE", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_FUNCTION", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_LINE", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin__Exit", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin___clear_cache", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin___fprintf_chk", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin___gcc_nested_func_ptr_created", builtin_function_kind::bfk_ext_lib, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin___gcc_nested_func_ptr_deleted", builtin_function_kind::bfk_ext_lib, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin___memcpy_chk", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin___memmove_chk", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin___mempcpy_chk", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin___memset_chk", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin___printf_chk", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin___snprintf_chk", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin___sprintf_chk", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin___stpcpy_chk", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin___stpncpy_chk", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin___strcat_chk", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin___strcpy_chk", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin___strncat_chk", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin___strncpy_chk", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin___vfprintf_chk", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin___vprintf_chk", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin___vsnprintf_chk", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin___vsprintf_chk", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin__exit", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_abort", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_abs", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_acos", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_acos", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_acosf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_acosh", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_acosh", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_acoshf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_acoshl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_acosl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_acospi", builtin_function_kind::bfk_c23, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_acospi", builtin_function_kind::bfk_ext_lib_floatn_nx, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_acospif", builtin_function_kind::bfk_c23, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_acospil", builtin_function_kind::bfk_c23, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_add_overflow", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_add_overflow_p", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_addc", builtin_function_kind::bfk_gcc, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_addcl", builtin_function_kind::bfk_gcc, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_addcll", builtin_function_kind::bfk_gcc, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_aggregate_incoming_address", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_aligned_alloc", builtin_function_kind::bfk_c11, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_alloca", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_apply", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_apply_args", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_asin", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_asin", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_asinf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_asinh", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_asinh", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_asinhf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_asinhl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_asinl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_asinpi", builtin_function_kind::bfk_c23, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_asinpi", builtin_function_kind::bfk_ext_lib_floatn_nx, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_asinpif", builtin_function_kind::bfk_c23, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_asinpil", builtin_function_kind::bfk_c23, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_assume_aligned", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_atan", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_atan", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_atan2", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_atan2", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_atan2f", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_atan2l", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_atan2pi", builtin_function_kind::bfk_c23, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_atan2pi", builtin_function_kind::bfk_ext_lib_floatn_nx, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_atan2pif", builtin_function_kind::bfk_c23, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_atan2pil", builtin_function_kind::bfk_c23, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_atanf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_atanh", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_atanh", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_atanhf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_atanhl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_atanl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_atanpi", builtin_function_kind::bfk_c23, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_atanpi", builtin_function_kind::bfk_ext_lib_floatn_nx, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_atanpif", builtin_function_kind::bfk_c23, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_atanpil", builtin_function_kind::bfk_c23, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_bcmp", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_bcopy", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_bswap128", builtin_function_kind::bfk_gcc, { 11, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_bswap16", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_bswap32", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_bswap64", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_bzero", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cabs", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cabs", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cabsf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cabsl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cacos", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cacos", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cacosf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cacosh", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cacosh", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cacoshf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cacoshl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cacosl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_calloc", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_carg", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_carg", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cargf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cargl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_casin", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_casin", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_casinf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_casinh", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_casinh", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_casinhf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_casinhl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_casinl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_catan", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_catan", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_catanf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_catanh", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_catanh", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_catanhf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_catanhl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_catanl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cbrt", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cbrt", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cbrtf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cbrtl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ccos", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ccos", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ccosf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ccosh", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ccosh", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ccoshf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ccoshl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ccosl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ceil", builtin_function_kind::bfk_ext_lib_floatn_nx, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ceil", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ceilf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ceill", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cexp", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cexp", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cexpf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cexpi", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cexpif", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cexpil", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cexpl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cimag", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cimagf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cimagl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_classify_type", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_clear_padding", builtin_function_kind::bfk_gcc, { 11, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_clog", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_clog", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_clog10", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_clog10f", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_clog10l", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_clogf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_clogl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_clrsb", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_clrsbg", builtin_function_kind::bfk_gcc, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_clrsbimax", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_clrsbl", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_clrsbll", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_clz", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_clzg", builtin_function_kind::bfk_gcc, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_clzimax", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_clzl", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_clzll", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_conj", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_conjf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_conjl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_constant_p", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_copysign", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_copysign", builtin_function_kind::bfk_ext_lib_floatn_nx, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_copysignf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_copysignl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cos", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cos", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cosf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cosh", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cosh", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_coshf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_coshl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cosl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cospi", builtin_function_kind::bfk_c23, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cospi", builtin_function_kind::bfk_ext_lib_floatn_nx, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cospif", builtin_function_kind::bfk_c23, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cospil", builtin_function_kind::bfk_c23, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cpow", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cpow", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cpowf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cpowl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cproj", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cproj", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cprojf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_cprojl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_crc16_data16", builtin_function_kind::bfk_gcc, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_crc16_data8", builtin_function_kind::bfk_gcc, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_crc32_data16", builtin_function_kind::bfk_gcc, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_crc32_data32", builtin_function_kind::bfk_gcc, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_crc32_data8", builtin_function_kind::bfk_gcc, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_crc64_data16", builtin_function_kind::bfk_gcc, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_crc64_data32", builtin_function_kind::bfk_gcc, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_crc64_data64", builtin_function_kind::bfk_gcc, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_crc64_data8", builtin_function_kind::bfk_gcc, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_crc8_data8", builtin_function_kind::bfk_gcc, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_creal", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_crealf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_creall", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_csin", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_csin", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_csinf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_csinh", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_csinh", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_csinhf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_csinhl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_csinl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_csqrt", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_csqrt", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_csqrtf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_csqrtl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ctan", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ctan", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ctanf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ctanh", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ctanh", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ctanhf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ctanhl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ctanl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ctz", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ctzg", builtin_function_kind::bfk_gcc, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ctzimax", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ctzl", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ctzll", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_dcgettext", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_dgettext", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_drem", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_dremf", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_dreml", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_dwarf_cfa", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_dwarf_sp_column", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_dynamic_object_size", builtin_function_kind::bfk_gcc, { 12, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_eh_return", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_eh_return_data_regno", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_erf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_erf", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_erfc", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_erfc", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_erfcf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_erfcl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_erff", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_erfl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_execl", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_execle", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_execlp", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_execv", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_execve", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_execvp", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_exit", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_exp", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_exp", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_exp10", builtin_function_kind::bfk_c23, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_exp10f", builtin_function_kind::bfk_c23, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_exp10l", builtin_function_kind::bfk_c23, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_exp2", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_exp2", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_exp2f", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_exp2l", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_expect", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_expect_with_probability", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_expf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_expl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_expm1", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_expm1", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_expm1f", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_expm1l", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_extend_pointer", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_extract_return_addr", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fabs", builtin_function_kind::bfk_ext_lib_floatn_nx, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fabs", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fabsd128", builtin_function_kind::bfk_c23, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fabsd32", builtin_function_kind::bfk_c23, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fabsd64", builtin_function_kind::bfk_c23, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fabsd64x", builtin_function_kind::bfk_c23, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fabsf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fabsl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fdim", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fdim", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fdimf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fdiml", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_feclearexcept", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fegetenv", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fegetexceptflag", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fegetround", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_feholdexcept", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_feraiseexcept", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fesetenv", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fesetexceptflag", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fesetround", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fetestexcept", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_feupdateenv", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ffs", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ffsg", builtin_function_kind::bfk_gcc, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ffsimax", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ffsl", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ffsll", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_finite", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_finited128", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_finited32", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_finited64", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_finitef", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_finitel", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_floor", builtin_function_kind::bfk_ext_lib_floatn_nx, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_floor", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_floorf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_floorl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fma", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fma", builtin_function_kind::bfk_ext_lib_floatn_nx, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fmaf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fmal", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fmax", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fmax", builtin_function_kind::bfk_ext_lib_floatn_nx, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fmaxf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fmaxl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fmin", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fmin", builtin_function_kind::bfk_ext_lib_floatn_nx, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fminf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fminl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fmod", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fmod", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fmodf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fmodl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fork", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fpclassify", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fprintf", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fprintf_unlocked", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fputc", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fputc_unlocked", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fputs", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fputs_unlocked", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_frame_address", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_free", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_frexp", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_frexp", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_frexpf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_frexpl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_frob_return_addr", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fscanf", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fwrite", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_fwrite_unlocked", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_gamma", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_gamma_r", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_gammaf", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_gammaf_r", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_gammal", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_gammal_r", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_gettext", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_huge_val", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_huge_val", builtin_function_kind::bfk_gcc_floatn_nx, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_huge_valf", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_huge_vall", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_hypot", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_hypot", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_hypotf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_hypotl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_iceil", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_iceilf", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_iceill", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ifloor", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ifloorf", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ifloorl", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ilogb", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ilogb", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ilogbf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ilogbl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_imaxabs", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_index", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_inf", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_inf", builtin_function_kind::bfk_gcc_floatn_nx, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_infd128", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_infd32", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_infd64", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_infd64x", builtin_function_kind::bfk_gcc, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_inff", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_infl", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_init_dwarf_reg_size_table", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_irint", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_irintf", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_irintl", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_iround", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_iroundf", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_iroundl", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isalnum", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isalpha", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isascii", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isblank", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_iscntrl", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isdigit", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_iseqsig", builtin_function_kind::bfk_gcc, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isfinite", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isgraph", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isgreater", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isgreaterequal", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isinf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isinf_sign", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isinfd128", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isinfd32", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isinfd64", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isinff", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isinfl", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isless", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_islessequal", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_islessgreater", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_islower", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isnan", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isnand128", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isnand32", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isnand64", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isnanf", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isnanl", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isnormal", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isprint", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ispunct", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_issignaling", builtin_function_kind::bfk_gcc, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isspace", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isunordered", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isupper", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_iswalnum", builtin_function_kind::bfk_c94, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_iswalpha", builtin_function_kind::bfk_c94, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_iswblank", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_iswcntrl", builtin_function_kind::bfk_c94, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_iswdigit", builtin_function_kind::bfk_c94, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_iswgraph", builtin_function_kind::bfk_c94, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_iswlower", builtin_function_kind::bfk_c94, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_iswprint", builtin_function_kind::bfk_c94, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_iswpunct", builtin_function_kind::bfk_c94, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_iswspace", builtin_function_kind::bfk_c94, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_iswupper", builtin_function_kind::bfk_c94, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_iswxdigit", builtin_function_kind::bfk_c94, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_isxdigit", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_j0", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_j0f", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_j0l", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_j1", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_j1f", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_j1l", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_jn", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_jnf", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_jnl", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_labs", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_lceil", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_lceilf", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_lceill", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ldexp", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ldexp", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ldexpf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ldexpl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_lfloor", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_lfloorf", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_lfloorl", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_lgamma", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_lgamma", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_lgamma_r", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_lgammaf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_lgammaf_r", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_lgammal", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_lgammal_r", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_llabs", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_llceil", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_llceilf", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_llceill", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_llfloor", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_llfloorf", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_llfloorl", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_llrint", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_llrint", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_llrintf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_llrintl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_llround", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_llround", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_llroundf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_llroundl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_log", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_log", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_log10", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_log10", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_log10f", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_log10l", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_log1p", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_log1p", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_log1pf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_log1pl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_log2", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_log2", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_log2f", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_log2l", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_logb", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_logb", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_logbf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_logbl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_logf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_logl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_longjmp", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_lrint", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_lrint", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_lrintf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_lrintl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_lround", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_lround", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_lroundf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_lroundl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_malloc", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_memchr", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_memcmp", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_memcpy", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_memmove", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_mempcpy", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_memset", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_modf", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_modf", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_modff", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_modfl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_mul_overflow", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_mul_overflow_p", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nan", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nan", builtin_function_kind::bfk_ext_lib_floatn_nx, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nand128", builtin_function_kind::bfk_c23, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nand32", builtin_function_kind::bfk_c23, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nand64", builtin_function_kind::bfk_c23, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nand64x", builtin_function_kind::bfk_c23, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nanf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nanl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nans", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nans", builtin_function_kind::bfk_gcc_floatn_nx, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nansd128", builtin_function_kind::bfk_gcc, { 11, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nansd32", builtin_function_kind::bfk_gcc, { 11, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nansd64", builtin_function_kind::bfk_gcc, { 11, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nansd64x", builtin_function_kind::bfk_gcc, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nansf", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nansf16b", builtin_function_kind::bfk_gcc, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nansl", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nearbyint", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nearbyint", builtin_function_kind::bfk_ext_lib_floatn_nx, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nearbyintf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nearbyintl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_next_arg", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nextafter", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nextafter", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nextafterf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nextafterf16b", builtin_function_kind::bfk_gcc, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nextafterl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nexttoward", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nexttowardf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_nexttowardl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_object_size", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_observable_checkpoint", builtin_function_kind::bfk_gcc, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_parity", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_parityg", builtin_function_kind::bfk_gcc, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_parityimax", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_parityl", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_parityll", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_popcount", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_popcountg", builtin_function_kind::bfk_gcc, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_popcountimax", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_popcountl", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_popcountll", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_posix_memalign", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_pow", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_pow", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_pow10", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_pow10f", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_pow10l", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_powf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_powi", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_powif", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_powil", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_powl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_prefetch", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_printf", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_printf_unlocked", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_putc", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_putc_unlocked", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_putchar", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_putchar_unlocked", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_puts", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_puts_unlocked", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_realloc", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_remainder", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_remainder", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_remainderf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_remainderl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_remquo", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_remquo", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_remquof", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_remquol", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_return", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_return_address", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_rev_crc16_data16", builtin_function_kind::bfk_gcc, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_rev_crc16_data8", builtin_function_kind::bfk_gcc, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_rev_crc32_data16", builtin_function_kind::bfk_gcc, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_rev_crc32_data32", builtin_function_kind::bfk_gcc, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_rev_crc32_data8", builtin_function_kind::bfk_gcc, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_rev_crc64_data16", builtin_function_kind::bfk_gcc, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_rev_crc64_data32", builtin_function_kind::bfk_gcc, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_rev_crc64_data64", builtin_function_kind::bfk_gcc, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_rev_crc64_data8", builtin_function_kind::bfk_gcc, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_rev_crc8_data8", builtin_function_kind::bfk_gcc, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_rindex", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_rint", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_rint", builtin_function_kind::bfk_ext_lib_floatn_nx, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_rintf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_rintl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_round", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_round", builtin_function_kind::bfk_ext_lib_floatn_nx, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_roundeven", builtin_function_kind::bfk_c23, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_roundeven", builtin_function_kind::bfk_ext_lib_floatn_nx, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_roundevenf", builtin_function_kind::bfk_c23, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_roundevenl", builtin_function_kind::bfk_c23, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_roundf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_roundl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sadd_overflow", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_saddl_overflow", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_saddll_overflow", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_saveregs", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_scalb", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_scalbf", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_scalbl", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_scalbln", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_scalbln", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_scalblnf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_scalblnl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_scalbn", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_scalbn", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_scalbnf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_scalbnl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_scanf", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_set_thread_pointer", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_setjmp", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_signbit", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_signbitd128", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_signbitd32", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_signbitd64", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_signbitf", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_signbitl", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_significand", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_significandf", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_significandl", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sin", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sin", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sincos", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sincosf", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sincosl", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sinf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sinh", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sinh", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sinhf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sinhl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sinl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sinpi", builtin_function_kind::bfk_c23, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sinpi", builtin_function_kind::bfk_ext_lib_floatn_nx, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sinpif", builtin_function_kind::bfk_c23, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sinpil", builtin_function_kind::bfk_c23, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_smul_overflow", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_smull_overflow", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_smulll_overflow", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_snprintf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_speculation_safe_value", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_speculation_safe_value_1", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_speculation_safe_value_16", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_speculation_safe_value_2", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_speculation_safe_value_4", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_speculation_safe_value_8", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_speculation_safe_value_ptr", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sprintf", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sqrt", builtin_function_kind::bfk_ext_lib_floatn_nx, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sqrt", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sqrtf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sqrtl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sscanf", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ssub_overflow", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ssubl_overflow", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ssubll_overflow", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_stack_address", builtin_function_kind::bfk_gcc, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_stpcpy", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_stpncpy", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_strcasecmp", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_strcat", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_strchr", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_strcmp", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_strcpy", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_strcspn", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_strdup", builtin_function_kind::bfk_c23, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_strfmon", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_strftime", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_strlen", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_strncasecmp", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_strncat", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_strncmp", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_strncpy", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_strndup", builtin_function_kind::bfk_c23, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_strnlen", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_strpbrk", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_strrchr", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_strspn", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_strstr", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sub_overflow", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_sub_overflow_p", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_subc", builtin_function_kind::bfk_gcc, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_subcl", builtin_function_kind::bfk_gcc, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_subcll", builtin_function_kind::bfk_gcc, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_tan", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_tan", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_tanf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_tanh", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_tanh", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_tanhf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_tanhl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_tanl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_tanpi", builtin_function_kind::bfk_c23, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_tanpi", builtin_function_kind::bfk_ext_lib_floatn_nx, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_tanpif", builtin_function_kind::bfk_c23, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_tanpil", builtin_function_kind::bfk_c23, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_tgamma", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_tgamma", builtin_function_kind::bfk_ext_lib_floatn_nx, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_tgammaf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_tgammal", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_thread_pointer", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_toascii", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_tolower", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_toupper", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_towlower", builtin_function_kind::bfk_c94, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_towupper", builtin_function_kind::bfk_c94, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_trap", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_trunc", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_trunc", builtin_function_kind::bfk_ext_lib_floatn_nx, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_truncf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_truncl", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_uabs", builtin_function_kind::bfk_c2y, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_uadd_overflow", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_uaddl_overflow", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_uaddll_overflow", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_uimaxabs", builtin_function_kind::bfk_c2y, { 15, 1, 0 }, { 16, 1, 0 } },
+  { "__builtin_ulabs", builtin_function_kind::bfk_c2y, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ullabs", builtin_function_kind::bfk_c2y, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_umaxabs", builtin_function_kind::bfk_c2y, { 16, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_umul_overflow", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_umull_overflow", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_umulll_overflow", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_unreachable", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_unreachable trap", builtin_function_kind::bfk_gcc, { 13, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_unwind_init", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_update_setjmp_buf", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_usub_overflow", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_usubl_overflow", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_usubll_overflow", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_va_arg_pack", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_va_arg_pack_len", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_va_copy", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_va_end", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_va_start", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_vfprintf", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_vfscanf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_vprintf", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_vscanf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_vsnprintf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_vsprintf", builtin_function_kind::bfk_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_vsscanf", builtin_function_kind::bfk_c99, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_y0", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_y0f", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_y0l", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_y1", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_y1f", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_y1l", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_yn", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ynf", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_ynl", builtin_function_kind::bfk_ext_lib, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__cyg_profile_func_enter", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__cyg_profile_func_exit", builtin_function_kind::bfk_gcc, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_add_and_fetch", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_add_and_fetch_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_add_and_fetch_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_add_and_fetch_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_add_and_fetch_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_add_and_fetch_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_and_and_fetch", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_and_and_fetch_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_and_and_fetch_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_and_and_fetch_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_and_and_fetch_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_and_and_fetch_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_bool_compare_and_swap", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_bool_compare_and_swap_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_bool_compare_and_swap_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_bool_compare_and_swap_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_bool_compare_and_swap_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_bool_compare_and_swap_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_add", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_add_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_add_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_add_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_add_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_add_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_and", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_and_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_and_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_and_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_and_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_and_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_nand", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_nand_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_nand_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_nand_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_nand_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_nand_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_or", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_or_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_or_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_or_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_or_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_or_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_sub", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_sub_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_sub_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_sub_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_sub_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_sub_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_xor", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_xor_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_xor_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_xor_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_xor_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_fetch_and_xor_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_lock_release", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_lock_release_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_lock_release_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_lock_release_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_lock_release_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_lock_release_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_lock_test_and_set", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_lock_test_and_set_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_lock_test_and_set_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_lock_test_and_set_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_lock_test_and_set_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_lock_test_and_set_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_nand_and_fetch", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_nand_and_fetch_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_nand_and_fetch_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_nand_and_fetch_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_nand_and_fetch_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_nand_and_fetch_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_or_and_fetch", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_or_and_fetch_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_or_and_fetch_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_or_and_fetch_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_or_and_fetch_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_or_and_fetch_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_sub_and_fetch", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_sub_and_fetch_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_sub_and_fetch_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_sub_and_fetch_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_sub_and_fetch_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_sub_and_fetch_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_synchronize", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_val_compare_and_swap", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_val_compare_and_swap_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_val_compare_and_swap_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_val_compare_and_swap_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_val_compare_and_swap_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_val_compare_and_swap_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_xor_and_fetch", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_xor_and_fetch_1", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_xor_and_fetch_16", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_xor_and_fetch_2", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_xor_and_fetch_4", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__sync_xor_and_fetch_8", builtin_function_kind::bfk_sync, { 10, 1, 0 }, { 0, 0, 0 } },
+};
+
+// Reserved words not being builtin functions, but recognized by the
+// C frontend's names_builtin_p() from gcc/c/c-decl.c(c) nevertheless,
+// extracted from the c_common_reswords array in
+// gcc/c-family/c-common.c(c) of the same releases.
+const target_gcc::builtin_table_entry target_gcc::_common_builtin_keywords[] = {
+  { "__builtin_assoc_barrier", builtin_function_kind::bfk_keyword, { 12, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_c23_va_start", builtin_function_kind::bfk_keyword_c23, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_choose_expr", builtin_function_kind::bfk_keyword, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_convertvector", builtin_function_kind::bfk_keyword, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_counted_by_ref", builtin_function_kind::bfk_keyword, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_has_attribute", builtin_function_kind::bfk_keyword, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_offsetof", builtin_function_kind::bfk_keyword, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_shuffle", builtin_function_kind::bfk_keyword, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_shufflevector", builtin_function_kind::bfk_keyword, { 12, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_stdc_bit_ceil", builtin_function_kind::bfk_keyword, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_stdc_bit_floor", builtin_function_kind::bfk_keyword, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_stdc_bit_width", builtin_function_kind::bfk_keyword, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_stdc_count_ones", builtin_function_kind::bfk_keyword, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_stdc_count_zeros", builtin_function_kind::bfk_keyword, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_stdc_first_leading_one", builtin_function_kind::bfk_keyword, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_stdc_first_leading_zero", builtin_function_kind::bfk_keyword, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_stdc_first_trailing_one", builtin_function_kind::bfk_keyword, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_stdc_first_trailing_zero", builtin_function_kind::bfk_keyword, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_stdc_has_single_bit", builtin_function_kind::bfk_keyword, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_stdc_leading_ones", builtin_function_kind::bfk_keyword, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_stdc_leading_zeros", builtin_function_kind::bfk_keyword, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_stdc_rotate_left", builtin_function_kind::bfk_keyword, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_stdc_rotate_right", builtin_function_kind::bfk_keyword, { 15, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_stdc_trailing_ones", builtin_function_kind::bfk_keyword, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_stdc_trailing_zeros", builtin_function_kind::bfk_keyword, { 14, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_types_compatible_p", builtin_function_kind::bfk_keyword, { 10, 1, 0 }, { 0, 0, 0 } },
+  { "__builtin_va_arg", builtin_function_kind::bfk_keyword, { 15, 1, 0 }, { 0, 0, 0 } },
+};
+
+namespace
+{
+  // The _FloatN and _FloatNx suffixes GCC's DEF_*_FLOATN_NX_BUILTINS
+  // macros append to the builtin names, in the order of
+  // gcc/builtins.def.
+  static const struct
+  {
+    const char *suffix;
+    unsigned int n;
+    bool extended;
+  } _floatn_nx_builtin_suffixes[] = {
+    { "f16", 16, false },
+    { "f32", 32, false },
+    { "f64", 64, false },
+    { "f128", 128, false },
+    { "f32x", 32, true },
+    { "f64x", 64, true },
+    { "f128x", 128, true },
+  };
+}
+
+bool target_gcc::_lookup_builtin_table(const builtin_table_entry *begin,
+				       const builtin_table_entry *end,
+				       const std::string &name)
+  const noexcept
+{
+  for (const builtin_table_entry *e = begin; e != end; ++e) {
+    if (!(e->since <= _gcc_version))
+      continue;
+    if (e->until.maj && !(_gcc_version < e->until))
+      continue;
+
+    switch (e->kind) {
+    case builtin_function_kind::bfk_keyword:
+      if (name == e->name)
+	return true;
+      break;
+
+    case builtin_function_kind::bfk_keyword_c23:
+      if (name == e->name && _opts_c_family.std_revision() >= 4)
+	return true;
+      break;
+
+    case builtin_function_kind::bfk_gcc:
+      /* fall through */
+    case builtin_function_kind::bfk_sync:
+      /* fall through */
+    case builtin_function_kind::bfk_lib:
+      /* fall through */
+    case builtin_function_kind::bfk_ext_lib:
+      /* fall through */
+    case builtin_function_kind::bfk_c94:
+      /* fall through */
+    case builtin_function_kind::bfk_c99:
+      /* fall through */
+    case builtin_function_kind::bfk_c11:
+      /* fall through */
+    case builtin_function_kind::bfk_c23:
+      /* fall through */
+    case builtin_function_kind::bfk_c2y:
+      if (name == e->name)
+	return true;
+      if (name.compare(0, 10, "__builtin_") != 0 &&
+	  "__builtin_" + name == e->name &&
+	  _builtin_plain_name_available(e->kind, name)) {
+	return true;
+      }
+      break;
+
+    case builtin_function_kind::bfk_gcc_floatn_nx:
+      /* fall through */
+    case builtin_function_kind::bfk_ext_lib_floatn_nx:
+      for (const auto &s : _floatn_nx_builtin_suffixes) {
+	if (!_has_float_n_type(s.n, s.extended))
+	  continue;
+	const std::string full = std::string{e->name} + s.suffix;
+	if (name == full)
+	  return true;
+	if (name.compare(0, 10, "__builtin_") != 0 &&
+	    "__builtin_" + name == full &&
+	    _builtin_plain_name_available(e->kind, name)) {
+	  return true;
+	}
+      }
+      break;
+    }
+  }
+  return false;
+}
+
+bool target_gcc::
+_builtin_plain_name_available(const builtin_function_kind kind,
+			      const std::string &name) const noexcept
+{
+  // C.f. def_builtin_1() from gcc/c-family/c-common.c(c): the plain
+  // library name is not declared with -fno-builtin (implied by
+  // -ffreestanding), with -fno-builtin-<name> and, for functions not
+  // in the selected ISO C standard revision, in strict ISO modes.
+  if (_opts_c_family.flag_no_builtin)
+    return false;
+  if (_opts_c_family.disabled_builtins.count(name))
+    return false;
+
+  bool nonansi;
+  const unsigned int rev = _opts_c_family.std_revision();
+  switch (kind) {
+  case builtin_function_kind::bfk_lib:
+    nonansi = false;
+    break;
+
+  case builtin_function_kind::bfk_ext_lib:
+    /* fall through */
+  case builtin_function_kind::bfk_ext_lib_floatn_nx:
+    /* fall through */
+  case builtin_function_kind::bfk_c2y:
+    // No C2Y language standard selectable yet.
+    nonansi = true;
+    break;
+
+  case builtin_function_kind::bfk_c94:
+    nonansi = rev < 1;
+    break;
+
+  case builtin_function_kind::bfk_c99:
+    nonansi = rev < 2;
+    break;
+
+  case builtin_function_kind::bfk_c11:
+    nonansi = rev < 3;
+    break;
+
+  case builtin_function_kind::bfk_c23:
+    nonansi = rev < 4;
+    break;
+
+  case builtin_function_kind::bfk_gcc:
+    /* fall through */
+  case builtin_function_kind::bfk_sync:
+    /* fall through */
+  case builtin_function_kind::bfk_gcc_floatn_nx:
+    /* fall through */
+  case builtin_function_kind::bfk_keyword:
+    /* fall through */
+  case builtin_function_kind::bfk_keyword_c23:
+    return false;
+  }
+
+  return !(nonansi && _opts_c_family.is_iso());
+}
+
+bool target_gcc::_has_float_n_type(const unsigned int n,
+				   const bool extended) const noexcept
+{
+  for (const auto &fn : _float_n_modes) {
+    if (std::get<0>(fn) == n && std::get<1>(fn) == extended)
+      return true;
+  }
+  return false;
+}
+
+bool target_gcc::_names_builtin_p(const std::string &name) const noexcept
+{
+  // This mirrors names_builtin_p() from gcc/c/c-decl.c(c), except
+  // that declarations from the translation unit cannot be taken into
+  // account at preprocessing time: a builtin function hidden by a
+  // non-function declaration of the same name is still reported.
+  if (_lookup_builtin_table(std::begin(_common_builtin_keywords),
+			    std::end(_common_builtin_keywords), name)) {
+    return true;
+  }
+  if (_lookup_builtin_table(std::begin(_common_builtins),
+			    std::end(_common_builtins), name)) {
+    return true;
+  }
+  return this->_arch_has_builtin(name);
+}
+
+pp_token target_gcc::
+_eval_has_builtin(const std::vector<std::vector<pp_token>> &exp_args,
+		  const std::function<pp_except(const std::string&)> &report_fatal)
+  const
+{
+  // This mirrors c_common_has_builtin() from gcc/c-family/c-lex.c(c).
+  assert(exp_args.size() == 1);
+  const std::vector<pp_token> &arg = exp_args[0];
+  std::vector<std::size_t> toks;
+  for (std::size_t j = 0; j < arg.size(); ++j) {
+    if (!_is_arg_ws(arg[j]))
+      toks.push_back(j);
+  }
+
+  if (toks.empty() || !arg[toks[0]].is_id())
+    throw report_fatal("macro \"__has_builtin\" requires an identifier");
+  const std::string &name = arg[toks[0]].get_value();
+  if (toks.size() != 1)
+    throw report_fatal("expected ')' after \"" + name + "\"");
+
+  return pp_token{pp_token::type::pp_number,
+		  _names_builtin_p(name) ? "1" : "0"};
 }
 
 namespace

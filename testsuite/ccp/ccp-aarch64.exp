@@ -1,11 +1,13 @@
 # Run the generic (architecture-neutral) ccp test cases under the
-# aarch64 target.  Architecture-specific tests (aarch64-*.c) are
-# handled by ccp-aarch64-specific.exp.
+# aarch64 target.  Architecture-specific tests (aarch64-*.c,
+# x86_64-*.c) are handled by ccp-aarch64-specific.exp and
+# ccp-x86_64-specific.exp.
 set ccp_arch "aarch64"
 set ccp_compiler_version "9.1.0"
 
 foreach src [glob -nocomplain $srcdir/$subdir/*.c] {
     if {[regexp {/aarch64-} $src]} continue
+    if {[regexp {/x86_64-} $src]} continue
     set testname $src
     run_ccp $src
 }

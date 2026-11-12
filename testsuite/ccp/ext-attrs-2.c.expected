@@ -1,0 +1,10 @@
+/* klp-ccp: from testsuite/ccp/ext-attrs-2.c */
+extern __attribute__((section(".data..ro_after_init"))) int ee_a;
+extern int ee_b __attribute__((aligned(64)));
+extern int klpe_eer_c;
+extern char ee_d[8] __attribute__((nonstring));
+
+int klpp_pu_f(void)
+{
+	return ee_a + ee_b + klpe_eer_c + ee_d[0];
+}

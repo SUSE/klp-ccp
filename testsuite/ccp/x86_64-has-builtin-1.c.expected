@@ -1,0 +1,11 @@
+/* klp-ccp: from testsuite/ccp/x86_64-has-builtin-1.c */
+#define __has_builtin(x) (0)
+
+int klpp_pu_f(void)
+{
+	int r = 0;
+#if __has_builtin(__builtin_expect)
+#error "klp-ccp: non-taken branch"
+#endif
+	return r;
+}

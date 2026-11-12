@@ -1,0 +1,61 @@
+/* klp-ccp: from testsuite/ccp/x86_64-has-attribute-1.c */
+#define ATTR_UNUSED __unused__
+#define ID(x) x
+
+int klpp_pu_f(void)
+{
+	int r = 0;
+#if __has_attribute(unused)
+	r += 1;
+#else
+#error "klp-ccp: a preceeding branch should have been taken"
+#endif
+#if __has_attribute(__packed__)
+	r += 2;
+#else
+#error "klp-ccp: a preceeding branch should have been taken"
+#endif
+#if __has_attribute(ATTR_UNUSED)
+	r += 4;
+#else
+#error "klp-ccp: a preceeding branch should have been taken"
+#endif
+#if __has_attribute(ID(aligned))
+	r += 8;
+#else
+#error "klp-ccp: a preceeding branch should have been taken"
+#endif
+#if __has_attribute(ms_abi)
+	r += 16;
+#else
+#error "klp-ccp: a preceeding branch should have been taken"
+#endif
+#if __has_attribute(aarch64_vector_pcs)
+#error "klp-ccp: non-taken branch"
+#endif
+#if __has_attribute(copy)
+	r += 64;
+#else
+#error "klp-ccp: a preceeding branch should have been taken"
+#endif
+#if __has_attribute(access)
+#error "klp-ccp: non-taken branch"
+#endif
+#if __has_attribute(bnd_legacy)
+#error "klp-ccp: non-taken branch"
+#endif
+#if __has_attribute(nonexistent)
+#error "klp-ccp: non-taken branch"
+#endif
+#if __has_attribute(noreturn) == 1
+	r += 1024;
+#else
+#error "klp-ccp: a preceeding branch should have been taken"
+#endif
+#if __has_attribute( __format__ )
+	r += 2048;
+#else
+#error "klp-ccp: a preceeding branch should have been taken"
+#endif
+	return r + __has_attribute(unused) + __has_attribute(nonexistent);
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2017-2019, 2021-2022, 2024-2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -169,7 +169,8 @@ gnuc_parser_driver::gnuc_parser_driver(preprocessor &&pp,
   : _result(nullptr), _pp(std::move(pp)),
     _parser(*this), _ignore_td_spec(0), _in_typedef(false),
     _ext_int_keywords(tgt.get_ext_int_keywords()),
-    _ext_float_keywords(tgt.get_ext_float_keywords())
+    _ext_float_keywords(tgt.get_ext_float_keywords()),
+    _address_space_keywords(tgt.get_address_space_keywords())
 {
   _typedefs_scopes.emplace();
   for (const auto &btd : tgt.get_builtin_typedefs())
@@ -292,6 +293,14 @@ gnuc_parser_driver::lex(gnuc_parser::semantic_type *value,
       if (it_ext_float_kw != _ext_float_keywords.cend()) {
 	value->ext_float_kind = it_ext_float_kw->second;
 	return gnuc_parser::token_type::TOK_KW_EXT_FLOAT;
+      }
+    }
+
+    {
+      const auto it_as_kw = _address_space_keywords.find(tok.get_value());
+      if (it_as_kw != _address_space_keywords.cend()) {
+	value->address_space_id = it_as_kw->second.get_id();
+	return gnuc_parser::token_type::TOK_KW_ADDR_SPACE;
       }
     }
 

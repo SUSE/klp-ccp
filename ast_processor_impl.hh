@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2017-2019, 2021-2022, 2024, 2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -367,6 +367,13 @@ namespace klp
       template<typename ret_type, typename callable_type>
       ret_type _processor<ret_type, callable_type>::
       operator()(type_qualifier &e)
+      {
+	return _c(e);
+      }
+
+      template<typename ret_type, typename callable_type>
+      ret_type _processor<ret_type, callable_type>::
+      operator()(address_space &e)
       {
 	return _c(e);
       }
@@ -1248,6 +1255,13 @@ namespace klp
       template<typename ret_type, typename callable_type>
       ret_type _const_processor<ret_type, callable_type>::
       operator()(const type_qualifier &e)
+      {
+	return _c(e);
+      }
+
+      template<typename ret_type, typename callable_type>
+      ret_type _const_processor<ret_type, callable_type>::
+      operator()(const address_space &e)
       {
 	return _c(e);
       }

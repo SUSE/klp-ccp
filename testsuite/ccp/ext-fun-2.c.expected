@@ -1,0 +1,17 @@
+/* klp-ccp: from testsuite/ccp/ext-fun-2.c */
+static int (*klpe_espr_f)(int x);
+
+static int (*klpe_espr_g)(int x);
+
+static int (*klpe_espr_g)(int x);
+
+static int __attribute__((const)) (*klpe_espr_h)(int x);
+
+extern inline int ee_i(int x);
+
+int klpp_pu_f(void)
+{
+	extern int (*klpe_espr_g)(int x);
+
+	return (*klpe_espr_f)(1) + (*klpe_espr_g)(2) + (*klpe_espr_h)(3) + ee_i(4);
+}

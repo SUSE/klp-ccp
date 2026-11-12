@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2018-2019, 2021, 2024, 2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -78,12 +78,53 @@ namespace klp
 	_q_end,
       };
 
+      // A named address space as introduced by ISO/IEC TR 18037 and
+      // supported by GCC as a target specific extension, like the
+      // __seg_gs and __seg_fs qualifiers on x86. Address spaces are
+      // represented by small integer ids, with zero denoting the
+      // generic address space. Non-zero ids are assigned by the
+      // targets: the x86 target uses 1 for __seg_gs and 2 for
+      // __seg_fs.
+      class address_space
+      {
+      public:
+	constexpr address_space() noexcept
+	  : _id{0}
+	{}
+
+	constexpr explicit address_space(const unsigned char id) noexcept
+	  : _id{id}
+	{}
+
+	constexpr bool operator==(const address_space &as) const noexcept
+	{ return _id == as._id; }
+
+	constexpr bool operator!=(const address_space &as) const noexcept
+	{ return !(*this == as); }
+
+	constexpr bool is_generic() const noexcept
+	{ return !_id; }
+
+	constexpr unsigned char get_id() const noexcept
+	{ return _id; }
+
+      private:
+	unsigned char _id;
+      };
+
+      // The set of qualifiers on a type: the C qualifiers const,
+      // volatile and restrict, which can be combined freely, plus a
+      // named address space, of which a type can have at most one
+      // besides the generic one.
       class qualifiers
       {
       public:
 	qualifiers() noexcept;
 
 	qualifiers(const std::initializer_list<qualifier> &il) noexcept;
+
+	qualifiers(const std::initializer_list<qualifier> &il,
+		   const address_space as) noexcept;
 
 	bool operator==(const qualifiers &qs) const noexcept;
 
@@ -92,14 +133,34 @@ namespace klp
 
 	void add(const qualifier q);
 
-	void add(const qualifiers qs);
+	// Merge the C qualifiers from qs and the address space, if any
+	// has been set on either side. Returns false if the address
+	// spaces conflict, i.e. if both are non-generic and
+	// differ. The C qualifiers get merged nevertheless, the
+	// address space is left unmodified in this case.
+	bool add(const qualifiers qs) noexcept;
 
+	// Returns false if a different, non-generic address space has
+	// already been set, leaving it unmodified.
+	bool set_address_space(const address_space as) noexcept;
+
+	address_space get_address_space() const noexcept
+	{ return _as; }
+
+	// Whether any C qualifier or a non-generic address space is set.
 	bool any() const noexcept;
 
+	// Whether all C qualifiers set in *this are set in qs as
+	// well. The address spaces are not considered: GCC applies
+	// its "discards qualifiers" check to the qualifiers without
+	// the address space (c.f. TYPE_QUALS_NO_ADDR_SPACE), and the
+	// address spaces are subject to the target's subset relation
+	// instead, which permits any conversion on x86.
 	bool is_subset_of(const qualifiers &qs) const noexcept;
 
       private:
 	std::array<bool, static_cast<unsigned int>(qualifier::_q_end)> _qs;
+	address_space _as;
       };
 
       class alignment

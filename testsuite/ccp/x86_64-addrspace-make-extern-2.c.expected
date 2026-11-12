@@ -1,0 +1,8 @@
+/* klp-ccp: from testsuite/ccp/x86_64-addrspace-make-extern-2.c */
+extern __seg_gs int ee_a[4];
+extern __seg_gs int *ee_p;
+
+int klpp_pu_f(void)
+{
+	return ee_a[1] + *ee_p + sizeof(ee_a);
+}

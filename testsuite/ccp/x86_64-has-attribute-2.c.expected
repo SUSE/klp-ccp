@@ -1,0 +1,14 @@
+/* klp-ccp: from testsuite/ccp/x86_64-has-attribute-2.c */
+#define ATTR __unused__
+
+int klpp_pu_g(void)
+{
+	return 1;
+}
+
+#define KLPR_CHECK(a) (__has_attribute(a) + __has_attribute(ATTR) + klpp_pu_g())
+
+int klpp_pu_f(void)
+{
+	return KLPR_CHECK(unused) + KLPR_CHECK(ATTR) + KLPR_CHECK(nonexistent);
+}

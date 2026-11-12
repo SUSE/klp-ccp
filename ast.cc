@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2017-2022, 2024, 2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -3047,6 +3047,35 @@ bool storage_class_specifier::_process(const_processor<bool> &p) const
 }
 
 
+// Combine the type qualifier and address space qualifier entities
+// from a list into a single qualifiers set. The C qualifiers may be
+// repeated and combined freely, but a type can live in at most one
+// named address space: report conflicting address space qualifiers
+// like GCC does.
+static klp::ccp::types::qualifiers
+_combine_type_qualifiers
+  (ast &a,
+   const std::vector<std::reference_wrapper<type_qualifier>> &tqs,
+   const std::vector<std::reference_wrapper<address_space>> &ass)
+{
+  klp::ccp::types::qualifiers qs;
+  for (auto tq : tqs)
+    qs.add(tq.get().get_kind());
+
+  for (auto as : ass) {
+    if (!qs.set_address_space(as.get().get_address_space())) {
+      klp::ccp::code_remark remark(klp::ccp::code_remark::severity::fatal,
+				   "conflicting named address spaces",
+				   a.get_pp_result(),
+				   as.get().get_tokens_range());
+      a.get_remarks().add(remark);
+      throw klp::ccp::semantic_except(remark);
+    }
+  }
+
+  return qs;
+}
+
 type_qualifier::type_qualifier(const pp_tokens_range &tr,
 			       const types::qualifier q) noexcept
   : ast_entity(tr), _q(q)
@@ -3080,6 +3109,39 @@ bool type_qualifier::_process(const_processor<bool> &p) const
 }
 
 
+address_space::address_space(const pp_tokens_range &tr,
+			     const types::address_space as) noexcept
+  : ast_entity(tr), _as(as)
+{}
+
+address_space::~address_space() noexcept = default;
+
+_ast_entity* address_space::_get_child(const size_t) const noexcept
+{
+  return nullptr;
+}
+
+void address_space::_process(processor<void> &p)
+{
+  p(*this);
+}
+
+void address_space::_process(const_processor<void> &p) const
+{
+  p(*this);
+}
+
+bool address_space::_process(processor<bool> &p)
+{
+  return p(*this);
+}
+
+bool address_space::_process(const_processor<bool> &p) const
+{
+  return p(*this);
+}
+
+
 type_qualifier_list::type_qualifier_list(type_qualifier* &&tq)
   : ast_entity(tq->get_tokens_range())
 {
@@ -3091,6 +3153,19 @@ type_qualifier_list::type_qualifier_list(type_qualifier* &&tq)
     throw;
   }
   _tq.get()._set_parent(*this);
+}
+
+type_qualifier_list::type_qualifier_list(address_space* &&as)
+  : ast_entity(as->get_tokens_range())
+{
+  auto _as = std::ref(*mv_p(std::move(as)));
+  try {
+    _ass.push_back(_as);
+  } catch(...) {
+    delete &_as.get();
+    throw;
+  }
+  _as.get()._set_parent(*this);
 }
 
 type_qualifier_list::type_qualifier_list(attribute_specifier_list* &&asl)
@@ -3112,6 +3187,9 @@ type_qualifier_list::~type_qualifier_list() noexcept
   for (auto tq : _tqs)
     delete &tq.get();
 
+  for (auto as : _ass)
+    delete &as.get();
+
   for (auto asl : _asls)
     delete &asl.get();
 }
@@ -3129,6 +3207,19 @@ void type_qualifier_list::extend(type_qualifier* &&tq)
   _tq.get()._set_parent(*this);
 }
 
+void type_qualifier_list::extend(address_space* &&as)
+{
+  auto _as = std::ref(*mv_p(std::move(as)));
+  try {
+    _ass.push_back(_as);
+  } catch(...) {
+    delete &_as.get();
+    throw;
+  }
+  _extend_tokens_range(_as.get().get_tokens_range());
+  _as.get()._set_parent(*this);
+}
+
 void type_qualifier_list::extend(attribute_specifier_list* &&asl)
 {
   auto _asl = std::ref(*mv_p(std::move(asl)));
@@ -3143,21 +3234,19 @@ void type_qualifier_list::extend(attribute_specifier_list* &&asl)
 }
 
 const klp::ccp::types::qualifiers
-type_qualifier_list::get_qualifiers() const
+type_qualifier_list::get_qualifiers(ast &a) const
 {
-  types::qualifiers qs;
-  for (auto q : _tqs)
-    qs.add(q.get().get_kind());
-
-  return qs;
+  return _combine_type_qualifiers(a, _tqs, _ass);
 }
 
 _ast_entity* type_qualifier_list::_get_child(const size_t i) const noexcept
 {
   if (i < _tqs.size()) {
     return &_tqs[i].get();
-  } else if (i < _tqs.size() + _asls.size()) {
-    return &_asls[i - _tqs.size()].get();
+  } else if (i < _tqs.size() + _ass.size()) {
+    return &_ass[i - _tqs.size()].get();
+  } else if (i < _tqs.size() + _ass.size() + _asls.size()) {
+    return &_asls[i - _tqs.size() - _ass.size()].get();
   }
 
   return nullptr;
@@ -4926,6 +5015,19 @@ specifier_qualifier_list::specifier_qualifier_list(type_qualifier* &&tq)
   _tq.get()._set_parent(*this);
 }
 
+specifier_qualifier_list::specifier_qualifier_list(address_space* &&as)
+  : typed_ast_entity::typed_ast_entity(as->get_tokens_range())
+{
+  auto _as = std::ref(*mv_p(std::move(as)));
+  try {
+    _ass.push_back(_as);
+  } catch(...) {
+    delete &_as.get();
+    throw;
+  }
+  _as.get()._set_parent(*this);
+}
+
 specifier_qualifier_list::
 specifier_qualifier_list(attribute_specifier_list* &&asl)
   : typed_ast_entity(asl->get_tokens_range())
@@ -4952,6 +5054,9 @@ specifier_qualifier_list::~specifier_qualifier_list() noexcept
 
   for (auto tq : _tqs)
     delete &tq.get();
+
+  for (auto as : _ass)
+    delete &as.get();
 
   for (auto asl : _asls)
     delete &asl.get();
@@ -4981,6 +5086,19 @@ void specifier_qualifier_list::extend(type_qualifier* &&tq)
   }
   _extend_tokens_range(_tq.get().get_tokens_range());
   _tq.get()._set_parent(*this);
+}
+
+void specifier_qualifier_list::extend(address_space* &&as)
+{
+  auto _as = std::ref(*mv_p(std::move(as)));
+  try {
+    _ass.push_back(_as);
+  } catch(...) {
+    delete &_as.get();
+    throw;
+  }
+  _extend_tokens_range(_as.get().get_tokens_range());
+  _as.get()._set_parent(*this);
 }
 
 void specifier_qualifier_list::extend(attribute_specifier_list* &&asl)
@@ -5040,13 +5158,9 @@ void specifier_qualifier_list::extend(specifier_qualifier_list* &&sql)
 }
 
 const klp::ccp::types::qualifiers
-specifier_qualifier_list::get_qualifiers() const
+specifier_qualifier_list::get_qualifiers(ast &a) const
 {
-  types::qualifiers qs;
-  for (auto q : _tqs)
-    qs.add(q.get().get_kind());
-
-  return qs;
+  return _combine_type_qualifiers(a, _tqs, _ass);
 }
 
 bool specifier_qualifier_list::is_signed_explicit() const noexcept
@@ -5073,7 +5187,7 @@ bool specifier_qualifier_list::is_auto_type() const noexcept
 
 std::size_t specifier_qualifier_list::_n_children() const noexcept
 {
-  return _tss.size() + _tqs.size() + _asls.size();
+  return _tss.size() + _tqs.size() + _ass.size() + _asls.size();
 }
 
 _ast_entity* specifier_qualifier_list::_get_child(const size_t i) const noexcept
@@ -5082,8 +5196,10 @@ _ast_entity* specifier_qualifier_list::_get_child(const size_t i) const noexcept
     return &_tss[i].get();
   } else if (i < _tss.size() + _tqs.size()) {
     return &_tqs[i - _tss.size()].get();
-  } else if (i < _tss.size() + _tqs.size() + _asls.size()) {
-    return &_asls[i - _tss.size() - _tqs.size()].get();
+  } else if (i < _tss.size() + _tqs.size() + _ass.size()) {
+    return &_ass[i - _tss.size() - _tqs.size()].get();
+  } else if (i < _tss.size() + _tqs.size() + _ass.size() + _asls.size()) {
+    return &_asls[i - _tss.size() - _tqs.size() - _ass.size()].get();
   }
 
   return nullptr;
@@ -5148,6 +5264,10 @@ declaration_specifiers::declaration_specifiers(type_qualifier* &&tq)
   : specifier_qualifier_list(std::move(tq))
 {}
 
+declaration_specifiers::declaration_specifiers(address_space* &&as)
+  : specifier_qualifier_list(std::move(as))
+{}
+
 declaration_specifiers::declaration_specifiers(attribute_specifier_list* &&asl)
   : specifier_qualifier_list(std::move(asl))
 {}
@@ -5195,6 +5315,11 @@ void declaration_specifiers::extend(type_specifier* &&ts)
 void declaration_specifiers::extend(type_qualifier* &&tq)
 {
   specifier_qualifier_list::extend(std::move(tq));
+}
+
+void declaration_specifiers::extend(address_space* &&as)
+{
+  specifier_qualifier_list::extend(std::move(as));
 }
 
 void declaration_specifiers::extend(attribute_specifier_list* &&asl)
@@ -7125,21 +7250,31 @@ bool stmt_compound::_process(const_processor<bool> &p) const
 
 
 stmt_expr::stmt_expr(const pp_tokens_range &tr, expr* &&e) noexcept
-  : stmt(tr), _e(mv_p(std::move(e)))
+  : stmt(tr), _e(mv_p(std::move(e))), _asl(nullptr)
 {
   if (_e)
     _e->_set_parent(*this);
 }
 
+stmt_expr::stmt_expr(const pp_tokens_range &tr,
+		     attribute_specifier_list* &&asl) noexcept
+  : stmt(tr), _e(nullptr), _asl(mv_p(std::move(asl)))
+{
+  if (_asl)
+    _asl->_set_parent(*this);
+}
+
 stmt_expr::~stmt_expr() noexcept
 {
   delete _e;
+  delete _asl;
 }
 
 _ast_entity* stmt_expr::_get_child(const size_t i) const noexcept
 {
+  // At most one of _e and _asl is non-NULL.
   if (!i)
-    return _e;
+    return _e ? static_cast<_ast_entity*>(_e) : _asl;
 
   return nullptr;
 }

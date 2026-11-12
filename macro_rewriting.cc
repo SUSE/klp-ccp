@@ -8771,8 +8771,11 @@ rescan_macro_invocation_rewriter::_impl::finalize()
     };
 
   if (m.is_builtin_special()) {
+    // Builtin special macros always expand to a single token. The
+    // invocation's source consists of the name token only, unless the
+    // macro takes arguments like __has_attribute() does.
     assert(L == 1);
-    assert(src_len == 1);
+    assert(src_len >= 1);
     bool identity = _tok_edits[0].k == token_edit::kind::kept;
     for (const auto &g : _gap_insertions) {
       if (!g.empty())
@@ -8781,9 +8784,21 @@ rescan_macro_invocation_rewriter::_impl::finalize()
     if (identity) {
       res.src_edit_script.push_back(mi_edit_script_op{
 	  mi_edit_script_op::copy{
-	    rescan_macro_invocation::output::tokens_range{0, 1}
+	    rescan_macro_invocation::output::tokens_range{0, src_len}
 	  }
 	});
+      // The arguments, if any, are retained as they are: mirror
+      // their expansion trees in the rewritten forest.
+      const std::size_t nargs = _rmi.get_nargs();
+      for (std::size_t i = 0; i < nargs; ++i) {
+	const auto orig_arg_root =
+	  static_cast<rescan_macro_invocation>(_rmi.get_arg_tree(i));
+	const auto arg_root =
+	  _forest.add_arg_tree_root(static_cast<rrmi_index>(_rrmi), i,
+				   orig_arg_root);
+	_forest.clone_original_subtree(orig_arg_root,
+				      static_cast<rrmi_index>(arg_root));
+      }
       for (const auto &tr : _tok_edits[0].traces)
 	finalize_trace(_forest, tr.second, static_cast<rrmi_index>(_rrmi));
       mark_name_rescanned();

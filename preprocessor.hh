@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2017-2022, 2024, 2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -31,6 +31,7 @@
 #include "header_resolver.hh"
 #include "pp_tokenizer.hh"
 #include "pp_result.hh"
+#include "pp_except.hh"
 
 namespace klp
 {
@@ -75,6 +76,23 @@ namespace klp
 		 const std::initializer_list<const char *> &arg_list,
 		 const bool variadic,
 		 const std::string &repl);
+
+      // Builtin special function-like macros whose value is
+      // computed by the target, like __has_attribute(). The handler
+      // receives the macro expanded arguments and returns the
+      // single result token. Errors are reported by throwing the
+      // exception obtained from the report_fatal callback, which
+      // attributes the message to the invocation.
+      typedef std::function<pp_token
+			    (const std::vector<std::vector<pp_token>> &exp_args,
+			     const std::function<pp_except(const std::string&)>
+				&report_fatal)>
+	builtin_special_macro_handler;
+
+      void register_builtin_special_macro
+		(const std::string &name,
+		 const std::initializer_list<const char *> &arg_list,
+		 builtin_special_macro_handler &&handler);
 
       void register_predefined_macro
 	(const std::string &signature,
@@ -177,6 +195,7 @@ namespace klp
       _expand_one_builtin_special
 			(_macro_expansion_forest::_rescan_macro_invocation &rmi,
 			 std::vector<std::vector<pp_token>> &&args,
+			 std::vector<std::vector<pp_token>> &&exp_args,
 			 const raw_pp_tokens_range &invocation_range);
 
       static std::string _stringify(const std::vector<pp_token> &arg_toks);
@@ -238,6 +257,8 @@ namespace klp
 
       std::size_t __counter__;
       const pp_result::macro &_m_defined_op;
+      std::map<std::string, builtin_special_macro_handler>
+	_builtin_special_macro_handlers;
 
       std::queue<pp_token> _expanded_tokens;
       bool _maybe_pp_directive;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2018-2021, 2025-2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -42,11 +42,19 @@ namespace klp
       get_execution_charset_encoder(const execution_charset_encoding e)
 	const override;
 
+      virtual address_space_keywords get_address_space_keywords()
+	const override;
+
     public:
       struct _impl_proxy;
       friend struct _impl_proxy;
 
     private:
+      // The x86 named address spaces, c.f. the __seg_gs and __seg_fs
+      // qualifiers supported by GCC >= 6.1.
+      static constexpr types::address_space address_space_seg_gs{1};
+      static constexpr types::address_space address_space_seg_fs{2};
+
       enum class float_mode_kind
       {
 	fmk_TF = static_cast<int>(common_float_mode_kind::cfmk_LAST) + 1,
@@ -103,6 +111,17 @@ namespace klp
 
       virtual void _arch_register_builtin_macros(preprocessor &pp)
 	const override;
+
+      virtual bool _arch_has_attribute(const std::string &ns,
+				       const std::string &name)
+	const noexcept override;
+
+      static const versioned_name_table_entry _gnu_attributes[];
+
+      virtual bool _arch_has_builtin(const std::string &name)
+	const noexcept override;
+
+      static const versioned_name_table_entry _builtins[];
 
       struct opts_x86
       {
