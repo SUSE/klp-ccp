@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2024, 2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -82,6 +82,10 @@ namespace klp
       shall_externalize_object(const ast::init_declarator &id,
 			       code_remarks &remarks) const override;
 
+      virtual std::string
+      get_obj_initializer_replacement(const ast::init_declarator &id,
+				      code_remarks &remarks) const override;
+
       virtual externalized_symbol_modification
       get_sym_mod_for_externalized_fun(const ast::direct_declarator_id &ddid,
 				       const allocated_ids_type &allocated_ids,
@@ -106,6 +110,14 @@ namespace klp
 
       virtual externalized_symbol_modification
       get_sym_mod_for_externalized_obj(const ast::init_declarator &id,
+				       const allocated_ids_type &allocated_ids,
+				       code_remarks &remarks) const override;
+
+      virtual std::set<std::string>
+      get_forced_macro_renames(code_remarks &remarks) const override;
+
+      virtual std::string
+      rename_function_forwarding_macro(const ast::direct_declarator_id &ddid,
 				       const allocated_ids_type &allocated_ids,
 				       code_remarks &remarks) const override;
 

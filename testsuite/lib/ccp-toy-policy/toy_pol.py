@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024  SUSE Software Solutions Germany GmbH
+# Copyright (C) 2024, 2026  SUSE Software Solutions Germany GmbH
 #
 # This file is part of klp-ccp.
 #
@@ -59,6 +59,14 @@ class LpCreationPolicy(LpCreationPolicyAbc):
         if m is not None:
             espec = m.group(1)
         return espec is not None and espec is not None
+
+    def get_obj_initializer_replacement(self,
+                                        object_name,
+                                        linkage,
+                                        declaration_loc):
+        if object_name.startswith('ri_'):
+            return 'klpr_invalid_expression'
+        return None
 
     def get_sym_mod_for_externalized_fun(self,
                                          function_name,
@@ -154,3 +162,8 @@ class LpCreationPolicy(LpCreationPolicyAbc):
         if multiple:
             return prefix + macro_name + str(index)
         return prefix + macro_name
+
+    def get_forced_macro_renames(self):
+        # Macros named fr_a..fr_d resp. FR_A..FR_D get force-renamed.
+        return ['fr_a', 'fr_b', 'fr_c', 'fr_d',
+                'FR_A', 'FR_B', 'FR_C', 'FR_D']

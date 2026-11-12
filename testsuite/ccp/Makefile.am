@@ -56,6 +56,27 @@ EXTRA_DIST = ccp.exp				\
 	ext-fun-2.c.expected			\
 	ext-fun-3.c				\
 	ext-fun-3.c.expected			\
+	force-macro-rename-1.c			\
+	force-macro-rename-1.c.expected		\
+	force-macro-rename-2.c			\
+	force-macro-rename-2.c.expected		\
+	force-macro-rename-3.c			\
+	force-macro-rename-3.h			\
+	force-macro-rename-3.c.expected		\
+	force-macro-rename-4.c			\
+	force-macro-rename-4.h			\
+	force-macro-rename-4.c.expected		\
+	force-macro-rename-5.c			\
+	force-macro-rename-5.c.expected		\
+	force-macro-rename-6.c			\
+	force-macro-rename-6.c.expected		\
+	force-macro-rename-7.c			\
+	force-macro-rename-7.c.expected		\
+	force-macro-rename-8.c			\
+	force-macro-rename-8.h			\
+	force-macro-rename-8.c.expected		\
+	force-macro-rename-9.c			\
+	force-macro-rename-9.c.expected		\
 	fun-attrs-1.c				\
 	fun-attrs-1.c.expected			\
 	fun-attrs-2.c				\
@@ -274,6 +295,15 @@ EXTRA_DIST = ccp.exp				\
 	make-extern-1.c.expected		\
 	make-extern-2.c			\
 	make-extern-2.c.expected		\
+	obj-init-replacement-1.c	\
+	obj-init-replacement-1.c.expected	\
+	obj-init-replacement-2.c	\
+	obj-init-replacement-2.c.expected	\
+	obj-init-replacement-3.c	\
+	obj-init-replacement-3.c.expected	\
+	obj-init-replacement-4.c	\
+	obj-init-replacement-4.h	\
+	obj-init-replacement-4.c.expected	\
 	simple.c				\
 	simple.c.expected			\
 	tag-decls-1.c				\

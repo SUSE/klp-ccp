@@ -1,0 +1,13 @@
+/* klp-ccp: from testsuite/ccp/obj-init-replacement-2.c */
+extern int (*klpe_eepr_a);
+extern int (*klpe_eepr_b);
+
+#define KLPR_ADDRESSABLE(sym)					\
+	static void * __attribute__((__used__))			\
+		ri_##sym = klpr_invalid_expression;
+
+void klpp_pu_f(void)
+{
+	KLPR_ADDRESSABLE(eepr_a)
+	KLPR_ADDRESSABLE(eepr_b)
+}

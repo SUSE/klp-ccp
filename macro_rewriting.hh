@@ -25,6 +25,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <set>
 #include <memory>
 #include <functional>
 #include <limits>
@@ -162,6 +163,20 @@ namespace klp
       // to the original one.
       bool is_identity() const noexcept;
 
+      // Create a definition forwarding to the original macro, i.e. one
+      // whose replacement list consists of an invocation of orig_m
+      // passing all parameters through. Used for renaming macro
+      // invocations whose definition doesn't need any modification
+      // otherwise.
+      static rewritten_macro_definition
+      make_forwarding(const pp_result::macro &orig_m,
+		      const pp_result &pp_result);
+
+      // Whether this definition has been created by make_forwarding()
+      // and thus, invokes the original macro by its name.
+      bool is_forwarding() const noexcept
+      { return _forwarding; }
+
       void write_repl
 	(source_writer &writer, const pp_result &pp_result,
 	 source_reader_cache &source_reader_cache,
@@ -173,15 +188,19 @@ namespace klp
 
       void normalize_ws(const pp_result &pp_result);
 
+      // Synthesized forwarding definitions don't have their
+      // whitespace normalized.
       rewritten_macro_definition(const pp_result::macro &orig_m,
 				 _ops_container_type &&ops,
 				 std::vector<std::string> &&arg_names,
-				 const pp_result &pp_result);
+				 const pp_result &pp_result,
+				 const bool forwarding = false);
 
       _ops_container_type _ops;
 
       const pp_result::macro &_orig_m;
       std::vector<std::string> _arg_names;
+      bool _forwarding;
     };
 
     // Global pool of rewritten macro definitions. Structurally equal
@@ -311,7 +330,10 @@ namespace klp
     // whether or not any function-like definition exists for it.
     // next_tok_is_lparen tells whether the first non-whitespace token
     // following the invocation in the output is an opening
-    // parenthesis.
+    // parenthesis. All invocations of the macros listed in
+    // forced_renames get renamed, those not requiring any other
+    // modification to a forwarding definition
+    // (rewritten_macro_definition::make_forwarding()).
     //
     // Returns false if the invocation cannot be represented in a
     // rewritten form, with a reason in error_msg.
@@ -322,6 +344,7 @@ namespace klp
 	 const std::vector<macro_invocation_output_edit_script_op> &out_edits,
 	 const bool next_tok_is_lparen,
 	 const std::map<std::string, bool> &macro_ids,
+	 const std::set<const pp_result::macro*> &forced_renames,
 	 rewritten_macro_definitions_pool &pool,
 	 rewritten_macro_invocation &result,
 	 std::string &error_msg);

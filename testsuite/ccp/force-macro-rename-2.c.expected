@@ -1,0 +1,25 @@
+/* klp-ccp: from testsuite/ccp/force-macro-rename-2.c */
+#define fr_a(fmt, ...) f(fmt, ##__VA_ARGS__)
+#define fr_b(args...) g(args)
+#define fr_c(fr_c) (fr_c)
+#define fr_d() 4
+
+extern void f(const char*, ...);
+extern void g(int, int);
+
+#define klpr_fr_a(fmt, ...) fr_a(fmt, ##__VA_ARGS__)
+
+#define klpr_fr_b(args...) fr_b(args)
+
+#define klpr_fr_c(fr_c_) fr_c(fr_c_)
+
+#define klpr_fr_d() fr_d()
+
+void klpp_pu_f(void)
+{
+	klpr_fr_a("x", 1, 2);
+	klpr_fr_a("y");
+	klpr_fr_b(1, 2);
+	int i = klpr_fr_c(3);
+	i += klpr_fr_d();
+}

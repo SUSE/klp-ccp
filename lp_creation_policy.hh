@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2019, 2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -75,6 +75,17 @@ namespace klp
       shall_externalize_object(const ast::init_declarator &id,
 			       code_remarks &remarks) const = 0;
 
+      // Queried for object definitions with an initializer which
+      // are not to get externalized. A non-empty return value
+      // denotes an identifier to replace the whole initializer
+      // with in the live patch, e.g. a common sentinel to be taken
+      // care of during post-processing. The original initializer's
+      // dependencies won't get included in the closure then. An
+      // empty return value retains the initializer.
+      virtual std::string
+      get_obj_initializer_replacement(const ast::init_declarator &id,
+				      code_remarks &remarks) const = 0;
+
       struct symbol_modification
       {
 	enum class linkage_change
@@ -142,6 +153,24 @@ namespace klp
 			     const bool multiple,
 			     const allocated_ids_type &allocated_ids,
 			     code_remarks &remarks) const = 0;
+
+      // Names of macros whose invocations within the live patch are
+      // all to get renamed, even where the definition wouldn't need
+      // any rewrite otherwise. In the latter case, the renamed
+      // definition forwards to the original macro. Queried once per
+      // live patch creation.
+      virtual std::set<std::string>
+      get_forced_macro_renames(code_remarks &remarks) const = 0;
+
+      // Choose the name of a macro forwarding to the function
+      // identified by ddid, whose rename is forced
+      // (c.f. get_forced_macro_renames()) even though it's not a
+      // macro. References to the function not renamed otherwise get
+      // replaced by the macro's name.
+      virtual std::string
+      rename_function_forwarding_macro(const ast::direct_declarator_id &ddid,
+				       const allocated_ids_type &allocated_ids,
+				       code_remarks &remarks) const = 0;
     };
   }
 }

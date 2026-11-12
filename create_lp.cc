@@ -1284,6 +1284,10 @@ namespace
 
     bool rewrite_needed;
 
+    // Identifier provided by the policy to replace the initializer's
+    // tokens with in the output, if non-empty.
+    std::string replacement;
+
   private:
     friend class object_init_declarator_info;
     initializer_info(object_init_declarator_info &_enclosing_id);
@@ -1459,12 +1463,22 @@ namespace
     const function_definition_info* get_function_definition() const noexcept
     { return _fdi.get(); }
 
+    // The declarator id of the definition or, if there's none, of
+    // the first declaration.
+    const ast::direct_declarator_id& get_direct_declarator_id() const noexcept;
+
     bool can_externalize_valid;
     bool can_externalize;
 
     bool externalize;
     bool in_closure;
     lp_creation_policy::externalized_symbol_modification externalized_sym_mod;
+
+    // Set if the policy forces a rename of the function's name as if
+    // it were a macro: references not renamed otherwise get replaced
+    // by forwarding_macro, a macro forwarding to the original name.
+    bool force_ref_rename;
+    std::string forwarding_macro;
 
   private:
     friend class ast_info;
@@ -1938,7 +1952,19 @@ namespace
     register_sym_mod(const lp_creation_policy::symbol_modification &sym_mod)
       noexcept;
 
+    // Whether the given range contains any macro invocation
+    // involving one of the macros from forced_macro_renames.
+    bool range_invokes_forced_macro_rename(const pp_tokens_range &r)
+      const noexcept;
+
     const ast::ast_translation_unit &atu;
+
+    // Macros whose rename within the live patch is forced by the
+    // policy.
+    std::set<const pp_result::macro*> forced_macro_renames;
+
+    // Identifiers chosen by the policy for initializer replacements.
+    std::set<std::string> initializer_replacements;
 
     typedef std::vector<header_info> header_infos_type;
     header_infos_type header_infos;
@@ -2994,8 +3020,20 @@ void function_definition_info::for_each_deps_on_types(callable_type &&c) const
 
 function_info::function_info()
   : _fdi(nullptr), can_externalize_valid(false), can_externalize(false),
-    externalize(false), in_closure(false)
+    externalize(false), in_closure(false), force_ref_rename(false)
 {}
+
+const ast::direct_declarator_id& function_info::get_direct_declarator_id()
+  const noexcept
+{
+  if (_fdi) {
+    return (_fdi->function_definition.get_declarator()
+	    .get_direct_declarator_id());
+  }
+  assert(!_idis.empty());
+  return _idis.front()->init_declarator.get_declarator()
+    .get_direct_declarator_id();
+}
 
 object_info::object_info()
   : _initializing_id(nullptr), shall_externalize_valid(false),
@@ -3407,6 +3445,122 @@ void ast_info::mark_header_uneligible(header_info &hi) noexcept
        cur = (cur->get_parent() ?
 	      &cur->get_parent()->get_containing_header() : nullptr)) {
     this->header_infos[cur->get_id()].eligible = false;
+  }
+}
+
+bool ast_info::range_invokes_forced_macro_rename(const pp_tokens_range &r)
+  const noexcept
+{
+  if (forced_macro_renames.empty())
+    return false;
+
+  const pp_result &ppr = atu.get_pp_result();
+  const auto mis = ppr.find_overlapping_macro_invocations(r);
+  for (auto it_mi = mis.first.first; it_mi != mis.second.first; ++it_mi) {
+    const bool any_forced =
+      std::any_of(it_mi->get_used_macros().begin(),
+		  it_mi->get_used_macros().end(),
+		  [&](const pp_result::macro &m) {
+		    return forced_macro_renames.count(&m) != 0;
+		  });
+    if (!any_forced)
+      continue;
+
+    const pp_tokens_range out_r = it_mi->get_output_range(ppr);
+    if (r.begin <= out_r.begin && out_r.end <= r.end)
+      return true;
+
+    // The range covers only part of the invocation's output, e.g. a
+    // single declaration from a macro expanding to several. Only
+    // the invocations contributing to the tokens within the range
+    // matter: check the emitting node and its ancestors for each
+    // overlapping segment of the final output.
+    using rescan_macro_invocation =
+      pp_result::macro_invocation::expansion_forest::rescan_macro_invocation;
+    const auto main_tree = it_mi->get_expansion_forest().get_main_tree();
+    pp_token_index pos = out_r.begin;
+    const auto final_out_end = main_tree.final_out_end();
+    for (auto it_seg = main_tree.final_out_begin(); it_seg != final_out_end;
+	 ++it_seg) {
+      const auto seg = *it_seg;
+      const pp_tokens_range seg_r{
+	pos,
+	pos + seg.get_out_range_in_emitting_node().length()
+      };
+      pos = seg_r.end;
+      if (seg_r.end <= r.begin || seg_r.begin >= r.end)
+	continue;
+
+      rescan_macro_invocation node = seg.get_emitting_node();
+      while (true) {
+	if (!node.is_arg_tree_root() &&
+	    forced_macro_renames.count(&node.get_macro())) {
+	  return true;
+	}
+	if (!node.is_rescan_tree_root())
+	  node = node.get_rescan_parent();
+	else if (node.is_arg_tree_root())
+	  node = node.get_arg_tree_owner();
+	else
+	  break;
+      }
+    }
+    assert(pos == out_r.end);
+  }
+  return false;
+}
+
+namespace
+{
+  // The range of a function definition's declaration part, i.e.
+  // everything up to, but excluding the body. This is what gets
+  // emitted for externalizations and for prototypes derived from
+  // function definitions.
+  pp_tokens_range
+  _function_definition_decl_range(const ast::function_definition &fd) noexcept
+  {
+    return pp_tokens_range{
+      fd.get_tokens_range().begin,
+      (!fd.get_asl() ? fd.get_declarator().get_tokens_range().end :
+       fd.get_asl()->get_tokens_range().end)
+    };
+  }
+
+  // Whether an object's declaration is an 'extern' declaration
+  // without initializer, i.e. one which may get duplicated.
+  bool _is_extern_only_declaration(const declaration_info &di,
+				   const ast::init_declarator &id) noexcept
+  {
+    return (di.storage_class_specifier &&
+	    (di.storage_class_specifier->get_storage_class() ==
+	     ast::storage_class::sc_extern) &&
+	    !id.get_initializer());
+  }
+
+  // The symbol modification applying to a reference to some
+  // function, if any.
+  const lp_creation_policy::symbol_modification*
+  _fun_ref_sym_mod(const dep_on_fun &d) noexcept
+  {
+    const function_info &fi = d.get_function_info();
+    if (d.externalize)
+      return &fi.externalized_sym_mod.sym_mod;
+    const function_definition_info * const fdi = fi.get_function_definition();
+    if (fdi)
+      return &fdi->sym_mod;
+    return nullptr;
+  }
+
+  // Whether a reference to some function is to get replaced by the
+  // function's forwarding macro, i.e. whether the function's rename
+  // is forced and the reference won't get renamed otherwise.
+  bool _fun_ref_needs_forwarding_macro(const dep_on_fun &d) noexcept
+  {
+    if (!d.get_function_info().force_ref_rename)
+      return false;
+    const lp_creation_policy::symbol_modification * const sym_mod =
+      _fun_ref_sym_mod(d);
+    return !sym_mod || !sym_mod->is_rename();
   }
 }
 
@@ -5077,6 +5231,7 @@ namespace
     };
 
     void _construct_fd_id_closure();
+    void _query_initializer_replacement(object_init_declarator_info &oidi);
     static bool _fun_expr_id_needs_externalization(const ast::expr_id &eid);
     bool _is_range_within_eligible_headers(const raw_pp_tokens_range &r) const;
 
@@ -5628,6 +5783,9 @@ update_reachable_incoming_er_edges:
 		_remarks.add(remark);
 	      }
 	    }
+	    if (!oi.in_closure && oi.get_initializing_init_declarator())
+	      _query_initializer_replacement
+		(*oi.get_initializing_init_declarator());
 	    oi.in_closure = true;
 	    if (oi.get_initializing_init_declarator())
 	      return true;
@@ -5646,6 +5804,85 @@ update_reachable_incoming_er_edges:
     walker.walk(patched_set, cur_walk_gen_nr);
     _ai.finish_walk();
   }
+}
+
+static bool _is_identifier(const std::string &s) noexcept
+{
+  if (s.empty())
+    return false;
+
+  auto &&is_alpha =
+    [](const char c) {
+      return ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_');
+    };
+
+  if (!is_alpha(s[0]))
+    return false;
+
+  return std::all_of(s.begin() + 1, s.end(),
+		     [&](const char c) {
+		       return is_alpha(c) || (c >= '0' && c <= '9');
+		     });
+}
+
+void _closure_builder::
+_query_initializer_replacement(object_init_declarator_info &oidi)
+{
+  initializer_info * const ii = oidi.get_initializer();
+  assert(ii);
+  assert(ii->replacement.empty());
+
+  const ast::init_declarator &id = oidi.init_declarator;
+  std::string repl = _pol.get_obj_initializer_replacement(id, _remarks);
+  if (repl.empty())
+    return;
+
+  const pp_result &ppr = _ai.atu.get_pp_result();
+  const pp_token_index id_tok = id.get_declarator().get_id_tok();
+  const std::string &name = ppr.get_pp_tokens()[id_tok].get_value();
+
+  // The same replacement may get used for any number of objects, but
+  // it must not clash with any other identifier.
+  if (!_is_identifier(repl) ||
+      (!_ai.initializer_replacements.count(repl) &&
+       _ai.get_allocated_ids().count(repl))) {
+    code_remark remark{
+      code_remark::severity::fatal,
+      ("invalid initializer replacement \"" + repl + "\" chosen by policy"
+       " for object \"" + name + "\""),
+      ppr, id_tok
+    };
+    _remarks.add(remark);
+    throw lp_except(remark);
+  }
+
+  if (!ii->child_tags.empty()) {
+    // Tags defined from within the initializer could be referenced
+    // from elsewhere.
+    code_remark remark{
+      code_remark::severity::warning,
+      ("not replacing initializer of object \"" + name + "\""
+       " defining tags"),
+      ppr, id_tok
+    };
+    _remarks.add(remark);
+    return;
+  }
+
+  if (_ai.initializer_replacements.insert(repl).second) {
+    _ai.register_sym_mod
+      (lp_creation_policy::symbol_modification{
+	 std::string{repl},
+	 lp_creation_policy::symbol_modification::linkage_change::lc_none
+       });
+  }
+
+  // Only the initializer's tokens get replaced in the output, its
+  // dependencies are retained as they are. In particular,
+  // declarations of externalized symbols referenced from the
+  // original initializer still get emitted.
+  ii->replacement = std::move(repl);
+  ii->rewrite_needed = true;
 }
 
 bool _closure_builder::
@@ -6206,8 +6443,35 @@ void _symbol_modification_resolver::operator()()
 	       (target_fi.externalized_sym_mod.sym_mod.is_rename() ||
 		target_fi.externalized_sym_mod.make_pointer)) ||
 	      (!d.externalize && target_fdi &&
-	       target_fdi->sym_mod.is_rename()));
+	       target_fdi->sym_mod.is_rename()) ||
+	      _fun_ref_needs_forwarding_macro(d));
     };
+
+  // Function definitions invoking any macro whose rename is forced
+  // get rewritten, just like with any other modification.
+  for (auto it_fi = _ai.functions_begin(); it_fi != _ai.functions_end();
+       ++it_fi) {
+    if (!it_fi->in_closure)
+      continue;
+
+    function_definition_info * const fdi = it_fi->get_function_definition();
+    if (!fdi || fdi->rewrite_needed)
+      continue;
+
+    if (!_ai.range_invokes_forced_macro_rename
+	   (fdi->function_definition.get_tokens_range())) {
+      continue;
+    }
+
+    fdi->rewrite_needed = true;
+    fdi->sym_mod.new_name =
+      _pol.rename_rewritten_closure_fun(fdi->function_definition,
+					_ai.get_allocated_ids(),
+					_remarks);
+    _ai.register_sym_mod(fdi->sym_mod);
+    if (fdi->sym_mod.is_rename())
+      renamed_some = true;
+  }
 
   while (renamed_some) {
     renamed_some = false;
@@ -6266,6 +6530,9 @@ void _symbol_modification_resolver::operator()()
 
 	      } else if (oidi_in_fd.get_initializer()) {
 		const initializer_info &ii = *oidi_in_fd.get_initializer();
+
+		if (!ii.replacement.empty())
+		  fdi->rewrite_needed = true;
 
 		for (auto &d : ii.deps.on_objs) {
 		  if (dep_on_obj_requires_rewrite(d))
@@ -6435,6 +6702,19 @@ void _conflicting_header_finder::operator()()
 		 (!di.storage_class_specifier || id.get_initializer())) {
 	// Don't emit (tentative) definitions for unreachable objects
 	// with external linkage.
+	_mark_headers_uneligible(di.declaration.get_tokens_range());
+      }
+
+      // Declarations invoking any macro whose rename is forced get
+      // emitted in rewritten form in any case. (Tentative)
+      // definitions must not get duplicated though.
+      if ((it_oi->externalize || it_oi->in_closure) &&
+	  (!di.storage_class_specifier ||
+	   (di.storage_class_specifier->get_storage_class() ==
+	    ast::storage_class::sc_static) ||
+	   id.get_initializer()) &&
+	  _ai.range_invokes_forced_macro_rename
+	    (di.declaration.get_tokens_range())) {
 	_mark_headers_uneligible(di.declaration.get_tokens_range());
       }
     }
@@ -7212,6 +7492,11 @@ _check_header_ordering_constraints(const pp_result::header_inclusion_node &h)
     case external_declaration_info::kind::declaration:
       {
 	const declaration_info &di = it_ed->get_declaration();
+	// Declarations invoking any macro whose rename is forced get
+	// emitted in rewritten form in addition to the header.
+	const bool forced_macro_rename =
+	  _ai.range_invokes_forced_macro_rename
+	    (di.declaration.get_tokens_range());
 	bool need_decl_specifiers = false;
 	di.init_declarators.for_each
 	  (wrap_callables<no_default_action>
@@ -7223,7 +7508,8 @@ _check_header_ordering_constraints(const pp_result::header_inclusion_node &h)
 	      if ((fi.externalize &&
 		   fi.externalized_sym_mod.sym_mod.is_rename()) ||
 		  (fdi && fdi->rewrite_needed &&
-		   fdi->sym_mod.is_rename())) {
+		   fdi->sym_mod.is_rename()) ||
+		  forced_macro_rename) {
 		if (conflicts_with_tag_from_block(fidi.declarator_deps)) {
 		  hi.eligible = false;
 		  return;
@@ -7233,8 +7519,9 @@ _check_header_ordering_constraints(const pp_result::header_inclusion_node &h)
 	    },
 	    [&](const object_init_declarator_info &oidi) {
 	      const object_info &oi = oidi.oi;
-	      if (oi.externalize &&
-		  oi.externalized_sym_mod.sym_mod.is_rename()) {
+	      if ((oi.externalize &&
+		   oi.externalized_sym_mod.sym_mod.is_rename()) ||
+		  forced_macro_rename) {
 		if (conflicts_with_tag_from_block(oidi.declarator_deps)) {
 		  hi.eligible = false;
 		  return;
@@ -7312,6 +7599,10 @@ namespace
     void _require_allocatable_type(const types::addressable_type &at);
 
     bool _queue_includes_for(const pp_tokens_range &r);
+    bool _queue_includes_for_decl(const pp_tokens_range &r,
+				  const pp_tokens_range &emitted_r);
+    bool _queue_includes_for_decl(const pp_tokens_range &r)
+    { return _queue_includes_for_decl(r, r); }
     void _queue_header_include(header_info &hi);
 
     std::pair<ast_info::external_declaration_iterator,
@@ -7407,8 +7698,10 @@ void _lp_deps_resolver::operator()()
 	}
 
 	bool from_header = false;
-	if (!esm.make_pointer && !esm.sym_mod.is_rename())
-	  from_header = _queue_includes_for(di.declaration.get_tokens_range());
+	if (!esm.make_pointer && !esm.sym_mod.is_rename()) {
+	  from_header =
+	    _queue_includes_for_decl(di.declaration.get_tokens_range());
+	}
 	if (!from_header) {
 	  _queue_deps(it_oidi->declarator_deps, false);
 	  _emit_child_tag_decls(it_oidi->child_tags);
@@ -7418,7 +7711,7 @@ void _lp_deps_resolver::operator()()
 
       } else if (it_oi->in_closure) {
 	const bool from_header =
-	  _queue_includes_for(di.declaration.get_tokens_range());
+	  _queue_includes_for_decl(di.declaration.get_tokens_range());
 	if (!from_header) {
 	  _queue_deps(it_oidi->declarator_deps, false);
 	  _emit_child_tag_decls(it_oidi->child_tags);
@@ -7485,7 +7778,8 @@ void _lp_deps_resolver::operator()()
 	bool from_header = false;
 	if (!it_fi->externalized_sym_mod.make_pointer &&
 	    !it_fi->externalized_sym_mod.sym_mod.is_rename()) {
-	  from_header = _queue_includes_for(di.declaration.get_tokens_range());
+	  from_header =
+	    _queue_includes_for_decl(di.declaration.get_tokens_range());
 	}
 
 	if (!from_header) {
@@ -7499,7 +7793,8 @@ void _lp_deps_resolver::operator()()
       if (it_fi->in_closure || (fdi && fdi->is_patched)) {
 	bool from_header = false;
 	if (!fdi || !fdi->sym_mod.is_rename()) {
-	  from_header = _queue_includes_for(di.declaration.get_tokens_range());
+	  from_header =
+	    _queue_includes_for_decl(di.declaration.get_tokens_range());
 	}
 
 	if (!from_header) {
@@ -7563,7 +7858,9 @@ void _lp_deps_resolver::operator()()
 	{
 	  function_definition_info &fdi = *decl.fdi;
 	  const bool from_header =
-	    _queue_includes_for(fdi.function_definition.get_tokens_range());
+	    _queue_includes_for_decl
+	      (fdi.function_definition.get_tokens_range(),
+	       _function_definition_decl_range(fdi.function_definition));
 	  if (!from_header) {
 	    _queue_deps(fdi.declarator_deps, false);
 	    _emit_child_tag_decls(fdi.child_tags);
@@ -7576,7 +7873,7 @@ void _lp_deps_resolver::operator()()
 	  function_init_declarator_info &fidi = *decl.fidi;
 	  declaration_info &di = fidi.enclosing_declaration;
 	  const bool from_header =
-	    _queue_includes_for(di.declaration.get_tokens_range());
+	    _queue_includes_for_decl(di.declaration.get_tokens_range());
 	  if (!from_header) {
 	    _queue_deps(fidi.declarator_deps, false);
 	    _emit_child_tag_decls(fidi.child_tags);
@@ -7589,8 +7886,11 @@ void _lp_deps_resolver::operator()()
 	{
 	  object_init_declarator_info &oidi = *decl.oidi;
 	  declaration_info &di = oidi.enclosing_declaration;
+	  // Only pure declarations can get duplicated.
 	  const bool from_header =
-	    _queue_includes_for(di.declaration.get_tokens_range());
+	    (_is_extern_only_declaration(di, oidi.init_declarator) ?
+	     _queue_includes_for_decl(di.declaration.get_tokens_range()) :
+	     _queue_includes_for(di.declaration.get_tokens_range()));
 	  if (!from_header) {
 	    _queue_deps(oidi.declarator_deps, false);
 	    _emit_child_tag_decls(oidi.child_tags);
@@ -8015,6 +8315,20 @@ bool _lp_deps_resolver::_queue_includes_for(const pp_tokens_range &r)
   }
 
   return from_header;
+}
+
+bool _lp_deps_resolver::
+_queue_includes_for_decl(const pp_tokens_range &r,
+			 const pp_tokens_range &emitted_r)
+{
+  // Declarations whose emitted part invokes any macro with a forced
+  // rename get emitted in rewritten form even if provided from some
+  // header eligible for inclusion: don't consider them as being
+  // provided from headers.
+  if (_ai.range_invokes_forced_macro_rename(emitted_r))
+    return false;
+
+  return _queue_includes_for(r);
 }
 
 void _lp_deps_resolver::_queue_header_include(header_info &hi)
@@ -8586,6 +8900,12 @@ namespace
 
     void operator()();
 
+    // The functions whose forwarding macro has actually been
+    // referenced from the output, in order of first use.
+    const std::vector<const function_info*>&
+    get_used_forwarding_macros() const noexcept
+    { return _used_forwarding_macros; }
+
   private:
     void _emit_inclusion_sequence
        (const ast_info::external_declaration_iterator &sequence_eds_begin,
@@ -8616,6 +8936,13 @@ namespace
     _prepare_tic_for_decl(object_init_declarator_info &oidi,
 			  const bool strip_initializer,
 			  const bool need_decl_type);
+
+    void _insert_completed_array_length
+	(const ast::init_declarator &id,
+	 depreprocessor::transformed_input_chunk &tic);
+
+    void _replace_initializer(const object_init_declarator_info &oidi,
+			      depreprocessor::transformed_input_chunk &tic);
 
     depreprocessor::transformed_input_chunk
     _prepare_tic_for_decl(typedef_init_declarator_info &tdidi);
@@ -8728,6 +9055,7 @@ namespace
 
     ast_info &_ai;
     depreprocessor &_d;
+    std::vector<const function_info*> _used_forwarding_macros;
     code_remarks &_remarks;
   };
 }
@@ -8882,7 +9210,13 @@ void _lp_writer::_emit_inclusion_sequence
 	  (wrap_callables<no_default_action>
 	   ([&](function_init_declarator_info &fidi) {
 	      _mark_emitted_tags(fidi.child_tags);
-	      fidi.emit_orig_decl = false;
+	      // Declarations invoking any macro whose rename is forced
+	      // get emitted in rewritten form in addition to the
+	      // header.
+	      if (!_ai.range_invokes_forced_macro_rename
+		     (di.declaration.get_tokens_range())) {
+		fidi.emit_orig_decl = false;
+	      }
 
 	      const ast::linkage &l = fidi.init_declarator.get_linkage();
 	      if (!l.is_first_in_chain())
@@ -8921,7 +9255,14 @@ void _lp_writer::_emit_inclusion_sequence
 	    },
 	    [&](object_init_declarator_info &oidi) {
 	      _mark_emitted_tags(oidi.child_tags);
-	      oidi.emit_orig_decl = false;
+	      // Declarations invoking any macro whose rename is forced
+	      // get emitted in rewritten form in addition to the
+	      // header, provided they can get duplicated.
+	      if (!_is_extern_only_declaration(di, oidi.init_declarator) ||
+		  !_ai.range_invokes_forced_macro_rename
+		     (di.declaration.get_tokens_range())) {
+		oidi.emit_orig_decl = false;
+	      }
 
 	      const ast::linkage &l = oidi.init_declarator.get_linkage();
 	      if (!l.is_first_in_chain())
@@ -8972,7 +9313,12 @@ void _lp_writer::_emit_inclusion_sequence
       {
 	function_definition_info &fdi = it_ed->get_function_definition();
 	_mark_emitted_tags(fdi.child_tags);
-	fdi.emit_orig_decl = false;
+	// Prototypes invoking any macro whose rename is forced get
+	// emitted in rewritten form in addition to the header.
+	if (!_ai.range_invokes_forced_macro_rename
+	       (_function_definition_decl_range(fdi.function_definition))) {
+	  fdi.emit_orig_decl = false;
+	}
 
 	assert(!fdi.fi.externalize ||
 	       fdi.fi.externalized_sym_mod.sym_mod.is_rename());
@@ -9112,7 +9458,13 @@ bool _lp_writer::_emit(function_init_declarator_info &fidi,
   const function_definition_info * const fdi = fi.get_function_definition();
   declaration_info &di = fidi.enclosing_declaration;
 
-  if (fidi.emit_orig_decl && !only_if_renamed) {
+  // Declarations invoking any macro whose rename is forced get
+  // emitted in rewritten form even if provided from an included
+  // header.
+  const bool forced_macro_rename =
+    _ai.range_invokes_forced_macro_rename(di.declaration.get_tokens_range());
+
+  if (fidi.emit_orig_decl && (!only_if_renamed || forced_macro_rename)) {
     assert(!(fi.externalize || fi.externalized_sym_mod.sym_mod.is_rename()));
     assert(!(fi.in_closure || (fdi && fdi->is_patched)) ||
 	   (fdi && fdi->sym_mod.is_rename()));
@@ -9138,7 +9490,8 @@ bool _lp_writer::_emit(function_init_declarator_info &fidi,
     di.declaration.get_declaration_specifiers();
   const ast::storage_class_specifier * const scs = di.storage_class_specifier;
   if (fi.externalize &&
-      (!only_if_renamed || fi.externalized_sym_mod.sym_mod.is_rename())) {
+      (!only_if_renamed || fi.externalized_sym_mod.sym_mod.is_rename() ||
+       forced_macro_rename)) {
     depreprocessor::transformed_input_chunk tic = _prepare_tic_for_decl(fidi);
     _rewrite_references(di.declaration_specifiers_deps, tic);
     _rewrite_references(fidi.declarator_deps, tic);
@@ -9163,7 +9516,8 @@ bool _lp_writer::_emit(function_init_declarator_info &fidi,
   }
 
   if ((fi.in_closure || (fdi && fdi->is_patched)) &&
-      (!only_if_renamed || (fdi && fdi->sym_mod.is_rename()))) {
+      (!only_if_renamed || (fdi && fdi->sym_mod.is_rename()) ||
+       forced_macro_rename)) {
     depreprocessor::transformed_input_chunk tic = _prepare_tic_for_decl(fidi);
     _rewrite_references(di.declaration_specifiers_deps, tic);
     _rewrite_references(fidi.declarator_deps, tic);
@@ -9205,9 +9559,15 @@ bool _lp_writer::_emit(object_init_declarator_info &oidi,
     di.declaration.get_declaration_specifiers();
   const ast::storage_class_specifier * const scs = di.storage_class_specifier;
 
+  // Declarations invoking any macro whose rename is forced get
+  // emitted in rewritten form even if provided from an included
+  // header.
+  const bool forced_macro_rename =
+    _ai.range_invokes_forced_macro_rename(di.declaration.get_tokens_range());
+
   assert(!(oidi.emit_orig_decl && oi.in_closure));
   assert(!(oi.externalize && oi.in_closure));
-  if (oidi.emit_orig_decl && !only_if_renamed) {
+  if (oidi.emit_orig_decl && (!only_if_renamed || forced_macro_rename)) {
     depreprocessor::transformed_input_chunk tic
       = _prepare_tic_for_decl(oidi, true, oidi.need_orig_decl_type);
     _rewrite_references(di.declaration_specifiers_deps, tic);
@@ -9224,20 +9584,23 @@ bool _lp_writer::_emit(object_init_declarator_info &oidi,
     oidi.emit_orig_decl = false;
     anything_emitted = true;
 
-  } else if (oi.in_closure && !only_if_renamed) {
+  } else if (oi.in_closure && (!only_if_renamed || forced_macro_rename)) {
     depreprocessor::transformed_input_chunk tic
       = _prepare_tic_for_decl(oidi, false, oidi.need_decl_type);
     _rewrite_references(di.declaration_specifiers_deps, tic);
     _rewrite_references(oidi.declarator_deps, tic);
-    if (oidi.get_initializer())
+    if (oidi.get_initializer() &&
+	oidi.get_initializer()->replacement.empty()) {
       _rewrite_references(oidi.get_initializer()->deps, tic);
+    }
     _d.append(std::move(tic));
     anything_emitted = true;
 
   }
 
   if (oi.externalize &&
-      (!only_if_renamed || oi.externalized_sym_mod.sym_mod.is_rename())) {
+      (!only_if_renamed || oi.externalized_sym_mod.sym_mod.is_rename() ||
+       forced_macro_rename)) {
     depreprocessor::transformed_input_chunk tic
       = _prepare_tic_for_decl(oidi, true, oidi.need_decl_type);
     _rewrite_references(di.declaration_specifiers_deps, tic);
@@ -9299,7 +9662,12 @@ bool _lp_writer::_emit(function_definition_info &fdi,
   bool anything_emitted = false;
 
   const function_info &fi = fdi.fi;
-  if (fdi.emit_orig_decl && !only_if_renamed) {
+  // Prototypes invoking any macro whose rename is forced get emitted
+  // in rewritten form even if provided from an included header.
+  const bool forced_macro_rename =
+    _ai.range_invokes_forced_macro_rename
+      (_function_definition_decl_range(fdi.function_definition));
+  if (fdi.emit_orig_decl && (!only_if_renamed || forced_macro_rename)) {
     assert(!(fi.externalize || fi.externalized_sym_mod.sym_mod.is_rename()));
     assert(!(fi.in_closure || fdi.is_patched) || fdi.sym_mod.is_rename());
     depreprocessor::transformed_input_chunk tic = _prepare_tic_for_decl(fdi);
@@ -9464,7 +9832,10 @@ bool _lp_writer::_emit(function_definition_info &fdi,
 		   oidi_in_fd_oi.externalized_sym_mod.make_pointer,
 		   id_tok_pos, tic);
 	      } else if (oidi_in_fd.get_initializer()) {
-		_rewrite_references(oidi_in_fd.get_initializer()->deps, tic);
+		if (!oidi_in_fd.get_initializer()->replacement.empty())
+		  _replace_initializer(oidi_in_fd, tic);
+		else
+		  _rewrite_references(oidi_in_fd.get_initializer()->deps, tic);
 	      }
 	    },
 	    [&](const typedef_init_declarator_info &tdidi) {
@@ -9570,7 +9941,8 @@ bool _lp_writer::_emit(function_definition_info &fdi,
 		    id.get_asl_after()},
 		   false, oidi_in_fd_oi.externalized_sym_mod.make_pointer,
 		   di_in_fd.declaration.get_tokens_range(), decl_tic);
-	      } else if (oidi_in_fd.get_initializer()) {
+	      } else if (oidi_in_fd.get_initializer() &&
+			 oidi_in_fd.get_initializer()->replacement.empty()) {
 		_rewrite_references(oidi_in_fd.get_initializer()->deps,
 				    decl_tic);
 	      }
@@ -9901,6 +10273,75 @@ _lp_writer::_prepare_tic_for_decl(function_init_declarator_info &fidi)
   return tic;
 }
 
+void _lp_writer::
+_insert_completed_array_length(const ast::init_declarator &id,
+			       depreprocessor::transformed_input_chunk &tic)
+{
+  const pp_tokens &toks = _ai.atu.get_pp_result().get_pp_tokens();
+  const ast::direct_declarator_id &ddid
+    = id.get_declarator().get_direct_declarator_id();
+
+  const types::array_type * const at =
+    (types::handle_types<const types::array_type*>
+     ((wrap_callables<default_action_return_value
+			<const types::array_type*, nullptr>::type>
+       ([](const types::array_type &_at) -> const types::array_type* {
+	  return &_at;
+	})),
+      *ddid.get_type()));
+  if (!at)
+    return;
+
+  assert(at->is_complete());
+
+  const ast::direct_declarator_array *dda = nullptr;
+  ddid.for_each_ancestor<type_set<ast::direct_declarator_array,
+				  ast::declarator,
+				  ast::direct_declarator_func>>
+    (wrap_callables<no_default_action>
+     ([&](const ast::direct_declarator_array &_dda) {
+	dda = &_dda;
+      },
+      [&](const ast::declarator&) {},
+      [&](const ast::direct_declarator_func&) {}));
+  if (dda && !dda->get_size()) {
+    std::string length = at->get_length().to_string(mpa::limb{10});
+    assert(dda->get_tokens_range().end);
+    const raw_pp_token_index insert_pos =
+      dda->get_tokens_range().end - 1;
+    assert(toks[insert_pos].is_punctuator("]"));
+    tic.insert_token(insert_pos,
+		     pp_token{
+		       pp_token::type::pp_number,
+		       std::move(length)
+		     },
+		     true, false);
+  }
+}
+
+void _lp_writer::
+_replace_initializer(const object_init_declarator_info &oidi,
+		     depreprocessor::transformed_input_chunk &tic)
+{
+  const initializer_info * const ii = oidi.get_initializer();
+  assert(ii && !ii->replacement.empty());
+  assert(ii->child_tags.empty());
+
+  const ast::init_declarator &id = oidi.init_declarator;
+  const pp_tokens_range initializer_range =
+    id.get_initializer()->get_tokens_range();
+  tic.purge_subrange(initializer_range, false);
+  tic.insert_token(initializer_range.begin,
+		   pp_token{
+		     pp_token::type::id,
+		     std::string{ii->replacement}
+		   },
+		   true, false);
+
+  // The original initializer might have completed an array type.
+  _insert_completed_array_length(id, tic);
+}
+
 depreprocessor::transformed_input_chunk
 _lp_writer::_prepare_tic_for_decl(object_init_declarator_info &oidi,
 				  const bool strip_initializer,
@@ -9937,46 +10378,11 @@ _lp_writer::_prepare_tic_for_decl(object_init_declarator_info &oidi,
       // The initializer's length might have completed an array type.
       // If so (and if it's needed), insert the length for the direct
       // array declarator's length expression.
-      if (need_decl_type) {
-	const ast::direct_declarator_id &ddid
-	  = id.get_declarator().get_direct_declarator_id();
+      if (need_decl_type)
+	_insert_completed_array_length(id, tic);
 
-	const types::array_type * const at =
-	  (types::handle_types<const types::array_type*>
-	   ((wrap_callables<default_action_return_value
-				<const types::array_type*, nullptr>::type>
-	     ([](const types::array_type &_at) -> const types::array_type* {
-		return &_at;
-	      })),
-	   *ddid.get_type()));
-	if (at) {
-	  assert(at->is_complete());
-
-	  const ast::direct_declarator_array *dda = nullptr;
-	  ddid.for_each_ancestor<type_set<ast::direct_declarator_array,
-					  ast::declarator,
-					  ast::direct_declarator_func>>
-	    (wrap_callables<no_default_action>
-	     ([&](const ast::direct_declarator_array &_dda) {
-		dda = &_dda;
-	      },
-	      [&](const ast::declarator&) {},
-	      [&](const ast::direct_declarator_func&) {}));
-	  if (dda && !dda->get_size()) {
-	    std::string length = at->get_length().to_string(mpa::limb{10});
-	    assert(dda->get_tokens_range().end);
-	    const raw_pp_token_index insert_pos =
-	      dda->get_tokens_range().end - 1;
-	    assert(toks[insert_pos].is_punctuator("]"));
-	    tic.insert_token(insert_pos,
-			     pp_token{
-			       pp_token::type::pp_number,
-			       std::move(length)
-			     },
-			     true, false);
-	  }
-	}
-      }
+    } else if (!ii->replacement.empty()) {
+      _replace_initializer(oidi, tic);
 
     } else {
       _handle_emitted_tags(ii->child_tags, tic);
@@ -10005,11 +10411,7 @@ _lp_writer::_prepare_tic_for_decl(function_definition_info &fdi)
 {
   const ast::function_definition &fd = fdi.function_definition;
 
-  const pp_tokens_range r{
-		fd.get_tokens_range().begin,
-		(!fd.get_asl() ? fd.get_declarator().get_tokens_range().end :
-		 fd.get_asl()->get_tokens_range().end)
-  };
+  const pp_tokens_range r = _function_definition_decl_range(fd);
   depreprocessor::transformed_input_chunk tic{r};
   tic.copy_subrange(r, false, _ai.atu.get_pp_result().get_pp_tokens());
   tic.insert_token(r.end,
@@ -10776,16 +11178,28 @@ _rewrite_references(const deps_on_funs &deps,
     const function_info &fi = d.get_function_info();
     const function_definition_info * const fdi = fi.get_function_definition();
     assert(fi.externalize || fi.in_closure || (fdi && fdi->is_patched));
-    if (d.externalize) {
-      assert(fi.externalize);
-      _apply_sym_mod_to_id_tok(fi.externalized_sym_mod.sym_mod,
-			       fi.externalized_sym_mod.make_pointer,
-			       d.from_eid.get_id_tok(),
-			       tic);
-    } else if (fdi) {
-      _apply_sym_mod_to_id_tok(fdi->sym_mod, false,
-			       d.from_eid.get_id_tok(),
-			       tic);
+    assert(!d.externalize || fi.externalize);
+    const lp_creation_policy::symbol_modification * const sym_mod =
+      _fun_ref_sym_mod(d);
+    const bool make_pointer =
+      d.externalize && fi.externalized_sym_mod.make_pointer;
+    if (_fun_ref_needs_forwarding_macro(d)) {
+      // Replace the reference by the forwarding macro's name.
+      assert(!fi.forwarding_macro.empty());
+      if (std::find(_used_forwarding_macros.begin(),
+		    _used_forwarding_macros.end(), &fi) ==
+	  _used_forwarding_macros.end()) {
+	_used_forwarding_macros.push_back(&fi);
+      }
+      _apply_sym_mod_to_id_tok
+	(lp_creation_policy::symbol_modification{
+	   std::string{fi.forwarding_macro},
+	   lp_creation_policy::symbol_modification::linkage_change::lc_none
+	 },
+	 make_pointer, d.from_eid.get_id_tok(), tic);
+    } else if (sym_mod) {
+      _apply_sym_mod_to_id_tok(*sym_mod, make_pointer,
+			       d.from_eid.get_id_tok(), tic);
     }
   }
 }
@@ -10813,9 +11227,76 @@ void klp::ccp::create_lp(const std::string &outfile,
   // functions and decide on externalizations.
   _closure_builder{ai, pol, remarks}();
 
+  // Resolve the names of the macros whose rename is forced by the
+  // policy. Functions of such a name get their references replaced
+  // by a forwarding macro.
+  {
+    const std::set<std::string> names = pol.get_forced_macro_renames(remarks);
+    const pp_result &ppr = atu.get_pp_result();
+    for (auto it_m = ppr.macros_begin(); it_m != ppr.macros_end(); ++it_m) {
+      if (it_m->is_builtin_special())
+	continue;
+      if (names.count(it_m->get_name()))
+	ai.forced_macro_renames.insert(&*it_m);
+    }
+
+    const pp_tokens &toks = ppr.get_pp_tokens();
+    for (auto it_fi = ai.functions_begin(); it_fi != ai.functions_end();
+	 ++it_fi) {
+      const pp_token_index id_tok =
+	it_fi->get_direct_declarator_id().get_id_tok();
+      if (names.count(toks[id_tok].get_value()))
+	it_fi->force_ref_rename = true;
+    }
+  }
+
   // Recursively rename rewritten resp. externalized functions and
   // objects.
   _symbol_modification_resolver{ai, pol, remarks}();
+
+  // Name the forwarding macros for functions whose rename is forced
+  // and some references to which can end up not being renamed
+  // otherwise.
+  for (auto it_fi = ai.functions_begin(); it_fi != ai.functions_end();
+       ++it_fi) {
+    if (!it_fi->force_ref_rename)
+      continue;
+
+    const function_definition_info * const fdi =
+      it_fi->get_function_definition();
+    const bool needed =
+      ((it_fi->externalize &&
+	!it_fi->externalized_sym_mod.sym_mod.is_rename()) ||
+       !(fdi && fdi->sym_mod.is_rename()));
+    if (!needed)
+      continue;
+
+    const ast::direct_declarator_id &ddid = it_fi->get_direct_declarator_id();
+    const pp_token_index id_tok = ddid.get_id_tok();
+    const pp_result &ppr = atu.get_pp_result();
+    std::string macro_name =
+      pol.rename_function_forwarding_macro(ddid, ai.get_allocated_ids(),
+					   remarks);
+    if (macro_name.empty() ||
+	macro_name == ppr.get_pp_tokens()[id_tok].get_value() ||
+	ai.get_allocated_ids().count(macro_name)) {
+      code_remark remark{
+	code_remark::severity::fatal,
+	("invalid name \"" + macro_name + "\" chosen by policy for"
+	 " forwarding macro of function \"" +
+	 ppr.get_pp_tokens()[id_tok].get_value() + "\""),
+	ppr, id_tok
+      };
+      remarks.add(remark);
+      throw lp_except(remark);
+    }
+    it_fi->forwarding_macro = macro_name;
+    ai.register_sym_mod
+      (lp_creation_policy::symbol_modification{
+	 std::move(macro_name),
+	 lp_creation_policy::symbol_modification::linkage_change::lc_none
+       });
+  }
 
   // Determine which of the headers from the original input
   // can be included from the live patch.
@@ -10829,8 +11310,21 @@ void klp::ccp::create_lp(const std::string &outfile,
   depreprocessor d{
     atu.get_pp_result(), pol,
     lp_creation_policy::allocated_ids_type{ai.get_allocated_ids()},
+    std::set<const pp_result::macro*>{ai.forced_macro_renames},
     remarks, output_remarks
   };
-  _lp_writer{ai, d, remarks}();
+  _lp_writer writer{ai, d, remarks};
+  writer();
+
+  // Define the forwarding macros actually referenced.
+  {
+    const pp_tokens &toks = atu.get_pp_result().get_pp_tokens();
+    for (const function_info * const fi : writer.get_used_forwarding_macros()) {
+      d.add_leading_macro_define
+	(fi->forwarding_macro,
+	 toks[fi->get_direct_declarator_id().get_id_tok()].get_value());
+    }
+  }
+
   d(outfile);
 }

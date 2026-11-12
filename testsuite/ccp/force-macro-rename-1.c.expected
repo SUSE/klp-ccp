@@ -1,0 +1,19 @@
+/* klp-ccp: from testsuite/ccp/force-macro-rename-1.c */
+#define KLPR_FR_A FR_A
+
+#define klpr_fr_a(x) fr_a(x)
+
+#define klpr_b klpr_fr_a(2)
+
+#define FR_A 1
+#define fr_a(x) ((x) + 1)
+
+#define c(x) x
+
+void klpp_pu_f(void)
+{
+	int i = KLPR_FR_A;
+	i += klpr_fr_a(i);
+	i += klpr_b;
+	i += c(klpr_fr_a(i));
+}

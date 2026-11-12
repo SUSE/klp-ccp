@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024  SUSE Software Solutions Germany GmbH
+# Copyright (C) 2024, 2026  SUSE Software Solutions Germany GmbH
 #
 # This file is part of klp-ccp.
 #
@@ -94,6 +94,18 @@ class LpCreationPolicyAbc(abc.ABC):
                                  declaration_loc):
         pass
 
+    # Queried for object definitions with an initializer which won't
+    # get externalized. Return an identifier to replace the whole
+    # initializer with, e.g. a common sentinel to be taken care of
+    # during post-processing, or None to retain it. The original
+    # initializer's dependencies won't get included in the live
+    # patch if replaced.
+    def get_obj_initializer_replacement(self,
+                                        object_name,
+                                        linkage,
+                                        declaration_loc):
+        return None
+
     @abc.abstractmethod
     def get_sym_mod_for_externalized_fun(self,
                                          function_name,
@@ -125,3 +137,19 @@ class LpCreationPolicyAbc(abc.ABC):
                                multiple,
                                allocated_ids):
         pass
+
+    # Names of macros whose invocations are all to get renamed in the
+    # live patch, even if their definitions wouldn't need any rewrite
+    # otherwise. The renamed definitions of otherwise unmodified
+    # macros forward to the original ones. Queried once.
+    def get_forced_macro_renames(self):
+        return []
+
+    # Name of a macro forwarding to a function whose rename is forced
+    # (c.f. get_forced_macro_renames()), but which isn't a macro:
+    # references to the function get replaced by the macro's name.
+    def rename_function_forwarding_macro(self,
+                                         function_name,
+                                         allocated_ids):
+        return self.rename_rewritten_macro(function_name, 0, False,
+                                           allocated_ids)
