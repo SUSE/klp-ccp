@@ -21,8 +21,6 @@
 
 #include <string>
 #include <memory>
-#include "raw_pp_tokens_range.hh"
-#include "pp_result.hh"
 
 namespace klp
 {
@@ -57,11 +55,9 @@ namespace klp
 	empty,
       };
 
-      pp_token(const type type, const std::string &value,
-	       const raw_pp_tokens_range &token_source);
+      pp_token(const type type, const std::string &value);
 
-      pp_token(const type type, std::string &&value,
-	       const raw_pp_tokens_range &token_source) noexcept;
+      pp_token(const type type, std::string &&value) noexcept;
 
       type get_type() const noexcept
       {
@@ -74,9 +70,6 @@ namespace klp
       }
 
       void set_type_and_value(const type type, const std::string &value);
-
-      const raw_pp_tokens_range& get_token_source() const noexcept
-      { return _token_source; }
 
       operator bool() const noexcept
       {
@@ -113,6 +106,11 @@ namespace klp
 	return is_type_any_of<type::eof>();
       }
 
+      bool is_empty() const noexcept
+      {
+	return is_type_any_of<type::empty>();
+      }
+
       static std::string stringify(const type type, const std::string &value);
 
       std::string stringify() const;
@@ -137,7 +135,6 @@ namespace klp
       };
 
       std::string _value;
-      raw_pp_tokens_range _token_source;
       type _type;
     };
 

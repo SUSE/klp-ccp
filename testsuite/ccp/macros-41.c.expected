@@ -1,0 +1,16 @@
+/* klp-ccp: from testsuite/ccp/macros-41.c */
+static int (*klpe_espr_i);
+static int (*klpe_espr_j);
+
+/* klp-ccp: not from file */
+#define KLPR_MULTI(x)			\
+	do {				\
+		x = 1;			\
+		(*klpe_espr_j) = 2;		\
+	} while (0)
+
+/* klp-ccp: from testsuite/ccp/macros-41.c */
+void klpp_pu_f(void)
+{
+	KLPR_MULTI((*klpe_espr_i));
+}

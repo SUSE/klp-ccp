@@ -117,3 +117,11 @@ class LpCreationPolicyAbc(abc.ABC):
                                          object_name,
                                          allocated_ids):
         pass
+
+    @abc.abstractmethod
+    def rename_rewritten_macro(self,
+                               macro_name,
+                               index,
+                               multiple,
+                               allocated_ids):
+        pass

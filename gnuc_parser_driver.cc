@@ -210,10 +210,10 @@ gnuc_parser_driver::lex(gnuc_parser::semantic_type *value,
 			gnuc_parser::location_type *loc)
 {
   const pp_tokens &tokens = _pp.get_result().get_pp_tokens();
-  pp_token_index last_index;
+  pp_token_index tok_index;
   do {
     try {
-      last_index = _pp.read_next_token();
+      tok_index = _pp.read_next_token();
     } catch (const pp_except&) {
       _grab_pp_remarks();
       throw;
@@ -224,16 +224,17 @@ gnuc_parser_driver::lex(gnuc_parser::semantic_type *value,
       _grab_pp_remarks();
       throw;
     }
-  } while (tokens.back().is_ws() ||
-	   tokens.back().is_newline() ||
-	   (tokens.back().is_id() &&
-	    tokens.back().get_value() == "__extension__"));
+  } while (tokens[tok_index].is_type_any_of<pp_token::type::ws,
+					    pp_token::type::empty,
+					    pp_token::type::newline>() ||
+	   (tokens[tok_index].is_id() &&
+	    tokens[tok_index].get_value() == "__extension__"));
   _grab_pp_remarks();
 
-  loc->end = last_index + 1;
-  loc->begin = last_index;
+  loc->end = tok_index + 1;
+  loc->begin = tok_index;
 
-  const pp_token &tok = tokens.back();
+  const pp_token &tok = tokens[tok_index];
   if (tok.is_eof()) {
     return static_cast<gnuc_parser::token_type>(0);
   }
@@ -304,12 +305,13 @@ gnuc_parser_driver::lex(gnuc_parser::semantic_type *value,
   case pp_token::type::punctuator:
     it_tok_type = punct_map.find(tok.get_value());
     if (it_tok_type == punct_map.cend()) {
-      const raw_pp_token_index tok_index = tok.get_token_source().begin;
+      const raw_pp_token_index raw_tok_index =
+	_pp.get_result().pp_token_index_to_raw(tok_index).begin;
       const raw_pp_token &raw_tok =
-	_pp.get_result().get_raw_tokens()[tok_index];
+	_pp.get_result().get_raw_tokens()[raw_tok_index];
       code_remark remark(code_remark::severity::fatal,
 			 "unrecognized preprocessor token (punctuator)",
-			 _pp.get_pending_token_source(tok_index),
+			 _pp.get_pending_token_source(raw_tok_index),
 			 raw_tok.get_range_in_file());
       _remarks.add(remark);
       throw pp_except(remark);
@@ -336,12 +338,13 @@ gnuc_parser_driver::lex(gnuc_parser::semantic_type *value,
 
   case pp_token::type::non_ws_char:
     {
-      const raw_pp_token_index tok_index = tok.get_token_source().begin;
+      const raw_pp_token_index raw_tok_index =
+	_pp.get_result().pp_token_index_to_raw(tok_index).begin;
       const raw_pp_token &raw_tok =
-	_pp.get_result().get_raw_tokens()[tok_index];
+	_pp.get_result().get_raw_tokens()[raw_tok_index];
       code_remark remark(code_remark::severity::fatal,
 			 "unrecognized preprocessor token (non-ws char)",
-			 _pp.get_pending_token_source(tok_index),
+			 _pp.get_pending_token_source(raw_tok_index),
 			 raw_tok.get_range_in_file());
       _remarks.add(remark);
       throw pp_except(remark);
@@ -357,22 +360,23 @@ void gnuc_parser_driver::error(const gnuc_parser::location_type& loc,
   assert(loc.end);
 
   const pp_token &tok = _pp.get_result().get_pp_tokens()[loc.begin];
-  const raw_pp_token_index tok_index = tok.get_token_source().begin;
+  const raw_pp_token_index raw_tok_index =
+    _pp.get_result().pp_token_index_to_raw(loc.begin).begin;
   const raw_pp_tokens &raw_toks = _pp.get_result().get_raw_tokens();
   range_in_file rif;
   if (!tok.is_eof()) {
-    assert(tok_index < raw_toks.size());
-    const raw_pp_token &raw_tok = raw_toks[tok_index];
+    assert(raw_tok_index < raw_toks.size());
+    const raw_pp_token &raw_tok = raw_toks[raw_tok_index];
     rif = raw_tok.get_range_in_file();
-  } else if (tok_index) {
-    const raw_pp_token &raw_last_tok = raw_toks[tok_index - 1];
+  } else if (raw_tok_index) {
+    const raw_pp_token &raw_last_tok = raw_toks[raw_tok_index - 1];
     rif = raw_last_tok.get_range_in_file();
     rif.begin = rif.end;
   } else {
     rif = range_in_file{0};
   }
   code_remark remark(code_remark::severity::fatal, msg,
-		     _pp.get_pending_token_source(tok_index),
+		     _pp.get_pending_token_source(raw_tok_index),
 		     rif);
   _remarks.add(remark);
   throw parse_except(remark);

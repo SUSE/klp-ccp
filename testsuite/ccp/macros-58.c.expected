@@ -1,0 +1,9 @@
+/* klp-ccp: from testsuite/ccp/macros-58.c */
+#define KLPR_ARR2(name, lb, rest) char name lb rest
+
+extern  KLPR_ARR2(espr_o, [, 4]);
+
+void klpp_pu_f(void)
+{
+	char s[sizeof(espr_o)];
+}

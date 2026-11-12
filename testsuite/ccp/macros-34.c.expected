@@ -1,0 +1,16 @@
+/* klp-ccp: from testsuite/ccp/macros-34.c */
+static int (*klpe_espr_i);
+
+static void klpr_g(void)
+{
+	(*klpe_espr_i) = 1;
+}
+
+/* klp-ccp: not from file */
+#define KLPR_CALL_G() klpr_g()
+
+/* klp-ccp: from testsuite/ccp/macros-34.c */
+void klpp_pu_f(void)
+{
+	KLPR_CALL_G();
+}

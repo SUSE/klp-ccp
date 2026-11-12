@@ -1,0 +1,10 @@
+/* klp-ccp: from testsuite/ccp/macros-69.c */
+#define SPARSE(p, space)
+#define CHECK(p) ({ typeof(*p) *q__ = p; SPARSE(p, x); q__; })
+
+static int *(*klpe_espr_a);
+
+int klpp_pu_f(void)
+{
+	return * CHECK((*klpe_espr_a));
+}

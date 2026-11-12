@@ -97,6 +97,13 @@ namespace klp
 				   const allocated_ids_type &allocated_ids,
 				   code_remarks &remarks) const override;
 
+      virtual std::string
+      rename_rewritten_macro(const pp_result::macro &m,
+			     const std::size_t index,
+			     const bool multiple,
+			     const allocated_ids_type &allocated_ids,
+			     code_remarks &remarks) const override;
+
       virtual externalized_symbol_modification
       get_sym_mod_for_externalized_obj(const ast::init_declarator &id,
 				       const allocated_ids_type &allocated_ids,

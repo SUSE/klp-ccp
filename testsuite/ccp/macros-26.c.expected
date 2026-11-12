@@ -1,7 +1,11 @@
 /* klp-ccp: from testsuite/ccp/macros-26.c */
 static int (*klpe_espr_i);
 
+/* klp-ccp: not from file */
+#define KLPR_FOO(x) "espr_i", x
+
+/* klp-ccp: from testsuite/ccp/macros-26.c */
 void klpp_pu_f(void)
 {
-	"espr_i", (*klpe_espr_i);
+	KLPR_FOO((*klpe_espr_i));
 }

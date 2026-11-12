@@ -1,0 +1,13 @@
+/* klp-ccp: from testsuite/ccp/macros-62.c */
+void klpp_pu_g(void)
+{
+}
+
+/* klp-ccp: not from file */
+#define KLPR_A(f) (klpp_##f(), ({ int f = 1; f; }))
+
+/* klp-ccp: from testsuite/ccp/macros-62.c */
+int klpp_pu_f(void)
+{
+	return KLPR_A(pu_g);
+}

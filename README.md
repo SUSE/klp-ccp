@@ -112,6 +112,21 @@ policies used for running the testcases, implemented in
 `testsuite/lib/ccp-toy-policy/`, or to a real one located in
 `examples/policies/suse/`.
 
+Besides the queries about functions, objects and headers, the policy
+also gets asked to name rewritten macro definitions through
+`rename_rewritten_macro(macro_name, index, multiple, allocated_ids)`:
+whenever some edit to the live patch source (like a renamed symbol or
+a dropped initializer) hits tokens produced by a macro invocation and
+that edit cannot be expressed by rewriting the invocation's arguments
+alone, klp-ccp emits a renamed copy of the macro definition with the
+edit applied and uses that in place of the original macro. `index` is
+the zero-based index among the rewritten variants of `macro_name` and
+`multiple` tells whether there is more than one such variant. The
+returned name must not clash with any macro or symbol name in the
+output, `allocated_ids` lists the symbol names handed out so far. The
+example policies prefix the name with `klpr_`, or `KLPR_` if the macro
+name is all upper-case or starts with an all upper-case word.
+
 ## Known issues and limitations
 - klp-ccp is largely untested
 - klp-cpp hasn't support for directly operating on diffs yet.

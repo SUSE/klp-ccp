@@ -1,0 +1,15 @@
+/* klp-ccp: from testsuite/ccp/macros-68.c */
+#define KLPR_DECL1(name, init) int name EMPTY
+
+#define EMPTY
+
+extern  KLPR_DECL1((*eep_a), 1);
+
+#define KLPR_DECL2(name, init) int name
+
+extern  KLPR_DECL2((*eep_b), 2);
+
+int klpp_pu_f(void)
+{
+	return (*eep_a) + (*eep_b);
+}

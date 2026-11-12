@@ -138,3 +138,19 @@ class LpCreationPolicy(LpCreationPolicyAbc):
 
         sym_mod = SymbolModification(new_name, linkage_change)
         return ExternalizedSymbolModification(sym_mod, make_pointer)
+
+    def rename_rewritten_macro(self,
+                               macro_name,
+                               index,
+                               multiple,
+                               allocated_ids):
+        # Match the macro's case: an all upper-case name or one
+        # starting with an all upper-case word gets an upper-case
+        # prefix.
+        prefix = 'klpr_'
+        first_word = next((w for w in macro_name.split('_') if w), '')
+        if first_word.isupper():
+            prefix = prefix.upper()
+        if multiple:
+            return prefix + macro_name + str(index)
+        return prefix + macro_name

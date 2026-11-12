@@ -1,0 +1,10 @@
+/* klp-ccp: from testsuite/ccp/macros-43.c */
+#define TWICE(x) x; x
+
+static int (*klpe_espr_i);
+static int (*klpe_espr_j);
+
+void klpp_pu_f(void)
+{
+	TWICE((*klpe_espr_i) = (*klpe_espr_j));
+}

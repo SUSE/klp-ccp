@@ -1,0 +1,21 @@
+/* klp-ccp: from testsuite/ccp/macros-49.c */
+static int (*klpe_espr_i);
+static int (*klpe_espr_j);
+
+static int g(int a, int b)
+{
+	return a + b;
+}
+
+/* klp-ccp: not from file */
+#define KLPR_A g((*klpe_espr_i),
+
+#define KLPR_B (*klpe_espr_j))
+
+#define KLPR_TOP KLPR_A KLPR_B
+
+/* klp-ccp: from testsuite/ccp/macros-49.c */
+int klpp_pu_f(void)
+{
+	return KLPR_TOP;
+}

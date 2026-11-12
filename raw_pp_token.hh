@@ -80,6 +80,11 @@ namespace klp
 	return is_type_any_of<pp_token::type::eof>();
       }
 
+      bool is_empty() const noexcept
+      {
+	return is_type_any_of<pp_token::type::empty>();
+      }
+
     private:
       template <pp_token::type... types>
       struct __is_type_any_of

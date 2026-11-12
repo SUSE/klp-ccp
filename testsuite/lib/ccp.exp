@@ -71,7 +71,9 @@ proc run_ccp {test} {
     }
 
     if { $should_fail && $value } {
+	# An expected error: there's no output to compare.
 	do_pass $is_xfailer "$test"
+	return
     } elseif { !$should_fail && $value } {
 	do_fail $is_xfailer "$test"
     }

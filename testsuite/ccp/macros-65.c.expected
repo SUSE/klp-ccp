@@ -1,0 +1,14 @@
+/* klp-ccp: from testsuite/ccp/macros-65.c */
+extern int klpe_eer_ab;
+extern int klpe_eer_cd;
+
+/* klp-ccp: not from file */
+#define klpr___concat(x, y) klpe_## x ## y
+
+#define klpr_concat(x, y) klpr___concat(x, y)
+
+/* klp-ccp: from testsuite/ccp/macros-65.c */
+int klpp_pu_f(void)
+{
+	return klpr_concat(eer_a, b) + klpr_concat(eer_c, d);
+}

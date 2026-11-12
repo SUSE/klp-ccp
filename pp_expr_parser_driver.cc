@@ -123,23 +123,23 @@ pp_expr_parser_driver::lex(pp_expr_parser::semantic_type *value,
 			   pp_expr_parser::location_type *loc)
 {
   pp_tokens &tokens = _pp_result.get_pp_tokens();
-  pp_token_index last_index;
+  pp_token_index tok_index;
   do {
     try {
-      last_index = _token_reader();
+      tok_index = _token_reader();
     } catch (const pp_except&) {
       throw;
     }
-  } while (tokens.back().is_type_any_of<pp_token::type::ws,
-					pp_token::type::empty,
-					pp_token::type::newline>() ||
-	   (tokens.back().is_id() &&
-	    tokens.back().get_value() == "__extension__"));
+  } while (tokens[tok_index].is_type_any_of<pp_token::type::ws,
+					    pp_token::type::empty,
+					    pp_token::type::newline>() ||
+	   (tokens[tok_index].is_id() &&
+	    tokens[tok_index].get_value() == "__extension__"));
 
-  loc->end = last_index + 1;
-  loc->begin = last_index;
+  loc->end = tok_index + 1;
+  loc->begin = tok_index;
 
-  pp_token &tok = tokens.back();
+  pp_token &tok = tokens[tok_index];
   if (tok.is_eof()) {
     return static_cast<pp_expr_parser::token_type>(0);
   }
@@ -180,12 +180,13 @@ pp_expr_parser_driver::lex(pp_expr_parser::semantic_type *value,
   case pp_token::type::punctuator:
     it_tok_type = punct_map.find(tok.get_value());
     if (it_tok_type == punct_map.cend()) {
-      const raw_pp_token_index tok_index = tok.get_token_source().begin;
+      const raw_pp_token_index raw_tok_index =
+	_pp_result.pp_token_index_to_raw(tok_index).begin;
       const raw_pp_token &raw_tok =
-	_pp_result.get_raw_tokens()[tok_index];
+	_pp_result.get_raw_tokens()[raw_tok_index];
       code_remark remark(code_remark::severity::fatal,
 			 "unrecognized preprocessor token (punctuator)",
-			 _pp_result.get_raw_token_source(tok_index),
+			 _pp_result.get_raw_token_source(raw_tok_index),
 			 raw_tok.get_range_in_file());
       _remarks.add(remark);
       throw pp_except(remark);
@@ -212,12 +213,13 @@ pp_expr_parser_driver::lex(pp_expr_parser::semantic_type *value,
 
   case pp_token::type::non_ws_char:
     {
-      const raw_pp_token_index tok_index = tok.get_token_source().begin;
+      const raw_pp_token_index raw_tok_index =
+	_pp_result.pp_token_index_to_raw(tok_index).begin;
       const raw_pp_token &raw_tok =
-	_pp_result.get_raw_tokens()[tok_index];
+	_pp_result.get_raw_tokens()[raw_tok_index];
       code_remark remark(code_remark::severity::fatal,
 			 "unrecognized preprocessor token (non-ws char)",
-			 _pp_result.get_raw_token_source(tok_index),
+			 _pp_result.get_raw_token_source(raw_tok_index),
 			 raw_tok.get_range_in_file());
       _remarks.add(remark);
       throw pp_except(remark);

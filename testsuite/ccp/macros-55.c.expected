@@ -1,0 +1,14 @@
+/* klp-ccp: from testsuite/ccp/macros-55.c */
+static int (*klpe_espr_i);
+static int (*klpe_espr_j);
+
+/* klp-ccp: not from file */
+#define KLPR_A(x) (({ int espr_i = 1; B(espr_i + (*klpe_espr_j) + 0, 1); }) + ({ int espr_j = 1; B((*klpe_espr_i) + espr_j + 0, 2); }))
+
+/* klp-ccp: from testsuite/ccp/macros-55.c */
+#define B(x, y) (x + y)
+
+int klpp_pu_f(void)
+{
+	return KLPR_A(FOO + BAZ + __COUNTER__);
+}

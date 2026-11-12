@@ -1,0 +1,9 @@
+/* klp-ccp: from testsuite/ccp/macros-57.c */
+#define ARR(name, dims, rest) char name dims rest
+
+extern  ARR(espr_o, [ 4, ]);
+
+void klpp_pu_f(void)
+{
+	char s[sizeof(espr_o)];
+}

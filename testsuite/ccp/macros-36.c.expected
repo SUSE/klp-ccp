@@ -1,0 +1,13 @@
+/* klp-ccp: from testsuite/ccp/macros-36.c */
+#define KLPR_DEFINE0(n) static int n
+
+KLPR_DEFINE0(eu_o);
+
+#define KLPR_DEFINE1(n) extern int n
+
+KLPR_DEFINE1(ee_q);
+
+void klpp_pu_f(void)
+{
+	eu_o = ee_q;
+}

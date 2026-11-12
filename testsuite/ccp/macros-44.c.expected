@@ -1,0 +1,17 @@
+/* klp-ccp: from testsuite/ccp/macros-44.c */
+static int (*klpe_espr_i);
+
+/* klp-ccp: not from file */
+#define klpr_read_once(x) (*(volatile typeof(x) *)(x)) + (*klpe_espr_i)
+
+#define KLPR_READ_once(x) (*(volatile typeof(x) *)(x)) + (*klpe_espr_i)
+
+#define KLPR___READ_once(x) (*(volatile typeof(x) *)(x)) + (*klpe_espr_i)
+
+/* klp-ccp: from testsuite/ccp/macros-44.c */
+void klpp_pu_f(void)
+{
+	klpr_read_once((*klpe_espr_i));
+	KLPR_READ_once((*klpe_espr_i));
+	KLPR___READ_once((*klpe_espr_i));
+}

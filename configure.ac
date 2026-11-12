@@ -3,7 +3,7 @@ AC_CONFIG_AUX_DIR([config])
 AM_INIT_AUTOMAKE([foreign])
 
 AC_PROG_CXX
-AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])
+AX_CXX_COMPILE_STDCXX_17([noext], [mandatory])
 AC_PROG_RANLIB
 
 AC_PROG_YACC

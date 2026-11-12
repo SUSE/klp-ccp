@@ -131,6 +131,17 @@ namespace klp
       get_sym_mod_for_externalized_obj(const ast::init_declarator &id,
 				       const allocated_ids_type &allocated_ids,
 				       code_remarks &remarks) const = 0;
+
+      // Choose a name for a rewritten definition of macro m. index is
+      // the zero-based index among all rewritten definitions for
+      // that macro, multiple tells whether or not there's more than
+      // one.
+      virtual std::string
+      rename_rewritten_macro(const pp_result::macro &m,
+			     const std::size_t index,
+			     const bool multiple,
+			     const allocated_ids_type &allocated_ids,
+			     code_remarks &remarks) const = 0;
     };
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  SUSE Software Solutions Germany GmbH
+ * Copyright (C) 2019-2022, 2024, 2026  SUSE Software Solutions Germany GmbH
  *
  * This file is part of klp-ccp.
  *
@@ -21,15 +21,59 @@
 
 #include <string>
 #include <map>
+#include <functional>
 #include "pp_result.hh"
+#include "macro_rewriting.hh"
+#include "lp_creation_policy.hh"
 
 namespace klp
 {
   namespace ccp
   {
-    class source_reader;
+    class source_reader_cache;
     class source_writer;
     class output_remarks;
+    class code_remarks;
+
+    // Reference to either an original macro definition or to a
+    // rewritten one from a rewritten_macro_definitions_pool.
+    class macro_ref
+    {
+    public:
+      macro_ref(const pp_result::macro &m) noexcept;
+      macro_ref(const rewritten_macro_definitions_pool &pool,
+		const rewritten_macro_definition_id id) noexcept;
+
+      bool operator==(const macro_ref &rhs) const noexcept;
+
+      bool operator!=(const macro_ref &rhs) const noexcept
+      { return !(*this == rhs); }
+
+      bool operator==(const pp_result::macro &rhs) const noexcept;
+
+      bool is_rewritten() const noexcept
+      { return _pool != nullptr; }
+
+      const pp_result::macro& get_original() const noexcept;
+
+      const rewritten_macro_definition& get_rewritten() const noexcept;
+
+      rewritten_macro_definition_id get_rewritten_id() const noexcept
+      { return _id; }
+
+      const rewritten_macro_definitions_pool& get_pool() const noexcept;
+
+      const std::string& get_name() const noexcept;
+
+      bool is_func_like() const noexcept;
+
+      bool is_predefined() const noexcept;
+
+    private:
+      const pp_result::macro *_m;
+      const rewritten_macro_definitions_pool *_pool;
+      rewritten_macro_definition_id _id;
+    };
 
     class depreprocessor
     {
@@ -52,23 +96,14 @@ namespace klp
 
       struct _macro_define_to_emit
       {
-	_macro_define_to_emit(const pp_result::macro &_m) noexcept;
+	_macro_define_to_emit(const macro_ref &_m) noexcept;
 
 	bool operator<(const _macro_define_to_emit& rhs) const noexcept;
 	bool operator<(const _macro_undef_to_emit& rhs) const noexcept;
 
 	raw_pp_tokens_range get_range_raw() const noexcept;
 
-	std::reference_wrapper<const pp_result::macro> m;
-      };
-
-      class _source_reader_cache
-      {
-      public:
-	source_reader& get(const pp_result::header_inclusion_node &h);
-
-      private:
-	std::vector<std::unique_ptr<source_reader>> _cache;
+	macro_ref m;
       };
 
       enum class _cond_incl_transition_kind
@@ -112,23 +147,6 @@ namespace klp
 	struct _op
 	{
 	public:
-	  enum class sticky_side
-	  {
-	    none,
-	    left,
-	    right,
-	  };
-
-	  struct replaced_macro_arg_tok
-	  {
-	    raw_pp_token_index arg_tok;
-	    pp_token new_tok;
-	    bool add_pointer_deref;
-	  };
-
-	  typedef std::vector<replaced_macro_arg_tok>
-		replaced_macro_arg_toks_type;
-
 	  _op(const pp_tokens_range &copied_range);
 	  _op(const pp_tokens_range &replaced_range,
 	      pp_token &&repl_tok, const bool _add_pointer_deref);
@@ -140,7 +158,7 @@ namespace klp
 	      const raw_pp_tokens_range &op_range_raw);
 	  _op(const pp_tokens_range &expanded_macro_range,
 	      const pp_result::macro_invocation *_rewritten_macro_invocation,
-	      replaced_macro_arg_toks_type &&_replaced_macro_arg_toks);
+	      const std::size_t _rewritten_mi);
 
 	  bool operator<(const pp_tokens_range &rhs) const noexcept;
 	  bool operator>(const pp_tokens_range &rhs) const noexcept;
@@ -170,7 +188,8 @@ namespace klp
 	  raw_pp_tokens_range cond_incl_op_range_raw;
 
 	  const pp_result::macro_invocation *rewritten_macro_invocation;
-	  replaced_macro_arg_toks_type replaced_macro_arg_toks;
+	  // Index into depreprocessor::_rewritten_mis.
+	  std::size_t rewritten_mi;
 	};
 
 	typedef std::vector<_op> _ops_type;
@@ -197,10 +216,10 @@ namespace klp
 	struct _used_macro_in_chunk
 	{
 	  _used_macro_in_chunk(const _pos_in_chunk &_pos,
-			       const pp_result::macro &_m) noexcept;
+			       const macro_ref &_m) noexcept;
 
 	  _pos_in_chunk pos;
-	  std::reference_wrapper<const pp_result::macro> m;
+	  macro_ref m;
 	};
 
 	typedef std::vector<_used_macro_in_chunk>
@@ -285,11 +304,15 @@ namespace klp
 		 const pp_result &pp_result);
 
 	bool _find_macro_constraints(const pp_result &pp_result,
+				     depreprocessor &d,
 				     bool next_raw_tok_is_opening_parenthesis);
+	void _remove_redundant_macro_constraints();
 
 	void
-	_try_rewrite_macro_arguments(const pp_result &pp_result,
-				     const pp_result::macro_invocation &mi);
+	_rewrite_macro_invocation(const pp_result &pp_result,
+				  const pp_result::macro_invocation &mi,
+				  depreprocessor &d,
+				  const bool next_raw_tok_after_chunk_is_lparen);
 
 	void _add_macro_undef_to_emit(const _pos_in_chunk &pos,
 				      _macro_undef_to_emit &&mu);
@@ -303,7 +326,8 @@ namespace klp
 	_write(source_writer &writer, _output_state &state,
 	       const bool write_newlines_before,
 	       const pp_result &pp_result,
-	       _source_reader_cache &source_reader_cache,
+	       const depreprocessor &d,
+	       source_reader_cache &source_reader_cache,
 	       output_remarks &remarks) const;
 
 	pp_tokens_range _bounding_r;
@@ -312,12 +336,14 @@ namespace klp
 	_used_macros_in_chunk_type _used_macros_in_chunk;
 	_macro_nondef_constraints_in_chunk_type
 	  _macro_nondef_constraints_in_chunk;
-	std::vector<pp_tokens_range> _ranges_to_emit_expanded;
 	_macro_undefs_to_emit_type _macro_undefs_to_emit;
 	_macro_defines_to_emit_type _macro_defines_to_emit;
       };
 
       depreprocessor(const pp_result &pp_result,
+		     const lp_creation_policy &pol,
+		     lp_creation_policy::allocated_ids_type &&allocated_ids,
+		     code_remarks &code_remarks,
 		     output_remarks &remarks);
 
       void append(transformed_input_chunk &&tic);
@@ -385,7 +411,11 @@ namespace klp
 	bool needs_undef_before_include(const pp_result::macro &m)
 	  const noexcept;
 
+	bool needs_undef_before_include(const macro_ref &m) const noexcept;
+
 	bool is_unmodified_by_include(const pp_result::macro &m) const noexcept;
+
+	bool is_unmodified_by_include(const macro_ref &m) const noexcept;
 
 	const_new_macro_define_iterator new_macro_defines_begin() const noexcept
 	{ return const_new_macro_define_iterator{_new_macro_defines.begin()}; }
@@ -405,7 +435,7 @@ namespace klp
 	void write(source_writer &writer, _output_state &state,
 		   const bool write_newlines_before,
 		   const pp_result &pp_result,
-		   _source_reader_cache &source_reader_cache,
+		   source_reader_cache &source_reader_cache,
 		   output_remarks &remarks) const;
 
       private:
@@ -459,7 +489,7 @@ namespace klp
 		   _output_state &state,
 		   const bool write_newlines_before,
 		   const pp_result &pp_result,
-		   _source_reader_cache &source_reader_cache,
+		   source_reader_cache &source_reader_cache,
 		   output_remarks &remarks) const;
 
       private:
@@ -537,10 +567,10 @@ namespace klp
 
       struct _macro_state
       {
-	_macro_state(const pp_result::macro &_m,
+	_macro_state(const macro_ref &_m,
 		     const _pos_in_output &_last_usage) noexcept;
 
-	std::reference_wrapper<const pp_result::macro> m;
+	macro_ref m;
 	_pos_in_output last_usage;
       };
 
@@ -571,13 +601,13 @@ namespace klp
 		       const _pos_in_output &mnc_pos,
 		       const _in_order_chunks_type &in_order_chunks,
 		       const _chunks_type::iterator &cur_run_begin);
-      void _emit_define(const pp_result::macro &m,
+      void _emit_define(const macro_ref &m,
 			const _pos_in_output &um_pos,
 			const _in_order_chunks_type &in_order_chunks,
 			const _chunks_type::iterator &cur_run_begin,
 			const _macro_state * const conflicting_macro_state);
       bool _can_place_define_at
-		(const pp_result::macro &m,
+		(const macro_ref &m,
 		 const _pos_in_output &placement_pos,
 		 const _pos_in_output &um_pos,
 		 const _macro_state * const conflicting_macro_state) noexcept;
@@ -592,7 +622,7 @@ namespace klp
 	noexcept;
 
       _pos_in_output _find_macro_define_in_order_pos
-				(const pp_result::macro &m,
+				(const macro_ref &m,
 				 const _in_order_chunks_type &in_order_chunks)
 	noexcept;
 
@@ -608,7 +638,7 @@ namespace klp
 	noexcept;
 
       _pos_in_output
-      _find_macro_define_in_run_pos(const pp_result::macro &m,
+      _find_macro_define_in_run_pos(const macro_ref &m,
 				    const _chunks_type::iterator &run_begin,
 				    const _chunks_type::iterator &run_end)
 	noexcept;
@@ -631,23 +661,23 @@ namespace klp
 				  const raw_pp_token_index next_begin_raw,
 				  const bool need_newline,
 				  const pp_result &pp_result,
-				  _source_reader_cache &source_reader_cache);
+				  source_reader_cache &source_reader_cache);
 
       static void _write_directive(source_writer &writer, _output_state &state,
 				   const raw_pp_tokens_range &directive_range,
 				   const pp_result &pp_result,
-				   _source_reader_cache &source_reader_cache);
+				   source_reader_cache &source_reader_cache);
       static void _write_define(source_writer &writer, _output_state &state,
 				const _macro_define_to_emit &md,
 				const bool write_newlines_before,
 				const pp_result &pp_result,
-				_source_reader_cache &source_reader_cache,
+				source_reader_cache &source_reader_cache,
 				output_remarks &remarks);
       static void _write_undef(source_writer &writer, _output_state &state,
 			       const _macro_undef_to_emit &mu,
 			       const bool write_newlines_before,
 			       const pp_result &pp_result,
-			       _source_reader_cache &source_reader_cache);
+			       source_reader_cache &source_reader_cache);
 
       static void
       _write_defines_and_undefs(source_writer &writer, _output_state &state,
@@ -655,7 +685,7 @@ namespace klp
 				const std::vector<_macro_undef_to_emit> &mus,
 				const bool write_newlines_before,
 				const pp_result &pp_result,
-				_source_reader_cache &source_reader_cache,
+				source_reader_cache &source_reader_cache,
 				output_remarks &remarks);
 
       typedef std::vector
@@ -693,15 +723,30 @@ namespace klp
 		 const _cond_incl_transition_kind k,
 		 const bool write_newlines_before,
 		 const pp_result &pp_result,
-		 _source_reader_cache &source_reader_cache,
+		 source_reader_cache &source_reader_cache,
 		 output_remarks &remarks);
 
       const pp_result &_pp_result;
+      const lp_creation_policy &_pol;
+      lp_creation_policy::allocated_ids_type _allocated_ids;
+      code_remarks &_code_remarks;
       _chunks_type _chunks;
       output_remarks &_remarks;
 
       _cond_incl_stack_type _cond_incl_stack;
+
+      // Macro rewriting state: all macro names known to the pp_result,
+      // mapping to whether or not there's any function-like definition.
+      std::map<std::string, bool> _macro_ids;
+      rewritten_macro_definitions_pool _rewritten_macro_defs;
+      std::vector<rewritten_macro_invocation> _rewritten_mis;
     };
+
+    void
+    emit_normalized_tokens(const pp_tokens &tokens,
+			   const pp_token_index begin,
+			   const pp_token_index end,
+			   const std::function<void(const std::string&)> &emit);
   }
 }
 

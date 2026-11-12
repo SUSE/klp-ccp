@@ -57,13 +57,21 @@ namespace klp
 	virtual pp_except report_fatal(const std::string &msg,
 				       const range_in_file::loc_type loc) = 0;
 
-	char _read_next_char_raw();
+	void _refill_buf();
+	void _refill_queue_half(const bool odd_half);
+	void _advance_queue_to_pos(const unsigned int new_queue_pos);
+	unsigned int _cur_queue_window_end_pos_wrap() const noexcept;
+	unsigned int _cur_queue_window_end_pos_nowrap() const noexcept;
+	unsigned int
+	_cur_queue_window_end_pos_nowrap(unsigned int search_begin_pos)
+	  const noexcept;
 
-	char _read_next_char(range_in_file::loc_type &loc);
-	void _advance_to_next_char();
-	void _skip_next_char();
+	unsigned int _next_queued_non_continuation_pos(unsigned int pos)
+	  const noexcept;
+	bool _at_eof() const noexcept;
 
-	raw_pp_token _tokenize_string(const char delim,
+	raw_pp_token _tokenize_string(const range_in_file::loc_type begin_loc,
+				      const char delim,
 				      const bool delim_escapable,
 				      const pp_token::type tok_type);
 	raw_pp_token _tokenize_punctuator();
@@ -77,10 +85,6 @@ namespace klp
 	buffer_type::const_iterator _buf_it;
 
 	range_in_file::loc_type _line_length;
-	range_in_file::loc_type _cur_loc;
-	range_in_file::loc_type _next_loc;
-	range_in_file::loc_type _next_next_loc;
-	range_in_file::loc_type _tok_loc;
 	enum class expect_qh_str
 	{
 	  no,
@@ -90,10 +94,22 @@ namespace klp
 	};
 	expect_qh_str _expect_qh_str;
 
-	char _pending;
-	char _cur;
-	char _next;
-	char _next_next;
+	char _pending[2];
+	// Only five look-ahead characters are needed (three "real"
+	// characters, interspersed with up to two continuation line
+	// markers (encoded as zero) inbetween, but a power of two
+	// enables more efficient ring buffer index wrapround.
+	// Make the queue at least twice as large as the next power of
+	// two, to enable batched refill whenever crossing into the
+	// other half.
+	// Two (or more) consecutive zeroes encode EOF.
+	static constexpr unsigned int _queue_capacity_log2 = 5;
+	static constexpr unsigned int _queue_capacity =
+	  1u << _queue_capacity_log2;
+	char _queue[_queue_capacity];
+	range_in_file::loc_type _queue_locs[_queue_capacity];
+	range_in_file::loc_type _next_queue_loc;
+	unsigned int _queue_pos;
       };
     }
 

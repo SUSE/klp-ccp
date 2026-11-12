@@ -1,0 +1,9 @@
+/* klp-ccp: from testsuite/ccp/macros-38.c */
+#define KLPR_DECLS(t) t b
+
+KLPR_DECLS(int);
+
+void klpp_pu_f(void)
+{
+	b = 1;
+}

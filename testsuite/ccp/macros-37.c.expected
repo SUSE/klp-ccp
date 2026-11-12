@@ -1,0 +1,13 @@
+/* klp-ccp: from testsuite/ccp/macros-37.c */
+static int (*klpe_espr_i);
+
+/* klp-ccp: not from file */
+#define KLPR_B (*klpe_espr_i)
+
+#define KLPR_A KLPR_B + 1
+
+/* klp-ccp: from testsuite/ccp/macros-37.c */
+void klpp_pu_f(void)
+{
+	int x = KLPR_A;
+}

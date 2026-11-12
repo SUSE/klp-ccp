@@ -740,6 +740,23 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
             allocated_ids
         )
 
+    def rename_rewritten_macro(self,
+                               macro_name,
+                               index,
+                               multiple,
+                               allocated_ids):
+        # Match the macro's case: an all upper-case name or one
+        # starting with an all upper-case word gets an upper-case
+        # prefix.
+        prefix = self._cfg_sym_rename_prefix + 'r_'
+        first_word = next((w for w in macro_name.split('_') if w), '')
+        if first_word.isupper():
+            prefix = prefix.upper()
+        name = prefix + macro_name
+        if multiple:
+            name += str(index)
+        return self._gen_unique_rename(name, allocated_ids)
+
     def get_sym_mod_for_externalized_obj(self,
                                          object_name,
                                          allocated_ids):

@@ -6,9 +6,13 @@
 #error "klp-ccp: non-taken branch"
 #elif defined(FOO)
 
+/* klp-ccp: not from file */
+#define KLPR_EXTERN_VOID static void
+
+/* klp-ccp: from testsuite/ccp/macros-20.h */
 #define G g
 
-static void G(void);
+KLPR_EXTERN_VOID G(void);
 
 #else
 #error "klp-ccp: a preceeding branch should have been taken"

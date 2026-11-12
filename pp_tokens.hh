@@ -43,6 +43,8 @@ namespace klp
       pp_tokens(const pp_tokens&) = delete;
       pp_tokens(pp_tokens&&) = default;
 
+      pp_tokens& operator=(pp_tokens &&rhs) noexcept = default;
+
       typedef _pp_tokens_type::const_iterator const_iterator;
       typedef _pp_tokens_type::iterator iterator;
       typedef _pp_tokens_type::reverse_iterator reverse_iterator;
@@ -112,6 +114,9 @@ namespace klp
       }
 
       const pp_token& operator[](const _pp_tokens_type::size_type i) const
+      { return _tokens[i]; }
+
+      pp_token& operator[](const _pp_tokens_type::size_type i)
       { return _tokens[i]; }
 
       std::string stringify(const bool as_string) const;

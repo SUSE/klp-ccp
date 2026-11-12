@@ -1,0 +1,16 @@
+/* klp-ccp: from testsuite/ccp/macros-66.c */
+static int (*klpe_espr_ab);
+static int (*klpe_espr_cd);
+
+/* klp-ccp: not from file */
+#define klpr___concat(x, y) (*klpe_## x ## y)
+
+#define klpr_concat(x, y) klpr___concat(x, y)
+
+#define KLPR_PFX(y) (*klpe_## espr_ ## y)
+
+/* klp-ccp: from testsuite/ccp/macros-66.c */
+int klpp_pu_f(void)
+{
+	return klpr_concat(espr_a, b) + klpr_concat(espr_c, d) + KLPR_PFX(ab) + KLPR_PFX(cd);
+}

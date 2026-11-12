@@ -1,9 +1,16 @@
 /* klp-ccp: from testsuite/ccp/macros-12.c */
+#define KLPR_G() (*klpe_espr_g)
+
+#define KLPR_EXTERN static
+
 #define VOID void
 
-static VOID (*klpe_espr_g)(void);
+#define A()
+#define B()
+
+KLPR_EXTERN VOID KLPR_G()(void);
 
 void klpp_pu_f(void)
 {
-	(*klpe_espr_g)();
+	A() KLPR_G()B()();
 }

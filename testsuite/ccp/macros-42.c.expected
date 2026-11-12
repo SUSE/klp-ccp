@@ -1,0 +1,13 @@
+/* klp-ccp: from testsuite/ccp/macros-42.c */
+int printk(const char *fmt, ...);
+static int (*klpe_espr_i);
+
+/* klp-ccp: not from file */
+#define KLPR_LOG(fmt, ...) printk(fmt, (*klpe_espr_i), ##__VA_ARGS__)
+
+/* klp-ccp: from testsuite/ccp/macros-42.c */
+void klpp_pu_f(void)
+{
+	KLPR_LOG("x %d", (*klpe_espr_i));
+	KLPR_LOG("y");
+}

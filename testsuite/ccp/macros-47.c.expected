@@ -1,0 +1,23 @@
+/* klp-ccp: from testsuite/ccp/macros-47.c */
+struct s { int X; };
+struct s X_s;
+static int (*klpe_espr_i);
+
+#define KLPR_X2 (
+
+#define KLPR_X1 (*klpe_espr_i) + X_s.X)
+
+#define KLPR_X0 espr_i + X_s.X)
+
+#define KLPR_TWICE(y)			\
+	y KLPR_X1;				\
+	{				\
+		int espr_i;		\
+		y KLPR_X0;			\
+	}
+
+void klpp_pu_f(void)
+{
+	int a;
+	KLPR_TWICE(a = KLPR_X2);
+}

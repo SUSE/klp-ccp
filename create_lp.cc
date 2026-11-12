@@ -9365,8 +9365,7 @@ void _lp_writer::_emit_tags(tags_infos &tags,
 	    tic.insert_token(r.end,
 			     pp_token{
 			       pp_token::type::punctuator,
-			       ";",
-			       raw_pp_tokens_range{}
+			       ";"
 			     },
 			     false, false);
 	  }
@@ -9403,8 +9402,7 @@ void _lp_writer::_emit_tags(tags_infos &tags,
 	    tic.insert_token(r.end,
 			     pp_token{
 			       pp_token::type::punctuator,
-			       ";",
-			       raw_pp_tokens_range{}
+			       ";"
 			     },
 			     false, false);
 	  }
@@ -9428,8 +9426,7 @@ void _lp_writer::_emit_tags(tags_infos &tags,
 	    tic.insert_token(r.end,
 			     pp_token{
 			       pp_token::type::punctuator,
-			       ";",
-			       raw_pp_tokens_range{}
+			       ";"
 			     },
 			     false, false);
 	  }
@@ -9454,8 +9451,7 @@ void _lp_writer::_emit_tags(tags_infos &tags,
 	    tic.insert_token(r.end,
 			     pp_token{
 			       pp_token::type::punctuator,
-			       ";",
-			       raw_pp_tokens_range{}
+			       ";"
 			     },
 			     false, false);
 	  }
@@ -9492,8 +9488,7 @@ void _lp_writer::_emit_tags(tags_infos &tags,
 	    tic.insert_token(r.end,
 			     pp_token{
 			       pp_token::type::punctuator,
-			       ";",
-			       raw_pp_tokens_range{}
+			       ";"
 			     },
 			     false, false);
 	  }
@@ -9517,8 +9512,7 @@ void _lp_writer::_emit_tags(tags_infos &tags,
 	    tic.insert_token(r.end,
 			     pp_token{
 			       pp_token::type::punctuator,
-			       ";",
-			       raw_pp_tokens_range{}
+			       ";"
 			     },
 			     false, false);
 	  }
@@ -9639,8 +9633,7 @@ _lp_writer::_prepare_tic_for_decl(object_init_declarator_info &oidi,
 	    tic.insert_token(insert_pos,
 			     pp_token{
 			       pp_token::type::pp_number,
-			       std::move(length),
-			       raw_pp_tokens_range{},
+			       std::move(length)
 			     },
 			     true, false);
 	  }
@@ -9684,8 +9677,7 @@ _lp_writer::_prepare_tic_for_decl(function_definition_info &fdi)
   tic.insert_token(r.end,
 		   pp_token{
 		     pp_token::type::punctuator,
-		     ";",
-		     raw_pp_tokens_range{}
+		     ";"
 		   },
 		   false, false);
 
@@ -9727,8 +9719,7 @@ _apply_sym_mod_to_id_tok(const lp_creation_policy::symbol_modification &sym_mod,
     tic.replace_token(id_tok_pos,
 		      pp_token{
 			pp_token::type::id,
-			sym_mod.new_name,
-			raw_pp_tokens_range{},
+			sym_mod.new_name
 		      },
 		      make_pointer);
   } else if (make_pointer) {
@@ -9833,8 +9824,7 @@ _set_storage_class(const ast::declaration_specifiers &ds,
 	tic.replace_token(r.begin,
 			  pp_token{
 			    pp_token::type::id,
-			    "extern",
-			    raw_pp_tokens_range{}
+			    "extern"
 			  },
 			  false);
       }
@@ -9847,8 +9837,7 @@ _set_storage_class(const ast::declaration_specifiers &ds,
 	tic.replace_token(r.begin,
 			  pp_token{
 			    pp_token::type::id,
-			    "static",
-			    raw_pp_tokens_range{}
+			    "static"
 			  },
 			  false);
       }
@@ -9873,8 +9862,7 @@ _set_storage_class(const ast::declaration_specifiers &ds,
       tic.insert_token(ds.get_tokens_range().begin,
 		       pp_token{
 			 pp_token::type::id,
-			 "extern",
-			 raw_pp_tokens_range{}
+			 "extern"
 		       },
 		       false, true);
       break;
@@ -9883,8 +9871,7 @@ _set_storage_class(const ast::declaration_specifiers &ds,
       tic.insert_token(ds.get_tokens_range().begin,
 		       pp_token{
 			 pp_token::type::id,
-			 "static",
-			 raw_pp_tokens_range{}
+			 "static"
 		       },
 		       false, true);
       break;
@@ -10054,7 +10041,11 @@ void klp::ccp::create_lp(const std::string &outfile,
   _lp_deps_resolver{ai, pol, remarks}();
 
   // Write the live patch.
-  depreprocessor d{atu.get_pp_result(), output_remarks};
+  depreprocessor d{
+    atu.get_pp_result(), pol,
+    lp_creation_policy::allocated_ids_type{ai.get_allocated_ids()},
+    remarks, output_remarks
+  };
   _lp_writer{ai, d}();
   d(outfile);
 }

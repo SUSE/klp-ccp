@@ -1,0 +1,25 @@
+/* klp-ccp: from testsuite/ccp/macros-56.c */
+static int (*klpe_espr_i);
+static int (*klpe_espr_j);
+static int (*klpe_espr_k);
+
+/* klp-ccp: not from file */
+#define KLPR_B(x) (({ int espr_i = 1; x; }) + ({ int espr_j = 1; (*klpe_espr_i) + espr_j + (*klpe_espr_k); }))
+
+#define KLPR_BAZ (*klpe_espr_j)
+
+#define KLPR_QUX (*klpe_espr_k)
+
+#define KLPR_FOO (*klpe_espr_i)
+
+#define KLPR_A(x) (KLPR_B(x) + ({ int espr_k = 1; KLPR_FOO + KLPR_BAZ + QUX; }))
+
+/* klp-ccp: from testsuite/ccp/macros-56.c */
+#define FOO espr_i
+
+#define QUX espr_k
+
+int klpp_pu_f(void)
+{
+	return KLPR_A(FOO + KLPR_BAZ + KLPR_QUX);
+}

@@ -1,0 +1,9 @@
+/* klp-ccp: from testsuite/ccp/macros-33.c */
+#define KLPR_DEFINE_FOO(name) int name
+
+static  KLPR_DEFINE_FOO((*klpe_espr_o));
+
+void klpp_pu_f(void)
+{
+	(*klpe_espr_o) = 1;
+}

@@ -1,0 +1,14 @@
+/* klp-ccp: from testsuite/ccp/macros-48.c */
+#define KLPR_SIG(n) static void n(void)
+
+KLPR_SIG(g)
+{
+}
+
+#include "macros-48.h"
+
+void klpp_pu_f(void)
+{
+	g();
+	h();
+}

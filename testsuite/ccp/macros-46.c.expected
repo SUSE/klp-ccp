@@ -1,0 +1,24 @@
+/* klp-ccp: from testsuite/ccp/macros-46.c */
+struct s { int X; };
+struct s X_s;
+static int (*klpe_espr_i);
+
+#define KLPR_X1 ((*klpe_espr_i) + X_s.X)
+
+#define KLPR_X0 (espr_i + X_s.X)
+
+#define KLPR_TOP(v)					\
+	int a = KLPR_X1;				\
+	{					\
+		int espr_i = v;			\
+		int b = ID(KLPR_X0) + a;		\
+		const char *c = S(X);		\
+	}
+
+#define ID(y) y
+#define S(y) #y
+
+void klpp_pu_f(void)
+{
+	KLPR_TOP(1);
+}

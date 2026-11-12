@@ -1364,6 +1364,80 @@ rename_rewritten_closure_fun(const ast::function_definition &fd,
   return new_name;
 }
 
+std::string lp_creation_python_policy::
+rename_rewritten_macro(const pp_result::macro &m,
+		       const std::size_t index,
+		       const bool multiple,
+		       const allocated_ids_type &allocated_ids,
+		       code_remarks &remarks) const
+{
+  const auto &instantiate_remark =
+    [&](const code_remark::severity severity,
+	std::string &&e) {
+      if (!m.is_predefined()) {
+	return code_remark{
+	  severity,
+	  std::move(e),
+	  _pp_result,
+	  m.get_directive_range(),
+	};
+      } else {
+	return code_remark{
+	  severity,
+	  std::move(e),
+	  _pp_result,
+	  raw_pp_tokens_range{0, 0},
+	};
+      }
+    };
+
+  PyObject *wrapped_allocated_ids = _d->wrap_allocated_ids(allocated_ids);
+  PyObject *py_multiple = multiple ? Py_True : Py_False;
+  Py_INCREF(py_multiple);
+  PyObject *r =
+    PyObject_CallMethod(_d->pol_obj, "rename_rewritten_macro",
+			"snOO",
+			m.get_name().c_str(),
+			static_cast<Py_ssize_t>(index),
+			py_multiple,
+			wrapped_allocated_ids);
+  Py_DECREF(py_multiple);
+  (reinterpret_cast<struct allocated_ids *>
+   (wrapped_allocated_ids))
+    ->_wrapped_ids = nullptr;
+  Py_DECREF(wrapped_allocated_ids);
+
+  r = _d->unwrap_py_lp_creation_policy_call_result(r, instantiate_remark,
+						   remarks);
+  assert(r != nullptr);
+  if (!PyUnicode_Check(r)) {
+    Py_DECREF(r);
+    throw python_except {
+      ("expected string result from python"
+       " \"LpCreationPolicyAbc.rename_rewritten_macro()\""
+       " policy implementation")
+    };
+  }
+  const char *pnew_name = PyUnicode_AsUTF8(r);
+  if (!pnew_name) {
+    Py_DECREF(r);
+    throw python_except {
+      ("couldn't obtain string value from result returned by"
+       " \"LpCreationPolicyAbc.rename_rewritten_macro()\""
+       " policy implementation")
+    };
+  }
+  std::string new_name;
+  try {
+    new_name = pnew_name;
+    Py_DECREF(r);
+  } catch (...) {
+    Py_DECREF(r);
+    throw;
+  }
+  return new_name;
+}
+
 lp_creation_python_policy::externalized_symbol_modification
 lp_creation_python_policy::
 get_sym_mod_for_externalized_obj(const ast::init_declarator &id,

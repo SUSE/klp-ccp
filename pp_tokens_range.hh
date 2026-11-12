@@ -54,6 +54,9 @@ namespace klp
       bool operator<(const pp_tokens_range &op) const noexcept
       { return this->end <= op.begin; }
 
+      std::size_t length() const noexcept
+      { return this->end - this->begin; }
+
       bool is_contained_in(const pp_tokens_range &r) const noexcept
       { return this->begin >= r.begin && this->end <= r.end; }
 
