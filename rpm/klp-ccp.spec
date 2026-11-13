@@ -1,7 +1,7 @@
 
 Name:		klp-ccp
 Version:	0.0.1
-Release:	14
+Release:	15
 Summary:	SUSE klp-ccp
 License:	GPL-2.0
 Group:		Development/Tools/Building
