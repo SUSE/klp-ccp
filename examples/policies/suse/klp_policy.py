@@ -177,22 +177,51 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
             for (f, optimized) in spawns.items():
                 if not optimized:
                     patched.add(f)
-                else:
+                elif self._sym_has_fun_def_in_elf(f):
+                    # Note this match is by name only. In a linked
+                    # multi-TU object two distinct base functions can
+                    # each spawn an identically suffixed clone (e.g.
+                    # foo.constprop.0): if ours was dropped but the
+                    # other TU's survived, the surviving symbol is
+                    # matched here and we over-warn. That's harmless,
+                    # as f is not added to patched regardless;
+                    # disambiguating would need debug info to correlate
+                    # the symbol with its defining TU, which the symtab
+                    # doesn't carry.
                     print('warning: optimized function \"' +
                           f +'\" in callgraph', file=sys.stderr)
+                # else: the optimized clone has no function definition
+                # symbol in the object. It must have been dropped after
+                # the IPA clones dump was written, so don't warn about
+                # it.
 
         return patched
+
+    def _sym_has_fun_def_in_elf(self, name):
+        # Report whether name has a function definition symbol in the
+        # patched object.
+        elf_syms = self._patched_obj_elf.elf_syms.get(name)
+        if not elf_syms:
+            return False
+        for s in elf_syms:
+            is_fun_def = self._elf_sym_is_fun_def_sym(s)
+            if isinstance(is_fun_def, tuple):
+                # (False, warning) error case. This helper runs at policy
+                # construction time, where there's no warnings channel back
+                # to the framework, so surface a critical warning by raising.
+                is_fun_def, warning = is_fun_def
+                if warning._critical:
+                    raise ccp.LpCreationPolicyError(warning._msg, [warning])
+            if is_fun_def:
+                return True
+        return False
 
     def _get_patched_funcs(self, funcs):
         patched = set()
         for f in funcs:
             # Filter out fully inlined functions and return only
             # those with a corresponding symbol in the obj.
-            elf_syms = self._patched_obj_elf.elf_syms.get(f)
-            if not elf_syms:
-                continue
-            in_elf = any([self._elf_sym_is_fun_def_sym(s) for s in elf_syms])
-            if not in_elf:
+            if not self._sym_has_fun_def_in_elf(f):
                 continue
 
             # If there's one or more symbols use the IPA to catch
@@ -364,7 +393,7 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
         for elf_sym in elf_syms:
             is_fun_def = self._elf_sym_is_fun_def_sym(elf_sym)
             if isinstance(is_fun_def, tuple):
-                warnings += is_fun_def[1]
+                warnings.append(is_fun_def[1])
                 is_fun_def = is_fun_def[0]
             if is_fun_def:
                 any_is_fun_def = True
