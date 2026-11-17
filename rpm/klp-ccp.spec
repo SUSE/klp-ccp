@@ -22,7 +22,9 @@ BuildRequires:	pkgconfig
 
 %description
 The SUSE klp-ccp utility to aid the kernel livepatch creation process
-with source code extraction related tasks.
+with source code extraction related tasks. Also includes klp-cpp-merge
+for merging klp-ccp's outputs for different architectures into a
+single source file.
 
 
 %prep
@@ -56,6 +58,7 @@ done
 
 %files
 %{_bindir}/klp-ccp
+%{_bindir}/klp-cpp-merge
 %dir %{_libdir}/klp-ccp
 %dir %{_libdir}/klp-ccp/lp-creation-python-policy
 %{_libdir}/klp-ccp/lp-creation-python-policy/ccp.py
