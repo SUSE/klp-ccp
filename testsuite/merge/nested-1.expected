@@ -1,0 +1,12 @@
+int f(void)
+{
+#ifdef X
+	a();
+#if defined(A)
+	b0();
+#elif defined(B)
+	b1();
+#endif
+#endif
+	c();
+}

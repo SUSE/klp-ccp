@@ -1,0 +1,9 @@
+#if foo
+#if defined(A)
+bar0
+#elif defined(B)
+bar1
+#endif
+#else
+baz
+#endif

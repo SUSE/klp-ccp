@@ -1,0 +1,22 @@
+x
+#if 1 + /*
+         blah
+        */ 1
+A
+#else
+B
+#endif
+#if defined(A)
+#define M(a) \
+	(a + 1)
+/* a
+ * b0
+ */
+#elif defined(B)
+#define M(a) \
+	(a + 2)
+/* a
+ * b1
+ */
+#endif
+y

@@ -1,5 +1,7 @@
 SUBDIRS = target . examples lp-creation-python-policy testsuite
 
+AUTOMAKE_OPTIONS = subdir-objects
+
 AM_YFLAGS = -d
 BUILT_SOURCES = gnuc_parser.hh pp_expr_parser.hh stack.hh
 EXTRA_DIST = COPYING stack.hh
@@ -43,6 +45,7 @@ noinst_HEADERS =				\
 	pp_tokenizer.hh			\
 	preprocessor.hh			\
 	range_in_file.hh			\
+	raw_pp_directive.hh			\
 	raw_pp_token.hh			\
 	raw_pp_tokens.hh			\
 	raw_pp_tokens_range.hh			\
@@ -51,8 +54,11 @@ noinst_HEADERS =				\
 	source_reader.hh			\
 	source_reader_cache.hh			\
 	source_writer.hh			\
+	string-edit/string_edit.hh		\
 	target_float.hh			\
 	target_int.hh				\
+	tree-edit/selkow.hh			\
+	tree-edit/tree_edit.hh			\
 	type_set.hh				\
 	types.hh				\
 	types_impl.hh
@@ -90,13 +96,17 @@ libcp_a_SOURCES =				\
 	pp_tokens_range.cc			\
 	pp_tokenizer.cc			\
 	preprocessor.cc			\
+	raw_pp_directive.cc			\
 	raw_pp_token.cc			\
 	semantic_except.cc			\
 	source_reader.cc			\
 	source_reader_cache.cc			\
 	source_writer.cc			\
+	string-edit/string_edit.cc		\
 	target_float.cc			\
 	target_int.cc				\
+	tree-edit/selkow.cc			\
+	tree-edit/tree_edit.cc			\
 	types.cc
 
 # Compile into a separate intermediate library to allow for using the
@@ -109,13 +119,17 @@ libklp_ccp_pypol_a_CPPFLAGS = \
 	-DKLP_CCP_PYPOL_DIR='"$(pypoldir)"' \
 	$(PYTHON3_EMBED_CFLAGS)
 
-bin_PROGRAMS = klp-ccp
+bin_PROGRAMS = klp-ccp klp-cpp-merge
 
 klp_ccp_SOURCES = klp_ccp.cc
 klp_ccp_LDADD = libklp-ccp-pypol.a libcp.a $(PYTHON3_EMBED_LIBS) target/libtarget.a
 
+klp_cpp_merge_SOURCES = klp_cpp_merge.cc
+klp_cpp_merge_LDADD = libcp.a
+
 check_PROGRAMS = cpp_tokenize normalize_path dirname cpp cparse \
-	test_mp_arithmetic test_target_int test_target_float
+	test_mp_arithmetic test_target_int test_target_float \
+	test_string_edit test_tree_edit test_raw_pp_directive
 
 cpp_tokenize_SOURCES = cpp_tokenize.cc
 cpp_tokenize_LDADD = libcp.a
@@ -140,3 +154,12 @@ test_target_int_LDADD = libcp.a target/libtarget.a
 
 test_target_float_SOURCES = test_target_float.cc
 test_target_float_LDADD = libcp.a target/libtarget.a
+
+test_string_edit_SOURCES = string-edit/test_string_edit.cc
+test_string_edit_LDADD = libcp.a
+
+test_tree_edit_SOURCES = tree-edit/test_tree_edit.cc
+test_tree_edit_LDADD = libcp.a
+
+test_raw_pp_directive_SOURCES = test_raw_pp_directive.cc
+test_raw_pp_directive_LDADD = libcp.a

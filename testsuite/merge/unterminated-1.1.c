@@ -1,0 +1,3 @@
+a
+#ifdef X
+b

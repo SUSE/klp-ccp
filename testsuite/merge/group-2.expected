@@ -1,0 +1,13 @@
+a
+#if defined(A) || defined(B)
+b0
+#elif defined(C) || defined(D)
+b1
+#endif
+c
+#if defined(A) || defined(D)
+d0
+#elif defined(B) || defined(C)
+d1
+#endif
+e

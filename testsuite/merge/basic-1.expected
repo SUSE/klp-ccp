@@ -1,0 +1,7 @@
+a
+#if defined(CONFIG_X86_64)
+b0
+#elif defined(CONFIG_ARM64)
+b1
+#endif
+c

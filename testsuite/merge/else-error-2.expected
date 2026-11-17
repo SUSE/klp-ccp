@@ -1,0 +1,5 @@
+#if X
+x;
+#elif Y
+y;
+#endif

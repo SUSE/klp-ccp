@@ -1,0 +1,12 @@
+a
+#if defined(A) || defined(B)
+b
+#elif defined(C)
+x
+#endif
+c
+#if defined(A) || defined(B)
+d
+#elif defined(C)
+y
+#endif
