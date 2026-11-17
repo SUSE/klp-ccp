@@ -1,5 +1,7 @@
 SUBDIRS = target . examples lp-creation-python-policy testsuite
 
+AUTOMAKE_OPTIONS = subdir-objects
+
 AM_YFLAGS = -d
 BUILT_SOURCES = gnuc_parser.hh pp_expr_parser.hh stack.hh
 EXTRA_DIST = COPYING stack.hh
@@ -53,6 +55,7 @@ noinst_HEADERS =				\
 	source_writer.hh			\
 	target_float.hh			\
 	target_int.hh				\
+	tree-edit/tree_edit.hh			\
 	type_set.hh				\
 	types.hh				\
 	types_impl.hh
@@ -97,6 +100,7 @@ libcp_a_SOURCES =				\
 	source_writer.cc			\
 	target_float.cc			\
 	target_int.cc				\
+	tree-edit/tree_edit.cc			\
 	types.cc
 
 # Compile into a separate intermediate library to allow for using the
@@ -115,7 +119,8 @@ klp_ccp_SOURCES = klp_ccp.cc
 klp_ccp_LDADD = libklp-ccp-pypol.a libcp.a $(PYTHON3_EMBED_LIBS) target/libtarget.a
 
 check_PROGRAMS = cpp_tokenize normalize_path dirname cpp cparse \
-	test_mp_arithmetic test_target_int test_target_float
+	test_mp_arithmetic test_target_int test_target_float \
+	test_tree_edit
 
 cpp_tokenize_SOURCES = cpp_tokenize.cc
 cpp_tokenize_LDADD = libcp.a
@@ -140,3 +145,6 @@ test_target_int_LDADD = libcp.a target/libtarget.a
 
 test_target_float_SOURCES = test_target_float.cc
 test_target_float_LDADD = libcp.a target/libtarget.a
+
+test_tree_edit_SOURCES = tree-edit/test_tree_edit.cc
+test_tree_edit_LDADD = libcp.a
