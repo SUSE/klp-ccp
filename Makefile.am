@@ -53,6 +53,7 @@ noinst_HEADERS =				\
 	source_reader.hh			\
 	source_reader_cache.hh			\
 	source_writer.hh			\
+	string-edit/string_edit.hh		\
 	target_float.hh			\
 	target_int.hh				\
 	tree-edit/tree_edit.hh			\
@@ -98,6 +99,7 @@ libcp_a_SOURCES =				\
 	source_reader.cc			\
 	source_reader_cache.cc			\
 	source_writer.cc			\
+	string-edit/string_edit.cc		\
 	target_float.cc			\
 	target_int.cc				\
 	tree-edit/tree_edit.cc			\
@@ -120,7 +122,7 @@ klp_ccp_LDADD = libklp-ccp-pypol.a libcp.a $(PYTHON3_EMBED_LIBS) target/libtarge
 
 check_PROGRAMS = cpp_tokenize normalize_path dirname cpp cparse \
 	test_mp_arithmetic test_target_int test_target_float \
-	test_tree_edit
+	test_string_edit test_tree_edit
 
 cpp_tokenize_SOURCES = cpp_tokenize.cc
 cpp_tokenize_LDADD = libcp.a
@@ -145,6 +147,9 @@ test_target_int_LDADD = libcp.a target/libtarget.a
 
 test_target_float_SOURCES = test_target_float.cc
 test_target_float_LDADD = libcp.a target/libtarget.a
+
+test_string_edit_SOURCES = string-edit/test_string_edit.cc
+test_string_edit_LDADD = libcp.a
 
 test_tree_edit_SOURCES = tree-edit/test_tree_edit.cc
 test_tree_edit_LDADD = libcp.a
