@@ -45,6 +45,7 @@ noinst_HEADERS =				\
 	pp_tokenizer.hh			\
 	preprocessor.hh			\
 	range_in_file.hh			\
+	raw_pp_directive.hh			\
 	raw_pp_token.hh			\
 	raw_pp_tokens.hh			\
 	raw_pp_tokens_range.hh			\
@@ -95,6 +96,7 @@ libcp_a_SOURCES =				\
 	pp_tokens_range.cc			\
 	pp_tokenizer.cc			\
 	preprocessor.cc			\
+	raw_pp_directive.cc			\
 	raw_pp_token.cc			\
 	semantic_except.cc			\
 	source_reader.cc			\
@@ -124,7 +126,7 @@ klp_ccp_LDADD = libklp-ccp-pypol.a libcp.a $(PYTHON3_EMBED_LIBS) target/libtarge
 
 check_PROGRAMS = cpp_tokenize normalize_path dirname cpp cparse \
 	test_mp_arithmetic test_target_int test_target_float \
-	test_string_edit test_tree_edit
+	test_string_edit test_tree_edit test_raw_pp_directive
 
 cpp_tokenize_SOURCES = cpp_tokenize.cc
 cpp_tokenize_LDADD = libcp.a
@@ -155,3 +157,6 @@ test_string_edit_LDADD = libcp.a
 
 test_tree_edit_SOURCES = tree-edit/test_tree_edit.cc
 test_tree_edit_LDADD = libcp.a
+
+test_raw_pp_directive_SOURCES = test_raw_pp_directive.cc
+test_raw_pp_directive_LDADD = libcp.a
