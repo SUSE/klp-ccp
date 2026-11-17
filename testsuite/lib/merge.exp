@@ -1,0 +1,52 @@
+# Test driver for klp-cpp-merge.
+#
+# A test NAME consists of NAME.conds, listing one preprocessor
+# condition per line, the input files NAME.0.c, NAME.1.c, ...
+# associated with the conditions in order, and either NAME.expected,
+# the expected output, or NAME.expected-error, a regular expression
+# expected to match the error output of a failing klp-cpp-merge.
+proc run_merge {test} {
+    global objdir
+    global subdir
+
+    set base [file rootname "$test"]
+    set name [file tail "$base"]
+    set cmd "$objdir/../klp-cpp-merge"
+    set result_file "$objdir/$subdir/$name.result"
+
+    set fp [open "$test"]
+    set conds [split [string trimright [read $fp] "\n"] "\n"]
+    close $fp
+    set args [list]
+    set k 0
+    foreach cond $conds {
+	if {![string length "$cond"]} continue
+	lappend args "$cond" "$base.$k.c"
+	incr k
+    }
+
+    file delete "$result_file"
+    set failed [catch {exec "$cmd" -o "$result_file" {*}$args 2>@1} output]
+
+    if {[file exists "$base.expected-error"]} {
+	set fp [open "$base.expected-error"]
+	set re [string trimright [read $fp] "\n"]
+	close $fp
+	if {!$failed} {
+	    fail "$name: unexpected success"
+	} elseif {![regexp -- "$re" "$output"]} {
+	    fail "$name: unexpected error output: \"$output\""
+	} else {
+	    pass "$name"
+	}
+	return
+    }
+
+    if {$failed} {
+	fail "$name: $output"
+    } elseif {[catch {exec diff "$base.expected" "$result_file"}]} {
+	fail "$name: result doesn't match expectations"
+    } else {
+	pass "$name"
+    }
+}

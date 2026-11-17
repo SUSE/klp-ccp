@@ -1,0 +1,5 @@
+defined(A)
+A && B
+(C)
+(D) || (E)
+!defined(F)

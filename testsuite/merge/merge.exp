@@ -1,0 +1,5 @@
+source "$srcdir/lib/merge.exp"
+
+foreach test [lsort [glob -nocomplain $srcdir/$subdir/*.conds]] {
+    run_merge $test
+}

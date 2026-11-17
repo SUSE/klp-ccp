@@ -1,3 +1,3 @@
 SUBDIRS = ccp-toy-policy
 
-EXTRA_DIST = common.exp cpp.exp cparse.exp ccp.exp
+EXTRA_DIST = common.exp cpp.exp cparse.exp ccp.exp merge.exp

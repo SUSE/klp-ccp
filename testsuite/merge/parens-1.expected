@@ -1,0 +1,11 @@
+#if defined(A)
+a0
+#elif (A && B)
+a1
+#elif (C)
+a2
+#elif ((D) || (E))
+a3
+#elif (!defined(F))
+a4
+#endif

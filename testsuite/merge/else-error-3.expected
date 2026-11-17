@@ -1,0 +1,9 @@
+#if X
+#if defined(A)
+x0;
+#elif defined(B)
+x1;
+#endif
+#else
+#error "p"
+#endif

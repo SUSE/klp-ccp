@@ -119,10 +119,13 @@ libklp_ccp_pypol_a_CPPFLAGS = \
 	-DKLP_CCP_PYPOL_DIR='"$(pypoldir)"' \
 	$(PYTHON3_EMBED_CFLAGS)
 
-bin_PROGRAMS = klp-ccp
+bin_PROGRAMS = klp-ccp klp-cpp-merge
 
 klp_ccp_SOURCES = klp_ccp.cc
 klp_ccp_LDADD = libklp-ccp-pypol.a libcp.a $(PYTHON3_EMBED_LIBS) target/libtarget.a
+
+klp_cpp_merge_SOURCES = klp_cpp_merge.cc
+klp_cpp_merge_LDADD = libcp.a
 
 check_PROGRAMS = cpp_tokenize normalize_path dirname cpp cparse \
 	test_mp_arithmetic test_target_int test_target_float \

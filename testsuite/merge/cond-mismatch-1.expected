@@ -1,0 +1,11 @@
+a
+#if defined(A)
+#if X
+b
+#endif
+#elif defined(B)
+#if Y
+b
+#endif
+#endif
+c
