@@ -56,6 +56,7 @@ noinst_HEADERS =				\
 	string-edit/string_edit.hh		\
 	target_float.hh			\
 	target_int.hh				\
+	tree-edit/selkow.hh			\
 	tree-edit/tree_edit.hh			\
 	type_set.hh				\
 	types.hh				\
@@ -102,6 +103,7 @@ libcp_a_SOURCES =				\
 	string-edit/string_edit.cc		\
 	target_float.cc			\
 	target_int.cc				\
+	tree-edit/selkow.cc			\
 	tree-edit/tree_edit.cc			\
 	types.cc
 
