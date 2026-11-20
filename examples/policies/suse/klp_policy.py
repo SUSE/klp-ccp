@@ -18,15 +18,15 @@
 
 import ccp
 
-from .mod_symvers import ModuleSymvers
-from .target_mod_elf import TargetModElf
 from .ipa_clones import IpaClones
+from .symbol_entry import (SectionFlags, SectionType, SymbolBinding,
+                           SymbolType)
+from .symbol_source_factory import make_symbol_source
 
 import os
 import sys
 import re
 from dataclasses import dataclass
-from elftools.elf.constants import SH_FLAGS as ELF_SH_FLAGS
 
 @dataclass
 class ExternalizableSymbol:
@@ -34,12 +34,16 @@ class ExternalizableSymbol:
     providing_mod: str
     is_exported: bool
 
+@dataclass
+class SymbolFacts:
+    # What the entries for a symbol name in the patched object tell.
+    any_is_def: bool
+    any_is_undef: bool
+    bindings: set
+    warnings: list
+
 class KlpPolicy(ccp.LpCreationPolicyAbc):
     def __init__(self, patched_funcs):
-        self._cfg_mod_symvers_filename = os.getenv('KCP_MOD_SYMVERS')
-        if not self._cfg_mod_symvers_filename:
-            raise KeyError('$KCP_MOD_SYMVERS not set')
-
         self._cfg_patched_obj_filename = os.getenv('KCP_PATCHED_OBJ')
         if not self._cfg_patched_obj_filename:
             raise KeyError('$KCP_PATCHED_OBJ not set')
@@ -91,8 +95,7 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
         assert isinstance(patched_funcs, list)
         self._cfg_patched_funcs = set(patched_funcs)
 
-        self._mod_symvers = ModuleSymvers(self._cfg_mod_symvers_filename)
-        self._patched_obj_elf = TargetModElf(self._cfg_patched_obj_filename)
+        self._syms = make_symbol_source(self._cfg_patched_obj_filename)
         self._patched_src_ipa_clones = \
             IpaClones(self._cfg_patched_src_ipa_clones_filename)
 
@@ -177,7 +180,7 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
             for (f, optimized) in spawns.items():
                 if not optimized:
                     patched.add(f)
-                elif self._sym_has_fun_def_in_elf(f):
+                elif self._sym_has_fun_def(f):
                     # Note this match is by name only. In a linked
                     # multi-TU object two distinct base functions can
                     # each spawn an identically suffixed clone (e.g.
@@ -197,14 +200,11 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
 
         return patched
 
-    def _sym_has_fun_def_in_elf(self, name):
+    def _sym_has_fun_def(self, name):
         # Report whether name has a function definition symbol in the
         # patched object.
-        elf_syms = self._patched_obj_elf.elf_syms.get(name)
-        if not elf_syms:
-            return False
-        for s in elf_syms:
-            is_fun_def = self._elf_sym_is_fun_def_sym(s)
+        for s in self._syms.entries(name):
+            is_fun_def = self._sym_is_fun_def(s)
             if isinstance(is_fun_def, tuple):
                 # (False, warning) error case. This helper runs at policy
                 # construction time, where there's no warnings channel back
@@ -221,7 +221,7 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
         for f in funcs:
             # Filter out fully inlined functions and return only
             # those with a corresponding symbol in the obj.
-            if not self._sym_has_fun_def_in_elf(f):
+            if not self._sym_has_fun_def(f):
                 continue
 
             # If there's one or more symbols use the IPA to catch
@@ -257,87 +257,116 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                         'header \"' + header + '\" non-eligible for inclusion'
                     ))
 
-    @classmethod
-    def _elf_sym_is_undef(elf_sym):
-        return elf_sym['st_shndx'] == 'SHN_UNDEF'
-
-    def _elf_sym_is_fun_def_sym(self, elf_sym):
-        t = elf_sym['st_info']['type']
-        if t == 'STT_FUNC':
-            assert(elf_sym['st_shndx'] != 'SHN_UNDEF')
+    def _sym_is_fun_def(self, entry):
+        if entry.type == SymbolType.FUNC:
+            assert(entry.defined)
             return True
-        elif t != 'STT_NOTYPE':
+        elif entry.type != SymbolType.NOTYPE:
             return False
 
-        # So the symbol is STT_NOTYPE, it could be anything, e.g. a
+        # So the symbol is NOTYPE, it could be anything, e.g. a
         # function definition implemented in assembly. Check if it's
         # provided from an SHF_EXECINSTR section.
-        shndx = elf_sym['st_shndx']
-        if shndx == 'SHN_UNDEF' or shndx == 'SHN_ABS':
+        if not entry.defined:
             return False
 
-        try:
-            shndx = int(shndx)
-        except:
+        if entry.section_error:
             return (False,
                     ccp.LpCreationPolicyWarning(
-                        'ELF sym \"' + elf_sym.name + '\" shndx not an int',
+                        entry.section_error,
                         critical=True
                     ))
-        if shndx >= self._patched_obj_elf.elf.num_sections():
-            return (False,
-                    ccp.LpCreationPolicyWarning(
-                        'ELF sym \"' + elf_sym.name + '\" shndx out of bounds',
-                        critical=True
-                    ))
-        elf_sec = self._patched_obj_elf.elf.get_section(shndx)
-        if elf_sec['sh_type'] != 'SHT_PROGBITS':
+        if entry.section_type is None:
+            # An absolute symbol.
             return False
-        elif not elf_sec['sh_flags'] & ELF_SH_FLAGS.SHF_EXECINSTR:
+        if entry.section_type != SectionType.PROGBITS:
+            return False
+        elif not entry.section_flags & SectionFlags.EXECINSTR:
             return False
 
         return True
 
-    def _elf_sym_is_obj_def_sym(self, elf_sym):
-        t = elf_sym['st_info']['type']
-        if t == 'STT_OBJECT':
-            assert(elf_sym['st_shndx'] != 'SHN_UNDEF')
+    def _sym_is_obj_def(self, entry):
+        if entry.type == SymbolType.OBJECT:
+            assert(entry.defined)
             return True
-        elif t != 'STT_NOTYPE':
+        elif entry.type != SymbolType.NOTYPE:
             return False
 
-        # So the symbol is STT_NOTYPE, it could be anything, e.g. a
+        # So the symbol is NOTYPE, it could be anything, e.g. a
         # function definition implemented in assembly. Check if it's
         # provided from some section which is looking like it could
         # contain data.
-        shndx = elf_sym['st_shndx']
-        if shndx == 'SHN_UNDEF' or shndx == 'SHN_ABS':
+        if not entry.defined:
             return False
 
-        try:
-            shndx = int(shndx)
-        except:
+        if entry.section_error:
             return (False,
                     ccp.LpCreationPolicyWarning(
-                        'ELF sym \"' + elf_sym.name + '\" shndx not an int',
+                        entry.section_error,
                         critical=True
                     ))
-        if shndx >= self._patched_obj_elf.elf.num_sections():
-            return (False,
-                    ccp.LpCreationPolicyWarning(
-                        'ELF sym \"' + elf_sym.name + '\" shndx out of bounds',
-                        critical=True
-                    ))
-        elf_sec = self._patched_obj_elf.elf.get_section(shndx)
-        sh_type = elf_sec['sh_type']
-        if sh_type != 'SHT_PROGBITS' and sh_type != 'SHT_NOBITS':
+        if entry.section_type is None:
+            # An absolute symbol.
             return False
-        elif elf_sec['sh_flags'] & ELF_SH_FLAGS.SHF_EXECINSTR:
+        if (entry.section_type != SectionType.PROGBITS and
+            entry.section_type != SectionType.NOBITS):
             return False
-        elif not elf_sec['sh_flags'] & ELF_SH_FLAGS.SHF_ALLOC:
+        elif entry.section_flags & SectionFlags.EXECINSTR:
+            return False
+        elif not entry.section_flags & SectionFlags.ALLOC:
             return False
 
         return True
+
+    def _sym_facts(self, name, entries, is_def_sym):
+        # Tell what the entries for the symbol name say, is_def_sym
+        # being the predicate for them to be a definition of the kind
+        # of symbol in question.
+        warnings = []
+        any_is_def = False
+        any_is_non_def = False
+        any_is_undef = False
+        bindings = set()
+        sym_value = None
+        conflicting_definitions = False
+        for entry in entries:
+            is_def = is_def_sym(entry)
+            if isinstance(is_def, tuple):
+                warnings.append(is_def[1])
+                is_def = is_def[0]
+            if is_def:
+                any_is_def = True
+                bindings.add(entry.bind)
+                if sym_value is None:
+                    sym_value = entry.value
+                elif sym_value != entry.value:
+                    conflicting_definitions = True
+            else:
+                any_is_non_def = True
+            any_is_undef |= not entry.defined
+
+        if any_is_def and any_is_non_def:
+            conflicting_definitions = True
+
+        if conflicting_definitions:
+            warnings.append(
+                ccp.LpCreationPolicyWarning(
+                    'conflicting definitions for symbol \"' +
+                    name + '\" found in ' + self._syms.label,
+                    critical=True
+                ))
+
+        assert(not any_is_def or bindings)
+        if not conflicting_definitions and len(bindings) > 1:
+            warnings.append(
+                ccp.LpCreationPolicyWarning(
+                    'conflicting bindings for symbol \"' +
+                    name + '\" found in ' + self._syms.label,
+                    critical=True
+                ))
+
+        return SymbolFacts(any_is_def, any_is_undef, bindings, warnings)
 
     def is_undefined_function_ignorable(self, function_name):
         return (function_name in self._cfg_ext_blacklist or
@@ -361,9 +390,7 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
         if self.is_undefined_function_ignorable(function_name):
             return False
 
-        exporter = None
-        if function_name in self._mod_symvers.symvers:
-            exporter = self._mod_symvers.symvers[function_name]
+        exporter = self._syms.exporter(function_name)
 
         # If linkage is internal, then a definition must be available
         # in the compilation unit.
@@ -372,7 +399,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
              (function_name))):
             return False
 
-        if not function_name in self._patched_obj_elf.elf_syms:
+        entries = self._syms.entries(function_name)
+        if not entries:
             if linkage == ccp.Linkage.EXTERNAL:
                 return (False,
                         ccp.LpCreationPolicyWarning(
@@ -382,60 +410,22 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                         ))
             return False
 
-        warnings = []
-        elf_syms = self._patched_obj_elf.elf_syms[function_name]
-        any_is_fun_def = False
-        any_is_non_fun_def = False
-        any_is_undef = False
-        bindings = set()
-        sym_value = None
-        conflicting_definitions = False
-        for elf_sym in elf_syms:
-            is_fun_def = self._elf_sym_is_fun_def_sym(elf_sym)
-            if isinstance(is_fun_def, tuple):
-                warnings.append(is_fun_def[1])
-                is_fun_def = is_fun_def[0]
-            if is_fun_def:
-                any_is_fun_def = True
-                bindings.add(elf_sym['st_info']['bind'])
-                if sym_value is None:
-                    sym_value = elf_sym['st_value']
-                elif sym_value != elf_sym['st_value']:
-                    conflicting_definitions = True
-            else:
-                any_is_non_fun_def = True
-            any_is_undef |= elf_sym['st_shndx'] == 'SHN_UNDEF'
+        facts = self._sym_facts(function_name, entries, self._sym_is_fun_def)
+        warnings = facts.warnings
+        any_is_fun_def = facts.any_is_def
+        any_is_undef = facts.any_is_undef
+        bindings = facts.bindings
 
-        if any_is_fun_def and any_is_non_fun_def:
-            conflicting_definitions = True
-
-        if conflicting_definitions:
-            warnings.append(
-                ccp.LpCreationPolicyWarning(
-                    'conflicting definitions for symbol \"' +
-                    function_name + '\" found in ELF',
-                    critical=True
-                ))
-
-        assert(not any_is_fun_def or bindings)
-        if not conflicting_definitions and len(bindings) > 1:
-            warnings.append(
-                ccp.LpCreationPolicyWarning(
-                    'conflicting bindings for symbol \"' +
-                    function_name + '\" found in ELF \"' +
-                    self._cfg_patched_obj_filename + '\"',
-                    critical=True
-                ))
         if linkage == ccp.Linkage.INTERNAL:
             if not any_is_fun_def:
                 return (False, warnings, )
 
-            if not 'STB_LOCAL' in bindings:
+            if not SymbolBinding.LOCAL in bindings:
                 warnings.append(
                     ccp.LpCreationPolicyWarning(
                         'expected STB_LOCAL binding for symbol \"' +
-                        function_name + '\" in ELF \"' +
-                        self._cfg_patched_obj_filename + '\"',
+                        function_name + '\" in ' +
+                        self._syms.label,
                         critical=True
                     ))
 
@@ -486,12 +476,13 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                     ))
 
             if any_is_fun_def:
-                if not 'STB_GLOBAL' in bindings and not 'STB_WEAK' in bindings:
+                if (not SymbolBinding.GLOBAL in bindings and
+                    not SymbolBinding.WEAK in bindings):
                     warnings.append(
                         ccp.LpCreationPolicyWarning(
                             'expected STB_GLOBAL or STB_LOCAL binding'
-                            ' for symbol \"' + function_name + '\" in ELF \"' +
-                            self._cfg_patched_obj_filename + '\"',
+                            ' for symbol \"' + function_name + '\" in ' +
+                            self._syms.label,
                             critical=True
                         ))
 
@@ -519,9 +510,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                     ))
                     return (False, warnings, )
 
-                # No .modinfo, as in vmlinux, means no dependencies.
                 if exporter != 'vmlinux' and \
-                   not exporter in (self._patched_obj_elf.modinfo_deps or []):
+                   not exporter in self._syms.modinfo_deps():
                     warnings.append(
                         ccp.LpCreationPolicyWarning(
                             'symbol \"' + function_name +
@@ -565,11 +555,10 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
         assert(linkage == ccp.Linkage.INTERNAL or
                linkage == ccp.Linkage.EXTERNAL)
 
-        exporter = None
-        if object_name in self._mod_symvers.symvers:
-            exporter = self._mod_symvers.symvers[object_name]
+        exporter = self._syms.exporter(object_name)
 
-        if not object_name in self._patched_obj_elf.elf_syms:
+        entries = self._syms.entries(object_name)
+        if not entries:
             if linkage == ccp.Linkage.EXTERNAL:
                 return (False,
                         ccp.LpCreationPolicyWarning(
@@ -579,50 +568,11 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                         ))
             return False
 
-        warnings = []
-        elf_syms = self._patched_obj_elf.elf_syms[object_name]
-        any_is_obj_def = False
-        any_is_non_obj_def = False
-        any_is_undef = False
-        bindings = set()
-        sym_value = None
-        conflicting_definitions = False
-        for elf_sym in elf_syms:
-            is_obj_def = self._elf_sym_is_obj_def_sym(elf_sym)
-            if isinstance(is_obj_def, tuple):
-                warnings.append(is_obj_def[1])
-                is_obj_def = is_obj_def[0]
-            if is_obj_def:
-                any_is_obj_def = True
-                bindings.add(elf_sym['st_info']['bind'])
-                if sym_value is None:
-                    sym_value = elf_sym['st_value']
-                elif sym_value != elf_sym['st_value']:
-                    conflicting_definitions = True
-            else:
-                any_is_non_obj_def = True
-            any_is_undef |= elf_sym['st_shndx'] == 'SHN_UNDEF'
-
-        if any_is_obj_def and any_is_non_obj_def:
-            conflicting_definitions = True
-
-        if conflicting_definitions:
-            warnings.append(
-                ccp.LpCreationPolicyWarning(
-                    'conflicting definitions for symbol \"' +
-                    object_name + '\" found in ELF',
-                    critical=True
-                ))
-
-        assert(not any_is_obj_def or bindings)
-        if not conflicting_definitions and len(bindings) > 1:
-            warnings.append(
-                ccp.LpCreationPolicyWarning(
-                    'conflicting bindings for symbol \"' +
-                    object_name + '\" found in ELF \"' +
-                    self._cfg_patched_obj_filename + '\"',
-                    critical=True
-                ))
+        facts = self._sym_facts(object_name, entries, self._sym_is_obj_def)
+        warnings = facts.warnings
+        any_is_obj_def = facts.any_is_def
+        any_is_undef = facts.any_is_undef
+        bindings = facts.bindings
 
         if linkage == ccp.Linkage.INTERNAL:
             if not any_is_obj_def:
@@ -636,12 +586,12 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                     ))
                 return (False, warnings, )
 
-            if not 'STB_LOCAL' in bindings:
+            if not SymbolBinding.LOCAL in bindings:
                 warnings.append(
                     ccp.LpCreationPolicyWarning(
                         'expected STB_LOCAL binding for symbol \"' +
-                        object_name + '\" in ELF \"' +
-                        self._cfg_patched_obj_filename + '\"',
+                        object_name + '\" in ' +
+                        self._syms.label,
                         critical=True
                     ))
 
@@ -683,12 +633,13 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                 return (False, warnings, )
 
             if any_is_obj_def:
-                if not 'STB_GLOBAL' in bindings and not 'STB_WEAK' in bindings:
+                if (not SymbolBinding.GLOBAL in bindings and
+                    not SymbolBinding.WEAK in bindings):
                     warnings.append(
                         ccp.LpCreationPolicyWarning(
                             'expected STB_GLOBAL or STB_LOCAL binding'
-                            ' for symbol \"' + object_name + '\" in ELF \"' +
-                            self._cfg_patched_obj_filename + '\"',
+                            ' for symbol \"' + object_name + '\" in ' +
+                            self._syms.label,
                             critical=True
                         ))
 
@@ -716,9 +667,8 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                     ))
                     return (False, warnings, )
 
-                # No .modinfo, as in vmlinux, means no dependencies.
                 if exporter != 'vmlinux' and \
-                   not exporter in (self._patched_obj_elf.modinfo_deps or []):
+                   not exporter in self._syms.modinfo_deps():
                     warnings.append(
                         ccp.LpCreationPolicyWarning(
                             'symbol \"' + object_name +
