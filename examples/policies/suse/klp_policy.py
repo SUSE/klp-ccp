@@ -519,8 +519,9 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                     ))
                     return (False, warnings, )
 
+                # No .modinfo, as in vmlinux, means no dependencies.
                 if exporter != 'vmlinux' and \
-                   not exporter in self._patched_obj_elf.modinfo_deps:
+                   not exporter in (self._patched_obj_elf.modinfo_deps or []):
                     warnings.append(
                         ccp.LpCreationPolicyWarning(
                             'symbol \"' + function_name +
@@ -715,8 +716,9 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                     ))
                     return (False, warnings, )
 
+                # No .modinfo, as in vmlinux, means no dependencies.
                 if exporter != 'vmlinux' and \
-                   not exporter in self._patched_obj_elf.modinfo_deps:
+                   not exporter in (self._patched_obj_elf.modinfo_deps or []):
                     warnings.append(
                         ccp.LpCreationPolicyWarning(
                             'symbol \"' + object_name +
