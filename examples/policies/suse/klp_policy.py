@@ -95,7 +95,15 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
         assert isinstance(patched_funcs, list)
         self._cfg_patched_funcs = set(patched_funcs)
 
-        self._syms = make_symbol_source(self._cfg_patched_obj_filename)
+        patched_obj_ko = os.path.basename(self._cfg_patched_obj_filename)
+        if patched_obj_ko.startswith('vmlinux'):
+            self._patched_obj_name = 'vmlinux'
+        else:
+            patched_obj_ko = re.sub(r'(?:\.ko)?(?:\.gz|\.xz|\.zst)?$', '', patched_obj_ko)
+            self._patched_obj_name = patched_obj_ko.translate({ord("-"): ord("_")})
+
+        self._syms = make_symbol_source(self._patched_obj_name,
+                                        self._cfg_patched_obj_filename)
         self._patched_src_ipa_clones = \
             IpaClones(self._cfg_patched_src_ipa_clones_filename)
 
@@ -116,13 +124,6 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
         if not no_complete_patched_funcs:
             with open(self._cfg_work_dir + '/patched_funcs', "w") as file:
                 file.write('\n'.join(self._obj_patched_funcs))
-
-        patched_obj_ko = os.path.basename(self._cfg_patched_obj_filename)
-        if patched_obj_ko.startswith('vmlinux'):
-            self._patched_obj_name = 'vmlinux'
-        else:
-            patched_obj_ko = re.sub(r'(?:\.ko)?(?:\.gz|\.xz|\.zst)?$', '', patched_obj_ko)
-            self._patched_obj_name = patched_obj_ko.translate({ord("-"): ord("_")})
 
         self._re_eligible_header_filename = []
         self._re_eligible_header_filename.append(
@@ -229,7 +230,7 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
             in_ipa = not self._patched_src_ipa_clones.all_instances_removed(f)
             if not in_ipa:
                 print('warning: \"' + f +
-                      '\" symbol found in ELF but IPA says removed.',
+                      '\" symbol found in patched object but IPA says removed.',
                       file=sys.stderr)
                 continue
 
@@ -404,7 +405,7 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
             if linkage == ccp.Linkage.EXTERNAL:
                 return (False,
                         ccp.LpCreationPolicyWarning(
-                            'no ELF symbol entry in \"' + self._patched_obj_name
+                            'no symbol entry in \"' + self._patched_obj_name
                             + '\" for extern \"' + function_name + '\"',
                             critical=True
                         ))
@@ -458,7 +459,7 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                 # the symbol then?
                 warnings.append(
                     ccp.LpCreationPolicyWarning(
-                        'no ELF symbol entry for \"' +
+                        'no symbol entry for \"' +
                         function_name + '\" in \"' +
                         self._cfg_patched_obj_filename + '\"' +
                         ' (hint: blacklist if subject to dead code elimination)',
@@ -469,7 +470,7 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
             if definition_loc and not any_is_fun_def:
                 warnings.append(
                     ccp.LpCreationPolicyWarning(
-                        'expected ELF symbol entry for extern \"' +
+                        'expected symbol entry for extern \"' +
                         function_name + '\" with definition in \"' +
                         self._cfg_patched_obj_filename + '\"',
                         critical=True
@@ -562,7 +563,7 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
             if linkage == ccp.Linkage.EXTERNAL:
                 return (False,
                         ccp.LpCreationPolicyWarning(
-                            'no ELF symbol entry in \"' + self._patched_obj_name
+                            'no symbol entry in \"' + self._patched_obj_name
                             + '\" for extern \"' + object_name + '\"',
                             critical=True
                         ))
@@ -579,7 +580,7 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                 warnings.append(
                     ccp.LpCreationPolicyWarning(
                         'object symbol \"' + object_name +
-                        '\" with internal linkage not found in ELF \"' +
+                        '\" with internal linkage not found in \"' +
                         self._cfg_patched_obj_filename + '\" ' +
                         ' (hint: blacklist if subject to dead code elimination)',
                         critical=True
@@ -624,7 +625,7 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                 # the symbol then?
                 warnings.append(
                     ccp.LpCreationPolicyWarning(
-                        'no ELF symbol entry for \"' +
+                        'no symbol entry for \"' +
                         object_name + '\" in \"' +
                         self._cfg_patched_obj_filename + '\"' +
                         ' (hint: blacklist if subject to dead code elimination)',

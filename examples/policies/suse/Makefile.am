@@ -1,4 +1,5 @@
 EXTRA_DIST = __init__.py		\
+	db_source.py			\
 	elf_source.py			\
 	ipa_clones.py			\
 	klp_policy.py			\
