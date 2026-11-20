@@ -512,7 +512,7 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
                 if exporter is None:
                     warnings.append(
                         ccp.LpCreationPolicyWarning(
-                            'no export for undefined symbol \"' + object_name +
+                            'no export for undefined symbol \"' + function_name +
                             '\" from \"' + self._cfg_patched_obj_filename +
                             '\" found',
                             critical=True
