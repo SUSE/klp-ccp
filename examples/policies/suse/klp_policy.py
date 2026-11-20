@@ -589,7 +589,7 @@ class KlpPolicy(ccp.LpCreationPolicyAbc):
         for elf_sym in elf_syms:
             is_obj_def = self._elf_sym_is_obj_def_sym(elf_sym)
             if isinstance(is_obj_def, tuple):
-                warnings += is_obj_def[1]
+                warnings.append(is_obj_def[1])
                 is_obj_def = is_obj_def[0]
             if is_obj_def:
                 any_is_obj_def = True
